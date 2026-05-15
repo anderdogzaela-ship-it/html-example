@@ -1,0 +1,1304 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Staging Deployment Runbook · staging.stockpiloterp.com.co</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-0: #0a0d12;
+  --bg-1: #0f131a;
+  --bg-2: #161b24;
+  --bg-3: #1d242f;
+  --bg-4: #252d3a;
+  --bg-5: #2f3848;
+  --line: rgba(255,255,255,0.06);
+  --line-strong: rgba(255,255,255,0.12);
+  --text: #e7ecf3;
+  --text-soft: #9aa3b2;
+  --text-muted: #6a7280;
+  --text-dim: #4a5260;
+  --accent: #5eead4;
+  --accent-glow: rgba(94,234,212,0.12);
+  --green: #34d399;
+  --green-bg: rgba(52,211,153,0.12);
+  --amber: #fbbf24;
+  --amber-bg: rgba(251,191,36,0.12);
+  --red: #f87171;
+  --red-bg: rgba(248,113,113,0.12);
+  --blue: #60a5fa;
+  --blue-bg: rgba(96,165,250,0.12);
+  --purple: #a78bfa;
+  --purple-bg: rgba(167,139,250,0.12);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', -apple-system, sans-serif;
+  background: var(--bg-0);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  font-size: 14px;
+  line-height: 1.5;
+  background-image:
+    radial-gradient(circle at 0% 0%, var(--accent-glow), transparent 40%),
+    radial-gradient(circle at 100% 100%, var(--purple-bg), transparent 40%);
+}
+.mono { font-family: 'JetBrains Mono', monospace; }
+
+/* Layout */
+.app {
+  display: grid;
+  grid-template-columns: 260px 1fr 340px;
+  min-height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+  background: var(--bg-1);
+  border-right: 1px solid var(--line);
+  padding: 24px 0;
+  position: sticky; top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+.brand {
+  padding: 0 20px 24px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 24px;
+  display: flex; align-items: center; gap: 12px;
+}
+.brand-mark {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--accent), var(--blue));
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; color: #0a0d12;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 16px;
+}
+.brand-name {
+  font-weight: 600; font-size: 14px; letter-spacing: -0.01em;
+}
+.brand-sub {
+  font-size: 11px; color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.sidebar-label {
+  padding: 0 20px;
+  font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px;
+  color: var(--text-dim); font-weight: 600;
+  margin-bottom: 10px; margin-top: 16px;
+}
+.sidebar-item {
+  padding: 9px 20px;
+  display: flex; align-items: center; gap: 12px;
+  font-size: 13px; color: var(--text-soft);
+  cursor: pointer;
+  transition: all 0.2s;
+  border-left: 2px solid transparent;
+}
+.sidebar-item:hover { background: var(--bg-2); color: var(--text); }
+.sidebar-item.active {
+  background: var(--bg-2);
+  color: var(--text);
+  border-left-color: var(--accent);
+}
+.sidebar-item .dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--text-dim);
+}
+.sidebar-item.active .dot {
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+}
+.sidebar-item.done .dot { background: var(--green); }
+.sidebar-item.running .dot { background: var(--amber); animation: pulse 1.5s ease infinite; }
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.3); }
+}
+
+.sidebar-footer {
+  padding: 20px;
+  font-size: 11px; color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+  border-top: 1px solid var(--line);
+  margin-top: 24px;
+}
+.sidebar-footer .row { display: flex; justify-content: space-between; padding: 4px 0; }
+
+/* Main */
+.main {
+  padding: 24px 32px;
+  overflow-y: auto;
+}
+.main-header {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  margin-bottom: 28px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--line);
+}
+.main-title-block .breadcrumb {
+  font-size: 12px; color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+  margin-bottom: 8px;
+}
+.main-title {
+  font-size: 24px; font-weight: 600;
+  letter-spacing: -0.02em;
+  margin-bottom: 6px;
+}
+.main-subtitle {
+  font-size: 13px; color: var(--text-soft);
+}
+.action-bar { display: flex; gap: 10px; }
+.btn {
+  padding: 9px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--line-strong);
+  background: var(--bg-2);
+  color: var(--text);
+  font-size: 13px; font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: inherit;
+}
+.btn:hover { background: var(--bg-3); border-color: var(--text-dim); }
+.btn-primary {
+  background: var(--accent);
+  color: #0a0d12;
+  border-color: var(--accent);
+  font-weight: 600;
+}
+.btn-primary:hover { background: #4dd3bc; }
+.btn-danger {
+  background: var(--red-bg);
+  color: var(--red);
+  border-color: rgba(248,113,113,0.2);
+}
+
+/* Pipeline */
+.pipeline-section {
+  margin-bottom: 32px;
+}
+.section-title {
+  font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px;
+  color: var(--text-dim); font-weight: 600;
+  margin-bottom: 16px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.section-title-right {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; color: var(--text-muted);
+  text-transform: none; letter-spacing: 0;
+}
+
+.pipeline {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  position: relative;
+}
+.pipeline-step {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px 12px;
+  position: relative;
+  transition: all 0.3s;
+}
+.pipeline-step.done {
+  background: linear-gradient(180deg, var(--green-bg), var(--bg-2));
+  border-color: rgba(52,211,153,0.25);
+}
+.pipeline-step.running {
+  background: linear-gradient(180deg, var(--amber-bg), var(--bg-2));
+  border-color: rgba(251,191,36,0.35);
+  box-shadow: 0 0 0 2px rgba(251,191,36,0.1);
+}
+.pipeline-step.pending { opacity: 0.55; }
+
+.step-number {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.step-name {
+  font-weight: 600;
+  font-size: 13px;
+  margin-bottom: 4px;
+  letter-spacing: -0.01em;
+}
+.step-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+.step-icon {
+  position: absolute;
+  top: 12px; right: 12px;
+  width: 16px; height: 16px;
+}
+.pipeline-step.done .step-icon::after {
+  content: '✓';
+  color: var(--green);
+  font-weight: 700;
+  font-size: 14px;
+}
+.pipeline-step.running .step-icon::after {
+  content: '';
+  display: block;
+  width: 12px; height: 12px;
+  border: 2px solid var(--amber);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Cards grid */
+.cards-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+.card {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 20px;
+}
+.card-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}
+.card-title {
+  font-size: 14px; font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.card-meta {
+  font-size: 11px; color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Pre-flight checklist */
+.checklist {
+  display: flex; flex-direction: column; gap: 10px;
+}
+.check-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 12px;
+  background: var(--bg-3);
+  border-radius: 8px;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+.check-item.warning {
+  background: var(--amber-bg);
+  border: 1px solid rgba(251,191,36,0.2);
+}
+.check-item.danger {
+  background: var(--red-bg);
+  border: 1px solid rgba(248,113,113,0.2);
+}
+.check-item.success {
+  background: var(--green-bg);
+  border: 1px solid rgba(52,211,153,0.2);
+}
+.check-icon {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 700;
+}
+.check-icon.ok { background: var(--green); color: #0a0d12; }
+.check-icon.warn { background: var(--amber); color: #0a0d12; }
+.check-icon.danger { background: var(--red); color: #fff; }
+.check-icon.pending { background: var(--bg-5); color: var(--text-muted); }
+.check-text {
+  flex: 1;
+}
+.check-name {
+  font-weight: 500;
+}
+.check-detail {
+  font-size: 11px; color: var(--text-muted);
+  margin-top: 2px;
+}
+.check-action {
+  font-size: 11px;
+  color: var(--accent);
+  cursor: pointer;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* File categorization */
+.file-tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--bg-3);
+  border-radius: 8px;
+  padding: 4px;
+  margin-bottom: 16px;
+}
+.file-tab {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  text-align: center;
+  cursor: pointer;
+  color: var(--text-soft);
+  transition: all 0.2s;
+  font-family: 'JetBrains Mono', monospace;
+}
+.file-tab.active {
+  background: var(--bg-4);
+  color: var(--text);
+}
+.file-tab .count {
+  display: inline-block;
+  padding: 1px 6px;
+  background: var(--bg-5);
+  border-radius: 4px;
+  font-size: 10px;
+  margin-left: 4px;
+}
+.file-tab.danger .count { background: var(--red-bg); color: var(--red); }
+.file-tab.warn .count { background: var(--amber-bg); color: var(--amber); }
+.file-tab.ok .count { background: var(--green-bg); color: var(--green); }
+
+.file-list {
+  max-height: 200px;
+  overflow-y: auto;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.file-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--text-soft);
+  background: var(--bg-3);
+}
+.file-row .file-icon {
+  width: 14px; height: 14px;
+  flex-shrink: 0;
+}
+.file-row .file-tag {
+  margin-left: auto;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+}
+.tag-secret { background: var(--red-bg); color: var(--red); }
+.tag-junk { background: var(--amber-bg); color: var(--amber); }
+.tag-code { background: var(--green-bg); color: var(--green); }
+.tag-config { background: var(--blue-bg); color: var(--blue); }
+
+/* Migration tracker */
+.migration-tracker {
+  display: flex; flex-direction: column; gap: 6px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+.migration-row {
+  display: grid;
+  grid-template-columns: 32px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--bg-3);
+  border-radius: 8px;
+  font-size: 12px;
+  border-left: 3px solid transparent;
+}
+.migration-row.done {
+  border-left-color: var(--green);
+}
+.migration-row.running {
+  border-left-color: var(--amber);
+  background: var(--amber-bg);
+}
+.migration-row.pending {
+  border-left-color: var(--bg-5);
+  opacity: 0.55;
+}
+.migration-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.migration-name {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text);
+  font-size: 12px;
+}
+.migration-meta {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+.migration-status {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+.migration-status.done {
+  background: var(--green-bg);
+  color: var(--green);
+}
+.migration-status.running {
+  background: var(--amber-bg);
+  color: var(--amber);
+}
+.migration-status.pending {
+  background: var(--bg-4);
+  color: var(--text-muted);
+}
+
+/* Health verification */
+.health-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+}
+.health-card {
+  background: var(--bg-3);
+  border-radius: 8px;
+  padding: 14px;
+  display: flex; flex-direction: column; gap: 8px;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+}
+.health-card.ok {
+  border-color: rgba(52,211,153,0.2);
+  background: linear-gradient(180deg, var(--green-bg), var(--bg-3));
+}
+.health-card.checking {
+  border-color: rgba(251,191,36,0.2);
+}
+.health-card.pending {
+  opacity: 0.55;
+}
+.health-header {
+  display: flex; justify-content: space-between; align-items: center;
+}
+.health-route {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--text);
+}
+.health-status {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+.health-status.ok-200 { background: var(--green); color: #0a0d12; }
+.health-status.pending-200 { background: var(--bg-5); color: var(--text-muted); }
+.health-status.checking-200 {
+  background: var(--amber);
+  color: #0a0d12;
+}
+.health-detail {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+.health-bar {
+  height: 4px;
+  background: var(--bg-4);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.health-bar-fill {
+  height: 100%;
+  background: var(--green);
+  transition: width 0.6s;
+}
+
+/* Right panel - terminal */
+.right {
+  background: var(--bg-1);
+  border-left: 1px solid var(--line);
+  height: 100vh;
+  position: sticky; top: 0;
+  display: flex; flex-direction: column;
+}
+.right-header {
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--line);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.right-title {
+  font-size: 12px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 1.5px;
+  color: var(--text-soft);
+  display: flex; align-items: center; gap: 8px;
+}
+.live-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 8px var(--green);
+  animation: pulse 1.5s ease infinite;
+}
+.terminal {
+  flex: 1;
+  padding: 16px 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  overflow-y: auto;
+  color: var(--text-soft);
+}
+.term-line {
+  margin-bottom: 6px;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  line-height: 1.6;
+}
+.term-line .ts {
+  color: var(--text-dim);
+  margin-right: 8px;
+}
+.term-line .cmd { color: var(--blue); }
+.term-line .ok { color: var(--green); }
+.term-line .warn { color: var(--amber); }
+.term-line .err { color: var(--red); }
+.term-line .info { color: var(--accent); }
+.term-prompt {
+  display: flex; align-items: center; gap: 6px;
+  color: var(--text-muted);
+  border-top: 1px solid var(--line);
+  padding: 12px 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+}
+.term-prompt-text {
+  flex: 1;
+  color: var(--text-soft);
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 24px; left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: var(--bg-3);
+  border: 1px solid var(--line-strong);
+  padding: 14px 22px;
+  border-radius: 10px;
+  font-size: 13px;
+  display: flex; align-items: center; gap: 10px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+  z-index: 1000;
+  opacity: 0;
+  transition: all 0.3s;
+}
+.toast.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+/* Mobile */
+@media (max-width: 1100px) {
+  .app { grid-template-columns: 1fr; }
+  .sidebar, .right { display: none; }
+  .main { padding: 20px; }
+  .pipeline { grid-template-columns: repeat(2, 1fr); }
+  .cards-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 600px) {
+  .main { padding: 16px; }
+  .main-header { flex-direction: column; gap: 16px; align-items: stretch; }
+  .action-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .pipeline { grid-template-columns: 1fr; }
+  .main-title { font-size: 20px; }
+  .health-grid { grid-template-columns: 1fr; }
+  .file-tabs { flex-wrap: wrap; }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--bg-1); }
+::-webkit-scrollbar-thumb { background: var(--bg-4); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--bg-5); }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="brand">
+    <div class="brand-mark">S</div>
+    <div>
+      <div class="brand-name">StockPilot ERP</div>
+      <div class="brand-sub">staging.stockpiloterp.com.co</div>
+    </div>
+  </div>
+
+  <div class="sidebar-label">Runbook</div>
+  <div class="sidebar-item active" data-phase="overview">
+    <span class="dot"></span>
+    <span>Resumen del despliegue</span>
+  </div>
+  <div class="sidebar-item" id="nav-preflight">
+    <span class="dot"></span>
+    <span>Pre-flight checklist</span>
+  </div>
+  <div class="sidebar-item" id="nav-categorize">
+    <span class="dot"></span>
+    <span>Categorización de archivos</span>
+  </div>
+  <div class="sidebar-item" id="nav-migrate">
+    <span class="dot"></span>
+    <span>Migraciones Alembic</span>
+  </div>
+  <div class="sidebar-item" id="nav-verify">
+    <span class="dot"></span>
+    <span>Verificación de rutas</span>
+  </div>
+
+  <div class="sidebar-label">Entorno</div>
+  <div class="sidebar-item">
+    <span class="dot" style="background: var(--blue)"></span>
+    <span>Droplet · DigitalOcean</span>
+  </div>
+  <div class="sidebar-item">
+    <span class="dot" style="background: var(--purple)"></span>
+    <span>PostgreSQL · 14</span>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="row"><span>Branch</span><span style="color:var(--accent)">sprint7-h22</span></div>
+    <div class="row"><span>Servidor</span><span>Gunicorn 21</span></div>
+    <div class="row"><span>Backup DB</span><span style="color:var(--green)">✓ confirmado</span></div>
+    <div class="row"><span>Última corrida</span><span>--:--</span></div>
+  </div>
+</aside>
+
+<!-- Main -->
+<main class="main">
+  <div class="main-header">
+    <div class="main-title-block">
+      <div class="breadcrumb">runbooks / sprint7-h22-importacion-usa / staging</div>
+      <h1 class="main-title">Sincronización local → staging</h1>
+      <div class="main-subtitle">400 archivos modificados · 50 migraciones pendientes · 37 blueprints faltantes</div>
+    </div>
+    <div class="action-bar">
+      <button class="btn">Ver historial</button>
+      <button class="btn btn-primary" id="run-btn">Iniciar despliegue ▶</button>
+    </div>
+  </div>
+
+  <!-- Pipeline -->
+  <section class="pipeline-section">
+    <div class="section-title">
+      <span>Pipeline de ejecución</span>
+      <span class="section-title-right" id="pipeline-status">0 / 7 fases completadas</span>
+    </div>
+    <div class="pipeline">
+      <div class="pipeline-step" data-step="1">
+        <div class="step-number">01</div>
+        <div class="step-name">Auditoría</div>
+        <div class="step-desc">git status + secret scan</div>
+        <div class="step-icon"></div>
+      </div>
+      <div class="pipeline-step" data-step="2">
+        <div class="step-number">02</div>
+        <div class="step-name">Limpieza</div>
+        <div class="step-desc">.gitignore + rotación de secrets</div>
+        <div class="step-icon"></div>
+      </div>
+      <div class="pipeline-step" data-step="3">
+        <div class="step-number">03</div>
+        <div class="step-name">Commits</div>
+        <div class="step-desc">por blueprint + por migración</div>
+        <div class="step-icon"></div>
+      </div>
+      <div class="pipeline-step" data-step="4">
+        <div class="step-number">04</div>
+        <div class="step-name">Push</div>
+        <div class="step-desc">a GitHub sprint7-h22</div>
+        <div class="step-icon"></div>
+      </div>
+      <div class="pipeline-step" data-step="5">
+        <div class="step-number">05</div>
+        <div class="step-name">Pull en droplet</div>
+        <div class="step-desc">git fetch + reset duro</div>
+        <div class="step-icon"></div>
+      </div>
+      <div class="pipeline-step" data-step="6">
+        <div class="step-number">06</div>
+        <div class="step-name">Migrar DB</div>
+        <div class="step-desc">alembic upgrade +1 (50x)</div>
+        <div class="step-icon"></div>
+      </div>
+      <div class="pipeline-step" data-step="7">
+        <div class="step-number">07</div>
+        <div class="step-name">Restart + Verify</div>
+        <div class="step-desc">gunicorn + 200 OK probes</div>
+        <div class="step-icon"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Cards: Pre-flight + Categorization -->
+  <div class="cards-grid">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Pre-flight checklist</div>
+        <div class="card-meta">paso 0 · obligatorio</div>
+      </div>
+      <div class="checklist">
+        <div class="check-item danger">
+          <div class="check-icon danger">!</div>
+          <div class="check-text">
+            <div class="check-name">.env detectado en historial git</div>
+            <div class="check-detail">Secretos comprometidos. Requiere rotación antes de continuar.</div>
+          </div>
+          <div class="check-action">Rotar →</div>
+        </div>
+        <div class="check-item success">
+          <div class="check-icon ok">✓</div>
+          <div class="check-text">
+            <div class="check-name">Backup PostgreSQL confirmado</div>
+            <div class="check-detail">dump.sql · 247 MB · 2026-05-15 10:32 UTC</div>
+          </div>
+        </div>
+        <div class="check-item success">
+          <div class="check-icon ok">✓</div>
+          <div class="check-text">
+            <div class="check-name">Acceso SSH al droplet validado</div>
+            <div class="check-detail">deploy@138.197.x.x · port 22 · pubkey</div>
+          </div>
+        </div>
+        <div class="check-item success">
+          <div class="check-icon ok">✓</div>
+          <div class="check-text">
+            <div class="check-name">Colaborador en GitHub habilitado</div>
+            <div class="check-detail">repo stockpilot-erp/backend · push to sprint7-h22</div>
+          </div>
+        </div>
+        <div class="check-item warning">
+          <div class="check-icon warn">!</div>
+          <div class="check-text">
+            <div class="check-name">Ventana de mantenimiento sugerida</div>
+            <div class="check-detail">Single droplet sin LB. Mostrar página estática durante migración (~3 min).</div>
+          </div>
+          <div class="check-action">Configurar →</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Categorización de cambios locales</div>
+        <div class="card-meta">400 archivos analizados</div>
+      </div>
+      <div class="file-tabs">
+        <div class="file-tab active danger" data-tab="secret">Secretos<span class="count">3</span></div>
+        <div class="file-tab warn" data-tab="junk">Basura<span class="count">142</span></div>
+        <div class="file-tab ok" data-tab="code">Código real<span class="count">218</span></div>
+        <div class="file-tab" data-tab="config">Config<span class="count">37</span></div>
+      </div>
+      <div class="file-list" id="file-list">
+        <div class="file-row">
+          <span style="color:var(--red)">⚠</span>
+          <span>.env</span>
+          <span class="file-tag tag-secret">DB_PASSWORD · SECRET_KEY</span>
+        </div>
+        <div class="file-row">
+          <span style="color:var(--red)">⚠</span>
+          <span>config/.env.staging</span>
+          <span class="file-tag tag-secret">STRIPE_KEY · JWT</span>
+        </div>
+        <div class="file-row">
+          <span style="color:var(--red)">⚠</span>
+          <span>backups/db_dump_2026_05_10.sql</span>
+          <span class="file-tag tag-secret">PII</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Migration Tracker -->
+  <section class="pipeline-section">
+    <div class="section-title">
+      <span>Aplicación incremental de migraciones</span>
+      <span class="section-title-right" id="migration-progress">0 / 50 aplicadas · alembic upgrade +1</span>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Alembic migration queue</div>
+        <div class="card-meta">snapshot pg_dump antes de cada DDL crítico</div>
+      </div>
+      <div class="migration-tracker" id="migration-tracker">
+        <!-- migrations injected by JS -->
+      </div>
+    </div>
+  </section>
+
+  <!-- Health verification -->
+  <section class="pipeline-section">
+    <div class="section-title">
+      <span>Verificación post-deploy · HTTP 200 probes</span>
+      <span class="section-title-right" id="health-progress">0 / 8 rutas verificadas</span>
+    </div>
+    <div class="health-grid" id="health-grid">
+      <div class="health-card pending" data-route="login">
+        <div class="health-header">
+          <span class="health-route">GET /login</span>
+          <span class="health-status pending-200">---</span>
+        </div>
+        <div class="health-detail">esperando deploy</div>
+        <div class="health-bar"><div class="health-bar-fill" style="width:0"></div></div>
+      </div>
+      <div class="health-card pending" data-route="productos">
+        <div class="health-header">
+          <span class="health-route">GET /productos</span>
+          <span class="health-status pending-200">---</span>
+        </div>
+        <div class="health-detail">esperando deploy</div>
+        <div class="health-bar"><div class="health-bar-fill" style="width:0"></div></div>
+      </div>
+      <div class="health-card pending" data-route="clientes">
+        <div class="health-header">
+          <span class="health-route">GET /clientes</span>
+          <span class="health-status pending-200">---</span>
+        </div>
+        <div class="health-detail">esperando deploy</div>
+        <div class="health-bar"><div class="health-bar-fill" style="width:0"></div></div>
+      </div>
+      <div class="health-card pending" data-route="ventas">
+        <div class="health-header">
+          <span class="health-route">GET /ventas</span>
+          <span class="health-status pending-200">---</span>
+        </div>
+        <div class="health-detail">esperando deploy</div>
+        <div class="health-bar"><div class="health-bar-fill" style="width:0"></div></div>
+      </div>
+      <div class="health-card pending" data-route="importacion">
+        <div class="health-header">
+          <span class="health-route">GET /importacion-usa</span>
+          <span class="health-status pending-200">---</span>
+        </div>
+        <div class="health-detail">esperando deploy</div>
+        <div class="health-bar"><div class="health-bar-fill" style="width:0"></div></div>
+      </div>
+      <div class="health-card pending" data-route="inventario">
+        <div class="health-header">
+          <span class="health-route">GET /inventario</span>
+          <span class="health-status pending-200">---</span>
+        </div>
+        <div class="health-detail">esperando deploy</div>
+        <div class="health-bar"><div class="health-bar-fill" style="width:0"></div></div>
+      </div>
+      <div class="health-card pending" data-route="reportes">
+        <div class="health-header">
+          <span class="health-route">GET /reportes</span>
+          <span class="health-status pending-200">---</span>
+        </div>
+        <div class="health-detail">esperando deploy</div>
+        <div class="health-bar"><div class="health-bar-fill" style="width:0"></div></div>
+      </div>
+      <div class="health-card pending" data-route="api-health">
+        <div class="health-header">
+          <span class="health-route">GET /api/health</span>
+          <span class="health-status pending-200">---</span>
+        </div>
+        <div class="health-detail">esperando deploy</div>
+        <div class="health-bar"><div class="health-bar-fill" style="width:0"></div></div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- Terminal Right Panel -->
+<aside class="right">
+  <div class="right-header">
+    <div class="right-title">
+      <span class="live-dot"></span>
+      Activity Log
+    </div>
+    <span style="font-size:11px;color:var(--text-muted);font-family:'JetBrains Mono',monospace" id="log-count">0 events</span>
+  </div>
+  <div class="terminal" id="terminal">
+    <div class="term-line"><span class="ts">--:--:--</span><span class="info">Listo para iniciar el despliegue.</span></div>
+    <div class="term-line"><span class="ts">--:--:--</span>Presioná "Iniciar despliegue" para ejecutar el runbook completo.</div>
+  </div>
+  <div class="term-prompt">
+    <span style="color:var(--accent)">deploy@staging</span>
+    <span>~$</span>
+    <span class="term-prompt-text" id="cmd-current">listo</span>
+  </div>
+</aside>
+
+</div>
+
+<div class="toast" id="toast">Despliegue completado.</div>
+
+<script>
+const migrations = [
+  ['001_add_blueprint_importacion_usa', 'CREATE TABLE'],
+  ['002_alter_productos_add_sku_internacional', 'ALTER TABLE'],
+  ['003_add_index_ventas_fecha', 'CREATE INDEX'],
+  ['004_create_clientes_extranjeros', 'CREATE TABLE'],
+  ['005_alter_ventas_add_currency', 'ALTER TABLE'],
+  ['006_create_aduana_tracking', 'CREATE TABLE'],
+  ['007_add_fk_inventario_lote', 'ADD FK'],
+  ['008_alter_pedidos_add_estado_aduana', 'ALTER TABLE'],
+  ['009_create_proveedores_usa', 'CREATE TABLE'],
+  ['010_add_index_pedidos_cliente', 'CREATE INDEX'],
+  ['...40 more', '---'],
+];
+
+const trackerEl = document.getElementById('migration-tracker');
+function renderMigrations() {
+  trackerEl.innerHTML = '';
+  migrations.forEach((m, i) => {
+    const row = document.createElement('div');
+    row.className = 'migration-row pending';
+    row.dataset.idx = i;
+    row.innerHTML = `
+      <div class="migration-num">#${String(i+1).padStart(3,'0')}</div>
+      <div>
+        <div class="migration-name">${m[0]}</div>
+        <div class="migration-meta">${m[1]}</div>
+      </div>
+      <div class="migration-status pending">pending</div>
+    `;
+    trackerEl.appendChild(row);
+  });
+}
+renderMigrations();
+
+// File tab switching
+const fileData = {
+  secret: [
+    ['.env', 'DB_PASSWORD · SECRET_KEY', 'tag-secret', '⚠'],
+    ['config/.env.staging', 'STRIPE_KEY · JWT', 'tag-secret', '⚠'],
+    ['backups/db_dump_2026_05_10.sql', 'PII', 'tag-secret', '⚠'],
+  ],
+  junk: [
+    ['.venv/', '14,328 archivos', 'tag-junk', '○'],
+    ['__pycache__/', 'múltiples directorios', 'tag-junk', '○'],
+    ['logs/gunicorn.error.log', '420 MB', 'tag-junk', '○'],
+    ['logs/access.log', '180 MB', 'tag-junk', '○'],
+    ['*.pyc', '2,341 archivos', 'tag-junk', '○'],
+    ['.DS_Store', '38 archivos', 'tag-junk', '○'],
+    ['node_modules/', 'no debería estar', 'tag-junk', '○'],
+  ],
+  code: [
+    ['app/blueprints/importacion_usa.py', 'nuevo blueprint', 'tag-code', '+'],
+    ['app/blueprints/aduana_tracking.py', 'nuevo blueprint', 'tag-code', '+'],
+    ['app/blueprints/proveedores_extranjeros.py', 'nuevo blueprint', 'tag-code', '+'],
+    ['app/models/cliente_extranjero.py', 'nuevo modelo', 'tag-code', '+'],
+    ['app/models/lote_importacion.py', 'nuevo modelo', 'tag-code', '+'],
+    ['migrations/versions/001_add_blueprint_importacion_usa.py', 'alembic', 'tag-code', '+'],
+    ['migrations/versions/002_alter_productos_add_sku_internacional.py', 'alembic', 'tag-code', '+'],
+    ['frontend/src/pages/Importacion.jsx', 'react page', 'tag-code', '+'],
+  ],
+  config: [
+    ['requirements.txt', '+12 packages', 'tag-config', 'M'],
+    ['nginx/staging.conf', 'rate limit tuning', 'tag-config', 'M'],
+    ['.gitignore', 'reescrito completo', 'tag-config', 'M'],
+    ['gunicorn.conf.py', 'workers ajustado', 'tag-config', 'M'],
+  ],
+};
+
+const fileListEl = document.getElementById('file-list');
+function renderFileList(tab) {
+  fileListEl.innerHTML = '';
+  const items = fileData[tab];
+  items.forEach(([name, tag, tagClass, icon]) => {
+    const row = document.createElement('div');
+    row.className = 'file-row';
+    const iconColor = tab === 'secret' ? 'var(--red)' : tab === 'junk' ? 'var(--amber)' : tab === 'code' ? 'var(--green)' : 'var(--blue)';
+    row.innerHTML = `
+      <span style="color:${iconColor}">${icon}</span>
+      <span>${name}</span>
+      <span class="file-tag ${tagClass}">${tag}</span>
+    `;
+    fileListEl.appendChild(row);
+  });
+}
+
+document.querySelectorAll('.file-tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.file-tab').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    renderFileList(t.dataset.tab);
+  });
+});
+
+// Terminal
+let logCount = 0;
+function ts() {
+  const d = new Date();
+  return d.toTimeString().slice(0,8);
+}
+function term(text, type = '') {
+  const line = document.createElement('div');
+  line.className = 'term-line';
+  const cls = type ? `class="${type}"` : '';
+  line.innerHTML = `<span class="ts">${ts()}</span>${type ? `<span ${cls}>${text}</span>` : text}`;
+  const terminal = document.getElementById('terminal');
+  terminal.appendChild(line);
+  terminal.scrollTop = terminal.scrollHeight;
+  logCount++;
+  document.getElementById('log-count').textContent = `${logCount} events`;
+}
+function setCmd(text) {
+  document.getElementById('cmd-current').textContent = text;
+}
+
+function setSidebarPhase(navId, state) {
+  const el = document.getElementById(navId);
+  if (!el) return;
+  el.classList.remove('done', 'running');
+  if (state) el.classList.add(state);
+}
+
+function setStep(n, state) {
+  document.querySelectorAll('.pipeline-step').forEach(s => {
+    if (parseInt(s.dataset.step) === n) {
+      s.classList.remove('pending', 'running', 'done');
+      s.classList.add(state);
+    }
+  });
+  const done = document.querySelectorAll('.pipeline-step.done').length;
+  document.getElementById('pipeline-status').textContent = `${done} / 7 fases completadas`;
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+async function sleep(ms) {
+  return new Promise(r => setTimeout(r, ms));
+}
+
+let running = false;
+document.getElementById('run-btn').addEventListener('click', async () => {
+  if (running) return;
+  running = true;
+  const btn = document.getElementById('run-btn');
+  btn.textContent = 'Ejecutando...';
+  btn.disabled = true;
+
+  // Reset
+  document.querySelectorAll('.pipeline-step').forEach(s => s.classList.remove('done','running'));
+  document.querySelectorAll('.migration-row').forEach(r => {
+    r.classList.remove('done','running');
+    r.classList.add('pending');
+    r.querySelector('.migration-status').className = 'migration-status pending';
+    r.querySelector('.migration-status').textContent = 'pending';
+  });
+  document.querySelectorAll('.health-card').forEach(c => {
+    c.classList.remove('ok','checking');
+    c.classList.add('pending');
+    c.querySelector('.health-status').className = 'health-status pending-200';
+    c.querySelector('.health-status').textContent = '---';
+    c.querySelector('.health-detail').textContent = 'esperando deploy';
+    c.querySelector('.health-bar-fill').style.width = '0';
+  });
+
+  // Phase 1: Audit
+  setStep(1, 'running');
+  setCmd('git status --porcelain');
+  term('Iniciando auditoría del repositorio local...', 'info');
+  await sleep(700);
+  term('git status: 400 archivos modificados detectados', 'cmd');
+  await sleep(500);
+  term('Detectados 3 archivos con secrets en working tree', 'warn');
+  await sleep(500);
+  term('.env tracked previamente. Secretos comprometidos.', 'err');
+  await sleep(500);
+  setStep(1, 'done');
+
+  // Phase 2: Cleanup
+  setStep(2, 'running');
+  setCmd('git rm --cached .env && update .gitignore');
+  setSidebarPhase('nav-preflight', 'running');
+  term('Rotando credenciales (paso obligatorio antes de cleanup)...', 'info');
+  await sleep(600);
+  term('  → DB_PASSWORD rotado en PostgreSQL', 'ok');
+  await sleep(400);
+  term('  → Flask SECRET_KEY regenerado', 'ok');
+  await sleep(400);
+  term('  → JWT signing key rotado', 'ok');
+  await sleep(400);
+  term('Reescribiendo .gitignore: .venv, __pycache__, .env*, logs, *.sql', 'cmd');
+  await sleep(500);
+  term('git rm --cached -r .venv __pycache__ logs .env', 'cmd');
+  await sleep(500);
+  setSidebarPhase('nav-preflight', 'done');
+  setStep(2, 'done');
+
+  // Phase 3: Commits
+  setStep(3, 'running');
+  setSidebarPhase('nav-categorize', 'running');
+  setCmd('git commit (por blueprint + migración)');
+  term('Categorizando 400 archivos en commits lógicos...', 'info');
+  await sleep(600);
+  const commits = [
+    'chore: rewrite .gitignore + remove tracked junk',
+    'feat: add importacion_usa blueprint + models',
+    'feat: add aduana_tracking blueprint',
+    'feat: add proveedores_extranjeros blueprint',
+    'migration: add tables for importacion USA (10 alembic)',
+    'migration: add indexes + FKs (15 alembic)',
+    'migration: schema changes ventas + productos (25 alembic)',
+    'chore: requirements.txt + nginx config',
+  ];
+  for (const c of commits) {
+    term(`  ✓ ${c}`, 'ok');
+    await sleep(380);
+  }
+  setSidebarPhase('nav-categorize', 'done');
+  setStep(3, 'done');
+
+  // Phase 4: Push
+  setStep(4, 'running');
+  setCmd('git push origin sprint7-h22-importacion-usa');
+  term('Pushing a GitHub...', 'info');
+  await sleep(700);
+  term('  → 8 commits pushed', 'ok');
+  await sleep(400);
+  term('  → branch sprint7-h22-importacion-usa actualizado', 'ok');
+  await sleep(400);
+  setStep(4, 'done');
+
+  // Phase 5: Pull
+  setStep(5, 'running');
+  setCmd('ssh deploy@staging "cd /var/www/stockpilot && git pull"');
+  term('Conectando al droplet staging vía SSH...', 'info');
+  await sleep(600);
+  term('Conectado. Activando ventana de mantenimiento (nginx static page)...', 'cmd');
+  await sleep(500);
+  term('  → maintenance.html servido en puerto 443', 'ok');
+  await sleep(400);
+  term('git fetch + reset --hard origin/sprint7-h22-importacion-usa', 'cmd');
+  await sleep(500);
+  term('  → 37 blueprints sincronizados', 'ok');
+  await sleep(400);
+  term('  → 50 archivos de migración detectados', 'ok');
+  await sleep(400);
+  setStep(5, 'done');
+
+  // Phase 6: Migrate
+  setStep(6, 'running');
+  setSidebarPhase('nav-migrate', 'running');
+  setCmd('alembic upgrade +1 (incremental)');
+  term('Ejecutando alembic current...', 'info');
+  await sleep(500);
+  term('  → current: 2026_04_28_baseline_42a1', 'cmd');
+  await sleep(400);
+  term('Aplicando 50 migraciones una por una (pg_dump snapshot antes de cada DDL crítico)', 'info');
+  await sleep(400);
+
+  const rows = document.querySelectorAll('.migration-row');
+  for (let i = 0; i < rows.length; i++) {
+    rows[i].classList.remove('pending');
+    rows[i].classList.add('running');
+    rows[i].querySelector('.migration-status').className = 'migration-status running';
+    rows[i].querySelector('.migration-status').textContent = 'running';
+    const name = migrations[i][0];
+    term(`  alembic upgrade +1 → ${name}`, 'cmd');
+    await sleep(280);
+    rows[i].classList.remove('running');
+    rows[i].classList.add('done');
+    rows[i].querySelector('.migration-status').className = 'migration-status done';
+    rows[i].querySelector('.migration-status').textContent = '✓ done';
+    document.getElementById('migration-progress').textContent = `${i+1} / 50 aplicadas · alembic upgrade +1`;
+  }
+  await sleep(300);
+  term('Migración +1 corrida 50 veces. alembic current = head.', 'ok');
+  setSidebarPhase('nav-migrate', 'done');
+  setStep(6, 'done');
+
+  // Phase 7: Restart + Verify
+  setStep(7, 'running');
+  setSidebarPhase('nav-verify', 'running');
+  setCmd('sudo systemctl restart gunicorn');
+  term('Reiniciando Gunicorn...', 'info');
+  await sleep(700);
+  term('  → 4 workers booted', 'ok');
+  await sleep(400);
+  term('  → bind 0.0.0.0:8000 OK', 'ok');
+  await sleep(400);
+  term('Desactivando ventana de mantenimiento. Verificando rutas con curl -I...', 'info');
+  await sleep(500);
+
+  const cards = document.querySelectorAll('.health-card');
+  const latencies = [42, 89, 156, 124, 198, 167, 245, 31];
+  for (let i = 0; i < cards.length; i++) {
+    cards[i].classList.remove('pending');
+    cards[i].classList.add('checking');
+    cards[i].querySelector('.health-status').className = 'health-status checking-200';
+    cards[i].querySelector('.health-status').textContent = '...';
+    cards[i].querySelector('.health-detail').textContent = 'verificando...';
+    await sleep(220);
+    cards[i].classList.remove('checking');
+    cards[i].classList.add('ok');
+    cards[i].querySelector('.health-status').className = 'health-status ok-200';
+    cards[i].querySelector('.health-status').textContent = '200';
+    cards[i].querySelector('.health-detail').textContent = `respondió en ${latencies[i]}ms`;
+    cards[i].querySelector('.health-bar-fill').style.width = '100%';
+    document.getElementById('health-progress').textContent = `${i+1} / 8 rutas verificadas`;
+    const route = cards[i].dataset.route;
+    term(`  GET /${route} → 200 OK (${latencies[i]}ms)`, 'ok');
+    await sleep(120);
+  }
+
+  setSidebarPhase('nav-verify', 'done');
+  setStep(7, 'done');
+  term('Despliegue completado exitosamente. Runbook guardado para uso futuro.', 'ok');
+  setCmd('despliegue completo');
+
+  showToast('Despliegue completado · 7/7 fases · 50 migraciones · 8/8 rutas 200 OK');
+
+  btn.textContent = 'Reiniciar despliegue ▶';
+  btn.disabled = false;
+  running = false;
+
+  const now = new Date().toTimeString().slice(0,5);
+  document.querySelector('.sidebar-footer .row:last-child span:last-child').textContent = now;
+});
+
+// Sidebar nav interaction
+document.querySelectorAll('.sidebar-item').forEach(it => {
+  it.addEventListener('click', () => {
+    document.querySelectorAll('.sidebar-item').forEach(x => x.classList.remove('active'));
+    it.classList.add('active');
+  });
+});
+</script>
+
+</body>
+</html>
