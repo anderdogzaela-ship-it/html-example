@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>MarmoLab · Evaluación de Carne con IA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Fraunces:ital,wght@0,500;1,500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #1a0e0a;
+  --bg-soft: #221310;
+  --surface: #2a1b16;
+  --surface-2: #38241d;
+  --surface-3: #4a302a;
+  --surface-4: #5e3d35;
+  --border: rgba(255,255,255,0.06);
+  --border-strong: rgba(255,255,255,0.12);
+
+  --text: #fdf6f0;
+  --text-soft: #d4c4ba;
+  --text-muted: #9e887b;
+  --text-dim: #6b574b;
+
+  --accent: #c8392f;
+  --accent-deep: #962a21;
+  --accent-soft: rgba(200,57,47,0.15);
+  --accent-glow: rgba(200,57,47,0.4);
+
+  --gold: #d4a574;
+  --gold-glow: rgba(212,165,116,0.35);
+  --success: #84cc16;
+  --warning: #f59e0b;
+
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 20px;
+  --s-6: 24px; --s-8: 32px; --s-10: 40px;
+
+  --shadow-lg: 0 16px 40px rgba(0,0,0,0.6);
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; user-select: none; }
+html { font-size: 14px; }
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  background-image:
+    radial-gradient(ellipse at top, rgba(212,165,116,0.06), transparent 50%),
+    radial-gradient(ellipse at bottom, rgba(200,57,47,0.05), transparent 50%);
+  background-attachment: fixed;
+  color: var(--text);
+  line-height: 1.5;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+.mono { font-family: 'JetBrains Mono', monospace; font-feature-settings: "tnum"; }
+.serif { font-family: 'Fraunces', serif; }
+
+button, input, textarea { font-family: inherit; color: inherit; border: none; outline: none; background: none; cursor: pointer; }
+
+/* ============ APP SHELL ============ */
+.app-shell {
+  max-width: 440px;
+  margin: 0 auto;
+  min-height: 100vh;
+  background: var(--bg);
+  position: relative;
+  display: flex; flex-direction: column;
+  box-shadow: 0 0 80px rgba(0,0,0,0.5);
+}
+
+@media (min-width: 1024px) {
+  .app-shell {
+    margin: var(--s-6) auto;
+    min-height: calc(100vh - 48px);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    border: 1px solid var(--border-strong);
+  }
+}
+
+/* ============ TOPBAR ============ */
+.topbar {
+  padding: var(--s-4) var(--s-5);
+  display: flex; align-items: center; justify-content: space-between;
+  background: rgba(26,14,10,0.92);
+  backdrop-filter: blur(20px);
+  position: sticky; top: 0; z-index: 30;
+  border-bottom: 1px solid var(--border);
+}
+.brand { display: flex; align-items: center; gap: var(--s-3); }
+.brand-mark {
+  width: 38px; height: 38px;
+  background: linear-gradient(135deg, var(--gold), var(--accent));
+  border-radius: var(--radius-md);
+  display: flex; align-items: center; justify-content: center;
+  color: white;
+  box-shadow: 0 4px 16px var(--accent-glow);
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 22px;
+  position: relative;
+}
+.brand-mark::after {
+  content: ''; position: absolute; inset: 0;
+  border-radius: var(--radius-md);
+  background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.3), transparent 50%);
+}
+.brand-text { display: flex; flex-direction: column; gap: 1px; }
+.brand-name {
+  font-family: 'Fraunces', serif;
+  font-weight: 500; font-size: 18px;
+  letter-spacing: -0.01em;
+}
+.brand-sub { font-size: 10px; color: var(--text-muted); font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; }
+
+.user-avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--gold));
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 13px; color: white;
+  border: 2px solid var(--surface);
+}
+
+/* ============ MAIN ============ */
+.main {
+  flex: 1;
+  padding: 0 var(--s-5) 100px;
+  display: flex; flex-direction: column; gap: var(--s-4);
+  padding-top: var(--s-4);
+}
+
+/* ============ SCREENS ============ */
+.screen { display: none; flex-direction: column; gap: var(--s-4); animation: fadeIn 0.3s var(--ease-out); }
+.screen.active { display: flex; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* HOME SCREEN */
+.hero-card {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-deep) 100%);
+  border-radius: var(--radius-lg);
+  padding: var(--s-5);
+  position: relative;
+  overflow: hidden;
+}
+.hero-card::before {
+  content: ''; position: absolute; top: 0; right: 0;
+  width: 200px; height: 200px;
+  background: radial-gradient(circle, var(--gold-glow), transparent 70%);
+  pointer-events: none;
+}
+.hero-eyebrow {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 2px;
+  color: rgba(255,255,255,0.7); font-weight: 700;
+  margin-bottom: var(--s-2);
+}
+.hero-title {
+  font-family: 'Fraunces', serif;
+  font-size: 24px; font-weight: 500;
+  letter-spacing: -0.01em;
+  margin-bottom: var(--s-2);
+}
+.hero-title .ital { font-style: italic; color: var(--gold); }
+.hero-sub {
+  font-size: 13px;
+  color: rgba(255,255,255,0.8);
+  margin-bottom: var(--s-4);
+  max-width: 280px;
+}
+.hero-cta {
+  background: white;
+  color: var(--accent);
+  padding: 12px 18px;
+  border-radius: 100px;
+  font-size: 13px; font-weight: 700;
+  display: inline-flex; align-items: center; gap: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  transition: transform 0.2s;
+}
+.hero-cta:hover { transform: translateY(-2px); }
+.hero-cta svg { width: 14px; height: 14px; }
+
+/* SECTION */
+.section-head {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0 4px;
+}
+.section-title {
+  font-family: 'Fraunces', serif;
+  font-size: 17px; font-weight: 500;
+}
+.section-action {
+  font-size: 12px; color: var(--gold); font-weight: 600;
+}
+
+/* STATS BAR */
+.stats-row {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: var(--s-2);
+}
+.stat-pill {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--s-3);
+  text-align: center;
+}
+.stat-pill-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 18px; font-weight: 700;
+  color: var(--gold);
+}
+.stat-pill-label {
+  font-size: 10px; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 1px;
+  font-weight: 600; margin-top: 2px;
+}
+
+/* FEED */
+.feed-list {
+  display: flex; flex-direction: column; gap: var(--s-3);
+}
+.feed-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: transform 0.2s var(--ease-out);
+}
+.feed-card:hover { transform: translateY(-2px); }
+.feed-image {
+  height: 160px;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+}
+.feed-image::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.7));
+}
+.feed-grade-pill {
+  position: absolute; top: 12px; right: 12px;
+  background: rgba(0,0,0,0.7); backdrop-filter: blur(10px);
+  padding: 6px 10px;
+  border-radius: 100px;
+  font-size: 11px; font-weight: 700;
+  color: var(--gold);
+  z-index: 2;
+}
+.feed-info {
+  padding: var(--s-4);
+}
+.feed-cut { font-weight: 700; font-size: 15px; margin-bottom: 4px; }
+.feed-establishment {
+  font-size: 12px; color: var(--text-muted);
+  display: flex; align-items: center; gap: 6px;
+  margin-bottom: var(--s-3);
+}
+.feed-meta {
+  display: flex; justify-content: space-between; align-items: center;
+  padding-top: var(--s-3); border-top: 1px solid var(--border);
+}
+.feed-rating { display: flex; align-items: center; gap: 4px; }
+.star {
+  width: 14px; height: 14px;
+  color: var(--gold);
+}
+.feed-rating-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px; font-weight: 700;
+  margin-left: 6px;
+}
+.feed-reviews { font-size: 11px; color: var(--text-muted); }
+
+/* CAPTURE SCREEN */
+.capture-frame {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  padding: var(--s-5);
+  overflow: hidden;
+  position: relative;
+}
+.capture-area {
+  aspect-ratio: 4/3;
+  background:
+    linear-gradient(135deg, rgba(106,32,28,0.95), rgba(60,18,15,0.95)),
+    url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><defs><pattern id="m" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="10" cy="10" r="2" fill="white" opacity="0.3"/></pattern></defs><rect width="100" height="100" fill="url(%23m)"/></svg>');
+  background-size: cover, 40px 40px;
+  border-radius: var(--radius-md);
+  position: relative;
+  overflow: hidden;
+  border: 2px dashed var(--border-strong);
+}
+.capture-area.has-image {
+  background-image:
+    repeating-linear-gradient(45deg, rgba(255,255,255,0.08) 0 2px, transparent 2px 8px),
+    radial-gradient(ellipse at 30% 40%, #8b2316 0%, #5c1709 60%),
+    linear-gradient(135deg, #6b1c10, #3d0e07);
+  border-style: solid;
+  border-color: var(--gold);
+}
+.capture-overlay {
+  position: absolute; inset: 16px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-radius: var(--radius-sm);
+  pointer-events: none;
+}
+.capture-corners::before, .capture-corners::after,
+.capture-overlay::before, .capture-overlay::after {
+  content: ''; position: absolute;
+  width: 20px; height: 20px;
+  border: 3px solid var(--gold);
+}
+.capture-overlay::before { top: -3px; left: -3px; border-right: none; border-bottom: none; }
+.capture-overlay::after { top: -3px; right: -3px; border-left: none; border-bottom: none; }
+.capture-corners::before { bottom: -3px; left: -3px; border-right: none; border-top: none; position: absolute; }
+.capture-corners::after { bottom: -3px; right: -3px; border-left: none; border-top: none; position: absolute; }
+.capture-corners {
+  position: absolute; inset: 16px;
+  pointer-events: none;
+}
+.capture-instructions {
+  position: absolute; bottom: 24px; left: 0; right: 0;
+  text-align: center;
+  font-size: 12px; color: rgba(255,255,255,0.85);
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+.lighting-check {
+  position: absolute; top: 24px; left: 24px;
+  display: flex; gap: 4px; align-items: center;
+  padding: 5px 10px;
+  background: rgba(0,0,0,0.6); backdrop-filter: blur(10px);
+  border-radius: 100px;
+  font-size: 10px; font-weight: 600;
+  color: var(--success);
+}
+.lighting-check .dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 6px var(--success);
+}
+
+.capture-controls {
+  margin-top: var(--s-4);
+  display: flex; gap: var(--s-3); justify-content: center; align-items: center;
+}
+.capture-btn {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  background: var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  color: white;
+  box-shadow: 0 6px 24px var(--accent-glow);
+  border: 4px solid white;
+  transition: transform 0.15s var(--ease-spring);
+}
+.capture-btn:active { transform: scale(0.95); }
+.capture-btn svg { width: 26px; height: 26px; }
+.capture-side-btn {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: var(--surface-3);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-soft);
+  border: 1px solid var(--border-strong);
+}
+.capture-side-btn svg { width: 18px; height: 18px; }
+
+.capture-tips {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--s-3);
+  display: flex; flex-direction: column; gap: var(--s-2);
+  font-size: 11px;
+  color: var(--text-soft);
+}
+.tip-item { display: flex; align-items: center; gap: 8px; }
+.tip-item svg { width: 14px; height: 14px; color: var(--gold); flex-shrink: 0; }
+
+/* ANALYSIS PROCESSING */
+.analysis-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--s-5);
+  position: relative;
+  overflow: hidden;
+}
+.analysis-card::before {
+  content: ''; position: absolute; top: 0; left: 0; height: 3px;
+  background: linear-gradient(90deg, var(--gold), var(--accent));
+  width: 0%;
+  animation: load-progress 5s linear forwards;
+}
+@keyframes load-progress { to { width: 100%; } }
+
+.analysis-image {
+  aspect-ratio: 16/10;
+  background-image:
+    repeating-linear-gradient(45deg, rgba(255,255,255,0.08) 0 2px, transparent 2px 8px),
+    radial-gradient(ellipse at 30% 40%, #8b2316, #5c1709 60%);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--s-4);
+  position: relative;
+  overflow: hidden;
+}
+.scan-line {
+  position: absolute; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  box-shadow: 0 0 20px var(--gold-glow);
+  animation: scan 1.5s linear infinite;
+}
+@keyframes scan {
+  0% { top: 0; }
+  100% { top: 100%; }
+}
+
+.analysis-title {
+  font-family: 'Fraunces', serif;
+  font-size: 18px; margin-bottom: var(--s-2);
+}
+.analysis-sub { font-size: 12px; color: var(--text-muted); margin-bottom: var(--s-4); }
+
+.analysis-steps { display: flex; flex-direction: column; gap: var(--s-2); }
+.a-step {
+  display: flex; align-items: center; gap: var(--s-3);
+  padding: 8px 12px;
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  opacity: 0.4;
+  transition: all 0.4s;
+}
+.a-step.active { opacity: 1; }
+.a-step.done { opacity: 1; background: var(--surface-3); }
+.a-step-icon {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: var(--surface-4); color: var(--text-muted);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px;
+  flex-shrink: 0;
+}
+.a-step.active .a-step-icon { background: var(--gold); color: var(--bg); }
+.a-step.done .a-step-icon { background: var(--success); color: white; }
+
+/* RESULT SCREEN */
+.result-card {
+  background: linear-gradient(135deg, var(--surface) 0%, var(--surface-2) 100%);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  padding: var(--s-5);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.result-card::before {
+  content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+  background: radial-gradient(circle, var(--gold-glow), transparent 60%);
+  opacity: 0.3;
+  pointer-events: none;
+  animation: rotate-bg 20s linear infinite;
+}
+@keyframes rotate-bg { to { transform: rotate(360deg); } }
+
+.result-score {
+  font-family: 'Fraunces', serif;
+  font-size: 72px; font-weight: 500;
+  background: linear-gradient(135deg, var(--gold), var(--accent));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1;
+  margin-bottom: var(--s-2);
+  position: relative;
+}
+.result-score-max {
+  font-family: 'Inter', sans-serif;
+  font-size: 22px; color: var(--text-muted);
+  font-weight: 600;
+}
+.result-grade {
+  display: inline-block;
+  padding: 6px 16px;
+  background: var(--accent-soft);
+  color: var(--gold);
+  border-radius: 100px;
+  font-size: 12px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 1.5px;
+  margin-bottom: var(--s-4);
+  position: relative;
+}
+.result-name {
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  font-size: 22px;
+  margin-bottom: var(--s-2);
+  position: relative;
+}
+.result-classification {
+  font-size: 12px; color: var(--text-soft);
+  position: relative; line-height: 1.5;
+}
+
+.result-details {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--s-4);
+}
+.detail-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+.detail-row:last-child { border-bottom: none; }
+.detail-key { color: var(--text-muted); }
+.detail-val { font-weight: 600; }
+.detail-val.gold { color: var(--gold); }
+
+/* USDA scale viz */
+.scale-viz {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--s-4);
+}
+.scale-title { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; margin-bottom: var(--s-3); }
+.scale-bar {
+  height: 32px;
+  background: linear-gradient(90deg,
+    #4a1c10 0%,
+    #6b2616 14%,
+    #8b3322 28%,
+    #a8412a 42%,
+    #c14e30 57%,
+    #d56035 71%,
+    #e57838 85%,
+    #f59842 100%);
+  border-radius: 100px;
+  position: relative;
+}
+.scale-marker {
+  position: absolute; top: -6px;
+  width: 4px; height: 44px;
+  background: var(--gold);
+  border-radius: 4px;
+  box-shadow: 0 0 12px var(--gold-glow);
+  left: 70%;
+}
+.scale-marker::after {
+  content: ''; position: absolute;
+  top: -8px; left: -8px;
+  width: 20px; height: 20px;
+  border: 2px solid var(--gold);
+  border-radius: 50%;
+  box-shadow: 0 0 12px var(--gold-glow);
+}
+.scale-labels {
+  display: flex; justify-content: space-between;
+  font-size: 9px; color: var(--text-muted);
+  margin-top: var(--s-2);
+  font-weight: 600;
+}
+
+/* RATING SCREEN */
+.rating-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--s-5);
+}
+.rating-stars-row {
+  display: flex; justify-content: center; gap: var(--s-2);
+  margin: var(--s-4) 0;
+}
+.rating-star {
+  width: 44px; height: 44px;
+  font-size: 36px;
+  color: var(--surface-4);
+  transition: all 0.15s var(--ease-spring);
+  cursor: pointer;
+}
+.rating-star.active { color: var(--gold); text-shadow: 0 0 12px var(--gold-glow); }
+.rating-star:hover { transform: scale(1.1); }
+.rating-label {
+  text-align: center;
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  font-size: 16px;
+  color: var(--gold);
+  margin-bottom: var(--s-4);
+}
+
+.field { display: flex; flex-direction: column; gap: 6px; margin-bottom: var(--s-3); }
+.field-label {
+  font-size: 10px; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 1.2px; font-weight: 700;
+}
+.field-input, .field-textarea {
+  padding: 12px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  font-size: 14px;
+  color: var(--text);
+  transition: all 0.2s;
+}
+.field-input:focus, .field-textarea:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px var(--gold-glow);
+}
+.field-textarea { min-height: 80px; resize: vertical; }
+
+.tag-grid { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+.tag-btn {
+  padding: 6px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: 100px;
+  font-size: 11px; font-weight: 600;
+  transition: all 0.2s;
+}
+.tag-btn:hover { border-color: var(--gold); }
+.tag-btn.selected { background: var(--gold); color: var(--bg); border-color: var(--gold); }
+
+/* BUTTON */
+.btn-primary {
+  width: 100%;
+  padding: 14px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, var(--accent), var(--accent-deep));
+  color: white;
+  font-weight: 700; font-size: 14px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  box-shadow: 0 6px 20px var(--accent-glow);
+  transition: transform 0.2s;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.btn-primary:hover { transform: translateY(-2px); }
+
+/* COMMUNITY SCREEN */
+.search-bar {
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 100px;
+  padding: 10px 16px;
+  display: flex; align-items: center; gap: var(--s-2);
+}
+.search-bar svg { width: 16px; height: 16px; color: var(--text-muted); }
+.search-input {
+  flex: 1; background: none; border: none; outline: none;
+  font-size: 14px; color: var(--text);
+}
+
+.estab-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.estab-card:hover { transform: translateY(-2px); }
+.estab-header {
+  padding: var(--s-4);
+  display: flex; gap: var(--s-3); align-items: center;
+}
+.estab-logo {
+  width: 48px; height: 48px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, var(--accent), var(--gold));
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Fraunces', serif; font-weight: 500; font-style: italic;
+  color: white;
+  flex-shrink: 0;
+  font-size: 18px;
+}
+.estab-info { flex: 1; min-width: 0; }
+.estab-name { font-weight: 700; font-size: 14px; }
+.estab-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.estab-rating {
+  text-align: right;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+}
+.estab-rating-val { font-size: 18px; color: var(--gold); }
+.estab-rating-count { font-size: 10px; color: var(--text-muted); }
+
+.estab-cuts {
+  display: flex; gap: 6px;
+  padding: 0 var(--s-4) var(--s-4);
+  overflow-x: auto;
+}
+.estab-cuts::-webkit-scrollbar { display: none; }
+.cut-chip {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  background: var(--surface-2);
+  border-radius: 100px;
+  font-size: 10px; font-weight: 600;
+  color: var(--text-soft);
+  display: flex; align-items: center; gap: 4px;
+}
+.cut-chip-grade {
+  color: var(--gold);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* BOTTOM NAV */
+.bottom-nav {
+  position: fixed;
+  bottom: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 100%; max-width: 440px;
+  background: rgba(26,14,10,0.95);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border-strong);
+  padding: 10px 0;
+  padding-bottom: calc(10px + env(safe-area-inset-bottom, 0));
+  display: flex;
+  z-index: 40;
+}
+@media (min-width: 1024px) {
+  .bottom-nav {
+    position: sticky;
+    bottom: 0;
+    width: auto;
+    left: auto;
+    transform: none;
+    border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+  }
+}
+.nav-item {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 6px;
+  color: var(--text-muted);
+  transition: color 0.2s;
+}
+.nav-item svg { width: 22px; height: 22px; }
+.nav-label { font-size: 10px; font-weight: 600; }
+.nav-item.active { color: var(--gold); }
+.nav-item-center {
+  margin-top: -20px;
+}
+.nav-center-btn {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--accent-deep));
+  display: flex; align-items: center; justify-content: center;
+  color: white;
+  box-shadow: 0 6px 20px var(--accent-glow);
+  border: 4px solid var(--bg);
+}
+.nav-center-btn svg { width: 24px; height: 24px; }
+
+/* TOAST */
+.toast-stack {
+  position: fixed; bottom: 90px; left: var(--s-5); right: var(--s-5);
+  max-width: 400px; margin: 0 auto;
+  z-index: 100;
+  display: flex; flex-direction: column; gap: var(--s-2);
+  pointer-events: none;
+}
+.toast {
+  background: var(--surface-3);
+  border: 1px solid var(--border-strong);
+  color: var(--text);
+  border-radius: var(--radius-md);
+  padding: var(--s-3) var(--s-4);
+  font-size: 13px; font-weight: 500;
+  box-shadow: var(--shadow-lg), 0 0 20px var(--accent-glow);
+  display: flex; align-items: center; gap: var(--s-2);
+  pointer-events: auto;
+  transform: translateY(100px); opacity: 0;
+  transition: all 0.4s var(--ease-spring);
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+
+/* RESPONSIVE */
+@media (max-width: 400px) {
+  .main { padding: 0 var(--s-4) 100px; }
+  .result-score { font-size: 60px; }
+}
+@media (hover: none) {
+  .feed-card:hover, .estab-card:hover { transform: none; }
+  .btn-primary:hover { transform: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">M</div>
+      <div class="brand-text">
+        <span class="brand-name">MarmoLab</span>
+        <span class="brand-sub">Carne · IA</span>
+      </div>
+    </div>
+    <div class="user-avatar">CR</div>
+  </header>
+
+  <main class="main">
+
+    <!-- HOME SCREEN -->
+    <div class="screen active" id="screen-home">
+      <div class="hero-card">
+        <div class="hero-eyebrow">Análisis con IA</div>
+        <h1 class="hero-title">Conocé el <span class="ital">marmoleo</span> de tu carne</h1>
+        <p class="hero-sub">Tomá una foto y obtené el grado USDA al instante. Calificá y descubrí qué dice la comunidad.</p>
+        <button class="hero-cta" onclick="goTo('capture')">
+          Analizar ahora
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-pill">
+          <div class="stat-pill-val">2.4k</div>
+          <div class="stat-pill-label">Análisis</div>
+        </div>
+        <div class="stat-pill">
+          <div class="stat-pill-val">847</div>
+          <div class="stat-pill-label">Locales</div>
+        </div>
+        <div class="stat-pill">
+          <div class="stat-pill-val">12k</div>
+          <div class="stat-pill-label">Reseñas</div>
+        </div>
+      </div>
+
+      <div class="section-head">
+        <span class="section-title">En la comunidad</span>
+        <button class="section-action" onclick="goTo('community')">Ver todo →</button>
+      </div>
+
+      <div class="feed-list">
+        <div class="feed-card">
+          <div class="feed-image" style="background-image: linear-gradient(135deg, rgba(0,0,0,0.2), rgba(0,0,0,0.4)), repeating-linear-gradient(45deg, rgba(255,255,255,0.1) 0 2px, transparent 2px 6px), radial-gradient(ellipse at 30% 40%, #8b2316, #5c1709);">
+            <div class="feed-grade-pill">★ 8.4 USDA Modest+</div>
+          </div>
+          <div class="feed-info">
+            <div class="feed-cut">Bife Ancho Premium</div>
+            <div class="feed-establishment">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 1118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              Parrilla Don Cosme · Palermo, BA
+            </div>
+            <div class="feed-meta">
+              <div class="feed-rating">
+                <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z"/></svg>
+                <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z"/></svg>
+                <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z"/></svg>
+                <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z"/></svg>
+                <svg class="star" viewBox="0 0 24 24" fill="currentColor" style="color: var(--surface-4);"><path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z"/></svg>
+                <span class="feed-rating-val">4.2</span>
+              </div>
+              <div class="feed-reviews">142 reseñas</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="feed-card">
+          <div class="feed-image" style="background-image: linear-gradient(135deg, rgba(0,0,0,0.2), rgba(0,0,0,0.4)), repeating-linear-gradient(45deg, rgba(255,255,255,0.15) 0 3px, transparent 3px 5px), radial-gradient(ellipse at 40% 50%, #a0392b, #6c1f12);">
+            <div class="feed-grade-pill">★ 9.2 Slightly Abundant</div>
+          </div>
+          <div class="feed-info">
+            <div class="feed-cut">Wagyu A5 · Costilla</div>
+            <div class="feed-establishment">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 1118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              Carnicería Premium SantaFe · Recoleta
+            </div>
+            <div class="feed-meta">
+              <div class="feed-rating">
+                <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z"/></svg>
+                <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z"/></svg>
+                <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z"/></svg>
+                <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z"/></svg>
+                <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z"/></svg>
+                <span class="feed-rating-val">4.9</span>
+              </div>
+              <div class="feed-reviews">89 reseñas</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CAPTURE SCREEN -->
+    <div class="screen" id="screen-capture">
+      <div class="section-head">
+        <span class="section-title">Capturar muestra</span>
+        <button class="section-action" onclick="goTo('home')">Cancelar</button>
+      </div>
+
+      <div class="capture-frame">
+        <div class="capture-area" id="capture-area">
+          <div class="lighting-check">
+            <span class="dot"></span>
+            <span>Iluminación OK</span>
+          </div>
+          <div class="capture-overlay"></div>
+          <div class="capture-corners"></div>
+          <div class="capture-instructions">Colocá la carne dentro del marco</div>
+        </div>
+        <div class="capture-controls">
+          <button class="capture-side-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 16l5-5 8 8M21 16l-5-5-3 3"/></svg>
+          </button>
+          <button class="capture-btn" id="capture-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          </button>
+          <button class="capture-side-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6l3-3 12 12-3 3z"/><path d="M14 8l6 6"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="capture-tips">
+        <div class="tip-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+          <span>Usá luz natural · evitá flash directo sobre la carne</span>
+        </div>
+        <div class="tip-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+          <span>Encuadre frontal del corte · 20-30 cm de distancia</span>
+        </div>
+        <div class="tip-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+          <span>Carne fresca cortada · mejor precisión en superficie reciente</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ANALYSIS SCREEN -->
+    <div class="screen" id="screen-analysis">
+      <div class="analysis-card">
+        <div class="analysis-image">
+          <div class="scan-line"></div>
+        </div>
+        <div class="analysis-title">Analizando marmoleo...</div>
+        <div class="analysis-sub">IA de visión clasificando según escala USDA</div>
+        <div class="analysis-steps" id="analysis-steps">
+          <div class="a-step" data-step="0">
+            <div class="a-step-icon">1</div>
+            <span>Detectando región del corte</span>
+          </div>
+          <div class="a-step" data-step="1">
+            <div class="a-step-icon">2</div>
+            <span>Calibrando iluminación y color</span>
+          </div>
+          <div class="a-step" data-step="2">
+            <div class="a-step-icon">3</div>
+            <span>Cuantificando grasa intramuscular</span>
+          </div>
+          <div class="a-step" data-step="3">
+            <div class="a-step-icon">4</div>
+            <span>Mapeando contra escala USDA (9 grados)</span>
+          </div>
+          <div class="a-step" data-step="4">
+            <div class="a-step-icon">5</div>
+            <span>Generando reporte y recomendaciones</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESULT SCREEN -->
+    <div class="screen" id="screen-result">
+      <div class="result-card">
+        <div class="result-grade">Modest+ · USDA Grade 5</div>
+        <div class="result-score">8.4<span class="result-score-max">/10</span></div>
+        <div class="result-name">Marmoleo de calidad superior</div>
+        <div class="result-classification">Distribución uniforme de grasa intramuscular fina. Comparable a corte premium argentino de novillo grasa C-D.</div>
+      </div>
+
+      <div class="scale-viz">
+        <div class="scale-title">Escala USDA · tu muestra</div>
+        <div class="scale-bar">
+          <div class="scale-marker"></div>
+        </div>
+        <div class="scale-labels">
+          <span>Devoid</span>
+          <span>Slight</span>
+          <span>Modest</span>
+          <span>Moderate</span>
+          <span>Abundant</span>
+        </div>
+      </div>
+
+      <div class="result-details">
+        <div class="detail-row">
+          <span class="detail-key">Grado calculado</span>
+          <span class="detail-val gold">8.4 / 10</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-key">Clasificación USDA</span>
+          <span class="detail-val">Modest+ (Grade 5)</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-key">Cobertura grasa intramuscular</span>
+          <span class="detail-val">18-22%</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-key">Distribución</span>
+          <span class="detail-val">Uniforme</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-key">Color de la carne</span>
+          <span class="detail-val">Rojo cereza brillante</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-key">Confianza del modelo</span>
+          <span class="detail-val">94%</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-key">Cocción recomendada</span>
+          <span class="detail-val">Punto medio (54-57°C)</span>
+        </div>
+      </div>
+
+      <button class="btn-primary" onclick="goTo('rating')">
+        Calificar y reseñar
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z"/></svg>
+      </button>
+    </div>
+
+    <!-- RATING SCREEN -->
+    <div class="screen" id="screen-rating">
+      <div class="section-head">
+        <span class="section-title">Tu valoración</span>
+        <button class="section-action" onclick="goTo('result')">Atrás</button>
+      </div>
+
+      <div class="rating-card">
+        <div style="text-align: center; font-size: 12px; color: var(--text-muted); margin-bottom: var(--s-3);">¿CÓMO ESTUVO TU EXPERIENCIA?</div>
+        <div class="rating-stars-row" id="rating-stars">
+          <div class="rating-star" data-star="1">★</div>
+          <div class="rating-star" data-star="2">★</div>
+          <div class="rating-star" data-star="3">★</div>
+          <div class="rating-star" data-star="4">★</div>
+          <div class="rating-star" data-star="5">★</div>
+        </div>
+        <div class="rating-label" id="rating-label">Tocá una estrella</div>
+
+        <div class="field">
+          <label class="field-label">Establecimiento</label>
+          <input class="field-input" value="Parrilla Don Cosme - Palermo, BA">
+        </div>
+
+        <div class="field">
+          <label class="field-label">Corte</label>
+          <input class="field-input" value="Bife Ancho Premium">
+        </div>
+
+        <div class="field">
+          <label class="field-label">Tags (opcional)</label>
+          <div class="tag-grid">
+            <button class="tag-btn" data-tag="tierno">Tierno</button>
+            <button class="tag-btn" data-tag="jugoso">Jugoso</button>
+            <button class="tag-btn" data-tag="sabor">Gran sabor</button>
+            <button class="tag-btn" data-tag="grasa">Bien graso</button>
+            <button class="tag-btn" data-tag="punto">Buen punto</button>
+            <button class="tag-btn" data-tag="precio">Buen precio</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label">Reseña</label>
+          <textarea class="field-textarea" placeholder="Contá cómo estuvo la experiencia, qué destacarías..."></textarea>
+        </div>
+
+        <button class="btn-primary" id="submit-review">
+          Publicar reseña
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- COMMUNITY SCREEN -->
+    <div class="screen" id="screen-community">
+      <div class="search-bar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input class="search-input" placeholder="Buscar local, corte o ciudad...">
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-pill">
+          <div class="stat-pill-val">847</div>
+          <div class="stat-pill-label">Locales</div>
+        </div>
+        <div class="stat-pill">
+          <div class="stat-pill-val">12k</div>
+          <div class="stat-pill-label">Reseñas</div>
+        </div>
+        <div class="stat-pill">
+          <div class="stat-pill-val">4.3</div>
+          <div class="stat-pill-label">Promedio</div>
+        </div>
+      </div>
+
+      <div class="section-head">
+        <span class="section-title">Top en Buenos Aires</span>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: var(--s-3);">
+        <div class="estab-card">
+          <div class="estab-header">
+            <div class="estab-logo">D</div>
+            <div class="estab-info">
+              <div class="estab-name">Parrilla Don Cosme</div>
+              <div class="estab-meta">Palermo, BA · 4 km</div>
+            </div>
+            <div class="estab-rating">
+              <div class="estab-rating-val">4.8</div>
+              <div class="estab-rating-count">214 reseñas</div>
+            </div>
+          </div>
+          <div class="estab-cuts">
+            <div class="cut-chip">Bife Ancho <span class="cut-chip-grade">8.4</span></div>
+            <div class="cut-chip">Asado <span class="cut-chip-grade">7.9</span></div>
+            <div class="cut-chip">Vacío <span class="cut-chip-grade">8.1</span></div>
+            <div class="cut-chip">Entraña <span class="cut-chip-grade">7.6</span></div>
+          </div>
+        </div>
+
+        <div class="estab-card">
+          <div class="estab-header">
+            <div class="estab-logo">S</div>
+            <div class="estab-info">
+              <div class="estab-name">Carnicería SantaFe Premium</div>
+              <div class="estab-meta">Recoleta, BA · 6 km</div>
+            </div>
+            <div class="estab-rating">
+              <div class="estab-rating-val">4.9</div>
+              <div class="estab-rating-count">89 reseñas</div>
+            </div>
+          </div>
+          <div class="estab-cuts">
+            <div class="cut-chip">Wagyu A5 <span class="cut-chip-grade">9.2</span></div>
+            <div class="cut-chip">Bife Chorizo <span class="cut-chip-grade">8.7</span></div>
+            <div class="cut-chip">Ojo de Bife <span class="cut-chip-grade">8.9</span></div>
+          </div>
+        </div>
+
+        <div class="estab-card">
+          <div class="estab-header">
+            <div class="estab-logo">F</div>
+            <div class="estab-info">
+              <div class="estab-name">La Fenix Steakhouse</div>
+              <div class="estab-meta">Puerto Madero · 8 km</div>
+            </div>
+            <div class="estab-rating">
+              <div class="estab-rating-val">4.6</div>
+              <div class="estab-rating-count">312 reseñas</div>
+            </div>
+          </div>
+          <div class="estab-cuts">
+            <div class="cut-chip">T-Bone <span class="cut-chip-grade">8.2</span></div>
+            <div class="cut-chip">Tomahawk <span class="cut-chip-grade">8.8</span></div>
+            <div class="cut-chip">Costilla <span class="cut-chip-grade">7.8</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <nav class="bottom-nav">
+    <button class="nav-item active" data-screen="home">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+      <span class="nav-label">Home</span>
+    </button>
+    <button class="nav-item" data-screen="community">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+      <span class="nav-label">Comunidad</span>
+    </button>
+    <button class="nav-item nav-item-center" data-screen="capture">
+      <div class="nav-center-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      </div>
+    </button>
+    <button class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z"/></svg>
+      <span class="nav-label">Favoritos</span>
+    </button>
+    <button class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span class="nav-label">Perfil</span>
+    </button>
+  </nav>
+</div>
+
+<div class="toast-stack" id="toast-stack"></div>
+
+<script>
+const toastStack = document.getElementById('toast-stack');
+function showToast(msg, icon = '✓') {
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.innerHTML = `<span>${icon}</span><span>${msg}</span>`;
+  toastStack.appendChild(t);
+  requestAnimationFrame(() => t.classList.add('show'));
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 2800);
+}
+
+function goTo(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const navItem = document.querySelector(`.nav-item[data-screen="${name}"]`);
+  if (navItem) navItem.classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  if (name === 'analysis') runAnalysis();
+}
+
+// Navigation
+document.querySelectorAll('.nav-item[data-screen]').forEach(n => {
+  n.addEventListener('click', () => goTo(n.dataset.screen));
+});
+
+// Capture flow
+document.getElementById('capture-btn').addEventListener('click', () => {
+  document.getElementById('capture-area').classList.add('has-image');
+  showToast('Foto capturada · iniciando análisis', '📷');
+  setTimeout(() => goTo('analysis'), 800);
+});
+
+// Analysis steps
+function runAnalysis() {
+  const steps = document.querySelectorAll('.a-step');
+  steps.forEach(s => s.classList.remove('done', 'active'));
+  let i = 0;
+  function next() {
+    if (i > 0) {
+      const prev = steps[i - 1];
+      prev.classList.remove('active');
+      prev.classList.add('done');
+      prev.querySelector('.a-step-icon').textContent = '✓';
+    }
+    if (i < steps.length) {
+      steps[i].classList.add('active');
+      setTimeout(() => { i++; next(); }, 900);
+    } else {
+      setTimeout(() => {
+        showToast('Análisis completado · 8.4/10 USDA Modest+', '✨');
+        goTo('result');
+      }, 400);
+    }
+  }
+  next();
+}
+
+// Rating stars
+const ratingLabels = ['', 'Mala', 'Regular', 'Buena', 'Muy buena', 'Excelente'];
+document.querySelectorAll('.rating-star').forEach(star => {
+  star.addEventListener('click', () => {
+    const value = parseInt(star.dataset.star);
+    document.querySelectorAll('.rating-star').forEach((s, i) => {
+      s.classList.toggle('active', i < value);
+    });
+    document.getElementById('rating-label').textContent = ratingLabels[value];
+  });
+});
+
+// Tag chips
+document.querySelectorAll('.tag-btn').forEach(t => {
+  t.addEventListener('click', () => t.classList.toggle('selected'));
+});
+
+// Submit review
+document.getElementById('submit-review').addEventListener('click', () => {
+  showToast('Reseña publicada · +50 puntos de reputación', '🎉');
+  setTimeout(() => goTo('community'), 1000);
+});
+</script>
+
+</body>
+</html>
