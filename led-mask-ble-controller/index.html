@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>LED Mask Control · Bluetooth Controller</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #06070d;
+  --bg-glow: #0c0e1a;
+  --surface: #13151f;
+  --surface-2: #1a1d2b;
+  --surface-3: #232839;
+  --surface-4: #2d3447;
+  --border: rgba(255,255,255,0.06);
+  --border-strong: rgba(255,255,255,0.12);
+
+  --text: #f5f7fb;
+  --text-soft: #b8bdd1;
+  --text-muted: #7c8299;
+  --text-dim: #4a4f66;
+
+  --accent: #ff2d75;
+  --accent-2: #b829ff;
+  --accent-3: #29d4ff;
+  --accent-soft: rgba(255,45,117,0.15);
+  --accent-glow: rgba(255,45,117,0.4);
+
+  --success: #00f0a8;
+  --warning: #ffb800;
+  --danger: #ff3838;
+
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 20px;
+  --s-6: 24px; --s-8: 32px; --s-10: 40px;
+
+  --shadow-glow: 0 0 30px var(--accent-glow);
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; user-select: none; }
+html { font-size: 14px; }
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  background-image:
+    radial-gradient(circle at 0% 0%, rgba(255,45,117,0.08), transparent 50%),
+    radial-gradient(circle at 100% 100%, rgba(41,212,255,0.06), transparent 50%);
+  background-attachment: fixed;
+  color: var(--text);
+  line-height: 1.5;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+.mono { font-family: 'JetBrains Mono', monospace; font-feature-settings: "tnum"; }
+
+button, input { font-family: inherit; color: inherit; border: none; outline: none; background: none; cursor: pointer; }
+
+/* ============ APP CONTAINER ============ */
+.app-shell {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+  background: var(--surface);
+  position: relative;
+  display: flex; flex-direction: column;
+  box-shadow: 0 0 80px rgba(0,0,0,0.5);
+}
+
+@media (min-width: 1024px) {
+  .app-shell {
+    margin: var(--s-6) auto;
+    min-height: calc(100vh - 48px);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+}
+
+/* ============ TOPBAR ============ */
+.topbar {
+  padding: var(--s-4) var(--s-5);
+  display: flex; align-items: center; justify-content: space-between;
+  background: rgba(19,21,31,0.92);
+  backdrop-filter: blur(20px);
+  position: sticky; top: 0; z-index: 30;
+  border-bottom: 1px solid var(--border);
+}
+.greeting { display: flex; flex-direction: column; gap: 2px; }
+.greet-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600; }
+.greet-name { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
+.greet-name .accent {
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.user-pic {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  display: flex; align-items: center; justify-content: center;
+  color: white; font-weight: 700;
+  box-shadow: var(--shadow-glow);
+  position: relative;
+}
+.user-pic::after {
+  content: ''; position: absolute; bottom: -2px; right: -2px;
+  width: 12px; height: 12px;
+  background: var(--success);
+  border: 2px solid var(--surface);
+  border-radius: 50%;
+}
+
+/* ============ MAIN ============ */
+.main {
+  flex: 1;
+  padding: var(--s-5);
+  display: flex; flex-direction: column; gap: var(--s-5);
+  padding-bottom: 100px;
+}
+
+/* CONNECTION STATUS CARD */
+.conn-card {
+  background: linear-gradient(135deg, var(--surface-2), var(--surface-3));
+  border-radius: var(--radius-lg);
+  padding: var(--s-5);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--border-strong);
+}
+.conn-card::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(circle at 80% 0%, var(--accent-glow), transparent 50%);
+  opacity: 0.4;
+  pointer-events: none;
+}
+.conn-status {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px;
+  background: rgba(0,240,168,0.15);
+  border-radius: 100px;
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 1px;
+  color: var(--success);
+  margin-bottom: var(--s-3);
+}
+.conn-status .dot {
+  width: 6px; height: 6px;
+  background: var(--success);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--success);
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse { 50% { opacity: 0.5; } }
+.conn-name {
+  font-size: 22px; font-weight: 700;
+  letter-spacing: -0.01em;
+  margin-bottom: 4px;
+}
+.conn-meta {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+  margin-bottom: var(--s-4);
+}
+.conn-stats {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: var(--s-3);
+}
+.conn-stat {
+  background: rgba(0,0,0,0.3);
+  border-radius: var(--radius-md);
+  padding: var(--s-3);
+}
+.stat-row { display: flex; align-items: center; gap: 6px; }
+.stat-icon {
+  width: 14px; height: 14px;
+  color: var(--accent-3);
+}
+.stat-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px; font-weight: 700;
+}
+.stat-label {
+  font-size: 9px; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 1px;
+  font-weight: 600; margin-top: 4px;
+}
+.battery-bar {
+  margin-top: 6px;
+  height: 4px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 100px;
+  overflow: hidden;
+}
+.battery-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--success), #00d090);
+  width: 78%;
+  border-radius: 100px;
+}
+.signal-bars {
+  margin-top: 4px;
+  display: flex; gap: 2px; align-items: flex-end;
+  height: 12px;
+}
+.signal-bar {
+  flex: 1;
+  background: var(--accent-3);
+  border-radius: 1px;
+  box-shadow: 0 0 4px var(--accent-3);
+}
+.signal-bar:nth-child(1) { height: 30%; }
+.signal-bar:nth-child(2) { height: 60%; }
+.signal-bar:nth-child(3) { height: 80%; }
+.signal-bar:nth-child(4) { height: 100%; }
+
+/* SECTION HEADER */
+.section-head {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: var(--s-3);
+}
+.section-title { font-size: 15px; font-weight: 700; }
+.section-action {
+  font-size: 12px; color: var(--accent-3); font-weight: 600;
+}
+
+/* MASK PREVIEW */
+.mask-preview {
+  background: var(--surface-2);
+  border-radius: var(--radius-lg);
+  padding: var(--s-5);
+  text-align: center;
+  border: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+}
+.mask-svg-wrap {
+  display: flex; justify-content: center; margin-bottom: var(--s-4);
+  position: relative;
+}
+.mask-svg {
+  width: 240px; height: 180px;
+  filter: drop-shadow(0 0 30px var(--accent-glow));
+}
+.mask-preview-meta {
+  display: flex; justify-content: space-between; align-items: center;
+  padding-top: var(--s-3); border-top: 1px solid var(--border);
+  font-size: 11px; color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+  text-transform: uppercase; letter-spacing: 1px;
+}
+.mask-preview-meta-val { color: var(--accent-3); font-weight: 700; }
+
+/* PRESET MODE GRID */
+.preset-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: var(--s-2);
+}
+.preset-card {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--s-3);
+  text-align: center;
+  transition: all 0.2s var(--ease-out);
+  cursor: pointer;
+}
+.preset-card:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-2px);
+}
+.preset-card.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  box-shadow: 0 0 0 1px var(--accent), 0 4px 16px var(--accent-glow);
+}
+.preset-emoji { font-size: 28px; margin-bottom: 4px; line-height: 1; }
+.preset-name {
+  font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 1px;
+}
+.preset-card.active .preset-name { color: var(--accent); }
+
+/* PATTERN GRID */
+.pattern-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: var(--s-2);
+}
+.pattern-card {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--s-3);
+  display: flex; align-items: center; gap: var(--s-3);
+  transition: all 0.2s var(--ease-out);
+  cursor: pointer;
+  text-align: left;
+}
+.pattern-card:hover {
+  border-color: var(--border-strong);
+}
+.pattern-card.active {
+  border-color: var(--accent-3);
+  background: rgba(41,212,255,0.08);
+}
+.pattern-preview {
+  width: 36px; height: 36px;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+.pattern-card.active .pattern-preview { box-shadow: 0 0 12px currentColor; }
+.pattern-name {
+  font-size: 12px; font-weight: 700;
+  margin-bottom: 2px;
+}
+.pattern-meta { font-size: 10px; color: var(--text-muted); }
+
+/* COLOR PICKER */
+.color-section {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--s-4);
+}
+.color-current {
+  display: flex; align-items: center; gap: var(--s-3);
+  margin-bottom: var(--s-4);
+}
+.color-swatch {
+  width: 56px; height: 56px;
+  border-radius: var(--radius-md);
+  background: var(--current-color, var(--accent));
+  box-shadow: 0 4px 20px var(--current-color, var(--accent-glow));
+  border: 2px solid rgba(255,255,255,0.2);
+  position: relative;
+  transition: all 0.3s var(--ease-out);
+}
+.color-info { flex: 1; }
+.color-name { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+.color-hex {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; color: var(--text-muted);
+  text-transform: uppercase;
+}
+.color-grid {
+  display: grid; grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+}
+.color-dot {
+  aspect-ratio: 1;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.15s var(--ease-out);
+  border: 2px solid transparent;
+}
+.color-dot:hover { transform: scale(1.1); }
+.color-dot.selected {
+  border-color: white;
+  box-shadow: 0 0 0 2px var(--surface), 0 0 12px currentColor;
+  transform: scale(1.1);
+}
+
+/* SLIDERS */
+.slider-row {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--s-4);
+}
+.slider-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: var(--s-3);
+}
+.slider-label-group { display: flex; align-items: center; gap: var(--s-2); }
+.slider-icon {
+  width: 32px; height: 32px;
+  background: rgba(255,45,117,0.15);
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--accent);
+}
+.slider-icon svg { width: 16px; height: 16px; }
+.slider-name {
+  font-size: 13px; font-weight: 600;
+}
+.slider-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 16px; font-weight: 700;
+  color: var(--accent);
+}
+.range-wrapper { position: relative; padding: 4px 0; }
+.range-track {
+  height: 6px;
+  background: var(--surface-4);
+  border-radius: 100px;
+  position: relative;
+  overflow: hidden;
+}
+.range-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  border-radius: 100px;
+  width: 65%;
+  transition: width 0.1s;
+}
+.range-input {
+  -webkit-appearance: none; appearance: none;
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  background: transparent;
+  cursor: pointer;
+}
+.range-input::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 4px 12px var(--accent-glow);
+  cursor: grab;
+  border: 3px solid var(--accent);
+}
+.range-input::-webkit-slider-thumb:active { cursor: grabbing; transform: scale(1.1); }
+.range-input::-moz-range-thumb {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: white;
+  border: 3px solid var(--accent);
+  cursor: grab;
+}
+.slider-meta {
+  display: flex; justify-content: space-between;
+  margin-top: var(--s-2);
+  font-size: 10px; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+/* TOGGLE */
+.toggle-row {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--s-3) var(--s-4);
+  display: flex; align-items: center; gap: var(--s-3);
+}
+.toggle-info { flex: 1; }
+.toggle-name { font-size: 13px; font-weight: 600; }
+.toggle-desc { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.toggle-switch {
+  width: 44px; height: 26px;
+  background: var(--surface-4);
+  border-radius: 100px;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+.toggle-switch::after {
+  content: ''; position: absolute;
+  top: 3px; left: 3px;
+  width: 20px; height: 20px;
+  background: white;
+  border-radius: 50%;
+  transition: all 0.3s var(--ease-spring);
+}
+.toggle-switch.on { background: var(--accent); }
+.toggle-switch.on::after { left: 21px; box-shadow: 0 0 8px white; }
+
+/* BOTTOM ACTION BAR */
+.bottom-bar {
+  position: fixed;
+  bottom: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 100%; max-width: 480px;
+  background: rgba(19,21,31,0.95);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+  padding: var(--s-3) var(--s-4);
+  padding-bottom: calc(var(--s-3) + env(safe-area-inset-bottom, 0));
+  display: flex; gap: var(--s-2);
+  z-index: 40;
+}
+@media (min-width: 1024px) {
+  .bottom-bar {
+    position: sticky;
+    bottom: 0;
+    width: auto;
+    left: auto;
+    transform: none;
+    border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+  }
+}
+.bb-btn {
+  flex: 1;
+  padding: 14px;
+  border-radius: var(--radius-md);
+  font-size: 13px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  transition: all 0.2s var(--ease-out);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.bb-btn-secondary {
+  background: var(--surface-3);
+  color: var(--text);
+}
+.bb-btn-secondary:hover { background: var(--surface-4); }
+.bb-btn-primary {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: white;
+  box-shadow: 0 4px 20px var(--accent-glow);
+}
+.bb-btn-primary:hover { transform: translateY(-1px); }
+
+/* TOAST */
+.toast-stack {
+  position: fixed; bottom: 90px; right: var(--s-5); left: var(--s-5);
+  max-width: 440px; margin: 0 auto;
+  z-index: 100;
+  display: flex; flex-direction: column; gap: var(--s-2);
+  pointer-events: none;
+}
+.toast {
+  background: var(--surface-3);
+  border: 1px solid var(--border-strong);
+  color: var(--text);
+  border-radius: var(--radius-md);
+  padding: var(--s-3) var(--s-4);
+  font-size: 13px; font-weight: 600;
+  box-shadow: 0 16px 40px rgba(0,0,0,0.5), 0 0 20px var(--accent-glow);
+  display: flex; align-items: center; gap: var(--s-2);
+  pointer-events: auto;
+  transform: translateY(100px); opacity: 0;
+  transition: all 0.4s var(--ease-spring);
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast .icon { color: var(--accent-3); }
+
+/* RESPONSIVE TWEAKS */
+@media (max-width: 380px) {
+  .main { padding: var(--s-4) var(--s-3); }
+  .preset-grid { grid-template-columns: repeat(2, 1fr); }
+  .color-grid { grid-template-columns: repeat(5, 1fr); }
+  .pattern-grid { grid-template-columns: 1fr; }
+}
+
+@media (hover: none) {
+  .preset-card:hover, .pattern-card:hover { transform: none; }
+  .color-dot:hover { transform: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+  <header class="topbar">
+    <div class="greeting">
+      <span class="greet-label">Controlador BLE</span>
+      <span class="greet-name">Olá, <span class="accent">Joshua</span></span>
+    </div>
+    <div class="user-pic">JS</div>
+  </header>
+
+  <main class="main">
+    <!-- CONNECTION CARD -->
+    <div class="conn-card">
+      <div class="conn-status">
+        <span class="dot"></span>
+        <span>Conectada</span>
+      </div>
+      <div class="conn-name">Máscara LED #01</div>
+      <div class="conn-meta">ESP32 · MAC AA:BB:CC:11:22:33</div>
+      <div class="conn-stats">
+        <div class="conn-stat">
+          <div class="stat-row">
+            <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="18" height="12" rx="2"/><path d="M22 11v2"/></svg>
+            <span class="stat-val">78%</span>
+          </div>
+          <div class="battery-bar"><div class="battery-fill"></div></div>
+          <div class="stat-label">Bateria</div>
+        </div>
+        <div class="conn-stat">
+          <div class="stat-row">
+            <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h.01M6 12h.01M10 12h.01M14 12h.01M18 12h.01M22 12h.01"/></svg>
+            <span class="stat-val">Ótimo</span>
+          </div>
+          <div class="signal-bars">
+            <div class="signal-bar"></div>
+            <div class="signal-bar"></div>
+            <div class="signal-bar"></div>
+            <div class="signal-bar"></div>
+          </div>
+          <div class="stat-label">Sinal BLE</div>
+        </div>
+        <div class="conn-stat">
+          <div class="stat-row">
+            <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z"/><path d="M12 7v5l3 3"/></svg>
+            <span class="stat-val">256</span>
+          </div>
+          <div style="margin-top: 6px; font-size: 9px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;">WS2812B · 30 FPS</div>
+          <div class="stat-label">LEDs ativos</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MASK PREVIEW -->
+    <div>
+      <div class="section-head">
+        <div class="section-title">Preview ao vivo</div>
+        <button class="section-action" id="test-btn">Testar padrão →</button>
+      </div>
+      <div class="mask-preview">
+        <div class="mask-svg-wrap">
+          <svg class="mask-svg" viewBox="0 0 240 180" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <radialGradient id="maskGlow" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="var(--current-color, #ff2d75)" stop-opacity="0.4"/>
+                <stop offset="100%" stop-color="var(--current-color, #ff2d75)" stop-opacity="0"/>
+              </radialGradient>
+            </defs>
+            <!-- Mask outline -->
+            <path d="M120 20 Q40 30 30 80 Q35 130 60 145 Q90 160 120 155 Q150 160 180 145 Q205 130 210 80 Q200 30 120 20 Z"
+                  fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
+            <!-- LED grid - rendered with JS -->
+            <g id="led-grid"></g>
+            <!-- Eye holes -->
+            <ellipse cx="90" cy="78" rx="18" ry="12" fill="rgba(0,0,0,0.6)" stroke="rgba(255,255,255,0.1)"/>
+            <ellipse cx="150" cy="78" rx="18" ry="12" fill="rgba(0,0,0,0.6)" stroke="rgba(255,255,255,0.1)"/>
+            <!-- Mouth area highlight -->
+            <ellipse cx="120" cy="130" rx="35" ry="12" fill="rgba(0,0,0,0.4)" stroke="rgba(255,255,255,0.1)" stroke-dasharray="2 2"/>
+          </svg>
+        </div>
+        <div class="mask-preview-meta">
+          <span>PADRÃO ATUAL</span>
+          <span class="mask-preview-meta-val" id="current-pattern">Pulse Wave</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRESETS -->
+    <div>
+      <div class="section-head">
+        <div class="section-title">Modos rápidos</div>
+        <button class="section-action">Gerenciar</button>
+      </div>
+      <div class="preset-grid">
+        <button class="preset-card active" data-preset="idle">
+          <div class="preset-emoji">😌</div>
+          <div class="preset-name">Idle</div>
+        </button>
+        <button class="preset-card" data-preset="talking">
+          <div class="preset-emoji">🎙</div>
+          <div class="preset-name">Falando</div>
+        </button>
+        <button class="preset-card" data-preset="surprised">
+          <div class="preset-emoji">😲</div>
+          <div class="preset-name">Surpresa</div>
+        </button>
+        <button class="preset-card" data-preset="angry">
+          <div class="preset-emoji">😠</div>
+          <div class="preset-name">Bravo</div>
+        </button>
+        <button class="preset-card" data-preset="focus">
+          <div class="preset-emoji">🎯</div>
+          <div class="preset-name">Foco</div>
+        </button>
+        <button class="preset-card" data-preset="party">
+          <div class="preset-emoji">🎉</div>
+          <div class="preset-name">Party</div>
+        </button>
+      </div>
+    </div>
+
+    <!-- PATTERNS -->
+    <div>
+      <div class="section-head">
+        <div class="section-title">Padrões de animação</div>
+        <button class="section-action">+ Novo</button>
+      </div>
+      <div class="pattern-grid">
+        <button class="pattern-card active" data-pattern="pulse">
+          <div class="pattern-preview" style="background: linear-gradient(135deg, #ff2d75, #b829ff); color: #ff2d75;"></div>
+          <div>
+            <div class="pattern-name">Pulse Wave</div>
+            <div class="pattern-meta">Sincronizado</div>
+          </div>
+        </button>
+        <button class="pattern-card" data-pattern="rainbow">
+          <div class="pattern-preview" style="background: linear-gradient(90deg, #ff2d75, #ffb800, #00f0a8, #29d4ff, #b829ff);"></div>
+          <div>
+            <div class="pattern-name">Rainbow Flow</div>
+            <div class="pattern-meta">Contínuo</div>
+          </div>
+        </button>
+        <button class="pattern-card" data-pattern="sound">
+          <div class="pattern-preview" style="background: linear-gradient(180deg, #29d4ff 0%, #29d4ff 30%, transparent 30%, transparent 50%, #29d4ff 50%, #29d4ff 80%, transparent 80%);"></div>
+          <div>
+            <div class="pattern-name">Sound Reactive</div>
+            <div class="pattern-meta">FFT mic</div>
+          </div>
+        </button>
+        <button class="pattern-card" data-pattern="motion">
+          <div class="pattern-preview" style="background: radial-gradient(circle at 30% 30%, #b829ff, #ff2d75);"></div>
+          <div>
+            <div class="pattern-name">Motion Reactive</div>
+            <div class="pattern-meta">MPU-6050</div>
+          </div>
+        </button>
+        <button class="pattern-card" data-pattern="fire">
+          <div class="pattern-preview" style="background: linear-gradient(180deg, #ffb800, #ff3838);"></div>
+          <div>
+            <div class="pattern-name">Fire</div>
+            <div class="pattern-meta">Procedural</div>
+          </div>
+        </button>
+        <button class="pattern-card" data-pattern="matrix">
+          <div class="pattern-preview" style="background: linear-gradient(180deg, transparent, #00f0a8); color: #00f0a8;"></div>
+          <div>
+            <div class="pattern-name">Matrix Rain</div>
+            <div class="pattern-meta">Procedural</div>
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <!-- COLOR PICKER -->
+    <div>
+      <div class="section-head">
+        <div class="section-title">Cor principal</div>
+        <button class="section-action">Picker custom</button>
+      </div>
+      <div class="color-section">
+        <div class="color-current">
+          <div class="color-swatch" id="color-swatch" style="--current-color: #ff2d75; background: #ff2d75; box-shadow: 0 4px 20px rgba(255,45,117,0.5);"></div>
+          <div class="color-info">
+            <div class="color-name" id="color-name">Neon Pink</div>
+            <div class="color-hex" id="color-hex">#FF2D75</div>
+          </div>
+        </div>
+        <div class="color-grid" id="color-grid">
+          <div class="color-dot selected" data-color="#ff2d75" data-name="Neon Pink" style="background: #ff2d75;"></div>
+          <div class="color-dot" data-color="#b829ff" data-name="Roxo" style="background: #b829ff;"></div>
+          <div class="color-dot" data-color="#29d4ff" data-name="Cyan" style="background: #29d4ff;"></div>
+          <div class="color-dot" data-color="#00f0a8" data-name="Verde" style="background: #00f0a8;"></div>
+          <div class="color-dot" data-color="#ffb800" data-name="Amber" style="background: #ffb800;"></div>
+          <div class="color-dot" data-color="#ff3838" data-name="Vermelho" style="background: #ff3838;"></div>
+          <div class="color-dot" data-color="#ffffff" data-name="Branco" style="background: #ffffff;"></div>
+          <div class="color-dot" data-color="#ff7700" data-name="Laranja" style="background: #ff7700;"></div>
+          <div class="color-dot" data-color="#5d3fd3" data-name="Indigo" style="background: #5d3fd3;"></div>
+          <div class="color-dot" data-color="#1e90ff" data-name="Azul" style="background: #1e90ff;"></div>
+          <div class="color-dot" data-color="#ff1493" data-name="Hot Pink" style="background: #ff1493;"></div>
+          <div class="color-dot" data-color="#00ffff" data-name="Aqua" style="background: #00ffff;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDERS -->
+    <div style="display: flex; flex-direction: column; gap: var(--s-3);">
+      <div class="slider-row">
+        <div class="slider-header">
+          <div class="slider-label-group">
+            <div class="slider-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v6m0 6v6"/><path d="M3 12h6m6 0h6"/><path d="M5 5l4 4m6 6l4 4M5 19l4-4m6-6l4-4"/></svg>
+            </div>
+            <span class="slider-name">Brilho</span>
+          </div>
+          <span class="slider-value" id="brightness-val">65%</span>
+        </div>
+        <div class="range-wrapper">
+          <div class="range-track"><div class="range-fill" id="brightness-fill"></div></div>
+          <input type="range" class="range-input" id="brightness-slider" min="0" max="100" value="65">
+        </div>
+        <div class="slider-meta"><span>Min</span><span>Max · 4A</span></div>
+      </div>
+
+      <div class="slider-row">
+        <div class="slider-header">
+          <div class="slider-label-group">
+            <div class="slider-icon" style="background: rgba(41,212,255,0.15); color: var(--accent-3);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 18v-6a9 9 0 0118 0v6"/><path d="M21 19a2 2 0 01-2 2h-1v-6h3v4zM3 19a2 2 0 002 2h1v-6H3v4z"/></svg>
+            </div>
+            <span class="slider-name">Sensibilidade ao som</span>
+          </div>
+          <span class="slider-value" style="color: var(--accent-3);" id="sound-val">72%</span>
+        </div>
+        <div class="range-wrapper">
+          <div class="range-track"><div class="range-fill" id="sound-fill" style="background: linear-gradient(90deg, var(--accent-3), #00f0a8); width: 72%;"></div></div>
+          <input type="range" class="range-input" id="sound-slider" min="0" max="100" value="72">
+        </div>
+        <div class="slider-meta"><span>Quieto</span><span>Alto</span></div>
+      </div>
+
+      <div class="slider-row">
+        <div class="slider-header">
+          <div class="slider-label-group">
+            <div class="slider-icon" style="background: rgba(184,41,255,0.15); color: var(--accent-2);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5v14"/></svg>
+            </div>
+            <span class="slider-name">Sensibilidade ao movimento</span>
+          </div>
+          <span class="slider-value" style="color: var(--accent-2);" id="motion-val">45%</span>
+        </div>
+        <div class="range-wrapper">
+          <div class="range-track"><div class="range-fill" id="motion-fill" style="background: linear-gradient(90deg, var(--accent-2), var(--accent)); width: 45%;"></div></div>
+          <input type="range" class="range-input" id="motion-slider" min="0" max="100" value="45">
+        </div>
+        <div class="slider-meta"><span>Mínimo</span><span>Máximo</span></div>
+      </div>
+    </div>
+
+    <!-- TOGGLES -->
+    <div style="display: flex; flex-direction: column; gap: var(--s-2);">
+      <div class="toggle-row">
+        <div class="toggle-info">
+          <div class="toggle-name">Auto-conectar</div>
+          <div class="toggle-desc">Conectar à máscara quando próximo</div>
+        </div>
+        <div class="toggle-switch on" data-toggle="autoconnect"></div>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-info">
+          <div class="toggle-name">Modo eco</div>
+          <div class="toggle-desc">Reduz brilho com bateria baixa</div>
+        </div>
+        <div class="toggle-switch on" data-toggle="eco"></div>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-info">
+          <div class="toggle-name">Sincronizar com música do celular</div>
+          <div class="toggle-desc">Captura áudio do dispositivo via BLE</div>
+        </div>
+        <div class="toggle-switch" data-toggle="syncmusic"></div>
+      </div>
+    </div>
+  </main>
+
+  <div class="bottom-bar">
+    <button class="bb-btn bb-btn-secondary" id="off-btn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18.36 6.64a9 9 0 11-12.73 0M12 2v10"/></svg>
+      Desligar
+    </button>
+    <button class="bb-btn bb-btn-primary" id="apply-btn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+      Aplicar
+    </button>
+  </div>
+</div>
+
+<div class="toast-stack" id="toast-stack"></div>
+
+<script>
+const toastStack = document.getElementById('toast-stack');
+function showToast(msg, icon = '✓') {
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.innerHTML = `<span class="icon">${icon}</span><span>${msg}</span>`;
+  toastStack.appendChild(t);
+  requestAnimationFrame(() => t.classList.add('show'));
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 2500);
+}
+
+// Render LED grid in mask SVG
+const ledGrid = document.getElementById('led-grid');
+function renderLEDs(color = '#ff2d75', brightness = 0.65) {
+  ledGrid.innerHTML = '';
+  // Generate a grid of LED dots filling the mask area
+  const positions = [];
+  for (let row = 0; row < 8; row++) {
+    for (let col = 0; col < 14; col++) {
+      const x = 45 + col * 11 + (row % 2 === 0 ? 0 : 5);
+      const y = 45 + row * 13;
+      // Skip eye holes
+      const inLeftEye = Math.hypot(x - 90, y - 78) < 22;
+      const inRightEye = Math.hypot(x - 150, y - 78) < 22;
+      // Skip outside mask shape (rough oval check)
+      const dx = (x - 120) / 90;
+      const dy = (y - 90) / 70;
+      const inOval = dx * dx + dy * dy < 1;
+      if (!inOval || inLeftEye || inRightEye) continue;
+      positions.push({ x, y });
+    }
+  }
+  positions.forEach((p, i) => {
+    const delay = (i * 80) % 2000;
+    const dot = `<circle cx="${p.x}" cy="${p.y}" r="2" fill="${color}" opacity="${0.4 + Math.random() * 0.6}">
+      <animate attributeName="opacity" values="0.3;1;0.3" dur="2s" begin="${delay}ms" repeatCount="indefinite"/>
+    </circle>`;
+    ledGrid.insertAdjacentHTML('beforeend', dot);
+  });
+}
+renderLEDs('#ff2d75', 0.65);
+
+// Color picker
+let currentColor = '#ff2d75';
+document.querySelectorAll('.color-dot').forEach(dot => {
+  dot.addEventListener('click', () => {
+    document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('selected'));
+    dot.classList.add('selected');
+    currentColor = dot.dataset.color;
+    const swatch = document.getElementById('color-swatch');
+    swatch.style.setProperty('--current-color', currentColor);
+    swatch.style.background = currentColor;
+    swatch.style.boxShadow = `0 4px 20px ${currentColor}80`;
+    document.getElementById('color-name').textContent = dot.dataset.name;
+    document.getElementById('color-hex').textContent = currentColor.toUpperCase();
+    renderLEDs(currentColor);
+  });
+});
+
+// Preset selection
+document.querySelectorAll('.preset-card').forEach(card => {
+  card.addEventListener('click', () => {
+    document.querySelectorAll('.preset-card').forEach(c => c.classList.remove('active'));
+    card.classList.add('active');
+    const name = card.querySelector('.preset-name').textContent;
+    showToast(`Modo "${name}" carregado · 8 parâmetros aplicados`, '⚡');
+  });
+});
+
+// Pattern selection
+document.querySelectorAll('.pattern-card').forEach(card => {
+  card.addEventListener('click', () => {
+    document.querySelectorAll('.pattern-card').forEach(c => c.classList.remove('active'));
+    card.classList.add('active');
+    const name = card.querySelector('.pattern-name').textContent;
+    document.getElementById('current-pattern').textContent = name;
+    showToast(`Padrão "${name}" ativo`, '🎨');
+  });
+});
+
+// Sliders
+function setupSlider(sliderId, fillId, valueId, unit = '%') {
+  const slider = document.getElementById(sliderId);
+  const fill = document.getElementById(fillId);
+  const val = document.getElementById(valueId);
+  slider.addEventListener('input', () => {
+    fill.style.width = slider.value + '%';
+    val.textContent = slider.value + unit;
+  });
+}
+setupSlider('brightness-slider', 'brightness-fill', 'brightness-val');
+setupSlider('sound-slider', 'sound-fill', 'sound-val');
+setupSlider('motion-slider', 'motion-fill', 'motion-val');
+
+// Toggles
+document.querySelectorAll('.toggle-switch').forEach(t => {
+  t.addEventListener('click', () => {
+    t.classList.toggle('on');
+    const name = t.parentElement.querySelector('.toggle-name').textContent;
+    showToast(`${name}: ${t.classList.contains('on') ? 'Ativado' : 'Desativado'}`, t.classList.contains('on') ? '✓' : '⊘');
+  });
+});
+
+// Action buttons
+document.getElementById('test-btn').addEventListener('click', () => {
+  showToast('Padrão testado por 3 segundos', '⚡');
+});
+document.getElementById('apply-btn').addEventListener('click', () => {
+  showToast('Configurações enviadas para a máscara via BLE', '📡');
+});
+document.getElementById('off-btn').addEventListener('click', () => {
+  showToast('Máscara desligada', '⊘');
+});
+</script>
+
+</body>
+</html>
