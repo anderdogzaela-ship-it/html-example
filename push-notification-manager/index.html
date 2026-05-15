@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Centro de Notificaciones · Gestión Push Web</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #fafbfd;
+  --bg-soft: #f1f4f9;
+  --surface: #ffffff;
+  --surface-2: #f5f7fb;
+  --surface-3: #e8ecf3;
+  --surface-4: #d4dae5;
+  --border: rgba(15,23,42,0.08);
+  --border-strong: rgba(15,23,42,0.15);
+
+  --text: #0f172a;
+  --text-soft: #475569;
+  --text-muted: #94a3b8;
+
+  --accent: #2563eb;
+  --accent-deep: #1d4ed8;
+  --accent-soft: rgba(37,99,235,0.1);
+  --accent-glow: rgba(37,99,235,0.25);
+
+  --success: #16a34a;
+  --warning: #d97706;
+  --danger: #dc2626;
+  --info: #0891b2;
+
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 20px;
+  --s-6: 24px; --s-8: 32px; --s-10: 40px;
+
+  --shadow-sm: 0 1px 2px rgba(15,23,42,0.04);
+  --shadow-md: 0 4px 16px rgba(15,23,42,0.08);
+  --shadow-lg: 0 16px 40px rgba(15,23,42,0.12);
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html { font-size: 14px; }
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+.mono { font-family: 'JetBrains Mono', monospace; font-feature-settings: "tnum"; }
+button, input, select { font-family: inherit; color: inherit; border: none; outline: none; background: none; }
+button { cursor: pointer; }
+
+/* TOPBAR */
+.topbar {
+  position: sticky; top: 0; z-index: 50;
+  background: rgba(255,255,255,0.9);
+  backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: var(--s-3) var(--s-6);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.menu-btn {
+  display: none;
+  width: 40px; height: 40px;
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  align-items: center; justify-content: center;
+}
+.menu-btn-bars { width: 18px; height: 14px; position: relative; }
+.menu-btn-bars span {
+  position: absolute; left: 0; right: 0; height: 2px;
+  background: var(--text); border-radius: 2px;
+  transition: transform 0.3s var(--ease-out), opacity 0.2s;
+}
+.menu-btn-bars span:nth-child(1) { top: 0; }
+.menu-btn-bars span:nth-child(2) { top: 6px; }
+.menu-btn-bars span:nth-child(3) { top: 12px; }
+.menu-btn.open .menu-btn-bars span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+.menu-btn.open .menu-btn-bars span:nth-child(2) { opacity: 0; }
+.menu-btn.open .menu-btn-bars span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+
+.brand { display: flex; align-items: center; gap: var(--s-3); font-weight: 700; }
+.brand-mark {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--accent), #6366f1);
+  border-radius: var(--radius-md);
+  display: flex; align-items: center; justify-content: center;
+  color: white;
+  box-shadow: 0 4px 12px var(--accent-glow), inset 0 1px 0 rgba(255,255,255,0.2);
+}
+.brand-mark svg { width: 18px; height: 18px; }
+.brand-text { display: flex; flex-direction: column; gap: 1px; }
+.brand-name { font-weight: 700; font-size: 15px; }
+.brand-sub { font-size: 10px; color: var(--text-muted); font-weight: 500; letter-spacing: 1px; text-transform: uppercase; }
+
+.permission-status {
+  display: flex; align-items: center; gap: var(--s-2);
+  padding: 6px 12px;
+  background: rgba(22,163,74,0.1);
+  border: 1px solid rgba(22,163,74,0.2);
+  border-radius: 100px;
+  font-size: 11px; font-weight: 600;
+  color: var(--success);
+}
+.permission-status .dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 8px rgba(22,163,74,0.5);
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse { 50% { opacity: 0.5; } }
+
+/* LAYOUT */
+.layout { display: grid; grid-template-columns: 260px 1fr; min-height: calc(100vh - 65px); }
+.sidebar {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: var(--s-5) var(--s-3);
+  position: sticky; top: 65px;
+  height: calc(100vh - 65px);
+  overflow-y: auto;
+  transition: transform 0.4s var(--ease-out);
+}
+.side-title {
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 1.5px;
+  color: var(--text-muted);
+  margin-bottom: var(--s-2); padding: 0 var(--s-3);
+}
+.side-item {
+  display: flex; align-items: center; gap: var(--s-3);
+  padding: 9px 12px; border-radius: var(--radius-md);
+  font-size: 13px; cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 2px;
+  position: relative;
+}
+.side-item:hover { background: var(--surface-2); }
+.side-item.active {
+  background: var(--accent-soft); color: var(--accent-deep); font-weight: 600;
+}
+.side-item.active::before {
+  content: ''; position: absolute; left: 0; top: 25%; bottom: 25%; width: 3px;
+  background: var(--accent); border-radius: 0 3px 3px 0;
+}
+.side-item-icon { width: 16px; height: 16px; color: var(--text-muted); flex-shrink: 0; }
+.side-item.active .side-item-icon { color: var(--accent); }
+.side-item-badge {
+  font-size: 10px; padding: 2px 7px;
+  border-radius: 100px;
+  background: var(--surface-3); color: var(--text-soft);
+  margin-left: auto; font-weight: 600;
+}
+.side-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 40;
+  opacity: 0; transition: opacity 0.3s;
+}
+.side-overlay.show { display: block; opacity: 1; }
+
+/* MAIN */
+.main { padding: var(--s-6) var(--s-8); }
+.page-head { margin-bottom: var(--s-6); display: flex; justify-content: space-between; align-items: flex-start; gap: var(--s-3); flex-wrap: wrap; }
+.page-eyebrow {
+  display: inline-flex; align-items: center; gap: var(--s-2);
+  font-size: 10px; text-transform: uppercase; letter-spacing: 2px;
+  color: var(--accent); font-weight: 700;
+  margin-bottom: var(--s-2);
+}
+.page-eyebrow::before { content: ''; width: 24px; height: 1px; background: var(--accent); }
+.page-title { font-size: 26px; font-weight: 700; letter-spacing: -0.01em; }
+.page-sub { color: var(--text-soft); font-size: 13px; margin-top: 4px; }
+
+.btn {
+  padding: 9px 14px;
+  border-radius: var(--radius-md);
+  font-size: 13px; font-weight: 600;
+  transition: all 0.2s var(--ease-out);
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.btn-primary { background: var(--accent); color: white; box-shadow: 0 4px 12px var(--accent-glow); }
+.btn-primary:hover { background: var(--accent-deep); transform: translateY(-1px); }
+.btn-secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border-strong); }
+.btn-secondary:hover { background: var(--surface-2); }
+.btn svg { width: 14px; height: 14px; }
+
+/* KPI */
+.kpi-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: var(--s-3); margin-bottom: var(--s-6);
+}
+.kpi-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--s-4);
+  box-shadow: var(--shadow-sm);
+  position: relative; overflow: hidden;
+}
+.kpi-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: var(--kpi-color, var(--accent));
+}
+.kpi-label { font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: var(--s-2); display: flex; justify-content: space-between; }
+.kpi-icon {
+  width: 28px; height: 28px;
+  background: var(--kpi-bg, var(--accent-soft));
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--kpi-color, var(--accent));
+}
+.kpi-icon svg { width: 14px; height: 14px; }
+.kpi-value { font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 700; margin-bottom: 2px; }
+.kpi-delta { font-size: 11px; color: var(--text-muted); }
+.kpi-delta.up { color: var(--success); }
+
+/* PANEL */
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: var(--s-4);
+  overflow: hidden;
+}
+.panel-header {
+  padding: var(--s-4) var(--s-5);
+  border-bottom: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+  flex-wrap: wrap; gap: var(--s-2);
+}
+.panel-title { font-size: 14px; font-weight: 700; }
+.panel-meta { font-size: 11px; color: var(--text-muted); }
+.panel-body { padding: var(--s-4) var(--s-5); }
+
+/* NOTIFICATION RULES */
+.rule-row {
+  padding: var(--s-4);
+  border-bottom: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: var(--s-3);
+}
+.rule-row:last-child { border-bottom: none; }
+.rule-row:hover { background: var(--surface-2); }
+.rule-icon {
+  width: 36px; height: 36px;
+  border-radius: var(--radius-md);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.rule-icon-sale { background: rgba(22,163,74,0.1); color: var(--success); }
+.rule-icon-stock { background: rgba(217,119,6,0.1); color: var(--warning); }
+.rule-icon-doc { background: rgba(37,99,235,0.1); color: var(--accent); }
+.rule-icon-overdue { background: rgba(220,38,38,0.1); color: var(--danger); }
+.rule-icon-customer { background: rgba(8,145,178,0.1); color: var(--info); }
+.rule-icon svg { width: 18px; height: 18px; }
+
+.rule-info { min-width: 0; }
+.rule-name { font-weight: 600; font-size: 13px; margin-bottom: 2px; }
+.rule-desc { font-size: 11px; color: var(--text-muted); }
+.rule-event {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  padding: 1px 6px;
+  border-radius: 4px;
+  display: inline-block; margin-top: 4px;
+}
+
+.rule-targets {
+  display: flex; align-items: center; gap: -4px;
+}
+.target-avatar {
+  width: 24px; height: 24px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), #6366f1);
+  display: flex; align-items: center; justify-content: center;
+  color: white; font-weight: 700; font-size: 9px;
+  border: 2px solid var(--surface);
+  margin-left: -6px;
+}
+.target-avatar:first-child { margin-left: 0; }
+.target-more {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-left: 4px;
+  font-weight: 500;
+}
+
+.toggle-switch {
+  width: 38px; height: 22px;
+  background: var(--surface-4);
+  border-radius: 100px;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+.toggle-switch::after {
+  content: ''; position: absolute;
+  top: 2px; left: 2px;
+  width: 18px; height: 18px;
+  background: white;
+  border-radius: 50%;
+  transition: all 0.3s var(--ease-spring);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.toggle-switch.on { background: var(--success); }
+.toggle-switch.on::after { left: 18px; }
+
+/* USER TARGETING */
+.users-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--s-3);
+}
+.user-target-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--s-3);
+  display: flex; align-items: center; gap: var(--s-3);
+}
+.user-avatar-lg {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), #6366f1);
+  display: flex; align-items: center; justify-content: center;
+  color: white; font-weight: 700; font-size: 13px;
+  flex-shrink: 0;
+}
+.user-info { flex: 1; min-width: 0; }
+.user-name { font-weight: 600; font-size: 13px; }
+.user-role { font-size: 11px; color: var(--text-muted); }
+.user-status {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 6px; border-radius: 100px;
+  font-size: 10px; font-weight: 600;
+}
+.user-status.subscribed { background: rgba(22,163,74,0.1); color: var(--success); }
+.user-status.pending { background: rgba(217,119,6,0.1); color: var(--warning); }
+.user-status.unsubscribed { background: rgba(220,38,38,0.1); color: var(--danger); }
+
+/* TEST SECTION */
+.test-grid {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: var(--s-4);
+}
+.field-group { display: flex; flex-direction: column; gap: var(--s-3); }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field-label {
+  font-size: 11px; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 1px; font-weight: 600;
+}
+.field-input, .field-textarea, .field-select {
+  padding: 10px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  font-size: 14px;
+  transition: all 0.2s;
+}
+.field-input:focus, .field-textarea:focus, .field-select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-soft);
+}
+.field-textarea { min-height: 80px; resize: vertical; }
+
+/* NOTIFICATION PREVIEW */
+.notif-preview {
+  background: var(--text);
+  color: var(--surface);
+  border-radius: var(--radius-md);
+  padding: var(--s-4);
+  display: flex; gap: var(--s-3);
+  position: relative;
+  box-shadow: var(--shadow-lg);
+}
+.notif-preview::before {
+  content: 'Preview';
+  position: absolute;
+  top: -10px; left: 12px;
+  background: var(--accent);
+  color: white;
+  font-size: 9px;
+  padding: 2px 8px;
+  border-radius: 100px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.notif-icon {
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--accent), #6366f1);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.notif-icon svg { width: 16px; height: 16px; color: white; }
+.notif-body { flex: 1; min-width: 0; }
+.notif-title { font-weight: 600; font-size: 13px; margin-bottom: 2px; }
+.notif-msg { font-size: 12px; color: rgba(255,255,255,0.7); margin-bottom: 6px; }
+.notif-meta { font-size: 10px; color: rgba(255,255,255,0.5); }
+
+/* DELIVERY LOG TABLE */
+.log-table { width: 100%; border-collapse: collapse; }
+.log-table th {
+  text-align: left; padding: 10px var(--s-5);
+  font-size: 10px; text-transform: uppercase; letter-spacing: 1px;
+  color: var(--text-muted); font-weight: 700;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+}
+.log-table td {
+  padding: 12px var(--s-5);
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.log-table tr:last-child td { border-bottom: none; }
+.delivery-pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 8px; border-radius: 100px;
+  font-size: 11px; font-weight: 600;
+}
+.delivery-delivered { background: rgba(22,163,74,0.1); color: var(--success); }
+.delivery-failed { background: rgba(220,38,38,0.1); color: var(--danger); }
+.delivery-pending { background: rgba(217,119,6,0.1); color: var(--warning); }
+
+.log-cards { display: none; flex-direction: column; gap: var(--s-2); padding: var(--s-4); }
+.log-card {
+  background: var(--surface-2);
+  border-radius: var(--radius-md);
+  padding: var(--s-3);
+  display: flex; flex-direction: column; gap: 6px;
+  border-left: 3px solid var(--accent);
+}
+.log-card.failed { border-left-color: var(--danger); }
+.log-card.pending { border-left-color: var(--warning); }
+
+/* TOAST */
+.toast-stack {
+  position: fixed; bottom: var(--s-6); right: var(--s-6);
+  z-index: 100;
+  display: flex; flex-direction: column; gap: var(--s-2);
+  pointer-events: none;
+}
+.toast {
+  background: var(--text); color: var(--surface);
+  border-radius: var(--radius-md);
+  padding: var(--s-3) var(--s-4);
+  font-size: 13px; font-weight: 500;
+  box-shadow: var(--shadow-lg);
+  display: flex; align-items: center; gap: var(--s-2);
+  pointer-events: auto;
+  transform: translateY(100px); opacity: 0;
+  transition: all 0.4s var(--ease-spring);
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+
+/* RESPONSIVE */
+@media (max-width: 1024px) {
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .test-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 768px) {
+  html { font-size: 13px; }
+  .menu-btn { display: flex; }
+  .topbar { padding: var(--s-3) var(--s-4); }
+  .layout { grid-template-columns: 1fr; }
+
+  .sidebar {
+    position: fixed; top: 65px; left: 0; bottom: 0;
+    width: 280px; z-index: 45;
+    transform: translateX(-100%);
+    box-shadow: var(--shadow-lg);
+  }
+  .sidebar.open { transform: translateX(0); }
+
+  .main { padding: var(--s-4) var(--s-3); }
+
+  .rule-row { grid-template-columns: auto 1fr; gap: var(--s-2); padding: var(--s-3); }
+  .rule-row > .rule-targets, .rule-row > .toggle-switch { grid-column: 2; justify-self: end; }
+  .rule-row > .rule-targets { margin-top: 6px; }
+
+  .log-table { display: none; }
+  .log-cards { display: flex; }
+
+  .users-grid { grid-template-columns: 1fr; }
+
+  .toast-stack { left: var(--s-4); right: var(--s-4); }
+  .toast { width: 100%; }
+}
+@media (max-width: 480px) {
+  .brand-text { display: none; }
+  .permission-status { padding: 5px 10px; }
+  .permission-status .label { display: none; }
+  .kpi-grid { grid-template-columns: 1fr; }
+}
+@media (hover: none) {
+  .btn-primary:hover { transform: none; }
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div style="display:flex; align-items:center; gap:var(--s-3);">
+    <button class="menu-btn" id="menu-btn"><span class="menu-btn-bars"><span></span><span></span><span></span></span></button>
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
+      </div>
+      <div class="brand-text">
+        <span class="brand-name">Centro Notificaciones</span>
+        <span class="brand-sub">Push Web</span>
+      </div>
+    </div>
+  </div>
+  <div class="permission-status" id="perm-status">
+    <span class="dot"></span>
+    <span class="label">Permisos concedidos · VAPID activo</span>
+  </div>
+</header>
+
+<div class="side-overlay" id="side-overlay"></div>
+
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="side-title">Gestión</div>
+    <div class="side-item active">
+      <svg class="side-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      <span>Dashboard</span>
+    </div>
+    <div class="side-item">
+      <svg class="side-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 4l-9 9 5 5L19 9z"/><path d="M14 4l5 5"/></svg>
+      <span>Reglas activas</span>
+      <span class="side-item-badge">8</span>
+    </div>
+    <div class="side-item">
+      <svg class="side-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+      <span>Usuarios objetivo</span>
+      <span class="side-item-badge">24</span>
+    </div>
+    <div class="side-item">
+      <svg class="side-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      <span>Historial de envíos</span>
+      <span class="side-item-badge">847</span>
+    </div>
+    <div class="side-title" style="margin-top: var(--s-5);">Configuración</div>
+    <div class="side-item">
+      <svg class="side-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      <span>Service Worker</span>
+    </div>
+    <div class="side-item">
+      <svg class="side-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+      <span>VAPID Keys</span>
+    </div>
+    <div class="side-item">
+      <svg class="side-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 9A9 9 0 005.64 5.64L1 10"/></svg>
+      <span>Reintentos</span>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="page-head">
+      <div>
+        <div class="page-eyebrow">Push Web · Sistema de gestión</div>
+        <h1 class="page-title">Centro de Notificaciones</h1>
+        <p class="page-sub">Reglas de envío, segmentación de usuarios y seguimiento de entrega en tiempo real.</p>
+      </div>
+      <button class="btn btn-primary" id="test-send">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        Enviar prueba
+      </button>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card" style="--kpi-color: var(--accent); --kpi-bg: var(--accent-soft);">
+        <div class="kpi-label">
+          <span>Enviadas hoy</span>
+          <span class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></span>
+        </div>
+        <div class="kpi-value">847</div>
+        <div class="kpi-delta up">↑ 12% vs ayer</div>
+      </div>
+      <div class="kpi-card" style="--kpi-color: var(--success); --kpi-bg: rgba(22,163,74,0.1);">
+        <div class="kpi-label">
+          <span>Tasa de entrega</span>
+          <span class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></span>
+        </div>
+        <div class="kpi-value">94.2%</div>
+        <div class="kpi-delta up">↑ 1.8% último mes</div>
+      </div>
+      <div class="kpi-card" style="--kpi-color: var(--info); --kpi-bg: rgba(8,145,178,0.1);">
+        <div class="kpi-label">
+          <span>Usuarios suscritos</span>
+          <span class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></span>
+        </div>
+        <div class="kpi-value">22 <span style="font-size: 14px; color: var(--text-muted); font-weight: 500;">/ 24</span></div>
+        <div class="kpi-delta">2 pendientes</div>
+      </div>
+      <div class="kpi-card" style="--kpi-color: var(--warning); --kpi-bg: rgba(217,119,6,0.1);">
+        <div class="kpi-label">
+          <span>Reglas activas</span>
+          <span class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 4l-9 9 5 5L19 9z"/></svg></span>
+        </div>
+        <div class="kpi-value">6 <span style="font-size: 14px; color: var(--text-muted); font-weight: 500;">/ 8</span></div>
+        <div class="kpi-delta">2 pausadas</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <div>
+          <div class="panel-title">Reglas de notificación</div>
+          <div class="panel-meta">8 reglas configuradas · Activación por evento del sistema</div>
+        </div>
+        <button class="btn btn-secondary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14m-7-7h14"/></svg>
+          Nueva regla
+        </button>
+      </div>
+      <div>
+        <div class="rule-row">
+          <div class="rule-icon rule-icon-sale">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+          </div>
+          <div class="rule-info">
+            <div class="rule-name">Venta completada</div>
+            <div class="rule-desc">Notifica al vendedor cuando una venta supera $1,000</div>
+            <span class="rule-event">on:sale.completed</span>
+          </div>
+          <div class="rule-targets">
+            <div class="target-avatar" style="background: linear-gradient(135deg, #f59e0b, #ea580c);">MR</div>
+            <div class="target-avatar" style="background: linear-gradient(135deg, #2563eb, #6366f1);">JS</div>
+            <div class="target-avatar" style="background: linear-gradient(135deg, #16a34a, #15803d);">LP</div>
+            <span class="target-more">+2</span>
+          </div>
+          <div class="toggle-switch on" data-rule="sale"></div>
+        </div>
+
+        <div class="rule-row">
+          <div class="rule-icon rule-icon-stock">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12" y2="16"/></svg>
+          </div>
+          <div class="rule-info">
+            <div class="rule-name">Stock bajo</div>
+            <div class="rule-desc">Alerta cuando inventario cae bajo el mínimo configurado por producto</div>
+            <span class="rule-event">on:inventory.low</span>
+          </div>
+          <div class="rule-targets">
+            <div class="target-avatar" style="background: linear-gradient(135deg, #d97706, #b45309);">AC</div>
+            <div class="target-avatar" style="background: linear-gradient(135deg, #dc2626, #991b1b);">RG</div>
+          </div>
+          <div class="toggle-switch on" data-rule="stock"></div>
+        </div>
+
+        <div class="rule-row">
+          <div class="rule-icon rule-icon-doc">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          </div>
+          <div class="rule-info">
+            <div class="rule-name">Documento pendiente de aprobación</div>
+            <div class="rule-desc">Notifica al supervisor cuando llega un documento nuevo a aprobar</div>
+            <span class="rule-event">on:document.pending_approval</span>
+          </div>
+          <div class="rule-targets">
+            <div class="target-avatar" style="background: linear-gradient(135deg, #2563eb, #1d4ed8);">CV</div>
+            <div class="target-avatar" style="background: linear-gradient(135deg, #6366f1, #4338ca);">AB</div>
+          </div>
+          <div class="toggle-switch on" data-rule="doc"></div>
+        </div>
+
+        <div class="rule-row">
+          <div class="rule-icon rule-icon-overdue">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <div class="rule-info">
+            <div class="rule-name">Factura vencida</div>
+            <div class="rule-desc">Aviso al equipo de cobranza cuando una factura supera 30 días</div>
+            <span class="rule-event">on:invoice.overdue</span>
+          </div>
+          <div class="rule-targets">
+            <div class="target-avatar" style="background: linear-gradient(135deg, #dc2626, #991b1b);">CN</div>
+            <div class="target-avatar" style="background: linear-gradient(135deg, #ea580c, #9a3412);">FG</div>
+            <div class="target-avatar" style="background: linear-gradient(135deg, #d97706, #b45309);">MK</div>
+          </div>
+          <div class="toggle-switch on" data-rule="overdue"></div>
+        </div>
+
+        <div class="rule-row">
+          <div class="rule-icon rule-icon-customer">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+          </div>
+          <div class="rule-info">
+            <div class="rule-name">Mensaje de cliente recibido</div>
+            <div class="rule-desc">Alerta al asesor asignado del cliente cuando llega un mensaje</div>
+            <span class="rule-event">on:customer.message</span>
+          </div>
+          <div class="rule-targets">
+            <div class="target-avatar" style="background: linear-gradient(135deg, #0891b2, #155e75);">VM</div>
+            <div class="target-avatar" style="background: linear-gradient(135deg, #14b8a6, #115e59);">RS</div>
+            <span class="target-more">asignado dinámicamente</span>
+          </div>
+          <div class="toggle-switch" data-rule="customer"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <div>
+          <div class="panel-title">Probar notificación</div>
+          <div class="panel-meta">Envía una notificación de prueba a tu propio dispositivo</div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="test-grid">
+          <div class="field-group">
+            <div class="field">
+              <label class="field-label">Regla a probar</label>
+              <select class="field-select" id="test-rule">
+                <option>Venta completada (sale.completed)</option>
+                <option>Stock bajo (inventory.low)</option>
+                <option>Documento pendiente (document.pending_approval)</option>
+                <option>Factura vencida (invoice.overdue)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="field-label">Título</label>
+              <input class="field-input" id="test-title" value="Venta completada · $1,250">
+            </div>
+            <div class="field">
+              <label class="field-label">Mensaje</label>
+              <textarea class="field-textarea" id="test-body">Cliente Distribuidora García - Pedido #4892 confirmado. Total: $1,250. Ver detalles en el sistema.</textarea>
+            </div>
+            <div class="field">
+              <label class="field-label">Destinatarios</label>
+              <select class="field-select">
+                <option>Solo yo (test)</option>
+                <option>Equipo de Ventas (5 usuarios)</option>
+                <option>Administradores (3 usuarios)</option>
+                <option>Todos los suscritos (22 usuarios)</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <div class="field-label" style="margin-bottom: var(--s-3);">Vista previa</div>
+            <div class="notif-preview" id="notif-preview">
+              <div class="notif-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+              </div>
+              <div class="notif-body">
+                <div class="notif-title" id="preview-title">Venta completada · $1,250</div>
+                <div class="notif-msg" id="preview-msg">Cliente Distribuidora García - Pedido #4892 confirmado. Total: $1,250. Ver detalles en el sistema.</div>
+                <div class="notif-meta">sistema.empresa.com · ahora</div>
+              </div>
+            </div>
+            <button class="btn btn-primary" style="width: 100%; justify-content: center; margin-top: var(--s-3);" id="send-test-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+              Enviar prueba ahora
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <div>
+          <div class="panel-title">Historial de envíos · últimas 24h</div>
+          <div class="panel-meta">847 enviadas · 798 entregadas · 32 fallidas · 17 pendientes</div>
+        </div>
+        <button class="btn btn-secondary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+          Exportar CSV
+        </button>
+      </div>
+      <table class="log-table">
+        <thead>
+          <tr><th>Hora</th><th>Regla</th><th>Destinatario</th><th>Estado</th><th>Latencia</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="mono">14:32:08</td><td>Venta completada</td><td>María Rodríguez</td><td><span class="delivery-pill delivery-delivered">✓ Entregada</span></td><td class="mono">142 ms</td></tr>
+          <tr><td class="mono">14:28:41</td><td>Stock bajo - SKU 4823</td><td>Roberto González</td><td><span class="delivery-pill delivery-delivered">✓ Entregada</span></td><td class="mono">98 ms</td></tr>
+          <tr><td class="mono">14:25:12</td><td>Factura vencida #2841</td><td>Carlos Núñez</td><td><span class="delivery-pill delivery-failed">✗ Fallida</span></td><td class="mono">— · permiso revocado</td></tr>
+          <tr><td class="mono">14:23:55</td><td>Documento pendiente</td><td>Andrea Bustos</td><td><span class="delivery-pill delivery-delivered">✓ Entregada</span></td><td class="mono">156 ms</td></tr>
+          <tr><td class="mono">14:21:30</td><td>Mensaje de cliente</td><td>Verónica Méndez</td><td><span class="delivery-pill delivery-pending">⏱ Reintentando</span></td><td class="mono">— · 2/3 intentos</td></tr>
+          <tr><td class="mono">14:18:02</td><td>Venta completada</td><td>Juan Silva</td><td><span class="delivery-pill delivery-delivered">✓ Entregada</span></td><td class="mono">112 ms</td></tr>
+        </tbody>
+      </table>
+      <div class="log-cards">
+        <div class="log-card">
+          <div style="display: flex; justify-content: space-between; font-size: 13px;"><strong>Venta completada</strong><span class="mono" style="color: var(--text-muted);">14:32:08</span></div>
+          <div style="font-size: 12px; color: var(--text-soft);">María Rodríguez</div>
+          <div style="display: flex; justify-content: space-between; align-items: center;"><span class="delivery-pill delivery-delivered">✓ Entregada</span><span class="mono" style="font-size: 11px; color: var(--text-muted);">142 ms</span></div>
+        </div>
+        <div class="log-card">
+          <div style="display: flex; justify-content: space-between; font-size: 13px;"><strong>Stock bajo - SKU 4823</strong><span class="mono" style="color: var(--text-muted);">14:28:41</span></div>
+          <div style="font-size: 12px; color: var(--text-soft);">Roberto González</div>
+          <div style="display: flex; justify-content: space-between; align-items: center;"><span class="delivery-pill delivery-delivered">✓ Entregada</span><span class="mono" style="font-size: 11px; color: var(--text-muted);">98 ms</span></div>
+        </div>
+        <div class="log-card failed">
+          <div style="display: flex; justify-content: space-between; font-size: 13px;"><strong>Factura vencida #2841</strong><span class="mono" style="color: var(--text-muted);">14:25:12</span></div>
+          <div style="font-size: 12px; color: var(--text-soft);">Carlos Núñez</div>
+          <div style="display: flex; justify-content: space-between; align-items: center;"><span class="delivery-pill delivery-failed">✗ Fallida</span><span style="font-size: 11px; color: var(--text-muted);">permiso revocado</span></div>
+        </div>
+        <div class="log-card pending">
+          <div style="display: flex; justify-content: space-between; font-size: 13px;"><strong>Mensaje de cliente</strong><span class="mono" style="color: var(--text-muted);">14:21:30</span></div>
+          <div style="font-size: 12px; color: var(--text-soft);">Verónica Méndez</div>
+          <div style="display: flex; justify-content: space-between; align-items: center;"><span class="delivery-pill delivery-pending">⏱ Reintentando</span><span style="font-size: 11px; color: var(--text-muted);">2/3 intentos</span></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="toast-stack" id="toast-stack"></div>
+
+<script>
+const mq = { mobile: window.matchMedia('(max-width: 768px)') };
+
+const sidebar = document.getElementById('sidebar');
+const menuBtn = document.getElementById('menu-btn');
+const overlay = document.getElementById('side-overlay');
+function openSidebar() { sidebar.classList.add('open'); menuBtn.classList.add('open'); overlay.classList.add('show'); document.body.style.overflow = 'hidden'; }
+function closeSidebar() { sidebar.classList.remove('open'); menuBtn.classList.remove('open'); overlay.classList.remove('show'); document.body.style.overflow = ''; }
+menuBtn.addEventListener('click', () => { sidebar.classList.contains('open') ? closeSidebar() : openSidebar(); });
+overlay.addEventListener('click', closeSidebar);
+mq.mobile.addEventListener('change', e => { if (!e.matches) closeSidebar(); });
+
+const toastStack = document.getElementById('toast-stack');
+function showToast(msg, icon = '✓') {
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.innerHTML = `<span>${icon}</span><span>${msg}</span>`;
+  toastStack.appendChild(t);
+  requestAnimationFrame(() => t.classList.add('show'));
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 2800);
+}
+
+// Toggle rules
+document.querySelectorAll('.toggle-switch').forEach(t => {
+  t.addEventListener('click', () => {
+    t.classList.toggle('on');
+    const ruleName = t.closest('.rule-row').querySelector('.rule-name').textContent;
+    showToast(`Regla "${ruleName}": ${t.classList.contains('on') ? 'Activada' : 'Pausada'}`, t.classList.contains('on') ? '✓' : '⊘');
+  });
+});
+
+// Live preview update
+const titleInput = document.getElementById('test-title');
+const bodyInput = document.getElementById('test-body');
+const previewTitle = document.getElementById('preview-title');
+const previewMsg = document.getElementById('preview-msg');
+titleInput.addEventListener('input', () => previewTitle.textContent = titleInput.value || 'Sin título');
+bodyInput.addEventListener('input', () => previewMsg.textContent = bodyInput.value || 'Sin mensaje');
+
+// Send test
+document.getElementById('send-test-btn').addEventListener('click', () => {
+  showToast(`Notificación enviada · ${Math.floor(Math.random() * 80 + 80)} ms`, '📡');
+});
+document.getElementById('test-send').addEventListener('click', () => {
+  showToast('Test enviado a tu navegador', '📡');
+});
+</script>
+
+</body>
+</html>
