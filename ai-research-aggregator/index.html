@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pesquisa IA · Agregador de Dados Públicos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f7f8fb;
+  --surface: #ffffff;
+  --surface-2: #f1f3f8;
+  --border: rgba(15,23,42,0.08);
+  --text: #0f172a;
+  --text-soft: #475569;
+  --text-muted: #94a3b8;
+  --accent: #6366f1;
+  --accent-soft: #eef2ff;
+  --green: #10b981;
+  --orange: #f59e0b;
+  --shadow-sm: 0 2px 8px rgba(15,23,42,0.04);
+  --shadow-md: 0 8px 24px rgba(15,23,42,0.08);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+.mono { font-family: 'JetBrains Mono', monospace; }
+
+/* HEADER */
+.topbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 32px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 20;
+  backdrop-filter: blur(20px);
+}
+.brand { display: flex; align-items: center; gap: 12px; font-weight: 600; font-size: 16px; }
+.brand-icon {
+  width: 32px; height: 32px;
+  background: linear-gradient(135deg, var(--accent), #8b5cf6);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  color: white; font-weight: 700;
+}
+.user-area { display: flex; align-items: center; gap: 12px; }
+.user-credits {
+  font-size: 12px; padding: 6px 12px;
+  background: var(--accent-soft); color: var(--accent);
+  border-radius: 100px; font-weight: 600;
+}
+.user-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: linear-gradient(135deg, #8b5cf6, #ec4899);
+  color: white; display: flex; align-items: center; justify-content: center;
+  font-weight: 600; font-size: 13px;
+}
+
+/* LAYOUT */
+.layout {
+  display: grid; grid-template-columns: 260px 1fr;
+  min-height: calc(100vh - 60px);
+}
+.sidebar {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: 24px 16px;
+}
+.side-section { margin-bottom: 24px; }
+.side-title {
+  font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.2px;
+  color: var(--text-muted); margin-bottom: 8px; padding: 0 8px;
+}
+.side-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 10px; border-radius: 8px;
+  font-size: 13px; cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 2px;
+}
+.side-item:hover { background: var(--surface-2); }
+.side-item.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.side-item .dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* MAIN */
+.main {
+  padding: 32px 48px;
+  max-width: 980px;
+}
+.page-title {
+  font-size: 24px; font-weight: 600;
+  margin-bottom: 6px;
+}
+.page-sub { color: var(--text-soft); margin-bottom: 28px; font-size: 14px; }
+
+/* SEARCH */
+.search-wrap {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; padding: 20px;
+  box-shadow: var(--shadow-md);
+  margin-bottom: 24px;
+  transition: border 0.2s;
+}
+.search-wrap:focus-within { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+.search-input {
+  width: 100%; border: none; outline: none;
+  font-family: inherit; font-size: 16px;
+  resize: none; min-height: 60px;
+  background: transparent; color: var(--text);
+}
+.search-input::placeholder { color: var(--text-muted); }
+.search-bar {
+  display: flex; justify-content: space-between; align-items: center;
+  padding-top: 12px; border-top: 1px solid var(--border);
+}
+.source-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+.source-pill {
+  font-size: 11px; padding: 4px 10px;
+  background: var(--surface-2);
+  border-radius: 100px;
+  display: flex; align-items: center; gap: 5px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.source-pill.active { background: var(--accent); color: white; }
+.source-pill:hover:not(.active) { background: var(--border); }
+.search-btn {
+  background: var(--accent); color: white;
+  border: none; padding: 10px 18px;
+  border-radius: 10px;
+  font-family: inherit; font-size: 13px; font-weight: 600;
+  cursor: pointer;
+  display: flex; align-items: center; gap: 8px;
+  transition: all 0.2s;
+}
+.search-btn:hover { background: #4f46e5; transform: translateY(-1px); }
+.search-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+/* SUGGESTIONS */
+.suggestions { margin-bottom: 32px; }
+.suggestion {
+  display: inline-block;
+  margin: 4px;
+  padding: 8px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.suggestion:hover { border-color: var(--accent); color: var(--accent); }
+
+/* RESULTS */
+.results-container { display: none; }
+.results-container.show { display: block; }
+
+.processing {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 20px;
+  margin-bottom: 16px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.proc-header { display: flex; align-items: center; gap: 12px; }
+.proc-spinner {
+  width: 20px; height: 20px;
+  border: 2px solid var(--surface-2);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.proc-title { font-weight: 600; font-size: 14px; }
+.proc-list {
+  display: flex; flex-direction: column; gap: 8px;
+  padding-left: 32px;
+}
+.proc-step {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 13px; color: var(--text-soft);
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+.proc-step.done { opacity: 1; color: var(--text); }
+.proc-step.active { opacity: 1; }
+.proc-step .step-icon {
+  width: 16px; height: 16px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-size: 10px;
+}
+.proc-step.done .step-icon { background: var(--green); color: white; }
+.proc-step.active .step-icon { background: var(--accent); color: white; animation: pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: 0.5; } }
+
+.ai-answer {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px;
+  margin-bottom: 16px;
+  position: relative;
+}
+.ai-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px;
+  background: linear-gradient(135deg, var(--accent), #8b5cf6);
+  color: white; font-size: 11px; font-weight: 600;
+  border-radius: 100px; margin-bottom: 12px;
+  text-transform: uppercase; letter-spacing: 1px;
+}
+.ai-content {
+  font-size: 14px; line-height: 1.7;
+}
+.ai-content p { margin-bottom: 12px; }
+.ai-content strong { font-weight: 600; }
+.ai-cite {
+  display: inline-flex; vertical-align: super; font-size: 10px;
+  width: 18px; height: 18px;
+  background: var(--accent-soft); color: var(--accent);
+  border-radius: 4px;
+  align-items: center; justify-content: center;
+  cursor: pointer; font-weight: 600;
+  margin: 0 1px;
+  transition: all 0.2s;
+}
+.ai-cite:hover { background: var(--accent); color: white; }
+
+.ai-footer {
+  display: flex; gap: 12px; align-items: center;
+  margin-top: 20px; padding-top: 16px;
+  border-top: 1px solid var(--border);
+  font-size: 12px; color: var(--text-muted);
+}
+.ai-action {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.ai-action:hover { background: var(--surface-2); color: var(--text); }
+
+/* SOURCES */
+.sources-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.source-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 16px;
+  display: flex; gap: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.source-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.source-num {
+  width: 24px; height: 24px;
+  background: var(--accent-soft); color: var(--accent);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 12px; flex-shrink: 0;
+}
+.source-body { flex: 1; min-width: 0; }
+.source-domain {
+  font-size: 11px; color: var(--text-muted);
+  margin-bottom: 4px;
+  display: flex; align-items: center; gap: 6px;
+}
+.source-favicon {
+  width: 14px; height: 14px;
+  border-radius: 3px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 700; color: white;
+}
+.source-title {
+  font-size: 13px; font-weight: 600;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  margin-bottom: 4px;
+}
+.source-snippet {
+  font-size: 12px; color: var(--text-soft);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* STRUCTURED DATA */
+.structured {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 20px;
+  margin-bottom: 16px;
+}
+.structured-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 16px; padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.structured-title { font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+.export-btn {
+  font-size: 11px; padding: 5px 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 6px; cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+.export-btn:hover { background: var(--accent); color: white; border-color: var(--accent); }
+table.data-table {
+  width: 100%; border-collapse: collapse;
+  font-size: 13px;
+}
+.data-table th {
+  text-align: left; padding: 10px 12px;
+  background: var(--surface-2);
+  color: var(--text-muted); font-weight: 600;
+  font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
+  border-bottom: 1px solid var(--border);
+}
+.data-table td {
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover { background: var(--surface-2); }
+.data-pill {
+  display: inline-flex; padding: 2px 8px;
+  background: var(--surface-2);
+  border-radius: 100px;
+  font-size: 11px; font-weight: 600;
+}
+.data-pill.verified { background: rgba(16,185,129,0.1); color: var(--green); }
+.data-pill.partial { background: rgba(245,158,11,0.1); color: var(--orange); }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+  .sidebar { display: none; }
+  .main { padding: 20px 16px; }
+  .sources-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-icon">P</div>
+    <div>Pesquisa IA</div>
+  </div>
+  <div class="user-area">
+    <div class="user-credits">142 créditos</div>
+    <div class="user-avatar">CS</div>
+  </div>
+</div>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="side-section">
+      <div class="side-title">Pesquisas</div>
+      <div class="side-item active"><span class="dot" style="background: var(--accent)"></span>Nova pesquisa</div>
+      <div class="side-item"><span class="dot" style="background: var(--green)"></span>Recentes (12)</div>
+      <div class="side-item"><span class="dot" style="background: var(--orange)"></span>Favoritas</div>
+    </div>
+    <div class="side-section">
+      <div class="side-title">Fontes ativas</div>
+      <div class="side-item"><span class="dot" style="background: var(--green)"></span>Receita Federal</div>
+      <div class="side-item"><span class="dot" style="background: var(--green)"></span>JusBrasil</div>
+      <div class="side-item"><span class="dot" style="background: var(--green)"></span>Diário Oficial</div>
+      <div class="side-item"><span class="dot" style="background: var(--green)"></span>CNPJ.biz</div>
+      <div class="side-item"><span class="dot" style="background: var(--green)"></span>SERASA Public</div>
+      <div class="side-item"><span class="dot" style="background: var(--orange)"></span>JUCESP</div>
+      <div class="side-item"><span class="dot" style="background: var(--text-muted)"></span>+ Adicionar fonte</div>
+    </div>
+    <div class="side-section">
+      <div class="side-title">Configurações</div>
+      <div class="side-item">⚙ Preferências</div>
+      <div class="side-item">📊 Histórico de uso</div>
+      <div class="side-item">🔑 Chaves de API</div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="page-title">O que vamos pesquisar hoje?</div>
+    <div class="page-sub">A IA consulta múltiplas fontes públicas, extrai dados estruturados e gera resumo com citações.</div>
+
+    <div class="search-wrap">
+      <textarea class="search-input" id="search-input" placeholder="Ex: empresa Tech Solutions LTDA CNPJ 12.345.678/0001-90 - quais ações judiciais ativas e situação fiscal?"></textarea>
+      <div class="search-bar">
+        <div class="source-pills">
+          <div class="source-pill active" data-source="all">Todas as fontes</div>
+          <div class="source-pill" data-source="judicial">⚖ Judicial</div>
+          <div class="source-pill" data-source="fiscal">📋 Fiscal</div>
+          <div class="source-pill" data-source="corporate">🏢 Empresarial</div>
+        </div>
+        <button class="search-btn" id="search-btn">
+          <span>Pesquisar com IA</span>
+          <span>→</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="suggestions" id="suggestions">
+      <div class="suggestion">Verificar processos judiciais de uma empresa</div>
+      <div class="suggestion">Situação fiscal por CNPJ</div>
+      <div class="suggestion">Histórico de licitações públicas</div>
+      <div class="suggestion">Diário Oficial - publicações recentes</div>
+      <div class="suggestion">Sócios e participações societárias</div>
+    </div>
+
+    <div class="results-container" id="results">
+      <!-- Processing -->
+      <div class="processing" id="processing">
+        <div class="proc-header">
+          <div class="proc-spinner"></div>
+          <div class="proc-title">Pesquisando em fontes públicas...</div>
+        </div>
+        <div class="proc-list" id="proc-list">
+          <div class="proc-step" data-step="0">
+            <div class="step-icon">1</div>
+            <div>Consultando Receita Federal (CNPJ)</div>
+          </div>
+          <div class="proc-step" data-step="1">
+            <div class="step-icon">2</div>
+            <div>Buscando processos no JusBrasil</div>
+          </div>
+          <div class="proc-step" data-step="2">
+            <div class="step-icon">3</div>
+            <div>Verificando publicações no Diário Oficial</div>
+          </div>
+          <div class="proc-step" data-step="3">
+            <div class="step-icon">4</div>
+            <div>Cruzando dados com IA + extração estruturada</div>
+          </div>
+          <div class="proc-step" data-step="4">
+            <div class="step-icon">5</div>
+            <div>Gerando resumo com citações</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Answer -->
+      <div class="ai-answer" id="ai-answer" style="display: none;">
+        <div class="ai-badge">
+          <span>✨</span>
+          <span>Resumo gerado por IA</span>
+        </div>
+        <div class="ai-content">
+          <p><strong>Tech Solutions LTDA</strong> (CNPJ 12.345.678/0001-90) é uma empresa de tecnologia ativa desde 2019, sede em São Paulo/SP, capital social de R$ 500.000,00<span class="ai-cite">1</span>. Situação cadastral: <strong>ativa</strong> e regular junto à Receita Federal.</p>
+          <p>Foram localizados <strong>3 processos judiciais ativos</strong>: dois trabalhistas em fase de instrução (Vara do Trabalho de São Paulo) e um cível de cobrança contra fornecedor<span class="ai-cite">2</span>. Não há registros de execuções fiscais nem ações por sócios.</p>
+          <p>Quadro societário: dois sócios administradores, com participação de 70% e 30% respectivamente<span class="ai-cite">3</span>. Última alteração contratual em agosto/2024 (aumento de capital).</p>
+          <p>Situação fiscal: <strong>regular</strong>. Sem pendências de IRPJ, ICMS ou ISS conforme certidões positivas com efeito de negativa<span class="ai-cite">4</span>. Última atualização da Receita: maio/2026.</p>
+        </div>
+        <div class="ai-footer">
+          <div class="ai-action">📋 Copiar resumo</div>
+          <div class="ai-action">📄 Exportar PDF</div>
+          <div class="ai-action">⭐ Salvar pesquisa</div>
+          <div style="margin-left: auto;">Pesquisa realizada em 4.2s · 4 fontes consultadas</div>
+        </div>
+      </div>
+
+      <!-- Structured data -->
+      <div class="structured" id="structured" style="display: none;">
+        <div class="structured-header">
+          <div class="structured-title">📊 Dados estruturados extraídos</div>
+          <div style="display: flex; gap: 6px;">
+            <div class="export-btn">CSV</div>
+            <div class="export-btn">JSON</div>
+            <div class="export-btn">Excel</div>
+          </div>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Campo</th><th>Valor</th><th>Fonte</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Razão social</strong></td><td>Tech Solutions LTDA</td><td>Receita Federal</td><td><span class="data-pill verified">✓ Verificado</span></td></tr>
+            <tr><td><strong>CNPJ</strong></td><td class="mono">12.345.678/0001-90</td><td>Receita Federal</td><td><span class="data-pill verified">✓ Verificado</span></td></tr>
+            <tr><td><strong>Situação</strong></td><td>Ativa</td><td>Receita Federal</td><td><span class="data-pill verified">✓ Verificado</span></td></tr>
+            <tr><td><strong>Capital social</strong></td><td>R$ 500.000,00</td><td>JUCESP</td><td><span class="data-pill verified">✓ Verificado</span></td></tr>
+            <tr><td><strong>Processos ativos</strong></td><td>3 (2 trabalhistas, 1 cível)</td><td>JusBrasil</td><td><span class="data-pill verified">✓ Verificado</span></td></tr>
+            <tr><td><strong>Sócio 1</strong></td><td>João Silva (70%)</td><td>JUCESP</td><td><span class="data-pill verified">✓ Verificado</span></td></tr>
+            <tr><td><strong>Sócio 2</strong></td><td>Maria Costa (30%)</td><td>JUCESP</td><td><span class="data-pill verified">✓ Verificado</span></td></tr>
+            <tr><td><strong>Última alteração contratual</strong></td><td>Ago/2024 - Aumento de capital</td><td>JUCESP</td><td><span class="data-pill partial">⚠ Parcial</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Sources -->
+      <div id="sources-section" style="display: none;">
+        <div style="font-weight: 600; font-size: 14px; margin-bottom: 12px;">Fontes consultadas</div>
+        <div class="sources-grid">
+          <div class="source-card">
+            <div class="source-num">1</div>
+            <div class="source-body">
+              <div class="source-domain"><span class="source-favicon" style="background: #1976d2;">RF</span>receita.fazenda.gov.br</div>
+              <div class="source-title">Consulta CNPJ - Tech Solutions LTDA</div>
+              <div class="source-snippet">Empresa ativa, situação cadastral regular. Atividade principal: 6201-5/01 Desenvolvimento de programas de computador sob encomenda.</div>
+            </div>
+          </div>
+          <div class="source-card">
+            <div class="source-num">2</div>
+            <div class="source-body">
+              <div class="source-domain"><span class="source-favicon" style="background: #d32f2f;">JB</span>jusbrasil.com.br</div>
+              <div class="source-title">Processos da Tech Solutions LTDA</div>
+              <div class="source-snippet">3 processos ativos: 2 reclamações trabalhistas (TRT-2 SP) em fase de instrução, 1 ação de cobrança no TJSP contra fornecedor de hardware.</div>
+            </div>
+          </div>
+          <div class="source-card">
+            <div class="source-num">3</div>
+            <div class="source-body">
+              <div class="source-domain"><span class="source-favicon" style="background: #388e3c;">JU</span>jucesp.sp.gov.br</div>
+              <div class="source-title">Atos societários - Tech Solutions LTDA</div>
+              <div class="source-snippet">Quadro societário: João Silva (CPF ***456) 70%, Maria Costa (CPF ***789) 30%. Última alteração: ago/2024.</div>
+            </div>
+          </div>
+          <div class="source-card">
+            <div class="source-num">4</div>
+            <div class="source-body">
+              <div class="source-domain"><span class="source-favicon" style="background: #f57c00;">DO</span>imprensaoficial.com.br</div>
+              <div class="source-title">Diário Oficial - publicações recentes</div>
+              <div class="source-snippet">Nenhuma publicação relevante nos últimos 90 dias. Última publicação: alteração contratual em ago/2024.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+const examplePrompts = [
+  "Verificar processos judiciais de uma empresa",
+  "Situação fiscal por CNPJ",
+  "Histórico de licitações públicas",
+  "Diário Oficial - publicações recentes",
+  "Sócios e participações societárias"
+];
+
+const input = document.getElementById('search-input');
+const btn = document.getElementById('search-btn');
+const results = document.getElementById('results');
+const processing = document.getElementById('processing');
+const aiAnswer = document.getElementById('ai-answer');
+const structured = document.getElementById('structured');
+const sourcesSection = document.getElementById('sources-section');
+const suggestions = document.getElementById('suggestions');
+
+// Click suggestions to fill input
+document.querySelectorAll('.suggestion').forEach(s => {
+  s.addEventListener('click', () => {
+    input.value = s.textContent + ' - empresa Tech Solutions LTDA CNPJ 12.345.678/0001-90';
+    input.focus();
+  });
+});
+
+// Source pill toggle
+document.querySelectorAll('.source-pill').forEach(p => {
+  p.addEventListener('click', () => {
+    document.querySelectorAll('.source-pill').forEach(x => x.classList.remove('active'));
+    p.classList.add('active');
+  });
+});
+
+// Citation hover
+document.querySelectorAll('.ai-cite').forEach(c => {
+  c.addEventListener('click', () => {
+    const num = c.textContent;
+    document.querySelectorAll('.source-card').forEach(s => {
+      if (s.querySelector('.source-num').textContent === num) {
+        s.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        s.style.borderColor = 'var(--accent)';
+        setTimeout(() => s.style.borderColor = '', 1200);
+      }
+    });
+  });
+});
+
+// Search simulation
+btn.addEventListener('click', () => {
+  if (!input.value.trim()) return;
+  runSearch();
+});
+
+input.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+    e.preventDefault();
+    runSearch();
+  }
+});
+
+function runSearch() {
+  suggestions.style.display = 'none';
+  results.classList.add('show');
+  aiAnswer.style.display = 'none';
+  structured.style.display = 'none';
+  sourcesSection.style.display = 'none';
+  processing.style.display = 'flex';
+  btn.disabled = true;
+  btn.querySelector('span').textContent = 'Pesquisando...';
+
+  // Reset steps
+  document.querySelectorAll('.proc-step').forEach(s => {
+    s.classList.remove('done', 'active');
+    const icon = s.querySelector('.step-icon');
+    icon.textContent = s.dataset.step ? (parseInt(s.dataset.step) + 1) : '';
+  });
+
+  // Animate steps
+  let step = 0;
+  const steps = document.querySelectorAll('.proc-step');
+  const stepInterval = setInterval(() => {
+    if (step > 0) {
+      steps[step - 1].classList.remove('active');
+      steps[step - 1].classList.add('done');
+      steps[step - 1].querySelector('.step-icon').textContent = '✓';
+    }
+    if (step < steps.length) {
+      steps[step].classList.add('active');
+      step++;
+    } else {
+      clearInterval(stepInterval);
+      finishSearch();
+    }
+  }, 700);
+}
+
+function finishSearch() {
+  setTimeout(() => {
+    processing.style.display = 'none';
+    aiAnswer.style.display = 'block';
+    structured.style.display = 'block';
+    sourcesSection.style.display = 'block';
+    btn.disabled = false;
+    btn.querySelector('span').textContent = 'Pesquisar com IA';
+
+    // Animate appearance
+    aiAnswer.style.opacity = '0';
+    structured.style.opacity = '0';
+    sourcesSection.style.opacity = '0';
+    setTimeout(() => { aiAnswer.style.transition = 'opacity 0.5s'; aiAnswer.style.opacity = '1'; }, 50);
+    setTimeout(() => { structured.style.transition = 'opacity 0.5s'; structured.style.opacity = '1'; }, 250);
+    setTimeout(() => { sourcesSection.style.transition = 'opacity 0.5s'; sourcesSection.style.opacity = '1'; }, 450);
+  }, 500);
+}
+
+// Export buttons
+document.querySelectorAll('.export-btn').forEach(b => {
+  b.addEventListener('click', () => {
+    const format = b.textContent;
+    b.textContent = '✓ Baixando...';
+    setTimeout(() => b.textContent = format, 1500);
+  });
+});
+
+// Action buttons
+document.querySelectorAll('.ai-action').forEach(a => {
+  a.addEventListener('click', () => {
+    const original = a.innerHTML;
+    a.innerHTML = '✓ Feito';
+    setTimeout(() => a.innerHTML = original, 1500);
+  });
+});
+</script>
+
+</body>
+</html>
