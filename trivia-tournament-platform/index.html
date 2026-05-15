@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>MindArena · Torneos de Destreza Mental</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&family=Fraunces:wght@500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #07051a;
+  --bg-soft: #0d0a26;
+  --surface: #14102e;
+  --surface-2: #1c1842;
+  --surface-3: #28245c;
+  --surface-4: #353074;
+  --border: rgba(255,255,255,0.08);
+  --border-strong: rgba(255,255,255,0.15);
+
+  --text: #f5f3ff;
+  --text-soft: #c4c0e8;
+  --text-muted: #8b87b8;
+  --text-dim: #5c5887;
+
+  --accent: #a78bfa;
+  --accent-2: #06d6a0;
+  --accent-3: #ffd93d;
+  --accent-soft: rgba(167,139,250,0.15);
+  --accent-glow: rgba(167,139,250,0.4);
+
+  --pink: #f72585;
+  --orange: #f59e0b;
+  --success: #06d6a0;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 20px;
+  --s-6: 24px; --s-8: 32px;
+
+  --shadow-lg: 0 16px 40px rgba(0,0,0,0.5);
+  --shadow-glow: 0 0 24px var(--accent-glow);
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; user-select: none; }
+html { font-size: 14px; }
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  background-image:
+    radial-gradient(circle at 0% 0%, rgba(247,37,133,0.08), transparent 50%),
+    radial-gradient(circle at 100% 100%, rgba(167,139,250,0.08), transparent 50%);
+  background-attachment: fixed;
+  color: var(--text);
+  line-height: 1.5;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+.mono { font-family: 'JetBrains Mono', monospace; font-feature-settings: "tnum"; }
+.serif { font-family: 'Fraunces', serif; }
+
+button, input { font-family: inherit; color: inherit; border: none; outline: none; background: none; cursor: pointer; }
+
+/* APP SHELL */
+.app-shell {
+  max-width: 440px;
+  margin: 0 auto;
+  min-height: 100vh;
+  position: relative;
+  display: flex; flex-direction: column;
+}
+@media (min-width: 1024px) {
+  .app-shell {
+    margin: var(--s-6) auto;
+    min-height: calc(100vh - 48px);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    border: 1px solid var(--border-strong);
+    box-shadow: 0 0 80px rgba(0,0,0,0.6);
+  }
+}
+
+/* TOPBAR */
+.topbar {
+  padding: var(--s-4) var(--s-5);
+  display: flex; align-items: center; justify-content: space-between;
+  background: rgba(7,5,26,0.85);
+  backdrop-filter: blur(20px);
+  position: sticky; top: 0; z-index: 30;
+  border-bottom: 1px solid var(--border);
+}
+.brand { display: flex; align-items: center; gap: var(--s-3); }
+.brand-mark {
+  width: 40px; height: 40px;
+  background: linear-gradient(135deg, var(--accent), var(--pink));
+  border-radius: var(--radius-md);
+  display: flex; align-items: center; justify-content: center;
+  color: white; font-weight: 800; font-size: 18px;
+  box-shadow: 0 4px 16px var(--accent-glow);
+  position: relative;
+}
+.brand-mark::after {
+  content: ''; position: absolute; inset: 0;
+  border-radius: var(--radius-md);
+  background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.4), transparent 50%);
+}
+.brand-text { display: flex; flex-direction: column; gap: 1px; }
+.brand-name { font-weight: 800; font-size: 16px; letter-spacing: -0.01em; }
+.brand-sub { font-size: 10px; color: var(--text-muted); font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; }
+
+.wallet-pill {
+  display: flex; align-items: center; gap: var(--s-2);
+  padding: 6px 12px;
+  background: rgba(6,214,160,0.15);
+  border: 1px solid rgba(6,214,160,0.25);
+  border-radius: 100px;
+}
+.wallet-pill-icon { width: 16px; height: 16px; color: var(--accent-2); }
+.wallet-pill-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px; font-weight: 700;
+  color: var(--accent-2);
+}
+
+/* MAIN */
+.main {
+  flex: 1;
+  padding: var(--s-5) var(--s-5) 100px;
+  display: flex; flex-direction: column; gap: var(--s-5);
+}
+
+/* SCREENS */
+.screen { display: none; flex-direction: column; gap: var(--s-4); animation: fadeIn 0.4s var(--ease-out); }
+.screen.active { display: flex; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* HERO BANNER */
+.hero-banner {
+  background: linear-gradient(135deg, var(--accent), var(--pink) 70%);
+  border-radius: var(--radius-lg);
+  padding: var(--s-5);
+  position: relative; overflow: hidden;
+}
+.hero-banner::before {
+  content: ''; position: absolute; top: -20px; right: -20px;
+  width: 140px; height: 140px;
+  background: radial-gradient(circle, var(--accent-3), transparent 60%);
+  opacity: 0.6;
+  pointer-events: none;
+}
+.hero-tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px;
+  background: rgba(0,0,0,0.3);
+  border-radius: 100px;
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 1.5px;
+  margin-bottom: var(--s-3);
+}
+.hero-tag .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-3); box-shadow: 0 0 8px var(--accent-3); animation: pulse 1.5s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: 0.5; } }
+
+.hero-title {
+  font-weight: 800;
+  font-size: 24px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  margin-bottom: var(--s-2);
+  position: relative;
+}
+.hero-prize {
+  display: flex; align-items: baseline; gap: var(--s-2);
+  margin-bottom: var(--s-2);
+}
+.hero-prize-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 32px; font-weight: 800;
+  color: var(--accent-3);
+  text-shadow: 0 2px 12px rgba(255,217,61,0.4);
+}
+.hero-prize-label {
+  font-size: 11px;
+  text-transform: uppercase; letter-spacing: 1.5px;
+  font-weight: 700;
+  opacity: 0.8;
+}
+.hero-meta {
+  display: flex; gap: var(--s-3); align-items: center;
+  font-size: 12px;
+  margin-bottom: var(--s-4);
+  position: relative;
+}
+.hero-meta-item { display: flex; align-items: center; gap: 4px; }
+.hero-meta svg { width: 12px; height: 12px; }
+
+.hero-btn {
+  width: 100%;
+  padding: 14px;
+  background: white;
+  color: var(--accent);
+  border-radius: 100px;
+  font-weight: 800; font-size: 14px;
+  text-transform: uppercase; letter-spacing: 1px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+}
+.hero-btn svg { width: 16px; height: 16px; }
+
+/* SECTION HEADER */
+.section-head {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0 4px;
+}
+.section-title { font-weight: 800; font-size: 16px; letter-spacing: -0.01em; }
+.section-action { font-size: 12px; color: var(--accent); font-weight: 700; }
+
+/* TOURNAMENT CARDS */
+.tournament-list { display: flex; flex-direction: column; gap: var(--s-3); }
+.tournament-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--s-4);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s var(--ease-out);
+  display: flex; gap: var(--s-3);
+  align-items: center;
+}
+.tournament-card:hover { transform: translateY(-2px); border-color: var(--border-strong); }
+.tournament-card.live { border-color: var(--accent); box-shadow: 0 4px 20px var(--accent-glow); }
+
+.tournament-icon {
+  width: 56px; height: 56px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, var(--bg-color, var(--accent)), var(--bg-color2, var(--pink)));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+.tournament-info { flex: 1; min-width: 0; }
+.tournament-name { font-weight: 700; font-size: 14px; margin-bottom: 2px; }
+.tournament-category { font-size: 11px; color: var(--text-muted); }
+.tournament-prize {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 800;
+  color: var(--accent-3);
+  font-size: 15px;
+  text-align: right;
+  flex-shrink: 0;
+}
+.tournament-prize-label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+
+.tournament-status {
+  position: absolute; top: 8px; right: 8px;
+  padding: 3px 8px;
+  font-size: 9px; font-weight: 700;
+  border-radius: 100px;
+  text-transform: uppercase; letter-spacing: 1px;
+}
+.status-live {
+  background: rgba(247,37,133,0.2);
+  color: var(--pink);
+  display: flex; align-items: center; gap: 4px;
+}
+.status-live::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--pink); animation: pulse 1.2s ease-in-out infinite; }
+.status-soon {
+  background: rgba(245,158,11,0.2);
+  color: var(--warning);
+}
+
+/* GAME SCREEN */
+.game-header {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--s-4);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.game-info { display: flex; align-items: center; gap: var(--s-3); }
+.game-q-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 24px; font-weight: 800;
+  background: linear-gradient(135deg, var(--accent), var(--pink));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.game-q-sub { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+
+.game-timer {
+  position: relative;
+  width: 64px; height: 64px;
+}
+.timer-bg {
+  width: 100%; height: 100%;
+  transform: rotate(-90deg);
+}
+.timer-value {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 20px; font-weight: 800;
+  color: var(--accent-3);
+}
+
+.question-card {
+  background: linear-gradient(135deg, var(--surface), var(--surface-2));
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  padding: var(--s-5);
+  min-height: 140px;
+  display: flex; align-items: center; justify-content: center;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.question-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--pink));
+}
+.question-text {
+  font-family: 'Fraunces', serif;
+  font-weight: 500;
+  font-size: 20px;
+  line-height: 1.3;
+}
+
+.answers-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s-3);
+}
+.answer-btn {
+  padding: var(--s-4);
+  background: var(--surface);
+  border: 2px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  font-weight: 700; font-size: 14px;
+  transition: all 0.2s var(--ease-out);
+  display: flex; align-items: center; gap: var(--s-3);
+  min-height: 70px;
+  text-align: left;
+}
+.answer-btn:hover:not(.locked) { border-color: var(--accent); transform: translateY(-2px); }
+.answer-btn.locked { cursor: not-allowed; }
+.answer-btn.correct {
+  border-color: var(--success);
+  background: rgba(6,214,160,0.15);
+  color: var(--success);
+}
+.answer-btn.incorrect {
+  border-color: var(--danger);
+  background: rgba(239,68,68,0.15);
+  color: var(--danger);
+}
+.answer-letter {
+  width: 32px; height: 32px;
+  background: var(--surface-3);
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800;
+  font-family: 'JetBrains Mono', monospace;
+  flex-shrink: 0;
+}
+.answer-btn.correct .answer-letter { background: var(--success); color: white; }
+.answer-btn.incorrect .answer-letter { background: var(--danger); color: white; }
+
+/* LIVE LEADERBOARD */
+.leaderboard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--s-4);
+}
+.lb-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: var(--s-3);
+}
+.lb-title { font-size: 13px; font-weight: 700; }
+.lb-live {
+  font-size: 10px; font-weight: 700;
+  color: var(--pink);
+  display: flex; align-items: center; gap: 4px;
+  text-transform: uppercase; letter-spacing: 1px;
+}
+.lb-live::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--pink); animation: pulse 1.2s ease-in-out infinite; }
+
+.lb-list { display: flex; flex-direction: column; gap: var(--s-2); }
+.lb-row {
+  display: flex; align-items: center; gap: var(--s-3);
+  padding: 10px;
+  background: var(--surface-2);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  position: relative;
+  transition: all 0.4s var(--ease-out);
+}
+.lb-row.you {
+  border-left: 3px solid var(--accent);
+  background: var(--surface-3);
+}
+.lb-rank {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--surface-3);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 12px;
+  flex-shrink: 0;
+}
+.lb-rank.r1 { background: linear-gradient(135deg, var(--accent-3), #ea580c); color: var(--bg); }
+.lb-rank.r2 { background: linear-gradient(135deg, #cbd5e1, #94a3b8); color: var(--bg); }
+.lb-rank.r3 { background: linear-gradient(135deg, #c2410c, #7c2d12); }
+.lb-avatar {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--pink));
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+.lb-name { flex: 1; font-weight: 600; }
+.lb-score {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 800;
+  color: var(--accent-3);
+}
+.lb-streak {
+  font-size: 10px;
+  background: rgba(247,37,133,0.2);
+  color: var(--pink);
+  padding: 2px 6px;
+  border-radius: 100px;
+  font-weight: 700;
+}
+
+/* WALLET SCREEN */
+.wallet-card {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--pink) 100%);
+  border-radius: var(--radius-lg);
+  padding: var(--s-5);
+  position: relative;
+  overflow: hidden;
+}
+.wallet-card::before {
+  content: ''; position: absolute; top: -40px; right: -40px;
+  width: 200px; height: 200px;
+  background: radial-gradient(circle, rgba(255,255,255,0.2), transparent);
+  pointer-events: none;
+}
+.wallet-card::after {
+  content: ''; position: absolute; bottom: -60px; left: -60px;
+  width: 180px; height: 180px;
+  background: radial-gradient(circle, var(--accent-3), transparent);
+  opacity: 0.3;
+  pointer-events: none;
+}
+.wallet-eyebrow {
+  font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px;
+  font-weight: 700;
+  opacity: 0.7;
+  margin-bottom: var(--s-2);
+}
+.wallet-balance {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 36px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-bottom: var(--s-3);
+  position: relative;
+}
+.wallet-currency { font-size: 18px; opacity: 0.7; font-weight: 700; }
+
+.wallet-actions {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: var(--s-2);
+  position: relative;
+}
+.wallet-action {
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: var(--radius-md);
+  padding: var(--s-3);
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: background 0.2s;
+}
+.wallet-action:hover { background: rgba(255,255,255,0.25); }
+.wallet-action svg { width: 18px; height: 18px; margin-bottom: 4px; }
+.wallet-action-label { display: block; }
+
+/* TRANSACTION LIST */
+.tx-list {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+.tx-row {
+  display: flex; align-items: center; gap: var(--s-3);
+  padding: var(--s-4);
+  border-bottom: 1px solid var(--border);
+}
+.tx-row:last-child { border-bottom: none; }
+.tx-icon {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.tx-icon.win { background: rgba(6,214,160,0.15); color: var(--success); }
+.tx-icon.entry { background: rgba(247,37,133,0.15); color: var(--pink); }
+.tx-icon.deposit { background: rgba(167,139,250,0.15); color: var(--accent); }
+.tx-info { flex: 1; min-width: 0; }
+.tx-name { font-weight: 600; font-size: 13px; margin-bottom: 2px; }
+.tx-meta { font-size: 11px; color: var(--text-muted); }
+.tx-amount {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  font-size: 14px;
+  text-align: right;
+}
+.tx-amount.positive { color: var(--success); }
+.tx-amount.negative { color: var(--text-soft); }
+
+/* RESULT MODAL */
+.result-screen {
+  text-align: center;
+}
+.result-crown {
+  width: 100px; height: 100px;
+  margin: 0 auto var(--s-4);
+  background: linear-gradient(135deg, var(--accent-3), var(--orange));
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 48px;
+  box-shadow: 0 0 40px var(--accent-3);
+  animation: crown-pop 0.6s var(--ease-spring);
+}
+@keyframes crown-pop {
+  0% { transform: scale(0) rotate(-180deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+.result-place {
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  font-size: 22px;
+  color: var(--accent-3);
+  margin-bottom: var(--s-2);
+}
+.result-amount {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 56px;
+  font-weight: 900;
+  background: linear-gradient(135deg, var(--accent-3), var(--pink));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1;
+  margin-bottom: var(--s-2);
+}
+.result-currency { font-size: 24px; opacity: 0.6; font-weight: 700; }
+.result-sub { color: var(--text-soft); margin-bottom: var(--s-5); }
+.result-stats {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: var(--s-2);
+  margin-bottom: var(--s-5);
+}
+.r-stat {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--s-3);
+}
+.r-stat-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 18px; font-weight: 800;
+  color: var(--accent);
+}
+.r-stat-label {
+  font-size: 9px; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 1px;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+/* BOTTOM NAV */
+.bottom-nav {
+  position: fixed;
+  bottom: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 100%; max-width: 440px;
+  background: rgba(7,5,26,0.95);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border-strong);
+  padding: 10px 0;
+  padding-bottom: calc(10px + env(safe-area-inset-bottom, 0));
+  display: flex;
+  z-index: 40;
+}
+@media (min-width: 1024px) {
+  .bottom-nav {
+    position: sticky;
+    bottom: 0;
+    width: auto;
+    left: auto;
+    transform: none;
+    border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+  }
+}
+.nav-item {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 6px;
+  color: var(--text-muted);
+  transition: color 0.2s;
+}
+.nav-item svg { width: 22px; height: 22px; }
+.nav-label { font-size: 10px; font-weight: 700; }
+.nav-item.active { color: var(--accent); }
+
+/* TOAST */
+.toast-stack {
+  position: fixed; bottom: 90px; left: var(--s-5); right: var(--s-5);
+  max-width: 400px; margin: 0 auto;
+  z-index: 100;
+  display: flex; flex-direction: column; gap: var(--s-2);
+  pointer-events: none;
+}
+.toast {
+  background: var(--surface-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  padding: var(--s-3) var(--s-4);
+  font-size: 13px; font-weight: 600;
+  box-shadow: var(--shadow-lg), 0 0 20px var(--accent-glow);
+  display: flex; align-items: center; gap: var(--s-2);
+  pointer-events: auto;
+  transform: translateY(100px); opacity: 0;
+  transition: all 0.4s var(--ease-spring);
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+
+@media (max-width: 400px) {
+  .answers-grid { grid-template-columns: 1fr; }
+  .main { padding: var(--s-4) var(--s-3) 100px; }
+  .result-amount { font-size: 44px; }
+  .hero-title { font-size: 20px; }
+}
+@media (hover: none) {
+  .tournament-card:hover, .answer-btn:hover { transform: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">M</div>
+      <div class="brand-text">
+        <span class="brand-name">MindArena</span>
+        <span class="brand-sub">Destreza Mental</span>
+      </div>
+    </div>
+    <div class="wallet-pill">
+      <svg class="wallet-pill-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="14" rx="2"/><circle cx="16" cy="13" r="2"/></svg>
+      <span class="wallet-pill-val">$1,847</span>
+    </div>
+  </header>
+
+  <main class="main">
+
+    <!-- LOBBY SCREEN -->
+    <div class="screen active" id="screen-lobby">
+      <div class="hero-banner">
+        <div class="hero-tag"><span class="dot"></span>EN VIVO AHORA</div>
+        <h1 class="hero-title">Trivia Express<br>Cultura General</h1>
+        <div class="hero-prize">
+          <span class="hero-prize-val">$50,000</span>
+          <span class="hero-prize-label">en premios</span>
+        </div>
+        <div class="hero-meta">
+          <div class="hero-meta-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+            <span>247 jugando</span>
+          </div>
+          <div class="hero-meta-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            <span>10 preguntas · 60s</span>
+          </div>
+        </div>
+        <button class="hero-btn" onclick="goTo('game')">
+          Unirme · $100 entrada
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+
+      <div class="section-head">
+        <span class="section-title">🔥 Torneos en vivo</span>
+        <button class="section-action" onclick="goTo('community')">Ver todos →</button>
+      </div>
+
+      <div class="tournament-list">
+        <div class="tournament-card live" onclick="goTo('game')">
+          <div class="tournament-status status-live">Live · 12 jugando</div>
+          <div class="tournament-icon" style="--bg-color: #f72585; --bg-color2: #f59e0b;">🧠</div>
+          <div class="tournament-info">
+            <div class="tournament-name">Trivia Relámpago</div>
+            <div class="tournament-category">5 preguntas · 30s · Cultura general</div>
+          </div>
+          <div>
+            <div class="tournament-prize">$2,500</div>
+            <div class="tournament-prize-label">Premio</div>
+          </div>
+        </div>
+
+        <div class="tournament-card" onclick="goTo('game')">
+          <div class="tournament-status status-soon">Empieza en 2:14</div>
+          <div class="tournament-icon" style="--bg-color: #a78bfa; --bg-color2: #06d6a0;">🎯</div>
+          <div class="tournament-info">
+            <div class="tournament-name">Maestros de la Historia</div>
+            <div class="tournament-category">10 preguntas · 60s · Historia</div>
+          </div>
+          <div>
+            <div class="tournament-prize">$8,000</div>
+            <div class="tournament-prize-label">Premio</div>
+          </div>
+        </div>
+
+        <div class="tournament-card">
+          <div class="tournament-status status-soon">Empieza en 8:42</div>
+          <div class="tournament-icon" style="--bg-color: #06d6a0; --bg-color2: #a78bfa;">⚡</div>
+          <div class="tournament-info">
+            <div class="tournament-name">Liga Diaria · Tier Bronce</div>
+            <div class="tournament-category">20 preguntas · 120s · Multitemática</div>
+          </div>
+          <div>
+            <div class="tournament-prize">$1,200</div>
+            <div class="tournament-prize-label">Premio</div>
+          </div>
+        </div>
+
+        <div class="tournament-card">
+          <div class="tournament-status status-soon">Empieza en 14:28</div>
+          <div class="tournament-icon" style="--bg-color: #ffd93d; --bg-color2: #f72585;">🏆</div>
+          <div class="tournament-info">
+            <div class="tournament-name">Gran Torneo Sábado</div>
+            <div class="tournament-category">50 preguntas · 5 min · Todas las categorías</div>
+          </div>
+          <div>
+            <div class="tournament-prize">$25,000</div>
+            <div class="tournament-prize-label">Bote acumulado</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GAME SCREEN -->
+    <div class="screen" id="screen-game">
+      <div class="game-header">
+        <div class="game-info">
+          <span class="game-q-num">3<span style="color: var(--text-muted);">/5</span></span>
+          <div>
+            <div style="font-weight: 700; font-size: 13px;">Trivia Relámpago</div>
+            <div class="game-q-sub">Pregunta actual</div>
+          </div>
+        </div>
+        <div class="game-timer">
+          <svg class="timer-bg" viewBox="0 0 64 64">
+            <circle cx="32" cy="32" r="28" fill="none" stroke="var(--surface-3)" stroke-width="4"/>
+            <circle id="timer-circle" cx="32" cy="32" r="28" fill="none" stroke="var(--accent-3)" stroke-width="4" stroke-dasharray="175.9" stroke-dashoffset="0" stroke-linecap="round"/>
+          </svg>
+          <div class="timer-value" id="timer-value">8</div>
+        </div>
+      </div>
+
+      <div class="question-card">
+        <div class="question-text" id="question-text">¿Qué planeta del sistema solar es conocido como el "Planeta Rojo"?</div>
+      </div>
+
+      <div class="answers-grid">
+        <button class="answer-btn" data-answer="0" data-correct="false">
+          <div class="answer-letter">A</div>
+          <span>Júpiter</span>
+        </button>
+        <button class="answer-btn" data-answer="1" data-correct="true">
+          <div class="answer-letter">B</div>
+          <span>Marte</span>
+        </button>
+        <button class="answer-btn" data-answer="2" data-correct="false">
+          <div class="answer-letter">C</div>
+          <span>Venus</span>
+        </button>
+        <button class="answer-btn" data-answer="3" data-correct="false">
+          <div class="answer-letter">D</div>
+          <span>Saturno</span>
+        </button>
+      </div>
+
+      <div class="leaderboard">
+        <div class="lb-header">
+          <span class="lb-title">Ranking en vivo · Top 5</span>
+          <span class="lb-live">EN VIVO</span>
+        </div>
+        <div class="lb-list" id="lb-list">
+          <div class="lb-row">
+            <div class="lb-rank r1">1</div>
+            <div class="lb-avatar">AB</div>
+            <div class="lb-name">Andrea_BC</div>
+            <span class="lb-streak">🔥 3</span>
+            <span class="lb-score">285</span>
+          </div>
+          <div class="lb-row you">
+            <div class="lb-rank r2">2</div>
+            <div class="lb-avatar" style="background: linear-gradient(135deg, var(--accent-3), var(--orange));">TÚ</div>
+            <div class="lb-name">Tú</div>
+            <span class="lb-streak">🔥 2</span>
+            <span class="lb-score">240</span>
+          </div>
+          <div class="lb-row">
+            <div class="lb-rank r3">3</div>
+            <div class="lb-avatar">LP</div>
+            <div class="lb-name">LuisPro</div>
+            <span class="lb-score">220</span>
+          </div>
+          <div class="lb-row">
+            <div class="lb-rank">4</div>
+            <div class="lb-avatar">CM</div>
+            <div class="lb-name">CarlitosMX</div>
+            <span class="lb-score">195</span>
+          </div>
+          <div class="lb-row">
+            <div class="lb-rank">5</div>
+            <div class="lb-avatar">SG</div>
+            <div class="lb-name">SofiaGZ</div>
+            <span class="lb-score">180</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESULT SCREEN -->
+    <div class="screen" id="screen-result">
+      <div class="result-screen">
+        <div class="result-crown">👑</div>
+        <div class="result-place">2º LUGAR</div>
+        <div class="result-amount">$850<span class="result-currency"> MXN</span></div>
+        <div class="result-sub">¡Excelente! Estás entre los mejores · Ganaste 850 pesos</div>
+
+        <div class="result-stats">
+          <div class="r-stat">
+            <div class="r-stat-val">4/5</div>
+            <div class="r-stat-label">Correctas</div>
+          </div>
+          <div class="r-stat">
+            <div class="r-stat-val">1.8s</div>
+            <div class="r-stat-label">Tiempo medio</div>
+          </div>
+          <div class="r-stat">
+            <div class="r-stat-val">+125</div>
+            <div class="r-stat-label">XP</div>
+          </div>
+        </div>
+
+        <button class="hero-btn" style="background: linear-gradient(135deg, var(--accent), var(--pink)); color: white;" onclick="goTo('lobby')">
+          Jugar otro torneo
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12a9 9 0 0118 0M3 12l3-3M3 12l3 3"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- WALLET SCREEN -->
+    <div class="screen" id="screen-wallet">
+      <div class="wallet-card">
+        <div class="wallet-eyebrow">Balance disponible</div>
+        <div class="wallet-balance">$1,847<span class="wallet-currency"> MXN</span></div>
+        <div class="wallet-actions">
+          <button class="wallet-action" onclick="showToast('Abriendo Mercado Pago...', '↓')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14m7-7H5"/></svg>
+            <span class="wallet-action-label">Depositar</span>
+          </button>
+          <button class="wallet-action" onclick="showToast('Verificación KYC requerida primero', '⚠')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+            <span class="wallet-action-label">Retirar</span>
+          </button>
+          <button class="wallet-action" onclick="showToast('Compartido con amigos', '✓')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            <span class="wallet-action-label">Invitar</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="section-head">
+        <span class="section-title">Movimientos recientes</span>
+        <button class="section-action">Ver historial</button>
+      </div>
+
+      <div class="tx-list">
+        <div class="tx-row">
+          <div class="tx-icon win">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div class="tx-info">
+            <div class="tx-name">Premio · 2º lugar</div>
+            <div class="tx-meta">Trivia Relámpago · hace 2 min</div>
+          </div>
+          <div class="tx-amount positive">+$850</div>
+        </div>
+        <div class="tx-row">
+          <div class="tx-icon entry">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l-4 4-4-4M5 15V3M14 11h7l-4-4M14 11l4 4M21 21v-6"/></svg>
+          </div>
+          <div class="tx-info">
+            <div class="tx-name">Entrada al torneo</div>
+            <div class="tx-meta">Trivia Relámpago · hace 5 min</div>
+          </div>
+          <div class="tx-amount negative">-$100</div>
+        </div>
+        <div class="tx-row">
+          <div class="tx-icon entry">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l-4 4-4-4M5 15V3M14 11h7l-4-4M14 11l4 4M21 21v-6"/></svg>
+          </div>
+          <div class="tx-info">
+            <div class="tx-name">Entrada al torneo</div>
+            <div class="tx-meta">Maestros Historia · hace 1 hora</div>
+          </div>
+          <div class="tx-amount negative">-$200</div>
+        </div>
+        <div class="tx-row">
+          <div class="tx-icon win">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div class="tx-info">
+            <div class="tx-name">Premio · 1º lugar</div>
+            <div class="tx-meta">Liga Diaria · ayer</div>
+          </div>
+          <div class="tx-amount positive">+$1,200</div>
+        </div>
+        <div class="tx-row">
+          <div class="tx-icon deposit">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14m7-7H5"/></svg>
+          </div>
+          <div class="tx-info">
+            <div class="tx-name">Depósito MercadoPago</div>
+            <div class="tx-meta">hace 3 días</div>
+          </div>
+          <div class="tx-amount positive">+$500</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COMMUNITY SCREEN -->
+    <div class="screen" id="screen-community">
+      <div class="section-head">
+        <span class="section-title">🏆 Top Jugadores · Mayo 2026</span>
+      </div>
+
+      <div class="leaderboard">
+        <div class="lb-list">
+          <div class="lb-row">
+            <div class="lb-rank r1">1</div>
+            <div class="lb-avatar">AB</div>
+            <div class="lb-name">
+              <div>Andrea_BC</div>
+              <div style="font-size: 10px; color: var(--text-muted); font-weight: 500;">142 torneos · $18,420 ganados</div>
+            </div>
+            <span class="lb-score">8,420</span>
+          </div>
+          <div class="lb-row">
+            <div class="lb-rank r2">2</div>
+            <div class="lb-avatar">LP</div>
+            <div class="lb-name">
+              <div>LuisPro</div>
+              <div style="font-size: 10px; color: var(--text-muted); font-weight: 500;">128 torneos · $14,890 ganados</div>
+            </div>
+            <span class="lb-score">7,650</span>
+          </div>
+          <div class="lb-row">
+            <div class="lb-rank r3">3</div>
+            <div class="lb-avatar">SG</div>
+            <div class="lb-name">
+              <div>SofiaGZ</div>
+              <div style="font-size: 10px; color: var(--text-muted); font-weight: 500;">115 torneos · $12,340 ganados</div>
+            </div>
+            <span class="lb-score">7,120</span>
+          </div>
+          <div class="lb-row you">
+            <div class="lb-rank">12</div>
+            <div class="lb-avatar" style="background: linear-gradient(135deg, var(--accent-3), var(--orange));">TÚ</div>
+            <div class="lb-name">
+              <div>Tú</div>
+              <div style="font-size: 10px; color: var(--text-muted); font-weight: 500;">47 torneos · $3,210 ganados</div>
+            </div>
+            <span class="lb-score">3,890</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-head">
+        <span class="section-title">Categorías populares</span>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-3);">
+        <div class="tournament-card" style="padding: var(--s-3);">
+          <div class="tournament-icon" style="--bg-color: #f72585; --bg-color2: #ffd93d; width: 40px; height: 40px; font-size: 20px;">🎬</div>
+          <div class="tournament-info">
+            <div class="tournament-name">Cine y TV</div>
+            <div class="tournament-category">847 jugadores</div>
+          </div>
+        </div>
+        <div class="tournament-card" style="padding: var(--s-3);">
+          <div class="tournament-icon" style="--bg-color: #06d6a0; --bg-color2: #a78bfa; width: 40px; height: 40px; font-size: 20px;">⚽</div>
+          <div class="tournament-info">
+            <div class="tournament-name">Deportes</div>
+            <div class="tournament-category">623 jugadores</div>
+          </div>
+        </div>
+        <div class="tournament-card" style="padding: var(--s-3);">
+          <div class="tournament-icon" style="--bg-color: #a78bfa; --bg-color2: #f72585; width: 40px; height: 40px; font-size: 20px;">🌍</div>
+          <div class="tournament-info">
+            <div class="tournament-name">Geografía</div>
+            <div class="tournament-category">412 jugadores</div>
+          </div>
+        </div>
+        <div class="tournament-card" style="padding: var(--s-3);">
+          <div class="tournament-icon" style="--bg-color: #ffd93d; --bg-color2: #06d6a0; width: 40px; height: 40px; font-size: 20px;">📚</div>
+          <div class="tournament-info">
+            <div class="tournament-name">Literatura</div>
+            <div class="tournament-category">298 jugadores</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <nav class="bottom-nav">
+    <button class="nav-item active" data-screen="lobby">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+      <span class="nav-label">Inicio</span>
+    </button>
+    <button class="nav-item" data-screen="community">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 010-5H6M18 9h1.5a2.5 2.5 0 000-5H18M4 22h16M10 14.66V17c0 .55-.47 1-1 1H5c-.53 0-1-.45-1-1v-2.34M19 17v-2.34M18 2H6v7a6 6 0 0012 0z"/></svg>
+      <span class="nav-label">Ranking</span>
+    </button>
+    <button class="nav-item" data-screen="wallet">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="14" rx="2"/><circle cx="16" cy="13" r="2"/></svg>
+      <span class="nav-label">Billetera</span>
+    </button>
+    <button class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span class="nav-label">Perfil</span>
+    </button>
+  </nav>
+</div>
+
+<div class="toast-stack" id="toast-stack"></div>
+
+<script>
+const toastStack = document.getElementById('toast-stack');
+function showToast(msg, icon = '✓') {
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.innerHTML = `<span>${icon}</span><span>${msg}</span>`;
+  toastStack.appendChild(t);
+  requestAnimationFrame(() => t.classList.add('show'));
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 2800);
+}
+
+function goTo(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const navItem = document.querySelector(`.nav-item[data-screen="${name}"]`);
+  if (navItem) navItem.classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  if (name === 'game') startGame();
+}
+
+document.querySelectorAll('.nav-item[data-screen]').forEach(n => {
+  n.addEventListener('click', () => goTo(n.dataset.screen));
+});
+
+// Game logic
+let timerInterval;
+function startGame() {
+  // Reset answers
+  document.querySelectorAll('.answer-btn').forEach(b => {
+    b.classList.remove('correct', 'incorrect', 'locked');
+  });
+
+  // Timer countdown
+  let time = 10;
+  const timerCircle = document.getElementById('timer-circle');
+  const timerValue = document.getElementById('timer-value');
+  const totalLen = 175.9;
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    time--;
+    timerValue.textContent = time;
+    timerCircle.style.strokeDashoffset = totalLen * (1 - time / 10);
+    if (time <= 3) {
+      timerValue.style.color = 'var(--danger)';
+      timerCircle.style.stroke = 'var(--danger)';
+    } else {
+      timerValue.style.color = 'var(--accent-3)';
+      timerCircle.style.stroke = 'var(--accent-3)';
+    }
+    if (time <= 0) {
+      clearInterval(timerInterval);
+      revealAnswer();
+    }
+  }, 1000);
+  timerValue.textContent = time;
+  timerCircle.style.strokeDashoffset = 0;
+}
+
+document.querySelectorAll('.answer-btn').forEach(b => {
+  b.addEventListener('click', () => {
+    if (b.classList.contains('locked')) return;
+    clearInterval(timerInterval);
+    document.querySelectorAll('.answer-btn').forEach(x => x.classList.add('locked'));
+    const isCorrect = b.dataset.correct === 'true';
+    b.classList.add(isCorrect ? 'correct' : 'incorrect');
+    if (!isCorrect) {
+      document.querySelector('.answer-btn[data-correct="true"]').classList.add('correct');
+    }
+    if (isCorrect) {
+      showToast('+85 puntos · Respuesta en 1.8s', '✓');
+      // Update leaderboard - move "you" up
+      const youRow = document.querySelector('.lb-row.you');
+      const score = youRow.querySelector('.lb-score');
+      score.textContent = '325';
+    } else {
+      showToast('Respuesta incorrecta', '✗');
+    }
+    setTimeout(() => goTo('result'), 2500);
+  });
+});
+
+function revealAnswer() {
+  document.querySelectorAll('.answer-btn').forEach(x => x.classList.add('locked'));
+  document.querySelector('.answer-btn[data-correct="true"]').classList.add('correct');
+  showToast('Tiempo agotado', '⏱');
+  setTimeout(() => goTo('result'), 2000);
+}
+</script>
+
+</body>
+</html>
