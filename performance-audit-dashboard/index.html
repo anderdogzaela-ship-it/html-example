@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Node.js Performance Audit · Production Report</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0d12;
+  --surface: #11161e;
+  --surface-2: #1a212c;
+  --surface-3: #232b38;
+  --border: rgba(255,255,255,0.06);
+  --border-strong: rgba(255,255,255,0.12);
+  --text: #e8ecf2;
+  --text-soft: #9ba5b3;
+  --text-muted: #6b7480;
+  --accent: #4fc3f7;
+  --green: #4ade80;
+  --red: #f87171;
+  --orange: #fb923c;
+  --purple: #a78bfa;
+  --yellow: #fbbf24;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+.mono { font-family: 'JetBrains Mono', monospace; }
+
+/* HEADER */
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 32px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 10;
+}
+.brand {
+  display: flex; align-items: center; gap: 12px;
+  font-weight: 600;
+}
+.brand-icon {
+  width: 32px; height: 32px;
+  background: linear-gradient(135deg, var(--accent), var(--purple));
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700;
+}
+.brand-meta { font-size: 11px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
+.top-controls { display: flex; gap: 12px; align-items: center; }
+.toggle {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 4px;
+  display: flex; gap: 2px;
+}
+.toggle button {
+  background: transparent; border: none; color: var(--text-soft);
+  padding: 8px 16px; border-radius: 6px;
+  font-size: 12px; font-weight: 500;
+  cursor: pointer; transition: all 0.2s;
+  font-family: inherit;
+}
+.toggle button.active {
+  background: var(--surface-3); color: var(--text);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+.diff-badge {
+  padding: 6px 12px; border-radius: 100px;
+  font-size: 12px; font-weight: 600;
+  background: rgba(74,222,128,0.12); color: var(--green);
+  display: flex; align-items: center; gap: 6px;
+}
+
+/* LAYOUT */
+.container {
+  max-width: 1400px; margin: 0 auto;
+  padding: 24px 32px 48px;
+}
+.page-header {
+  margin-bottom: 32px;
+}
+.page-title {
+  font-size: 28px; font-weight: 600; margin-bottom: 6px;
+}
+.page-sub { color: var(--text-soft); font-size: 14px; }
+
+/* SUMMARY CARDS */
+.summary-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 16px; margin-bottom: 24px;
+}
+.summary-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 20px;
+  position: relative; overflow: hidden;
+}
+.summary-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: var(--card-color, var(--accent));
+}
+.sc-label {
+  font-size: 11px; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 1.2px;
+  margin-bottom: 8px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.sc-icon { font-size: 14px; }
+.sc-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 28px; font-weight: 600;
+  margin-bottom: 6px;
+  transition: color 0.3s;
+}
+.sc-delta {
+  font-size: 12px; font-weight: 500;
+  display: flex; align-items: center; gap: 6px;
+}
+.sc-delta.positive { color: var(--green); }
+.sc-delta.negative { color: var(--red); }
+
+/* MAIN GRID */
+.main-grid {
+  display: grid; grid-template-columns: 1.5fr 1fr;
+  gap: 20px;
+}
+.panel {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px;
+}
+.panel-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 20px; padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+.panel-title { font-size: 15px; font-weight: 600; }
+.panel-meta { font-size: 11px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
+
+/* LATENCY CHART */
+.latency-bars {
+  display: flex; flex-direction: column; gap: 16px;
+  margin-bottom: 24px;
+}
+.lat-row {
+  display: grid; grid-template-columns: 60px 1fr 80px;
+  gap: 16px; align-items: center;
+}
+.lat-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; color: var(--text-soft); font-weight: 600;
+}
+.lat-bar-track {
+  height: 28px; background: var(--surface-2);
+  border-radius: 6px; position: relative;
+  overflow: hidden;
+}
+.lat-bar {
+  position: absolute; top: 0; left: 0; bottom: 0;
+  border-radius: 6px;
+  transition: width 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+  background: linear-gradient(90deg, var(--bar-color, var(--accent)), var(--bar-color-end, var(--purple)));
+  display: flex; align-items: center; padding: 0 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; font-weight: 600; color: white;
+}
+.lat-bar-prev {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  width: 2px; height: 70%;
+  background: var(--red); border-radius: 1px;
+  z-index: 2;
+}
+.lat-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px; font-weight: 600; text-align: right;
+}
+
+.throughput-chart {
+  height: 200px; position: relative;
+  background: var(--surface-2); border-radius: 8px;
+  padding: 16px;
+}
+.tp-svg { width: 100%; height: 100%; }
+
+/* FLAMEGRAPH */
+.flamegraph {
+  background: var(--surface-2); border-radius: 8px;
+  padding: 16px;
+  min-height: 280px;
+  display: flex; flex-direction: column; gap: 2px;
+  justify-content: flex-end;
+}
+.flame-row { display: flex; gap: 2px; height: 24px; }
+.flame-block {
+  border-radius: 3px;
+  display: flex; align-items: center;
+  padding: 0 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; font-weight: 500;
+  color: rgba(0,0,0,0.85);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.flame-block:hover { filter: brightness(1.2); transform: translateY(-2px); }
+
+/* SLOW QUERIES */
+.queries {
+  display: flex; flex-direction: column; gap: 12px;
+}
+.query-row {
+  background: var(--surface-2); border-radius: 8px;
+  padding: 14px 16px;
+  border-left: 3px solid var(--orange);
+  transition: all 0.3s;
+}
+.query-row.fixed { border-left-color: var(--green); opacity: 0.7; }
+.query-row.fixed .q-sql { text-decoration: line-through; }
+.q-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 6px;
+}
+.q-sql {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.q-meta {
+  display: flex; gap: 12px; font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text-muted);
+}
+.q-time { color: var(--orange); font-weight: 600; }
+.query-row.fixed .q-time { color: var(--green); }
+.q-fix-tag {
+  padding: 2px 8px; border-radius: 4px;
+  background: rgba(74,222,128,0.15); color: var(--green);
+  font-size: 10px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+
+/* MEMORY */
+.memory-stats {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+  margin-bottom: 16px;
+}
+.mem-stat {
+  background: var(--surface-2); padding: 12px;
+  border-radius: 8px;
+}
+.mem-stat-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+.mem-stat-value { font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 600; }
+
+.memory-chart {
+  height: 140px; background: var(--surface-2);
+  border-radius: 8px; padding: 16px; position: relative;
+}
+
+/* TIMELINE */
+.timeline {
+  margin-top: 24px;
+  padding: 24px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.tl-header { font-size: 15px; font-weight: 600; margin-bottom: 16px; }
+.tl-list { display: flex; flex-direction: column; gap: 12px; }
+.tl-item {
+  display: grid; grid-template-columns: 100px 1fr auto;
+  gap: 16px; padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  align-items: center;
+}
+.tl-item:last-child { border-bottom: none; }
+.tl-time { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-muted); }
+.tl-action { font-size: 13px; }
+.tl-action strong { font-weight: 600; }
+.tl-impact {
+  font-family: 'JetBrains Mono', monospace; font-size: 12px;
+  font-weight: 600; padding: 4px 10px; border-radius: 4px;
+  background: rgba(74,222,128,0.12); color: var(--green);
+}
+
+@media (max-width: 980px) {
+  .summary-grid { grid-template-columns: repeat(2, 1fr); }
+  .main-grid { grid-template-columns: 1fr; }
+  .container { padding: 16px; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-icon mono">⚡</div>
+    <div>
+      <div>Performance Audit</div>
+      <div class="brand-meta">prod-cluster-01 · node v20.11.0 · pg 15.6</div>
+    </div>
+  </div>
+  <div class="top-controls">
+    <div class="diff-badge"><span>↓</span> <span id="overall-delta">68% faster</span></div>
+    <div class="toggle">
+      <button id="btn-before">Before</button>
+      <button id="btn-after" class="active">After</button>
+      <button id="btn-compare">Compare</button>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="page-header">
+    <div class="page-title">Production performance report</div>
+    <div class="page-sub">Optimization sprint · 14 days · Node.js + PostgreSQL · Workload: API endpoints under 850 RPS</div>
+  </div>
+
+  <!-- SUMMARY CARDS -->
+  <div class="summary-grid">
+    <div class="summary-card" style="--card-color: var(--green)">
+      <div class="sc-label">p95 Latency <span class="sc-icon">⏱</span></div>
+      <div class="sc-value mono" id="m-p95">142 ms</div>
+      <div class="sc-delta positive" id="d-p95">↓ 68% from 445 ms</div>
+    </div>
+    <div class="summary-card" style="--card-color: var(--accent)">
+      <div class="sc-label">p99 Latency <span class="sc-icon">⏱</span></div>
+      <div class="sc-value mono" id="m-p99">298 ms</div>
+      <div class="sc-delta positive" id="d-p99">↓ 71% from 1,028 ms</div>
+    </div>
+    <div class="summary-card" style="--card-color: var(--purple)">
+      <div class="sc-label">Throughput <span class="sc-icon">📈</span></div>
+      <div class="sc-value mono" id="m-rps">2,140 rps</div>
+      <div class="sc-delta positive" id="d-rps">↑ 152% from 850 rps</div>
+    </div>
+    <div class="summary-card" style="--card-color: var(--orange)">
+      <div class="sc-label">Memory peak <span class="sc-icon">🧠</span></div>
+      <div class="sc-value mono" id="m-mem">412 MB</div>
+      <div class="sc-delta positive" id="d-mem">↓ 47% from 778 MB</div>
+    </div>
+  </div>
+
+  <!-- MAIN GRID -->
+  <div class="main-grid">
+    <div>
+      <!-- LATENCY -->
+      <div class="panel" style="margin-bottom: 20px;">
+        <div class="panel-header">
+          <div class="panel-title">Latency distribution · /api/orders</div>
+          <div class="panel-meta">measured with autocannon @ 850 RPS · 10 min</div>
+        </div>
+        <div class="latency-bars" id="lat-bars"></div>
+      </div>
+
+      <!-- FLAMEGRAPH -->
+      <div class="panel" style="margin-bottom: 20px;">
+        <div class="panel-header">
+          <div class="panel-title">CPU flamegraph · main thread</div>
+          <div class="panel-meta">captured with clinic.js flame</div>
+        </div>
+        <div class="flamegraph" id="flamegraph"></div>
+      </div>
+
+      <!-- SLOW QUERIES -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Top slow queries · pg_stat_statements</div>
+          <div class="panel-meta" id="q-count">12 of 12 resolved</div>
+        </div>
+        <div class="queries" id="queries"></div>
+      </div>
+    </div>
+
+    <div>
+      <!-- THROUGHPUT -->
+      <div class="panel" style="margin-bottom: 20px;">
+        <div class="panel-header">
+          <div class="panel-title">Throughput over time</div>
+          <div class="panel-meta">RPS sustained</div>
+        </div>
+        <div class="throughput-chart">
+          <svg class="tp-svg" id="tp-svg" viewBox="0 0 400 170" preserveAspectRatio="none"></svg>
+        </div>
+      </div>
+
+      <!-- MEMORY -->
+      <div class="panel" style="margin-bottom: 20px;">
+        <div class="panel-header">
+          <div class="panel-title">Memory profile</div>
+          <div class="panel-meta">heap snapshot diff</div>
+        </div>
+        <div class="memory-stats">
+          <div class="mem-stat">
+            <div class="mem-stat-label">RSS</div>
+            <div class="mem-stat-value" id="mem-rss">412 MB</div>
+          </div>
+          <div class="mem-stat">
+            <div class="mem-stat-label">Heap used</div>
+            <div class="mem-stat-value" id="mem-heap">186 MB</div>
+          </div>
+          <div class="mem-stat">
+            <div class="mem-stat-label">GC pauses</div>
+            <div class="mem-stat-value" id="mem-gc">2.1 ms</div>
+          </div>
+        </div>
+        <div class="memory-chart">
+          <svg class="tp-svg" id="mem-svg" viewBox="0 0 400 110" preserveAspectRatio="none"></svg>
+        </div>
+      </div>
+
+      <!-- WORKERS -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Worker thread allocation</div>
+          <div class="panel-meta">CPU-bound offload</div>
+        </div>
+        <div id="workers" style="display: flex; flex-direction: column; gap: 12px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TIMELINE -->
+  <div class="timeline">
+    <div class="tl-header">Optimization timeline</div>
+    <div class="tl-list">
+      <div class="tl-item">
+        <div class="tl-time">Day 1-2</div>
+        <div class="tl-action"><strong>Baseline profiling.</strong> Captured CPU flamegraph + heap snapshots + pg_stat_statements report.</div>
+        <div class="tl-impact">baseline</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-time">Day 3</div>
+        <div class="tl-action"><strong>N+1 query elimination on /api/orders.</strong> Replaced loop of single queries with JOIN + DataLoader pattern.</div>
+        <div class="tl-impact">↓ 280ms p95</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-time">Day 4-5</div>
+        <div class="tl-action"><strong>Added composite indexes.</strong> Three missing indexes identified from pg_stat_statements top 10.</div>
+        <div class="tl-impact">↓ 95ms p95</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-time">Day 6-7</div>
+        <div class="tl-action"><strong>pgbouncer transaction pooling.</strong> Connection pool sized from 20 to 100, pgbouncer in front.</div>
+        <div class="tl-impact">↑ 40% throughput</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-time">Day 8-9</div>
+        <div class="tl-action"><strong>Async pattern fixes.</strong> Promise.all() for parallel I/O in 4 endpoints, removed sequential awaits.</div>
+        <div class="tl-impact">↓ 45ms p95</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-time">Day 10-11</div>
+        <div class="tl-action"><strong>Worker thread for PDF generation.</strong> Offloaded CPU-bound work blocking event loop.</div>
+        <div class="tl-impact">unblocked event loop</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-time">Day 12-13</div>
+        <div class="tl-action"><strong>Redis caching on hot reads.</strong> 60-second TTL on product catalog + user permissions.</div>
+        <div class="tl-impact">↑ 75% throughput</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-time">Day 14</div>
+        <div class="tl-action"><strong>Final benchmarks + documentation.</strong> Reproducible autocannon scripts, runbook, before/after report.</div>
+        <div class="tl-impact">delivered</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const data = {
+  after: {
+    latency: { p50: 38, p75: 72, p90: 115, p95: 142, p99: 298 },
+    throughput: 2140,
+    memory: { rss: 412, heap: 186, gc: 2.1 },
+    flamegraph: [
+      { name: 'app.handleOrder', width: 100, color: '#4fc3f7' },
+      [
+        { name: 'db.query (JOIN)', width: 35, color: '#4ade80' },
+        { name: 'validate', width: 12, color: '#a78bfa' },
+        { name: 'serialize', width: 18, color: '#fbbf24' },
+        { name: 'cache.get', width: 8, color: '#4ade80' },
+        { name: 'audit.log', width: 15, color: '#fb923c' },
+        { name: 'res.send', width: 12, color: '#9ba5b3' }
+      ],
+      [
+        { name: 'pg.execute', width: 20, color: '#4ade80' },
+        { name: 'parse', width: 15, color: '#a78bfa' },
+        { name: 'zod.validate', width: 12, color: '#a78bfa' },
+        { name: 'JSON.stringify', width: 18, color: '#fbbf24' },
+        { name: 'redis.get', width: 8, color: '#4ade80' },
+        { name: 'fs.append', width: 15, color: '#fb923c' },
+        { name: 'compress', width: 12, color: '#9ba5b3' }
+      ]
+    ],
+    workers: [
+      { name: 'PDF generator', load: 78, color: 'var(--purple)' },
+      { name: 'Image resize', load: 42, color: 'var(--accent)' },
+      { name: 'Main thread', load: 28, color: 'var(--green)' }
+    ],
+    throughputData: [400, 580, 780, 1100, 1450, 1780, 2010, 2140, 2120, 2140, 2090, 2140, 2150, 2140, 2130, 2140, 2155, 2140, 2148, 2140]
+  },
+  before: {
+    latency: { p50: 128, p75: 245, p90: 380, p95: 445, p99: 1028 },
+    throughput: 850,
+    memory: { rss: 778, heap: 412, gc: 18.5 },
+    flamegraph: [
+      { name: 'app.handleOrder', width: 100, color: '#f87171' },
+      [
+        { name: 'db.query (N+1) ⚠', width: 78, color: '#f87171' },
+        { name: 'serialize', width: 8, color: '#fbbf24' },
+        { name: 'res.send', width: 14, color: '#9ba5b3' }
+      ],
+      [
+        { name: 'pg.execute (loop x32)', width: 65, color: '#f87171' },
+        { name: 'parse', width: 13, color: '#a78bfa' },
+        { name: 'JSON.stringify (sync)', width: 12, color: '#fb923c' },
+        { name: 'fs.append (block)', width: 10, color: '#f87171' }
+      ]
+    ],
+    workers: [
+      { name: 'PDF generator', load: 0, color: 'var(--text-muted)' },
+      { name: 'Image resize', load: 0, color: 'var(--text-muted)' },
+      { name: 'Main thread', load: 96, color: 'var(--red)' }
+    ],
+    throughputData: [200, 320, 480, 620, 720, 810, 850, 845, 850, 840, 850, 855, 850, 845, 850, 850, 855, 850, 845, 850]
+  },
+  queries: [
+    { sql: 'SELECT * FROM orders WHERE user_id = $1', before: 312, after: 12, fix: 'Index added' },
+    { sql: 'SELECT items.* FROM order_items WHERE order_id IN (...) -- N+1', before: 248, after: 18, fix: 'JOIN refactor' },
+    { sql: 'SELECT COUNT(*) FROM events WHERE created_at > $1', before: 186, after: 8, fix: 'Partial index' },
+    { sql: 'SELECT * FROM products ORDER BY popularity DESC LIMIT 50', before: 94, after: 6, fix: 'Cached + index' },
+    { sql: 'UPDATE inventory SET qty = qty - $1 WHERE sku = $2', before: 78, after: 4, fix: 'Row lock fix' }
+  ]
+};
+
+let currentView = 'after';
+
+// LATENCY BARS
+function renderLatency() {
+  const d = data[currentView].latency;
+  const dPrev = currentView === 'after' ? data.before.latency : data.after.latency;
+  const max = Math.max(...Object.values(data.before.latency));
+  const container = document.getElementById('lat-bars');
+  container.innerHTML = '';
+  const labels = ['p50', 'p75', 'p90', 'p95', 'p99'];
+  const colors = ['#4ade80', '#4fc3f7', '#a78bfa', '#fbbf24', '#fb923c'];
+  labels.forEach((label, i) => {
+    const value = d[label];
+    const prev = dPrev[label];
+    const widthPct = (value / max) * 100;
+    const prevPct = (prev / max) * 100;
+    const row = document.createElement('div');
+    row.className = 'lat-row';
+    row.innerHTML = `
+      <div class="lat-label">${label}</div>
+      <div class="lat-bar-track">
+        <div class="lat-bar" style="width: ${widthPct}%; --bar-color: ${colors[i]}; --bar-color-end: ${colors[i]}99;">${value} ms</div>
+        ${currentView === 'after' ? `<div class="lat-bar-prev" style="left: ${prevPct}%;" title="Before: ${prev}ms"></div>` : ''}
+      </div>
+      <div class="lat-value">${value}<span style="color: var(--text-muted); font-size: 11px;"> ms</span></div>
+    `;
+    container.appendChild(row);
+  });
+}
+
+// FLAMEGRAPH
+function renderFlamegraph() {
+  const fg = data[currentView].flamegraph;
+  const container = document.getElementById('flamegraph');
+  container.innerHTML = '';
+  fg.forEach(row => {
+    const rowEl = document.createElement('div');
+    rowEl.className = 'flame-row';
+    if (Array.isArray(row)) {
+      row.forEach(block => {
+        const b = document.createElement('div');
+        b.className = 'flame-block';
+        b.style.width = block.width + '%';
+        b.style.background = block.color;
+        b.textContent = block.name;
+        b.title = `${block.name} · ${block.width}% CPU`;
+        rowEl.appendChild(b);
+      });
+    } else {
+      const b = document.createElement('div');
+      b.className = 'flame-block';
+      b.style.width = row.width + '%';
+      b.style.background = row.color;
+      b.textContent = row.name;
+      b.title = `${row.name} · ${row.width}% CPU`;
+      rowEl.appendChild(b);
+    }
+    container.appendChild(rowEl);
+  });
+}
+
+// QUERIES
+function renderQueries() {
+  const container = document.getElementById('queries');
+  container.innerHTML = '';
+  data.queries.forEach(q => {
+    const row = document.createElement('div');
+    const fixed = currentView === 'after';
+    row.className = 'query-row' + (fixed ? ' fixed' : '');
+    row.innerHTML = `
+      <div class="q-header">
+        <div class="q-sql">${q.sql}</div>
+        ${fixed ? `<div class="q-fix-tag">${q.fix}</div>` : ''}
+      </div>
+      <div class="q-meta">
+        <span class="q-time">${fixed ? q.after : q.before} ms avg</span>
+        <span>calls/sec: ${(Math.random()*40+10).toFixed(1)}</span>
+      </div>
+    `;
+    container.appendChild(row);
+  });
+}
+
+// THROUGHPUT
+function renderThroughput() {
+  const tp = data[currentView].throughputData;
+  const svg = document.getElementById('tp-svg');
+  const max = Math.max(...data.after.throughputData);
+  const w = 400, h = 170;
+  let path = '';
+  let area = '';
+  tp.forEach((v, i) => {
+    const x = (i / (tp.length - 1)) * w;
+    const y = h - (v / max) * (h - 20) - 10;
+    path += (i === 0 ? 'M' : 'L') + x + ',' + y + ' ';
+    if (i === 0) area += 'M' + x + ',' + h + ' L' + x + ',' + y + ' ';
+    else area += 'L' + x + ',' + y + ' ';
+  });
+  area += `L${w},${h} Z`;
+  const color = currentView === 'after' ? '#4ade80' : '#f87171';
+  svg.innerHTML = `
+    <defs>
+      <linearGradient id="tpGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stop-color="${color}" stop-opacity="0.3"/>
+        <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    <path d="${area}" fill="url(#tpGrad)"/>
+    <path d="${path}" fill="none" stroke="${color}" stroke-width="2"/>
+    ${tp.map((v, i) => {
+      const x = (i / (tp.length - 1)) * w;
+      const y = h - (v / max) * (h - 20) - 10;
+      return `<circle cx="${x}" cy="${y}" r="2" fill="${color}"/>`;
+    }).join('')}
+  `;
+}
+
+// MEMORY
+function renderMemory() {
+  const m = data[currentView].memory;
+  document.getElementById('mem-rss').textContent = m.rss + ' MB';
+  document.getElementById('mem-heap').textContent = m.heap + ' MB';
+  document.getElementById('mem-gc').textContent = m.gc + ' ms';
+
+  const svg = document.getElementById('mem-svg');
+  const w = 400, h = 110;
+  const max = data.before.memory.rss;
+  const points = currentView === 'after'
+    ? [200, 280, 320, 380, 410, 412, 408, 410, 412, 415, 410, 412, 408, 410, 412]
+    : [350, 480, 580, 650, 720, 778, 750, 770, 778, 760, 740, 778, 770, 760, 778];
+  let path = '';
+  points.forEach((v, i) => {
+    const x = (i / (points.length - 1)) * w;
+    const y = h - (v / max) * (h - 15) - 8;
+    path += (i === 0 ? 'M' : 'L') + x + ',' + y + ' ';
+  });
+  const color = currentView === 'after' ? '#a78bfa' : '#fb923c';
+  svg.innerHTML = `
+    <path d="${path} L${w},${h} L0,${h} Z" fill="${color}" fill-opacity="0.15"/>
+    <path d="${path}" fill="none" stroke="${color}" stroke-width="2"/>
+  `;
+}
+
+// WORKERS
+function renderWorkers() {
+  const w = data[currentView].workers;
+  const container = document.getElementById('workers');
+  container.innerHTML = '';
+  w.forEach(worker => {
+    const row = document.createElement('div');
+    row.innerHTML = `
+      <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 12px;">
+        <span style="color: var(--text-soft);">${worker.name}</span>
+        <span class="mono" style="color: var(--text); font-weight: 600;">${worker.load}%</span>
+      </div>
+      <div style="height: 6px; background: var(--surface-2); border-radius: 3px; overflow: hidden;">
+        <div style="height: 100%; width: ${worker.load}%; background: ${worker.color}; transition: width 1s ease-out;"></div>
+      </div>
+    `;
+    container.appendChild(row);
+  });
+}
+
+// SUMMARY CARDS
+function renderSummary() {
+  const d = data[currentView];
+  document.getElementById('m-p95').textContent = d.latency.p95 + ' ms';
+  document.getElementById('m-p99').textContent = d.latency.p99 + ' ms';
+  document.getElementById('m-rps').textContent = d.throughput.toLocaleString() + ' rps';
+  document.getElementById('m-mem').textContent = d.memory.rss + ' MB';
+
+  // Show deltas only on "after"
+  const showDeltas = currentView === 'after';
+  document.getElementById('d-p95').style.display = showDeltas ? 'flex' : 'none';
+  document.getElementById('d-p99').style.display = showDeltas ? 'flex' : 'none';
+  document.getElementById('d-rps').style.display = showDeltas ? 'flex' : 'none';
+  document.getElementById('d-mem').style.display = showDeltas ? 'flex' : 'none';
+  document.getElementById('overall-delta').textContent = showDeltas ? '68% faster' : 'baseline';
+}
+
+function renderAll() {
+  renderSummary();
+  renderLatency();
+  renderFlamegraph();
+  renderQueries();
+  renderThroughput();
+  renderMemory();
+  renderWorkers();
+}
+
+function setView(view) {
+  currentView = view;
+  document.querySelectorAll('.toggle button').forEach(b => b.classList.remove('active'));
+  document.getElementById('btn-' + view).classList.add('active');
+  renderAll();
+}
+
+document.getElementById('btn-before').addEventListener('click', () => setView('before'));
+document.getElementById('btn-after').addEventListener('click', () => setView('after'));
+document.getElementById('btn-compare').addEventListener('click', () => {
+  // Compare mode: cycle between before and after with animation
+  let i = 0;
+  const cycle = setInterval(() => {
+    setView(i % 2 === 0 ? 'before' : 'after');
+    i++;
+    if (i >= 6) clearInterval(cycle);
+  }, 1200);
+});
+
+renderAll();
+</script>
+
+</body>
+</html>
