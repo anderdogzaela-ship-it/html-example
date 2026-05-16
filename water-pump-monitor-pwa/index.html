@@ -1,0 +1,1299 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AquaMonitor · Bombas de Agua Potable</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-0: #08111a;
+  --bg-1: #0e1924;
+  --bg-2: #15212e;
+  --bg-3: #1d2c3c;
+  --bg-4: #28384c;
+  --bg-5: #344660;
+  --line: rgba(255,255,255,0.06);
+  --line-strong: rgba(255,255,255,0.12);
+  --text: #e9eef5;
+  --text-soft: #9aa6b5;
+  --text-muted: #6a7886;
+  --text-dim: #4a5663;
+  --water: #38bdf8;
+  --water-glow: rgba(56,189,248,0.18);
+  --water-bg: rgba(56,189,248,0.1);
+  --water-deep: #0284c7;
+  --teal: #14b8a6;
+  --teal-bg: rgba(20,184,166,0.12);
+  --green: #22c55e;
+  --green-bg: rgba(34,197,94,0.12);
+  --amber: #f59e0b;
+  --amber-bg: rgba(245,158,11,0.12);
+  --red: #ef4444;
+  --red-bg: rgba(239,68,68,0.12);
+  --purple: #a855f7;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg-0);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  font-size: 14px;
+  line-height: 1.5;
+  background-image:
+    radial-gradient(circle at 0% 0%, var(--water-glow), transparent 35%),
+    radial-gradient(circle at 100% 100%, var(--teal-bg), transparent 35%);
+}
+.mono { font-family: 'JetBrains Mono', monospace; }
+
+/* Header */
+.header {
+  background: rgba(14,25,36,0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--line);
+  padding: 16px 28px;
+  position: sticky; top: 0; z-index: 50;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.brand {
+  display: flex; align-items: center; gap: 12px;
+}
+.brand-mark {
+  width: 40px; height: 40px;
+  background: linear-gradient(135deg, var(--water), var(--teal));
+  border-radius: 11px;
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+  box-shadow: 0 8px 24px var(--water-glow);
+}
+.brand-mark svg { width: 22px; height: 22px; fill: white; }
+.brand-mark::after {
+  content: '';
+  position: absolute;
+  width: 7px; height: 7px;
+  background: var(--green);
+  border-radius: 50%;
+  top: 2px; right: 2px;
+  border: 2px solid var(--bg-1);
+  animation: pulse 1.8s ease infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.4); }
+}
+.brand-text { display: flex; flex-direction: column; gap: 1px; }
+.brand-name {
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: -0.02em;
+}
+.brand-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.header-right {
+  display: flex; align-items: center; gap: 12px;
+}
+.status-pill {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 7px 14px;
+  background: var(--green-bg);
+  border-radius: 100px;
+  font-size: 12px;
+  color: var(--green);
+  font-weight: 500;
+}
+.status-pill .dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--green);
+  animation: pulse 1.5s ease infinite;
+}
+.user-pill {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--bg-2);
+  padding: 6px 12px 6px 6px;
+  border-radius: 100px;
+  font-size: 12px;
+  color: var(--text-soft);
+}
+.user-avatar {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--purple), var(--water));
+  display: flex; align-items: center; justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 11px;
+}
+
+/* PWA install banner */
+.pwa-banner {
+  background: linear-gradient(135deg, var(--water-bg), var(--teal-bg));
+  border-bottom: 1px solid var(--line);
+  padding: 12px 28px;
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 16px;
+  font-size: 13px;
+}
+.pwa-banner-left {
+  display: flex; align-items: center; gap: 12px;
+}
+.play-icon {
+  width: 32px; height: 32px;
+  background: white;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.play-icon svg { width: 18px; height: 18px; }
+.pwa-banner-text { line-height: 1.4; }
+.pwa-banner-text strong { color: var(--text); }
+.pwa-banner-text small { color: var(--text-muted); font-size: 11px; }
+.pwa-install-btn {
+  padding: 8px 16px;
+  background: var(--text);
+  color: var(--bg-0);
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 12px;
+  cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: inherit;
+  white-space: nowrap;
+}
+.pwa-install-btn:hover { background: var(--water); color: white; }
+
+/* Main */
+main {
+  padding: 28px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Top stats */
+.top-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 28px;
+}
+.stat-card {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 18px;
+  position: relative;
+  overflow: hidden;
+}
+.stat-card.water::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--water-bg), transparent 50%);
+  z-index: 0;
+}
+.stat-card > * { position: relative; z-index: 1; }
+.stat-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 12px;
+}
+.stat-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.stat-icon {
+  width: 28px; height: 28px;
+  border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+}
+.stat-icon.water { background: var(--water-bg); color: var(--water); }
+.stat-icon.green { background: var(--green-bg); color: var(--green); }
+.stat-icon.amber { background: var(--amber-bg); color: var(--amber); }
+.stat-icon.purple { background: rgba(168,85,247,0.12); color: var(--purple); }
+.stat-icon svg { width: 16px; height: 16px; }
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.stat-value-unit {
+  font-size: 14px;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+.stat-trend {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+.stat-trend.up { color: var(--green); }
+.stat-trend.down { color: var(--red); }
+
+/* Main grid */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 22px;
+  margin-bottom: 28px;
+}
+
+/* Section title */
+.section-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 14px;
+}
+.section-title {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-soft);
+  font-weight: 600;
+}
+.section-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* Pumps grid */
+.pumps-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.pump-card {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s;
+}
+.pump-card.running {
+  border-color: rgba(34,197,94,0.25);
+}
+.pump-card.running::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent, var(--green-bg) 95%, var(--green) 100%);
+  opacity: 0.3;
+  pointer-events: none;
+  animation: runningPulse 3s ease infinite;
+}
+@keyframes runningPulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.5; }
+}
+.pump-card.fault {
+  border-color: var(--red);
+  background: linear-gradient(135deg, var(--red-bg), var(--bg-2));
+}
+.pump-card.idle {
+  opacity: 0.85;
+}
+
+.pump-header {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  margin-bottom: 14px;
+  position: relative;
+  z-index: 1;
+}
+.pump-info {
+  display: flex; align-items: center; gap: 12px;
+}
+.pump-icon {
+  width: 44px; height: 44px;
+  border-radius: 10px;
+  background: var(--bg-3);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.pump-icon svg { width: 22px; height: 22px; fill: var(--text-soft); }
+.pump-card.running .pump-icon {
+  background: var(--green-bg);
+}
+.pump-card.running .pump-icon svg {
+  fill: var(--green);
+  animation: spin 4s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.pump-card.fault .pump-icon {
+  background: var(--red-bg);
+}
+.pump-card.fault .pump-icon svg { fill: var(--red); }
+.pump-name {
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+  margin-bottom: 2px;
+}
+.pump-location {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+.pump-status-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 4px 9px;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  display: inline-flex; align-items: center; gap: 5px;
+}
+.pump-status-badge.running {
+  background: var(--green-bg);
+  color: var(--green);
+}
+.pump-status-badge.running::before {
+  content: '';
+  width: 5px; height: 5px;
+  background: var(--green);
+  border-radius: 50%;
+  animation: pulse 1.5s ease infinite;
+}
+.pump-status-badge.idle { background: var(--bg-4); color: var(--text-muted); }
+.pump-status-badge.fault { background: var(--red); color: white; }
+
+.pump-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+  position: relative;
+  z-index: 1;
+}
+.metric-mini {
+  background: var(--bg-3);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+.metric-mini-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+}
+.metric-mini-val {
+  font-size: 16px;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: -0.02em;
+}
+.metric-mini-val .unit {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 400;
+  margin-left: 2px;
+}
+.metric-mini-val.green { color: var(--green); }
+.metric-mini-val.amber { color: var(--amber); }
+.metric-mini-val.red { color: var(--red); }
+
+.pump-last-reading {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+  position: relative;
+  z-index: 1;
+}
+.pump-last-reading .live-dot {
+  width: 6px; height: 6px;
+  background: var(--green);
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 6px;
+  animation: pulse 1.5s ease infinite;
+}
+
+/* Tank gauge */
+.tank-card {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 22px;
+  display: flex; flex-direction: column;
+  gap: 16px;
+}
+.tank-visual {
+  position: relative;
+  height: 280px;
+  background: linear-gradient(180deg, var(--bg-3) 0%, var(--bg-4) 100%);
+  border-radius: 16px;
+  border: 2px solid var(--bg-4);
+  overflow: hidden;
+}
+.tank-water {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  background: linear-gradient(180deg, var(--water) 0%, var(--water-deep) 100%);
+  transition: height 1s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex; align-items: flex-start; justify-content: center;
+  padding-top: 14px;
+  height: 68%;
+}
+.tank-water::before, .tank-water::after {
+  content: '';
+  position: absolute;
+  top: -6px; left: 0; right: 0;
+  height: 12px;
+  background: radial-gradient(ellipse at center top, var(--water-deep), transparent 70%);
+  opacity: 0.6;
+}
+.tank-water::after {
+  animation: wave 3s ease-in-out infinite;
+}
+@keyframes wave {
+  0%, 100% { transform: translateX(-3%); }
+  50% { transform: translateX(3%); }
+}
+.tank-percentage {
+  position: absolute;
+  bottom: 50%;
+  left: 50%;
+  transform: translate(-50%, 50%);
+  font-size: 48px;
+  font-weight: 800;
+  color: white;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: -0.04em;
+  text-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  z-index: 2;
+}
+.tank-percentage .pct {
+  font-size: 24px;
+  color: rgba(255,255,255,0.8);
+}
+.tank-markers {
+  position: absolute;
+  top: 0; bottom: 0; right: 8px;
+  display: flex; flex-direction: column; justify-content: space-between;
+  padding: 8px 0;
+  z-index: 1;
+}
+.tank-marker {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 9px;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+.tank-marker::after {
+  content: '';
+  width: 8px;
+  height: 1px;
+  background: rgba(255,255,255,0.2);
+}
+.tank-info {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.tank-info-item {
+  background: var(--bg-3);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+.tank-info-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 3px;
+}
+.tank-info-val {
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Alerts panel */
+.alerts-panel {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 22px;
+  margin-bottom: 22px;
+}
+.alerts-list {
+  display: flex; flex-direction: column; gap: 10px;
+}
+.alert-item {
+  background: var(--bg-3);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: grid;
+  grid-template-columns: 32px 1fr auto;
+  align-items: center;
+  gap: 14px;
+  border-left: 3px solid var(--line-strong);
+  transition: all 0.3s;
+}
+.alert-item.critical { border-left-color: var(--red); background: linear-gradient(135deg, var(--red-bg), var(--bg-3) 30%); }
+.alert-item.warning { border-left-color: var(--amber); background: linear-gradient(135deg, var(--amber-bg), var(--bg-3) 30%); }
+.alert-item.info { border-left-color: var(--water); background: linear-gradient(135deg, var(--water-bg), var(--bg-3) 30%); }
+.alert-icon-wrap {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+}
+.alert-item.critical .alert-icon-wrap { background: var(--red); color: white; }
+.alert-item.warning .alert-icon-wrap { background: var(--amber); color: var(--bg-0); }
+.alert-item.info .alert-icon-wrap { background: var(--water); color: var(--bg-0); }
+.alert-info {}
+.alert-title {
+  font-weight: 600;
+  font-size: 13px;
+  margin-bottom: 2px;
+  display: flex; align-items: center; gap: 8px;
+}
+.alert-time {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+.alert-desc {
+  font-size: 12px;
+  color: var(--text-soft);
+}
+.alert-action {
+  font-size: 11px;
+  color: var(--water);
+  text-decoration: none;
+  font-weight: 500;
+  white-space: nowrap;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Chart */
+.chart-card {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 22px;
+  margin-bottom: 22px;
+}
+.chart-svg {
+  width: 100%;
+  height: 200px;
+  margin-top: 14px;
+}
+
+/* Threshold config */
+.thresholds-card {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 22px;
+  margin-bottom: 22px;
+}
+.threshold-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+.threshold-row:last-child { border-bottom: none; }
+.threshold-name {
+  font-weight: 500;
+  font-size: 13px;
+}
+.threshold-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+  margin-top: 2px;
+}
+.threshold-value {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--bg-3);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 600;
+}
+.threshold-value .val { color: var(--water); }
+.threshold-toggle {
+  width: 36px; height: 20px;
+  background: var(--green);
+  border-radius: 12px;
+  position: relative;
+  cursor: pointer;
+}
+.threshold-toggle::after {
+  content: '';
+  position: absolute;
+  width: 14px; height: 14px;
+  background: white;
+  border-radius: 50%;
+  top: 3px;
+  right: 3px;
+  transition: all 0.2s;
+}
+.threshold-toggle.off { background: var(--bg-5); }
+.threshold-toggle.off::after { right: auto; left: 3px; }
+
+/* Event log */
+.event-log-card {
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 0;
+  overflow: hidden;
+  margin-bottom: 22px;
+}
+.event-log-header {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg-2);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.event-log-body {
+  padding: 16px 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+.event-line {
+  margin-bottom: 6px;
+  display: flex; gap: 12px;
+  color: var(--text-soft);
+}
+.event-line .ts { color: var(--text-dim); }
+.event-line .pump { color: var(--water); font-weight: 600; min-width: 70px; }
+.event-line .ok { color: var(--green); }
+.event-line .warn { color: var(--amber); }
+.event-line .err { color: var(--red); }
+.event-line .info { color: var(--water); }
+
+/* Push notification mock */
+.push-notification {
+  position: fixed;
+  bottom: 24px; right: 24px;
+  width: 360px;
+  max-width: calc(100vw - 32px);
+  background: var(--bg-2);
+  border: 1px solid var(--line-strong);
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 24px 48px rgba(0,0,0,0.5);
+  z-index: 100;
+  display: flex;
+  gap: 12px;
+  transform: translateY(120%);
+  opacity: 0;
+  transition: all 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.push-notification.show {
+  transform: translateY(0);
+  opacity: 1;
+}
+.push-app-icon {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--water), var(--teal));
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  color: white;
+  flex-shrink: 0;
+}
+.push-app-icon svg { width: 18px; height: 18px; fill: white; }
+.push-body { flex: 1; min-width: 0; }
+.push-source {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 3px;
+}
+.push-title {
+  font-weight: 700;
+  font-size: 13px;
+  margin-bottom: 3px;
+  letter-spacing: -0.01em;
+  display: flex; align-items: center; gap: 6px;
+}
+.push-text {
+  font-size: 12px;
+  color: var(--text-soft);
+  line-height: 1.4;
+}
+
+/* Controls */
+.controls-bar {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px 20px;
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 16px;
+  margin-bottom: 22px;
+  flex-wrap: wrap;
+}
+.controls-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn {
+  padding: 9px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--line-strong);
+  background: var(--bg-3);
+  color: var(--text);
+  font-size: 12px; font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.btn:hover { background: var(--bg-4); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-primary {
+  background: var(--water);
+  color: var(--bg-0);
+  border-color: var(--water);
+  font-weight: 600;
+}
+.btn-primary:hover { background: #0ea5e9; }
+.btn-danger {
+  background: var(--red-bg);
+  color: var(--red);
+  border-color: rgba(239,68,68,0.3);
+}
+.btn-danger:hover { background: var(--red); color: white; }
+.controls-time {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .top-stats { grid-template-columns: repeat(2, 1fr); }
+  .dashboard-grid { grid-template-columns: 1fr; }
+  .pumps-grid { grid-template-columns: 1fr; }
+  main { padding: 20px 16px; }
+}
+@media (max-width: 640px) {
+  .header { padding: 12px 16px; flex-wrap: wrap; gap: 10px; }
+  .brand-sub { display: none; }
+  .header-right { gap: 8px; }
+  .user-pill span { display: none; }
+  .pwa-banner { flex-direction: column; align-items: flex-start; padding: 12px 16px; }
+  .top-stats { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .stat-card { padding: 14px; }
+  .stat-value { font-size: 22px; }
+  .pump-metrics { grid-template-columns: 1fr 1fr; }
+  .controls-bar { flex-direction: column; align-items: stretch; }
+  .controls-actions { width: 100%; }
+  .controls-actions .btn { flex: 1; justify-content: center; }
+  .push-notification {
+    bottom: 12px; right: 12px; left: 12px;
+    width: auto;
+  }
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--bg-4); border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="brand">
+    <div class="brand-mark">
+      <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 4.5 7 13 7 13s7-8.5 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+    </div>
+    <div class="brand-text">
+      <div class="brand-name">AquaMonitor</div>
+      <div class="brand-sub">Vecindad Los Robles · Sistema de bombas</div>
+    </div>
+  </div>
+
+  <div class="header-right">
+    <div class="status-pill">
+      <span class="dot"></span>
+      <span>Sistema operativo</span>
+    </div>
+    <div class="user-pill">
+      <div class="user-avatar">MT</div>
+      <span>Matías · Admin</span>
+    </div>
+  </div>
+</div>
+
+<!-- PWA install banner -->
+<div class="pwa-banner">
+  <div class="pwa-banner-left">
+    <div class="play-icon">
+      <svg viewBox="0 0 24 24"><path fill="#4285f4" d="M3 20.5V3.5c0-.59.34-1.11.84-1.35L13.69 12l-9.85 9.85c-.5-.25-.84-.76-.84-1.35z"/><path fill="#fbbc04" d="M16.81 15.12L6.05 21.34l8.49-8.49 2.27 2.27z"/><path fill="#ea4335" d="M20.16 10.81c.5.28.83.8.83 1.38s-.33 1.1-.83 1.38l-2.34 1.32-2.4-2.4 2.4-2.4 2.34 1.72z"/><path fill="#34a853" d="M6.05 2.66l10.76 6.22-2.27 2.27L6.05 2.66z"/></svg>
+    </div>
+    <div class="pwa-banner-text">
+      <strong>Distribuído por Google Play como PWA + TWA.</strong>
+      <small style="display:block; margin-top:2px">Mismo código HTML/CSS/JS, actualizaciones sin pasar por revisión de Play Store.</small>
+    </div>
+  </div>
+  <button class="pwa-install-btn">Ver en Play Store ↗</button>
+</div>
+
+<main>
+
+<!-- Top stats -->
+<div class="top-stats">
+  <div class="stat-card water">
+    <div class="stat-header">
+      <span class="stat-label">Bombas activas</span>
+      <div class="stat-icon green">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5l-4-4L7.41 11 10 13.59 16.59 7 18 8.41 10 16.5z"/></svg>
+      </div>
+    </div>
+    <div class="stat-value">2<span class="stat-value-unit">/3</span></div>
+    <div class="stat-trend up">↑ Bomba 3 en falla (revisar)</div>
+  </div>
+  <div class="stat-card water">
+    <div class="stat-header">
+      <span class="stat-label">Nivel del tanque</span>
+      <div class="stat-icon water">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L4.5 18h15L12 2zm0 4.5l5 11h-10l5-11z"/></svg>
+      </div>
+    </div>
+    <div class="stat-value" id="tank-pct">68<span class="stat-value-unit">%</span></div>
+    <div class="stat-trend up">↑ subiendo · 2.4 L/min</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-header">
+      <span class="stat-label">Consumo hoy</span>
+      <div class="stat-icon purple">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/></svg>
+      </div>
+    </div>
+    <div class="stat-value">3,840<span class="stat-value-unit">L</span></div>
+    <div class="stat-trend">-12% vs ayer mismo horario</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-header">
+      <span class="stat-label">Alertas 24h</span>
+      <div class="stat-icon amber">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+      </div>
+    </div>
+    <div class="stat-value">3</div>
+    <div class="stat-trend">1 crítica · 2 advertencias</div>
+  </div>
+</div>
+
+<!-- Controls -->
+<div class="controls-bar">
+  <div class="controls-time">
+    <span style="color: var(--green)">●</span> Última lectura: hace 4 segundos · <span id="cur-time">14:32:18</span>
+  </div>
+  <div class="controls-actions">
+    <button class="btn" id="refresh-btn">↻ Actualizar lecturas</button>
+    <button class="btn btn-primary" id="simulate-btn">⚡ Simular evento de falla</button>
+    <button class="btn" id="push-btn">🔔 Probar notificación push</button>
+  </div>
+</div>
+
+<!-- Dashboard grid -->
+<div class="dashboard-grid">
+
+  <!-- Pumps -->
+  <div>
+    <div class="section-header">
+      <span class="section-title">Bombas · Estado en vivo</span>
+      <span class="section-meta">datos cada 30s · sensor ESP32</span>
+    </div>
+    <div class="pumps-grid" id="pumps-grid">
+      <!-- pump cards injected by JS -->
+    </div>
+  </div>
+
+  <!-- Tank visual -->
+  <div>
+    <div class="section-header">
+      <span class="section-title">Tanque principal</span>
+      <span class="section-meta">capacidad: 10,000 L</span>
+    </div>
+    <div class="tank-card">
+      <div class="tank-visual">
+        <div class="tank-water" id="tank-water">
+          <div class="tank-percentage" id="tank-pct-big">68<span class="pct">%</span></div>
+        </div>
+        <div class="tank-markers">
+          <div class="tank-marker">100%</div>
+          <div class="tank-marker">75%</div>
+          <div class="tank-marker">50%</div>
+          <div class="tank-marker">25%</div>
+          <div class="tank-marker">0%</div>
+        </div>
+      </div>
+      <div class="tank-info">
+        <div class="tank-info-item">
+          <div class="tank-info-label">Volumen actual</div>
+          <div class="tank-info-val" id="tank-vol">6,800 L</div>
+        </div>
+        <div class="tank-info-item">
+          <div class="tank-info-label">Llenado estimado</div>
+          <div class="tank-info-val">~38 min</div>
+        </div>
+        <div class="tank-info-item">
+          <div class="tank-info-label">Flujo entrada</div>
+          <div class="tank-info-val" style="color: var(--green)">+2.4 L/min</div>
+        </div>
+        <div class="tank-info-item">
+          <div class="tank-info-label">Flujo salida</div>
+          <div class="tank-info-val">-0.8 L/min</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Alerts -->
+<div class="alerts-panel">
+  <div class="section-header">
+    <span class="section-title">Centro de alertas · 24h</span>
+    <span class="section-meta">3 eventos · 1 crítico</span>
+  </div>
+  <div class="alerts-list">
+    <div class="alert-item critical">
+      <div class="alert-icon-wrap">!</div>
+      <div class="alert-info">
+        <div class="alert-title">Bomba 3 sin respuesta del sensor <span class="alert-time">· hace 12 min</span></div>
+        <div class="alert-desc">El sensor ESP32 de la bomba 3 dejó de transmitir. Posible falla de alimentación o WiFi del módulo.</div>
+      </div>
+      <a class="alert-action">Marcar atendida →</a>
+    </div>
+    <div class="alert-item warning">
+      <div class="alert-icon-wrap">⚠</div>
+      <div class="alert-info">
+        <div class="alert-title">Tanque por debajo del 30% <span class="alert-time">· hace 2h</span></div>
+        <div class="alert-desc">El tanque principal cayó al 28%. Bombas 1 y 2 activadas automáticamente. Recuperación en curso.</div>
+      </div>
+      <a class="alert-action">Ver detalle →</a>
+    </div>
+    <div class="alert-item info">
+      <div class="alert-icon-wrap">i</div>
+      <div class="alert-info">
+        <div class="alert-title">Mantenimiento programado bomba 1 <span class="alert-time">· en 3 días</span></div>
+        <div class="alert-desc">Próxima revisión preventiva agendada para sábado 19/05. 280 horas de operación desde el último mantenimiento.</div>
+      </div>
+      <a class="alert-action">Ver calendario →</a>
+    </div>
+  </div>
+</div>
+
+<!-- Chart -->
+<div class="chart-card">
+  <div class="section-header">
+    <span class="section-title">Nivel del tanque · últimas 24 horas</span>
+    <span class="section-meta">96 lecturas · cada 15 min</span>
+  </div>
+  <svg class="chart-svg" viewBox="0 0 800 200" preserveAspectRatio="none">
+    <defs>
+      <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.5"/>
+        <stop offset="100%" stop-color="#38bdf8" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    <line x1="0" y1="40" x2="800" y2="40" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+    <line x1="0" y1="100" x2="800" y2="100" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+    <line x1="0" y1="160" x2="800" y2="160" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+    <path d="M0,80 L40,75 L80,90 L120,110 L160,130 L200,145 L240,150 L280,140 L320,125 L360,105 L400,85 L440,70 L480,60 L520,50 L560,55 L600,70 L640,90 L680,110 L720,95 L760,70 L800,64"
+          fill="url(#chartGrad)" stroke="none"/>
+    <path d="M0,80 L40,75 L80,90 L120,110 L160,130 L200,145 L240,150 L280,140 L320,125 L360,105 L400,85 L440,70 L480,60 L520,50 L560,55 L600,70 L640,90 L680,110 L720,95 L760,70 L800,64"
+          fill="none" stroke="#38bdf8" stroke-width="2"/>
+    <circle cx="200" cy="145" r="4" fill="#f59e0b"/>
+    <circle cx="800" cy="64" r="5" fill="#38bdf8" stroke="white" stroke-width="2"/>
+    <text x="200" y="135" fill="#f59e0b" font-size="10" font-family="JetBrains Mono" text-anchor="middle">28% · alerta</text>
+    <text x="780" y="58" fill="#38bdf8" font-size="10" font-family="JetBrains Mono" text-anchor="end">68% · ahora</text>
+  </svg>
+  <div style="display: flex; justify-content: space-between; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-muted); margin-top: 8px; padding: 0 4px">
+    <span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>ahora</span>
+  </div>
+</div>
+
+<!-- Thresholds -->
+<div class="thresholds-card">
+  <div class="section-header">
+    <span class="section-title">Umbrales de alerta · push notification</span>
+    <span class="section-meta">Service Worker + VAPID · sin FCM</span>
+  </div>
+  <div class="threshold-row">
+    <div>
+      <div class="threshold-name">Tanque por debajo del nivel mínimo</div>
+      <div class="threshold-desc">push a admin + residentes con suscripción</div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 10px">
+      <div class="threshold-value">< <span class="val">25%</span></div>
+      <div class="threshold-toggle"></div>
+    </div>
+  </div>
+  <div class="threshold-row">
+    <div>
+      <div class="threshold-name">Bomba sin respuesta del sensor</div>
+      <div class="threshold-desc">push crítico a admin · sonido + vibración</div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 10px">
+      <div class="threshold-value">> <span class="val">5 min</span></div>
+      <div class="threshold-toggle"></div>
+    </div>
+  </div>
+  <div class="threshold-row">
+    <div>
+      <div class="threshold-name">Flujo anormal en la entrada del tanque</div>
+      <div class="threshold-desc">push a admin · posible fuga o sensor descalibrado</div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 10px">
+      <div class="threshold-value">< <span class="val">0.5 L/min</span></div>
+      <div class="threshold-toggle"></div>
+    </div>
+  </div>
+  <div class="threshold-row">
+    <div>
+      <div class="threshold-name">Horas de operación sin mantenimiento</div>
+      <div class="threshold-desc">push informativo a admin · planificación</div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 10px">
+      <div class="threshold-value">> <span class="val">300 hrs</span></div>
+      <div class="threshold-toggle"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Event log -->
+<div class="event-log-card">
+  <div class="event-log-header">
+    <div class="section-title" style="display: flex; align-items: center; gap: 8px">
+      <span style="width:7px;height:7px;background:var(--green);border-radius:50%;animation:pulse 1.5s ease infinite"></span>
+      <span>Event log · MySQL</span>
+    </div>
+    <span class="section-meta" id="event-count">7 eventos</span>
+  </div>
+  <div class="event-log-body" id="event-log">
+    <div class="event-line"><span class="ts">14:32:18</span><span class="pump">[Bomba 1]</span><span class="ok">✓ insertado en MySQL: nivel 68%, flujo 2.4 L/min</span></div>
+    <div class="event-line"><span class="ts">14:31:48</span><span class="pump">[Bomba 2]</span><span class="ok">✓ insertado en MySQL: nivel 68%, flujo 2.4 L/min</span></div>
+    <div class="event-line"><span class="ts">14:31:18</span><span class="pump">[Bomba 3]</span><span class="err">✗ timeout sensor (3er reintento)</span></div>
+    <div class="event-line"><span class="ts">14:30:48</span><span class="pump">[Bomba 1]</span><span class="ok">✓ insertado en MySQL: nivel 68%, flujo 2.4 L/min</span></div>
+    <div class="event-line"><span class="ts">14:30:18</span><span class="pump">[Bomba 1]</span><span class="ok">✓ insertado en MySQL: nivel 67%, flujo 2.4 L/min</span></div>
+    <div class="event-line"><span class="ts">14:29:48</span><span class="pump">[Bomba 3]</span><span class="err">✗ timeout sensor (2do reintento)</span></div>
+    <div class="event-line"><span class="ts">14:29:18</span><span class="pump">[Bomba 3]</span><span class="warn">! sensor no responde, primer intento</span></div>
+  </div>
+</div>
+
+</main>
+
+<!-- Push notification -->
+<div class="push-notification" id="push-notif">
+  <div class="push-app-icon">
+    <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 4.5 7 13 7 13s7-8.5 7-13c0-3.87-3.13-7-7-7z"/></svg>
+  </div>
+  <div class="push-body">
+    <div class="push-source">AquaMonitor · ahora</div>
+    <div class="push-title">⚠ Alerta crítica · Bomba 3</div>
+    <div class="push-text" id="push-text">El sensor de la bomba 3 dejó de responder. Revisa la conexión WiFi o alimentación.</div>
+  </div>
+</div>
+
+<script>
+
+const pumps = [
+  {
+    id: 1, name: 'Bomba 1', location: 'Cisterna A · vecindad', status: 'running',
+    flow: '2.4', flowUnit: 'L/min',
+    pressure: '3.8', pressureUnit: 'bar',
+    runtime: '14:22', runtimeUnit: 'hrs',
+    lastReading: 'hace 4 seg'
+  },
+  {
+    id: 2, name: 'Bomba 2', location: 'Cisterna B · vecindad', status: 'running',
+    flow: '2.4', flowUnit: 'L/min',
+    pressure: '3.6', pressureUnit: 'bar',
+    runtime: '11:48', runtimeUnit: 'hrs',
+    lastReading: 'hace 6 seg'
+  },
+  {
+    id: 3, name: 'Bomba 3', location: 'Refuerzo edificio', status: 'fault',
+    flow: '0.0', flowUnit: 'L/min',
+    pressure: '0.0', pressureUnit: 'bar',
+    runtime: '0:00', runtimeUnit: 'hrs',
+    lastReading: 'sensor offline'
+  },
+];
+
+function renderPump(p) {
+  const card = document.createElement('div');
+  card.className = `pump-card ${p.status}`;
+  card.dataset.id = p.id;
+
+  const statusLabel = { running: 'EN OPERACIÓN', idle: 'INACTIVA', fault: 'FALLA' }[p.status];
+  const flowClass = p.status === 'fault' ? 'red' : 'green';
+  const pressureClass = p.status === 'fault' ? 'red' : '';
+
+  card.innerHTML = `
+    <div class="pump-header">
+      <div class="pump-info">
+        <div class="pump-icon">
+          <svg viewBox="0 0 24 24"><path d="M12 2v6m0 0a6 6 0 1 0 0 12 6 6 0 0 0 0-12zm-1 5h2v4h-2z"/></svg>
+        </div>
+        <div>
+          <div class="pump-name">${p.name}</div>
+          <div class="pump-location">${p.location}</div>
+        </div>
+      </div>
+      <span class="pump-status-badge ${p.status}">${statusLabel}</span>
+    </div>
+    <div class="pump-metrics">
+      <div class="metric-mini">
+        <div class="metric-mini-label">Flujo</div>
+        <div class="metric-mini-val ${flowClass}">${p.flow}<span class="unit">${p.flowUnit}</span></div>
+      </div>
+      <div class="metric-mini">
+        <div class="metric-mini-label">Presión</div>
+        <div class="metric-mini-val ${pressureClass}">${p.pressure}<span class="unit">${p.pressureUnit}</span></div>
+      </div>
+      <div class="metric-mini">
+        <div class="metric-mini-label">Op. hoy</div>
+        <div class="metric-mini-val">${p.runtime}<span class="unit">${p.runtimeUnit}</span></div>
+      </div>
+    </div>
+    <div class="pump-last-reading">
+      <span><span class="live-dot"></span>${p.lastReading}</span>
+      <span>sensor: ESP32 · MQTT</span>
+    </div>
+  `;
+  return card;
+}
+
+const grid = document.getElementById('pumps-grid');
+pumps.forEach(p => grid.appendChild(renderPump(p)));
+
+// Time updates
+function updateTime() {
+  document.getElementById('cur-time').textContent = new Date().toTimeString().slice(0, 8);
+}
+updateTime();
+setInterval(updateTime, 1000);
+
+function ts() {
+  return new Date().toTimeString().slice(0, 8);
+}
+
+function logEvent(pump, text, type='info') {
+  const body = document.getElementById('event-log');
+  const line = document.createElement('div');
+  line.className = 'event-line';
+  const icons = { ok: '✓', warn: '!', err: '✗', info: '▸' };
+  line.innerHTML = `<span class="ts">${ts()}</span><span class="pump">[${pump}]</span><span class="${type}">${icons[type] || '·'} ${text}</span>`;
+  body.insertBefore(line, body.firstChild);
+  if (body.children.length > 50) body.removeChild(body.lastChild);
+  document.getElementById('event-count').textContent = `${body.children.length} eventos`;
+}
+
+function showPush(title, text) {
+  const notif = document.getElementById('push-notif');
+  notif.querySelector('.push-title').textContent = title;
+  document.getElementById('push-text').textContent = text;
+  notif.classList.add('show');
+  setTimeout(() => notif.classList.remove('show'), 5500);
+}
+
+let tankLevel = 68;
+async function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+document.getElementById('refresh-btn').addEventListener('click', async () => {
+  const btn = document.getElementById('refresh-btn');
+  btn.disabled = true;
+  btn.textContent = '⟳ leyendo sensores...';
+  logEvent('Sistema', 'iniciando lectura manual de los 3 sensores ESP32', 'info');
+  await sleep(800);
+  logEvent('Bomba 1', `insertado en MySQL: nivel ${tankLevel}%, flujo 2.4 L/min`, 'ok');
+  await sleep(200);
+  logEvent('Bomba 2', `insertado en MySQL: nivel ${tankLevel}%, flujo 2.4 L/min`, 'ok');
+  await sleep(200);
+  logEvent('Bomba 3', 'sensor todavía sin respuesta · POST a /api/health falló', 'err');
+  await sleep(300);
+  tankLevel = Math.min(72, tankLevel + 1);
+  document.getElementById('tank-water').style.height = tankLevel + '%';
+  document.getElementById('tank-pct').firstChild.textContent = tankLevel;
+  document.getElementById('tank-pct-big').firstChild.textContent = tankLevel;
+  document.getElementById('tank-vol').textContent = (tankLevel * 100).toLocaleString() + ' L';
+  btn.disabled = false;
+  btn.textContent = '↻ Actualizar lecturas';
+});
+
+document.getElementById('simulate-btn').addEventListener('click', async () => {
+  const btn = document.getElementById('simulate-btn');
+  btn.disabled = true;
+  btn.textContent = '⚡ simulando...';
+  logEvent('Bomba 1', 'caída repentina de presión: 3.8 → 1.2 bar', 'warn');
+  await sleep(700);
+  logEvent('Bomba 1', 'flujo cayó a 0.3 L/min · posible obstrucción en línea', 'err');
+  // Update pump 1 card to fault
+  const card = document.querySelector('.pump-card[data-id="1"]');
+  card.classList.remove('running');
+  card.classList.add('fault');
+  card.querySelector('.pump-status-badge').className = 'pump-status-badge fault';
+  card.querySelector('.pump-status-badge').textContent = 'FALLA';
+  card.querySelectorAll('.metric-mini-val')[0].textContent = '0.3';
+  card.querySelectorAll('.metric-mini-val')[0].classList.add('red');
+  card.querySelectorAll('.metric-mini-val')[0].classList.remove('green');
+  card.querySelectorAll('.metric-mini-val')[1].textContent = '1.2';
+  card.querySelectorAll('.metric-mini-val')[1].classList.add('amber');
+  await sleep(400);
+  logEvent('Sistema', 'umbral cruzado: push notification disparada', 'warn');
+  showPush('⚠ Alerta crítica · Bomba 1', 'Caída de presión detectada (1.2 bar). Revisa filtro o línea de succión.');
+  setTimeout(() => {
+    btn.disabled = false;
+    btn.textContent = '⚡ Simular evento de falla';
+  }, 1500);
+});
+
+document.getElementById('push-btn').addEventListener('click', () => {
+  showPush('💧 AquaMonitor', 'Tanque por encima del 70% · ciclo de llenado completado.');
+  logEvent('Sistema', 'push notification de prueba enviada via VAPID', 'ok');
+});
+
+// Threshold toggle
+document.querySelectorAll('.threshold-toggle').forEach(t => {
+  t.addEventListener('click', () => t.classList.toggle('off'));
+});
+
+// PWA install button
+document.querySelector('.pwa-install-btn').addEventListener('click', () => {
+  showPush('📱 PWA + TWA', 'Esta app vive como página web, pero se instala desde Play Store como app nativa. Mismo código, distribución oficial.');
+});
+
+// Auto periodic event
+setInterval(() => {
+  if (Math.random() > 0.6) {
+    const pump = Math.random() > 0.5 ? 'Bomba 1' : 'Bomba 2';
+    logEvent(pump, `insertado en MySQL: nivel ${tankLevel}%, flujo 2.4 L/min`, 'ok');
+  }
+}, 5500);
+</script>
+
+</body>
+</html>
