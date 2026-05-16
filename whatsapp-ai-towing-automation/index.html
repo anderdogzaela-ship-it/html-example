@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Automatización WhatsApp + IA · Registro de Grúas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-0: #0b0f14;
+  --bg-1: #11161d;
+  --bg-2: #161c25;
+  --bg-3: #1d242f;
+  --bg-4: #252d3a;
+  --bg-5: #2f3848;
+  --line: rgba(255,255,255,0.06);
+  --line-strong: rgba(255,255,255,0.12);
+  --text: #ebeef3;
+  --text-soft: #9ea7b5;
+  --text-muted: #6b7280;
+  --text-dim: #4a5260;
+  --wa: #25d366;
+  --wa-bg: rgba(37,211,102,0.12);
+  --wa-glow: rgba(37,211,102,0.18);
+  --accent: #f59e0b;
+  --accent-bg: rgba(245,158,11,0.12);
+  --blue: #60a5fa;
+  --blue-bg: rgba(96,165,250,0.12);
+  --green: #34d399;
+  --green-bg: rgba(52,211,153,0.12);
+  --red: #f87171;
+  --red-bg: rgba(248,113,113,0.12);
+  --purple: #a78bfa;
+  --purple-bg: rgba(167,139,250,0.12);
+  --pink: #ec4899;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg-0);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  font-size: 14px;
+  line-height: 1.5;
+  background-image:
+    radial-gradient(circle at 0% 0%, var(--wa-glow), transparent 35%),
+    radial-gradient(circle at 100% 100%, var(--accent-bg), transparent 35%);
+}
+.mono { font-family: 'JetBrains Mono', monospace; }
+
+/* Layout */
+.app {
+  display: grid;
+  grid-template-columns: 380px 1fr 380px;
+  min-height: 100vh;
+}
+
+/* Header */
+.header {
+  grid-column: 1 / -1;
+  padding: 18px 28px;
+  background: var(--bg-1);
+  border-bottom: 1px solid var(--line);
+  display: flex; justify-content: space-between; align-items: center;
+  position: sticky; top: 0; z-index: 10;
+  backdrop-filter: blur(20px);
+}
+.brand {
+  display: flex; align-items: center; gap: 14px;
+}
+.brand-mark {
+  width: 40px; height: 40px;
+  border-radius: 11px;
+  background: linear-gradient(135deg, var(--wa) 0%, #128c7e 100%);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 18px var(--wa-glow);
+  position: relative;
+}
+.brand-mark::after {
+  content: '';
+  position: absolute;
+  width: 6px; height: 6px;
+  background: var(--accent);
+  border-radius: 50%;
+  top: 2px; right: 2px;
+  box-shadow: 0 0 6px var(--accent);
+  border: 2px solid var(--bg-1);
+}
+.brand-mark svg { width: 22px; height: 22px; fill: white; }
+.brand-text { display: flex; flex-direction: column; gap: 2px; }
+.brand-title {
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+}
+.brand-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.header-meta {
+  display: flex; align-items: center; gap: 24px;
+}
+.stat {
+  display: flex; flex-direction: column;
+  font-family: 'JetBrains Mono', monospace;
+}
+.stat-label {
+  font-size: 9px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
+.stat-value {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+.stat-value.wa { color: var(--wa); }
+.stat-value.accent { color: var(--accent); }
+
+.status-pill {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 7px 12px;
+  background: var(--wa-bg);
+  border-radius: 100px;
+  font-size: 12px; color: var(--wa);
+  font-weight: 500;
+}
+.status-pill .dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--wa);
+  animation: pulse 1.5s ease infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.4); }
+}
+
+/* WhatsApp Inbox - left */
+.inbox {
+  background: var(--bg-1);
+  border-right: 1px solid var(--line);
+  height: calc(100vh - 73px);
+  overflow-y: auto;
+  display: flex; flex-direction: column;
+}
+.inbox-header {
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--line);
+  display: flex; justify-content: space-between; align-items: center;
+  background: var(--bg-1);
+  position: sticky; top: 0;
+  z-index: 2;
+}
+.inbox-title {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-soft);
+  font-weight: 600;
+}
+.inbox-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.chat {
+  flex: 1;
+  padding: 20px;
+  display: flex; flex-direction: column; gap: 14px;
+  background:
+    repeating-linear-gradient(45deg, transparent 0, transparent 20px, rgba(255,255,255,0.005) 20px, rgba(255,255,255,0.005) 21px);
+}
+
+.msg {
+  display: flex; gap: 10px;
+  align-items: flex-end;
+  animation: slideIn 0.4s ease;
+}
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.msg-avatar {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #5e6c84 0%, #344563 100%);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 600;
+  flex-shrink: 0;
+  color: white;
+}
+.msg-avatar.luis { background: linear-gradient(135deg, #5eead4 0%, #0ea5e9 100%); }
+.msg-avatar.carlos { background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%); }
+.msg-avatar.maria { background: linear-gradient(135deg, #a78bfa 0%, #ec4899 100%); }
+
+.msg-content {
+  flex: 1;
+}
+.msg-name {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+  padding-left: 4px;
+}
+.msg-bubble {
+  background: var(--bg-3);
+  padding: 10px 14px;
+  border-radius: 14px;
+  border-top-left-radius: 4px;
+  font-size: 13px;
+  line-height: 1.5;
+  position: relative;
+  max-width: 100%;
+}
+.msg-bubble.image {
+  padding: 8px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.msg-bubble .img-preview {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: linear-gradient(135deg, #475569 0%, #1e293b 100%);
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+}
+.msg-bubble .img-preview::before {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(circle at 30% 70%, rgba(255,255,255,0.08), transparent 50%),
+    repeating-linear-gradient(0deg, transparent 0, transparent 30px, rgba(0,0,0,0.1) 30px, rgba(0,0,0,0.1) 31px);
+}
+.img-plate {
+  background: white;
+  padding: 6px 16px;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  font-size: 18px;
+  color: #1a1a1a;
+  letter-spacing: 2px;
+  border: 2px solid #333;
+  position: relative;
+  z-index: 1;
+}
+.img-caption {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+  text-align: center;
+}
+
+.msg-time {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 4px;
+  padding-left: 4px;
+  display: flex; align-items: center; gap: 6px;
+}
+.msg-time .check {
+  color: var(--wa);
+}
+
+.msg.processing .msg-bubble {
+  border: 1px solid var(--accent);
+  box-shadow: 0 0 0 2px rgba(245,158,11,0.1);
+}
+
+.msg.new {
+  position: relative;
+}
+.msg.new::after {
+  content: 'NUEVO';
+  position: absolute;
+  top: -8px; right: 0;
+  background: var(--wa);
+  color: #0b0f14;
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  animation: pulse 1.5s ease infinite;
+}
+
+/* Center - Pipeline */
+.center {
+  padding: 24px 28px;
+  overflow-y: auto;
+  height: calc(100vh - 73px);
+}
+
+.section-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 16px;
+}
+.section-title {
+  font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px;
+  color: var(--text-soft); font-weight: 600;
+}
+.section-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* Pipeline visualization */
+.pipeline {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 22px;
+  margin-bottom: 22px;
+  position: relative;
+}
+.pipeline-flow {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 14px;
+  position: relative;
+}
+.pipeline-flow::before {
+  content: '';
+  position: absolute;
+  top: 24px;
+  left: 4%; right: 4%;
+  height: 2px;
+  background: var(--line);
+  z-index: 0;
+}
+.flow-node {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+}
+.flow-circle {
+  width: 50px; height: 50px;
+  margin: 0 auto 8px;
+  border-radius: 50%;
+  background: var(--bg-3);
+  border: 2px solid var(--line);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-muted);
+  transition: all 0.4s;
+}
+.flow-node.active .flow-circle {
+  background: var(--accent-bg);
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(245,158,11,0.15);
+  animation: nodeActive 0.8s ease;
+}
+@keyframes nodeActive {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+.flow-node.done .flow-circle {
+  background: var(--green-bg);
+  border-color: var(--green);
+  color: var(--green);
+}
+.flow-name {
+  font-size: 12px;
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+.flow-tech {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.pipeline-controls {
+  display: flex; gap: 10px;
+  padding-top: 18px;
+  margin-top: 18px;
+  border-top: 1px solid var(--line);
+  flex-wrap: wrap;
+}
+.btn {
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--line-strong);
+  background: var(--bg-3);
+  color: var(--text);
+  font-size: 13px; font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: inherit;
+}
+.btn:hover { background: var(--bg-4); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-primary {
+  background: var(--wa);
+  color: #0b0f14;
+  border-color: var(--wa);
+  font-weight: 600;
+}
+.btn-primary:hover { background: #1fb755; }
+.btn-secondary {
+  background: var(--accent-bg);
+  border-color: rgba(245,158,11,0.3);
+  color: var(--accent);
+}
+
+/* Extraction view */
+.extraction {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 22px;
+  margin-bottom: 22px;
+}
+.extraction-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+.extraction-model {
+  display: flex; align-items: center; gap: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.extraction-model strong { color: var(--purple); }
+
+.extraction-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.field {
+  background: var(--bg-3);
+  border-radius: 8px;
+  padding: 11px 14px;
+  border-left: 3px solid var(--bg-5);
+  opacity: 0.4;
+  transition: all 0.4s;
+}
+.field.extracted {
+  opacity: 1;
+  border-left-color: var(--wa);
+  animation: extract 0.5s ease;
+}
+.field.warning {
+  border-left-color: var(--accent);
+}
+.field.error {
+  border-left-color: var(--red);
+}
+@keyframes extract {
+  0% { background: var(--wa-bg); transform: translateX(-4px); }
+  100% { background: var(--bg-3); transform: translateX(0); }
+}
+.field-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 3px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.field-value {
+  font-size: 14px;
+  font-weight: 500;
+  font-family: 'JetBrains Mono', monospace;
+  display: flex; align-items: center; gap: 8px;
+  min-height: 18px;
+}
+.field-value .confidence {
+  margin-left: auto;
+  font-size: 10px;
+  padding: 1px 6px;
+  background: var(--green-bg);
+  color: var(--green);
+  border-radius: 4px;
+  font-weight: 700;
+}
+.field-value .confidence.warn { background: var(--accent-bg); color: var(--accent); }
+.field-value .placeholder {
+  color: var(--text-dim);
+  font-style: italic;
+  font-size: 12px;
+}
+
+/* JSON output */
+.json-view {
+  background: #0a0d12;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 16px 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  line-height: 1.7;
+  margin-bottom: 22px;
+}
+.json-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+}
+.json-title {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
+.json-format {
+  font-size: 10px;
+  color: var(--blue);
+  padding: 2px 8px;
+  background: var(--blue-bg);
+  border-radius: 4px;
+}
+.json-content {
+  color: var(--text-soft);
+  min-height: 220px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+.json-key { color: #ec4899; }
+.json-string { color: #34d399; }
+.json-number { color: #f59e0b; }
+.json-cursor {
+  display: inline-block;
+  width: 6px;
+  height: 14px;
+  background: var(--wa);
+  margin-left: 2px;
+  vertical-align: middle;
+  animation: blink 1s step-end infinite;
+}
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+/* Validations */
+.validations {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 20px;
+}
+.val-list {
+  display: flex; flex-direction: column; gap: 8px;
+}
+.val-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 12px;
+  background: var(--bg-3);
+  border-radius: 8px;
+  font-size: 12px;
+  opacity: 0.4;
+  transition: all 0.3s;
+}
+.val-item.passed {
+  opacity: 1;
+  background: var(--green-bg);
+}
+.val-item.warning {
+  opacity: 1;
+  background: var(--accent-bg);
+}
+.val-icon {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--bg-5);
+  color: var(--text-muted);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.val-item.passed .val-icon { background: var(--green); color: #0b0f14; }
+.val-item.warning .val-icon { background: var(--accent); color: #0b0f14; }
+.val-text {
+  flex: 1;
+}
+.val-name {
+  font-weight: 500;
+  font-size: 13px;
+}
+.val-detail {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Right - Sheets */
+.sheets {
+  background: var(--bg-1);
+  border-left: 1px solid var(--line);
+  height: calc(100vh - 73px);
+  overflow: hidden;
+  display: flex; flex-direction: column;
+}
+.sheets-header {
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg-1);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.sheets-title {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-soft);
+  font-weight: 600;
+  display: flex; align-items: center; gap: 8px;
+}
+.sheets-title .sheet-icon {
+  width: 16px; height: 16px;
+  background: linear-gradient(135deg, #34a853 0%, #1e8e3e 100%);
+  border-radius: 3px;
+  display: inline-block;
+}
+.sheets-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.sheet-tab {
+  padding: 8px 16px;
+  background: var(--bg-2);
+  border-bottom: 1px solid var(--line);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+  display: flex; align-items: center; gap: 8px;
+}
+.sheet-tab strong { color: var(--green); }
+
+.sheet-table-wrap {
+  flex: 1;
+  overflow: auto;
+  padding: 0;
+}
+.sheet-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+}
+.sheet-table th {
+  background: var(--bg-2);
+  padding: 10px 8px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+  position: sticky; top: 0;
+  z-index: 1;
+  white-space: nowrap;
+}
+.sheet-table td {
+  padding: 8px;
+  border-bottom: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+  color: var(--text-soft);
+  white-space: nowrap;
+}
+.sheet-table tr.new-row {
+  background: var(--wa-bg);
+  animation: newRow 1.2s ease;
+}
+@keyframes newRow {
+  0% { background: var(--wa-bg); transform: scale(1.005); }
+  60% { background: var(--wa-bg); }
+  100% { background: transparent; }
+}
+.sheet-table tr.new-row.permanent {
+  background: transparent;
+  transition: background 0.6s;
+}
+.sheet-row-num {
+  background: var(--bg-2);
+  text-align: center;
+  font-size: 10px;
+  color: var(--text-muted);
+  font-weight: 600;
+  width: 36px;
+}
+.sheet-cell-pendiente { color: var(--accent); }
+.sheet-cell-completo { color: var(--green); }
+
+/* Bottom log */
+.log-row {
+  padding: 12px 20px;
+  border-top: 1px solid var(--line);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  background: var(--bg-2);
+  max-height: 140px;
+  overflow-y: auto;
+}
+.log-line {
+  margin-bottom: 4px;
+  color: var(--text-soft);
+  display: flex; gap: 8px;
+}
+.log-line .ts { color: var(--text-dim); }
+.log-line .ok { color: var(--green); }
+.log-line .warn { color: var(--accent); }
+.log-line .err { color: var(--red); }
+.log-line .info { color: var(--blue); }
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 24px; left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: var(--bg-3);
+  border: 1px solid var(--wa);
+  padding: 14px 24px;
+  border-radius: 10px;
+  font-size: 13px;
+  display: flex; align-items: center; gap: 10px;
+  box-shadow: 0 24px 48px rgba(0,0,0,0.5);
+  z-index: 100;
+  opacity: 0;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.toast.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+.toast-icon {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--wa);
+  color: #0b0f14;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* Responsive */
+@media (max-width: 1280px) {
+  .app { grid-template-columns: 320px 1fr 320px; }
+}
+@media (max-width: 1024px) {
+  .app {
+    grid-template-columns: 1fr;
+  }
+  .inbox, .sheets {
+    height: auto;
+    max-height: 400px;
+    border-right: none;
+    border-left: none;
+    border-bottom: 1px solid var(--line);
+  }
+  .center {
+    height: auto;
+    padding: 20px;
+  }
+  .header { padding: 14px 20px; }
+  .header-meta { gap: 12px; }
+  .stat { display: none; }
+  .stat.first { display: flex; }
+}
+@media (max-width: 640px) {
+  .header { flex-direction: column; gap: 12px; align-items: flex-start; }
+  .header-meta { width: 100%; justify-content: space-between; }
+  .pipeline-flow { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  .pipeline-flow::before { display: none; }
+  .extraction-grid { grid-template-columns: 1fr; }
+  .pipeline-controls { flex-direction: column; }
+  .pipeline-controls .btn { width: 100%; justify-content: center; }
+  .center { padding: 16px; }
+  .pipeline, .extraction, .json-view, .validations { padding: 16px; }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--bg-4); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--bg-5); }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+<!-- Header -->
+<div class="header">
+  <div class="brand">
+    <div class="brand-mark">
+      <svg viewBox="0 0 24 24"><path d="M17.5 14.4c-.3-.1-1.7-.8-2-.9s-.5-.1-.7.1-.8.9-.9 1.1-.3.2-.5.1c-.3-.2-1.2-.5-2.3-1.4-.8-.8-1.4-1.7-1.6-2-.2-.3 0-.4.1-.6.1-.1.3-.3.4-.4.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5s-.7-1.7-1-2.3c-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1.1 2.8 1.2 3 2.1 3.3 5.2 4.6c.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.7-.7 2-1.4.3-.6.3-1.1.2-1.2-.1-.2-.3-.2-.6-.3zM12 2C6.5 2 2 6.5 2 12c0 1.7.4 3.4 1.3 4.9L2 22l5.3-1.4c1.4.8 3 1.2 4.7 1.2 5.5 0 10-4.5 10-10S17.5 2 12 2z"/></svg>
+    </div>
+    <div class="brand-text">
+      <div class="brand-title">Servicios Grúas · Automatización IA</div>
+      <div class="brand-sub">n8n · WhatsApp API · OpenAI · Google Sheets</div>
+    </div>
+  </div>
+  <div class="header-meta">
+    <div class="stat first">
+      <span class="stat-label">Servicios hoy</span>
+      <span class="stat-value wa" id="stat-services">12</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">Costo IA / día</span>
+      <span class="stat-value accent">$0.18</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">Operadores</span>
+      <span class="stat-value">4</span>
+    </div>
+    <div class="status-pill">
+      <span class="dot"></span>
+      <span>Flujo activo</span>
+    </div>
+  </div>
+</div>
+
+<!-- WhatsApp Inbox -->
+<aside class="inbox">
+  <div class="inbox-header">
+    <span class="inbox-title">WhatsApp · Bandeja</span>
+    <span class="inbox-count" id="inbox-count">3 mensajes</span>
+  </div>
+  <div class="chat" id="chat">
+
+    <div class="msg">
+      <div class="msg-avatar luis">LU</div>
+      <div class="msg-content">
+        <div class="msg-name">Luis · 7:14 AM</div>
+        <div class="msg-bubble">Servicio terminado José placa AFJ223 de San Isidro a Ate costo 300 adelanto 100 falta 200 técnico Luis</div>
+        <div class="msg-time"><span class="check">✓✓</span> procesado · fila #18</div>
+      </div>
+    </div>
+
+    <div class="msg">
+      <div class="msg-avatar carlos">CA</div>
+      <div class="msg-content">
+        <div class="msg-name">Carlos · 8:32 AM</div>
+        <div class="msg-bubble image">
+          <div class="img-preview">
+            <div class="img-plate">B6T-749</div>
+          </div>
+          <div class="img-caption">grua_servicio_LIM_2026.jpg</div>
+        </div>
+        <div class="msg-time"><span class="check">✓✓</span> OCR + IA · fila #19</div>
+      </div>
+    </div>
+
+    <div class="msg new processing" id="incoming-msg">
+      <div class="msg-avatar maria">MA</div>
+      <div class="msg-content">
+        <div class="msg-name">María · ahora</div>
+        <div class="msg-bubble">Servicio María Vargas terminó placa P9B832 Surco hasta Callao 450 soles adelantó 150 pendiente 300 técnico Roberto Sánchez 14:22hrs auto se quedó en panne</div>
+        <div class="msg-time"><span style="color: var(--accent)">⟳</span> procesando...</div>
+      </div>
+    </div>
+
+  </div>
+</aside>
+
+<!-- Center Pipeline -->
+<main class="center">
+
+  <!-- Pipeline Flow -->
+  <div class="pipeline">
+    <div class="section-header">
+      <span class="section-title">Pipeline n8n · Flujo de extracción</span>
+      <span class="section-meta" id="pipeline-status">Idle · esperando trigger</span>
+    </div>
+    <div class="pipeline-flow">
+      <div class="flow-node" data-node="1">
+        <div class="flow-circle">1</div>
+        <div class="flow-name">WhatsApp In</div>
+        <div class="flow-tech">webhook · Meta</div>
+      </div>
+      <div class="flow-node" data-node="2">
+        <div class="flow-circle">2</div>
+        <div class="flow-name">OCR Imagen</div>
+        <div class="flow-tech">vision LLM</div>
+      </div>
+      <div class="flow-node" data-node="3">
+        <div class="flow-circle">3</div>
+        <div class="flow-name">Extracción IA</div>
+        <div class="flow-tech">structured output</div>
+      </div>
+      <div class="flow-node" data-node="4">
+        <div class="flow-circle">4</div>
+        <div class="flow-name">Validación</div>
+        <div class="flow-tech">regex · roster</div>
+      </div>
+      <div class="flow-node" data-node="5">
+        <div class="flow-circle">5</div>
+        <div class="flow-name">Sheets Write</div>
+        <div class="flow-tech">append row</div>
+      </div>
+    </div>
+    <div class="pipeline-controls">
+      <button class="btn btn-primary" id="run-text">Procesar mensaje de María ▶</button>
+      <button class="btn btn-secondary" id="run-image">Procesar imagen de placa</button>
+      <button class="btn" id="reset-btn">Reiniciar</button>
+    </div>
+  </div>
+
+  <!-- Extraction View -->
+  <div class="extraction">
+    <div class="extraction-header">
+      <span class="section-title">Extracción estructurada · 11 campos</span>
+      <div class="extraction-model">
+        <span>modelo:</span><strong id="model-name">gpt-4o-mini</strong>
+        <span>·</span>
+        <span id="model-time">latencia: ---ms</span>
+      </div>
+    </div>
+    <div class="extraction-grid" id="field-grid">
+      <div class="field" data-field="cliente">
+        <div class="field-label">Cliente</div>
+        <div class="field-value"><span class="placeholder">pendiente</span></div>
+      </div>
+      <div class="field" data-field="placa">
+        <div class="field-label">Placa</div>
+        <div class="field-value"><span class="placeholder">pendiente</span></div>
+      </div>
+      <div class="field" data-field="origen">
+        <div class="field-label">Origen</div>
+        <div class="field-value"><span class="placeholder">pendiente</span></div>
+      </div>
+      <div class="field" data-field="destino">
+        <div class="field-label">Destino</div>
+        <div class="field-value"><span class="placeholder">pendiente</span></div>
+      </div>
+      <div class="field" data-field="costo">
+        <div class="field-label">Costo</div>
+        <div class="field-value"><span class="placeholder">pendiente</span></div>
+      </div>
+      <div class="field" data-field="adelanto">
+        <div class="field-label">Adelanto</div>
+        <div class="field-value"><span class="placeholder">pendiente</span></div>
+      </div>
+      <div class="field" data-field="pendiente">
+        <div class="field-label">Pendiente</div>
+        <div class="field-value"><span class="placeholder">pendiente</span></div>
+      </div>
+      <div class="field" data-field="tecnico">
+        <div class="field-label">Técnico</div>
+        <div class="field-value"><span class="placeholder">pendiente</span></div>
+      </div>
+      <div class="field" data-field="fecha">
+        <div class="field-label">Fecha</div>
+        <div class="field-value"><span class="placeholder">pendiente</span></div>
+      </div>
+      <div class="field" data-field="hora">
+        <div class="field-label">Hora</div>
+        <div class="field-value"><span class="placeholder">pendiente</span></div>
+      </div>
+      <div class="field" data-field="observaciones" style="grid-column: 1 / -1">
+        <div class="field-label">Observaciones</div>
+        <div class="field-value"><span class="placeholder">pendiente</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JSON Output -->
+  <div class="json-view">
+    <div class="json-header">
+      <span class="json-title">JSON Schema · OpenAI structured output</span>
+      <span class="json-format">response_format: json_schema</span>
+    </div>
+    <div class="json-content" id="json-out">{
+  <span class="json-key">"cliente"</span>: <span class="json-string">null</span>,
+  <span class="json-key">"placa"</span>: <span class="json-string">null</span>,
+  <span class="json-key">"origen"</span>: <span class="json-string">null</span>,
+  <span class="json-key">"destino"</span>: <span class="json-string">null</span>,
+  <span class="json-key">"costo"</span>: <span class="json-number">null</span>,
+  <span class="json-key">"adelanto"</span>: <span class="json-number">null</span>,
+  <span class="json-key">"pendiente"</span>: <span class="json-number">null</span>,
+  <span class="json-key">"tecnico"</span>: <span class="json-string">null</span>,
+  <span class="json-key">"fecha"</span>: <span class="json-string">null</span>,
+  <span class="json-key">"hora"</span>: <span class="json-string">null</span>,
+  <span class="json-key">"observaciones"</span>: <span class="json-string">null</span>
+}</div>
+  </div>
+
+  <!-- Validations -->
+  <div class="validations">
+    <div class="section-header">
+      <span class="section-title">Reglas de validación · 5/5 antes de Sheets</span>
+      <span class="section-meta" id="val-status">esperando datos</span>
+    </div>
+    <div class="val-list" id="val-list">
+      <div class="val-item" data-val="placa">
+        <div class="val-icon">·</div>
+        <div class="val-text">
+          <div class="val-name">Formato placa peruana</div>
+          <div class="val-detail">regex: ^[A-Z]{1,3}[-]?[0-9]{3,4}$</div>
+        </div>
+      </div>
+      <div class="val-item" data-val="costo">
+        <div class="val-icon">·</div>
+        <div class="val-text">
+          <div class="val-name">Costo numérico positivo</div>
+          <div class="val-detail">costo > 0 && costo == adelanto + pendiente</div>
+        </div>
+      </div>
+      <div class="val-item" data-val="origen">
+        <div class="val-icon">·</div>
+        <div class="val-text">
+          <div class="val-name">Distrito en lista Lima Metropolitana</div>
+          <div class="val-detail">lookup: 43 distritos · fuzzy match</div>
+        </div>
+      </div>
+      <div class="val-item" data-val="tecnico">
+        <div class="val-icon">·</div>
+        <div class="val-text">
+          <div class="val-name">Técnico en roster activo</div>
+          <div class="val-detail">contra tabla operadores · case insensitive</div>
+        </div>
+      </div>
+      <div class="val-item" data-val="duplicate">
+        <div class="val-icon">·</div>
+        <div class="val-text">
+          <div class="val-name">No duplicado (placa + fecha + hora)</div>
+          <div class="val-detail">previene doble registro del mismo servicio</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- Right - Google Sheets -->
+<aside class="sheets">
+  <div class="sheets-header">
+    <div class="sheets-title">
+      <span class="sheet-icon"></span>
+      <span>Google Sheets · Registro</span>
+    </div>
+    <span class="sheets-meta" id="sheets-meta">19 filas</span>
+  </div>
+  <div class="sheet-tab">
+    <strong>•</strong>
+    <span>servicios_2026.xlsx · hoja: Mayo</span>
+  </div>
+  <div class="sheet-table-wrap">
+    <table class="sheet-table" id="sheet-table">
+      <thead>
+        <tr>
+          <th class="sheet-row-num">#</th>
+          <th>Cliente</th>
+          <th>Placa</th>
+          <th>Origen</th>
+          <th>Destino</th>
+          <th>Costo</th>
+          <th>Adel.</th>
+          <th>Pend.</th>
+          <th>Técnico</th>
+          <th>Fecha</th>
+          <th>Hora</th>
+        </tr>
+      </thead>
+      <tbody id="sheet-body">
+        <tr><td class="sheet-row-num">18</td><td>José Mendoza</td><td>AFJ-223</td><td>San Isidro</td><td>Ate</td><td>S/ 300</td><td>S/ 100</td><td class="sheet-cell-pendiente">S/ 200</td><td>Luis G.</td><td>16/05</td><td>07:14</td></tr>
+        <tr><td class="sheet-row-num">19</td><td>Carlos Romero</td><td>B6T-749</td><td>Miraflores</td><td>Lince</td><td>S/ 220</td><td>S/ 220</td><td class="sheet-cell-completo">S/ 0</td><td>Carlos M.</td><td>16/05</td><td>08:32</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="log-row" id="log">
+    <div class="log-line"><span class="ts">07:14:02</span><span class="ok">✓ servicio #18 registrado en Sheets</span></div>
+    <div class="log-line"><span class="ts">08:32:11</span><span class="ok">✓ OCR + extracción · servicio #19</span></div>
+    <div class="log-line"><span class="ts">10:18:33</span><span class="info">▸ esperando próximo mensaje WhatsApp</span></div>
+  </div>
+</aside>
+
+</div>
+
+<div class="toast" id="toast">
+  <div class="toast-icon">✓</div>
+  <span id="toast-text">Servicio registrado en Sheets</span>
+</div>
+
+<script>
+// Data sets
+const textPayload = {
+  cliente: { value: 'María Vargas', confidence: 99 },
+  placa: { value: 'P9B-832', confidence: 96 },
+  origen: { value: 'Surco', confidence: 94 },
+  destino: { value: 'Callao', confidence: 97 },
+  costo: { value: 'S/ 450', confidence: 99 },
+  adelanto: { value: 'S/ 150', confidence: 99 },
+  pendiente: { value: 'S/ 300', confidence: 99 },
+  tecnico: { value: 'Roberto Sánchez', confidence: 95 },
+  fecha: { value: '16/05/2026', confidence: 100 },
+  hora: { value: '14:22', confidence: 100 },
+  observaciones: { value: 'Auto se quedó en panne · servicio finalizado', confidence: 88 },
+};
+
+const imagePayload = {
+  cliente: { value: 'Sandra Quispe', confidence: 92 },
+  placa: { value: 'B6T-749', confidence: 99 },
+  origen: { value: 'Miraflores', confidence: 91 },
+  destino: { value: 'Lince', confidence: 89 },
+  costo: { value: 'S/ 220', confidence: 95 },
+  adelanto: { value: 'S/ 220', confidence: 95 },
+  pendiente: { value: 'S/ 0', confidence: 100 },
+  tecnico: { value: 'Carlos Mendoza', confidence: 93 },
+  fecha: { value: '16/05/2026', confidence: 100 },
+  hora: { value: '08:32', confidence: 100 },
+  observaciones: { value: 'Imagen procesada con vision LLM · placa legible', confidence: 90 },
+};
+
+let processing = false;
+let serviceCount = 19;
+
+function ts() {
+  const d = new Date();
+  return d.toTimeString().slice(0, 8);
+}
+
+function setNode(n, state) {
+  document.querySelectorAll('.flow-node').forEach(node => {
+    if (parseInt(node.dataset.node) === n) {
+      node.classList.remove('active', 'done');
+      if (state) node.classList.add(state);
+    }
+  });
+}
+
+function resetNodes() {
+  document.querySelectorAll('.flow-node').forEach(node => {
+    node.classList.remove('active', 'done');
+  });
+}
+
+function logLine(text, type = 'info') {
+  const log = document.getElementById('log');
+  const line = document.createElement('div');
+  line.className = 'log-line';
+  const prefix = { ok: '✓', warn: '!', err: '✗', info: '▸' }[type] || '·';
+  line.innerHTML = `<span class="ts">${ts()}</span><span class="${type}">${prefix} ${text}</span>`;
+  log.appendChild(line);
+  log.scrollTop = log.scrollHeight;
+}
+
+function resetFields() {
+  document.querySelectorAll('.field').forEach(f => {
+    f.classList.remove('extracted', 'warning', 'error');
+    f.querySelector('.field-value').innerHTML = '<span class="placeholder">pendiente</span>';
+  });
+  document.querySelectorAll('.val-item').forEach(v => {
+    v.classList.remove('passed', 'warning');
+    v.querySelector('.val-icon').textContent = '·';
+  });
+  document.getElementById('val-status').textContent = 'esperando datos';
+  document.getElementById('model-time').textContent = 'latencia: ---ms';
+}
+
+function showToast(text) {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-text').textContent = text;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+async function sleep(ms) {
+  return new Promise(r => setTimeout(r, ms));
+}
+
+async function streamJson(payload) {
+  const json = document.getElementById('json-out');
+  const fields = Object.keys(payload);
+  let out = '{\n';
+  json.innerHTML = out;
+  for (let i = 0; i < fields.length; i++) {
+    const key = fields[i];
+    const val = payload[key].value;
+    const isNum = ['costo','adelanto','pendiente'].includes(key);
+    const escaped = String(val).replace(/"/g, '\\"');
+    const valueColored = isNum
+      ? `<span class="json-number">"${escaped}"</span>`
+      : `<span class="json-string">"${escaped}"</span>`;
+    out += `  <span class="json-key">"${key}"</span>: ${valueColored}${i < fields.length - 1 ? ',' : ''}\n`;
+    json.innerHTML = out + '<span class="json-cursor"></span>}';
+    await sleep(120);
+  }
+  json.innerHTML = out + '}';
+}
+
+async function fillFields(payload) {
+  for (const key of Object.keys(payload)) {
+    const field = document.querySelector(`.field[data-field="${key}"]`);
+    if (!field) continue;
+    const conf = payload[key].confidence;
+    const value = payload[key].value;
+    const confClass = conf < 92 ? 'warn' : '';
+    field.classList.add('extracted');
+    if (conf < 90) field.classList.add('warning');
+    field.querySelector('.field-value').innerHTML = `
+      <span>${value}</span>
+      <span class="confidence ${confClass}">${conf}%</span>
+    `;
+    await sleep(110);
+  }
+}
+
+async function runValidations() {
+  const items = document.querySelectorAll('.val-item');
+  const list = ['placa', 'costo', 'origen', 'tecnico', 'duplicate'];
+  document.getElementById('val-status').textContent = 'corriendo reglas...';
+  for (let i = 0; i < items.length; i++) {
+    items[i].classList.add('passed');
+    items[i].querySelector('.val-icon').textContent = '✓';
+    document.getElementById('val-status').textContent = `${i+1}/5 reglas pasadas`;
+    await sleep(280);
+  }
+  document.getElementById('val-status').textContent = '5/5 reglas pasadas';
+}
+
+async function appendRow(payload) {
+  serviceCount += 1;
+  const body = document.getElementById('sheet-body');
+  const tr = document.createElement('tr');
+  tr.className = 'new-row';
+  const pendienteClass = payload.pendiente.value === 'S/ 0' ? 'sheet-cell-completo' : 'sheet-cell-pendiente';
+  tr.innerHTML = `
+    <td class="sheet-row-num">${serviceCount}</td>
+    <td>${payload.cliente.value}</td>
+    <td>${payload.placa.value}</td>
+    <td>${payload.origen.value}</td>
+    <td>${payload.destino.value}</td>
+    <td>${payload.costo.value}</td>
+    <td>${payload.adelanto.value}</td>
+    <td class="${pendienteClass}">${payload.pendiente.value}</td>
+    <td>${payload.tecnico.value.split(' ')[0]} ${payload.tecnico.value.split(' ')[1] ? payload.tecnico.value.split(' ')[1].charAt(0) + '.' : ''}</td>
+    <td>${payload.fecha.value.slice(0,5)}</td>
+    <td>${payload.hora.value}</td>
+  `;
+  body.appendChild(tr);
+  document.getElementById('sheets-meta').textContent = `${serviceCount} filas`;
+  document.getElementById('stat-services').textContent = serviceCount - 7;
+  setTimeout(() => tr.classList.add('permanent'), 1200);
+  tr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+async function runFlow(payload, isImage) {
+  if (processing) return;
+  processing = true;
+  document.querySelectorAll('.pipeline-controls .btn').forEach(b => b.disabled = true);
+  resetNodes();
+  resetFields();
+
+  document.getElementById('pipeline-status').textContent = 'procesando...';
+
+  setNode(1, 'active');
+  logLine('mensaje WhatsApp recibido vía webhook Meta', 'info');
+  await sleep(700);
+  setNode(1, 'done');
+
+  if (isImage) {
+    setNode(2, 'active');
+    document.getElementById('model-name').textContent = 'gpt-4o vision';
+    logLine('imagen detectada · vision LLM extrayendo placa + contexto', 'info');
+    await sleep(1100);
+    document.getElementById('model-time').textContent = 'latencia: 1240ms';
+    logLine('placa detectada: B6T-749 (99% confianza)', 'ok');
+    setNode(2, 'done');
+  } else {
+    document.getElementById('model-name').textContent = 'gpt-4o-mini';
+    setNode(2, 'done');
+  }
+
+  setNode(3, 'active');
+  document.getElementById('pipeline-status').textContent = 'extrayendo campos (LLM)...';
+  if (!isImage) document.getElementById('model-time').textContent = 'latencia: 480ms';
+  logLine('llamando OpenAI con response_format json_schema (11 campos)', 'cmd');
+
+  await Promise.all([streamJson(payload), fillFields(payload)]);
+
+  setNode(3, 'done');
+  logLine('11 campos extraídos · JSON válido garantizado por schema', 'ok');
+
+  setNode(4, 'active');
+  document.getElementById('pipeline-status').textContent = 'corriendo validaciones...';
+  await runValidations();
+  setNode(4, 'done');
+  logLine('reglas placa+costo+distrito+técnico+dedup pasadas', 'ok');
+
+  setNode(5, 'active');
+  document.getElementById('pipeline-status').textContent = 'escribiendo en Google Sheets...';
+  await sleep(500);
+  await appendRow(payload);
+  setNode(5, 'done');
+  logLine(`fila #${serviceCount} insertada · servicios_2026 · hoja Mayo`, 'ok');
+
+  document.getElementById('pipeline-status').textContent = `flujo completado en 4.2s`;
+  showToast(`Servicio #${serviceCount} registrado · ${payload.cliente.value}`);
+
+  document.querySelectorAll('.pipeline-controls .btn').forEach(b => b.disabled = false);
+  processing = false;
+}
+
+document.getElementById('run-text').addEventListener('click', () => runFlow(textPayload, false));
+document.getElementById('run-image').addEventListener('click', () => runFlow(imagePayload, true));
+document.getElementById('reset-btn').addEventListener('click', () => {
+  if (processing) return;
+  resetNodes();
+  resetFields();
+  document.getElementById('pipeline-status').textContent = 'Idle · esperando trigger';
+  document.getElementById('json-out').innerHTML = `{
+  <span class="json-key">"cliente"</span>: <span class="json-string">null</span>,
+  <span class="json-key">"placa"</span>: <span class="json-string">null</span>,
+  <span class="json-key">"origen"</span>: <span class="json-string">null</span>,
+  <span class="json-key">"destino"</span>: <span class="json-string">null</span>,
+  <span class="json-key">"costo"</span>: <span class="json-number">null</span>,
+  <span class="json-key">"adelanto"</span>: <span class="json-number">null</span>,
+  <span class="json-key">"pendiente"</span>: <span class="json-number">null</span>,
+  <span class="json-key">"tecnico"</span>: <span class="json-string">null</span>,
+  <span class="json-key">"fecha"</span>: <span class="json-string">null</span>,
+  <span class="json-key">"hora"</span>: <span class="json-string">null</span>,
+  <span class="json-key">"observaciones"</span>: <span class="json-string">null</span>
+}`;
+  logLine('estado reiniciado', 'info');
+});
+</script>
+
+</body>
+</html>
