@@ -1,0 +1,1383 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FarmaCompara · Agente de Busca em Farmácias Online</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-0: #f8fafc;
+  --bg-1: #ffffff;
+  --bg-2: #f1f5f9;
+  --bg-3: #e2e8f0;
+  --bg-4: #cbd5e1;
+  --bg-dark: #0f172a;
+  --bg-dark-2: #1e293b;
+  --bg-dark-3: #334155;
+  --line: rgba(15,23,42,0.08);
+  --line-strong: rgba(15,23,42,0.12);
+  --text: #0f172a;
+  --text-soft: #475569;
+  --text-muted: #64748b;
+  --text-dim: #94a3b8;
+  --primary: #0d9488;
+  --primary-light: #14b8a6;
+  --primary-bg: rgba(13,148,136,0.08);
+  --green: #16a34a;
+  --green-bg: #dcfce7;
+  --amber: #f59e0b;
+  --amber-bg: #fef3c7;
+  --red: #ef4444;
+  --red-bg: #fee2e2;
+  --blue: #2563eb;
+  --blue-bg: #dbeafe;
+  --purple: #9333ea;
+  --purple-bg: #f3e8ff;
+  --pink: #db2777;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg-0);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.mono { font-family: 'JetBrains Mono', monospace; }
+
+/* Header */
+.header {
+  background: white;
+  border-bottom: 1px solid var(--line);
+  padding: 16px 32px;
+  position: sticky; top: 0; z-index: 50;
+  backdrop-filter: blur(20px);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.brand {
+  display: flex; align-items: center; gap: 12px;
+}
+.brand-mark {
+  width: 38px; height: 38px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  color: white;
+  position: relative;
+}
+.brand-mark svg { width: 22px; height: 22px; }
+.brand-mark::after {
+  content: '';
+  position: absolute;
+  width: 7px; height: 7px;
+  background: var(--green);
+  border-radius: 50%;
+  top: 2px; right: 2px;
+  border: 2px solid white;
+  animation: pulse 1.8s ease infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.3); }
+}
+.brand-text { display: flex; flex-direction: column; gap: 1px; }
+.brand-name {
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: -0.02em;
+}
+.brand-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.tabs {
+  display: flex; gap: 4px;
+  background: var(--bg-2);
+  padding: 4px;
+  border-radius: 10px;
+}
+.tab {
+  padding: 8px 14px;
+  border-radius: 7px;
+  font-size: 12px; font-weight: 500;
+  color: var(--text-soft);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex; align-items: center; gap: 6px;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+}
+.tab.active {
+  background: white;
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+.tab .count {
+  display: inline-block;
+  background: var(--bg-3);
+  padding: 1px 6px;
+  border-radius: 100px;
+  font-size: 10px;
+  font-weight: 600;
+}
+.tab.active .count {
+  background: var(--primary-bg);
+  color: var(--primary);
+}
+
+.header-actions {
+  display: flex; align-items: center; gap: 12px;
+}
+.cep-pill {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--bg-2);
+  padding: 8px 14px;
+  border-radius: 100px;
+  font-size: 12px;
+  color: var(--text-soft);
+  font-family: 'JetBrains Mono', monospace;
+}
+.cep-pill .pin {
+  color: var(--primary);
+}
+
+/* Main */
+main {
+  padding: 28px 32px;
+  max-width: 1500px;
+  margin: 0 auto;
+}
+
+/* Search */
+.search-section {
+  margin-bottom: 24px;
+}
+.search-title {
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-bottom: 6px;
+  line-height: 1.1;
+}
+.search-title span {
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.search-sub {
+  font-size: 14px;
+  color: var(--text-soft);
+  margin-bottom: 22px;
+}
+
+.search-box {
+  background: white;
+  border: 1px solid var(--line-strong);
+  border-radius: 14px;
+  padding: 8px;
+  display: flex; align-items: center; gap: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  transition: all 0.3s;
+}
+.search-box:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px var(--primary-bg);
+}
+.search-icon {
+  color: var(--text-muted);
+  padding: 0 10px;
+  display: flex;
+}
+.search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 15px;
+  font-family: inherit;
+  padding: 12px 8px;
+  background: transparent;
+  color: var(--text);
+}
+.search-btn {
+  padding: 12px 22px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 9px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+.search-btn:hover { background: var(--primary-light); }
+.search-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.quick-searches {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  margin-top: 12px;
+}
+.quick-chip {
+  padding: 6px 12px;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 100px;
+  font-size: 12px;
+  color: var(--text-soft);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.quick-chip:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--primary-bg);
+}
+
+/* Canonical SKU header */
+.canonical-banner {
+  background: linear-gradient(135deg, var(--primary-bg), white);
+  border: 1px solid var(--primary);
+  border-radius: 14px;
+  padding: 18px 22px;
+  margin-bottom: 20px;
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 16px;
+  opacity: 0;
+  transform: translateY(-8px);
+  transition: all 0.4s;
+}
+.canonical-banner.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+.canonical-info { flex: 1; min-width: 0; }
+.canonical-name {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  letter-spacing: -0.01em;
+}
+.canonical-meta {
+  display: flex; gap: 16px;
+  font-size: 12px;
+  color: var(--text-soft);
+  font-family: 'JetBrains Mono', monospace;
+  flex-wrap: wrap;
+}
+.canonical-meta strong { color: var(--text); }
+.canonical-action {
+  display: flex; align-items: center; gap: 12px;
+}
+.canonical-best-price {
+  text-align: right;
+}
+.canonical-best-price-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.canonical-best-price-val {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--green);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Results layout */
+.results-layout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 22px;
+  align-items: flex-start;
+}
+
+.results-list {
+  display: flex; flex-direction: column; gap: 12px;
+}
+
+.section-label {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 12px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.section-label .right {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.result-card {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 18px 20px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 18px;
+  align-items: center;
+  transition: all 0.25s;
+  opacity: 0;
+  transform: translateY(8px);
+}
+.result-card.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+.result-card:hover {
+  border-color: var(--primary);
+  box-shadow: 0 8px 24px rgba(13,148,136,0.08);
+}
+.result-card.best {
+  border-color: var(--green);
+  background: linear-gradient(135deg, var(--green-bg) 0%, white 30%);
+}
+.result-card.out-stock {
+  opacity: 0.55;
+}
+
+.pharmacy-logo {
+  width: 56px; height: 56px;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700;
+  font-size: 18px;
+  font-family: 'JetBrains Mono', monospace;
+  color: white;
+  flex-shrink: 0;
+}
+.logo-drogasil { background: linear-gradient(135deg, #f5365c, #b91c1c); }
+.logo-pacheco { background: linear-gradient(135deg, #0d9488, #115e59); }
+.logo-pague-menos { background: linear-gradient(135deg, #f59e0b, #ea580c); }
+.logo-raia { background: linear-gradient(135deg, #2563eb, #1e40af); }
+.logo-ultrafarma { background: linear-gradient(135deg, #9333ea, #6d28d9); }
+.logo-onofre { background: linear-gradient(135deg, #db2777, #9d174d); }
+
+.result-info { min-width: 0; }
+.result-pharmacy {
+  font-weight: 600;
+  font-size: 15px;
+  margin-bottom: 3px;
+  letter-spacing: -0.01em;
+  display: flex; align-items: center; gap: 8px;
+}
+.best-badge {
+  background: var(--green);
+  color: white;
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+}
+.result-listing {
+  font-size: 13px;
+  color: var(--text-soft);
+  margin-bottom: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.result-meta {
+  display: flex; gap: 14px;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+  flex-wrap: wrap;
+}
+.result-meta .item {
+  display: flex; align-items: center; gap: 5px;
+}
+.result-meta .item.stock-ok { color: var(--green); }
+.result-meta .item.stock-low { color: var(--amber); }
+.result-meta .item.stock-out { color: var(--red); }
+.result-meta .item.fresh-good { color: var(--green); }
+.result-meta .item.fresh-old { color: var(--amber); }
+
+.result-price-block {
+  text-align: right;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.result-price {
+  font-size: 22px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+.result-card.best .result-price { color: var(--green); }
+.result-original {
+  font-size: 12px;
+  color: var(--text-dim);
+  text-decoration: line-through;
+  font-family: 'JetBrains Mono', monospace;
+}
+.result-discount {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--green);
+  background: var(--green-bg);
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: inline-block;
+  width: fit-content;
+  align-self: flex-end;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Sidebar */
+.sidebar {
+  display: flex; flex-direction: column; gap: 16px;
+  position: sticky; top: 100px;
+}
+
+.side-card {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 18px;
+}
+.side-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  letter-spacing: -0.01em;
+}
+
+.scraper-list { display: flex; flex-direction: column; gap: 8px; }
+.scraper-row {
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: var(--bg-2);
+  border-radius: 8px;
+  font-size: 12px;
+}
+.scraper-logo-mini {
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.scraper-info {
+  display: flex; flex-direction: column; gap: 2px;
+  min-width: 0;
+}
+.scraper-name {
+  font-weight: 600;
+  font-size: 12px;
+}
+.scraper-stats {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+.scraper-pill {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 7px;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.scraper-pill.ok { background: var(--green-bg); color: var(--green); }
+.scraper-pill.warn { background: var(--amber-bg); color: var(--amber); }
+.scraper-pill.err { background: var(--red-bg); color: var(--red); }
+
+/* Stats */
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.stat-mini {
+  background: var(--bg-2);
+  border-radius: 8px;
+  padding: 12px;
+}
+.stat-mini-val {
+  font-size: 20px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: -0.02em;
+}
+.stat-mini-val.primary { color: var(--primary); }
+.stat-mini-val.green { color: var(--green); }
+.stat-mini-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 2px;
+}
+
+/* LLM Normalization */
+.llm-log {
+  background: var(--bg-dark);
+  border-radius: 12px;
+  padding: 16px;
+  color: #e2e8f0;
+  margin-top: 12px;
+}
+.llm-log-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #94a3b8;
+  font-weight: 600;
+  margin-bottom: 12px;
+  display: flex; align-items: center; gap: 8px;
+}
+.llm-log-title::before {
+  content: '';
+  width: 7px; height: 7px;
+  background: #34d399;
+  border-radius: 50%;
+  display: inline-block;
+  animation: pulse 1.5s ease infinite;
+}
+.llm-mapping {
+  display: flex; flex-direction: column; gap: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+}
+.llm-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 10px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 6px;
+}
+.llm-source {
+  color: #cbd5e1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.llm-arrow {
+  color: #14b8a6;
+  font-weight: 700;
+}
+.llm-canonical {
+  color: #5eead4;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Admin dashboard panel */
+.admin-panel {
+  display: none;
+  background: white;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  padding: 24px;
+}
+.admin-panel.active { display: block; }
+.admin-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-bottom: 22px;
+}
+.admin-stat {
+  background: var(--bg-2);
+  border-radius: 10px;
+  padding: 16px;
+}
+.admin-stat-val {
+  font-size: 26px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: -0.02em;
+  color: var(--primary);
+  margin-bottom: 2px;
+}
+.admin-stat-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.admin-stat-trend {
+  font-size: 11px;
+  margin-top: 4px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.admin-stat-trend.up { color: var(--green); }
+.admin-stat-trend.down { color: var(--red); }
+
+.scrapers-detail-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.scrapers-detail-table th {
+  background: var(--bg-2);
+  padding: 10px 14px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--line);
+}
+.scrapers-detail-table th:first-child { border-top-left-radius: 10px; }
+.scrapers-detail-table th:last-child { border-top-right-radius: 10px; }
+.scrapers-detail-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+}
+.scrapers-detail-table tr:last-child td { border-bottom: none; }
+.scrapers-detail-table .pharm-cell {
+  display: flex; align-items: center; gap: 10px;
+}
+.pharm-cell .pharm-logo-tiny {
+  width: 24px; height: 24px;
+  border-radius: 5px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: white;
+  font-family: 'JetBrains Mono', monospace;
+  flex-shrink: 0;
+}
+.health-bar-cell {
+  display: flex; align-items: center; gap: 8px;
+}
+.health-bar-mini {
+  flex: 1; max-width: 80px;
+  height: 5px;
+  background: var(--bg-3);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.health-bar-mini .fill {
+  height: 100%;
+  background: var(--green);
+}
+.health-bar-mini .fill.amber { background: var(--amber); }
+.health-bar-mini .fill.red { background: var(--red); }
+
+/* Activity feed at bottom */
+.activity-feed {
+  margin-top: 24px;
+  background: var(--bg-dark);
+  border-radius: 14px;
+  padding: 20px;
+  color: #e2e8f0;
+}
+.activity-feed-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.activity-feed-title {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #94a3b8;
+  font-weight: 600;
+  display: flex; align-items: center; gap: 8px;
+}
+.activity-feed-body {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+.activity-line {
+  margin-bottom: 5px;
+  display: flex; gap: 10px;
+  color: #cbd5e1;
+}
+.activity-line .ts { color: #64748b; }
+.activity-line .ok { color: #34d399; }
+.activity-line .warn { color: #fbbf24; }
+.activity-line .info { color: #60a5fa; }
+.activity-line .err { color: #f87171; }
+
+/* Mobile */
+@media (max-width: 1024px) {
+  .results-layout { grid-template-columns: 1fr; }
+  .sidebar { position: static; }
+  main { padding: 20px 16px; }
+  .search-title { font-size: 24px; }
+}
+@media (max-width: 640px) {
+  .header { padding: 12px 16px; flex-wrap: wrap; gap: 10px; }
+  .brand-sub { display: none; }
+  .tabs { width: 100%; order: 3; }
+  .tab { flex: 1; justify-content: center; }
+  .header-actions { gap: 8px; }
+  .cep-pill { font-size: 11px; padding: 6px 10px; }
+  .canonical-banner { flex-direction: column; align-items: stretch; }
+  .canonical-action { justify-content: space-between; }
+  .result-card { grid-template-columns: auto 1fr; padding: 14px; gap: 12px; }
+  .result-price-block { grid-column: 1 / -1; flex-direction: row; justify-content: space-between; align-items: center; padding-top: 10px; border-top: 1px solid var(--line); }
+  .result-meta { flex-direction: column; gap: 4px; }
+  .admin-grid { grid-template-columns: 1fr; }
+  .scrapers-detail-table { font-size: 11px; }
+  .scrapers-detail-table th, .scrapers-detail-table td { padding: 8px; }
+  .scrapers-detail-table .latency-col, .scrapers-detail-table .infra-col { display: none; }
+  .llm-row { grid-template-columns: 1fr; gap: 4px; }
+  .llm-arrow { display: none; }
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--bg-4); border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="brand">
+    <div class="brand-mark">
+      <svg viewBox="0 0 24 24" fill="white"><path d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5zm-1 6h2v3h3v2h-3v3h-2v-3H8v-2h3V8z"/></svg>
+    </div>
+    <div class="brand-text">
+      <div class="brand-name">FarmaCompara</div>
+      <div class="brand-sub">agente de busca · 6 farmácias online · BR</div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="search">Buscar produto</button>
+    <button class="tab" data-tab="admin">Painel scrapers <span class="count" id="admin-count">6</span></button>
+  </div>
+
+  <div class="header-actions">
+    <div class="cep-pill">
+      <span class="pin">📍</span>
+      <span>CEP 04567-010 · Vila Mariana, SP</span>
+    </div>
+  </div>
+</div>
+
+<main>
+
+<!-- SEARCH VIEW -->
+<div id="search-view">
+
+<div class="search-section">
+  <h1 class="search-title">Compare preços de remédios em <span>diversas farmácias online</span> num clique.</h1>
+  <p class="search-sub">Mapeamento canônico de SKUs · resultados frescos · transparência total sobre quando o preço foi atualizado.</p>
+
+  <div class="search-box">
+    <span class="search-icon">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+    </span>
+    <input type="text" class="search-input" placeholder="Digite o nome do medicamento, princípio ativo ou marca..." id="search-input" value="Dipirona 500mg 20 comprimidos">
+    <button class="search-btn" id="search-btn">Buscar</button>
+  </div>
+
+  <div class="quick-searches">
+    <div class="quick-chip">Paracetamol 750mg</div>
+    <div class="quick-chip">Ibuprofeno 600mg</div>
+    <div class="quick-chip">Cefalexina 500mg</div>
+    <div class="quick-chip">Amoxicilina 500mg</div>
+    <div class="quick-chip">Losartana 50mg</div>
+  </div>
+</div>
+
+<!-- Canonical SKU banner (hidden initially) -->
+<div class="canonical-banner" id="canonical-banner">
+  <div class="canonical-info">
+    <div class="canonical-name">Dipirona Sódica 500mg · comprimido · cx com 20</div>
+    <div class="canonical-meta">
+      <span>SKU canônico: <strong>DIP-500-CP-20</strong></span>
+      <span>Princípio ativo: <strong>dipirona sódica</strong></span>
+      <span>Equivalentes mapeados: <strong>6 listings</strong></span>
+      <span>EAN agregado: <strong>3 códigos</strong></span>
+    </div>
+  </div>
+  <div class="canonical-action">
+    <div class="canonical-best-price">
+      <div class="canonical-best-price-label">Menor preço</div>
+      <div class="canonical-best-price-val">R$ 6,99</div>
+    </div>
+  </div>
+</div>
+
+<div class="section-label">
+  <span>Resultados em 6 farmácias online</span>
+  <span class="right" id="results-meta">aguardando busca</span>
+</div>
+
+<div class="results-layout">
+
+  <div class="results-list" id="results-list">
+    <!-- result cards injected by JS -->
+  </div>
+
+  <div class="sidebar">
+    <div class="side-card">
+      <div class="side-title">Status dos scrapers</div>
+      <div class="scraper-list">
+        <div class="scraper-row">
+          <div class="scraper-logo-mini logo-drogasil">DR</div>
+          <div class="scraper-info">
+            <span class="scraper-name">Drogasil</span>
+            <span class="scraper-stats">última crawl: 2h · 98% sucesso</span>
+          </div>
+          <span class="scraper-pill ok">OK</span>
+        </div>
+        <div class="scraper-row">
+          <div class="scraper-logo-mini logo-pacheco">PA</div>
+          <div class="scraper-info">
+            <span class="scraper-name">Drogaria Pacheco</span>
+            <span class="scraper-stats">última crawl: 1h · 96% sucesso</span>
+          </div>
+          <span class="scraper-pill ok">OK</span>
+        </div>
+        <div class="scraper-row">
+          <div class="scraper-logo-mini logo-pague-menos">PM</div>
+          <div class="scraper-info">
+            <span class="scraper-name">Pague Menos</span>
+            <span class="scraper-stats">última crawl: 3h · 89% sucesso</span>
+          </div>
+          <span class="scraper-pill warn">CAPTCHA</span>
+        </div>
+        <div class="scraper-row">
+          <div class="scraper-logo-mini logo-raia">RA</div>
+          <div class="scraper-info">
+            <span class="scraper-name">Droga Raia</span>
+            <span class="scraper-stats">última crawl: 2h · 99% sucesso</span>
+          </div>
+          <span class="scraper-pill ok">OK</span>
+        </div>
+        <div class="scraper-row">
+          <div class="scraper-logo-mini logo-ultrafarma">UF</div>
+          <div class="scraper-info">
+            <span class="scraper-name">Ultrafarma</span>
+            <span class="scraper-stats">última crawl: 4h · 92% sucesso</span>
+          </div>
+          <span class="scraper-pill ok">OK</span>
+        </div>
+        <div class="scraper-row">
+          <div class="scraper-logo-mini logo-onofre">ON</div>
+          <div class="scraper-info">
+            <span class="scraper-name">Drogaria Onofre</span>
+            <span class="scraper-stats">última crawl: 6h · 78% sucesso</span>
+          </div>
+          <span class="scraper-pill warn">LENTO</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-card">
+      <div class="side-title">Frescor dos dados</div>
+      <div class="stats-grid">
+        <div class="stat-mini">
+          <div class="stat-mini-val green">2.4h</div>
+          <div class="stat-mini-label">Média de idade</div>
+        </div>
+        <div class="stat-mini">
+          <div class="stat-mini-val primary">98.2%</div>
+          <div class="stat-mini-label">Cobertura SKU</div>
+        </div>
+        <div class="stat-mini">
+          <div class="stat-mini-val primary">42</div>
+          <div class="stat-mini-label">Crawls / dia</div>
+        </div>
+        <div class="stat-mini">
+          <div class="stat-mini-val green">R$ 0,02</div>
+          <div class="stat-mini-label">Custo LLM / SKU</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="llm-log">
+      <div class="llm-log-title">Normalização LLM · mapeamento ao vivo</div>
+      <div class="llm-mapping" id="llm-mapping">
+        <!-- mapping rows injected by JS -->
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<div class="activity-feed">
+  <div class="activity-feed-header">
+    <div class="activity-feed-title">
+      <span style="width:7px;height:7px;background:#34d399;border-radius:50%;animation:pulse 1.5s ease infinite"></span>
+      <span>Activity log</span>
+    </div>
+    <span style="font-size: 11px; color: #64748b; font-family: 'JetBrains Mono', monospace" id="log-count">0 eventos</span>
+  </div>
+  <div class="activity-feed-body" id="activity-feed">
+    <div class="activity-line"><span class="ts">--:--:--</span><span class="info">▸ Pronto. Pressione "Buscar" para rodar o agente.</span></div>
+  </div>
+</div>
+
+</div>
+
+<!-- ADMIN VIEW -->
+<div class="admin-panel" id="admin-view">
+  <div style="margin-bottom: 20px">
+    <h2 style="font-size: 22px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 4px">Painel dos scrapers</h2>
+    <p style="font-size: 13px; color: var(--text-soft)">Saúde da infraestrutura por farmácia · monitoramento de captcha, latência e custos</p>
+  </div>
+
+  <div class="admin-grid">
+    <div class="admin-stat">
+      <div class="admin-stat-val">6/6</div>
+      <div class="admin-stat-label">Scrapers ativos</div>
+      <div class="admin-stat-trend up">↑ 100% uptime nas últimas 24h</div>
+    </div>
+    <div class="admin-stat">
+      <div class="admin-stat-val">94.2%</div>
+      <div class="admin-stat-label">Taxa de sucesso média</div>
+      <div class="admin-stat-trend up">↑ +2.1% vs semana passada</div>
+    </div>
+    <div class="admin-stat">
+      <div class="admin-stat-val">12.4k</div>
+      <div class="admin-stat-label">SKUs únicos mapeados</div>
+      <div class="admin-stat-trend up">↑ +340 esta semana</div>
+    </div>
+    <div class="admin-stat">
+      <div class="admin-stat-val">$87</div>
+      <div class="admin-stat-label">Infra / mês</div>
+      <div class="admin-stat-trend">proxies + scrapingbee + db</div>
+    </div>
+    <div class="admin-stat">
+      <div class="admin-stat-val">2.4h</div>
+      <div class="admin-stat-label">Idade média dos dados</div>
+      <div class="admin-stat-trend up">target: < 6h</div>
+    </div>
+    <div class="admin-stat">
+      <div class="admin-stat-val">8.2%</div>
+      <div class="admin-stat-label">Captcha rate global</div>
+      <div class="admin-stat-trend down">↓ Pague Menos 18% (atenção)</div>
+    </div>
+  </div>
+
+  <table class="scrapers-detail-table">
+    <thead>
+      <tr>
+        <th>Farmácia</th>
+        <th>Última crawl</th>
+        <th>Sucesso</th>
+        <th>Captcha</th>
+        <th class="latency-col">Latência</th>
+        <th>SKUs</th>
+        <th class="infra-col">Infra</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>
+          <div class="pharm-cell">
+            <span class="pharm-logo-tiny logo-drogasil">DR</span>
+            <span>Drogasil</span>
+          </div>
+        </td>
+        <td>2h atrás</td>
+        <td>
+          <div class="health-bar-cell">
+            <div class="health-bar-mini"><div class="fill" style="width: 98%"></div></div>
+            <span>98%</span>
+          </div>
+        </td>
+        <td>3%</td>
+        <td class="latency-col">1.8s</td>
+        <td>2.1k</td>
+        <td class="infra-col">Playwright + residential</td>
+        <td><span class="scraper-pill ok">OK</span></td>
+      </tr>
+      <tr>
+        <td>
+          <div class="pharm-cell">
+            <span class="pharm-logo-tiny logo-pacheco">PA</span>
+            <span>Drogaria Pacheco</span>
+          </div>
+        </td>
+        <td>1h atrás</td>
+        <td>
+          <div class="health-bar-cell">
+            <div class="health-bar-mini"><div class="fill" style="width: 96%"></div></div>
+            <span>96%</span>
+          </div>
+        </td>
+        <td>5%</td>
+        <td class="latency-col">2.1s</td>
+        <td>1.9k</td>
+        <td class="infra-col">Playwright stealth</td>
+        <td><span class="scraper-pill ok">OK</span></td>
+      </tr>
+      <tr>
+        <td>
+          <div class="pharm-cell">
+            <span class="pharm-logo-tiny logo-pague-menos">PM</span>
+            <span>Pague Menos</span>
+          </div>
+        </td>
+        <td>3h atrás</td>
+        <td>
+          <div class="health-bar-cell">
+            <div class="health-bar-mini"><div class="fill amber" style="width: 89%"></div></div>
+            <span>89%</span>
+          </div>
+        </td>
+        <td>18%</td>
+        <td class="latency-col">3.4s</td>
+        <td>1.7k</td>
+        <td class="infra-col">ScrapingBee + cookies</td>
+        <td><span class="scraper-pill warn">CAPTCHA</span></td>
+      </tr>
+      <tr>
+        <td>
+          <div class="pharm-cell">
+            <span class="pharm-logo-tiny logo-raia">RA</span>
+            <span>Droga Raia</span>
+          </div>
+        </td>
+        <td>2h atrás</td>
+        <td>
+          <div class="health-bar-cell">
+            <div class="health-bar-mini"><div class="fill" style="width: 99%"></div></div>
+            <span>99%</span>
+          </div>
+        </td>
+        <td>1%</td>
+        <td class="latency-col">1.5s</td>
+        <td>2.3k</td>
+        <td class="infra-col">httpx + JSON API</td>
+        <td><span class="scraper-pill ok">OK</span></td>
+      </tr>
+      <tr>
+        <td>
+          <div class="pharm-cell">
+            <span class="pharm-logo-tiny logo-ultrafarma">UF</span>
+            <span>Ultrafarma</span>
+          </div>
+        </td>
+        <td>4h atrás</td>
+        <td>
+          <div class="health-bar-cell">
+            <div class="health-bar-mini"><div class="fill" style="width: 92%"></div></div>
+            <span>92%</span>
+          </div>
+        </td>
+        <td>7%</td>
+        <td class="latency-col">2.4s</td>
+        <td>2.5k</td>
+        <td class="infra-col">Playwright stealth</td>
+        <td><span class="scraper-pill ok">OK</span></td>
+      </tr>
+      <tr>
+        <td>
+          <div class="pharm-cell">
+            <span class="pharm-logo-tiny logo-onofre">ON</span>
+            <span>Drogaria Onofre</span>
+          </div>
+        </td>
+        <td>6h atrás</td>
+        <td>
+          <div class="health-bar-cell">
+            <div class="health-bar-mini"><div class="fill amber" style="width: 78%"></div></div>
+            <span>78%</span>
+          </div>
+        </td>
+        <td>14%</td>
+        <td class="latency-col">4.8s</td>
+        <td>1.9k</td>
+        <td class="infra-col">ScrapingBee + retry</td>
+        <td><span class="scraper-pill warn">LENTO</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+</div>
+
+</main>
+
+<script>
+
+const pharmacies = [
+  {
+    code: 'drogasil',
+    name: 'Drogasil',
+    logoClass: 'logo-drogasil',
+    badge: 'DR',
+    listing: 'Dipirona Sódica EMS 500mg 20 comprimidos',
+    price: 6.99,
+    original: 12.90,
+    discount: 46,
+    stock: 'ok',
+    stockText: 'Em estoque',
+    fresh: 'good',
+    freshText: 'atualizado há 2h',
+    delivery: '24h grátis',
+    best: true,
+  },
+  {
+    code: 'pacheco',
+    name: 'Drogaria Pacheco',
+    logoClass: 'logo-pacheco',
+    badge: 'PA',
+    listing: 'Anador 500mg c/20 comp · genérico',
+    price: 8.49,
+    original: 14.50,
+    discount: 41,
+    stock: 'ok',
+    stockText: 'Em estoque',
+    fresh: 'good',
+    freshText: 'atualizado há 1h',
+    delivery: '48h R$ 9,90',
+    best: false,
+  },
+  {
+    code: 'raia',
+    name: 'Droga Raia',
+    logoClass: 'logo-raia',
+    badge: 'RA',
+    listing: 'Novalgina 500mg blíster 20cp · Sanofi',
+    price: 9.20,
+    original: null,
+    discount: null,
+    stock: 'low',
+    stockText: 'Últimas 3 un.',
+    fresh: 'good',
+    freshText: 'atualizado há 2h',
+    delivery: '24h R$ 6,90',
+    best: false,
+  },
+  {
+    code: 'ultrafarma',
+    name: 'Ultrafarma',
+    logoClass: 'logo-ultrafarma',
+    badge: 'UF',
+    listing: 'Dipirona 500mg cx20cp · Medley',
+    price: 7.89,
+    original: 13.50,
+    discount: 42,
+    stock: 'ok',
+    stockText: 'Em estoque',
+    fresh: 'old',
+    freshText: 'atualizado há 4h',
+    delivery: '72h grátis acima R$ 50',
+    best: false,
+  },
+  {
+    code: 'pague-menos',
+    name: 'Pague Menos',
+    logoClass: 'logo-pague-menos',
+    badge: 'PM',
+    listing: 'Dipirona Sódica 500mg 20cp · genérico',
+    price: 7.50,
+    original: 11.90,
+    discount: 37,
+    stock: 'ok',
+    stockText: 'Em estoque',
+    fresh: 'old',
+    freshText: 'atualizado há 3h',
+    delivery: '48h R$ 12,90',
+    best: false,
+  },
+  {
+    code: 'onofre',
+    name: 'Drogaria Onofre',
+    logoClass: 'logo-onofre',
+    badge: 'ON',
+    listing: 'Dipirona Sódica Genérico 500mg 20cp',
+    price: 0,
+    original: 13.20,
+    discount: null,
+    stock: 'out',
+    stockText: 'Indisponível',
+    fresh: 'old',
+    freshText: 'atualizado há 6h',
+    delivery: '---',
+    best: false,
+  },
+];
+
+const llmMappings = [
+  ['Anador 500mg c/20 comp', 'DIP-500-CP-20'],
+  ['Novalgina 500mg blíster 20cp Sanofi', 'DIP-500-CP-20'],
+  ['Dipirona Sódica EMS 500mg 20cp', 'DIP-500-CP-20'],
+  ['Dipirona Medley 500mg cx20cp', 'DIP-500-CP-20'],
+];
+
+let activeTab = 'search';
+
+function ts() {
+  return new Date().toTimeString().slice(0, 8);
+}
+
+function log(text, type='info') {
+  const feed = document.getElementById('activity-feed');
+  const line = document.createElement('div');
+  line.className = 'activity-line';
+  const prefix = { ok: '✓', warn: '!', err: '✗', info: '▸' }[type] || '·';
+  line.innerHTML = `<span class="ts">${ts()}</span><span class="${type}">${prefix} ${text}</span>`;
+  feed.appendChild(line);
+  feed.scrollTop = feed.scrollHeight;
+  document.getElementById('log-count').textContent = `${feed.querySelectorAll('.activity-line').length} eventos`;
+}
+
+async function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function renderResultCard(pharm) {
+  const card = document.createElement('div');
+  card.className = `result-card${pharm.best ? ' best' : ''}${pharm.stock === 'out' ? ' out-stock' : ''}`;
+
+  const stockClass = pharm.stock === 'ok' ? 'stock-ok' : pharm.stock === 'low' ? 'stock-low' : 'stock-out';
+  const freshClass = pharm.fresh === 'good' ? 'fresh-good' : 'fresh-old';
+
+  let priceBlockHtml;
+  if (pharm.stock === 'out') {
+    priceBlockHtml = `
+      <div class="result-price-block">
+        <div class="result-price" style="color: var(--text-dim)">Indisponível</div>
+        <div class="result-original">R$ ${pharm.original?.toFixed(2).replace('.',',')}</div>
+      </div>
+    `;
+  } else {
+    priceBlockHtml = `
+      <div class="result-price-block">
+        <div class="result-price">R$ ${pharm.price.toFixed(2).replace('.',',')}</div>
+        ${pharm.original ? `<div class="result-original">R$ ${pharm.original.toFixed(2).replace('.',',')}</div>` : ''}
+        ${pharm.discount ? `<div class="result-discount">-${pharm.discount}%</div>` : ''}
+      </div>
+    `;
+  }
+
+  card.innerHTML = `
+    <div class="pharmacy-logo ${pharm.logoClass}">${pharm.badge}</div>
+    <div class="result-info">
+      <div class="result-pharmacy">
+        ${pharm.name}
+        ${pharm.best ? '<span class="best-badge">MELHOR PREÇO</span>' : ''}
+      </div>
+      <div class="result-listing">${pharm.listing}</div>
+      <div class="result-meta">
+        <span class="item ${stockClass}">● ${pharm.stockText}</span>
+        <span class="item ${freshClass}">⟳ ${pharm.freshText}</span>
+        <span class="item">→ Entrega ${pharm.delivery}</span>
+      </div>
+    </div>
+    ${priceBlockHtml}
+  `;
+  return card;
+}
+
+async function runSearch() {
+  const btn = document.getElementById('search-btn');
+  btn.disabled = true;
+  btn.textContent = 'Rodando...';
+
+  const list = document.getElementById('results-list');
+  list.innerHTML = '';
+  document.getElementById('canonical-banner').classList.remove('show');
+  document.getElementById('llm-mapping').innerHTML = '';
+
+  log('Recebida query: "Dipirona 500mg 20 comprimidos"', 'info');
+  document.getElementById('results-meta').textContent = 'consultando cache + LLM normalização';
+  await sleep(400);
+
+  log('LLM normaliza query → SKU canônico DIP-500-CP-20', 'ok');
+  await sleep(300);
+
+  // Show canonical banner
+  document.getElementById('canonical-banner').classList.add('show');
+  log('Buscando preços no cache Postgres (últimos crawls)', 'info');
+  await sleep(400);
+
+  // Stream LLM mapping rows
+  const mappingEl = document.getElementById('llm-mapping');
+  for (const [raw, canonical] of llmMappings) {
+    const row = document.createElement('div');
+    row.className = 'llm-row';
+    row.innerHTML = `
+      <span class="llm-source">"${raw}"</span>
+      <span class="llm-arrow">→</span>
+      <span class="llm-canonical">${canonical}</span>
+    `;
+    mappingEl.appendChild(row);
+    await sleep(200);
+  }
+
+  // Stream result cards
+  let totalShown = 0;
+  for (const pharm of pharmacies) {
+    const card = renderResultCard(pharm);
+    list.appendChild(card);
+    await sleep(40);
+    card.classList.add('show');
+    totalShown++;
+    document.getElementById('results-meta').textContent = `${totalShown} / 6 farmácias respondidas · cache local`;
+    log(`${pharm.name}: ${pharm.stock === 'out' ? 'sem estoque' : 'R$ ' + pharm.price.toFixed(2).replace('.',',')} · ${pharm.freshText}`, pharm.best ? 'ok' : 'info');
+    await sleep(220);
+  }
+
+  document.getElementById('results-meta').textContent = '6/6 farmácias · melhor preço R$ 6,99 · economia até 46%';
+  log('Busca completa em 1.8s · servida do cache, agente não bateu nas farmácias agora', 'ok');
+
+  btn.disabled = false;
+  btn.textContent = 'Buscar';
+}
+
+document.getElementById('search-btn').addEventListener('click', runSearch);
+document.getElementById('search-input').addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') runSearch();
+});
+document.querySelectorAll('.quick-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.getElementById('search-input').value = chip.textContent;
+    runSearch();
+  });
+});
+
+// Tab switching
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    const tab = t.dataset.tab;
+    activeTab = tab;
+    if (tab === 'search') {
+      document.getElementById('search-view').style.display = 'block';
+      document.getElementById('admin-view').classList.remove('active');
+    } else {
+      document.getElementById('search-view').style.display = 'none';
+      document.getElementById('admin-view').classList.add('active');
+    }
+  });
+});
+
+// Auto-run first search
+setTimeout(runSearch, 600);
+</script>
+
+</body>
+</html>
