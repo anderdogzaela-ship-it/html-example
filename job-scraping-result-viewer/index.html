@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JobScrape · Resultados Filtrados e Deduplicados</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-0: #f7f9fc;
+  --bg-1: #ffffff;
+  --bg-2: #f1f4fa;
+  --bg-3: #e3e9f2;
+  --bg-4: #cbd3e0;
+  --bg-dark: #0e1a2b;
+  --bg-dark-2: #1a2a40;
+  --line: rgba(14,26,43,0.08);
+  --line-strong: rgba(14,26,43,0.12);
+  --text: #0e1a2b;
+  --text-soft: #475569;
+  --text-muted: #64748b;
+  --text-dim: #94a3b8;
+  --primary: #0f766e;
+  --primary-light: #14b8a6;
+  --primary-bg: rgba(15,118,110,0.08);
+  --primary-glow: rgba(15,118,110,0.15);
+  --green: #16a34a;
+  --green-bg: #dcfce7;
+  --amber: #f59e0b;
+  --amber-bg: #fef3c7;
+  --red: #dc2626;
+  --red-bg: #fee2e2;
+  --blue: #2563eb;
+  --blue-bg: #dbeafe;
+  --purple: #7c3aed;
+  --purple-bg: #ede9fe;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg-0);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.mono { font-family: 'JetBrains Mono', monospace; }
+
+/* Nav */
+nav {
+  background: white;
+  border-bottom: 1px solid var(--line);
+  padding: 14px 28px;
+  position: sticky; top: 0; z-index: 50;
+  backdrop-filter: blur(20px);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.brand {
+  display: flex; align-items: center; gap: 12px;
+}
+.brand-mark {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+}
+.brand-mark svg { width: 20px; height: 20px; fill: white; }
+.brand-mark::after {
+  content: '';
+  position: absolute;
+  width: 8px; height: 8px;
+  background: var(--green);
+  border-radius: 50%;
+  bottom: 0; right: 0;
+  border: 2px solid white;
+  animation: pulse 1.8s ease infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.4); }
+}
+.brand-text { display: flex; flex-direction: column; gap: 1px; }
+.brand-name {
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: -0.02em;
+}
+.brand-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+.nav-right {
+  display: flex; gap: 10px;
+  align-items: center;
+}
+.status-pill {
+  background: var(--green-bg);
+  color: var(--green);
+  padding: 6px 12px;
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.status-pill .dot {
+  width: 6px; height: 6px;
+  background: var(--green);
+  border-radius: 50%;
+  animation: pulse 1.5s ease infinite;
+}
+.btn {
+  padding: 9px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--line-strong);
+  background: white;
+  color: var(--text);
+  font-family: inherit;
+  display: inline-flex; align-items: center; gap: 7px;
+  transition: all 0.2s;
+}
+.btn:hover { background: var(--bg-2); }
+.btn-primary {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+.btn-primary:hover { background: var(--primary-light); }
+
+/* Main layout */
+.app-body {
+  max-width: 1500px;
+  margin: 0 auto;
+  padding: 24px 28px;
+}
+
+/* Scraper health header */
+.scraper-health {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.scraper-card {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px 18px;
+  display: flex; align-items: center; gap: 14px;
+}
+.scraper-icon-wrap {
+  width: 44px; height: 44px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700;
+  color: white;
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  flex-shrink: 0;
+}
+.scraper-icon-wrap.a { background: linear-gradient(135deg, #dc2626, #991b1b); }
+.scraper-icon-wrap.b { background: linear-gradient(135deg, #2563eb, #1e40af); }
+.scraper-icon-wrap.dedup { background: linear-gradient(135deg, #7c3aed, #5b21b6); }
+.scraper-info { flex: 1; min-width: 0; }
+.scraper-name {
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: -0.01em;
+  margin-bottom: 3px;
+}
+.scraper-stats {
+  display: flex; gap: 12px;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+.scraper-stats .ok { color: var(--green); }
+.scraper-stats .warn { color: var(--amber); }
+.scraper-status {
+  font-size: 10px;
+  padding: 4px 9px;
+  border-radius: 4px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+}
+.scraper-status.ok { background: var(--green-bg); color: var(--green); }
+.scraper-status.warn { background: var(--amber-bg); color: var(--amber); }
+
+/* Page header */
+.page-header {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  margin-bottom: 18px;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.page-title-block {}
+.page-title {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 2px;
+}
+.page-sub {
+  font-size: 13px;
+  color: var(--text-soft);
+}
+.page-actions {
+  display: flex; gap: 8px;
+}
+
+/* Layout grid */
+.layout-grid {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 20px;
+}
+
+/* Filters sidebar */
+.filters {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 18px;
+  height: fit-content;
+  position: sticky; top: 80px;
+}
+.filters-title {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-weight: 700;
+  color: var(--text-soft);
+  margin-bottom: 16px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.filters-title .reset {
+  font-size: 11px;
+  color: var(--primary);
+  cursor: pointer;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.filter-group {
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+.filter-group:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+.filter-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 8px;
+  letter-spacing: -0.01em;
+}
+.filter-checks {
+  display: flex; flex-direction: column;
+  gap: 6px;
+}
+.filter-check {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px;
+  color: var(--text-soft);
+  cursor: pointer;
+}
+.filter-check input { cursor: pointer; accent-color: var(--primary); }
+.filter-check .count {
+  margin-left: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+.filter-pills {
+  display: flex; flex-wrap: wrap; gap: 6px;
+}
+.filter-pill {
+  padding: 4px 10px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 100px;
+  font-size: 11px;
+  cursor: pointer;
+  font-weight: 500;
+  color: var(--text-soft);
+  transition: all 0.15s;
+}
+.filter-pill:hover { background: var(--bg-3); }
+.filter-pill.active {
+  background: var(--primary-bg);
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+.salary-range {
+  display: flex; flex-direction: column; gap: 6px;
+}
+.salary-range-input {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 7px 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  outline: none;
+  width: 100%;
+}
+
+/* Results section */
+.results-card {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.results-toolbar {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--line);
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: var(--bg-2);
+}
+.results-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--text-soft);
+}
+.results-count strong { color: var(--primary); font-size: 14px; }
+.results-count .dedup-info {
+  margin-left: 12px;
+  padding-left: 12px;
+  border-left: 1px solid var(--line);
+  color: var(--text-muted);
+}
+.results-count .dedup-info strong { color: var(--purple); }
+
+.export-group {
+  display: flex; gap: 6px;
+}
+.export-btn {
+  padding: 7px 12px;
+  background: white;
+  border: 1px solid var(--line-strong);
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--text-soft);
+  display: inline-flex; align-items: center; gap: 5px;
+}
+.export-btn:hover { border-color: var(--primary); color: var(--primary); }
+.export-btn .icon { font-family: 'JetBrains Mono', monospace; font-size: 10px; padding: 1px 5px; background: var(--bg-3); border-radius: 3px; }
+
+/* Job table */
+.jobs-table-wrap {
+  overflow-x: auto;
+}
+.jobs-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.jobs-table th {
+  background: var(--bg-2);
+  padding: 11px 14px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+.jobs-table td {
+  padding: 13px 14px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+.jobs-table tbody tr {
+  transition: all 0.15s;
+}
+.jobs-table tbody tr:hover {
+  background: var(--bg-0);
+}
+.jobs-table tbody tr:last-child td { border-bottom: none; }
+
+.job-source {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 3px 7px;
+  border-radius: 4px;
+  color: white;
+}
+.job-source.A { background: #dc2626; }
+.job-source.B { background: #2563eb; }
+
+.job-title-cell {
+  min-width: 220px;
+}
+.job-title {
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: -0.01em;
+  margin-bottom: 2px;
+  color: var(--text);
+}
+.job-company {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.job-region {
+  font-size: 12px;
+  color: var(--text-soft);
+  white-space: nowrap;
+}
+.region-tag {
+  background: var(--bg-3);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-soft);
+}
+
+.job-modality {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.mod-remoto { background: var(--green-bg); color: var(--green); }
+.mod-hibrido { background: var(--amber-bg); color: var(--amber); }
+.mod-presencial { background: var(--blue-bg); color: var(--blue); }
+
+.job-salary {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+}
+.job-salary.range { color: var(--primary); }
+.job-salary.confidential {
+  color: var(--text-dim);
+  font-weight: 400;
+}
+
+.job-hash {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--text-muted);
+  background: var(--bg-3);
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: inline-flex; align-items: center; gap: 4px;
+  cursor: help;
+}
+.dup-indicator {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 10px;
+  color: var(--purple);
+  font-weight: 600;
+  background: var(--purple-bg);
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  margin-left: 6px;
+  cursor: help;
+}
+
+.job-timestamps {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  line-height: 1.5;
+}
+.job-timestamps .first { color: var(--green); }
+.job-timestamps .last { color: var(--blue); }
+
+.job-status {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 3px 7px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.status-new { background: var(--green-bg); color: var(--green); }
+.status-renovated { background: var(--amber-bg); color: var(--amber); }
+.status-stable { background: var(--bg-3); color: var(--text-soft); }
+.status-removed { background: var(--red-bg); color: var(--red); }
+
+.btn-tiny {
+  background: white;
+  border: 1px solid var(--line);
+  padding: 5px 9px;
+  border-radius: 5px;
+  font-size: 11px;
+  color: var(--text-soft);
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btn-tiny:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+/* Pagination */
+.pagination {
+  padding: 12px 18px;
+  background: var(--bg-2);
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 12px;
+  color: var(--text-soft);
+  font-family: 'JetBrains Mono', monospace;
+}
+.page-controls {
+  display: flex; gap: 4px;
+}
+.page-btn {
+  padding: 5px 10px;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  font-size: 11px;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--text-soft);
+}
+.page-btn.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 24px; left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: white;
+  border: 1px solid var(--line-strong);
+  padding: 14px 24px;
+  border-radius: 12px;
+  font-size: 13px;
+  box-shadow: 0 20px 48px rgba(0,0,0,0.18);
+  z-index: 100;
+  opacity: 0;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  display: flex; align-items: center; gap: 10px;
+}
+.toast.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+.toast-icon {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--green);
+  color: white;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* Tooltip */
+[data-tip] { position: relative; }
+[data-tip]:hover::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-dark);
+  color: white;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  white-space: nowrap;
+  z-index: 10;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  pointer-events: none;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .layout-grid { grid-template-columns: 1fr; }
+  .filters { position: static; }
+  .scraper-health { grid-template-columns: 1fr; }
+  .app-body { padding: 20px 16px; }
+}
+@media (max-width: 640px) {
+  nav { padding: 12px 16px; flex-wrap: wrap; gap: 10px; }
+  .brand-sub { display: none; }
+  .nav-right .btn { display: none; }
+  .page-header { flex-direction: column; align-items: stretch; }
+  .page-actions { justify-content: flex-start; flex-wrap: wrap; }
+  .results-toolbar { flex-direction: column; align-items: stretch; }
+  .export-group { flex-wrap: wrap; }
+  .jobs-table-wrap { font-size: 12px; }
+  .jobs-table th, .jobs-table td { padding: 8px 10px; }
+  .jobs-table .col-hide-mobile { display: none; }
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--bg-4); border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="brand">
+    <div class="brand-mark">
+      <svg viewBox="0 0 24 24"><path d="M20 6h-4V4c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v2H4c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6 0h-4V4h4v2z"/></svg>
+    </div>
+    <div class="brand-text">
+      <div class="brand-name">JobScrape</div>
+      <div class="brand-sub">2 fontes · dedup ativo · agendado</div>
+    </div>
+  </div>
+  <div class="nav-right">
+    <div class="status-pill">
+      <span class="dot"></span>
+      <span>Última crawl: 2h atrás</span>
+    </div>
+    <button class="btn">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      Rodar agora
+    </button>
+  </div>
+</nav>
+
+<div class="app-body">
+
+  <!-- Scraper health -->
+  <div class="scraper-health">
+    <div class="scraper-card">
+      <div class="scraper-icon-wrap a">SITE A</div>
+      <div class="scraper-info">
+        <div class="scraper-name">Site A · vagas relevantes</div>
+        <div class="scraper-stats">
+          <span class="ok">● 98% sucesso</span>
+          <span>1.247 vagas</span>
+          <span>2h atrás</span>
+        </div>
+      </div>
+      <span class="scraper-status ok">OK</span>
+    </div>
+    <div class="scraper-card">
+      <div class="scraper-icon-wrap b">SITE B</div>
+      <div class="scraper-info">
+        <div class="scraper-name">Site B · vagas relevantes</div>
+        <div class="scraper-stats">
+          <span class="warn">● 89% sucesso</span>
+          <span>986 vagas</span>
+          <span>3h atrás · 11% captcha</span>
+        </div>
+      </div>
+      <span class="scraper-status warn">CAPTCHA</span>
+    </div>
+    <div class="scraper-card">
+      <div class="scraper-icon-wrap dedup">DEDUP</div>
+      <div class="scraper-info">
+        <div class="scraper-name">Hash de deduplicação</div>
+        <div class="scraper-stats">
+          <span>cargo + empresa + região</span>
+          <span style="color: var(--purple)">347 duplicadas removidas</span>
+        </div>
+      </div>
+      <span class="scraper-status ok">ATIVO</span>
+    </div>
+  </div>
+
+  <div class="page-header">
+    <div class="page-title-block">
+      <h1 class="page-title">Resultados filtrados · 14 vagas</h1>
+      <p class="page-sub">2.233 vagas brutas em 2 sites · 347 duplicadas removidas · 14 dentro dos critérios</p>
+    </div>
+    <div class="page-actions">
+      <button class="btn">↻ Atualizar lista</button>
+      <button class="btn btn-primary">+ Adicionar critério</button>
+    </div>
+  </div>
+
+  <div class="layout-grid">
+
+    <!-- Filters -->
+    <aside class="filters">
+      <div class="filters-title">
+        <span>Critérios</span>
+        <span class="reset">Limpar</span>
+      </div>
+
+      <div class="filter-group">
+        <div class="filter-label">Cargo / Função</div>
+        <div class="filter-pills">
+          <span class="filter-pill active">Desenvolvedor</span>
+          <span class="filter-pill active">Engenheiro</span>
+          <span class="filter-pill">Analista</span>
+          <span class="filter-pill">Tech Lead</span>
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <div class="filter-label">Modalidade</div>
+        <div class="filter-checks">
+          <label class="filter-check">
+            <input type="checkbox" checked>
+            <span>Remoto</span>
+            <span class="count">7</span>
+          </label>
+          <label class="filter-check">
+            <input type="checkbox" checked>
+            <span>Híbrido</span>
+            <span class="count">5</span>
+          </label>
+          <label class="filter-check">
+            <input type="checkbox">
+            <span>Presencial</span>
+            <span class="count">2</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <div class="filter-label">Faixa salarial (R$)</div>
+        <div class="salary-range">
+          <input type="text" class="salary-range-input" placeholder="Mínimo" value="8.000">
+          <input type="text" class="salary-range-input" placeholder="Máximo" value="20.000">
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <div class="filter-label">Região</div>
+        <div class="filter-pills">
+          <span class="filter-pill active">SP</span>
+          <span class="filter-pill active">RJ</span>
+          <span class="filter-pill">MG</span>
+          <span class="filter-pill active">RS</span>
+          <span class="filter-pill">PR</span>
+          <span class="filter-pill">Remoto</span>
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <div class="filter-label">Status</div>
+        <div class="filter-checks">
+          <label class="filter-check">
+            <input type="checkbox" checked>
+            <span>Nova (24h)</span>
+            <span class="count">5</span>
+          </label>
+          <label class="filter-check">
+            <input type="checkbox" checked>
+            <span>Renovada</span>
+            <span class="count">3</span>
+          </label>
+          <label class="filter-check">
+            <input type="checkbox" checked>
+            <span>Estável</span>
+            <span class="count">6</span>
+          </label>
+          <label class="filter-check">
+            <input type="checkbox">
+            <span>Removida</span>
+            <span class="count">0</span>
+          </label>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- Results -->
+    <section class="results-card">
+      <div class="results-toolbar">
+        <div class="results-count">
+          <strong>14</strong> vagas filtradas
+          <span class="dedup-info">
+            <strong>347</strong> duplicadas removidas (15.5% do bruto)
+          </span>
+        </div>
+        <div class="export-group">
+          <button class="export-btn" data-format="csv">
+            <span class="icon">CSV</span>
+            <span>Exportar</span>
+          </button>
+          <button class="export-btn" data-format="excel">
+            <span class="icon">XLSX</span>
+            <span>Exportar</span>
+          </button>
+          <button class="export-btn" data-format="json">
+            <span class="icon">JSON</span>
+            <span>Exportar</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="jobs-table-wrap">
+        <table class="jobs-table">
+          <thead>
+            <tr>
+              <th>Fonte</th>
+              <th>Vaga / Empresa</th>
+              <th class="col-hide-mobile">Região</th>
+              <th>Modalidade</th>
+              <th>Salário</th>
+              <th class="col-hide-mobile">Hash dedup</th>
+              <th class="col-hide-mobile">Visto</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="jobs-body">
+            <!-- rows injected by JS -->
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pagination">
+        <span>Página 1 de 1 · 14 resultados</span>
+        <div class="page-controls">
+          <button class="page-btn">‹</button>
+          <button class="page-btn active">1</button>
+          <button class="page-btn">›</button>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+</div>
+
+<div class="toast" id="toast">
+  <div class="toast-icon">✓</div>
+  <span id="toast-text">Arquivo baixado</span>
+</div>
+
+<script>
+const jobs = [
+  {
+    source: 'A',
+    title: 'Engenheiro de Software Sênior',
+    company: 'TechCorp Brasil',
+    region: 'São Paulo, SP',
+    regionShort: 'SP',
+    modality: 'remoto',
+    salary: 'R$ 14k-18k',
+    hash: 'd4a2c1b8',
+    firstSeen: '15/05 09:21',
+    lastSeen: '17/05 08:14',
+    status: 'new',
+    dupCount: 0
+  },
+  {
+    source: 'B',
+    title: 'Engenheiro de Software Sênior',
+    company: 'TechCorp Brasil',
+    region: 'São Paulo, SP',
+    regionShort: 'SP',
+    modality: 'remoto',
+    salary: 'R$ 14k-18k',
+    hash: 'd4a2c1b8',
+    firstSeen: '15/05 11:48',
+    lastSeen: '17/05 09:02',
+    status: 'duplicate',
+    dupTooltip: 'Duplicada da linha 1 (mesma vaga em Site A)',
+    hideRow: true
+  },
+  {
+    source: 'A',
+    title: 'Backend Engineer · Python',
+    company: 'FintechHub',
+    region: 'Rio de Janeiro, RJ',
+    regionShort: 'RJ',
+    modality: 'hibrido',
+    salary: 'R$ 11k-15k',
+    hash: '8f3d7e2a',
+    firstSeen: '12/05 14:30',
+    lastSeen: '17/05 07:55',
+    status: 'stable',
+    dupCount: 1
+  },
+  {
+    source: 'B',
+    title: 'Desenvolvedor Full-Stack React/Node',
+    company: 'AgroSmart',
+    region: 'Porto Alegre, RS',
+    regionShort: 'RS',
+    modality: 'hibrido',
+    salary: 'R$ 9k-13k',
+    hash: 'c7b1f4d6',
+    firstSeen: '16/05 08:12',
+    lastSeen: '17/05 08:21',
+    status: 'new',
+    dupCount: 0
+  },
+  {
+    source: 'A',
+    title: 'Tech Lead · Plataforma SaaS',
+    company: 'Plataform Inc',
+    region: 'Remoto (BR)',
+    regionShort: 'BR',
+    modality: 'remoto',
+    salary: 'R$ 18k-25k',
+    hash: 'a9e2d8c3',
+    firstSeen: '10/05 16:42',
+    lastSeen: '17/05 06:30',
+    status: 'renovated',
+    dupCount: 0,
+    statusTip: 'Vaga renovada 4 vezes desde a publicação inicial'
+  },
+  {
+    source: 'B',
+    title: 'Engenheiro de Dados Sênior',
+    company: 'DataMov',
+    region: 'São Paulo, SP',
+    regionShort: 'SP',
+    modality: 'remoto',
+    salary: 'R$ 15k-19k',
+    hash: 'b5e8a1c2',
+    firstSeen: '14/05 10:05',
+    lastSeen: '17/05 07:18',
+    status: 'stable',
+    dupCount: 0
+  },
+  {
+    source: 'A',
+    title: 'Mobile Developer · Flutter',
+    company: 'NeoBank',
+    region: 'Rio de Janeiro, RJ',
+    regionShort: 'RJ',
+    modality: 'remoto',
+    salary: 'A combinar',
+    hash: 'f2c8d4a7',
+    firstSeen: '16/05 12:33',
+    lastSeen: '17/05 08:01',
+    status: 'new',
+    dupCount: 0,
+    salaryConfidential: true
+  },
+  {
+    source: 'B',
+    title: 'DevOps Engineer · AWS / Kubernetes',
+    company: 'CloudOps Brasil',
+    region: 'São Paulo, SP',
+    regionShort: 'SP',
+    modality: 'hibrido',
+    salary: 'R$ 13k-17k',
+    hash: 'd1e9c5b3',
+    firstSeen: '11/05 15:20',
+    lastSeen: '17/05 06:50',
+    status: 'stable',
+    dupCount: 0
+  },
+  {
+    source: 'A',
+    title: 'Senior Frontend Engineer · React',
+    company: 'EdTech Now',
+    region: 'Remoto (BR)',
+    regionShort: 'BR',
+    modality: 'remoto',
+    salary: 'R$ 12k-16k',
+    hash: 'e7f1a2d4',
+    firstSeen: '13/05 09:18',
+    lastSeen: '17/05 08:45',
+    status: 'renovated',
+    dupCount: 1
+  },
+  {
+    source: 'A',
+    title: 'Engenheiro de Machine Learning',
+    company: 'AIHub Lab',
+    region: 'São Paulo, SP',
+    regionShort: 'SP',
+    modality: 'hibrido',
+    salary: 'R$ 16k-22k',
+    hash: 'g8d3b1c9',
+    firstSeen: '16/05 14:42',
+    lastSeen: '17/05 07:32',
+    status: 'new',
+    dupCount: 0
+  },
+  {
+    source: 'B',
+    title: 'Engenheiro de Software Pleno',
+    company: 'LogTech',
+    region: 'Porto Alegre, RS',
+    regionShort: 'RS',
+    modality: 'hibrido',
+    salary: 'R$ 9k-12k',
+    hash: 'h2c5e7f1',
+    firstSeen: '14/05 11:25',
+    lastSeen: '17/05 08:05',
+    status: 'stable',
+    dupCount: 0
+  },
+  {
+    source: 'A',
+    title: 'Software Engineer · Backend Go',
+    company: 'GameLayer',
+    region: 'Remoto (BR)',
+    regionShort: 'BR',
+    modality: 'remoto',
+    salary: 'R$ 13k-18k',
+    hash: 'i5b9d2a8',
+    firstSeen: '15/05 18:10',
+    lastSeen: '17/05 07:48',
+    status: 'new',
+    dupCount: 0
+  },
+  {
+    source: 'B',
+    title: 'Tech Lead · Frontend',
+    company: 'MarketCo',
+    region: 'Rio de Janeiro, RJ',
+    regionShort: 'RJ',
+    modality: 'hibrido',
+    salary: 'R$ 15k-20k',
+    hash: 'j7a4e1c6',
+    firstSeen: '12/05 16:50',
+    lastSeen: '17/05 08:30',
+    status: 'renovated',
+    dupCount: 0
+  },
+  {
+    source: 'A',
+    title: 'Senior Site Reliability Engineer',
+    company: 'PaymentFlow',
+    region: 'São Paulo, SP',
+    regionShort: 'SP',
+    modality: 'remoto',
+    salary: 'R$ 17k-22k',
+    hash: 'k3f8b5d2',
+    firstSeen: '14/05 13:28',
+    lastSeen: '17/05 07:55',
+    status: 'stable',
+    dupCount: 1
+  },
+  {
+    source: 'B',
+    title: 'Engenheiro de QA Automatizado',
+    company: 'TestPro',
+    region: 'Porto Alegre, RS',
+    regionShort: 'RS',
+    modality: 'remoto',
+    salary: 'R$ 8k-11k',
+    hash: 'l6e2c9a4',
+    firstSeen: '16/05 09:35',
+    lastSeen: '17/05 08:18',
+    status: 'new',
+    dupCount: 0
+  },
+];
+
+const statusLabels = {
+  new: { label: 'NOVA', cls: 'status-new' },
+  renovated: { label: 'RENOVADA', cls: 'status-renovated' },
+  stable: { label: 'ESTÁVEL', cls: 'status-stable' },
+  removed: { label: 'REMOVIDA', cls: 'status-removed' },
+};
+
+function renderJobs() {
+  const tbody = document.getElementById('jobs-body');
+  tbody.innerHTML = '';
+  for (const job of jobs) {
+    if (job.hideRow) continue;
+    const row = document.createElement('tr');
+    const status = statusLabels[job.status] || statusLabels.stable;
+    const modClass = `mod-${job.modality}`;
+    const modLabel = { remoto: 'Remoto', hibrido: 'Híbrido', presencial: 'Presencial' }[job.modality];
+    const dupBadge = job.dupCount > 0
+      ? `<span class="dup-indicator" data-tip="${job.dupCount} duplicada${job.dupCount > 1 ? 's' : ''} removida${job.dupCount > 1 ? 's' : ''} de Site ${job.source === 'A' ? 'B' : 'A'}">⊕ ${job.dupCount} dup</span>`
+      : '';
+    const salaryClass = job.salaryConfidential ? 'confidential' : (job.salary.includes('k-') ? 'range' : '');
+
+    row.innerHTML = `
+      <td><span class="job-source ${job.source}">${job.source}</span></td>
+      <td class="job-title-cell">
+        <div class="job-title">${job.title}${dupBadge}</div>
+        <div class="job-company">${job.company}</div>
+      </td>
+      <td class="col-hide-mobile"><span class="region-tag">${job.regionShort}</span> ${job.region.split(',')[0]}</td>
+      <td><span class="job-modality ${modClass}">${modLabel}</span></td>
+      <td class="job-salary ${salaryClass}">${job.salary}</td>
+      <td class="col-hide-mobile"><span class="job-hash" data-tip="MD5(cargo+empresa+região+salário)">#${job.hash}</span></td>
+      <td class="col-hide-mobile job-timestamps">
+        <div><span class="first">►</span> ${job.firstSeen}</div>
+        <div><span class="last">⟳</span> ${job.lastSeen}</div>
+      </td>
+      <td><span class="job-status ${status.cls}"${job.statusTip ? ` data-tip="${job.statusTip}"` : ''}>${status.label}</span></td>
+    `;
+    tbody.appendChild(row);
+  }
+}
+
+renderJobs();
+
+function showToast(text) {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-text').textContent = text;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+document.querySelectorAll('.export-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const fmt = btn.dataset.format;
+    const name = {
+      csv: 'vagas_filtradas_2026-05-17.csv',
+      excel: 'vagas_filtradas_2026-05-17.xlsx',
+      json: 'vagas_filtradas_2026-05-17.json'
+    }[fmt];
+    showToast(`Gerando ${name}... 14 linhas, 11 colunas`);
+  });
+});
+
+document.querySelectorAll('.filter-pill').forEach(p => {
+  p.addEventListener('click', () => p.classList.toggle('active'));
+});
+</script>
+
+</body>
+</html>
