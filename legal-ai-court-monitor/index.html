@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lex IA · Monitoramento de Processos + Claude</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Playfair+Display:wght@500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-0: #f4f4ef;
+  --bg-1: #ffffff;
+  --bg-2: #ebebe2;
+  --bg-3: #dcdcd0;
+  --bg-4: #c5c5b8;
+  --navy: #0f1e3a;
+  --navy-light: #1d3258;
+  --navy-bg: rgba(15,30,58,0.06);
+  --line: rgba(15,30,58,0.08);
+  --line-strong: rgba(15,30,58,0.14);
+  --text: #0f1e3a;
+  --text-soft: #4b5563;
+  --text-muted: #6b7280;
+  --text-dim: #9ca3af;
+  --gold: #b08543;
+  --gold-bg: rgba(176,133,67,0.1);
+  --green: #15803d;
+  --green-bg: #dcfce7;
+  --amber: #b45309;
+  --amber-bg: #fef3c7;
+  --red: #b91c1c;
+  --red-bg: #fee2e2;
+  --blue: #1e40af;
+  --blue-bg: #dbeafe;
+  --purple: #6b21a8;
+  --purple-bg: #f3e8ff;
+  --claude: #c96442;
+  --claude-bg: rgba(201,100,66,0.08);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg-0);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  font-size: 14px;
+  line-height: 1.55;
+}
+.serif { font-family: 'Playfair Display', serif; }
+.mono { font-family: 'JetBrains Mono', monospace; }
+
+/* Nav */
+nav {
+  background: var(--navy);
+  color: white;
+  padding: 14px 28px;
+  position: sticky; top: 0; z-index: 50;
+  display: flex; justify-content: space-between; align-items: center;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.brand {
+  display: flex; align-items: center; gap: 12px;
+}
+.brand-mark {
+  width: 38px; height: 38px;
+  background: linear-gradient(135deg, var(--gold), #8a6535);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Playfair Display', serif;
+  font-weight: 700;
+  font-size: 18px;
+  color: white;
+}
+.brand-text { display: flex; flex-direction: column; gap: 1px; }
+.brand-name {
+  font-family: 'Playfair Display', serif;
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: -0.01em;
+}
+.brand-sub {
+  font-size: 11px;
+  color: rgba(255,255,255,0.55);
+  font-family: 'JetBrains Mono', monospace;
+}
+.nav-status {
+  display: flex; gap: 16px; align-items: center;
+}
+.status-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11px;
+  color: rgba(255,255,255,0.85);
+  font-family: 'JetBrains Mono', monospace;
+}
+.status-chip .dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  animation: pulse 1.8s ease infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.4); }
+}
+.status-chip.ok .dot { background: #4ade80; }
+.status-chip.cert .dot { background: var(--gold); animation: none; }
+
+.user-badge {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(255,255,255,0.08);
+  padding: 5px 11px 5px 5px;
+  border-radius: 100px;
+  font-size: 12px;
+}
+.user-avatar {
+  width: 28px; height: 28px;
+  background: linear-gradient(135deg, var(--gold), #8a6535);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700;
+  font-size: 11px;
+  color: white;
+}
+
+/* Main grid */
+.app {
+  max-width: 1500px;
+  margin: 0 auto;
+  padding: 28px;
+  display: grid;
+  grid-template-columns: 320px 1fr 340px;
+  gap: 22px;
+}
+
+/* Left sidebar */
+.sidebar-left {
+  display: flex; flex-direction: column; gap: 14px;
+}
+.side-card {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 18px;
+}
+.side-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.side-title .count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--navy);
+  font-weight: 600;
+  background: var(--navy-bg);
+  padding: 2px 7px;
+  border-radius: 4px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* Source connection */
+.source-row {
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+}
+.source-row:last-child { border-bottom: none; padding-bottom: 0; }
+.source-row:first-child { padding-top: 0; }
+.source-icon {
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 9px;
+  font-family: 'JetBrains Mono', monospace;
+  flex-shrink: 0;
+}
+.source-icon.dj { background: linear-gradient(135deg, var(--navy), var(--navy-light)); }
+.source-icon.mn { background: linear-gradient(135deg, var(--blue), #1e3a8a); }
+.source-icon.sc { background: linear-gradient(135deg, var(--gold), #8a6535); }
+.source-info {}
+.source-name {
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: -0.01em;
+}
+.source-meta {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+.source-pill {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.source-pill.ok { background: var(--green-bg); color: var(--green); }
+.source-pill.warn { background: var(--amber-bg); color: var(--amber); }
+
+/* OAB cert card */
+.oab-card {
+  background: linear-gradient(135deg, var(--navy), var(--navy-light));
+  color: white;
+  border-radius: 12px;
+  padding: 16px;
+  position: relative;
+  overflow: hidden;
+}
+.oab-card::before {
+  content: '';
+  position: absolute;
+  top: -40px; right: -40px;
+  width: 180px; height: 180px;
+  background: radial-gradient(circle, var(--gold-bg), transparent 70%);
+}
+.oab-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: rgba(255,255,255,0.6);
+  font-weight: 600;
+  margin-bottom: 6px;
+  position: relative;
+}
+.oab-cert-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  font-size: 13px;
+  margin-bottom: 12px;
+  position: relative;
+}
+.oab-details {
+  font-size: 11px;
+  color: rgba(255,255,255,0.7);
+  line-height: 1.55;
+  position: relative;
+}
+.oab-details strong { color: var(--gold); }
+.oab-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(255,255,255,0.1);
+  padding: 4px 9px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  margin-top: 8px;
+}
+.oab-pill::before {
+  content: '';
+  width: 6px; height: 6px;
+  background: var(--gold);
+  border-radius: 50%;
+}
+
+/* Stats mini */
+.stats-mini {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.stat-mini-card {
+  background: var(--bg-2);
+  border-radius: 8px;
+  padding: 12px;
+}
+.stat-mini-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 3px;
+  font-weight: 600;
+}
+.stat-mini-val {
+  font-family: 'Playfair Display', serif;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--navy);
+  line-height: 1;
+}
+.stat-mini-val.amber { color: var(--amber); }
+.stat-mini-val.red { color: var(--red); }
+.stat-mini-trend {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 4px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Filter chips */
+.filter-chips {
+  display: flex; flex-direction: column;
+  gap: 6px;
+}
+.filter-chip {
+  padding: 8px 12px;
+  background: var(--bg-2);
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--text-soft);
+  cursor: pointer;
+  display: flex; justify-content: space-between; align-items: center;
+  transition: all 0.15s;
+}
+.filter-chip:hover { background: var(--bg-3); }
+.filter-chip.active {
+  background: var(--navy);
+  color: white;
+}
+.filter-chip .filter-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+/* Main column */
+.main-col {}
+.main-header {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  margin-bottom: 22px;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.main-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--navy);
+  margin-bottom: 4px;
+}
+.main-sub {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.main-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+.btn {
+  padding: 9px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--line-strong);
+  background: white;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  display: inline-flex; align-items: center; gap: 7px;
+  transition: all 0.15s;
+}
+.btn:hover { background: var(--bg-2); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-primary {
+  background: var(--navy);
+  color: white;
+  border-color: var(--navy);
+}
+.btn-primary:hover { background: var(--navy-light); }
+.btn-claude {
+  background: var(--claude);
+  color: white;
+  border-color: var(--claude);
+}
+.btn-claude:hover { background: #b55835; }
+
+/* Processo cards */
+.processos-grid {
+  display: flex; flex-direction: column;
+  gap: 14px;
+}
+.processo-card {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 20px;
+  transition: all 0.2s;
+  position: relative;
+}
+.processo-card.urgent {
+  border-color: var(--amber);
+  background: linear-gradient(135deg, var(--amber-bg), white 60%);
+}
+.processo-card.critical {
+  border-color: var(--red);
+  background: linear-gradient(135deg, var(--red-bg), white 60%);
+}
+.processo-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(15,30,58,0.08);
+}
+
+.processo-header {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  margin-bottom: 12px;
+  gap: 16px;
+}
+.processo-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.processo-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--navy);
+  margin-bottom: 4px;
+  line-height: 1.25;
+}
+.processo-parties {
+  font-size: 12px;
+  color: var(--text-soft);
+  margin-bottom: 4px;
+}
+.processo-parties .vs { color: var(--text-dim); margin: 0 6px; }
+.processo-court {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+  display: flex; align-items: center; gap: 8px;
+}
+.court-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: var(--navy);
+  color: white;
+}
+
+.urgency-pill {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 5px 11px;
+  border-radius: 100px;
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  flex-shrink: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+.urgency-pill.critical { background: var(--red); color: white; }
+.urgency-pill.urgent { background: var(--amber); color: white; }
+.urgency-pill.normal { background: var(--bg-3); color: var(--text-soft); }
+.urgency-pill .dot {
+  width: 5px; height: 5px;
+  background: white;
+  border-radius: 50%;
+}
+
+/* Claude summary */
+.claude-summary {
+  background: var(--claude-bg);
+  border-left: 3px solid var(--claude);
+  border-radius: 0 8px 8px 0;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+.claude-summary-header {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 6px;
+}
+.claude-icon {
+  width: 18px; height: 18px;
+  background: var(--claude);
+  border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 11px;
+}
+.claude-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  font-weight: 700;
+  color: var(--claude);
+}
+.claude-meta {
+  margin-left: auto;
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+.claude-text {
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.6;
+}
+.claude-text strong { color: var(--navy); font-weight: 600; }
+
+/* Mov timeline */
+.mov-timeline {
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+.mov-row {
+  display: grid;
+  grid-template-columns: 90px 1fr auto;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 8px 0;
+  border-bottom: 1px dashed var(--line);
+}
+.mov-row:last-child { border-bottom: none; padding-bottom: 0; }
+.mov-date {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+  padding-top: 1px;
+}
+.mov-date .new-tag {
+  display: inline-block;
+  margin-left: 4px;
+  font-size: 8px;
+  background: var(--green);
+  color: white;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.mov-content {
+  font-size: 12px;
+  color: var(--text-soft);
+  line-height: 1.5;
+}
+.mov-content strong { color: var(--text); }
+.mov-classify {
+  font-size: 9px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+.classify-deadline { background: var(--amber-bg); color: var(--amber); }
+.classify-decision { background: var(--purple-bg); color: var(--purple); }
+.classify-routine { background: var(--bg-3); color: var(--text-muted); }
+.classify-favorable { background: var(--green-bg); color: var(--green); }
+
+.processo-footer {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.prazo-info {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+.prazo-info strong { color: var(--red); }
+.prazo-info strong.amber { color: var(--amber); }
+.processo-actions {
+  display: flex; gap: 6px;
+}
+.btn-tiny {
+  padding: 5px 10px;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  font-size: 11px;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--text-soft);
+  font-weight: 500;
+}
+.btn-tiny:hover {
+  border-color: var(--navy);
+  color: var(--navy);
+}
+.btn-tiny.claude {
+  background: var(--claude-bg);
+  border-color: var(--claude);
+  color: var(--claude);
+}
+.btn-tiny.claude:hover {
+  background: var(--claude);
+  color: white;
+}
+
+/* Right sidebar - Claude insights panel */
+.sidebar-right {
+  display: flex; flex-direction: column; gap: 14px;
+  position: sticky; top: 80px;
+  height: fit-content;
+}
+.insights-card {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 18px;
+}
+.insights-header {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}
+.insights-icon {
+  width: 32px; height: 32px;
+  background: var(--claude);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  color: white;
+  font-weight: 700;
+}
+.insights-title {
+  font-family: 'Playfair Display', serif;
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--navy);
+  letter-spacing: -0.01em;
+}
+.insights-sub {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.insight-item {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+.insight-item:last-child { border-bottom: none; padding-bottom: 0; }
+.insight-item:first-child { padding-top: 0; }
+.insight-tag {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-bottom: 6px;
+  display: inline-block;
+}
+.insight-tag.alerta { background: var(--red-bg); color: var(--red); }
+.insight-tag.oportunidade { background: var(--green-bg); color: var(--green); }
+.insight-tag.estrategia { background: var(--blue-bg); color: var(--blue); }
+.insight-text {
+  font-size: 12px;
+  color: var(--text);
+  line-height: 1.55;
+}
+.insight-text strong { color: var(--navy); }
+.insight-ref {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+  margin-top: 4px;
+}
+
+/* LGPD card */
+.lgpd-card {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px;
+}
+.lgpd-row {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 11px;
+  color: var(--text-soft);
+  padding: 6px 0;
+}
+.lgpd-row.ok { color: var(--green); }
+.lgpd-row svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+/* Cost panel */
+.cost-card {
+  background: linear-gradient(135deg, var(--claude-bg), white);
+  border: 1px solid rgba(201,100,66,0.2);
+  border-radius: 12px;
+  padding: 16px;
+}
+.cost-num {
+  font-family: 'Playfair Display', serif;
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--claude);
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+.cost-num .currency { font-size: 16px; vertical-align: top; }
+.cost-meta {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 4px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Activity log */
+.log-card {
+  background: var(--navy);
+  border-radius: 14px;
+  padding: 0;
+  overflow: hidden;
+  margin-top: 22px;
+  color: rgba(255,255,255,0.85);
+}
+.log-head {
+  padding: 12px 18px;
+  display: flex; justify-content: space-between; align-items: center;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.log-head-title {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.7);
+  display: flex; align-items: center; gap: 8px;
+}
+.log-head-title::before {
+  content: '';
+  width: 7px; height: 7px;
+  background: var(--gold);
+  border-radius: 50%;
+  animation: pulse 1.5s ease infinite;
+}
+.log-body {
+  padding: 12px 18px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+.log-line {
+  margin-bottom: 5px;
+  display: flex; gap: 10px;
+  color: rgba(255,255,255,0.7);
+}
+.log-line .ts { color: rgba(255,255,255,0.4); }
+.log-line .module { color: var(--gold); min-width: 80px; }
+.log-line .ok { color: #4ade80; }
+.log-line .info { color: #60a5fa; }
+.log-line .warn { color: #fbbf24; }
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 24px; left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: white;
+  border: 1px solid var(--line-strong);
+  padding: 14px 24px;
+  border-radius: 12px;
+  font-size: 13px;
+  box-shadow: 0 20px 48px rgba(0,0,0,0.18);
+  z-index: 100;
+  opacity: 0;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  display: flex; align-items: center; gap: 10px;
+}
+.toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+.toast-icon {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--green);
+  color: white;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+}
+.toast-icon.claude { background: var(--claude); }
+
+/* Responsive */
+@media (max-width: 1280px) {
+  .app { grid-template-columns: 280px 1fr 300px; gap: 16px; }
+}
+@media (max-width: 1024px) {
+  .app { grid-template-columns: 1fr; }
+  .sidebar-right { position: static; }
+}
+@media (max-width: 640px) {
+  nav { padding: 12px 16px; flex-wrap: wrap; gap: 10px; }
+  .nav-status { gap: 10px; }
+  .status-chip { font-size: 10px; }
+  .user-badge { display: none; }
+  .brand-sub { display: none; }
+  .app { padding: 16px; }
+  .main-header { flex-direction: column; align-items: flex-start; }
+  .main-actions { width: 100%; }
+  .processo-header { flex-direction: column; }
+  .processo-card { padding: 16px; }
+  .processo-title { font-size: 15px; }
+  .mov-row { grid-template-columns: 70px 1fr; }
+  .mov-classify { grid-column: 1 / -1; justify-self: flex-start; }
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--bg-4); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="brand">
+    <div class="brand-mark">L</div>
+    <div class="brand-text">
+      <div class="brand-name">Lex IA</div>
+      <div class="brand-sub">monitor processual + claude</div>
+    </div>
+  </div>
+  <div class="nav-status">
+    <div class="status-chip ok">
+      <span class="dot"></span>
+      <span>Datajud: 8/8 tribunais</span>
+    </div>
+    <div class="status-chip cert">
+      <span class="dot"></span>
+      <span>OAB cert · ICP-Brasil</span>
+    </div>
+    <div class="user-badge">
+      <div class="user-avatar">MD</div>
+      <span>Dr. Márcio</span>
+    </div>
+  </div>
+</nav>
+
+<div class="app">
+
+  <!-- Left sidebar -->
+  <aside class="sidebar-left">
+
+    <div class="side-card">
+      <div class="side-title">
+        <span>Fontes conectadas</span>
+        <span class="count">3/3</span>
+      </div>
+      <div class="source-row">
+        <div class="source-icon dj">DJ</div>
+        <div class="source-info">
+          <div class="source-name">Datajud (CNJ)</div>
+          <div class="source-meta">API oficial · 247 processos</div>
+        </div>
+        <span class="source-pill ok">OK</span>
+      </div>
+      <div class="source-row">
+        <div class="source-icon mn">MNI</div>
+        <div class="source-info">
+          <div class="source-name">MNI · interop</div>
+          <div class="source-meta">SOAP · 89 processos</div>
+        </div>
+        <span class="source-pill ok">OK</span>
+      </div>
+      <div class="source-row">
+        <div class="source-icon sc">SC</div>
+        <div class="source-info">
+          <div class="source-name">Scraping custom</div>
+          <div class="source-meta">TJ-MG + Projudi · 12 processos</div>
+        </div>
+        <span class="source-pill warn">FALLBACK</span>
+      </div>
+    </div>
+
+    <div class="oab-card">
+      <div class="oab-label">Autenticação OAB</div>
+      <div class="oab-cert-num">OAB/SP 287.439</div>
+      <div class="oab-details">
+        Certificado <strong>e-CPF ICP-Brasil A3</strong> ativo · expira em 12/02/2027
+      </div>
+      <div class="oab-pill">Auditoria habilitada</div>
+    </div>
+
+    <div class="side-card">
+      <div class="side-title">
+        <span>Carteira</span>
+        <span class="count">348 ativos</span>
+      </div>
+      <div class="stats-mini">
+        <div class="stat-mini-card">
+          <div class="stat-mini-label">Prazo &lt; 5 dias</div>
+          <div class="stat-mini-val red">7</div>
+          <div class="stat-mini-trend">+2 hoje</div>
+        </div>
+        <div class="stat-mini-card">
+          <div class="stat-mini-label">Mov. novas (24h)</div>
+          <div class="stat-mini-val amber">23</div>
+          <div class="stat-mini-trend">classificadas IA</div>
+        </div>
+        <div class="stat-mini-card">
+          <div class="stat-mini-label">Decisões</div>
+          <div class="stat-mini-val">12</div>
+          <div class="stat-mini-trend">esta semana</div>
+        </div>
+        <div class="stat-mini-card">
+          <div class="stat-mini-label">Audiências</div>
+          <div class="stat-mini-val">4</div>
+          <div class="stat-mini-trend">próximos 14d</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-card">
+      <div class="side-title">
+        <span>Filtros rápidos</span>
+      </div>
+      <div class="filter-chips">
+        <div class="filter-chip active">
+          <span>Todos</span>
+          <span class="filter-count">348</span>
+        </div>
+        <div class="filter-chip">
+          <span>Prazo urgente</span>
+          <span class="filter-count">7</span>
+        </div>
+        <div class="filter-chip">
+          <span>Mov. não lidas</span>
+          <span class="filter-count">23</span>
+        </div>
+        <div class="filter-chip">
+          <span>Decisões pendentes</span>
+          <span class="filter-count">12</span>
+        </div>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- Main column -->
+  <main class="main-col">
+    <div class="main-header">
+      <div>
+        <h1 class="main-title">Processos em destaque</h1>
+        <div class="main-sub">3 prioritários · 1 com prazo crítico · Claude classificou movimentações</div>
+      </div>
+      <div class="main-actions">
+        <button class="btn" id="sync-btn">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          Sincronizar agora
+        </button>
+        <button class="btn btn-claude" id="claude-btn">
+          <span>✦</span>
+          Resumo Claude · todos
+        </button>
+      </div>
+    </div>
+
+    <div class="processos-grid">
+
+      <div class="processo-card critical">
+        <div class="processo-header">
+          <div>
+            <div class="processo-num">1003428-77.2024.8.26.0100</div>
+            <div class="processo-title">Ação Trabalhista · Indenização por horas extras</div>
+            <div class="processo-parties">Roberto Silva Andrade<span class="vs">vs</span>Tecnologia Beta LTDA</div>
+            <div class="processo-court">
+              <span class="court-badge">TJ-SP</span>
+              <span>1ª Vara do Trabalho · São Paulo</span>
+            </div>
+          </div>
+          <span class="urgency-pill critical">
+            <span class="dot"></span>
+            Prazo 2 dias
+          </span>
+        </div>
+
+        <div class="claude-summary">
+          <div class="claude-summary-header">
+            <div class="claude-icon">✦</div>
+            <span class="claude-label">Resumo Claude</span>
+            <span class="claude-meta">gerado há 2h · 412 tokens</span>
+          </div>
+          <div class="claude-text">
+            Decisão proferida hoje determina <strong>réplica à contestação em 5 dias úteis</strong> (vencimento: 19/05). A juíza acolheu parcialmente os documentos juntados pela ré, exigindo manifestação específica sobre os controles de jornada apresentados nas fls. 234-267. Risco médio-alto se a réplica não for protocolada no prazo.
+          </div>
+        </div>
+
+        <div class="mov-timeline">
+          <div class="mov-row">
+            <div class="mov-date">17/05 09:14 <span class="new-tag">NOVA</span></div>
+            <div class="mov-content"><strong>Decisão saneadora</strong> · "Determino réplica à contestação no prazo de 5 dias úteis..."</div>
+            <span class="mov-classify classify-deadline">Prazo</span>
+          </div>
+          <div class="mov-row">
+            <div class="mov-date">15/05 14:22</div>
+            <div class="mov-content">Juntada de petição da ré: contestação + documentos (fls. 234-267)</div>
+            <span class="mov-classify classify-routine">Rotina</span>
+          </div>
+          <div class="mov-row">
+            <div class="mov-date">10/05 16:48</div>
+            <div class="mov-content">Audiência de conciliação · não houve acordo</div>
+            <span class="mov-classify classify-routine">Rotina</span>
+          </div>
+        </div>
+
+        <div class="processo-footer">
+          <div class="prazo-info">⏰ Prazo: <strong>19/05/2026</strong> (2 dias úteis)</div>
+          <div class="processo-actions">
+            <button class="btn-tiny claude">✦ Rascunhar réplica</button>
+            <button class="btn-tiny">Ver completo</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="processo-card urgent">
+        <div class="processo-header">
+          <div>
+            <div class="processo-num">5004187-15.2023.4.03.6100</div>
+            <div class="processo-title">Mandado de Segurança · Habilitação ISS</div>
+            <div class="processo-parties">Construtora Aurora S/A<span class="vs">vs</span>União Federal</div>
+            <div class="processo-court">
+              <span class="court-badge">TRF-3</span>
+              <span>4ª Turma · Justiça Federal · SP</span>
+            </div>
+          </div>
+          <span class="urgency-pill urgent">
+            <span class="dot"></span>
+            Prazo 4 dias
+          </span>
+        </div>
+
+        <div class="claude-summary">
+          <div class="claude-summary-header">
+            <div class="claude-icon">✦</div>
+            <span class="claude-label">Resumo Claude</span>
+            <span class="claude-meta">gerado há 4h · 287 tokens</span>
+          </div>
+          <div class="claude-text">
+            Acórdão denegou parcialmente a segurança. <strong>Cabível Embargos de Declaração</strong> em 5 dias (vence 21/05) para questão omissa sobre prescrição quinquenal. Decisão majoritária com voto vencido da Desa. Marília Spínola - argumentos no voto divergente podem servir de base para recurso especial subsequente.
+          </div>
+        </div>
+
+        <div class="mov-timeline">
+          <div class="mov-row">
+            <div class="mov-date">16/05 11:34 <span class="new-tag">NOVA</span></div>
+            <div class="mov-content"><strong>Acórdão publicado</strong> · "Denegada a segurança parcialmente..."</div>
+            <span class="mov-classify classify-decision">Decisão</span>
+          </div>
+          <div class="mov-row">
+            <div class="mov-date">14/05 16:00</div>
+            <div class="mov-content">Sessão de julgamento concluída · 3 a 2</div>
+            <span class="mov-classify classify-routine">Rotina</span>
+          </div>
+        </div>
+
+        <div class="processo-footer">
+          <div class="prazo-info">⏰ Embargos: <strong class="amber">21/05/2026</strong> (4 dias úteis)</div>
+          <div class="processo-actions">
+            <button class="btn-tiny claude">✦ Minutar embargos</button>
+            <button class="btn-tiny">Ver completo</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="processo-card">
+        <div class="processo-header">
+          <div>
+            <div class="processo-num">2009334-44.2025.8.19.0001</div>
+            <div class="processo-title">Cobrança · Honorários contratuais</div>
+            <div class="processo-parties">Studio Jurídico XYZ<span class="vs">vs</span>Empresa de Comunicação Z</div>
+            <div class="processo-court">
+              <span class="court-badge">TJ-RJ</span>
+              <span>14ª Vara Cível · Rio de Janeiro</span>
+            </div>
+          </div>
+          <span class="urgency-pill normal">
+            <span class="dot"></span>
+            Sem prazo urgente
+          </span>
+        </div>
+
+        <div class="claude-summary">
+          <div class="claude-summary-header">
+            <div class="claude-icon">✦</div>
+            <span class="claude-label">Resumo Claude</span>
+            <span class="claude-meta">gerado há 12h · 198 tokens</span>
+          </div>
+          <div class="claude-text">
+            <strong>Decisão favorável de saneamento.</strong> Juiz fixou pontos controvertidos limitando o debate à existência ou não da prestação dos serviços (matéria documental). Provas testemunhais foram indeferidas. Tendência forte de procedência se a documentação for mantida. Próxima fase: instrução documental complementar.
+          </div>
+        </div>
+
+        <div class="mov-timeline">
+          <div class="mov-row">
+            <div class="mov-date">16/05 22:08 <span class="new-tag">NOVA</span></div>
+            <div class="mov-content"><strong>Decisão saneadora favorável</strong> · pontos controvertidos limitados</div>
+            <span class="mov-classify classify-favorable">Favorável</span>
+          </div>
+          <div class="mov-row">
+            <div class="mov-date">12/05 10:15</div>
+            <div class="mov-content">Réplica protocolada · documentos juntados (fls. 145-189)</div>
+            <span class="mov-classify classify-routine">Rotina</span>
+          </div>
+        </div>
+
+        <div class="processo-footer">
+          <div class="prazo-info">📅 Próxima audiência: 04/06/2026</div>
+          <div class="processo-actions">
+            <button class="btn-tiny claude">✦ Estratégia detalhada</button>
+            <button class="btn-tiny">Ver completo</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="log-card">
+      <div class="log-head">
+        <div class="log-head-title">Activity log</div>
+        <span style="font-size: 10px; color: rgba(255,255,255,0.5); font-family: 'JetBrains Mono', monospace" id="log-count">7 eventos</span>
+      </div>
+      <div class="log-body" id="log-body">
+        <div class="log-line"><span class="ts">14:38:22</span><span class="module">[datajud]</span><span class="ok">✓ 247 processos sincronizados · 23 movimentações novas</span></div>
+        <div class="log-line"><span class="ts">14:38:14</span><span class="module">[mni]</span><span class="ok">✓ 89 processos · TJ-RJ + TJ-RS via MNI</span></div>
+        <div class="log-line"><span class="ts">14:38:08</span><span class="module">[claude]</span><span class="info">▸ classificando 23 movimentações por relevância</span></div>
+        <div class="log-line"><span class="ts">14:38:11</span><span class="module">[claude]</span><span class="ok">✓ 7 prazos detectados · 2 decisões · 12 favoráveis · 2 rotina</span></div>
+        <div class="log-line"><span class="ts">14:38:12</span><span class="module">[lgpd]</span><span class="info">▸ payload Claude · only relevant chunks · PII redacted</span></div>
+        <div class="log-line"><span class="ts">14:38:15</span><span class="module">[scheduler]</span><span class="info">▸ próxima sincronização agendada · 15:00</span></div>
+        <div class="log-line"><span class="ts">14:38:20</span><span class="module">[alerts]</span><span class="warn">! 1 prazo crítico (2 dias) · email enviado para Dr. Márcio</span></div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Right sidebar -->
+  <aside class="sidebar-right">
+
+    <div class="insights-card">
+      <div class="insights-header">
+        <div class="insights-icon">✦</div>
+        <div>
+          <div class="insights-title">Insights da semana</div>
+          <div class="insights-sub">gerados por Claude · 3 acionáveis</div>
+        </div>
+      </div>
+
+      <div class="insight-item">
+        <div class="insight-tag alerta">⚠ Alerta</div>
+        <div class="insight-text">
+          Cliente <strong>Construtora Aurora</strong> tem 3 processos com argumentos correlatos sobre ISS. Recomendo unificar tese para os embargos de declaração do 5004187-15 e replicar.
+        </div>
+        <div class="insight-ref">refs: 5004187-15, 5009824-22, 5012348-09</div>
+      </div>
+
+      <div class="insight-item">
+        <div class="insight-tag oportunidade">★ Oportunidade</div>
+        <div class="insight-text">
+          Decisão favorável recente do <strong>TJ-SP em caso análogo</strong> (Apelação 1004523-12) pode ser citada no processo Roberto Silva. Reforça tese de horas extras.
+        </div>
+        <div class="insight-ref">julgado em 12/05/2026 · 2ª Turma</div>
+      </div>
+
+      <div class="insight-item">
+        <div class="insight-tag estrategia">⊙ Estratégia</div>
+        <div class="insight-text">
+          12 processos sem movimentação há 60+ dias podem se beneficiar de <strong>pedido de impulso oficial</strong>. Lista priorizada disponível para revisão.
+        </div>
+        <div class="insight-ref">12 processos · 8 TJ-SP / 4 TRF-3</div>
+      </div>
+
+    </div>
+
+    <div class="cost-card">
+      <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-muted); font-weight: 600; margin-bottom: 4px">Custo Claude · mês</div>
+      <div class="cost-num"><span class="currency">US$</span>42</div>
+      <div class="cost-meta">348 processos · 2.847 calls · gpt-4o-mini fallback ativo</div>
+    </div>
+
+    <div class="lgpd-card">
+      <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-muted); font-weight: 700; margin-bottom: 10px">LGPD Compliance</div>
+      <div class="lgpd-row ok">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        <span>Data Processing Agreement com Anthropic</span>
+      </div>
+      <div class="lgpd-row ok">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        <span>Minimização: chunks relevantes apenas</span>
+      </div>
+      <div class="lgpd-row ok">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        <span>Logs de acesso + DPO designado</span>
+      </div>
+      <div class="lgpd-row ok">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        <span>Dados em repouso · Postgres BR</span>
+      </div>
+    </div>
+
+  </aside>
+
+</div>
+
+<div class="toast" id="toast">
+  <div class="toast-icon" id="toast-icon">✓</div>
+  <span id="toast-text">Ação completada</span>
+</div>
+
+<script>
+async function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function ts() {
+  return new Date().toTimeString().slice(0, 8);
+}
+
+function logEvent(module, text, type='info') {
+  const body = document.getElementById('log-body');
+  const line = document.createElement('div');
+  line.className = 'log-line';
+  const icon = { ok: '✓', warn: '!', err: '✗', info: '▸' }[type] || '·';
+  line.innerHTML = `<span class="ts">${ts()}</span><span class="module">[${module}]</span><span class="${type}">${icon} ${text}</span>`;
+  body.insertBefore(line, body.firstChild);
+  if (body.children.length > 30) body.removeChild(body.lastChild);
+  document.getElementById('log-count').textContent = `${body.querySelectorAll('.log-line').length} eventos`;
+}
+
+function showToast(text, icon = 'ok') {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-text').textContent = text;
+  const iconEl = document.getElementById('toast-icon');
+  iconEl.className = `toast-icon ${icon === 'claude' ? 'claude' : ''}`;
+  iconEl.textContent = icon === 'claude' ? '✦' : '✓';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 4000);
+}
+
+document.getElementById('sync-btn').addEventListener('click', async () => {
+  const btn = document.getElementById('sync-btn');
+  btn.disabled = true;
+  btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation: spin 0.8s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Sincronizando...`;
+  logEvent('scheduler', 'sincronização manual iniciada', 'info');
+  await sleep(500);
+  logEvent('datajud', 'consultando 247 processos via API CNJ', 'info');
+  await sleep(700);
+  logEvent('datajud', '247 processos sincronizados · 5 mov. novas', 'ok');
+  await sleep(300);
+  logEvent('mni', '89 processos · TJ-RJ + TJ-RS', 'ok');
+  await sleep(300);
+  logEvent('scraping', '12 processos · TJ-MG + Projudi (com cert OAB)', 'ok');
+  await sleep(400);
+  logEvent('claude', 'classificando 5 movimentações novas', 'info');
+  await sleep(600);
+  logEvent('claude', 'resumos gerados · 2 prazos detectados', 'ok');
+  showToast('Sincronização completa · 5 movimentações novas processadas');
+  btn.disabled = false;
+  btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> Sincronizar agora`;
+});
+
+document.getElementById('claude-btn').addEventListener('click', async () => {
+  const btn = document.getElementById('claude-btn');
+  btn.disabled = true;
+  btn.innerHTML = `<span style="animation: spin 0.8s linear infinite; display: inline-block">✦</span> Processando...`;
+  logEvent('claude', 'regenerando resumos para 348 processos ativos', 'info');
+  await sleep(1500);
+  logEvent('lgpd', 'chunks minimizados · PII redacted antes de Claude', 'info');
+  await sleep(400);
+  logEvent('claude', '348 resumos gerados · ~12.4k tokens · US$0.18', 'ok');
+  showToast('Resumos atualizados · 12 oportunidades detectadas', 'claude');
+  btn.disabled = false;
+  btn.innerHTML = '<span>✦</span> Resumo Claude · todos';
+});
+
+document.querySelectorAll('.btn-tiny.claude').forEach(b => {
+  b.addEventListener('click', () => {
+    showToast('Claude gerando rascunho · pronto em ~12s', 'claude');
+  });
+});
+
+document.querySelectorAll('.filter-chip').forEach(c => {
+  c.addEventListener('click', () => {
+    document.querySelectorAll('.filter-chip').forEach(x => x.classList.remove('active'));
+    c.classList.add('active');
+  });
+});
+
+const style = document.createElement('style');
+style.textContent = '@keyframes spin { to { transform: rotate(360deg); } }';
+document.head.appendChild(style);
+</script>
+
+</body>
+</html>
