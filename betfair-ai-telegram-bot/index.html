@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FootballBot · Pipeline de Análise + Telegram</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-0: #0a0e14;
+  --bg-1: #10151d;
+  --bg-2: #161d28;
+  --bg-3: #1d2531;
+  --bg-4: #28323f;
+  --bg-5: #34404e;
+  --line: rgba(255,255,255,0.05);
+  --line-strong: rgba(255,255,255,0.12);
+  --text: #e8edf5;
+  --text-soft: #9ba5b4;
+  --text-muted: #6c7686;
+  --text-dim: #4a5360;
+  --primary: #22d3ee;
+  --primary-bg: rgba(34,211,238,0.12);
+  --primary-glow: rgba(34,211,238,0.2);
+  --tg: #0088cc;
+  --tg-bg: rgba(0,136,204,0.1);
+  --green: #22c55e;
+  --green-bg: rgba(34,197,94,0.12);
+  --amber: #f59e0b;
+  --amber-bg: rgba(245,158,11,0.12);
+  --red: #ef4444;
+  --red-bg: rgba(239,68,68,0.12);
+  --pink: #ec4899;
+  --purple: #a855f7;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg-0);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  font-size: 14px;
+  line-height: 1.5;
+  background-image:
+    radial-gradient(circle at 0% 0%, var(--primary-glow), transparent 35%),
+    radial-gradient(circle at 100% 100%, rgba(168,85,247,0.1), transparent 35%);
+}
+.mono { font-family: 'JetBrains Mono', monospace; }
+
+/* Nav */
+nav {
+  background: rgba(16,21,29,0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--line);
+  padding: 14px 28px;
+  position: sticky; top: 0; z-index: 50;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.brand {
+  display: flex; align-items: center; gap: 12px;
+}
+.brand-mark {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--primary), var(--purple));
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--bg-0);
+  box-shadow: 0 6px 14px var(--primary-glow);
+}
+.brand-mark svg { width: 20px; height: 20px; fill: var(--bg-0); }
+.brand-text { display: flex; flex-direction: column; gap: 1px; }
+.brand-name {
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: -0.02em;
+}
+.brand-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+.nav-right {
+  display: flex; gap: 12px; align-items: center;
+}
+.live-pill {
+  background: var(--green-bg);
+  color: var(--green);
+  padding: 6px 12px;
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 500;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.live-pill .dot {
+  width: 6px; height: 6px;
+  background: var(--green);
+  border-radius: 50%;
+  animation: pulse 1.5s ease infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.4); }
+}
+.btn {
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--line-strong);
+  background: var(--bg-3);
+  color: var(--text);
+  font-family: inherit;
+  display: inline-flex; align-items: center; gap: 7px;
+  transition: all 0.2s;
+}
+.btn:hover { background: var(--bg-4); }
+
+/* Main grid */
+.app {
+  max-width: 1500px;
+  margin: 0 auto;
+  padding: 24px 28px;
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 22px;
+}
+
+/* Left content */
+.main-col {}
+
+/* Pipeline status */
+.pipeline-card {
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+.card-head {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}
+.card-title {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  display: flex; align-items: center; gap: 8px;
+}
+.card-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.pipeline-flow {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  position: relative;
+}
+.pipeline-flow::before {
+  content: '';
+  position: absolute;
+  top: 20px;
+  left: 8%; right: 8%;
+  height: 2px;
+  background: var(--line);
+}
+.pipe-step {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+}
+.pipe-circle {
+  width: 40px; height: 40px;
+  margin: 0 auto 8px;
+  background: var(--bg-3);
+  border: 2px solid var(--bg-4);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+.pipe-step.active .pipe-circle {
+  background: var(--primary-bg);
+  border-color: var(--primary);
+  color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+.pipe-step.done .pipe-circle {
+  background: var(--green-bg);
+  border-color: var(--green);
+  color: var(--green);
+}
+.pipe-name {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin-bottom: 2px;
+}
+.pipe-tech {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Sources grid */
+.sources-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.source-card {
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px;
+  position: relative;
+}
+.source-card.primary { border-color: rgba(34,211,238,0.2); }
+.source-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 8px;
+}
+.source-name {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.source-name.api { color: var(--primary); }
+.source-name.scrape { color: var(--purple); }
+.source-name.paid { color: var(--amber); }
+.source-status {
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+}
+.source-status.ok { background: var(--green-bg); color: var(--green); }
+.source-status.degraded { background: var(--amber-bg); color: var(--amber); }
+.source-status.off { background: var(--bg-3); color: var(--text-muted); }
+.source-info {
+  font-size: 11px;
+  color: var(--text-soft);
+  margin-bottom: 8px;
+}
+.source-info strong { color: var(--text); font-family: 'JetBrains Mono', monospace; }
+.source-metrics {
+  display: flex; gap: 12px;
+  font-size: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text-muted);
+}
+.source-metrics .ok { color: var(--green); }
+.source-metrics .warn { color: var(--amber); }
+
+/* Games list */
+.games-section {
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+.games-list { padding: 4px 0; }
+.game-row {
+  padding: 14px 20px;
+  display: grid;
+  grid-template-columns: 60px 1fr auto auto;
+  align-items: center;
+  gap: 16px;
+  border-bottom: 1px solid var(--line);
+  transition: background 0.2s;
+}
+.game-row:hover { background: var(--bg-2); }
+.game-row:last-child { border-bottom: none; }
+.game-row.alerted { background: linear-gradient(90deg, var(--primary-bg), transparent 50%); }
+
+.game-time {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: center;
+}
+.game-time .day {
+  font-size: 10px;
+  display: block;
+  color: var(--text-dim);
+  margin-bottom: 2px;
+}
+.game-time .hour {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.game-teams {
+  display: flex; align-items: center; gap: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: -0.01em;
+}
+.team-favorite {
+  background: var(--green-bg);
+  color: var(--green);
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 9px;
+  font-weight: 700;
+  margin-left: 6px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.game-league {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 2px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.game-criteria {
+  display: flex; gap: 6px;
+}
+.criteria-pill {
+  font-size: 9px;
+  padding: 3px 7px;
+  border-radius: 4px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  background: var(--bg-3);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.criteria-pill.met {
+  background: var(--green-bg);
+  color: var(--green);
+}
+
+.game-score {
+  text-align: right;
+  min-width: 70px;
+}
+.confidence-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.confidence-num.high { color: var(--green); }
+.confidence-num.med { color: var(--amber); }
+.confidence-num.low { color: var(--text-muted); }
+.confidence-label {
+  font-size: 9px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: -1px;
+}
+
+/* Bot controls */
+.controls-card {
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 18px;
+}
+.threshold-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+.threshold-row:last-child { border-bottom: none; }
+.threshold-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-soft);
+}
+.threshold-label small {
+  display: block;
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+  margin-top: 2px;
+}
+.threshold-value {
+  display: flex; align-items: center; gap: 8px;
+}
+.threshold-pill {
+  background: var(--primary-bg);
+  color: var(--primary);
+  padding: 4px 10px;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+  min-width: 50px;
+  text-align: center;
+}
+.threshold-toggle {
+  width: 36px; height: 20px;
+  background: var(--green);
+  border-radius: 12px;
+  position: relative;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.threshold-toggle::after {
+  content: '';
+  position: absolute;
+  width: 14px; height: 14px;
+  background: white;
+  border-radius: 50%;
+  top: 3px; right: 3px;
+  transition: all 0.2s;
+}
+.threshold-toggle.off { background: var(--bg-5); }
+.threshold-toggle.off::after { right: auto; left: 3px; }
+
+/* Right sidebar - Telegram preview */
+.tg-preview {
+  background: linear-gradient(180deg, #17212b, #0e1621);
+  border: 1px solid var(--line-strong);
+  border-radius: 22px;
+  overflow: hidden;
+  height: fit-content;
+  position: sticky; top: 80px;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+}
+.tg-header {
+  background: linear-gradient(135deg, #2b5278, #1d3a55);
+  padding: 14px 18px;
+  display: flex; align-items: center; gap: 12px;
+  color: white;
+}
+.tg-bot-avatar {
+  width: 38px; height: 38px;
+  background: linear-gradient(135deg, var(--primary), var(--purple));
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--bg-0);
+  flex-shrink: 0;
+}
+.tg-bot-info { flex: 1; min-width: 0; }
+.tg-bot-name {
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: -0.01em;
+  display: flex; align-items: center; gap: 6px;
+}
+.tg-bot-name svg {
+  width: 12px; height: 12px;
+  fill: white;
+}
+.tg-bot-status {
+  font-size: 11px;
+  color: rgba(255,255,255,0.6);
+}
+.tg-bot-icons {
+  display: flex; gap: 14px;
+  color: rgba(255,255,255,0.7);
+}
+
+.tg-chat {
+  background: #0e1621;
+  padding: 16px 14px;
+  max-height: 540px;
+  overflow-y: auto;
+}
+.tg-msg {
+  background: #182533;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  border-top-left-radius: 4px;
+  max-width: 92%;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #e8edf5;
+  position: relative;
+  animation: msgIn 0.4s ease;
+}
+@keyframes msgIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.tg-msg-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.tg-msg-title {
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--primary);
+  letter-spacing: -0.01em;
+}
+.tg-msg-score {
+  background: var(--green-bg);
+  color: var(--green);
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+}
+.tg-msg-game {
+  font-weight: 600;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+.tg-msg-meta {
+  font-size: 10px;
+  color: rgba(255,255,255,0.5);
+  font-family: 'JetBrains Mono', monospace;
+  margin-bottom: 8px;
+}
+.tg-msg-criteria {
+  display: flex; flex-direction: column; gap: 4px;
+  margin-bottom: 8px;
+}
+.tg-msg-crit {
+  display: flex; align-items: flex-start; gap: 6px;
+  font-size: 11px;
+  color: rgba(255,255,255,0.85);
+}
+.tg-msg-crit::before {
+  content: '✓';
+  color: var(--green);
+  font-weight: 700;
+}
+.tg-msg-stats {
+  background: rgba(255,255,255,0.04);
+  border-radius: 6px;
+  padding: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: rgba(255,255,255,0.7);
+  line-height: 1.6;
+  margin-bottom: 8px;
+}
+.tg-msg-stats .lbl { color: rgba(255,255,255,0.4); }
+.tg-msg-buttons {
+  display: flex; gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+.tg-btn {
+  background: rgba(43,82,120,0.4);
+  color: var(--primary);
+  border: 1px solid rgba(43,82,120,0.6);
+  padding: 6px 11px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  flex: 1;
+  text-align: center;
+}
+.tg-btn:hover { background: rgba(43,82,120,0.7); }
+.tg-msg-time {
+  font-size: 9px;
+  color: rgba(255,255,255,0.4);
+  text-align: right;
+  margin-top: 4px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.tg-typing {
+  background: #182533;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  border-top-left-radius: 4px;
+  max-width: 80px;
+  display: flex; gap: 4px;
+}
+.tg-typing-dot {
+  width: 6px; height: 6px;
+  background: rgba(255,255,255,0.4);
+  border-radius: 50%;
+  animation: typingDot 1.4s infinite ease-in-out;
+}
+.tg-typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.tg-typing-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes typingDot {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-4px); opacity: 1; }
+}
+
+.tg-controls {
+  padding: 12px 14px;
+  background: #17212b;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  display: flex; gap: 10px;
+  align-items: center;
+}
+.tg-controls .input-mock {
+  flex: 1;
+  background: #242f3d;
+  border-radius: 18px;
+  padding: 8px 14px;
+  font-size: 11px;
+  color: rgba(255,255,255,0.5);
+}
+
+/* Activity log */
+.log-card {
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 0;
+  overflow: hidden;
+  margin-top: 20px;
+}
+.log-card-head {
+  padding: 14px 18px;
+  background: var(--bg-2);
+  display: flex; justify-content: space-between; align-items: center;
+  border-bottom: 1px solid var(--line);
+}
+.log-body {
+  padding: 12px 18px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  max-height: 140px;
+  overflow-y: auto;
+}
+.log-line {
+  margin-bottom: 5px;
+  display: flex; gap: 10px;
+  color: var(--text-soft);
+}
+.log-line .ts { color: var(--text-dim); }
+.log-line .module { color: var(--primary); min-width: 80px; }
+.log-line .ok { color: var(--green); }
+.log-line .info { color: var(--primary); }
+.log-line .warn { color: var(--amber); }
+.log-line .err { color: var(--red); }
+
+/* Action bar */
+.action-bar {
+  display: flex; gap: 8px;
+  margin-bottom: 20px;
+}
+.btn-primary {
+  background: var(--primary);
+  color: var(--bg-0);
+  border-color: var(--primary);
+  font-weight: 700;
+}
+.btn-primary:hover { background: #06b6d4; }
+.btn-tg {
+  background: var(--tg);
+  color: white;
+  border-color: var(--tg);
+}
+.btn-tg:hover { background: #0099e6; }
+
+/* Mobile */
+@media (max-width: 1024px) {
+  .app { grid-template-columns: 1fr; }
+  .tg-preview { position: static; max-width: 380px; margin: 0 auto; }
+  .sources-grid { grid-template-columns: 1fr; }
+  .pipeline-flow { grid-template-columns: 1fr 1fr; gap: 14px; }
+  .pipeline-flow::before { display: none; }
+  .game-row { grid-template-columns: 50px 1fr auto; }
+  .game-criteria { display: none; }
+}
+@media (max-width: 640px) {
+  nav { padding: 12px 16px; flex-wrap: wrap; gap: 10px; }
+  .brand-sub { display: none; }
+  .nav-right .live-pill { font-size: 11px; padding: 5px 10px; }
+  .app { padding: 16px; }
+  .game-row { gap: 10px; padding: 12px 16px; }
+  .action-bar { flex-direction: column; }
+  .action-bar .btn { width: 100%; justify-content: center; }
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--bg-4); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="brand">
+    <div class="brand-mark">
+      <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8zM12 6l1.5 4.5h5L14 13l1.5 4.5L12 14.5 8.5 17.5 10 13 6 10.5h5z"/></svg>
+    </div>
+    <div class="brand-text">
+      <div class="brand-name">FootballBot</div>
+      <div class="brand-sub">Betfair API + Stats + Telegram</div>
+    </div>
+  </div>
+  <div class="nav-right">
+    <div class="live-pill">
+      <span class="dot"></span>
+      <span>Pipeline ativa · 24/7</span>
+    </div>
+    <button class="btn">⚙ Config</button>
+  </div>
+</nav>
+
+<div class="app">
+
+  <!-- Main column -->
+  <div class="main-col">
+
+    <!-- Pipeline status -->
+    <div class="pipeline-card">
+      <div class="card-head">
+        <div class="card-title">Pipeline · varredura ativa</div>
+        <div class="card-meta" id="pipeline-status">última corrida: 38s atrás</div>
+      </div>
+      <div class="pipeline-flow">
+        <div class="pipe-step done" data-step="1">
+          <div class="pipe-circle">1</div>
+          <div class="pipe-name">Betfair API</div>
+          <div class="pipe-tech">eventTypeIds=1</div>
+        </div>
+        <div class="pipe-step done" data-step="2">
+          <div class="pipe-circle">2</div>
+          <div class="pipe-name">Stats source</div>
+          <div class="pipe-tech">SofaScore + Hub</div>
+        </div>
+        <div class="pipe-step done" data-step="3">
+          <div class="pipe-circle">3</div>
+          <div class="pipe-name">Scoring layer</div>
+          <div class="pipe-tech">classical + LLM</div>
+        </div>
+        <div class="pipe-step done" data-step="4">
+          <div class="pipe-circle">4</div>
+          <div class="pipe-name">Telegram alert</div>
+          <div class="pipe-tech">acima threshold</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sources -->
+    <div class="sources-grid">
+      <div class="source-card primary">
+        <div class="source-header">
+          <span class="source-name api">BETFAIR API</span>
+          <span class="source-status ok">OK</span>
+        </div>
+        <div class="source-info">
+          <strong>114</strong> eventos · próximos 8 dias<br>
+          <strong>1.847</strong> mercados lidos
+        </div>
+        <div class="source-metrics">
+          <span class="ok">● 99% sucesso</span>
+          <span>latência 240ms</span>
+        </div>
+      </div>
+      <div class="source-card">
+        <div class="source-header">
+          <span class="source-name scrape">SOFASCORE</span>
+          <span class="source-status ok">OK</span>
+        </div>
+        <div class="source-info">
+          <strong>108</strong> jogos com stats<br>
+          shots, corners, xG por tempo
+        </div>
+        <div class="source-metrics">
+          <span class="ok">● 96% match rate</span>
+          <span>Playwright stealth</span>
+        </div>
+      </div>
+      <div class="source-card">
+        <div class="source-header">
+          <span class="source-name paid">SPORTRADAR</span>
+          <span class="source-status off">FALLBACK</span>
+        </div>
+        <div class="source-info">
+          ativado se SofaScore < 90%<br>
+          uso médio: <strong>~8%</strong> dos jogos
+        </div>
+        <div class="source-metrics">
+          <span>USD 0.04 / jogo</span>
+          <span>SLA 99.9%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action bar -->
+    <div class="action-bar">
+      <button class="btn btn-primary" id="rescan-btn">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        Reanalisar agora
+      </button>
+      <button class="btn">📅 Próximos 8 dias</button>
+      <button class="btn">🎯 6 critérios ativos</button>
+      <button class="btn btn-tg" id="test-tg">📲 Testar alerta Telegram</button>
+    </div>
+
+    <!-- Games list -->
+    <div class="games-section">
+      <div class="card-head" style="padding: 14px 20px; border-bottom: 1px solid var(--line); margin: 0">
+        <div class="card-title">114 jogos analisados · 4 com sinal ≥ 70%</div>
+        <div class="card-meta">ordenado: confiança ↓</div>
+      </div>
+      <div class="games-list" id="games-list">
+        <!-- games injected -->
+      </div>
+    </div>
+
+    <!-- Bot config thresholds -->
+    <div class="controls-card">
+      <div class="card-head" style="margin-bottom: 12px; padding-bottom: 10px">
+        <div class="card-title">Thresholds de alerta · Telegram</div>
+        <div class="card-meta">ajustável por estratégia</div>
+      </div>
+      <div class="threshold-row">
+        <div class="threshold-label">
+          Confiança mínima
+          <small>score ponderado: favoritismo + pressão + odd inflada</small>
+        </div>
+        <div class="threshold-value">
+          <span class="threshold-pill">≥ 70%</span>
+          <div class="threshold-toggle"></div>
+        </div>
+      </div>
+      <div class="threshold-row">
+        <div class="threshold-label">
+          Rate limit
+          <small>previne flood quando muitos jogos batem o critério</small>
+        </div>
+        <div class="threshold-value">
+          <span class="threshold-pill">5/h</span>
+          <div class="threshold-toggle"></div>
+        </div>
+      </div>
+      <div class="threshold-row">
+        <div class="threshold-label">
+          Odd mínima
+          <small>filtra odds baixas demais (favoritos óbvios)</small>
+        </div>
+        <div class="threshold-value">
+          <span class="threshold-pill">≥ 1.60</span>
+          <div class="threshold-toggle"></div>
+        </div>
+      </div>
+      <div class="threshold-row">
+        <div class="threshold-label">
+          Feedback loop
+          <small>usuário marca alertas como "bom sinal" ou "ruído"</small>
+        </div>
+        <div class="threshold-value">
+          <span class="threshold-pill">ativo</span>
+          <div class="threshold-toggle"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Activity log -->
+    <div class="log-card">
+      <div class="log-card-head">
+        <div class="card-title" style="font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px">
+          <span style="width:7px;height:7px;background:var(--green);border-radius:50%;display:inline-block;margin-right:8px;animation:pulse 1.5s ease infinite"></span>
+          Activity log
+        </div>
+        <span class="card-meta" id="log-count">8 eventos</span>
+      </div>
+      <div class="log-body" id="log-body">
+        <div class="log-line"><span class="ts">14:32:08</span><span class="module">[betfair]</span><span class="ok">✓ 114 eventos lidos · próximos 8 dias</span></div>
+        <div class="log-line"><span class="ts">14:32:11</span><span class="module">[sofascore]</span><span class="ok">✓ stats coletados · 108/114 jogos</span></div>
+        <div class="log-line"><span class="ts">14:32:14</span><span class="module">[sportradar]</span><span class="info">▸ ativado para 6 jogos com gaps de stats</span></div>
+        <div class="log-line"><span class="ts">14:32:18</span><span class="module">[scoring]</span><span class="info">▸ aplicando favoritismo + pressão ofensiva + odds infladas</span></div>
+        <div class="log-line"><span class="ts">14:32:21</span><span class="module">[scoring]</span><span class="ok">✓ 4 jogos acima do threshold (70%)</span></div>
+        <div class="log-line"><span class="ts">14:32:22</span><span class="module">[telegram]</span><span class="ok">✓ 4 alertas enviados ao grupo Clesio</span></div>
+        <div class="log-line"><span class="ts">14:32:22</span><span class="module">[ratelimit]</span><span class="warn">! 7 sinais detectados, 3 silenciados por rate limit (5/h)</span></div>
+        <div class="log-line"><span class="ts">14:32:23</span><span class="module">[scheduler]</span><span class="info">▸ próxima varredura agendada · 14:47</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Right - Telegram preview -->
+  <aside class="tg-preview">
+    <div class="tg-header">
+      <div class="tg-bot-avatar">FB</div>
+      <div class="tg-bot-info">
+        <div class="tg-bot-name">
+          FootballBot
+          <svg viewBox="0 0 24 24"><path d="M12 2L4.5 18h15L12 2zm0 4.5l5 11h-10l5-11z"/></svg>
+        </div>
+        <div class="tg-bot-status">bot · online</div>
+      </div>
+      <div class="tg-bot-icons">
+        <span>🔔</span>
+        <span>⋮</span>
+      </div>
+    </div>
+    <div class="tg-chat" id="tg-chat">
+      <!-- messages injected -->
+    </div>
+    <div class="tg-controls">
+      <div class="input-mock">Comandos: /jogos · /stats · /pausar...</div>
+      <span style="color: rgba(255,255,255,0.5)">😊</span>
+    </div>
+  </aside>
+
+</div>
+
+<script>
+
+const games = [
+  {
+    day: 'Sáb', date: '20/05', hour: '12:30',
+    home: 'Liverpool', away: 'Brighton', league: 'Premier League',
+    favorite: 'home',
+    criteria: { shots: true, corners: true, win_both: true },
+    confidence: 84,
+    odds: { home: 1.62, draw: 4.20, away: 5.40 },
+    stats: { shots_h1: '8-2', corners_h1: '5-1', xg_h1: '1.4-0.3' },
+    alerted: true
+  },
+  {
+    day: 'Sáb', date: '20/05', hour: '14:00',
+    home: 'Bayern', away: 'Wolfsburg', league: 'Bundesliga',
+    favorite: 'home',
+    criteria: { shots: true, corners: true, win_both: true },
+    confidence: 78,
+    odds: { home: 1.45, draw: 4.80, away: 6.80 },
+    stats: { shots_h1: '11-3', corners_h1: '6-2', xg_h1: '1.8-0.4' },
+    alerted: true
+  },
+  {
+    day: 'Dom', date: '21/05', hour: '16:00',
+    home: 'PSG', away: 'Strasbourg', league: 'Ligue 1',
+    favorite: 'home',
+    criteria: { shots: true, corners: true, win_both: false },
+    confidence: 71,
+    odds: { home: 1.32, draw: 5.50, away: 9.00 },
+    stats: { shots_h1: '9-2', corners_h1: '5-1', xg_h1: '1.5-0.2' },
+    alerted: true
+  },
+  {
+    day: 'Dom', date: '21/05', hour: '17:30',
+    home: 'Real Madrid', away: 'Granada', league: 'La Liga',
+    favorite: 'home',
+    criteria: { shots: true, corners: false, win_both: true },
+    confidence: 70,
+    odds: { home: 1.28, draw: 6.40, away: 10.5 },
+    stats: { shots_h1: '12-3', corners_h1: '4-3', xg_h1: '2.1-0.5' },
+    alerted: true
+  },
+  {
+    day: 'Dom', date: '21/05', hour: '15:00',
+    home: 'Inter', away: 'Cagliari', league: 'Serie A',
+    favorite: 'home',
+    criteria: { shots: true, corners: true, win_both: false },
+    confidence: 62,
+    odds: { home: 1.50, draw: 4.20, away: 7.20 },
+    stats: { shots_h1: '7-3', corners_h1: '4-2', xg_h1: '1.2-0.4' },
+    alerted: false
+  },
+  {
+    day: 'Seg', date: '22/05', hour: '20:00',
+    home: 'Atlético', away: 'Sevilla', league: 'La Liga',
+    favorite: 'home',
+    criteria: { shots: false, corners: true, win_both: false },
+    confidence: 45,
+    odds: { home: 1.95, draw: 3.40, away: 4.20 },
+    stats: { shots_h1: '5-4', corners_h1: '5-2', xg_h1: '0.9-0.7' },
+    alerted: false
+  },
+];
+
+function renderGames() {
+  const list = document.getElementById('games-list');
+  list.innerHTML = '';
+  for (const g of games) {
+    const row = document.createElement('div');
+    row.className = 'game-row' + (g.alerted ? ' alerted' : '');
+    const confClass = g.confidence >= 75 ? 'high' : g.confidence >= 65 ? 'med' : 'low';
+    const criteriaHtml = `
+      <span class="criteria-pill ${g.criteria.shots ? 'met' : ''}">SHOTS</span>
+      <span class="criteria-pill ${g.criteria.corners ? 'met' : ''}">CORNERS</span>
+      <span class="criteria-pill ${g.criteria.win_both ? 'met' : ''}">WIN BOTH</span>
+    `;
+    row.innerHTML = `
+      <div class="game-time">
+        <span class="day">${g.day} ${g.date}</span>
+        <span class="hour">${g.hour}</span>
+      </div>
+      <div>
+        <div class="game-teams">
+          ${g.home}${g.favorite === 'home' ? '<span class="team-favorite">FAV</span>' : ''} vs ${g.away}${g.favorite === 'away' ? '<span class="team-favorite">FAV</span>' : ''}
+        </div>
+        <div class="game-league">${g.league} · odd home ${g.odds.home}</div>
+      </div>
+      <div class="game-criteria">${criteriaHtml}</div>
+      <div class="game-score">
+        <div class="confidence-num ${confClass}">${g.confidence}%</div>
+        <div class="confidence-label">${g.alerted ? '✓ alertado' : 'abaixo'}</div>
+      </div>
+    `;
+    list.appendChild(row);
+  }
+}
+renderGames();
+
+// Telegram messages
+function addTgMsg(game) {
+  const chat = document.getElementById('tg-chat');
+  const msg = document.createElement('div');
+  msg.className = 'tg-msg';
+  msg.innerHTML = `
+    <div class="tg-msg-header">
+      <span class="tg-msg-title">⚡ NOVO ALERTA</span>
+      <span class="tg-msg-score">${game.confidence}%</span>
+    </div>
+    <div class="tg-msg-game">${game.home} vs ${game.away}</div>
+    <div class="tg-msg-meta">${game.league} · ${game.day} ${game.date} ${game.hour}</div>
+    <div class="tg-msg-criteria">
+      ${game.criteria.shots ? '<div class="tg-msg-crit">Time com mais chutes em ambos os tempos</div>' : ''}
+      ${game.criteria.corners ? '<div class="tg-msg-crit">Time com mais escanteios em ambos os tempos</div>' : ''}
+      ${game.criteria.win_both ? '<div class="tg-msg-crit">Time que vence ambos os tempos</div>' : ''}
+    </div>
+    <div class="tg-msg-stats">
+      <span class="lbl">Shots 1T:</span> ${game.stats.shots_h1}<br>
+      <span class="lbl">Corners 1T:</span> ${game.stats.corners_h1}<br>
+      <span class="lbl">xG 1T:</span> ${game.stats.xg_h1}<br>
+      <span class="lbl">Odd home:</span> ${game.odds.home} · <span class="lbl">draw:</span> ${game.odds.draw} · <span class="lbl">away:</span> ${game.odds.away}
+    </div>
+    <div class="tg-msg-buttons">
+      <button class="tg-btn">📊 Detalhes</button>
+      <button class="tg-btn">👍 Bom sinal</button>
+      <button class="tg-btn">👎 Ruído</button>
+    </div>
+    <div class="tg-msg-time">${new Date().toTimeString().slice(0, 5)}</div>
+  `;
+  chat.appendChild(msg);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+// Initial Telegram messages
+const alertedGames = games.filter(g => g.alerted);
+alertedGames.slice(0, 2).forEach(g => addTgMsg(g));
+
+async function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function ts() {
+  return new Date().toTimeString().slice(0, 8);
+}
+
+function logEvent(module, text, type = 'info') {
+  const body = document.getElementById('log-body');
+  const line = document.createElement('div');
+  line.className = 'log-line';
+  const icon = { ok: '✓', warn: '!', err: '✗', info: '▸' }[type] || '·';
+  line.innerHTML = `<span class="ts">${ts()}</span><span class="module">[${module}]</span><span class="${type}">${icon} ${text}</span>`;
+  body.insertBefore(line, body.firstChild);
+  if (body.children.length > 30) body.removeChild(body.lastChild);
+  document.getElementById('log-count').textContent = `${body.querySelectorAll('.log-line').length} eventos`;
+}
+
+// Re-scan button
+document.getElementById('rescan-btn').addEventListener('click', async () => {
+  const btn = document.getElementById('rescan-btn');
+  btn.disabled = true;
+  btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation: spin 0.8s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Analisando...`;
+
+  logEvent('scheduler', 'reanálise manual iniciada', 'info');
+  await sleep(400);
+  logEvent('betfair', 'lendo eventos · próximos 8 dias', 'info');
+  await sleep(600);
+  logEvent('betfair', '114 eventos lidos · 1847 mercados', 'ok');
+  await sleep(300);
+  logEvent('sofascore', 'coletando stats · Playwright stealth', 'info');
+  await sleep(800);
+  logEvent('sofascore', 'stats coletados · 108/114 jogos', 'ok');
+  await sleep(200);
+  logEvent('sportradar', 'fallback ativado para 6 jogos · USD 0.24', 'info');
+  await sleep(400);
+  logEvent('scoring', 'aplicando classical stats + LLM summary', 'info');
+  await sleep(700);
+  logEvent('scoring', '4 jogos acima do threshold (70%)', 'ok');
+  await sleep(300);
+  logEvent('telegram', '4 alertas enviados ao grupo Clesio', 'ok');
+
+  document.getElementById('pipeline-status').textContent = `última corrida: agora`;
+
+  btn.disabled = false;
+  btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> Reanalisar agora`;
+});
+
+document.getElementById('test-tg').addEventListener('click', async () => {
+  const btn = document.getElementById('test-tg');
+  btn.disabled = true;
+  btn.textContent = 'Enviando...';
+
+  const chat = document.getElementById('tg-chat');
+  const typing = document.createElement('div');
+  typing.className = 'tg-typing';
+  typing.innerHTML = '<div class="tg-typing-dot"></div><div class="tg-typing-dot"></div><div class="tg-typing-dot"></div>';
+  chat.appendChild(typing);
+  chat.scrollTop = chat.scrollHeight;
+
+  await sleep(1200);
+  typing.remove();
+
+  addTgMsg(alertedGames[2 % alertedGames.length]);
+  logEvent('telegram', 'alerta teste enviado', 'ok');
+
+  btn.disabled = false;
+  btn.textContent = '📲 Testar alerta Telegram';
+});
+
+// Threshold toggles
+document.querySelectorAll('.threshold-toggle').forEach(t => {
+  t.addEventListener('click', () => t.classList.toggle('off'));
+});
+
+// Spin animation
+const style = document.createElement('style');
+style.textContent = '@keyframes spin { to { transform: rotate(360deg); } }';
+document.head.appendChild(style);
+</script>
+
+</body>
+</html>
