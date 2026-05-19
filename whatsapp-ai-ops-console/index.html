@@ -1,0 +1,1492 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0d1117">
+<title>ConvoAI Ops — WhatsApp AI Assistant Operations Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d1117;
+  --surface: #161b22;
+  --surface-2: #1c2128;
+  --surface-3: #22272e;
+  --surface-hover: #2d333b;
+  --border: rgba(240,246,252,0.08);
+  --border-strong: rgba(240,246,252,0.16);
+  --text: #f0f6fc;
+  --text-soft: #8b949e;
+  --text-muted: #6e7681;
+  --accent: #00a884;
+  --accent-2: #25d366;
+  --accent-deep: #008069;
+  --accent-glow: rgba(0,168,132,0.15);
+  --success: #3fb950;
+  --success-bg: rgba(63,185,80,0.12);
+  --warning: #d29922;
+  --warning-bg: rgba(210,153,34,0.12);
+  --danger: #f85149;
+  --danger-bg: rgba(248,81,73,0.12);
+  --info: #58a6ff;
+  --info-bg: rgba(88,166,255,0.12);
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px;
+  --s-5: 24px; --s-6: 32px; --s-7: 48px;
+  --r-sm: 6px; --r-md: 10px; --r-lg: 14px; --r-xl: 20px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.4);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.35);
+  --shadow-lg: 0 12px 40px rgba(0,0,0,0.5);
+  --shadow-glow: 0 0 0 1px var(--accent-glow), 0 8px 32px var(--accent-glow);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: -0.01em;
+  overflow: hidden;
+  background-image:
+    radial-gradient(circle at 10% 0%, rgba(0,168,132,0.08), transparent 40%),
+    radial-gradient(circle at 95% 95%, rgba(37,211,102,0.06), transparent 50%);
+}
+.mono { font-family: 'JetBrains Mono', monospace; }
+button { font-family: inherit; }
+
+/* ===== LAYOUT ===== */
+.app {
+  display: grid;
+  grid-template-rows: 60px auto minmax(0, 1fr);
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* ===== TOPBAR ===== */
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 var(--s-5);
+  border-bottom: 1px solid var(--border);
+  background: rgba(13,17,23,0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  z-index: 50;
+}
+.brand {
+  display: flex; align-items: center; gap: 10px;
+  font-weight: 700; font-size: 15px; letter-spacing: -0.02em;
+}
+.brand-mark {
+  width: 32px; height: 32px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  display: grid; place-items: center;
+  box-shadow: 0 4px 12px var(--accent-glow);
+  position: relative;
+}
+.brand-mark::after {
+  content: ''; position: absolute;
+  width: 8px; height: 8px;
+  background: var(--success);
+  border: 2px solid var(--bg);
+  border-radius: 50%;
+  bottom: -2px; right: -2px;
+}
+.brand-mark svg { width: 16px; height: 16px; }
+.brand-name { display: flex; flex-direction: column; line-height: 1.1; }
+.brand-sub { font-size: 10px; color: var(--text-muted); font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; }
+.topbar-center { display: flex; gap: 2px; padding: 3px; background: var(--surface-2); border-radius: 10px; border: 1px solid var(--border); }
+.tb-tab {
+  padding: 6px 12px;
+  font-size: 12px; font-weight: 600;
+  color: var(--text-soft);
+  background: transparent;
+  border: none; border-radius: 7px;
+  cursor: pointer; transition: all 0.15s;
+}
+.tb-tab:hover { color: var(--text); }
+.tb-tab.active { background: var(--surface-3); color: var(--text); box-shadow: var(--shadow-sm); }
+.topbar-right { display: flex; align-items: center; gap: var(--s-3); }
+.live-pill {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 10px;
+  background: var(--success-bg);
+  color: var(--success);
+  border: 1px solid rgba(63,185,80,0.25);
+  border-radius: 999px;
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 0.04em; text-transform: uppercase;
+}
+.live-pill::before {
+  content: ''; width: 6px; height: 6px;
+  background: var(--success); border-radius: 50%;
+  box-shadow: 0 0 8px var(--success);
+  animation: pulse 1.6s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%,100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.7); }
+}
+.icon-btn {
+  width: 36px; height: 36px;
+  display: grid; place-items: center;
+  background: var(--surface); color: var(--text-soft);
+  border: 1px solid var(--border); border-radius: var(--r-md);
+  cursor: pointer; transition: all 0.18s;
+}
+.icon-btn:hover { background: var(--surface-2); color: var(--text); border-color: var(--border-strong); }
+.icon-btn svg { width: 16px; height: 16px; stroke: currentColor; }
+.avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: linear-gradient(135deg, #00a884, #25d366);
+  display: grid; place-items: center;
+  font-size: 13px; font-weight: 700; color: white;
+}
+.menu-btn { display: none; }
+
+/* ===== KPI STRIP ===== */
+.kpis {
+  padding: var(--s-4) var(--s-5);
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--s-3);
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(28,33,40,0.4), transparent);
+}
+.kpi {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: var(--s-3) var(--s-4);
+  position: relative; overflow: hidden;
+  transition: all 0.2s;
+  min-width: 0;
+}
+.kpi:hover {
+  background: var(--surface-2);
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+.kpi-label {
+  font-size: 10px; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 0.08em;
+  font-weight: 600;
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 6px;
+}
+.kpi-icon-wrap {
+  width: 22px; height: 22px; border-radius: 6px;
+  background: var(--surface-3);
+  display: grid; place-items: center;
+  color: var(--accent);
+}
+.kpi-icon-wrap svg { width: 12px; height: 12px; stroke: currentColor; }
+.kpi-value {
+  font-size: 22px; font-weight: 700;
+  letter-spacing: -0.02em;
+  display: flex; align-items: baseline; gap: 4px;
+}
+.kpi-unit { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+.kpi-trend {
+  margin-top: 4px;
+  font-size: 11px; font-weight: 500;
+  display: flex; align-items: center; gap: 3px;
+}
+.kpi-trend.up { color: var(--success); }
+.kpi-trend.down { color: var(--danger); }
+.kpi-trend svg { width: 10px; height: 10px; }
+
+/* ===== MAIN: 3 PANE ===== */
+.main {
+  display: grid;
+  grid-template-columns: 340px minmax(0, 1fr) 320px;
+  gap: 1px;
+  background: var(--border);
+  min-height: 0;
+}
+.pane {
+  background: var(--bg);
+  display: flex; flex-direction: column;
+  min-width: 0; min-height: 0;
+  overflow: hidden;
+}
+.pane-header {
+  padding: var(--s-3) var(--s-4);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
+  background: var(--surface);
+}
+.pane-title {
+  font-size: 13px; font-weight: 600;
+  display: flex; align-items: center; gap: 8px;
+}
+.pane-count {
+  font-size: 11px; font-weight: 600;
+  padding: 2px 7px;
+  background: var(--surface-3); color: var(--text-soft);
+  border-radius: 999px;
+}
+.pane-count.urgent { background: var(--warning-bg); color: var(--warning); }
+.pane-search {
+  padding: var(--s-3) var(--s-4);
+  border-bottom: 1px solid var(--border);
+  position: relative;
+  flex-shrink: 0;
+}
+.pane-search input {
+  width: 100%;
+  padding: 9px 14px 9px 36px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 12px;
+  color: var(--text);
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.pane-search input:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: var(--surface);
+}
+.pane-search input::placeholder { color: var(--text-muted); }
+.pane-search svg {
+  position: absolute;
+  left: 27px; top: 50%; transform: translateY(-50%);
+  width: 14px; height: 14px;
+  stroke: var(--text-muted);
+}
+.pane-body {
+  flex: 1; overflow-y: auto;
+  min-height: 0;
+}
+.pane-body::-webkit-scrollbar { width: 6px; }
+.pane-body::-webkit-scrollbar-thumb { background: var(--surface-3); border-radius: 3px; }
+
+/* ===== CONVERSATION LIST ===== */
+.conv-item {
+  display: flex; gap: 12px;
+  padding: var(--s-3) var(--s-4);
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.15s;
+  position: relative;
+}
+.conv-item:hover { background: var(--surface); }
+.conv-item.active { background: var(--surface-2); }
+.conv-item.active::before {
+  content: ''; position: absolute;
+  left: 0; top: 8px; bottom: 8px; width: 3px;
+  background: var(--accent); border-radius: 0 3px 3px 0;
+}
+.conv-avatar {
+  width: 42px; height: 42px; border-radius: 50%;
+  display: grid; place-items: center;
+  font-size: 13px; font-weight: 700; color: white;
+  flex-shrink: 0;
+  position: relative;
+}
+.conv-avatar-online {
+  position: absolute;
+  width: 10px; height: 10px;
+  background: var(--success);
+  border: 2px solid var(--bg);
+  border-radius: 50%;
+  bottom: 0; right: 0;
+}
+.conv-info { flex: 1; min-width: 0; }
+.conv-name-row {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 3px;
+}
+.conv-name { font-size: 13px; font-weight: 600; color: var(--text); }
+.conv-time { font-size: 10px; color: var(--text-muted); flex-shrink: 0; }
+.conv-preview {
+  font-size: 12px; color: var(--text-soft);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  margin-bottom: 5px;
+}
+.conv-badges { display: flex; gap: 5px; align-items: center; }
+.badge {
+  font-size: 9px; font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 999px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  display: inline-flex; align-items: center; gap: 3px;
+}
+.badge.ai { background: var(--accent-glow); color: var(--accent-2); }
+.badge.human { background: var(--info-bg); color: var(--info); }
+.badge.handoff { background: var(--warning-bg); color: var(--warning); }
+.badge.intent { background: var(--surface-3); color: var(--text-soft); }
+.badge-dot { width: 4px; height: 4px; border-radius: 50%; background: currentColor; }
+.unread-pill {
+  position: absolute;
+  top: 50%; right: 16px;
+  transform: translateY(-50%);
+  background: var(--accent-2);
+  color: var(--bg);
+  font-size: 10px; font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 999px;
+}
+
+/* ===== CHAT VIEW ===== */
+.chat-header {
+  padding: var(--s-3) var(--s-5);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: var(--s-3);
+  background: var(--surface);
+  flex-shrink: 0;
+}
+.chat-header-avatar {
+  width: 40px; height: 40px; border-radius: 50%;
+  display: grid; place-items: center;
+  font-size: 13px; font-weight: 700; color: white;
+  background: linear-gradient(135deg, #f59e0b, #ef4444);
+}
+.chat-header-info { flex: 1; min-width: 0; }
+.chat-header-name { font-size: 14px; font-weight: 600; }
+.chat-header-meta { font-size: 11px; color: var(--text-soft); display: flex; gap: 8px; align-items: center; }
+.chat-header-actions { display: flex; gap: 6px; }
+.chat-action {
+  width: 32px; height: 32px;
+  border-radius: 7px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  display: grid; place-items: center;
+  cursor: pointer;
+  color: var(--text-soft);
+  transition: all 0.15s;
+}
+.chat-action:hover { color: var(--text); background: var(--surface-3); }
+.chat-action svg { width: 14px; height: 14px; stroke: currentColor; }
+.chat-action.handoff { background: var(--warning-bg); color: var(--warning); border-color: rgba(210,153,34,0.3); }
+.chat-action.handoff:hover { background: rgba(210,153,34,0.2); }
+
+.chat-body {
+  flex: 1; overflow-y: auto;
+  padding: var(--s-5);
+  background:
+    radial-gradient(circle at 50% 50%, rgba(0,168,132,0.025), transparent 70%),
+    var(--bg);
+  display: flex; flex-direction: column; gap: var(--s-3);
+  min-height: 0;
+}
+.chat-body::-webkit-scrollbar { width: 6px; }
+.chat-body::-webkit-scrollbar-thumb { background: var(--surface-3); border-radius: 3px; }
+
+.msg {
+  display: flex; flex-direction: column;
+  max-width: 78%;
+  gap: 4px;
+  animation: msgIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes msgIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.msg.in { align-self: flex-start; }
+.msg.out { align-self: flex-end; }
+.msg-bubble {
+  padding: 10px 14px;
+  border-radius: 14px;
+  font-size: 13.5px;
+  line-height: 1.45;
+  word-wrap: break-word;
+  position: relative;
+}
+.msg.in .msg-bubble {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-bottom-left-radius: 4px;
+}
+.msg.out .msg-bubble {
+  background: linear-gradient(135deg, var(--accent-deep), var(--accent));
+  color: white;
+  border-bottom-right-radius: 4px;
+  box-shadow: 0 4px 12px var(--accent-glow);
+}
+.msg-meta {
+  display: flex; gap: 6px; align-items: center;
+  font-size: 10px; color: var(--text-muted);
+  padding: 0 4px;
+}
+.msg.out .msg-meta { justify-content: flex-end; }
+.msg-meta-tick svg { width: 12px; height: 12px; stroke: var(--accent-2); }
+.msg-intent-tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 1px 6px;
+  background: var(--surface-3);
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-soft);
+}
+.msg-intent-tag.high { color: var(--success); background: var(--success-bg); }
+.msg-intent-tag.medium { color: var(--warning); background: var(--warning-bg); }
+.msg-intent-tag.low { color: var(--danger); background: var(--danger-bg); }
+.msg-confidence {
+  display: flex; align-items: center; gap: 4px;
+  margin-top: 2px;
+}
+.confidence-bar {
+  width: 60px; height: 3px;
+  background: var(--surface-3);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.confidence-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--success), var(--accent-2));
+  border-radius: 999px;
+  transition: width 0.4s;
+}
+.confidence-text { font-size: 10px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
+
+.msg.system {
+  align-self: center;
+  max-width: 80%;
+}
+.msg.system .msg-bubble {
+  background: transparent;
+  border: 1px dashed var(--border-strong);
+  color: var(--text-soft);
+  font-size: 11px;
+  text-align: center;
+  font-style: italic;
+  padding: 8px 14px;
+}
+
+.chat-typing {
+  align-self: flex-start;
+  display: flex; gap: 6px;
+  padding: 12px 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  border-bottom-left-radius: 4px;
+}
+.typing-dot {
+  width: 6px; height: 6px;
+  background: var(--text-muted);
+  border-radius: 50%;
+  animation: typing 1.4s infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes typing {
+  0%,60%,100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-6px); opacity: 1; }
+}
+
+.chat-composer {
+  padding: var(--s-3) var(--s-4);
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  display: flex; gap: var(--s-2); align-items: center;
+  flex-shrink: 0;
+}
+.composer-input {
+  flex: 1;
+  padding: 10px 16px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 13px;
+  color: var(--text);
+  font-family: inherit;
+}
+.composer-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.composer-input::placeholder { color: var(--text-muted); }
+.composer-suggestions { padding: var(--s-2) var(--s-4); display: flex; gap: 6px; flex-wrap: wrap; border-top: 1px solid var(--border); background: var(--surface); }
+.suggestion {
+  padding: 6px 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 11px;
+  color: var(--text-soft);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.suggestion:hover { color: var(--text); border-color: var(--accent); background: var(--surface-3); }
+.suggestion svg { width: 11px; height: 11px; vertical-align: -1px; margin-right: 4px; }
+
+/* ===== RIGHT PANE ===== */
+.handoff-list { padding: var(--s-3); display: flex; flex-direction: column; gap: var(--s-3); }
+.handoff-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: var(--s-3);
+  cursor: pointer;
+  transition: all 0.18s;
+  position: relative;
+}
+.handoff-card:hover { background: var(--surface-2); border-color: var(--border-strong); }
+.handoff-card.urgent { border-color: rgba(210,153,34,0.3); }
+.handoff-card.urgent::before {
+  content: ''; position: absolute;
+  top: 0; left: 0; bottom: 0;
+  width: 3px;
+  background: var(--warning);
+  border-radius: var(--r-md) 0 0 var(--r-md);
+}
+.handoff-head {
+  display: flex; gap: 10px; align-items: center;
+  margin-bottom: 10px;
+}
+.handoff-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  display: grid; place-items: center;
+  font-size: 11px; font-weight: 700; color: white;
+  flex-shrink: 0;
+}
+.handoff-name { font-size: 12px; font-weight: 600; }
+.handoff-time { font-size: 10px; color: var(--text-muted); }
+.handoff-reason {
+  font-size: 11px; color: var(--text-soft);
+  background: var(--surface-2);
+  padding: 8px 10px;
+  border-radius: 6px;
+  border-left: 2px solid var(--accent);
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+.handoff-reason strong { color: var(--text); font-weight: 600; }
+.handoff-meta {
+  display: flex; gap: 8px;
+  font-size: 10px; color: var(--text-muted);
+  margin-bottom: 10px;
+}
+.handoff-meta-item { display: flex; align-items: center; gap: 3px; }
+.handoff-meta-item svg { width: 10px; height: 10px; stroke: currentColor; }
+.handoff-actions { display: flex; gap: 6px; }
+.handoff-btn {
+  flex: 1;
+  padding: 7px;
+  font-size: 11px; font-weight: 600;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-soft);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.handoff-btn:hover { background: var(--surface-3); color: var(--text); }
+.handoff-btn.primary {
+  background: var(--accent-deep);
+  color: white;
+  border-color: var(--accent-deep);
+}
+.handoff-btn.primary:hover { background: var(--accent); }
+
+/* ===== SIDE CARDS ===== */
+.side-section {
+  padding: var(--s-3) var(--s-4);
+  border-top: 1px solid var(--border);
+}
+.side-section-title {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.side-section-link { font-size: 10px; color: var(--accent-2); cursor: pointer; }
+
+.intent-list { display: flex; flex-direction: column; gap: 7px; }
+.intent-row {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 11px;
+}
+.intent-bar {
+  flex: 1; height: 6px;
+  background: var(--surface-2);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.intent-bar-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--accent), var(--accent-2)); }
+.intent-label { color: var(--text-soft); min-width: 70px; }
+.intent-pct { color: var(--text); font-weight: 600; min-width: 30px; text-align: right; font-family: 'JetBrains Mono'; font-size: 10px; }
+
+.cost-summary {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: var(--s-3);
+}
+.cost-total {
+  display: flex; align-items: baseline; gap: 6px;
+  margin-bottom: 8px;
+}
+.cost-amount { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; font-family: 'JetBrains Mono', monospace; }
+.cost-currency { font-size: 12px; color: var(--text-muted); }
+.cost-meta { font-size: 11px; color: var(--text-soft); }
+.cost-breakdown { margin-top: 10px; display: flex; flex-direction: column; gap: 5px; font-size: 11px; }
+.cost-row { display: flex; align-items: center; justify-content: space-between; padding-bottom: 5px; border-bottom: 1px solid var(--border); }
+.cost-row:last-child { border-bottom: none; padding-bottom: 0; }
+.cost-row-label { color: var(--text-soft); }
+.cost-row-val { color: var(--text); font-family: 'JetBrains Mono'; font-size: 11px; }
+
+/* ===== TAB VIEW SWITCHING ===== */
+.view { display: none; height: 100%; flex-direction: column; }
+.view.active { display: flex; }
+.view-main { display: grid; grid-template-columns: 340px minmax(0, 1fr) 320px; gap: 1px; background: var(--border); min-height: 0; height: 100%; }
+
+/* Templates view */
+.tpl-list { padding: var(--s-5); display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: var(--s-3); overflow-y: auto; }
+.tpl-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: var(--s-4);
+}
+.tpl-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.tpl-name { font-family: 'JetBrains Mono'; font-size: 12px; font-weight: 600; }
+.tpl-status { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 999px; letter-spacing: 0.04em; text-transform: uppercase; }
+.tpl-status.approved { background: var(--success-bg); color: var(--success); }
+.tpl-status.pending { background: var(--warning-bg); color: var(--warning); }
+.tpl-status.rejected { background: var(--danger-bg); color: var(--danger); }
+.tpl-preview {
+  padding: 10px 12px;
+  background: var(--surface-2);
+  border-radius: 8px;
+  font-size: 12px; line-height: 1.5;
+  color: var(--text-soft);
+  margin-bottom: 10px;
+}
+.tpl-preview-var { color: var(--accent-2); font-family: 'JetBrains Mono'; }
+.tpl-meta { display: flex; gap: 12px; font-size: 10px; color: var(--text-muted); }
+
+/* Analytics view */
+.analytics-grid {
+  padding: var(--s-5);
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--s-4);
+  overflow-y: auto;
+}
+.an-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: var(--s-5);
+}
+.an-title { font-size: 13px; font-weight: 600; margin-bottom: var(--s-4); }
+.an-bars { display: flex; align-items: flex-end; gap: 8px; height: 140px; }
+.an-bar { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+.an-bar-fill { width: 100%; border-radius: 4px 4px 0 0; background: linear-gradient(180deg, var(--accent), var(--accent-deep)); transition: filter 0.2s; }
+.an-bar-fill:hover { filter: brightness(1.3); }
+.an-bar-label { font-size: 10px; color: var(--text-muted); }
+
+/* Knowledge base view */
+.kb-list { padding: var(--s-5); display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--s-3); overflow-y: auto; }
+.kb-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: var(--s-4);
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.kb-card:hover { background: var(--surface-2); border-color: var(--border-strong); }
+.kb-q { font-size: 13px; font-weight: 600; margin-bottom: 8px; line-height: 1.4; }
+.kb-a { font-size: 12px; color: var(--text-soft); line-height: 1.55; margin-bottom: 10px; }
+.kb-meta { display: flex; gap: 10px; font-size: 10px; color: var(--text-muted); padding-top: 10px; border-top: 1px solid var(--border); }
+.kb-meta-item { display: flex; align-items: center; gap: 4px; }
+.kb-meta-item svg { width: 11px; height: 11px; stroke: currentColor; }
+.kb-card.gap {
+  background: var(--warning-bg);
+  border-color: rgba(210,153,34,0.3);
+}
+.kb-card.gap .kb-q { color: var(--warning); }
+.kb-card.gap .kb-a { color: var(--text); }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 1100px) {
+  .kpis { grid-template-columns: repeat(3, 1fr); }
+  .kpi:nth-child(4), .kpi:nth-child(5) { display: none; }
+  .main, .view-main { grid-template-columns: 280px minmax(0, 1fr); }
+  .pane:nth-child(3) { display: none; }
+}
+@media (max-width: 768px) {
+  body { overflow-y: auto; }
+  .app { height: auto; min-height: 100vh; grid-template-rows: 56px auto 1fr; }
+  .topbar { padding: 0 var(--s-3); height: 56px; }
+  .brand-sub { display: none; }
+  .topbar-center { display: none; }
+  .menu-btn { display: grid; }
+  .kpis { grid-template-columns: repeat(2, 1fr); padding: var(--s-3); }
+  .kpi:nth-child(3) { display: none; }
+  .main, .view-main { grid-template-columns: 1fr; height: auto; min-height: 60vh; }
+  .pane { min-height: 340px; }
+  .pane:nth-child(1) { display: none; }
+  .pane:nth-child(1).mobile-active { display: flex; }
+  .pane:nth-child(2):not(.mobile-active) { display: none; }
+  .mobile-tabs {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: rgba(13,17,23,0.95);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border-strong);
+    z-index: 100;
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+  }
+  .mtab {
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    padding: 6px;
+    color: var(--text-muted);
+    background: transparent; border: none;
+    cursor: pointer;
+    font-size: 10px; font-weight: 600;
+  }
+  .mtab svg { width: 18px; height: 18px; stroke: currentColor; }
+  .mtab.active { color: var(--accent-2); }
+  .app { padding-bottom: 60px; }
+}
+.mobile-tabs { display: none; }
+@media (max-width: 768px) {
+  .mobile-tabs { display: grid; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:var(--s-3);">
+      <button class="icon-btn menu-btn" id="menuBtn" aria-label="Menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <div class="brand">
+        <div class="brand-mark">
+          <svg viewBox="0 0 24 24" fill="white"><path d="M17.498 14.382c-.301-.15-1.767-.867-2.04-.966-.273-.101-.473-.15-.673.15-.197.295-.771.964-.944 1.162-.175.195-.349.21-.646.075-.3-.15-1.263-.465-2.403-1.485-.888-.795-1.484-1.77-1.66-2.07-.174-.3-.019-.465.13-.615.136-.135.301-.345.451-.523.146-.181.194-.301.297-.496.1-.21.049-.375-.025-.524-.075-.15-.672-1.62-.922-2.206-.24-.584-.487-.51-.672-.51-.172-.015-.371-.015-.571-.015-.2 0-.523.074-.797.359-.273.3-1.045 1.02-1.045 2.475s1.07 2.865 1.219 3.075c.149.195 2.105 3.195 5.1 4.485.714.3 1.27.48 1.704.629.714.227 1.365.195 1.88.121.574-.091 1.767-.721 2.016-1.426.255-.705.255-1.29.18-1.425-.074-.135-.27-.21-.57-.345z"/></svg>
+        </div>
+        <div class="brand-name">
+          <span>ConvoAI Ops</span>
+          <span class="brand-sub">WhatsApp Business · AI Assistant</span>
+        </div>
+      </div>
+    </div>
+    <div class="topbar-center" id="viewTabs">
+      <button class="tb-tab active" data-view="conversations">Conversations</button>
+      <button class="tb-tab" data-view="knowledge">Knowledge Base</button>
+      <button class="tb-tab" data-view="templates">Templates</button>
+      <button class="tb-tab" data-view="analytics">Analytics</button>
+    </div>
+    <div class="topbar-right">
+      <div class="live-pill"><span>Live</span></div>
+      <button class="icon-btn" aria-label="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      </button>
+      <div class="avatar">AC</div>
+    </div>
+  </div>
+
+  <!-- KPIS -->
+  <div class="kpis">
+    <div class="kpi">
+      <div class="kpi-label">
+        Active conversations
+        <div class="kpi-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div>
+      </div>
+      <div class="kpi-value" id="kpiActive">147</div>
+      <div class="kpi-trend up">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg>
+        +24 vs 1h ago
+      </div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">
+        Deflection rate
+        <div class="kpi-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></div>
+      </div>
+      <div class="kpi-value"><span id="kpiDef">87</span><span class="kpi-unit">%</span></div>
+      <div class="kpi-trend up">AI-resolved without human</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">
+        Avg response time
+        <div class="kpi-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+      </div>
+      <div class="kpi-value"><span id="kpiTime">1.8</span><span class="kpi-unit">s</span></div>
+      <div class="kpi-trend up">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg>
+        -0.4s
+      </div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">
+        Today's LLM cost
+        <div class="kpi-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div>
+      </div>
+      <div class="kpi-value">$<span id="kpiCost">3.42</span></div>
+      <div class="kpi-trend up">Prompt cache 73%</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">
+        Handoff queue
+        <div class="kpi-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+      </div>
+      <div class="kpi-value" id="kpiQueue">4</div>
+      <div class="kpi-trend down">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        SLA 2m avg
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== CONVERSATIONS VIEW ===== -->
+  <div class="view active" data-view-content="conversations">
+    <div class="view-main">
+      <!-- LEFT: Conversation list -->
+      <div class="pane">
+        <div class="pane-header">
+          <div class="pane-title">Inbox <span class="pane-count">147</span></div>
+          <div style="display:flex;gap:4px;">
+            <button class="icon-btn" style="width:28px;height:28px;border-radius:6px;" aria-label="Filter">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="pane-search">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" placeholder="Buscar conversa, intent ou cliente...">
+        </div>
+        <div class="pane-body" id="convList"></div>
+      </div>
+
+      <!-- CENTER: Chat -->
+      <div class="pane">
+        <div class="chat-header">
+          <div class="chat-header-avatar">MS</div>
+          <div class="chat-header-info">
+            <div class="chat-header-name">Maria Santos</div>
+            <div class="chat-header-meta">
+              <span class="badge ai"><span class="badge-dot"></span> AI assistant</span>
+              <span>+55 11 9 8472-3919</span>
+              <span>·</span>
+              <span>4 mensagens</span>
+            </div>
+          </div>
+          <div class="chat-header-actions">
+            <button class="chat-action" title="Ver perfil">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </button>
+            <button class="chat-action" title="Histórico">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+            </button>
+            <button class="chat-action handoff" title="Transferir para humano" id="handoffBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="chat-body" id="chatBody">
+          <div class="msg system"><div class="msg-bubble">Conversa iniciada · 14:32 · Origem: campanha Instagram</div></div>
+          <div class="msg in">
+            <div class="msg-bubble">Boa tarde, vocês fazem entrega em Campinas? Quero saber sobre o plano premium</div>
+            <div class="msg-meta">14:32 <span class="msg-intent-tag high">Intent: pricing_inquiry · 96%</span></div>
+          </div>
+          <div class="msg out">
+            <div class="msg-bubble">Olá Maria! Boa tarde 👋 Sim, fazemos entrega em Campinas com prazo de 2-3 dias úteis. Sobre o plano premium, ele inclui suporte 24/7, atualizações automáticas e acesso prioritário. O valor é R$ 299/mês ou R$ 2.890/ano (economia de 19%). Gostaria de detalhes sobre algum desses pontos?</div>
+            <div class="msg-meta">
+              <span class="msg-intent-tag high">RAG match: FAQ-87, Pricing-12</span>
+              <span class="msg-meta-tick">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              </span>
+              14:32
+            </div>
+          </div>
+          <div class="msg in">
+            <div class="msg-bubble">Eu vi no site mas queria saber se tem desconto pra cliente antigo, sou cliente há 4 anos</div>
+            <div class="msg-meta">14:33 <span class="msg-intent-tag medium">Intent: discount_request · 78%</span></div>
+          </div>
+          <div class="msg out">
+            <div class="msg-bubble">Entendi, Maria! Para clientes com histórico de 3+ anos temos um programa especial. Vou validar seu cadastro agora... ✓ Confirmado, você está na categoria "Premium Histórico" e tem direito a 15% de desconto no plano anual. Ficaria R$ 2.456,50/ano. Quer que eu já gere o link de upgrade?</div>
+            <div class="msg-meta">
+              <span class="msg-intent-tag high">CRM lookup: customer_id=4821 · tier=premium-historic</span>
+              <span class="msg-meta-tick">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              </span>
+              14:33
+            </div>
+          </div>
+          <div class="msg in">
+            <div class="msg-bubble">Hmm, mas eu não quero ainda. Queria falar com alguém pra entender umas coisas específicas do meu caso, é possível?</div>
+            <div class="msg-meta">14:34 <span class="msg-intent-tag medium">Intent: human_handoff_request · 91%</span></div>
+          </div>
+          <div class="chat-typing" id="typing">
+            <span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>
+          </div>
+        </div>
+        <div class="composer-suggestions">
+          <span style="font-size:10px; color:var(--text-muted); letter-spacing:0.04em; text-transform:uppercase; align-self:center; margin-right:4px;">Sugestões AI:</span>
+          <span class="suggestion">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+            Aceitar handoff
+          </span>
+          <span class="suggestion">📅 Agendar callback</span>
+          <span class="suggestion">📋 Resumo da conversa</span>
+          <span class="suggestion">🧠 Adicionar à KB</span>
+        </div>
+        <div class="chat-composer">
+          <button class="icon-btn" style="width:32px;height:32px;" aria-label="Anexo">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+          </button>
+          <input class="composer-input" placeholder="Mensagem como humano (override AI)..." id="composerInput">
+          <button class="icon-btn" style="width:32px;height:32px;background:var(--accent-deep);color:white;border-color:var(--accent-deep);" aria-label="Enviar">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- RIGHT: Handoff queue + intent + cost -->
+      <div class="pane">
+        <div class="pane-header">
+          <div class="pane-title">Handoff queue <span class="pane-count urgent">4</span></div>
+        </div>
+        <div class="pane-body">
+          <div class="handoff-list">
+            <div class="handoff-card urgent">
+              <div class="handoff-head">
+                <div class="handoff-avatar" style="background:linear-gradient(135deg,#f59e0b,#ef4444)">MS</div>
+                <div style="flex:1;min-width:0;">
+                  <div class="handoff-name">Maria Santos</div>
+                  <div class="handoff-time">há 30s · SLA 2m</div>
+                </div>
+                <span class="badge handoff">Urgente</span>
+              </div>
+              <div class="handoff-reason">
+                <strong>Contexto:</strong> Cliente premium-histórica (4 anos, customer_id 4821) recebeu cotação com 15% desconto. Pediu falar com humano antes de fechar para esclarecer dúvidas específicas do caso dela.
+              </div>
+              <div class="handoff-meta">
+                <span class="handoff-meta-item">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                  4 msgs
+                </span>
+                <span class="handoff-meta-item">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+                  R$ 2,456 LTV
+                </span>
+                <span class="handoff-meta-item">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                  Premium
+                </span>
+              </div>
+              <div class="handoff-actions">
+                <button class="handoff-btn">Reassign</button>
+                <button class="handoff-btn primary">Take over</button>
+              </div>
+            </div>
+            <div class="handoff-card">
+              <div class="handoff-head">
+                <div class="handoff-avatar" style="background:linear-gradient(135deg,#3b82f6,#8b5cf6)">RP</div>
+                <div style="flex:1;min-width:0;">
+                  <div class="handoff-name">Rafael Pinto</div>
+                  <div class="handoff-time">há 1m</div>
+                </div>
+                <span class="badge intent">Low conf.</span>
+              </div>
+              <div class="handoff-reason">
+                <strong>Contexto:</strong> Cliente perguntou sobre integração com sistema legado SAP. AI confidence 31%, fora da KB. Não tentou responder, encaminhou direto.
+              </div>
+              <div class="handoff-meta">
+                <span class="handoff-meta-item">2 msgs</span>
+                <span class="handoff-meta-item">B2B Enterprise</span>
+              </div>
+              <div class="handoff-actions">
+                <button class="handoff-btn">Reassign</button>
+                <button class="handoff-btn primary">Take over</button>
+              </div>
+            </div>
+            <div class="handoff-card">
+              <div class="handoff-head">
+                <div class="handoff-avatar" style="background:linear-gradient(135deg,#10b981,#06b6d4)">JC</div>
+                <div style="flex:1;min-width:0;">
+                  <div class="handoff-name">Juliana Costa</div>
+                  <div class="handoff-time">há 3m</div>
+                </div>
+                <span class="badge intent">Complaint</span>
+              </div>
+              <div class="handoff-reason">
+                <strong>Contexto:</strong> Reclamação sobre cobrança duplicada em 14/05. Sentiment score -0.78. Política de empresa: complaints sempre human handoff.
+              </div>
+              <div class="handoff-meta">
+                <span class="handoff-meta-item">6 msgs</span>
+                <span class="handoff-meta-item">Refund eligible</span>
+              </div>
+              <div class="handoff-actions">
+                <button class="handoff-btn">Reassign</button>
+                <button class="handoff-btn primary">Take over</button>
+              </div>
+            </div>
+            <div class="handoff-card">
+              <div class="handoff-head">
+                <div class="handoff-avatar" style="background:linear-gradient(135deg,#8b5cf6,#ec4899)">FT</div>
+                <div style="flex:1;min-width:0;">
+                  <div class="handoff-name">Felipe Tavares</div>
+                  <div class="handoff-time">há 5m</div>
+                </div>
+                <span class="badge intent">Negotiation</span>
+              </div>
+              <div class="handoff-reason">
+                <strong>Contexto:</strong> Cliente quer negociar plano custom para 12 usuários. Fora do catalog standard, exige aprovação comercial humana.
+              </div>
+              <div class="handoff-meta">
+                <span class="handoff-meta-item">8 msgs</span>
+                <span class="handoff-meta-item">R$ 12k+ LTV</span>
+              </div>
+              <div class="handoff-actions">
+                <button class="handoff-btn">Reassign</button>
+                <button class="handoff-btn primary">Take over</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="side-section">
+            <div class="side-section-title">Top intents · 24h <span class="side-section-link">Ver mais</span></div>
+            <div class="intent-list">
+              <div class="intent-row">
+                <span class="intent-label">pricing_inquiry</span>
+                <div class="intent-bar"><div class="intent-bar-fill" style="width:82%;"></div></div>
+                <span class="intent-pct">412</span>
+              </div>
+              <div class="intent-row">
+                <span class="intent-label">order_status</span>
+                <div class="intent-bar"><div class="intent-bar-fill" style="width:68%;"></div></div>
+                <span class="intent-pct">342</span>
+              </div>
+              <div class="intent-row">
+                <span class="intent-label">feature_question</span>
+                <div class="intent-bar"><div class="intent-bar-fill" style="width:54%;"></div></div>
+                <span class="intent-pct">271</span>
+              </div>
+              <div class="intent-row">
+                <span class="intent-label">technical_support</span>
+                <div class="intent-bar"><div class="intent-bar-fill" style="width:38%;"></div></div>
+                <span class="intent-pct">189</span>
+              </div>
+              <div class="intent-row">
+                <span class="intent-label">cancellation</span>
+                <div class="intent-bar"><div class="intent-bar-fill" style="width:22%;background:linear-gradient(90deg,var(--warning),var(--danger));"></div></div>
+                <span class="intent-pct">108</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="side-section">
+            <div class="side-section-title">LLM cost · today</div>
+            <div class="cost-summary">
+              <div class="cost-total">
+                <span class="cost-amount">3.42</span>
+                <span class="cost-currency">USD</span>
+              </div>
+              <div class="cost-meta">147 conversas · $0.023/conv · cache 73%</div>
+              <div class="cost-breakdown">
+                <div class="cost-row"><span class="cost-row-label">Input tokens</span><span class="cost-row-val">1.84M</span></div>
+                <div class="cost-row"><span class="cost-row-label">Output tokens</span><span class="cost-row-val">412K</span></div>
+                <div class="cost-row"><span class="cost-row-label">Cached read</span><span class="cost-row-val">1.34M</span></div>
+                <div class="cost-row"><span class="cost-row-label">Model</span><span class="cost-row-val">claude-haiku</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== KNOWLEDGE BASE VIEW ===== -->
+  <div class="view" data-view-content="knowledge">
+    <div class="kb-list">
+      <div class="kb-card">
+        <div class="kb-q">Quais são os planos disponíveis e seus preços?</div>
+        <div class="kb-a">Plano Basic R$ 99/mês, Pro R$ 199/mês, Premium R$ 299/mês. Anual com 19% desconto. Premium inclui suporte 24/7 e atualizações automáticas.</div>
+        <div class="kb-meta">
+          <span class="kb-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> 412 hits</span>
+          <span class="kb-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Atualizado há 3d</span>
+        </div>
+      </div>
+      <div class="kb-card">
+        <div class="kb-q">Como rastrear meu pedido?</div>
+        <div class="kb-a">Forneça o número do pedido (formato #PED12345) e a AI consulta diretamente o sistema de tracking via API e retorna status + previsão de entrega.</div>
+        <div class="kb-meta">
+          <span class="kb-meta-item">342 hits</span>
+          <span class="kb-meta-item">Integrado com Bling</span>
+        </div>
+      </div>
+      <div class="kb-card">
+        <div class="kb-q">Vocês entregam em [cidade]?</div>
+        <div class="kb-a">Cobertura nacional via correios + transportadora. Prazo varia 2-7 dias úteis dependendo da região. AI cruza CEP com tabela de cobertura.</div>
+        <div class="kb-meta">
+          <span class="kb-meta-item">271 hits</span>
+          <span class="kb-meta-item">CEP API integrada</span>
+        </div>
+      </div>
+      <div class="kb-card">
+        <div class="kb-q">Como funciona a política de troca?</div>
+        <div class="kb-a">Troca em até 7 dias para produtos sem uso. Devolução grátis via Correios com código gerado automaticamente pelo bot via integração com sistema interno.</div>
+        <div class="kb-meta">
+          <span class="kb-meta-item">189 hits</span>
+          <span class="kb-meta-item">CDC compliant</span>
+        </div>
+      </div>
+      <div class="kb-card gap">
+        <div class="kb-q">⚠ Gap detectado: "integração com SAP"</div>
+        <div class="kb-a">Aparece 12x nos últimos 7 dias, sem resposta na KB. Sugestão: adicionar artigo cobrindo integrações enterprise (SAP, Oracle, Microsoft Dynamics) com link para form de contato comercial.</div>
+        <div class="kb-meta">
+          <span class="kb-meta-item">12 ocorrências</span>
+          <span class="kb-meta-item">Sugerir artigo</span>
+        </div>
+      </div>
+      <div class="kb-card gap">
+        <div class="kb-q">⚠ Gap detectado: "garantia estendida"</div>
+        <div class="kb-a">8 perguntas nos últimos 14 dias, AI respondeu com confidence baixa. Sugestão: documentar política oficial e termos da garantia estendida.</div>
+        <div class="kb-meta">
+          <span class="kb-meta-item">8 ocorrências</span>
+          <span class="kb-meta-item">Sugerir artigo</span>
+        </div>
+      </div>
+      <div class="kb-card">
+        <div class="kb-q">Quais formas de pagamento aceitas?</div>
+        <div class="kb-a">PIX, cartão de crédito (parcelado até 12x), boleto bancário. AI gera link Mercado Pago dinâmico baseado no plano + desconto aplicado.</div>
+        <div class="kb-meta">
+          <span class="kb-meta-item">156 hits</span>
+          <span class="kb-meta-item">MP integrado</span>
+        </div>
+      </div>
+      <div class="kb-card">
+        <div class="kb-q">Como cancelar minha assinatura?</div>
+        <div class="kb-a">Cancelamento via área do cliente ou direto no WhatsApp. AI confirma identidade, mostra benefícios perdidos (retention attempt), e processa via API se confirmar.</div>
+        <div class="kb-meta">
+          <span class="kb-meta-item">108 hits</span>
+          <span class="kb-meta-item">Retention enabled</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TEMPLATES VIEW ===== -->
+  <div class="view" data-view-content="templates">
+    <div class="tpl-list">
+      <div class="tpl-card">
+        <div class="tpl-head">
+          <span class="tpl-name">welcome_new_lead</span>
+          <span class="tpl-status approved">✓ Approved</span>
+        </div>
+        <div class="tpl-preview">Olá <span class="tpl-preview-var">{{1}}</span>! 👋 Obrigado por entrar em contato com a [Empresa]. Recebemos seu interesse em <span class="tpl-preview-var">{{2}}</span>. Como posso ajudar?</div>
+        <div class="tpl-meta">
+          <span>Marketing · UTILITY</span>
+          <span>Aprovado há 12d</span>
+        </div>
+      </div>
+      <div class="tpl-card">
+        <div class="tpl-head">
+          <span class="tpl-name">order_confirmation</span>
+          <span class="tpl-status approved">✓ Approved</span>
+        </div>
+        <div class="tpl-preview">Pedido <span class="tpl-preview-var">{{1}}</span> confirmado! Total: R$ <span class="tpl-preview-var">{{2}}</span>. Previsão de entrega: <span class="tpl-preview-var">{{3}}</span>. Rastreio em breve.</div>
+        <div class="tpl-meta">
+          <span>Utility · TRANSACTIONAL</span>
+          <span>Aprovado há 24d</span>
+        </div>
+      </div>
+      <div class="tpl-card">
+        <div class="tpl-head">
+          <span class="tpl-name">cart_abandoned_24h</span>
+          <span class="tpl-status approved">✓ Approved</span>
+        </div>
+        <div class="tpl-preview">Oi <span class="tpl-preview-var">{{1}}</span>, vi que você deixou <span class="tpl-preview-var">{{2}}</span> no carrinho ontem. Quer que eu reserve por mais 24h? Posso aplicar 5% de desconto.</div>
+        <div class="tpl-meta">
+          <span>Marketing · MARKETING</span>
+          <span>Aprovado há 8d</span>
+        </div>
+      </div>
+      <div class="tpl-card">
+        <div class="tpl-head">
+          <span class="tpl-name">followup_no_response</span>
+          <span class="tpl-status pending">⏱ In review</span>
+        </div>
+        <div class="tpl-preview">Olá <span class="tpl-preview-var">{{1}}</span>, ainda quer ajuda com sua dúvida sobre <span class="tpl-preview-var">{{2}}</span>? Estou aqui para esclarecer.</div>
+        <div class="tpl-meta">
+          <span>Utility</span>
+          <span>Submetido há 18h · ETA 48h</span>
+        </div>
+      </div>
+      <div class="tpl-card">
+        <div class="tpl-head">
+          <span class="tpl-name">renewal_reminder_7d</span>
+          <span class="tpl-status pending">⏱ In review</span>
+        </div>
+        <div class="tpl-preview">Sua assinatura <span class="tpl-preview-var">{{1}}</span> renova em 7 dias por R$ <span class="tpl-preview-var">{{2}}</span>. Quer revisar ou continuar como está?</div>
+        <div class="tpl-meta">
+          <span>Utility</span>
+          <span>Submetido há 6h · ETA 36h</span>
+        </div>
+      </div>
+      <div class="tpl-card">
+        <div class="tpl-head">
+          <span class="tpl-name">promo_blackfriday</span>
+          <span class="tpl-status rejected">✗ Rejected</span>
+        </div>
+        <div class="tpl-preview">🔥 OFERTA EXCLUSIVA! Plano <span class="tpl-preview-var">{{1}}</span> com 50% OFF só hoje! Clica aqui pra aproveitar.</div>
+        <div class="tpl-meta">
+          <span style="color:var(--danger);">Razão: linguagem promocional</span>
+          <span>Reescrever sem urgência forçada</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== ANALYTICS VIEW ===== -->
+  <div class="view" data-view-content="analytics">
+    <div class="analytics-grid">
+      <div class="an-card">
+        <div class="an-title">Volume de conversas · últimos 7 dias</div>
+        <div class="an-bars" id="anBars1"></div>
+      </div>
+      <div class="an-card">
+        <div class="an-title">Deflection rate · últimos 7 dias</div>
+        <div class="an-bars" id="anBars2"></div>
+      </div>
+      <div class="an-card">
+        <div class="an-title">Distribuição por intent</div>
+        <div class="intent-list">
+          <div class="intent-row"><span class="intent-label">pricing_inquiry</span><div class="intent-bar"><div class="intent-bar-fill" style="width:32%;"></div></div><span class="intent-pct">32%</span></div>
+          <div class="intent-row"><span class="intent-label">order_status</span><div class="intent-bar"><div class="intent-bar-fill" style="width:26%;"></div></div><span class="intent-pct">26%</span></div>
+          <div class="intent-row"><span class="intent-label">feature_question</span><div class="intent-bar"><div class="intent-bar-fill" style="width:18%;"></div></div><span class="intent-pct">18%</span></div>
+          <div class="intent-row"><span class="intent-label">technical_support</span><div class="intent-bar"><div class="intent-bar-fill" style="width:12%;"></div></div><span class="intent-pct">12%</span></div>
+          <div class="intent-row"><span class="intent-label">cancellation</span><div class="intent-bar"><div class="intent-bar-fill" style="width:8%;background:linear-gradient(90deg,var(--warning),var(--danger));"></div></div><span class="intent-pct">8%</span></div>
+          <div class="intent-row"><span class="intent-label">other</span><div class="intent-bar"><div class="intent-bar-fill" style="width:4%;background:var(--surface-3);"></div></div><span class="intent-pct">4%</span></div>
+        </div>
+      </div>
+      <div class="an-card">
+        <div class="an-title">Custo LLM acumulado · mês atual</div>
+        <div class="cost-total" style="margin-bottom:14px;">
+          <span class="cost-amount" style="font-size:28px;">82.40</span>
+          <span class="cost-currency">USD · 17 dias</span>
+        </div>
+        <div class="cost-breakdown">
+          <div class="cost-row"><span class="cost-row-label">Claude Haiku · input</span><span class="cost-row-val">$34.12</span></div>
+          <div class="cost-row"><span class="cost-row-label">Claude Haiku · output</span><span class="cost-row-val">$28.74</span></div>
+          <div class="cost-row"><span class="cost-row-label">Cached reads (73%)</span><span class="cost-row-val">$14.20 saved</span></div>
+          <div class="cost-row"><span class="cost-row-label">Embeddings (RAG)</span><span class="cost-row-val">$5.34</span></div>
+          <div class="cost-row"><span class="cost-row-label">Projeção mensal</span><span class="cost-row-val">~$145</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MOBILE BOTTOM TABS -->
+  <div class="mobile-tabs" id="mobileTabs">
+    <button class="mtab active" data-mtab="conversations">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+      Inbox
+    </button>
+    <button class="mtab" data-mtab="knowledge">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>
+      KB
+    </button>
+    <button class="mtab" data-mtab="templates">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/></svg>
+      Templates
+    </button>
+    <button class="mtab" data-mtab="analytics">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Analytics
+    </button>
+  </div>
+</div>
+
+<script>
+/* ===== Conversation list data ===== */
+const conversations = [
+  { id:1, name:'Maria Santos', initials:'MS', color:'linear-gradient(135deg,#f59e0b,#ef4444)', preview:'Eu vi no site mas queria saber se tem desconto...', time:'14:34', badges:['ai','handoff'], unread:1, active:true },
+  { id:2, name:'Rafael Pinto', initials:'RP', color:'linear-gradient(135deg,#3b82f6,#8b5cf6)', preview:'Preciso entender a integração com SAP', time:'14:33', badges:['handoff'], unread:2 },
+  { id:3, name:'Juliana Costa', initials:'JC', color:'linear-gradient(135deg,#10b981,#06b6d4)', preview:'Foi cobrado em duplicidade no meu cartão', time:'14:31', badges:['human'], unread:3 },
+  { id:4, name:'Felipe Tavares', initials:'FT', color:'linear-gradient(135deg,#8b5cf6,#ec4899)', preview:'Plano custom para 12 usuários', time:'14:29', badges:['handoff'] },
+  { id:5, name:'Camila Reis', initials:'CR', color:'linear-gradient(135deg,#06b6d4,#7c3aed)', preview:'Pedido entregue, muito obrigada!', time:'14:27', badges:['ai'] },
+  { id:6, name:'Bruno Lima', initials:'BL', color:'linear-gradient(135deg,#22c55e,#84cc16)', preview:'Como faço pra renovar o plano?', time:'14:24', badges:['ai'] },
+  { id:7, name:'Ana Oliveira', initials:'AO', color:'linear-gradient(135deg,#ec4899,#8b5cf6)', preview:'Entrega prevista pra quando?', time:'14:18', badges:['ai'] },
+  { id:8, name:'Diego Mendes', initials:'DM', color:'linear-gradient(135deg,#0891b2,#0284c7)', preview:'Vocês emitem nota fiscal?', time:'14:12', badges:['ai'] },
+  { id:9, name:'Renata Souza', initials:'RS', color:'linear-gradient(135deg,#f97316,#dc2626)', preview:'Funcionalidade X tá com bug', time:'14:08', badges:['ai'] },
+  { id:10, name:'Lucas Almeida', initials:'LA', color:'linear-gradient(135deg,#6366f1,#a855f7)', preview:'Posso fazer upgrade?', time:'13:58', badges:['ai'] },
+  { id:11, name:'Patricia Nunes', initials:'PN', color:'linear-gradient(135deg,#14b8a6,#0891b2)', preview:'Tem desconto pra ONGs?', time:'13:51', badges:['ai'] },
+  { id:12, name:'Tiago Barbosa', initials:'TB', color:'linear-gradient(135deg,#fbbf24,#f59e0b)', preview:'Email do suporte?', time:'13:47', badges:['ai'] },
+];
+
+const badgeLabels = {
+  ai: '<span class="badge ai"><span class="badge-dot"></span>AI</span>',
+  human: '<span class="badge human"><span class="badge-dot"></span>Humano</span>',
+  handoff: '<span class="badge handoff">Handoff</span>',
+};
+
+const convList = document.getElementById('convList');
+conversations.forEach(c => {
+  const item = document.createElement('div');
+  item.className = 'conv-item' + (c.active ? ' active' : '');
+  item.dataset.id = c.id;
+  item.innerHTML = `
+    <div class="conv-avatar" style="background:${c.color}">
+      ${c.initials}
+      ${c.id <= 4 ? '<span class="conv-avatar-online"></span>' : ''}
+    </div>
+    <div class="conv-info">
+      <div class="conv-name-row">
+        <span class="conv-name">${c.name}</span>
+        <span class="conv-time">${c.time}</span>
+      </div>
+      <div class="conv-preview">${c.preview}</div>
+      <div class="conv-badges">${c.badges.map(b => badgeLabels[b]).join('')}</div>
+    </div>
+    ${c.unread ? `<div class="unread-pill">${c.unread}</div>` : ''}
+  `;
+  item.addEventListener('click', () => {
+    document.querySelectorAll('.conv-item').forEach(i => i.classList.remove('active'));
+    item.classList.add('active');
+  });
+  convList.appendChild(item);
+});
+
+/* ===== Simulate typing and new AI reply ===== */
+const typing = document.getElementById('typing');
+const chatBody = document.getElementById('chatBody');
+setTimeout(() => {
+  if (typing) typing.style.display = 'none';
+  const reply = document.createElement('div');
+  reply.className = 'msg out';
+  reply.innerHTML = `
+    <div class="msg-bubble">Claro, Maria! Vou transferir você para a Aline, especialista em retenção premium. Ela pode esclarecer detalhes específicos do seu caso e tem autoridade para condições customizadas. Tempo estimado de resposta: 2 minutos. Posso já compartilhar com ela o resumo da nossa conversa?</div>
+    <div class="msg-meta">
+      <span class="msg-intent-tag medium">Triggered handoff · routing to: retention_specialist</span>
+      <span class="msg-meta-tick">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+      </span>
+      14:35
+    </div>
+  `;
+  chatBody.appendChild(reply);
+  chatBody.scrollTop = chatBody.scrollHeight;
+}, 2400);
+
+/* ===== View tabs ===== */
+document.querySelectorAll('#viewTabs .tb-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    const v = tab.dataset.view;
+    document.querySelectorAll('#viewTabs .tb-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    document.querySelectorAll('.view').forEach(view => {
+      view.classList.toggle('active', view.dataset.viewContent === v);
+    });
+    if (v === 'analytics') buildAnalyticsBars();
+    document.querySelectorAll('.mtab').forEach(m => m.classList.toggle('active', m.dataset.mtab === v));
+  });
+});
+
+/* ===== Mobile bottom tabs ===== */
+document.querySelectorAll('.mtab').forEach(t => {
+  t.addEventListener('click', () => {
+    const v = t.dataset.mtab;
+    document.querySelectorAll('.mtab').forEach(m => m.classList.remove('active'));
+    t.classList.add('active');
+    document.querySelectorAll('#viewTabs .tb-tab').forEach(tab => tab.classList.toggle('active', tab.dataset.view === v));
+    document.querySelectorAll('.view').forEach(view => view.classList.toggle('active', view.dataset.viewContent === v));
+    if (v === 'analytics') buildAnalyticsBars();
+  });
+});
+
+/* ===== Handoff button on chat header ===== */
+document.getElementById('handoffBtn').addEventListener('click', () => {
+  document.getElementById('handoffBtn').style.background = 'var(--accent-deep)';
+  document.getElementById('handoffBtn').style.color = 'white';
+});
+
+/* ===== Composer input "send" simulation ===== */
+const composer = document.getElementById('composerInput');
+composer.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && composer.value.trim()) {
+    const msg = document.createElement('div');
+    msg.className = 'msg out';
+    msg.innerHTML = `
+      <div class="msg-bubble">${composer.value}</div>
+      <div class="msg-meta">
+        <span class="msg-intent-tag" style="background:var(--info-bg);color:var(--info);">Human override · AI paused</span>
+        <span class="msg-meta-tick">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        </span>
+        ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+      </div>
+    `;
+    chatBody.appendChild(msg);
+    chatBody.scrollTop = chatBody.scrollHeight;
+    composer.value = '';
+  }
+});
+
+/* ===== Analytics bars ===== */
+function buildAnalyticsBars() {
+  const bars1 = document.getElementById('anBars1');
+  const bars2 = document.getElementById('anBars2');
+  if (bars1.children.length) return;
+  const days = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+  const vol = [820, 1042, 1187, 980, 1450, 1620, 1308];
+  const def = [82, 84, 87, 86, 89, 91, 87];
+  const maxVol = Math.max(...vol);
+  vol.forEach((v, i) => {
+    const col = document.createElement('div');
+    col.className = 'an-bar';
+    col.innerHTML = `<div class="an-bar-fill" style="height:${(v/maxVol)*100}%" title="${v} convs"></div><div class="an-bar-label">${days[i]}</div>`;
+    bars1.appendChild(col);
+  });
+  def.forEach((d, i) => {
+    const col = document.createElement('div');
+    col.className = 'an-bar';
+    col.innerHTML = `<div class="an-bar-fill" style="height:${d}%;background:linear-gradient(180deg,#25d366,#00a884)" title="${d}%"></div><div class="an-bar-label">${days[i]}</div>`;
+    bars2.appendChild(col);
+  });
+}
+
+/* ===== KPI live ticker ===== */
+setInterval(() => {
+  const kpiActive = document.getElementById('kpiActive');
+  const cur = parseInt(kpiActive.textContent);
+  kpiActive.textContent = Math.max(120, Math.min(170, cur + (Math.floor(Math.random() * 5) - 2)));
+}, 2800);
+setInterval(() => {
+  const kpiCost = document.getElementById('kpiCost');
+  const cur = parseFloat(kpiCost.textContent);
+  kpiCost.textContent = (cur + Math.random() * 0.03).toFixed(2);
+}, 3500);
+setInterval(() => {
+  const kpiTime = document.getElementById('kpiTime');
+  kpiTime.textContent = (1.4 + Math.random() * 0.8).toFixed(1);
+}, 3200);
+
+/* ===== Viewport adapt ===== */
+const mql = window.matchMedia('(max-width: 768px)');
+function adapt() {
+  // No-op for now; mobile tabs handle visibility via CSS
+}
+mql.addEventListener('change', adapt);
+adapt();
+</script>
+</body>
+</html>
