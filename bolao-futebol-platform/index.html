@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bolão de Futebol — Plataforma com Pix, Ranking Automático e Resultados ao Vivo</title>
+<meta name="description" content="Plataforma de bolão de futebol online: palpites por rodada, Pix automático, verificação de comprovantes, classificação automática e resultados ao vivo. Participante + Admin.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #07100b;
+  --surface: #0e1a12;
+  --surface-2: #142519;
+  --surface-3: #1b3122;
+  --line: rgba(255,255,255,0.08);
+  --line-strong: rgba(255,255,255,0.14);
+  --text: #f2f7f3;
+  --text-soft: #a6bcae;
+  --text-muted: #6f897a;
+  --green: #00c768;
+  --green-soft: rgba(0,199,104,0.14);
+  --yellow: #ffd400;
+  --yellow-soft: rgba(255,212,0,0.14);
+  --red: #ff5a5f;
+  --red-soft: rgba(255,90,95,0.14);
+  --blue: #36b6ff;
+  --pix: #32bcad;
+  --pix-soft: rgba(50,188,173,0.16);
+  --radius: 16px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  background-image:
+    radial-gradient(circle at 12% -5%, rgba(0,199,104,0.16), transparent 45%),
+    radial-gradient(circle at 95% 0%, rgba(255,212,0,0.08), transparent 40%);
+  min-height: 100vh;
+  padding-bottom: 60px;
+}
+h1,h2,h3,.font-display { font-family: 'Sora', sans-serif; letter-spacing: -0.02em; }
+button { font-family: inherit; cursor: pointer; }
+a { color: inherit; }
+.wrap { max-width: 1180px; margin: 0 auto; padding: 0 22px; }
+
+/* ---------- top bar ---------- */
+.topbar {
+  position: sticky; top: 0; z-index: 50;
+  background: rgba(7,16,11,0.82); backdrop-filter: blur(18px);
+  border-bottom: 1px solid var(--line);
+}
+.topbar-inner { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 0; }
+.brand { display: flex; align-items: center; gap: 11px; font-family: 'Sora'; font-weight: 700; font-size: 17px; }
+.brand .ball {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: radial-gradient(circle at 32% 28%, #fff 0 4px, transparent 5px), var(--green);
+  box-shadow: 0 0 0 2px rgba(0,199,104,0.25), 0 6px 18px rgba(0,199,104,0.35);
+  position: relative; flex-shrink: 0;
+}
+.brand .ball::after {
+  content:""; position:absolute; inset:0; border-radius:50%;
+  background:
+    radial-gradient(circle at 70% 75%, #0a3d22 0 3px, transparent 4px),
+    radial-gradient(circle at 30% 80%, #0a3d22 0 2px, transparent 3px);
+}
+.brand small { display:block; font-family:'Inter'; font-weight:500; font-size:10.5px; color: var(--text-muted); letter-spacing: 0.04em; text-transform: uppercase; margin-top: -3px;}
+.surface-switch { display:flex; gap:4px; background: var(--surface-2); border:1px solid var(--line); border-radius: 100px; padding: 4px; }
+.surface-switch button {
+  border:0; background:transparent; color: var(--text-soft);
+  padding: 8px 18px; border-radius: 100px; font-size: 13px; font-weight: 600;
+  transition: .18s;
+}
+.surface-switch button.active { background: var(--green); color:#04150c; box-shadow: 0 4px 14px rgba(0,199,104,0.3); }
+.topbar-meta { display:flex; align-items:center; gap: 14px; }
+.demo-tag { font-size: 11px; color: var(--text-muted); border:1px solid var(--line); padding: 5px 11px; border-radius: 100px; }
+@media (max-width: 720px){ .topbar-meta .demo-tag{ display:none;} .brand small{display:none;} }
+
+/* ---------- surfaces ---------- */
+.surface { display:none; animation: fade .35s ease; }
+.surface.active { display:block; }
+@keyframes fade { from{opacity:0; transform: translateY(8px);} to{opacity:1; transform:none;} }
+
+/* ---------- bolão header ---------- */
+.bolao-hero { margin-top: 26px; border:1px solid var(--line); border-radius: var(--radius); overflow:hidden; background: var(--surface); }
+.bolao-hero-top {
+  padding: 22px 24px; display:flex; justify-content:space-between; gap: 20px; flex-wrap: wrap;
+  background:
+    linear-gradient(120deg, rgba(0,199,104,0.16), transparent 60%),
+    repeating-linear-gradient(90deg, transparent 0 64px, rgba(255,255,255,0.018) 64px 128px);
+  border-bottom: 1px solid var(--line);
+}
+.bolao-title h1 { font-size: 25px; }
+.bolao-title .sub { color: var(--text-soft); font-size: 13.5px; margin-top:3px; }
+.pill { display:inline-flex; align-items:center; gap:6px; font-size: 12px; font-weight:600; padding: 5px 11px; border-radius: 100px; }
+.pill.green { background: var(--green-soft); color: var(--green); }
+.pill.yellow { background: var(--yellow-soft); color: var(--yellow); }
+.pill.red { background: var(--red-soft); color: var(--red); }
+.pill.live { background: var(--red-soft); color: var(--red); }
+.pill.live .dot { width:7px; height:7px; border-radius:50%; background: var(--red); animation: pulse 1.2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1; transform:scale(1);} 50%{opacity:.4; transform:scale(.7);} }
+.hero-status { display:flex; flex-direction:column; align-items:flex-end; gap:8px; }
+.deadline { font-size: 12.5px; color: var(--text-soft); }
+.deadline b { color: var(--yellow); font-variant-numeric: tabular-nums; }
+
+/* ---------- stat strip ---------- */
+.stat-strip { display:grid; grid-template-columns: repeat(4,1fr); }
+.stat-strip .stat { padding: 18px 22px; border-right: 1px solid var(--line); }
+.stat-strip .stat:last-child { border-right:0; }
+.stat .label { font-size: 11.5px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.stat .value { font-family:'Sora'; font-weight: 700; font-size: 24px; margin-top: 3px; }
+.stat .value small { font-size: 13px; color: var(--text-soft); font-weight:500; }
+.stat .value.green { color: var(--green); }
+.stat .value.yellow { color: var(--yellow); }
+@media (max-width:720px){ .stat-strip{ grid-template-columns: repeat(2,1fr);} .stat-strip .stat:nth-child(2n){border-right:0;} .stat-strip .stat{border-bottom:1px solid var(--line);} }
+
+/* ---------- layout ---------- */
+.cols { display:grid; grid-template-columns: 1.55fr 1fr; gap: 20px; margin-top: 22px; align-items:start; }
+@media (max-width: 940px){ .cols{ grid-template-columns:1fr; } }
+.card { background: var(--surface); border:1px solid var(--line); border-radius: var(--radius); }
+.card-head { padding: 16px 20px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--line); }
+.card-head h2 { font-size: 15.5px; }
+.card-head .hint { font-size: 12px; color: var(--text-muted); }
+.card-body { padding: 8px 14px 14px; }
+
+/* ---------- match prediction rows ---------- */
+.match {
+  display:grid; grid-template-columns: 1fr auto 1fr; align-items:center; gap: 8px;
+  padding: 14px 10px; border-radius: 12px; transition:.15s; position:relative;
+}
+.match + .match { border-top: 1px solid var(--line); }
+.match:hover { background: var(--surface-2); }
+.team { display:flex; align-items:center; gap: 10px; min-width:0; }
+.team.away { flex-direction: row-reverse; text-align:right; }
+.crest {
+  width: 34px; height: 34px; border-radius: 9px; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center; font-family:'Sora'; font-weight:700; font-size:13px; color:#04150c;
+}
+.team .tn { font-weight:600; font-size: 14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.team .tmeta { font-size:11px; color: var(--text-muted); }
+.score-input { display:flex; align-items:center; gap:7px; }
+.score-input input {
+  width: 44px; height: 44px; text-align:center; font-family:'Sora'; font-weight:700; font-size:18px;
+  background: var(--surface-2); border:1.5px solid var(--line-strong); border-radius: 11px; color: var(--text);
+  transition:.15s; outline:none;
+}
+.score-input input:focus { border-color: var(--green); background: var(--green-soft); }
+.score-input .x { color: var(--text-muted); font-weight:600; font-size:13px; }
+.match-foot { grid-column: 1/-1; display:flex; align-items:center; justify-content:space-between; margin-top: 4px; padding: 0 2px;}
+.match-foot .when { font-size: 11.5px; color: var(--text-muted); }
+.match-foot .pts { font-size: 11.5px; }
+.locked .score-input input { opacity:.55; pointer-events:none; }
+.tag-mini { font-size:10.5px; font-weight:600; padding:2px 8px; border-radius:100px; }
+.tag-mini.open { background: var(--green-soft); color:var(--green);}
+.tag-mini.locked-t { background: rgba(255,255,255,0.06); color: var(--text-muted);}
+
+/* live result rows */
+.live-row { display:grid; grid-template-columns: 1fr auto 1fr; align-items:center; gap:10px; padding: 13px 8px; }
+.live-row + .live-row { border-top:1px solid var(--line); }
+.live-score { font-family:'Sora'; font-weight:800; font-size:21px; display:flex; align-items:center; gap:9px; }
+.live-min { font-size:11px; font-weight:700; color: var(--red); background: var(--red-soft); padding:2px 7px; border-radius:6px; white-space:nowrap; }
+.live-min.ft { color: var(--text-muted); background: rgba(255,255,255,0.06);}
+.guess-chip { font-size:11px; color: var(--text-soft); }
+.guess-chip b { color: var(--text); }
+.earned { font-size:11px; font-weight:700; color: var(--green); }
+
+/* ranking */
+.rank-row { display:grid; grid-template-columns: 34px 1fr auto auto; align-items:center; gap:12px; padding: 11px 10px; border-radius:10px; }
+.rank-row + .rank-row { border-top:1px solid var(--line); }
+.rank-row.me { background: var(--green-soft); border:1px solid rgba(0,199,104,0.3); }
+.rank-pos { font-family:'Sora'; font-weight:700; font-size:15px; text-align:center; color: var(--text-soft); }
+.rank-row.me .rank-pos { color: var(--green); }
+.rank-pos.medal { font-size:18px; }
+.avatar { width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12px; color:#04150c; flex-shrink:0;}
+.rank-name { display:flex; align-items:center; gap:10px; min-width:0;}
+.rank-name .n { font-weight:600; font-size:13.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.rank-pts { font-family:'Sora'; font-weight:700; font-size:15px; }
+.trend { font-size:11px; width:30px; text-align:right; }
+.trend.up { color: var(--green); } .trend.down { color: var(--red);} .trend.flat{ color: var(--text-muted);}
+
+/* pix card */
+.pix-card { text-align:center; padding: 4px 18px 20px; }
+.pix-amount { font-family:'Sora'; font-weight:800; font-size: 30px; margin: 6px 0 2px;}
+.pix-amount small { font-size:15px; color: var(--text-soft); font-weight:600;}
+.qr {
+  width: 168px; height: 168px; margin: 16px auto 12px; border-radius: 14px; background:#fff; padding:12px;
+  display:grid; grid-template-columns: repeat(9,1fr); grid-template-rows: repeat(9,1fr); gap: 2px;
+}
+.qr i { background:#0a0a0a; border-radius:2px; }
+.qr i.off { background:transparent; }
+.pix-code {
+  display:flex; align-items:center; gap:8px; background: var(--surface-2); border:1px solid var(--line);
+  border-radius: 10px; padding: 9px 12px; font-size: 12px; color: var(--text-soft); margin-top:6px;
+}
+.pix-code code { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-family: ui-monospace, monospace;}
+.btn {
+  border:0; border-radius: 11px; padding: 12px 16px; font-weight:700; font-size: 13.5px; transition:.16s; width:100%;
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+}
+.btn.primary { background: var(--green); color:#04150c; }
+.btn.primary:hover { filter: brightness(1.07); transform: translateY(-1px); }
+.btn.pix { background: var(--pix); color:#042c28; }
+.btn.ghost { background: var(--surface-2); color: var(--text); border:1px solid var(--line-strong); }
+.btn.ghost:hover { border-color: var(--green); }
+.btn.sm { width:auto; padding: 8px 13px; font-size:12.5px; border-radius:9px;}
+.btn.tiny { width:auto; padding:6px 11px; font-size:11.5px; border-radius:8px;}
+.btn.danger { background: var(--red-soft); color: var(--red); }
+.btn.danger:hover { background: var(--red); color:#fff;}
+.btn.ok { background: var(--green-soft); color: var(--green);}
+.btn.ok:hover { background: var(--green); color:#04150c;}
+.pix-status { margin-top:14px; font-size:12.5px; display:flex; align-items:center; justify-content:center; gap:8px; color: var(--text-soft);}
+.spin { width:14px; height:14px; border:2px solid rgba(255,255,255,0.2); border-top-color: var(--pix); border-radius:50%; animation: rot .8s linear infinite;}
+@keyframes rot { to { transform: rotate(360deg);} }
+
+/* receipt upload */
+.dropzone {
+  border: 1.5px dashed var(--line-strong); border-radius: 12px; padding: 20px; text-align:center;
+  color: var(--text-soft); font-size: 13px; transition:.16s; background: var(--surface);
+}
+.dropzone:hover { border-color: var(--green); background: var(--green-soft); }
+.dropzone .ic { font-size: 26px; }
+
+/* ---------- ADMIN ---------- */
+.admin-grid { display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin-top:22px; align-items:start;}
+@media (max-width: 940px){ .admin-grid{ grid-template-columns:1fr;} }
+.verify-row { display:flex; align-items:center; gap:13px; padding: 13px 10px; }
+.verify-row + .verify-row { border-top:1px solid var(--line); }
+.receipt-thumb {
+  width:46px; height:58px; border-radius:8px; flex-shrink:0; background: var(--surface-3);
+  border:1px solid var(--line); display:flex; align-items:center; justify-content:center; font-size:18px; position:relative; overflow:hidden;
+}
+.receipt-thumb::after{ content:""; position:absolute; left:6px; right:6px; top:14px; height:2px; background: rgba(255,255,255,0.15); box-shadow:0 6px 0 rgba(255,255,255,0.12), 0 12px 0 rgba(255,255,255,0.08);}
+.verify-info { flex:1; min-width:0;}
+.verify-info .n { font-weight:600; font-size:13.5px;}
+.verify-info .m { font-size:11.5px; color: var(--text-muted);}
+.verify-actions { display:flex; gap:7px; }
+.rule-row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding: 12px 10px;}
+.rule-row + .rule-row { border-top:1px solid var(--line);}
+.rule-row .rl { font-size:13.5px;}
+.rule-row .rl small { display:block; color: var(--text-muted); font-size:11.5px;}
+.stepper { display:flex; align-items:center; gap:0; border:1px solid var(--line-strong); border-radius:9px; overflow:hidden;}
+.stepper button { background: var(--surface-2); border:0; color: var(--text); width:30px; height:32px; font-size:16px; font-weight:700;}
+.stepper button:hover { background: var(--surface-3);}
+.stepper .val { width:42px; text-align:center; font-family:'Sora'; font-weight:700; font-size:15px; color: var(--yellow);}
+.match-admin { display:grid; grid-template-columns: 1fr auto 1fr; gap:10px; align-items:center; padding:12px 8px;}
+.match-admin + .match-admin { border-top:1px solid var(--line);}
+.res-input { display:flex; gap:6px; align-items:center; justify-content:center;}
+.res-input input { width:38px; height:36px; text-align:center; background: var(--surface-2); border:1px solid var(--line-strong); border-radius:8px; color:var(--text); font-family:'Sora'; font-weight:700;}
+.audit { font-size:12px; color: var(--text-soft); display:flex; gap:9px; padding:9px 10px; align-items:flex-start;}
+.audit + .audit { border-top:1px solid var(--line);}
+.audit .t { color: var(--text-muted); font-variant-numeric: tabular-nums; white-space:nowrap;}
+.audit .badge { font-size:10px; font-weight:700; padding:1px 7px; border-radius:100px; white-space:nowrap;}
+.audit .badge.ok{ background:var(--green-soft); color:var(--green);} .audit .badge.no{ background:var(--red-soft); color:var(--red);} .audit .badge.in{ background:var(--blue); color:#04150c;}
+
+/* feature footer */
+.feat { margin-top: 34px; }
+.feat h3 { font-size: 13px; color: var(--text-muted); text-transform:uppercase; letter-spacing:0.07em; margin-bottom:14px;}
+.feat-grid { display:grid; grid-template-columns: repeat(4,1fr); gap:14px;}
+@media (max-width:860px){ .feat-grid{ grid-template-columns: repeat(2,1fr);} }
+.feat-card { background: var(--surface); border:1px solid var(--line); border-radius:14px; padding:16px;}
+.feat-card .fi { font-size:20px; }
+.feat-card .ft { font-family:'Sora'; font-weight:600; font-size:14px; margin:8px 0 4px;}
+.feat-card .fd { font-size:12px; color: var(--text-soft); line-height:1.5;}
+
+.legal {
+  margin-top: 24px; border:1px solid rgba(255,212,0,0.28); background: var(--yellow-soft);
+  border-radius:14px; padding: 14px 18px; display:flex; gap:13px; font-size:12.5px; color:#f4e6a8;
+}
+.legal .li { font-size:18px; }
+.legal b { color: var(--yellow);}
+
+.foot { text-align:center; color: var(--text-muted); font-size:12px; margin-top:34px;}
+.foot a { color: var(--green); text-decoration:none;}
+
+.toast {
+  position: fixed; bottom: 24px; left:50%; transform: translateX(-50%) translateY(20px);
+  background: var(--surface-3); border:1px solid var(--line-strong); color: var(--text);
+  padding: 12px 18px; border-radius: 12px; font-size:13px; font-weight:600; opacity:0; pointer-events:none;
+  transition:.3s; box-shadow: 0 12px 30px rgba(0,0,0,0.4); z-index:99; display:flex; align-items:center; gap:9px;
+}
+.toast.show { opacity:1; transform: translateX(-50%) translateY(0); }
+.toast .ti { color: var(--green); font-size:16px; }
+.section-gap { margin-top:20px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="wrap topbar-inner">
+    <div class="brand">
+      <span class="ball"></span>
+      <span>BolãoCraque<small>Bolão de Futebol Online</small></span>
+    </div>
+    <div class="surface-switch">
+      <button class="active" data-surface="participante" onclick="switchSurface('participante', this)">Participante</button>
+      <button data-surface="admin" onclick="switchSurface('admin', this)">Admin</button>
+    </div>
+    <div class="topbar-meta">
+      <span class="demo-tag">Protótipo interativo</span>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+<!-- ============== PARTICIPANTE ============== -->
+<section class="surface active" id="surface-participante">
+
+  <div class="bolao-hero">
+    <div class="bolao-hero-top">
+      <div class="bolao-title">
+        <span class="pill green" style="margin-bottom:8px;">● Bolão ativo</span>
+        <h1>Bolão Brasileirão 2026</h1>
+        <div class="sub">Rodada 12 · 10 partidas · Regra: 3 pts placar exato · 1 pt vencedor</div>
+      </div>
+      <div class="hero-status">
+        <span class="pill green">✓ Entrada paga via Pix</span>
+        <div class="deadline">Palpites fecham em <b id="countdown">02:14:36</b></div>
+      </div>
+    </div>
+    <div class="stat-strip">
+      <div class="stat"><div class="label">Minha pontuação</div><div class="value green">187 <small>pts</small></div></div>
+      <div class="stat"><div class="label">Minha posição</div><div class="value">3º <small>de 248</small></div></div>
+      <div class="stat"><div class="label">Participantes</div><div class="value">248</div></div>
+      <div class="stat"><div class="label">Premiação acumulada</div><div class="value yellow">R$ 4.960</div></div>
+    </div>
+  </div>
+
+  <div class="cols">
+    <!-- LEFT -->
+    <div>
+      <div class="card">
+        <div class="card-head">
+          <h2>Meus Palpites — Rodada 12</h2>
+          <span class="hint">Salvo automaticamente</span>
+        </div>
+        <div class="card-body" id="predict-list"></div>
+        <div style="padding: 4px 16px 18px;">
+          <button class="btn primary" onclick="savePredictions()">Salvar palpites da rodada</button>
+        </div>
+      </div>
+
+      <div class="card section-gap">
+        <div class="card-head">
+          <h2>Resultados ao vivo</h2>
+          <span class="pill live"><span class="dot"></span>AO VIVO</span>
+        </div>
+        <div class="card-body" id="live-list"></div>
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div>
+      <div class="card">
+        <div class="card-head"><h2>Classificação</h2><span class="hint">Atualiza automático</span></div>
+        <div class="card-body" id="rank-list"></div>
+      </div>
+
+      <div class="card section-gap">
+        <div class="card-head"><h2>Pagamento via Pix</h2><span class="pill green">Confirmado</span></div>
+        <div class="pix-card">
+          <div style="font-size:12.5px; color:var(--text-soft);">Entrada do Bolão Brasileirão 2026</div>
+          <div class="pix-amount">R$ 20<small>,00</small></div>
+          <div class="qr" id="qr"></div>
+          <div class="pix-code">
+            <code id="pixcode">00020126360014BR.GOV.BCB.PIX0114+5511987654321...</code>
+            <button class="btn tiny ghost" onclick="copyPix()">Copiar</button>
+          </div>
+          <div class="pix-status" id="pixstatus" style="color:var(--green);">✓ Pagamento confirmado pelo webhook · participação liberada</div>
+          <button class="btn ghost" style="margin-top:14px;" onclick="resimulatePix()">Simular nova cobrança Pix</button>
+        </div>
+      </div>
+
+      <div class="card section-gap">
+        <div class="card-head"><h2>Comprovante manual</h2><span class="hint">Pix fora do automático</span></div>
+        <div class="card-body" style="padding:14px;">
+          <div class="dropzone" onclick="uploadReceipt()">
+            <div class="ic">🧾</div>
+            <div style="margin-top:6px;">Arraste o comprovante ou <b style="color:var(--green)">clique para enviar</b></div>
+            <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">PNG, JPG ou PDF · vai para verificação do admin</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== ADMIN ============== -->
+<section class="surface" id="surface-admin">
+
+  <div class="bolao-hero" style="margin-top:26px;">
+    <div class="bolao-hero-top">
+      <div class="bolao-title">
+        <span class="pill yellow" style="margin-bottom:8px;">⚙ Painel administrativo</span>
+        <h1>Bolão Brasileirão 2026 · Gestão</h1>
+        <div class="sub">Rodada 12 ativa · Campeonato configurável · Exportação de dados</div>
+      </div>
+      <div class="hero-status">
+        <span class="pill red" id="pending-pill">3 comprovantes a verificar</span>
+        <div class="deadline">Próximo fechamento <b>hoje 21:00</b></div>
+      </div>
+    </div>
+    <div class="stat-strip">
+      <div class="stat"><div class="label">Participantes</div><div class="value">248</div></div>
+      <div class="stat"><div class="label">Pagamentos confirmados</div><div class="value green">231</div></div>
+      <div class="stat"><div class="label">Arrecadação</div><div class="value yellow">R$ 4.960</div></div>
+      <div class="stat"><div class="label">Pendentes</div><div class="value" id="pending-stat">17</div></div>
+    </div>
+  </div>
+
+  <div class="admin-grid">
+    <!-- LEFT col -->
+    <div>
+      <div class="card">
+        <div class="card-head"><h2>Comprovantes a verificar</h2><span class="hint" id="verify-hint">3 pendentes</span></div>
+        <div class="card-body" id="verify-list"></div>
+      </div>
+
+      <div class="card section-gap">
+        <div class="card-head"><h2>Gestão de partidas — Rodada 12</h2><span class="hint">Lançar resultados</span></div>
+        <div class="card-body" id="admin-matches"></div>
+        <div style="padding:4px 16px 18px;">
+          <button class="btn primary" onclick="recalc()">Lançar resultados e recalcular ranking</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT col -->
+    <div>
+      <div class="card">
+        <div class="card-head"><h2>Regras de pontuação</h2><span class="hint">Configurável</span></div>
+        <div class="card-body" id="rules-list"></div>
+      </div>
+
+      <div class="card section-gap">
+        <div class="card-head"><h2>Configuração do campeonato</h2></div>
+        <div class="card-body" style="padding:14px;">
+          <div class="rule-row" style="padding:10px 6px;">
+            <div class="rl">Campeonato <small>fonte de resultados ao vivo</small></div>
+            <select class="btn ghost sm" style="padding:8px 12px;">
+              <option>Brasileirão Série A</option><option>Copa do Mundo</option>
+              <option>Champions League</option><option>Bolão customizado</option>
+            </select>
+          </div>
+          <div class="rule-row" style="padding:10px 6px;">
+            <div class="rl">Entrada por participante <small>cobrada via Pix na inscrição</small></div>
+            <div class="stepper"><button onclick="stepFee(-5)">−</button><span class="val" id="fee">R$20</span><button onclick="stepFee(5)">+</button></div>
+          </div>
+          <div class="rule-row" style="padding:10px 6px;">
+            <div class="rl">API de resultados <small>consulta periódica · recálculo automático</small></div>
+            <span class="pill green">API-Football conectada</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card section-gap">
+        <div class="card-head"><h2>Log de auditoria</h2><span class="hint">Imutável</span></div>
+        <div class="card-body" id="audit-list" style="padding:8px 8px 12px;"></div>
+        <div style="padding:4px 16px 18px;">
+          <button class="btn ghost" onclick="exportData()">⬇ Exportar ranking e pagamentos (CSV)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- shared footer -->
+<div class="legal">
+  <span class="li">⚖️</span>
+  <div><b>Nota regulatória.</b> Bolão com prêmios em dinheiro no Brasil está sob a Lei 5.768/1971 e geralmente exige autorização SECAP quando configurado como promoção comercial. É etapa regulatória do operador, não de desenvolvimento — destacada aqui para ciência do contexto.</div>
+</div>
+
+<div class="feat">
+  <h3>O que o sistema entrega</h3>
+  <div class="feat-grid">
+    <div class="feat-card"><div class="fi">💸</div><div class="ft">Pix automático</div><div class="fd">Cobrança na inscrição via Mercado Pago ou Pagar.me. Webhook confirma e libera participação.</div></div>
+    <div class="feat-card"><div class="fi">🧾</div><div class="ft">Verificação de comprovantes</div><div class="fd">Upload manual para pagamentos fora do Pix. Admin aprova ou rejeita com motivo e log de auditoria.</div></div>
+    <div class="feat-card"><div class="fi">🏆</div><div class="ft">Classificação automática</div><div class="fd">Pontuação configurável. Recálculo do ranking quando o resultado real da partida entra.</div></div>
+    <div class="feat-card"><div class="fi">⚽</div><div class="ft">Resultados ao vivo</div><div class="fd">API de futebol consultada periodicamente. Placar e ranking se atualizam quando a partida termina.</div></div>
+  </div>
+</div>
+
+<div class="foot">
+  Protótipo de validação · Stack alvo Laravel + MySQL + Inertia/React + Pix · parte da
+  <a href="../">galeria de demos</a>
+</div>
+
+</div>
+
+<div class="toast" id="toast"><span class="ti">✓</span><span id="toast-msg">Salvo</span></div>
+
+<script>
+/* ---------- data ---------- */
+const palette = ['#00c768','#ffd400','#36b6ff','#ff5a5f','#a855f7','#f97316','#14b8a6','#ec4899','#eab308','#22d3ee'];
+const matches = [
+  { home:'Flamengo', haway:'FLA', away:'Palmeiras', aaway:'PAL', hc:'#e11d2e', ac:'#0a7d33', when:'Hoje 16:00', live:true, lh:1, la:0, min:"63'", myh:2, mya:1 },
+  { home:'Corinthians', haway:'COR', away:'São Paulo', aaway:'SAO', hc:'#111', ac:'#c8102e', when:'Hoje 18:30', live:true, lh:0, la:0, min:"31'", myh:1, mya:1 },
+  { home:'Grêmio', haway:'GRE', away:'Internacional', aaway:'INT', hc:'#0d80c6', ac:'#c8102e', when:'Hoje 21:00', live:false, myh:'', mya:'' },
+  { home:'Atlético-MG', haway:'CAM', away:'Cruzeiro', aaway:'CRU', hc:'#111', ac:'#1a3a8f', when:'Amanhã 16:00', live:false, myh:'', mya:'' },
+  { home:'Fluminense', haway:'FLU', away:'Botafogo', aaway:'BOT', hc:'#7a1f3d', ac:'#111', when:'Amanhã 18:30', live:false, myh:'', mya:'' },
+];
+const ranking = [
+  { pos:1, name:'Rafael Mendes', pts:201, av:'RM', tr:'up' },
+  { pos:2, name:'Juliana Costa', pts:194, av:'JC', tr:'up' },
+  { pos:3, name:'Você', pts:187, av:'VC', tr:'flat', me:true },
+  { pos:4, name:'Bruno Almeida', pts:182, av:'BA', tr:'down' },
+  { pos:5, name:'Carla Souza', pts:178, av:'CS', tr:'up' },
+  { pos:6, name:'Diego Pereira', pts:171, av:'DP', tr:'flat' },
+  { pos:7, name:'Marina Lima', pts:165, av:'ML', tr:'down' },
+];
+const pending = [
+  { name:'Thiago Barros', m:'R$ 20,00 · enviado há 12 min', },
+  { name:'Patrícia Gomes', m:'R$ 20,00 · enviado há 38 min', },
+  { name:'Lucas Ferreira', m:'R$ 20,00 · enviado há 1 h', },
+];
+const rules = [
+  { rl:'Placar exato', sub:'acertou o placar completo', v:3 },
+  { rl:'Vencedor / empate certo', sub:'acertou só o resultado', v:1 },
+  { rl:'Saldo de gols correto', sub:'bônus opcional', v:1 },
+];
+const audit = [
+  { t:'14:32', txt:'Pagamento Pix confirmado — Ana Ribeiro', badge:'in', bt:'PIX' },
+  { t:'14:18', txt:'Comprovante aprovado — Marcos V.', badge:'ok', bt:'APROVADO' },
+  { t:'13:55', txt:'Comprovante rejeitado (valor divergente) — João P.', badge:'no', bt:'REJEITADO' },
+  { t:'13:40', txt:'Ranking recalculado após FLAxPAL', badge:'in', bt:'SISTEMA' },
+];
+
+/* ---------- crest helper ---------- */
+function crest(label, color){ return `<div class="crest" style="background:${color}">${label}</div>`; }
+
+/* ---------- render predictions ---------- */
+function renderPredict(){
+  const el = document.getElementById('predict-list');
+  el.innerHTML = matches.map((m,i)=>{
+    const locked = m.live;
+    return `<div class="match ${locked?'locked':''}">
+      <div class="team">${crest(m.haway,m.hc)}<div><div class="tn">${m.home}</div><div class="tmeta">Mandante</div></div></div>
+      <div class="score-input">
+        <input type="number" min="0" value="${m.myh}" ${locked?'disabled':''} data-i="${i}" data-s="h" placeholder="-">
+        <span class="x">×</span>
+        <input type="number" min="0" value="${m.mya}" ${locked?'disabled':''} data-i="${i}" data-s="a" placeholder="-">
+      </div>
+      <div class="team away">${crest(m.aaway,m.ac)}<div><div class="tn">${m.away}</div><div class="tmeta">Visitante</div></div></div>
+      <div class="match-foot">
+        <span class="when">${m.when}</span>
+        ${locked?'<span class="tag-mini locked-t">🔒 Palpite fechado</span>':'<span class="tag-mini open">● Aberto para palpite</span>'}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ---------- render live ---------- */
+function renderLive(){
+  const el = document.getElementById('live-list');
+  const liveM = matches.filter(m=>m.live);
+  el.innerHTML = liveM.map(m=>{
+    const hit = (m.lh==m.myh && m.la==m.mya) ? '+3 pts (placar exato)' :
+      ((m.lh>m.la && m.myh>m.mya)||(m.lh<m.la && m.myh<m.mya)||(m.lh==m.la&&m.myh==m.mya) ? '+1 pt (resultado)' : '0 pt');
+    const earned = hit.startsWith('+');
+    return `<div class="live-row">
+      <div class="team">${crest(m.haway,m.hc)}<div class="tn">${m.home}</div></div>
+      <div style="text-align:center">
+        <div class="live-score">${m.lh}<span style="color:var(--text-muted);font-size:14px">:</span>${m.la} <span class="live-min">${m.min}</span></div>
+        <div class="guess-chip">Seu palpite <b>${m.myh}×${m.mya}</b> · <span class="earned" style="${earned?'':'color:var(--text-muted)'}">${hit}</span></div>
+      </div>
+      <div class="team away">${crest(m.aaway,m.ac)}<div class="tn">${m.away}</div></div>
+    </div>`;
+  }).join('');
+}
+
+/* ---------- render ranking ---------- */
+function renderRank(){
+  const medals = {1:'🥇',2:'🥈',3:'🥉'};
+  const tr = {up:'▲', down:'▼', flat:'–'};
+  document.getElementById('rank-list').innerHTML = ranking.map((r,i)=>`
+    <div class="rank-row ${r.me?'me':''}">
+      <div class="rank-pos ${medals[r.pos]?'medal':''}">${medals[r.pos]||r.pos+'º'}</div>
+      <div class="rank-name">
+        <div class="avatar" style="background:${palette[i%palette.length]}">${r.av}</div>
+        <div class="n">${r.name}</div>
+      </div>
+      <div class="rank-pts">${r.pts}</div>
+      <div class="trend ${r.tr}">${tr[r.tr]}</div>
+    </div>`).join('');
+}
+
+/* ---------- QR ---------- */
+function renderQR(){
+  const seed = [0,2,4,6,8,10,11,13,16,18,20,22,24,27,30,33,36,38,40,42,44,47,50,53,55,58,60,63,66,68,70,72,74,77,79];
+  let cells='';
+  for(let i=0;i<81;i++){ cells += `<i class="${seed.includes(i)||Math.floor(i/9)%2===i%2?'':'off'}"></i>`; }
+  // corner finder patterns always on
+  document.getElementById('qr').innerHTML = cells;
+}
+
+/* ---------- ADMIN renders ---------- */
+function renderVerify(){
+  const el = document.getElementById('verify-list');
+  if(!pending.length){ el.innerHTML = `<div style="padding:24px;text-align:center;color:var(--text-muted);font-size:13px;">✓ Nenhum comprovante pendente</div>`; }
+  else el.innerHTML = pending.map((p,i)=>`
+    <div class="verify-row" id="vr-${i}">
+      <div class="receipt-thumb">🧾</div>
+      <div class="verify-info"><div class="n">${p.name}</div><div class="m">${p.m}</div></div>
+      <div class="verify-actions">
+        <button class="btn tiny ok" onclick="verify(${i},true)">✓ Aprovar</button>
+        <button class="btn tiny danger" onclick="verify(${i},false)">✕ Rejeitar</button>
+      </div>
+    </div>`).join('');
+  document.getElementById('verify-hint').textContent = pending.length+' pendentes';
+  document.getElementById('pending-pill').textContent = pending.length+' comprovantes a verificar';
+}
+function renderRules(){
+  document.getElementById('rules-list').innerHTML = rules.map((r,i)=>`
+    <div class="rule-row">
+      <div class="rl">${r.rl}<small>${r.sub}</small></div>
+      <div class="stepper"><button onclick="stepRule(${i},-1)">−</button><span class="val" id="rule-${i}">${r.v} pt${r.v!=1?'s':''}</span><button onclick="stepRule(${i},1)">+</button></div>
+    </div>`).join('');
+}
+function renderAdminMatches(){
+  document.getElementById('admin-matches').innerHTML = matches.slice(0,4).map((m,i)=>`
+    <div class="match-admin">
+      <div class="team">${crest(m.haway,m.hc)}<div class="tn">${m.home}</div></div>
+      <div class="res-input"><input value="${m.live?m.lh:''}" placeholder="-"><span class="x" style="color:var(--text-muted)">×</span><input value="${m.live?m.la:''}" placeholder="-"></div>
+      <div class="team away">${crest(m.aaway,m.ac)}<div class="tn">${m.away}</div></div>
+    </div>`).join('');
+}
+function renderAudit(){
+  document.getElementById('audit-list').innerHTML = audit.map(a=>`
+    <div class="audit"><span class="t">${a.t}</span><span class="badge ${a.badge}">${a.bt}</span><span>${a.txt}</span></div>`).join('');
+}
+
+/* ---------- interactions ---------- */
+function switchSurface(name, btn){
+  document.querySelectorAll('.surface').forEach(s=>s.classList.remove('active'));
+  document.getElementById('surface-'+name).classList.add('active');
+  document.querySelectorAll('.surface-switch button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+function toast(msg){
+  const t = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  t.classList.add('show'); clearTimeout(window._tt);
+  window._tt = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+function savePredictions(){ toast('Palpites da rodada 12 salvos'); }
+function copyPix(){
+  const code = document.getElementById('pixcode').textContent;
+  if(navigator.clipboard) navigator.clipboard.writeText(code).catch(()=>{});
+  toast('Código Pix copiado');
+}
+function resimulatePix(){
+  const s = document.getElementById('pixstatus');
+  s.style.color = 'var(--text-soft)';
+  s.innerHTML = '<span class="spin"></span> Aguardando confirmação do pagamento via webhook...';
+  setTimeout(()=>{ s.style.color='var(--green)'; s.innerHTML='✓ Pagamento confirmado pelo webhook · participação liberada'; toast('Pix confirmado pelo webhook'); }, 2600);
+}
+function uploadReceipt(){ toast('Comprovante enviado para verificação do admin'); }
+
+function verify(i, ok){
+  const row = document.getElementById('vr-'+i);
+  row.style.transition='.3s'; row.style.opacity='0'; row.style.transform='translateX(40px)';
+  setTimeout(()=>{
+    pending.splice(i,1); renderVerify();
+    const stat = document.getElementById('pending-stat');
+    stat.textContent = Math.max(0, parseInt(stat.textContent)-1);
+    toast(ok?'Comprovante aprovado · participação liberada':'Comprovante rejeitado · participante notificado');
+  }, 320);
+}
+function stepRule(i, d){
+  rules[i].v = Math.max(0, rules[i].v + d);
+  document.getElementById('rule-'+i).textContent = rules[i].v + ' pt' + (rules[i].v!=1?'s':'');
+}
+let fee = 20;
+function stepFee(d){ fee = Math.max(5, fee+d); document.getElementById('fee').textContent='R$'+fee; }
+function recalc(){ toast('Resultados lançados · ranking recalculado para 248 participantes'); }
+function exportData(){ toast('Exportando ranking_rodada12.csv'); }
+
+/* ---------- countdown ---------- */
+function tickCountdown(){
+  const el = document.getElementById('countdown');
+  let [h,m,s] = el.textContent.split(':').map(Number);
+  let total = h*3600+m*60+s-1; if(total<0) total=2*3600+14*60+36;
+  h=String(Math.floor(total/3600)).padStart(2,'0');
+  m=String(Math.floor((total%3600)/60)).padStart(2,'0');
+  s=String(total%60).padStart(2,'0');
+  el.textContent = `${h}:${m}:${s}`;
+}
+
+/* ---------- init ---------- */
+renderPredict(); renderLive(); renderRank(); renderQR();
+renderVerify(); renderRules(); renderAdminMatches(); renderAudit();
+setInterval(tickCountdown, 1000);
+</script>
+</body>
+</html>

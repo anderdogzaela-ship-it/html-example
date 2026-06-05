@@ -11,6 +11,9 @@ Deployed on Vercel · Auto-builds on every push.
 ### Booking & Scheduling
 - **[therapy-booking-premium](./therapy-booking-premium/)** — Premium therapy/wellness booking LP with GSAP animations, interactive calendar, and integrated payment flow.
 
+### Sports Pools & Gamification
+- **[bolao-futebol-platform](./bolao-futebol-platform/)** — Football pool (bolão) platform with Participante + Admin surfaces: round predictions with deadlines, automatic Pix (webhook-confirmed), receipt upload/verification with audit log, configurable scoring rules, live results via API-Football, and auto-recalculated ranking.
+
 ### Coming soon
 - E-commerce storefronts with checkout
 - Multi-tenant SaaS dashboards
