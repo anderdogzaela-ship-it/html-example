@@ -1,0 +1,2204 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0F766E">
+<title>LensAgent — AI Parser for Eyeglass Prescription Orders</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --primary: #0F766E;
+  --primary-dark: #115E59;
+  --primary-soft: #CCFBF1;
+  --accent: #06B6D4;
+  --accent-soft: #ECFEFF;
+  --bg: #F8FAFC;
+  --bg-warm: #F1F5F9;
+  --surface: #FFFFFF;
+  --text: #0F172A;
+  --text-2: #475569;
+  --text-3: #94A3B8;
+  --border: #E2E8F0;
+  --border-strong: #CBD5E1;
+  --success: #16A34A;
+  --success-soft: #DCFCE7;
+  --warning: #F59E0B;
+  --warning-soft: #FEF3C7;
+  --danger: #DC2626;
+  --danger-soft: #FEE2E2;
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 6px 18px rgba(15, 23, 42, 0.08);
+  --shadow-lg: 0 24px 60px rgba(15, 23, 42, 0.15);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: linear-gradient(135deg, #F0FDFA 0%, #F8FAFC 50%, #ECFEFF 100%);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+.mono { font-family: 'JetBrains Mono', monospace; }
+
+.stage {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px;
+}
+.demo-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.brand-mark {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  display: grid;
+  place-items: center;
+  color: white;
+  box-shadow: var(--shadow-sm);
+}
+.brand-name {
+  font-weight: 800;
+  font-size: 20px;
+  letter-spacing: -0.5px;
+}
+.brand-sub {
+  font-size: 11px;
+  color: var(--text-3);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: white;
+  padding: 6px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+.tool-toggle {
+  display: flex;
+  background: var(--bg);
+  padding: 3px;
+  border-radius: 7px;
+}
+.tool-toggle button {
+  border: 0;
+  background: transparent;
+  padding: 6px 12px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+  cursor: pointer;
+  border-radius: 5px;
+}
+.tool-toggle button.active {
+  background: white;
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
+}
+.btn-restart {
+  border: 0;
+  background: var(--primary);
+  color: white;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* BROWSER SHELL */
+.browser {
+  background: white;
+  border-radius: 16px;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.browser-bar {
+  background: #EDF2F7;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.browser-dots {
+  display: flex;
+  gap: 6px;
+}
+.browser-dots span {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+}
+.browser-dots .red { background: #FF5F57; }
+.browser-dots .yellow { background: #FFBD2E; }
+.browser-dots .green { background: #28C940; }
+.browser-url {
+  flex: 1;
+  background: white;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--text-2);
+  font-family: 'JetBrains Mono', monospace;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.browser-url svg { color: var(--success); flex-shrink: 0; }
+.browser-actions {
+  display: flex;
+  gap: 6px;
+}
+.browser-action {
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  background: var(--border);
+}
+
+/* APP LAYOUT */
+.app {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  min-height: 720px;
+}
+.sidebar {
+  background: #F8FAFC;
+  border-right: 1px solid var(--border);
+  padding: 18px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.sidebar-user {
+  padding: 10px 8px 16px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sidebar-user .avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: white;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 12px;
+}
+.sidebar-user strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+}
+.sidebar-user span {
+  font-size: 10px;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--text-2);
+  font-weight: 600;
+  cursor: pointer;
+  border: 0;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  position: relative;
+}
+.nav-item:hover { background: white; }
+.nav-item.active {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+.nav-item svg { flex-shrink: 0; }
+.nav-item .badge {
+  margin-left: auto;
+  background: var(--warning);
+  color: white;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 999px;
+  min-width: 18px;
+  text-align: center;
+}
+.nav-section {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-3);
+  font-weight: 700;
+  margin: 14px 8px 6px;
+}
+
+.main {
+  background: var(--bg);
+  overflow: hidden;
+  position: relative;
+}
+.view {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  padding: 24px;
+  overflow-y: auto;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(8px);
+  transition: all 0.3s;
+}
+.view.active {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+.view-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 22px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.view-title {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+.view-sub {
+  color: var(--text-2);
+  font-size: 13px;
+  margin-top: 2px;
+}
+.btn-primary {
+  background: var(--primary);
+  color: white;
+  border: 0;
+  padding: 9px 16px;
+  border-radius: 9px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  transition: transform 0.15s;
+}
+.btn-primary:active { transform: scale(0.98); }
+.btn-secondary {
+  background: white;
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  padding: 8px 14px;
+  border-radius: 9px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-success {
+  background: var(--success);
+  color: white;
+  border: 0;
+}
+
+/* DASHBOARD HOME */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 22px;
+}
+.kpi {
+  background: white;
+  padding: 16px;
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
+}
+.kpi .top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.kpi .label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 700;
+  color: var(--text-3);
+}
+.kpi .icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  display: grid;
+  place-items: center;
+}
+.kpi .icon.teal { background: var(--primary-soft); color: var(--primary); }
+.kpi .icon.amber { background: var(--warning-soft); color: var(--warning); }
+.kpi .icon.green { background: var(--success-soft); color: var(--success); }
+.kpi .icon.cyan { background: var(--accent-soft); color: var(--accent); }
+.kpi .value {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.8px;
+  line-height: 1.1;
+  font-family: 'JetBrains Mono', monospace;
+}
+.kpi .delta {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--success);
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+.kpi .delta.down { color: var(--danger); }
+.kpi .delta.flat { color: var(--text-3); }
+
+.two-col {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+}
+.panel {
+  background: white;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+.panel-head {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.panel-title {
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: -0.2px;
+}
+.panel-action {
+  font-size: 12px;
+  color: var(--primary);
+  font-weight: 700;
+  cursor: pointer;
+}
+.panel-body { padding: 14px 18px; }
+.panel-body.tight { padding: 0; }
+
+.recent-order {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto auto;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.recent-order:last-child { border-bottom: 0; }
+.order-id {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--bg-warm);
+  padding: 3px 8px;
+  border-radius: 5px;
+  color: var(--text);
+}
+.recent-order .info strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+}
+.recent-order .info span {
+  font-size: 11px;
+  color: var(--text-2);
+}
+.input-type-pill {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.itp-image { background: var(--accent-soft); color: var(--accent); }
+.itp-text { background: var(--primary-soft); color: var(--primary); }
+.itp-email { background: #F3E8FF; color: #7C3AED; }
+.itp-whatsapp { background: #DCFCE7; color: #16A34A; }
+
+.conf-bar {
+  width: 80px;
+  height: 6px;
+  background: var(--bg-warm);
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+}
+.conf-bar span {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  position: relative;
+}
+.conf-bar span::after {
+  content: attr(data-pct);
+  position: absolute;
+  right: 0;
+  top: -16px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text);
+}
+.conf-bar.high span { background: var(--success); }
+.conf-bar.mid span { background: var(--warning); }
+.conf-bar.low span { background: var(--danger); }
+
+.status-pill {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.status-pill.approved { background: var(--success-soft); color: var(--success); }
+.status-pill.review { background: var(--warning-soft); color: var(--warning); }
+.status-pill.rejected { background: var(--danger-soft); color: var(--danger); }
+.status-pill.processing { background: var(--accent-soft); color: var(--accent); }
+
+/* INPUT BREAKDOWN */
+.breakdown-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  font-size: 12px;
+}
+.breakdown-row .lbl {
+  flex: 1;
+  font-weight: 600;
+  color: var(--text-2);
+}
+.breakdown-row .num {
+  font-weight: 800;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text);
+}
+.breakdown-bar {
+  flex: 2;
+  height: 8px;
+  background: var(--bg-warm);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.breakdown-bar span {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+}
+
+/* PARSING VIEW */
+.parsing-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.rx-image-card {
+  background: white;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+.rx-image-card .head {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.rx-image-card .head h3 {
+  font-size: 13px;
+  font-weight: 800;
+}
+.rx-image-card .head .meta {
+  font-size: 11px;
+  color: var(--text-3);
+  font-family: 'JetBrains Mono', monospace;
+}
+.rx-image {
+  background: linear-gradient(180deg, #FFFEF7, #FFF9E6);
+  border-radius: 0;
+  padding: 24px;
+  position: relative;
+  font-family: 'Caveat', 'Brush Script MT', cursive;
+  min-height: 360px;
+}
+.rx-image::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 28px;
+  background: linear-gradient(180deg, #FFEB9C, transparent);
+  opacity: 0.5;
+}
+.rx-header {
+  border-bottom: 2px solid #B45309;
+  padding-bottom: 14px;
+  margin-bottom: 18px;
+  text-align: center;
+}
+.rx-header .clinic {
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  color: #78350F;
+  letter-spacing: 0.5px;
+}
+.rx-header .doc {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  color: #92400E;
+  margin-top: 2px;
+}
+.rx-handwritten {
+  font-family: 'Brush Script MT', 'Lucida Handwriting', cursive;
+  color: #1E3A8A;
+  font-size: 18px;
+  line-height: 1.8;
+}
+.rx-row {
+  display: grid;
+  grid-template-columns: 30px 1fr 1fr 1fr 1fr;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.rx-row .lbl {
+  font-weight: 700;
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  color: #1E40AF;
+  text-transform: uppercase;
+}
+.rx-spec {
+  font-family: 'Brush Script MT', 'Lucida Handwriting', cursive;
+  font-size: 22px;
+  font-weight: 600;
+  text-align: center;
+}
+.rx-headers {
+  display: grid;
+  grid-template-columns: 30px 1fr 1fr 1fr 1fr;
+  gap: 12px;
+  text-align: center;
+  font-family: 'Inter', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  color: #92400E;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #FBBF24;
+}
+.rx-footer {
+  margin-top: 22px;
+  padding-top: 14px;
+  border-top: 1px dashed #B45309;
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  color: #78350F;
+  display: flex;
+  justify-content: space-between;
+}
+.rx-pd {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 14px;
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  color: #1E40AF;
+}
+.rx-pd strong {
+  display: block;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #92400E;
+  margin-bottom: 2px;
+}
+.rx-pd .v {
+  font-family: 'Brush Script MT', 'Lucida Handwriting', cursive;
+  font-size: 18px;
+  color: #1E3A8A;
+}
+
+/* PARSED OUTPUT CARD */
+.parsed-card {
+  background: white;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+.parsed-card .head {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.parsed-card .head h3 {
+  font-size: 13px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.live-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--success-soft);
+  color: var(--success);
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+  animation: livePulse 1.4s infinite;
+}
+@keyframes livePulse {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+.field-list {
+  padding: 12px;
+}
+.field-row {
+  display: grid;
+  grid-template-columns: 70px 1fr 80px 24px;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 10px;
+  margin-bottom: 4px;
+  border: 1px solid transparent;
+  transition: all 0.3s;
+  opacity: 0;
+  transform: translateX(-10px);
+  animation: fieldIn 0.4s ease forwards;
+}
+.field-row:nth-child(1) { animation-delay: 0.2s; }
+.field-row:nth-child(2) { animation-delay: 0.6s; }
+.field-row:nth-child(3) { animation-delay: 1.0s; }
+.field-row:nth-child(4) { animation-delay: 1.4s; }
+.field-row:nth-child(5) { animation-delay: 1.8s; }
+.field-row:nth-child(6) { animation-delay: 2.2s; }
+.field-row:nth-child(7) { animation-delay: 2.6s; }
+.field-row:nth-child(8) { animation-delay: 3.0s; }
+@keyframes fieldIn {
+  to { opacity: 1; transform: translateX(0); }
+}
+.field-row .key {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-2);
+  font-weight: 600;
+}
+.field-row .val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+.field-row .conf {
+  font-size: 10px;
+  font-weight: 700;
+  text-align: right;
+}
+.field-row.high { background: var(--success-soft); border-color: #BBF7D0; }
+.field-row.high .conf { color: var(--success); }
+.field-row.mid { background: var(--warning-soft); border-color: #FDE68A; }
+.field-row.mid .conf { color: var(--warning); }
+.field-row.low { background: var(--danger-soft); border-color: #FECACA; }
+.field-row.low .conf { color: var(--danger); }
+.field-row .ck {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+}
+.field-row.high .ck { background: var(--success); color: white; }
+.field-row.mid .ck { background: var(--warning); color: white; }
+.field-row.low .ck { background: var(--danger); color: white; }
+.validation-banner {
+  margin: 12px;
+  padding: 10px 12px;
+  background: var(--danger-soft);
+  border: 1px solid #FECACA;
+  border-radius: 10px;
+  font-size: 12px;
+  color: var(--danger);
+  font-weight: 600;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  opacity: 0;
+  animation: fieldIn 0.4s ease forwards;
+  animation-delay: 3.6s;
+}
+.validation-banner svg { flex-shrink: 0; margin-top: 2px; }
+.validation-banner strong {
+  display: block;
+  font-weight: 800;
+  margin-bottom: 2px;
+}
+.validation-banner span {
+  font-weight: 500;
+  font-size: 11px;
+  color: var(--text-2);
+}
+.parsing-actions {
+  padding: 12px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 8px;
+  background: var(--bg-warm);
+}
+.parsing-actions .btn-primary { flex: 1; justify-content: center; }
+.parsing-actions .btn-secondary { flex: 1; justify-content: center; }
+
+/* INTAKE VIEW */
+.intake-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+}
+.intake-tabs {
+  display: flex;
+  gap: 4px;
+  background: white;
+  padding: 6px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 14px;
+}
+.intake-tab {
+  flex: 1;
+  background: transparent;
+  border: 0;
+  padding: 10px 12px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-2);
+  cursor: pointer;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.intake-tab.active {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+.drop-zone {
+  background: white;
+  border: 2px dashed var(--border-strong);
+  border-radius: 14px;
+  padding: 50px 30px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.drop-zone:hover {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+}
+.drop-zone .icon-big {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  display: grid;
+  place-items: center;
+  margin: 0 auto 16px;
+}
+.drop-zone h3 {
+  font-size: 17px;
+  font-weight: 800;
+  margin-bottom: 4px;
+  letter-spacing: -0.3px;
+}
+.drop-zone p {
+  font-size: 13px;
+  color: var(--text-2);
+  margin-bottom: 18px;
+}
+.drop-zone .or {
+  display: block;
+  margin: 14px 0;
+  color: var(--text-3);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 700;
+}
+.formats-supported {
+  font-size: 11px;
+  color: var(--text-3);
+  font-weight: 600;
+  margin-top: 14px;
+}
+
+/* QUEUE */
+.queue-filters {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.filter-pill {
+  background: white;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+  cursor: pointer;
+  font-family: inherit;
+}
+.filter-pill.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+.filter-pill .count {
+  background: rgba(255,255,255,0.25);
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 10px;
+}
+.filter-pill:not(.active) .count {
+  background: var(--bg-warm);
+}
+.queue-list {
+  background: white;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+.queue-head {
+  display: grid;
+  grid-template-columns: 100px 1fr 110px 100px 130px 100px 80px;
+  gap: 12px;
+  padding: 12px 18px;
+  background: var(--bg-warm);
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-3);
+  border-bottom: 1px solid var(--border);
+}
+.queue-row {
+  display: grid;
+  grid-template-columns: 100px 1fr 110px 100px 130px 100px 80px;
+  gap: 12px;
+  padding: 14px 18px;
+  align-items: center;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.queue-row:hover { background: var(--bg-warm); }
+.queue-row:last-child { border-bottom: 0; }
+.queue-row .customer strong {
+  display: block;
+  font-weight: 700;
+}
+.queue-row .customer span {
+  font-size: 11px;
+  color: var(--text-2);
+}
+.queue-row .rx {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text);
+}
+.queue-row .conf-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.queue-row .conf-cell .pct {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 800;
+  width: 32px;
+}
+.queue-row .conf-cell .pct.high { color: var(--success); }
+.queue-row .conf-cell .pct.mid { color: var(--warning); }
+.queue-row .conf-cell .pct.low { color: var(--danger); }
+
+/* SHEETS OUTPUT */
+.sheets-preview {
+  background: white;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+.sheets-bar {
+  background: #0F9D58;
+  padding: 10px 16px;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sheets-bar svg { color: white; }
+.sheets-bar strong {
+  font-weight: 700;
+  font-size: 13px;
+}
+.sheets-bar .sub {
+  font-size: 11px;
+  opacity: 0.86;
+  margin-left: auto;
+  font-family: 'JetBrains Mono', monospace;
+}
+.sheets-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.sheets-table th {
+  background: #F3F4F6;
+  padding: 8px 10px;
+  text-align: left;
+  font-weight: 700;
+  font-size: 11px;
+  color: var(--text-2);
+  border-bottom: 1px solid var(--border-strong);
+  border-right: 1px solid var(--border);
+}
+.sheets-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  color: var(--text);
+}
+.sheets-table tr:nth-child(even) td {
+  background: #FAFBFC;
+}
+.sheets-table .new-row td {
+  background: var(--success-soft) !important;
+  font-weight: 700;
+}
+
+/* AUDIT VIEW */
+.audit-charts {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.chart-container {
+  background: white;
+  border-radius: 14px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+.chart-container h3 {
+  font-size: 14px;
+  font-weight: 800;
+  margin-bottom: 14px;
+}
+.chart-bar-group {
+  display: flex;
+  align-items: end;
+  gap: 8px;
+  height: 180px;
+  padding-top: 12px;
+}
+.chart-bar {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.chart-bar .bar {
+  width: 100%;
+  background: linear-gradient(180deg, var(--primary), var(--primary-dark));
+  border-radius: 6px 6px 0 0;
+  position: relative;
+}
+.chart-bar .bar::before {
+  content: attr(data-val);
+  position: absolute;
+  top: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text);
+}
+.chart-bar .lbl {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.donut-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.donut {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: conic-gradient(var(--success) 0deg 320deg, var(--warning) 320deg 340deg, var(--danger) 340deg 360deg);
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+.donut::before {
+  content: '';
+  position: absolute;
+  inset: 22px;
+  background: white;
+  border-radius: 50%;
+}
+.donut .v {
+  position: relative;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+.donut .v small {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-2);
+  display: block;
+  text-align: center;
+}
+.donut-legend {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  width: 100%;
+}
+.donut-legend .item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.donut-legend .item .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+.donut-legend .item span {
+  color: var(--text-2);
+  font-weight: 500;
+}
+.donut-legend .item strong {
+  margin-left: auto;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.insight-banner {
+  background: linear-gradient(135deg, var(--primary-soft), var(--accent-soft));
+  border: 1px solid var(--primary);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  margin-top: 18px;
+}
+.insight-banner .ic {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--primary);
+  color: white;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.insight-banner h4 {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--primary-dark);
+  margin-bottom: 4px;
+}
+.insight-banner p {
+  font-size: 12px;
+  color: var(--text-2);
+  line-height: 1.55;
+}
+
+@media (max-width: 1100px) {
+  .stage { padding: 12px; }
+  .app { grid-template-columns: 1fr; min-height: auto; }
+  .sidebar { display: none; }
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .two-col { grid-template-columns: 1fr; }
+  .parsing-grid { grid-template-columns: 1fr; }
+  .audit-charts { grid-template-columns: 1fr; }
+  .queue-head, .queue-row { grid-template-columns: 1fr; gap: 4px; }
+  .queue-head { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="stage">
+
+  <!-- HEADER -->
+  <div class="demo-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <circle cx="6" cy="13" r="3.5"/>
+          <circle cx="18" cy="13" r="3.5"/>
+          <path d="M9.5 13h5"/>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-name">LensAgent</div>
+        <div class="brand-sub" data-i18n="brand-sub">AI Parser · Eyeglass Orders</div>
+      </div>
+    </div>
+    <div class="toolbar">
+      <div class="tool-toggle" id="lang-toggle">
+        <button class="active" data-lang="pt">PT-BR</button>
+        <button data-lang="en">English</button>
+      </div>
+      <button class="btn-restart" id="restart-btn">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+        <span data-i18n="restart">Reiniciar demo</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- BROWSER SHELL -->
+  <div class="browser">
+    <div class="browser-bar">
+      <div class="browser-dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+      <div class="browser-url">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <span>lensagent.app</span>
+        <span style="color:var(--text-3)">/dashboard</span>
+      </div>
+      <div class="browser-actions">
+        <div class="browser-action"></div>
+        <div class="browser-action"></div>
+        <div class="browser-action"></div>
+      </div>
+    </div>
+
+    <div class="app">
+      <!-- SIDEBAR -->
+      <aside class="sidebar">
+        <div class="sidebar-user">
+          <div class="avatar">G</div>
+          <div>
+            <strong>Guilherme V</strong>
+            <span data-i18n="role">Admin · Óptica</span>
+          </div>
+        </div>
+        <button class="nav-item active" data-view="dashboard">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          <span data-i18n="nav-dash">Dashboard</span>
+        </button>
+        <button class="nav-item" data-view="intake">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <span data-i18n="nav-intake">Nova receita</span>
+        </button>
+        <button class="nav-item" data-view="parsing">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <span data-i18n="nav-parsing">Parsing ao vivo</span>
+        </button>
+        <button class="nav-item" data-view="queue">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+          <span data-i18n="nav-queue">Fila de revisão</span>
+          <span class="badge">7</span>
+        </button>
+        <button class="nav-item" data-view="sheets">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>
+          <span data-i18n="nav-sheets">Saída Sheets</span>
+        </button>
+        <button class="nav-item" data-view="audit">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg>
+          <span data-i18n="nav-audit">Auditoria</span>
+        </button>
+
+        <div class="nav-section" data-i18n="sect-system">Sistema</div>
+        <button class="nav-item">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+          <span data-i18n="nav-schema">Schema óptico</span>
+        </button>
+        <button class="nav-item">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="10"/></svg>
+          <span data-i18n="nav-settings">Configurações</span>
+        </button>
+      </aside>
+
+      <!-- MAIN CONTENT -->
+      <div class="main">
+
+        <!-- VIEW 1: DASHBOARD -->
+        <section class="view active" data-view="dashboard">
+          <div class="view-head">
+            <div>
+              <div class="view-title" data-i18n="dash-h">Dashboard</div>
+              <div class="view-sub" data-i18n="dash-sub">Visão geral dos pedidos processados pelo agente.</div>
+            </div>
+            <button class="btn-primary" id="new-order-cta">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <span data-i18n="dash-cta">Nova receita</span>
+            </button>
+          </div>
+          <div class="kpi-grid">
+            <div class="kpi">
+              <div class="top">
+                <div class="label" data-i18n="kpi-1">Pedidos hoje</div>
+                <div class="icon teal">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                </div>
+              </div>
+              <div class="value">142</div>
+              <div class="delta">↑ 18% vs <span data-i18n="yesterday">ontem</span></div>
+            </div>
+            <div class="kpi">
+              <div class="top">
+                <div class="label" data-i18n="kpi-2">Taxa de acerto</div>
+                <div class="icon green">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+              </div>
+              <div class="value">96.4%</div>
+              <div class="delta">↑ 2.1% <span data-i18n="vs-mes">vs mês</span></div>
+            </div>
+            <div class="kpi">
+              <div class="top">
+                <div class="label" data-i18n="kpi-3">Fila de revisão</div>
+                <div class="icon amber">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="9" x2="12" y2="13"/><circle cx="12" cy="17" r="0.5"/></svg>
+                </div>
+              </div>
+              <div class="value">7</div>
+              <div class="delta flat" data-i18n="kpi-3-d">aguardando humano</div>
+            </div>
+            <div class="kpi">
+              <div class="top">
+                <div class="label" data-i18n="kpi-4">Custo IA mês</div>
+                <div class="icon cyan">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                </div>
+              </div>
+              <div class="value">$84</div>
+              <div class="delta down">↓ 12% <span data-i18n="vs-last">vs anterior</span></div>
+            </div>
+          </div>
+
+          <div class="two-col">
+            <div class="panel">
+              <div class="panel-head">
+                <div class="panel-title" data-i18n="recent-h">Pedidos recentes</div>
+                <span class="panel-action" data-i18n="see-all">Ver todos ›</span>
+              </div>
+              <div class="panel-body tight">
+                <div class="recent-order">
+                  <span class="order-id">RX-2871</span>
+                  <div class="info">
+                    <strong>Maria Costa</strong>
+                    <span data-i18n="lens-1">Lente multifocal antirreflexo</span>
+                  </div>
+                  <span class="input-type-pill itp-image" data-i18n="ip-image">Imagem</span>
+                  <div class="conf-bar high"><span style="width: 96%" data-pct="96%"></span></div>
+                  <span class="status-pill approved" data-i18n="st-approved">Aprovado</span>
+                </div>
+                <div class="recent-order">
+                  <span class="order-id">RX-2870</span>
+                  <div class="info">
+                    <strong>João Pereira</strong>
+                    <span data-i18n="lens-2">Lente visão simples</span>
+                  </div>
+                  <span class="input-type-pill itp-text" data-i18n="ip-pdf">PDF</span>
+                  <div class="conf-bar high"><span style="width: 92%" data-pct="92%"></span></div>
+                  <span class="status-pill approved" data-i18n="st-approved">Aprovado</span>
+                </div>
+                <div class="recent-order">
+                  <span class="order-id">RX-2869</span>
+                  <div class="info">
+                    <strong>Carla Ribeiro</strong>
+                    <span data-i18n="lens-3">Multifocal alta curva</span>
+                  </div>
+                  <span class="input-type-pill itp-whatsapp" data-i18n="ip-whats">WhatsApp</span>
+                  <div class="conf-bar mid"><span style="width: 72%" data-pct="72%"></span></div>
+                  <span class="status-pill review" data-i18n="st-review">Revisar</span>
+                </div>
+                <div class="recent-order">
+                  <span class="order-id">RX-2868</span>
+                  <div class="info">
+                    <strong>Pedro Santos</strong>
+                    <span data-i18n="lens-4">Bifocal Kryptok</span>
+                  </div>
+                  <span class="input-type-pill itp-email" data-i18n="ip-email">Email</span>
+                  <div class="conf-bar high"><span style="width: 98%" data-pct="98%"></span></div>
+                  <span class="status-pill approved" data-i18n="st-approved">Aprovado</span>
+                </div>
+                <div class="recent-order">
+                  <span class="order-id">RX-2867</span>
+                  <div class="info">
+                    <strong>Lúcia Andrade</strong>
+                    <span data-i18n="lens-5">Lente fotocromática</span>
+                  </div>
+                  <span class="input-type-pill itp-image" data-i18n="ip-image">Imagem</span>
+                  <div class="conf-bar low"><span style="width: 54%" data-pct="54%"></span></div>
+                  <span class="status-pill review" data-i18n="st-review">Revisar</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head">
+                <div class="panel-title" data-i18n="breakdown-h">Origem dos pedidos</div>
+              </div>
+              <div class="panel-body">
+                <div class="breakdown-row">
+                  <div class="lbl"><span data-i18n="src-image">Foto manuscrita</span></div>
+                  <div class="breakdown-bar"><span style="width:64%; background:var(--accent)"></span></div>
+                  <div class="num">64%</div>
+                </div>
+                <div class="breakdown-row">
+                  <div class="lbl"><span data-i18n="src-pdf">PDF laboratório</span></div>
+                  <div class="breakdown-bar"><span style="width:21%; background:var(--primary)"></span></div>
+                  <div class="num">21%</div>
+                </div>
+                <div class="breakdown-row">
+                  <div class="lbl"><span data-i18n="src-whats">WhatsApp</span></div>
+                  <div class="breakdown-bar"><span style="width:11%; background:var(--success)"></span></div>
+                  <div class="num">11%</div>
+                </div>
+                <div class="breakdown-row">
+                  <div class="lbl"><span data-i18n="src-email">Email</span></div>
+                  <div class="breakdown-bar"><span style="width:4%; background:#7C3AED"></span></div>
+                  <div class="num">4%</div>
+                </div>
+              </div>
+              <div class="insight-banner" style="margin: 0 18px 16px">
+                <div class="ic">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><polyline points="2 17 12 22 22 17"/></svg>
+                </div>
+                <div>
+                  <h4 data-i18n="insight-h">Validação óptica embutida</h4>
+                  <p data-i18n="insight-p">142 pedidos hoje. 4 esfera/cilindro/eixo rejeitados pelo schema antes de chegar ao humano economizando 4 erros manuais.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- VIEW 2: INTAKE -->
+        <section class="view" data-view="intake">
+          <div class="view-head">
+            <div>
+              <div class="view-title" data-i18n="intake-h">Nova receita</div>
+              <div class="view-sub" data-i18n="intake-sub">Carregue receita por foto PDF email ou cole texto WhatsApp.</div>
+            </div>
+          </div>
+          <div class="intake-tabs">
+            <button class="intake-tab active">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              <span data-i18n="tab-image">Imagem</span>
+            </button>
+            <button class="intake-tab">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              <span data-i18n="tab-pdf">PDF</span>
+            </button>
+            <button class="intake-tab">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              <span data-i18n="tab-whats">WhatsApp</span>
+            </button>
+            <button class="intake-tab">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22 6 12 13 2 6"/></svg>
+              <span data-i18n="tab-email">Email</span>
+            </button>
+          </div>
+          <div class="drop-zone" id="drop-zone">
+            <div class="icon-big">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            </div>
+            <h3 data-i18n="drop-h">Arrastar e soltar foto da receita</h3>
+            <p data-i18n="drop-p">PNG JPG ou PDF até 10 MB. Receita manuscrita ou impressa de laboratório.</p>
+            <span class="or" data-i18n="or">ou</span>
+            <button class="btn-primary" id="upload-cta">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <span data-i18n="upload-cta">Selecionar arquivo</span>
+            </button>
+            <div class="formats-supported" data-i18n="formats">Suporta receita do CFM padrão ABNT ou prescrição livre. Detecção automática de formato.</div>
+          </div>
+        </section>
+
+        <!-- VIEW 3: PARSING (the WOW moment) -->
+        <section class="view" data-view="parsing">
+          <div class="view-head">
+            <div>
+              <div class="view-title" data-i18n="parsing-h">Parsing ao vivo</div>
+              <div class="view-sub" data-i18n="parsing-sub">IA extrai os campos da receita com pontuação de confiança por campo.</div>
+            </div>
+            <button class="btn-secondary" id="restart-parsing">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+              <span data-i18n="reparse">Re-processar</span>
+            </button>
+          </div>
+          <div class="parsing-grid">
+            <!-- ORIGINAL IMAGE -->
+            <div class="rx-image-card">
+              <div class="head">
+                <h3 data-i18n="rx-img-h">Receita original</h3>
+                <span class="meta">RX-2872.jpg · 1.4 MB</span>
+              </div>
+              <div class="rx-image">
+                <div class="rx-header">
+                  <div class="clinic">CLÍNICA DRA. ALINE MARQUES</div>
+                  <div class="doc" data-i18n="doc-info">CRO 28412 SP · Av Paulista 1578 SP</div>
+                </div>
+                <div class="rx-headers">
+                  <span></span>
+                  <span data-i18n="hdr-sph">Esfera</span>
+                  <span data-i18n="hdr-cyl">Cilindro</span>
+                  <span data-i18n="hdr-axis">Eixo</span>
+                  <span data-i18n="hdr-add">Adição</span>
+                </div>
+                <div class="rx-handwritten">
+                  <div class="rx-row">
+                    <span class="lbl">OD</span>
+                    <span class="rx-spec">-1.75</span>
+                    <span class="rx-spec">-0.50</span>
+                    <span class="rx-spec">90</span>
+                    <span class="rx-spec">+2.25</span>
+                  </div>
+                  <div class="rx-row">
+                    <span class="lbl">OS</span>
+                    <span class="rx-spec">-2.00</span>
+                    <span class="rx-spec">-0.75</span>
+                    <span class="rx-spec">85</span>
+                    <span class="rx-spec">+2.25</span>
+                  </div>
+                </div>
+                <div class="rx-pd">
+                  <div>
+                    <strong data-i18n="rx-pd">DNP binocular</strong>
+                    <span class="v">62 mm</span>
+                  </div>
+                  <div>
+                    <strong data-i18n="rx-h">Altura</strong>
+                    <span class="v">18 mm</span>
+                  </div>
+                </div>
+                <div class="rx-footer">
+                  <span data-i18n="rx-patient">Paciente Roberto Lima</span>
+                  <span data-i18n="rx-date">18 jun 2026</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- PARSED OUTPUT -->
+            <div class="parsed-card">
+              <div class="head">
+                <h3>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                  <span data-i18n="parsed-h">Saída estruturada</span>
+                </h3>
+                <span class="live-indicator">
+                  <span class="live-dot"></span>
+                  <span data-i18n="claude">Claude Vision</span>
+                </span>
+              </div>
+              <div class="field-list" id="field-list">
+                <div class="field-row high">
+                  <span class="key">od.sphere</span>
+                  <span class="val mono">-1.75</span>
+                  <span class="conf">98%</span>
+                  <span class="ck">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  </span>
+                </div>
+                <div class="field-row high">
+                  <span class="key">od.cylinder</span>
+                  <span class="val mono">-0.50</span>
+                  <span class="conf">96%</span>
+                  <span class="ck">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  </span>
+                </div>
+                <div class="field-row high">
+                  <span class="key">od.axis</span>
+                  <span class="val mono">90</span>
+                  <span class="conf">95%</span>
+                  <span class="ck">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  </span>
+                </div>
+                <div class="field-row high">
+                  <span class="key">os.sphere</span>
+                  <span class="val mono">-2.00</span>
+                  <span class="conf">97%</span>
+                  <span class="ck">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  </span>
+                </div>
+                <div class="field-row mid">
+                  <span class="key">os.cylinder</span>
+                  <span class="val mono">-0.75</span>
+                  <span class="conf">76%</span>
+                  <span class="ck">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="9" x2="12" y2="13"/><circle cx="12" cy="17" r="0.5"/></svg>
+                  </span>
+                </div>
+                <div class="field-row mid">
+                  <span class="key">os.axis</span>
+                  <span class="val mono">85</span>
+                  <span class="conf">78%</span>
+                  <span class="ck">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="9" x2="12" y2="13"/><circle cx="12" cy="17" r="0.5"/></svg>
+                  </span>
+                </div>
+                <div class="field-row high">
+                  <span class="key">add</span>
+                  <span class="val mono">+2.25</span>
+                  <span class="conf">99%</span>
+                  <span class="ck">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  </span>
+                </div>
+                <div class="field-row high">
+                  <span class="key">pd_binocular</span>
+                  <span class="val mono">62 mm</span>
+                  <span class="conf">93%</span>
+                  <span class="ck">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  </span>
+                </div>
+              </div>
+              <div class="validation-banner">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                <div>
+                  <strong style="color: var(--success)" data-i18n="val-pass-h">Validação óptica aprovada</strong>
+                  <span data-i18n="val-pass-p">Todos os campos dentro dos limites do schema. Esfera entre -10 e +10. Cilindro entre 0 e -6. Eixo entre 1 e 180. ADD entre 0 e +3. OD e OS pareados. DNP em range humano normal.</span>
+                </div>
+              </div>
+              <div class="parsing-actions">
+                <button class="btn-secondary" style="flex:1">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><polyline points="5 13 12 20 19 13"/></svg>
+                  <span data-i18n="export-json">Exportar JSON</span>
+                </button>
+                <button class="btn-primary" id="send-sheets">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  <span data-i18n="send-sheets">Enviar a Google Sheets</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- VIEW 4: QUEUE -->
+        <section class="view" data-view="queue">
+          <div class="view-head">
+            <div>
+              <div class="view-title" data-i18n="queue-h">Fila de revisão manual</div>
+              <div class="view-sub" data-i18n="queue-sub">Pedidos com confiança abaixo do threshold de 80% por algum campo.</div>
+            </div>
+            <button class="btn-primary">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              <span data-i18n="approve-all">Aprovar selecionados</span>
+            </button>
+          </div>
+          <div class="queue-filters">
+            <button class="filter-pill active"><span data-i18n="f-all">Todos</span><span class="count">7</span></button>
+            <button class="filter-pill"><span data-i18n="f-low">Confiança baixa</span><span class="count">3</span></button>
+            <button class="filter-pill"><span data-i18n="f-mid">Confiança média</span><span class="count">4</span></button>
+            <button class="filter-pill"><span data-i18n="f-image">Imagem</span><span class="count">5</span></button>
+            <button class="filter-pill"><span data-i18n="f-text">Texto</span><span class="count">2</span></button>
+          </div>
+          <div class="queue-list">
+            <div class="queue-head">
+              <div data-i18n="q-id">ID</div>
+              <div data-i18n="q-customer">Cliente</div>
+              <div data-i18n="q-input">Entrada</div>
+              <div data-i18n="q-conf">Confiança</div>
+              <div data-i18n="q-issue">Campo crítico</div>
+              <div data-i18n="q-rec">Recebido</div>
+              <div></div>
+            </div>
+            <div class="queue-row">
+              <span class="order-id">RX-2869</span>
+              <div class="customer">
+                <strong>Carla Ribeiro</strong>
+                <span data-i18n="lens-3">Multifocal alta curva</span>
+              </div>
+              <span class="input-type-pill itp-whatsapp">WhatsApp</span>
+              <div class="conf-cell"><span class="pct mid">72%</span><div class="conf-bar mid"><span style="width:72%"></span></div></div>
+              <span class="mono" style="font-size:11px">os.axis</span>
+              <span class="mono" style="font-size:11px;color:var(--text-2)">11:42</span>
+              <button class="btn-secondary" style="padding:5px 10px;font-size:11px" data-i18n="q-review">Revisar</button>
+            </div>
+            <div class="queue-row">
+              <span class="order-id">RX-2867</span>
+              <div class="customer">
+                <strong>Lúcia Andrade</strong>
+                <span data-i18n="lens-5">Lente fotocromática</span>
+              </div>
+              <span class="input-type-pill itp-image">Imagem</span>
+              <div class="conf-cell"><span class="pct low">54%</span><div class="conf-bar low"><span style="width:54%"></span></div></div>
+              <span class="mono" style="font-size:11px">od.cylinder</span>
+              <span class="mono" style="font-size:11px;color:var(--text-2)">11:18</span>
+              <button class="btn-secondary" style="padding:5px 10px;font-size:11px" data-i18n="q-review">Revisar</button>
+            </div>
+            <div class="queue-row">
+              <span class="order-id">RX-2864</span>
+              <div class="customer">
+                <strong>Roberto Lima</strong>
+                <span data-i18n="lens-6">Lente progressiva premium</span>
+              </div>
+              <span class="input-type-pill itp-image">Imagem</span>
+              <div class="conf-cell"><span class="pct mid">79%</span><div class="conf-bar mid"><span style="width:79%"></span></div></div>
+              <span class="mono" style="font-size:11px">os.cylinder</span>
+              <span class="mono" style="font-size:11px;color:var(--text-2)">10:54</span>
+              <button class="btn-secondary" style="padding:5px 10px;font-size:11px" data-i18n="q-review">Revisar</button>
+            </div>
+            <div class="queue-row">
+              <span class="order-id">RX-2861</span>
+              <div class="customer">
+                <strong>Antônio Soares</strong>
+                <span data-i18n="lens-7">Lente bifocal Franklin</span>
+              </div>
+              <span class="input-type-pill itp-image">Imagem</span>
+              <div class="conf-cell"><span class="pct low">48%</span><div class="conf-bar low"><span style="width:48%"></span></div></div>
+              <span class="mono" style="font-size:11px">add</span>
+              <span class="mono" style="font-size:11px;color:var(--text-2)">10:31</span>
+              <button class="btn-secondary" style="padding:5px 10px;font-size:11px" data-i18n="q-review">Revisar</button>
+            </div>
+            <div class="queue-row">
+              <span class="order-id">RX-2858</span>
+              <div class="customer">
+                <strong>Beatriz Mota</strong>
+                <span data-i18n="lens-8">Lente esférica polarizada</span>
+              </div>
+              <span class="input-type-pill itp-text">PDF</span>
+              <div class="conf-cell"><span class="pct mid">73%</span><div class="conf-bar mid"><span style="width:73%"></span></div></div>
+              <span class="mono" style="font-size:11px">pd_binocular</span>
+              <span class="mono" style="font-size:11px;color:var(--text-2)">10:08</span>
+              <button class="btn-secondary" style="padding:5px 10px;font-size:11px" data-i18n="q-review">Revisar</button>
+            </div>
+            <div class="queue-row">
+              <span class="order-id">RX-2855</span>
+              <div class="customer">
+                <strong>Felipe Cardoso</strong>
+                <span data-i18n="lens-9">Lente multifocal antirreflexo</span>
+              </div>
+              <span class="input-type-pill itp-image">Imagem</span>
+              <div class="conf-cell"><span class="pct low">42%</span><div class="conf-bar low"><span style="width:42%"></span></div></div>
+              <span class="mono" style="font-size:11px;color:var(--danger)">od.axis</span>
+              <span class="mono" style="font-size:11px;color:var(--text-2)">09:47</span>
+              <button class="btn-secondary" style="padding:5px 10px;font-size:11px" data-i18n="q-review">Revisar</button>
+            </div>
+            <div class="queue-row">
+              <span class="order-id">RX-2852</span>
+              <div class="customer">
+                <strong>Patrícia Nunes</strong>
+                <span data-i18n="lens-10">Lente esférica progressiva</span>
+              </div>
+              <span class="input-type-pill itp-text">PDF</span>
+              <div class="conf-cell"><span class="pct mid">76%</span><div class="conf-bar mid"><span style="width:76%"></span></div></div>
+              <span class="mono" style="font-size:11px">os.sphere</span>
+              <span class="mono" style="font-size:11px;color:var(--text-2)">09:22</span>
+              <button class="btn-secondary" style="padding:5px 10px;font-size:11px" data-i18n="q-review">Revisar</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- VIEW 5: SHEETS OUTPUT -->
+        <section class="view" data-view="sheets">
+          <div class="view-head">
+            <div>
+              <div class="view-title" data-i18n="sheets-h">Saída Google Sheets</div>
+              <div class="view-sub" data-i18n="sheets-sub">Pedidos aprovados inseridos automaticamente na planilha conectada.</div>
+            </div>
+            <button class="btn-secondary">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6m11-7h-6m-6 0H1"/></svg>
+              <span data-i18n="config-cols">Configurar colunas</span>
+            </button>
+          </div>
+          <div class="sheets-preview">
+            <div class="sheets-bar">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>
+              <strong data-i18n="sheet-name">Pedidos de Lentes 2026</strong>
+              <span class="sub">sheets.google.com/RX2026</span>
+            </div>
+            <div style="overflow-x:auto">
+              <table class="sheets-table">
+                <thead>
+                  <tr>
+                    <th></th>
+                    <th>A · ID</th>
+                    <th>B · Cliente</th>
+                    <th>C · Data</th>
+                    <th>D · OD.SPH</th>
+                    <th>E · OD.CYL</th>
+                    <th>F · OD.AXIS</th>
+                    <th>G · OS.SPH</th>
+                    <th>H · OS.CYL</th>
+                    <th>I · OS.AXIS</th>
+                    <th>J · ADD</th>
+                    <th>K · DNP</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td>1</td><td>RX-2871</td><td>Maria Costa</td><td>18/06</td><td>-2.50</td><td>-0.75</td><td>180</td><td>-2.75</td><td>-0.50</td><td>175</td><td>+2.00</td><td>61</td></tr>
+                  <tr><td>2</td><td>RX-2870</td><td>João Pereira</td><td>18/06</td><td>-1.25</td><td>0</td><td>--</td><td>-1.50</td><td>0</td><td>--</td><td>0</td><td>64</td></tr>
+                  <tr><td>3</td><td>RX-2868</td><td>Pedro Santos</td><td>18/06</td><td>+1.00</td><td>-0.25</td><td>90</td><td>+1.25</td><td>-0.25</td><td>85</td><td>+1.50</td><td>63</td></tr>
+                  <tr class="new-row"><td>4</td><td>RX-2872</td><td>Roberto Lima</td><td>18/06</td><td>-1.75</td><td>-0.50</td><td>90</td><td>-2.00</td><td>-0.75</td><td>85</td><td>+2.25</td><td>62</td></tr>
+                  <tr><td>5</td><td>RX-2866</td><td>Sandra Pinto</td><td>17/06</td><td>-3.00</td><td>-1.00</td><td>10</td><td>-3.25</td><td>-1.25</td><td>170</td><td>+2.50</td><td>60</td></tr>
+                  <tr><td>6</td><td>RX-2865</td><td>Marcelo Vieira</td><td>17/06</td><td>+0.75</td><td>0</td><td>--</td><td>+0.50</td><td>0</td><td>--</td><td>0</td><td>65</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- VIEW 6: AUDIT -->
+        <section class="view" data-view="audit">
+          <div class="view-head">
+            <div>
+              <div class="view-title" data-i18n="audit-h">Auditoria de acerto</div>
+              <div class="view-sub" data-i18n="audit-sub">Mede taxa real comparando saída do agente com correções humanas.</div>
+            </div>
+          </div>
+          <div class="audit-charts">
+            <div class="chart-container">
+              <h3 data-i18n="chart-h">Taxa de acerto por tipo de entrada</h3>
+              <div class="chart-bar-group">
+                <div class="chart-bar"><div class="bar" style="height: 68%" data-val="89%"></div><div class="lbl" data-i18n="bar-image">Imagem</div></div>
+                <div class="chart-bar"><div class="bar" style="height: 88%" data-val="97%"></div><div class="lbl" data-i18n="bar-pdf">PDF</div></div>
+                <div class="chart-bar"><div class="bar" style="height: 75%" data-val="92%"></div><div class="lbl" data-i18n="bar-email">Email</div></div>
+                <div class="chart-bar"><div class="bar" style="height: 60%" data-val="83%"></div><div class="lbl" data-i18n="bar-whats">WhatsApp</div></div>
+              </div>
+            </div>
+            <div class="chart-container">
+              <h3 data-i18n="donut-h">Distribuição confiança</h3>
+              <div class="donut-wrap">
+                <div class="donut">
+                  <div class="v">89%<small data-i18n="high-conf">alta confiança</small></div>
+                </div>
+                <div class="donut-legend">
+                  <div class="item"><span class="dot" style="background:var(--success)"></span><span data-i18n="leg-high">Alta (>=80%)</span><strong>89%</strong></div>
+                  <div class="item"><span class="dot" style="background:var(--warning)"></span><span data-i18n="leg-mid">Média (50-79%)</span><strong>8%</strong></div>
+                  <div class="item"><span class="dot" style="background:var(--danger)"></span><span data-i18n="leg-low">Baixa (<50%)</span><strong>3%</strong></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="insight-banner">
+            <div class="ic">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12"/><circle cx="12" cy="16" r="0.5"/></svg>
+            </div>
+            <div>
+              <h4 data-i18n="audit-insight-h">Insight: validação óptica capturou 4 erros impossíveis este mês</h4>
+              <p data-i18n="audit-insight-p">O modelo extraiu valores como esfera de quinze dioptrias e eixo de duzentos graus. Sem o schema óptico embutido esses pedidos teriam ido a produção como manuais. Schema validation é o que mantém a taxa real de acerto acima de noventa por cento em todos os formatos.</p>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const I18N = {
+  pt: {
+    'brand-sub': 'AI Parser · Pedidos de Lentes',
+    'restart': 'Reiniciar demo',
+    'role': 'Admin · Óptica',
+    'nav-dash': 'Dashboard',
+    'nav-intake': 'Nova receita',
+    'nav-parsing': 'Parsing ao vivo',
+    'nav-queue': 'Fila de revisão',
+    'nav-sheets': 'Saída Sheets',
+    'nav-audit': 'Auditoria',
+    'sect-system': 'Sistema',
+    'nav-schema': 'Schema óptico',
+    'nav-settings': 'Configurações',
+    'dash-h': 'Dashboard',
+    'dash-sub': 'Visão geral dos pedidos processados pelo agente.',
+    'dash-cta': 'Nova receita',
+    'kpi-1': 'Pedidos hoje',
+    'kpi-2': 'Taxa de acerto',
+    'kpi-3': 'Fila de revisão',
+    'kpi-3-d': 'aguardando humano',
+    'kpi-4': 'Custo IA mês',
+    'yesterday': 'ontem',
+    'vs-mes': 'vs mês',
+    'vs-last': 'vs anterior',
+    'recent-h': 'Pedidos recentes',
+    'see-all': 'Ver todos ›',
+    'lens-1': 'Lente multifocal antirreflexo',
+    'lens-2': 'Lente visão simples',
+    'lens-3': 'Multifocal alta curva',
+    'lens-4': 'Bifocal Kryptok',
+    'lens-5': 'Lente fotocromática',
+    'lens-6': 'Lente progressiva premium',
+    'lens-7': 'Lente bifocal Franklin',
+    'lens-8': 'Lente esférica polarizada',
+    'lens-9': 'Lente multifocal antirreflexo',
+    'lens-10': 'Lente esférica progressiva',
+    'ip-image': 'Imagem',
+    'ip-pdf': 'PDF',
+    'ip-whats': 'WhatsApp',
+    'ip-email': 'Email',
+    'st-approved': 'Aprovado',
+    'st-review': 'Revisar',
+    'breakdown-h': 'Origem dos pedidos',
+    'src-image': 'Foto manuscrita',
+    'src-pdf': 'PDF laboratório',
+    'src-whats': 'WhatsApp',
+    'src-email': 'Email',
+    'insight-h': 'Validação óptica embutida',
+    'insight-p': '142 pedidos hoje. 4 esfera/cilindro/eixo rejeitados pelo schema antes de chegar ao humano economizando 4 erros manuais.',
+    'intake-h': 'Nova receita',
+    'intake-sub': 'Carregue receita por foto PDF email ou cole texto WhatsApp.',
+    'tab-image': 'Imagem',
+    'tab-pdf': 'PDF',
+    'tab-whats': 'WhatsApp',
+    'tab-email': 'Email',
+    'drop-h': 'Arrastar e soltar foto da receita',
+    'drop-p': 'PNG JPG ou PDF até 10 MB. Receita manuscrita ou impressa de laboratório.',
+    'or': 'ou',
+    'upload-cta': 'Selecionar arquivo',
+    'formats': 'Suporta receita do CFM padrão ABNT ou prescrição livre. Detecção automática de formato.',
+    'parsing-h': 'Parsing ao vivo',
+    'parsing-sub': 'IA extrai os campos da receita com pontuação de confiança por campo.',
+    'reparse': 'Re-processar',
+    'rx-img-h': 'Receita original',
+    'doc-info': 'CRO 28412 SP · Av Paulista 1578 SP',
+    'hdr-sph': 'Esfera',
+    'hdr-cyl': 'Cilindro',
+    'hdr-axis': 'Eixo',
+    'hdr-add': 'Adição',
+    'rx-pd': 'DNP binocular',
+    'rx-h': 'Altura',
+    'rx-patient': 'Paciente Roberto Lima',
+    'rx-date': '18 jun 2026',
+    'parsed-h': 'Saída estruturada',
+    'claude': 'Claude Vision',
+    'val-pass-h': 'Validação óptica aprovada',
+    'val-pass-p': 'Todos os campos dentro dos limites do schema. Esfera entre -10 e +10. Cilindro entre 0 e -6. Eixo entre 1 e 180. ADD entre 0 e +3. OD e OS pareados. DNP em range humano normal.',
+    'export-json': 'Exportar JSON',
+    'send-sheets': 'Enviar a Google Sheets',
+    'queue-h': 'Fila de revisão manual',
+    'queue-sub': 'Pedidos com confiança abaixo do threshold de 80% por algum campo.',
+    'approve-all': 'Aprovar selecionados',
+    'f-all': 'Todos',
+    'f-low': 'Confiança baixa',
+    'f-mid': 'Confiança média',
+    'f-image': 'Imagem',
+    'f-text': 'Texto',
+    'q-id': 'ID',
+    'q-customer': 'Cliente',
+    'q-input': 'Entrada',
+    'q-conf': 'Confiança',
+    'q-issue': 'Campo crítico',
+    'q-rec': 'Recebido',
+    'q-review': 'Revisar',
+    'sheets-h': 'Saída Google Sheets',
+    'sheets-sub': 'Pedidos aprovados inseridos automaticamente na planilha conectada.',
+    'config-cols': 'Configurar colunas',
+    'sheet-name': 'Pedidos de Lentes 2026',
+    'audit-h': 'Auditoria de acerto',
+    'audit-sub': 'Mede taxa real comparando saída do agente com correções humanas.',
+    'chart-h': 'Taxa de acerto por tipo de entrada',
+    'bar-image': 'Imagem',
+    'bar-pdf': 'PDF',
+    'bar-email': 'Email',
+    'bar-whats': 'WhatsApp',
+    'donut-h': 'Distribuição confiança',
+    'high-conf': 'alta confiança',
+    'leg-high': 'Alta (>=80%)',
+    'leg-mid': 'Média (50-79%)',
+    'leg-low': 'Baixa (<50%)',
+    'audit-insight-h': 'Insight: validação óptica capturou 4 erros impossíveis este mês',
+    'audit-insight-p': 'O modelo extraiu valores como esfera de quinze dioptrias e eixo de duzentos graus. Sem o schema óptico embutido esses pedidos teriam ido a produção como manuais. Schema validation é o que mantém a taxa real de acerto acima de noventa por cento em todos os formatos.',
+  },
+  en: {
+    'brand-sub': 'AI Parser · Lens Orders',
+    'restart': 'Restart demo',
+    'role': 'Admin · Optical lab',
+    'nav-dash': 'Dashboard',
+    'nav-intake': 'New order',
+    'nav-parsing': 'Live parsing',
+    'nav-queue': 'Review queue',
+    'nav-sheets': 'Sheets output',
+    'nav-audit': 'Audit',
+    'sect-system': 'System',
+    'nav-schema': 'Optical schema',
+    'nav-settings': 'Settings',
+    'dash-h': 'Dashboard',
+    'dash-sub': 'Overview of orders processed by the agent.',
+    'dash-cta': 'New order',
+    'kpi-1': 'Orders today',
+    'kpi-2': 'Accuracy rate',
+    'kpi-3': 'Review queue',
+    'kpi-3-d': 'awaiting human',
+    'kpi-4': 'AI cost month',
+    'yesterday': 'yesterday',
+    'vs-mes': 'vs month',
+    'vs-last': 'vs previous',
+    'recent-h': 'Recent orders',
+    'see-all': 'See all ›',
+    'lens-1': 'Anti-reflex multifocal lens',
+    'lens-2': 'Single vision lens',
+    'lens-3': 'High-curve multifocal',
+    'lens-4': 'Bifocal Kryptok',
+    'lens-5': 'Photochromic lens',
+    'lens-6': 'Premium progressive lens',
+    'lens-7': 'Franklin bifocal',
+    'lens-8': 'Polarized spherical lens',
+    'lens-9': 'Anti-reflex multifocal',
+    'lens-10': 'Spherical progressive',
+    'ip-image': 'Image',
+    'ip-pdf': 'PDF',
+    'ip-whats': 'WhatsApp',
+    'ip-email': 'Email',
+    'st-approved': 'Approved',
+    'st-review': 'Review',
+    'breakdown-h': 'Order sources',
+    'src-image': 'Handwritten photo',
+    'src-pdf': 'Lab PDF',
+    'src-whats': 'WhatsApp',
+    'src-email': 'Email',
+    'insight-h': 'Embedded optical validation',
+    'insight-p': '142 orders today. 4 sphere/cylinder/axis rejected by schema before reaching the human reviewer saving 4 manual errors.',
+    'intake-h': 'New order',
+    'intake-sub': 'Upload prescription via photo PDF email or paste WhatsApp text.',
+    'tab-image': 'Image',
+    'tab-pdf': 'PDF',
+    'tab-whats': 'WhatsApp',
+    'tab-email': 'Email',
+    'drop-h': 'Drag and drop prescription photo',
+    'drop-p': 'PNG JPG or PDF up to 10 MB. Handwritten prescription or lab print.',
+    'or': 'or',
+    'upload-cta': 'Select file',
+    'formats': 'Supports standard CFM prescription or free format. Automatic format detection.',
+    'parsing-h': 'Live parsing',
+    'parsing-sub': 'AI extracts prescription fields with per-field confidence scoring.',
+    'reparse': 'Re-process',
+    'rx-img-h': 'Original prescription',
+    'doc-info': 'CRO 28412 SP · Av Paulista 1578 SP',
+    'hdr-sph': 'Sphere',
+    'hdr-cyl': 'Cylinder',
+    'hdr-axis': 'Axis',
+    'hdr-add': 'Add',
+    'rx-pd': 'PD binocular',
+    'rx-h': 'Height',
+    'rx-patient': 'Patient Roberto Lima',
+    'rx-date': 'Jun 18 2026',
+    'parsed-h': 'Structured output',
+    'claude': 'Claude Vision',
+    'val-pass-h': 'Optical validation passed',
+    'val-pass-p': 'All fields within schema limits. Sphere between -10 and +10. Cylinder between 0 and -6. Axis between 1 and 180. ADD between 0 and +3. OD and OS paired. PD in normal human range.',
+    'export-json': 'Export JSON',
+    'send-sheets': 'Send to Google Sheets',
+    'queue-h': 'Manual review queue',
+    'queue-sub': 'Orders below the 80% confidence threshold on at least one field.',
+    'approve-all': 'Approve selected',
+    'f-all': 'All',
+    'f-low': 'Low confidence',
+    'f-mid': 'Mid confidence',
+    'f-image': 'Image',
+    'f-text': 'Text',
+    'q-id': 'ID',
+    'q-customer': 'Customer',
+    'q-input': 'Input',
+    'q-conf': 'Confidence',
+    'q-issue': 'Critical field',
+    'q-rec': 'Received',
+    'q-review': 'Review',
+    'sheets-h': 'Google Sheets output',
+    'sheets-sub': 'Approved orders auto-inserted into the connected spreadsheet.',
+    'config-cols': 'Configure columns',
+    'sheet-name': 'Lens Orders 2026',
+    'audit-h': 'Accuracy audit',
+    'audit-sub': 'Measures real accuracy comparing agent output with human corrections.',
+    'chart-h': 'Accuracy rate by input type',
+    'bar-image': 'Image',
+    'bar-pdf': 'PDF',
+    'bar-email': 'Email',
+    'bar-whats': 'WhatsApp',
+    'donut-h': 'Confidence distribution',
+    'high-conf': 'high confidence',
+    'leg-high': 'High (>=80%)',
+    'leg-mid': 'Mid (50-79%)',
+    'leg-low': 'Low (<50%)',
+    'audit-insight-h': 'Insight: optical validation caught 4 impossible errors this month',
+    'audit-insight-p': 'The model extracted values like sphere of 15 diopters and axis of 200 degrees. Without the embedded optical schema these orders would have gone to production as manual entries. Schema validation is what keeps real accuracy above 90 percent across every input format.',
+  }
+};
+let currentLang = 'pt';
+function applyI18n() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    const val = I18N[currentLang][key];
+    if (val !== undefined) el.textContent = val;
+  });
+  document.documentElement.lang = currentLang === 'pt' ? 'pt-BR' : 'en';
+}
+
+// View switching
+const views = document.querySelectorAll('.view');
+const navItems = document.querySelectorAll('.nav-item[data-view]');
+function show(viewName) {
+  views.forEach(v => v.classList.toggle('active', v.dataset.view === viewName));
+  navItems.forEach(n => n.classList.toggle('active', n.dataset.view === viewName));
+  if (viewName === 'parsing') restartParsing();
+}
+navItems.forEach(n => {
+  n.addEventListener('click', () => show(n.dataset.view));
+});
+
+// CTAs from dashboard
+document.getElementById('new-order-cta').addEventListener('click', () => show('intake'));
+document.getElementById('upload-cta').addEventListener('click', () => show('parsing'));
+document.getElementById('send-sheets').addEventListener('click', () => show('sheets'));
+
+// Intake tabs
+document.querySelectorAll('.intake-tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.intake-tab').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+  });
+});
+
+// Filter pills
+document.querySelectorAll('.filter-pill').forEach(p => {
+  p.addEventListener('click', () => {
+    document.querySelectorAll('.filter-pill').forEach(x => x.classList.remove('active'));
+    p.classList.add('active');
+  });
+});
+
+// Re-trigger parsing animation
+function restartParsing() {
+  const fields = document.querySelectorAll('.field-row');
+  fields.forEach(f => {
+    f.style.animation = 'none';
+    f.offsetHeight; // reflow
+    f.style.animation = '';
+  });
+  const banner = document.querySelector('.validation-banner');
+  if (banner) {
+    banner.style.animation = 'none';
+    banner.offsetHeight;
+    banner.style.animation = '';
+  }
+}
+document.getElementById('restart-parsing').addEventListener('click', restartParsing);
+
+// Language
+document.getElementById('lang-toggle').addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  document.querySelectorAll('#lang-toggle button').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  currentLang = b.dataset.lang;
+  applyI18n();
+});
+
+// Restart
+document.getElementById('restart-btn').addEventListener('click', () => show('dashboard'));
+
+applyI18n();
+</script>
+</body>
+</html>
