@@ -1,0 +1,1702 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0F766E">
+<title>QuadrantOps — Performance Dashboard with Weighted Quadrant Scoring</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --primary: #0F766E;
+  --primary-dark: #115E59;
+  --primary-soft: #CCFBF1;
+  --bg: #F8FAFC;
+  --bg-warm: #F1F5F9;
+  --surface: #FFFFFF;
+  --text: #0F172A;
+  --text-2: #475569;
+  --text-3: #94A3B8;
+  --border: #E2E8F0;
+  --border-strong: #CBD5E1;
+  /* Quadrant colors */
+  --q-star: #10B981;
+  --q-star-soft: #D1FAE5;
+  --q-horse: #8B5CF6;
+  --q-horse-soft: #EDE9FE;
+  --q-cow: #F59E0B;
+  --q-cow-soft: #FEF3C7;
+  --q-dog: #DC2626;
+  --q-dog-soft: #FEE2E2;
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 6px 18px rgba(15, 23, 42, 0.08);
+  --shadow-lg: 0 24px 60px rgba(15, 23, 42, 0.15);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: linear-gradient(135deg, #F0FDFA 0%, #F8FAFC 50%, #EDE9FE 100%);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+.mono { font-family: 'JetBrains Mono', monospace; }
+
+.stage {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px;
+}
+.demo-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.brand-mark {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  display: grid;
+  place-items: center;
+  color: white;
+  box-shadow: var(--shadow-sm);
+}
+.brand-name {
+  font-weight: 800;
+  font-size: 20px;
+  letter-spacing: -0.5px;
+}
+.brand-sub {
+  font-size: 11px;
+  color: var(--text-3);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: white;
+  padding: 6px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+.tool-toggle {
+  display: flex;
+  background: var(--bg);
+  padding: 3px;
+  border-radius: 7px;
+}
+.tool-toggle button {
+  border: 0;
+  background: transparent;
+  padding: 6px 12px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+  cursor: pointer;
+  border-radius: 5px;
+}
+.tool-toggle button.active {
+  background: white;
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
+}
+.btn-restart {
+  border: 0;
+  background: var(--primary);
+  color: white;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* BROWSER SHELL */
+.browser {
+  background: white;
+  border-radius: 16px;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.browser-bar {
+  background: #EDF2F7;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.browser-dots {
+  display: flex;
+  gap: 6px;
+}
+.browser-dots span {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+}
+.browser-dots .red { background: #FF5F57; }
+.browser-dots .yellow { background: #FFBD2E; }
+.browser-dots .green { background: #28C940; }
+.browser-url {
+  flex: 1;
+  background: white;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--text-2);
+  font-family: 'JetBrains Mono', monospace;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.browser-url svg { color: var(--q-star); flex-shrink: 0; }
+
+/* APP LAYOUT */
+.app {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  min-height: 760px;
+}
+.sidebar {
+  background: #F8FAFC;
+  border-right: 1px solid var(--border);
+  padding: 18px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.sidebar-user {
+  padding: 10px 8px 16px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sidebar-user .avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: white;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 12px;
+}
+.sidebar-user strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+}
+.sidebar-user span {
+  font-size: 10px;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--text-2);
+  font-weight: 600;
+  cursor: pointer;
+  border: 0;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+}
+.nav-item:hover { background: white; }
+.nav-item.active {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+.nav-item svg { flex-shrink: 0; }
+.role-banner {
+  margin-top: auto;
+  padding: 12px;
+  background: var(--primary-soft);
+  border: 1px solid var(--primary);
+  border-radius: 10px;
+  font-size: 11px;
+}
+.role-banner strong {
+  display: block;
+  color: var(--primary);
+  font-weight: 800;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 10px;
+}
+.role-banner span {
+  color: var(--text-2);
+  font-weight: 500;
+}
+
+.main {
+  background: var(--bg);
+  overflow: hidden;
+  position: relative;
+}
+.view {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  padding: 24px;
+  overflow-y: auto;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(8px);
+  transition: all 0.3s;
+}
+.view.active {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+.view-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 22px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.view-title {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+.view-sub {
+  color: var(--text-2);
+  font-size: 13px;
+  margin-top: 2px;
+}
+.btn-primary {
+  background: var(--primary);
+  color: white;
+  border: 0;
+  padding: 9px 16px;
+  border-radius: 9px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.btn-secondary {
+  background: white;
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  padding: 8px 14px;
+  border-radius: 9px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* KPI cards */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 22px;
+}
+.kpi {
+  background: white;
+  padding: 16px;
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
+}
+.kpi .label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 700;
+  color: var(--text-3);
+  margin-bottom: 6px;
+}
+.kpi .value {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.8px;
+  line-height: 1.1;
+  font-family: 'JetBrains Mono', monospace;
+}
+.kpi.q-star .value { color: var(--q-star); }
+.kpi.q-horse .value { color: var(--q-horse); }
+.kpi.q-cow .value { color: var(--q-cow); }
+.kpi.q-dog .value { color: var(--q-dog); }
+.kpi .delta {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-2);
+  margin-top: 4px;
+}
+
+/* QUADRANT */
+.quadrant-section {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 16px;
+}
+.panel {
+  background: white;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+.panel-head {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.panel-title {
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: -0.2px;
+}
+.panel-action {
+  font-size: 12px;
+  color: var(--primary);
+  font-weight: 700;
+  cursor: pointer;
+}
+.panel-body { padding: 18px; }
+
+.quadrant-chart {
+  position: relative;
+  width: 100%;
+  height: 420px;
+  background: linear-gradient(135deg, var(--q-horse-soft) 0%, var(--q-horse-soft) 50%, var(--q-star-soft) 50%, var(--q-star-soft) 100%);
+  background:
+    linear-gradient(to top right, var(--q-dog-soft) 0%, var(--q-dog-soft) 49.5%, transparent 49.5%) bottom left/50% 50% no-repeat,
+    linear-gradient(to top left, var(--q-cow-soft) 0%, var(--q-cow-soft) 49.5%, transparent 49.5%) bottom right/50% 50% no-repeat,
+    linear-gradient(to bottom right, var(--q-horse-soft) 0%, var(--q-horse-soft) 49.5%, transparent 49.5%) top left/50% 50% no-repeat,
+    linear-gradient(to bottom left, var(--q-star-soft) 0%, var(--q-star-soft) 49.5%, transparent 49.5%) top right/50% 50% no-repeat,
+    white;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+.q-axis-x, .q-axis-y {
+  position: absolute;
+  background: var(--text-3);
+}
+.q-axis-x {
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  opacity: 0.4;
+}
+.q-axis-y {
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  opacity: 0.4;
+}
+.q-label {
+  position: absolute;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 800;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: white;
+  z-index: 2;
+}
+.q-label.tl { top: 10px; left: 10px; color: var(--q-horse); border: 1px solid var(--q-horse); }
+.q-label.tr { top: 10px; right: 10px; color: var(--q-star); border: 1px solid var(--q-star); }
+.q-label.bl { bottom: 10px; left: 10px; color: var(--q-dog); border: 1px solid var(--q-dog); }
+.q-label.br { bottom: 10px; right: 10px; color: var(--q-cow); border: 1px solid var(--q-cow); }
+.q-axis-label {
+  position: absolute;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.q-axis-label.x-right { right: 8px; bottom: calc(50% - 18px); }
+.q-axis-label.x-left { left: 8px; bottom: calc(50% - 18px); }
+.q-axis-label.y-top { top: 8px; left: calc(50% + 8px); }
+.q-axis-label.y-bottom { bottom: 8px; left: calc(50% + 8px); }
+.q-dot {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--primary);
+  border: 3px solid white;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.15);
+  cursor: pointer;
+  z-index: 3;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  display: grid;
+  place-items: center;
+  font-size: 9px;
+  font-weight: 800;
+  color: white;
+  font-family: 'JetBrains Mono', monospace;
+}
+.q-dot.star { background: var(--q-star); }
+.q-dot.horse { background: var(--q-horse); }
+.q-dot.cow { background: var(--q-cow); }
+.q-dot.dog { background: var(--q-dog); }
+.q-dot.highlight {
+  width: 30px;
+  height: 30px;
+  z-index: 4;
+  box-shadow: 0 0 0 4px white, 0 0 0 6px var(--primary), 0 8px 20px rgba(15, 23, 42, 0.25);
+  animation: bounce 2s infinite;
+}
+@keyframes bounce {
+  0%, 100% { transform: translate(-50%, -50%); }
+  50% { transform: translate(-50%, -60%); }
+}
+
+/* INDICATOR LIST */
+.indicator-list { padding: 0; }
+.indicator-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+}
+.indicator-row:last-child { border-bottom: 0; }
+.indicator-row .name strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+.indicator-row .name span {
+  font-size: 11px;
+  color: var(--text-2);
+}
+.axis-tag {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 4px 8px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.axis-tag.x { background: var(--primary-soft); color: var(--primary); }
+.axis-tag.y { background: #EDE9FE; color: var(--q-horse); }
+.weight-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.weight-control input[type="range"] {
+  width: 100px;
+  accent-color: var(--primary);
+}
+.weight-control .weight-val {
+  font-size: 12px;
+  font-weight: 800;
+  background: var(--bg-warm);
+  padding: 3px 8px;
+  border-radius: 4px;
+  min-width: 32px;
+  text-align: center;
+}
+.toggle-active {
+  width: 36px;
+  height: 20px;
+  background: var(--q-star);
+  border-radius: 999px;
+  position: relative;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.toggle-active::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 16px;
+  height: 16px;
+  background: white;
+  border-radius: 50%;
+}
+.toggle-active.off { background: var(--border-strong); }
+.toggle-active.off::after { right: auto; left: 2px; }
+
+.insight-banner {
+  background: linear-gradient(135deg, var(--primary-soft), #EDE9FE);
+  border: 1px solid var(--primary);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-top: 14px;
+}
+.insight-banner .ic {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--primary);
+  color: white;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.insight-banner h4 {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--primary-dark);
+  margin-bottom: 4px;
+}
+.insight-banner p {
+  font-size: 12px;
+  color: var(--text-2);
+  line-height: 1.55;
+}
+
+/* AGENT VIEW */
+.agent-hero {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  color: white;
+  border-radius: 14px;
+  padding: 22px 24px;
+  margin-bottom: 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+}
+.agent-hero h2 {
+  font-size: 19px;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+.agent-hero .info-row {
+  display: flex;
+  gap: 16px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+.agent-hero .info-row strong {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  background: rgba(255,255,255,0.18);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-weight: 700;
+}
+.agent-badge {
+  background: var(--q-star);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.score-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+.score-card {
+  background: white;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  padding: 18px;
+}
+.score-card .label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 700;
+  color: var(--text-3);
+  margin-bottom: 8px;
+}
+.score-card .axis-name {
+  font-size: 16px;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+.score-card .axis-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  color: var(--primary);
+}
+.score-card .axis-bar {
+  height: 8px;
+  background: var(--bg-warm);
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 10px 0;
+}
+.score-card .axis-bar span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--q-star));
+  border-radius: 4px;
+}
+.contrib-list { margin-top: 12px; }
+.contrib-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  font-size: 12px;
+  color: var(--text-2);
+  border-bottom: 1px solid var(--border);
+}
+.contrib-row:last-child { border-bottom: 0; }
+.contrib-row .name { font-weight: 600; }
+.contrib-row .val { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--text); }
+
+/* HISTORY */
+.history-chart {
+  position: relative;
+  height: 220px;
+  background: var(--bg-warm);
+  border-radius: 10px;
+  padding: 16px;
+}
+.history-svg {
+  width: 100%;
+  height: 100%;
+}
+.history-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* AGENT LIST (admin) */
+.agent-row {
+  display: grid;
+  grid-template-columns: 36px 1fr auto auto auto auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border);
+}
+.agent-row:last-child { border-bottom: 0; }
+.agent-row .avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--bg-warm);
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 11px;
+  color: var(--text);
+}
+.agent-row .info strong {
+  display: block;
+  font-weight: 700;
+  font-size: 13px;
+}
+.agent-row .info .mat {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-2);
+}
+.agent-row .axis-mini {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--bg-warm);
+  padding: 2px 8px;
+  border-radius: 4px;
+  min-width: 42px;
+  text-align: center;
+}
+.agent-row .quadrant-pill {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 4px 8px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.quadrant-pill.star { background: var(--q-star-soft); color: var(--q-star); }
+.quadrant-pill.horse { background: var(--q-horse-soft); color: var(--q-horse); }
+.quadrant-pill.cow { background: var(--q-cow-soft); color: var(--q-cow); }
+.quadrant-pill.dog { background: var(--q-dog-soft); color: var(--q-dog); }
+
+/* TOOLTIPS */
+.tooltip {
+  position: absolute;
+  background: var(--text);
+  color: white;
+  font-size: 11px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 10;
+  white-space: nowrap;
+  font-weight: 600;
+}
+.tooltip.show { opacity: 1; }
+.tooltip strong {
+  display: block;
+  font-weight: 800;
+  margin-bottom: 2px;
+}
+
+/* RESPONSIVE */
+@media (max-width: 1100px) {
+  .stage { padding: 12px; }
+  .app { grid-template-columns: 1fr; min-height: auto; }
+  .sidebar { display: none; }
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .quadrant-section { grid-template-columns: 1fr; }
+  .score-cards { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="stage">
+
+  <!-- HEADER -->
+  <div class="demo-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="8" height="8" rx="1"/>
+          <rect x="13" y="3" width="8" height="8" rx="1"/>
+          <rect x="3" y="13" width="8" height="8" rx="1"/>
+          <rect x="13" y="13" width="8" height="8" rx="1"/>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-name">QuadrantOps</div>
+        <div class="brand-sub" data-i18n="brand-sub">Weighted quadrant performance</div>
+      </div>
+    </div>
+    <div class="toolbar">
+      <div class="tool-toggle" id="role-toggle">
+        <button class="active" data-role="admin">Admin</button>
+        <button data-role="agent">Atendente</button>
+      </div>
+      <div class="tool-toggle" id="lang-toggle">
+        <button class="active" data-lang="pt">PT-BR</button>
+        <button data-lang="en">English</button>
+      </div>
+      <button class="btn-restart" id="restart-btn">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+        <span data-i18n="restart">Reiniciar</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- BROWSER SHELL -->
+  <div class="browser">
+    <div class="browser-bar">
+      <div class="browser-dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+      <div class="browser-url">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <span>quadrantops.app</span>
+        <span style="color:var(--text-3)" id="url-path">/admin</span>
+      </div>
+    </div>
+
+    <div class="app">
+      <!-- SIDEBAR -->
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-user" id="sidebar-user">
+          <div class="avatar" id="user-avatar">RH</div>
+          <div>
+            <strong id="user-name">RH Admin</strong>
+            <span id="user-role" data-i18n="role-admin">Administrador</span>
+          </div>
+        </div>
+        <!-- Admin nav -->
+        <div id="admin-nav">
+          <button class="nav-item active" data-view="dashboard">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+            <span data-i18n="nav-dash">Dashboard</span>
+          </button>
+          <button class="nav-item" data-view="quadrant">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h20M12 2v20"/></svg>
+            <span data-i18n="nav-quad">Quadrante</span>
+          </button>
+          <button class="nav-item" data-view="indicators">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            <span data-i18n="nav-ind">Indicadores</span>
+          </button>
+          <button class="nav-item" data-view="agents">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span data-i18n="nav-agents">Atendentes</span>
+          </button>
+        </div>
+        <!-- Agent nav -->
+        <div id="agent-nav" style="display:none">
+          <button class="nav-item active" data-view="agent-home">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V21H3z"/><path d="M9 21v-6h6v6"/></svg>
+            <span data-i18n="nav-home">Meu painel</span>
+          </button>
+          <button class="nav-item" data-view="agent-history">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
+            <span data-i18n="nav-history">Histórico</span>
+          </button>
+          <button class="nav-item" data-view="agent-indicators">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            <span data-i18n="nav-my-ind">Meus indicadores</span>
+          </button>
+        </div>
+        <div class="role-banner">
+          <strong data-i18n="rls-h">RLS isolation</strong>
+          <span data-i18n="rls-p">Cada atendente vê apenas os próprios dados via Row Level Security.</span>
+        </div>
+      </aside>
+
+      <!-- MAIN -->
+      <div class="main">
+
+        <!-- ADMIN: DASHBOARD -->
+        <section class="view active" data-view="dashboard">
+          <div class="view-head">
+            <div>
+              <div class="view-title" data-i18n="dash-h">Dashboard de performance</div>
+              <div class="view-sub" data-i18n="dash-sub">Visão geral da equipe distribuída por quadrante.</div>
+            </div>
+            <button class="btn-primary">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <span data-i18n="add-period">Adicionar período</span>
+            </button>
+          </div>
+          <div class="kpi-grid">
+            <div class="kpi q-star">
+              <div class="label" data-i18n="q-star">Estrelas</div>
+              <div class="value">9</div>
+              <div class="delta" data-i18n="of-team">de 32 atendentes</div>
+            </div>
+            <div class="kpi q-horse">
+              <div class="label" data-i18n="q-horse">Cavalos</div>
+              <div class="value">12</div>
+              <div class="delta" data-i18n="of-team">de 32 atendentes</div>
+            </div>
+            <div class="kpi q-cow">
+              <div class="label" data-i18n="q-cow">Vacas</div>
+              <div class="value">7</div>
+              <div class="delta" data-i18n="of-team">de 32 atendentes</div>
+            </div>
+            <div class="kpi q-dog">
+              <div class="label" data-i18n="q-dog">Problemas</div>
+              <div class="value">4</div>
+              <div class="delta" data-i18n="of-team">de 32 atendentes</div>
+            </div>
+          </div>
+
+          <div class="quadrant-section">
+            <div class="panel">
+              <div class="panel-head">
+                <div class="panel-title" data-i18n="qm-h">Mapa do quadrante</div>
+                <span class="panel-action" data-i18n="export">Exportar</span>
+              </div>
+              <div class="panel-body">
+                <div class="quadrant-chart" id="quad-chart">
+                  <div class="q-axis-x"></div>
+                  <div class="q-axis-y"></div>
+                  <div class="q-label tl" data-i18n="q-horse">CAVALOS</div>
+                  <div class="q-label tr" data-i18n="q-star">ESTRELAS</div>
+                  <div class="q-label bl" data-i18n="q-dog">PROBLEMAS</div>
+                  <div class="q-label br" data-i18n="q-cow">VACAS</div>
+                  <div class="q-axis-label x-right" id="x-right" data-i18n="axis-x-high">+ Produtividade</div>
+                  <div class="q-axis-label x-left" id="x-left" data-i18n="axis-x-low">- Produtividade</div>
+                  <div class="q-axis-label y-top" id="y-top" data-i18n="axis-y-high">+ Qualidade</div>
+                  <div class="q-axis-label y-bottom" id="y-bottom" data-i18n="axis-y-low">- Qualidade</div>
+                  <!-- Dots populated by JS -->
+                </div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head">
+                <div class="panel-title" data-i18n="recent-h">Atendentes em destaque</div>
+              </div>
+              <div class="panel-body" style="padding:0">
+                <div class="agent-row">
+                  <div class="avatar">AC</div>
+                  <div class="info">
+                    <strong>Ana C.</strong>
+                    <div class="mat">MAT 4827</div>
+                  </div>
+                  <span class="axis-mini">82</span>
+                  <span class="axis-mini">76</span>
+                  <span class="quadrant-pill star" data-i18n="q-star">Estrela</span>
+                </div>
+                <div class="agent-row">
+                  <div class="avatar">RM</div>
+                  <div class="info">
+                    <strong>Rafael M.</strong>
+                    <div class="mat">MAT 4801</div>
+                  </div>
+                  <span class="axis-mini">68</span>
+                  <span class="axis-mini">88</span>
+                  <span class="quadrant-pill horse" data-i18n="q-horse">Cavalo</span>
+                </div>
+                <div class="agent-row">
+                  <div class="avatar">LC</div>
+                  <div class="info">
+                    <strong>Larissa C.</strong>
+                    <div class="mat">MAT 4855</div>
+                  </div>
+                  <span class="axis-mini">88</span>
+                  <span class="axis-mini">42</span>
+                  <span class="quadrant-pill cow" data-i18n="q-cow">Vaca</span>
+                </div>
+                <div class="agent-row">
+                  <div class="avatar">TF</div>
+                  <div class="info">
+                    <strong>Tales F.</strong>
+                    <div class="mat">MAT 4889</div>
+                  </div>
+                  <span class="axis-mini">38</span>
+                  <span class="axis-mini">35</span>
+                  <span class="quadrant-pill dog" data-i18n="q-dog">Problema</span>
+                </div>
+                <div class="agent-row">
+                  <div class="avatar">PB</div>
+                  <div class="info">
+                    <strong>Paula B.</strong>
+                    <div class="mat">MAT 4812</div>
+                  </div>
+                  <span class="axis-mini">71</span>
+                  <span class="axis-mini">82</span>
+                  <span class="quadrant-pill star" data-i18n="q-star">Estrela</span>
+                </div>
+              </div>
+              <div class="insight-banner" style="margin:14px">
+                <div class="ic">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                </div>
+                <div>
+                  <h4 data-i18n="weight-h">Pesos definem tudo</h4>
+                  <p data-i18n="weight-p">Mude o peso de qualquer indicador na seção Indicadores e veja os pontos do quadrante recalcularem em tempo real.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ADMIN: QUADRANT (full) -->
+        <section class="view" data-view="quadrant">
+          <div class="view-head">
+            <div>
+              <div class="view-title" data-i18n="quad-full-h">Mapa do quadrante</div>
+              <div class="view-sub" data-i18n="quad-full-sub">Cada ponto é um atendente posicionado pela soma ponderada dos indicadores em cada eixo.</div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-body">
+              <div class="quadrant-chart" id="quad-chart-full" style="height: 540px">
+                <div class="q-axis-x"></div>
+                <div class="q-axis-y"></div>
+                <div class="q-label tl" data-i18n="q-horse">CAVALOS</div>
+                <div class="q-label tr" data-i18n="q-star">ESTRELAS</div>
+                <div class="q-label bl" data-i18n="q-dog">PROBLEMAS</div>
+                <div class="q-label br" data-i18n="q-cow">VACAS</div>
+                <div class="q-axis-label x-right" data-i18n="axis-x-high">+ Produtividade</div>
+                <div class="q-axis-label x-left" data-i18n="axis-x-low">- Produtividade</div>
+                <div class="q-axis-label y-top" data-i18n="axis-y-high">+ Qualidade</div>
+                <div class="q-axis-label y-bottom" data-i18n="axis-y-low">- Qualidade</div>
+              </div>
+            </div>
+          </div>
+          <div class="insight-banner">
+            <div class="ic">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6m11-7h-6m-6 0H1"/></svg>
+            </div>
+            <div>
+              <h4 data-i18n="math-h">A matemática por trás dos pontos</h4>
+              <p data-i18n="math-p">Posição X é soma ponderada normalizada de indicadores marcados como eixo X. Mesma lógica para Y. Quando admin muda peso de um indicador a posição de todo atendente recalcula automaticamente preservando a relação com os demais.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ADMIN: INDICATORS (the WOW interactive view) -->
+        <section class="view" data-view="indicators">
+          <div class="view-head">
+            <div>
+              <div class="view-title" data-i18n="ind-h">Indicadores e pesos</div>
+              <div class="view-sub" data-i18n="ind-sub">Ajuste pesos para ver o quadrante recalcular em tempo real.</div>
+            </div>
+            <button class="btn-primary">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <span data-i18n="new-ind">Novo indicador</span>
+            </button>
+          </div>
+          <div class="quadrant-section">
+            <div class="panel">
+              <div class="panel-head">
+                <div class="panel-title" data-i18n="ind-list-h">Indicadores ativos</div>
+              </div>
+              <div class="indicator-list" id="indicator-list">
+                <!-- populated by JS -->
+              </div>
+            </div>
+            <div class="panel">
+              <div class="panel-head">
+                <div class="panel-title" data-i18n="live-quad">Quadrante ao vivo</div>
+                <span class="panel-action" data-i18n="resetting">Atualizando ao mudar pesos</span>
+              </div>
+              <div class="panel-body">
+                <div class="quadrant-chart" id="quad-chart-live" style="height: 360px">
+                  <div class="q-axis-x"></div>
+                  <div class="q-axis-y"></div>
+                  <div class="q-label tl" data-i18n="q-horse">CAVALOS</div>
+                  <div class="q-label tr" data-i18n="q-star">ESTRELAS</div>
+                  <div class="q-label bl" data-i18n="q-dog">PROBLEMAS</div>
+                  <div class="q-label br" data-i18n="q-cow">VACAS</div>
+                  <div class="q-axis-label x-right" data-i18n="axis-x-high">+ Produtividade</div>
+                  <div class="q-axis-label x-left" data-i18n="axis-x-low">- Produtividade</div>
+                  <div class="q-axis-label y-top" data-i18n="axis-y-high">+ Qualidade</div>
+                  <div class="q-axis-label y-bottom" data-i18n="axis-y-low">- Qualidade</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ADMIN: AGENTS -->
+        <section class="view" data-view="agents">
+          <div class="view-head">
+            <div>
+              <div class="view-title" data-i18n="agents-h">Atendentes</div>
+              <div class="view-sub" data-i18n="agents-sub">Lista completa com posição e quadrante atual.</div>
+            </div>
+          </div>
+          <div class="panel">
+            <div id="agent-list">
+              <!-- populated by JS -->
+            </div>
+          </div>
+        </section>
+
+        <!-- AGENT: HOME -->
+        <section class="view" data-view="agent-home">
+          <div class="agent-hero">
+            <div>
+              <h2>Ana Carolina</h2>
+              <div data-i18n="agent-tag" style="font-size:12px;opacity:0.86">Atendente sênior · Equipe vendas</div>
+              <div class="info-row">
+                <strong>MAT 4827</strong>
+                <strong data-i18n="period">JUN 2026</strong>
+              </div>
+            </div>
+            <div style="text-align:right">
+              <div class="agent-badge" data-i18n="q-star">ESTRELA</div>
+              <div style="font-size:11px; margin-top:8px; opacity:0.86" data-i18n="trend">↑ subiu de Cavalo no mês passado</div>
+            </div>
+          </div>
+          <div class="score-cards">
+            <div class="score-card">
+              <div class="label" data-i18n="axis-x">Eixo Produtividade</div>
+              <div class="axis-name" data-i18n="axis-x-name">Produtividade</div>
+              <div class="axis-val">82</div>
+              <div class="axis-bar"><span style="width:82%"></span></div>
+              <div class="contrib-list">
+                <div class="contrib-row"><span class="name" data-i18n="ind-1">Atendimentos por hora</span><span class="val">94</span></div>
+                <div class="contrib-row"><span class="name" data-i18n="ind-2">Tempo médio resposta</span><span class="val">76</span></div>
+                <div class="contrib-row"><span class="name" data-i18n="ind-3">Resolução primeiro contato</span><span class="val">79</span></div>
+              </div>
+            </div>
+            <div class="score-card">
+              <div class="label" data-i18n="axis-y">Eixo Qualidade</div>
+              <div class="axis-name" data-i18n="axis-y-name">Qualidade</div>
+              <div class="axis-val">76</div>
+              <div class="axis-bar"><span style="width:76%; background:linear-gradient(90deg, var(--q-horse), var(--q-star))"></span></div>
+              <div class="contrib-list">
+                <div class="contrib-row"><span class="name" data-i18n="ind-4">CSAT médio</span><span class="val">82</span></div>
+                <div class="contrib-row"><span class="name" data-i18n="ind-5">NPS contribuído</span><span class="val">71</span></div>
+                <div class="contrib-row"><span class="name" data-i18n="ind-6">Auditoria qualidade</span><span class="val">74</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-head">
+              <div class="panel-title" data-i18n="my-pos">Minha posição no quadrante</div>
+            </div>
+            <div class="panel-body">
+              <div class="quadrant-chart" id="quad-chart-agent" style="height: 360px">
+                <div class="q-axis-x"></div>
+                <div class="q-axis-y"></div>
+                <div class="q-label tl" data-i18n="q-horse">CAVALOS</div>
+                <div class="q-label tr" data-i18n="q-star">ESTRELAS</div>
+                <div class="q-label bl" data-i18n="q-dog">PROBLEMAS</div>
+                <div class="q-label br" data-i18n="q-cow">VACAS</div>
+                <div class="q-axis-label x-right" data-i18n="axis-x-high">+ Produtividade</div>
+                <div class="q-axis-label x-left" data-i18n="axis-x-low">- Produtividade</div>
+                <div class="q-axis-label y-top" data-i18n="axis-y-high">+ Qualidade</div>
+                <div class="q-axis-label y-bottom" data-i18n="axis-y-low">- Qualidade</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- AGENT: HISTORY -->
+        <section class="view" data-view="agent-history">
+          <div class="view-head">
+            <div>
+              <div class="view-title" data-i18n="hist-h">Histórico de performance</div>
+              <div class="view-sub" data-i18n="hist-sub">Como minha posição se moveu ao longo do tempo.</div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-head">
+              <div class="panel-title" data-i18n="hist-line">Trajetória mensal</div>
+            </div>
+            <div class="panel-body">
+              <div class="history-chart">
+                <svg class="history-svg" viewBox="0 0 600 220" preserveAspectRatio="none">
+                  <!-- Grid lines -->
+                  <line x1="0" y1="55" x2="600" y2="55" stroke="#CBD5E1" stroke-width="0.5" stroke-dasharray="4 4"/>
+                  <line x1="0" y1="110" x2="600" y2="110" stroke="#CBD5E1" stroke-width="0.5" stroke-dasharray="4 4"/>
+                  <line x1="0" y1="165" x2="600" y2="165" stroke="#CBD5E1" stroke-width="0.5" stroke-dasharray="4 4"/>
+                  <!-- Productivity line (X axis) -->
+                  <polyline points="40,140 130,120 220,100 310,80 400,70 490,55 560,40" fill="none" stroke="#0F766E" stroke-width="2.5" stroke-linecap="round"/>
+                  <!-- Quality line (Y axis) -->
+                  <polyline points="40,160 130,150 220,135 310,120 400,95 490,75 560,55" fill="none" stroke="#8B5CF6" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="6 4"/>
+                  <!-- Productivity dots -->
+                  <circle cx="40" cy="140" r="4" fill="#0F766E"/>
+                  <circle cx="130" cy="120" r="4" fill="#0F766E"/>
+                  <circle cx="220" cy="100" r="4" fill="#0F766E"/>
+                  <circle cx="310" cy="80" r="4" fill="#0F766E"/>
+                  <circle cx="400" cy="70" r="4" fill="#0F766E"/>
+                  <circle cx="490" cy="55" r="4" fill="#0F766E"/>
+                  <circle cx="560" cy="40" r="5" fill="white" stroke="#0F766E" stroke-width="3"/>
+                  <!-- Quality dots -->
+                  <circle cx="40" cy="160" r="4" fill="#8B5CF6"/>
+                  <circle cx="130" cy="150" r="4" fill="#8B5CF6"/>
+                  <circle cx="220" cy="135" r="4" fill="#8B5CF6"/>
+                  <circle cx="310" cy="120" r="4" fill="#8B5CF6"/>
+                  <circle cx="400" cy="95" r="4" fill="#8B5CF6"/>
+                  <circle cx="490" cy="75" r="4" fill="#8B5CF6"/>
+                  <circle cx="560" cy="55" r="5" fill="white" stroke="#8B5CF6" stroke-width="3"/>
+                </svg>
+                <div class="history-labels">
+                  <span>JAN</span><span>FEV</span><span>MAR</span><span>ABR</span><span>MAI</span><span>JUN</span><span data-i18n="hoje">HOJE</span>
+                </div>
+              </div>
+              <div style="display:flex; gap:18px; margin-top:14px; font-size:12px">
+                <div style="display:flex; align-items:center; gap:6px">
+                  <span style="width:14px; height:3px; background:var(--primary); border-radius:2px"></span>
+                  <span data-i18n="axis-x-name">Produtividade</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:6px">
+                  <span style="width:14px; height:3px; background:var(--q-horse); border-radius:2px; background-image: linear-gradient(90deg, var(--q-horse) 50%, transparent 50%); background-size: 6px 100%"></span>
+                  <span data-i18n="axis-y-name">Qualidade</span>
+                </div>
+              </div>
+              <div class="insight-banner">
+                <div class="ic">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                </div>
+                <div>
+                  <h4 data-i18n="moved-h">Trajetória dos últimos 6 meses</h4>
+                  <p data-i18n="moved-p">Movi de Problemas (jan) para Cavalos (mar) e estou em Estrelas desde maio. Maior salto foi no eixo Qualidade impulsionado pelos indicadores CSAT e auditoria.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- AGENT: MY INDICATORS -->
+        <section class="view" data-view="agent-indicators">
+          <div class="view-head">
+            <div>
+              <div class="view-title" data-i18n="my-ind-h">Meus indicadores</div>
+              <div class="view-sub" data-i18n="my-ind-sub">Detalhe de cada métrica que compõe meu score.</div>
+            </div>
+          </div>
+          <div class="panel">
+            <div id="my-indicators-list">
+              <!-- populated by JS -->
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+const I18N = {
+  pt: {
+    'brand-sub': 'Performance por quadrante ponderado',
+    'restart': 'Reiniciar',
+    'role-admin': 'Administrador',
+    'role-agent': 'Atendente · MAT 4827',
+    'rls-h': 'Isolamento RLS',
+    'rls-p': 'Cada atendente vê apenas os próprios dados via Row Level Security.',
+    'nav-dash': 'Dashboard',
+    'nav-quad': 'Quadrante',
+    'nav-ind': 'Indicadores',
+    'nav-agents': 'Atendentes',
+    'nav-home': 'Meu painel',
+    'nav-history': 'Histórico',
+    'nav-my-ind': 'Meus indicadores',
+    'dash-h': 'Dashboard de performance',
+    'dash-sub': 'Visão geral da equipe distribuída por quadrante.',
+    'add-period': 'Adicionar período',
+    'q-star': 'Estrelas',
+    'q-horse': 'Cavalos',
+    'q-cow': 'Vacas',
+    'q-dog': 'Problemas',
+    'of-team': 'de 32 atendentes',
+    'qm-h': 'Mapa do quadrante',
+    'export': 'Exportar',
+    'axis-x-high': '+ Produtividade',
+    'axis-x-low': '- Produtividade',
+    'axis-y-high': '+ Qualidade',
+    'axis-y-low': '- Qualidade',
+    'recent-h': 'Atendentes em destaque',
+    'weight-h': 'Pesos definem tudo',
+    'weight-p': 'Mude o peso de qualquer indicador na seção Indicadores e veja os pontos do quadrante recalcularem em tempo real.',
+    'quad-full-h': 'Mapa do quadrante',
+    'quad-full-sub': 'Cada ponto é um atendente posicionado pela soma ponderada dos indicadores em cada eixo.',
+    'math-h': 'A matemática por trás dos pontos',
+    'math-p': 'Posição X é soma ponderada normalizada de indicadores marcados como eixo X. Mesma lógica para Y. Quando admin muda peso de um indicador a posição de todo atendente recalcula automaticamente preservando a relação com os demais.',
+    'ind-h': 'Indicadores e pesos',
+    'ind-sub': 'Ajuste pesos para ver o quadrante recalcular em tempo real.',
+    'new-ind': 'Novo indicador',
+    'ind-list-h': 'Indicadores ativos',
+    'live-quad': 'Quadrante ao vivo',
+    'resetting': 'Atualizando ao mudar pesos',
+    'agents-h': 'Atendentes',
+    'agents-sub': 'Lista completa com posição e quadrante atual.',
+    'agent-tag': 'Atendente sênior · Equipe vendas',
+    'period': 'JUN 2026',
+    'trend': '↑ subiu de Cavalo no mês passado',
+    'axis-x': 'Eixo Produtividade',
+    'axis-y': 'Eixo Qualidade',
+    'axis-x-name': 'Produtividade',
+    'axis-y-name': 'Qualidade',
+    'ind-1': 'Atendimentos por hora',
+    'ind-2': 'Tempo médio resposta',
+    'ind-3': 'Resolução primeiro contato',
+    'ind-4': 'CSAT médio',
+    'ind-5': 'NPS contribuído',
+    'ind-6': 'Auditoria qualidade',
+    'my-pos': 'Minha posição no quadrante',
+    'hist-h': 'Histórico de performance',
+    'hist-sub': 'Como minha posição se moveu ao longo do tempo.',
+    'hist-line': 'Trajetória mensal',
+    'hoje': 'HOJE',
+    'moved-h': 'Trajetória dos últimos 6 meses',
+    'moved-p': 'Movi de Problemas (jan) para Cavalos (mar) e estou em Estrelas desde maio. Maior salto foi no eixo Qualidade impulsionado pelos indicadores CSAT e auditoria.',
+    'my-ind-h': 'Meus indicadores',
+    'my-ind-sub': 'Detalhe de cada métrica que compõe meu score.',
+    'tooltip-pos': 'Posição',
+  },
+  en: {
+    'brand-sub': 'Weighted quadrant performance',
+    'restart': 'Restart',
+    'role-admin': 'Administrator',
+    'role-agent': 'Agent · MAT 4827',
+    'rls-h': 'RLS isolation',
+    'rls-p': 'Each agent sees only their own data via Row Level Security.',
+    'nav-dash': 'Dashboard',
+    'nav-quad': 'Quadrant',
+    'nav-ind': 'Indicators',
+    'nav-agents': 'Agents',
+    'nav-home': 'My panel',
+    'nav-history': 'History',
+    'nav-my-ind': 'My indicators',
+    'dash-h': 'Performance dashboard',
+    'dash-sub': 'Team overview distributed across the quadrant.',
+    'add-period': 'Add period',
+    'q-star': 'Stars',
+    'q-horse': 'Horses',
+    'q-cow': 'Cows',
+    'q-dog': 'Problems',
+    'of-team': 'of 32 agents',
+    'qm-h': 'Quadrant map',
+    'export': 'Export',
+    'axis-x-high': '+ Productivity',
+    'axis-x-low': '- Productivity',
+    'axis-y-high': '+ Quality',
+    'axis-y-low': '- Quality',
+    'recent-h': 'Featured agents',
+    'weight-h': 'Weights drive everything',
+    'weight-p': 'Change any indicator weight in the Indicators section and watch the quadrant dots recalculate in real time.',
+    'quad-full-h': 'Quadrant map',
+    'quad-full-sub': 'Each dot is an agent positioned by the weighted sum of indicators on each axis.',
+    'math-h': 'The math behind the dots',
+    'math-p': 'X position equals normalized weighted sum of indicators flagged as X axis. Same logic for Y. When admin changes an indicator weight every agent position recalculates automatically while preserving relative positions.',
+    'ind-h': 'Indicators and weights',
+    'ind-sub': 'Adjust weights to see the quadrant recalculate in real time.',
+    'new-ind': 'New indicator',
+    'ind-list-h': 'Active indicators',
+    'live-quad': 'Live quadrant',
+    'resetting': 'Updating as weights change',
+    'agents-h': 'Agents',
+    'agents-sub': 'Full list with current position and quadrant.',
+    'agent-tag': 'Senior agent · Sales team',
+    'period': 'JUN 2026',
+    'trend': '↑ moved up from Horse last month',
+    'axis-x': 'Productivity axis',
+    'axis-y': 'Quality axis',
+    'axis-x-name': 'Productivity',
+    'axis-y-name': 'Quality',
+    'ind-1': 'Tickets per hour',
+    'ind-2': 'Avg response time',
+    'ind-3': 'First-contact resolution',
+    'ind-4': 'Avg CSAT',
+    'ind-5': 'NPS contribution',
+    'ind-6': 'Quality audit',
+    'my-pos': 'My position in the quadrant',
+    'hist-h': 'Performance history',
+    'hist-sub': 'How my position has moved over time.',
+    'hist-line': 'Monthly trajectory',
+    'hoje': 'TODAY',
+    'moved-h': '6-month trajectory',
+    'moved-p': 'Moved from Problems (Jan) to Horses (Mar) and have been in Stars since May. Biggest jump was on the Quality axis driven by the CSAT and audit indicators.',
+    'my-ind-h': 'My indicators',
+    'my-ind-sub': 'Detail of each metric contributing to my score.',
+    'tooltip-pos': 'Position',
+  }
+};
+let currentLang = 'pt';
+let currentRole = 'admin';
+function applyI18n() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    const val = I18N[currentLang][key];
+    if (val !== undefined) el.textContent = val;
+  });
+  document.documentElement.lang = currentLang === 'pt' ? 'pt-BR' : 'en';
+  renderIndicators();
+  renderAgentIndicators();
+}
+
+// AGENT DATA
+const AGENTS = [
+  { name: 'Ana C.', mat: '4827', initials: 'AC', // Star
+    scores: { tickets_per_hour: 94, response_time: 76, fcr: 79, csat: 82, nps: 71, audit: 74 } },
+  { name: 'Rafael M.', mat: '4801', initials: 'RM', // Horse
+    scores: { tickets_per_hour: 58, response_time: 65, fcr: 60, csat: 89, nps: 86, audit: 88 } },
+  { name: 'Larissa C.', mat: '4855', initials: 'LC', // Cow
+    scores: { tickets_per_hour: 92, response_time: 85, fcr: 88, csat: 45, nps: 38, audit: 42 } },
+  { name: 'Tales F.', mat: '4889', initials: 'TF', // Dog
+    scores: { tickets_per_hour: 42, response_time: 38, fcr: 35, csat: 38, nps: 32, audit: 35 } },
+  { name: 'Paula B.', mat: '4812', initials: 'PB', // Star
+    scores: { tickets_per_hour: 75, response_time: 68, fcr: 72, csat: 84, nps: 80, audit: 81 } },
+  { name: 'Carlos S.', mat: '4866', initials: 'CS', // Horse
+    scores: { tickets_per_hour: 51, response_time: 58, fcr: 55, csat: 80, nps: 78, audit: 82 } },
+  { name: 'Mariana N.', mat: '4843', initials: 'MN', // Star
+    scores: { tickets_per_hour: 78, response_time: 81, fcr: 76, csat: 73, nps: 75, audit: 78 } },
+  { name: 'Diego R.', mat: '4877', initials: 'DR', // Cow
+    scores: { tickets_per_hour: 84, response_time: 82, fcr: 79, csat: 48, nps: 45, audit: 50 } },
+  { name: 'Fernanda P.', mat: '4892', initials: 'FP', // Dog
+    scores: { tickets_per_hour: 35, response_time: 42, fcr: 38, csat: 45, nps: 38, audit: 41 } },
+  { name: 'Ricardo L.', mat: '4824', initials: 'RL', // Star
+    scores: { tickets_per_hour: 88, response_time: 85, fcr: 82, csat: 78, nps: 76, audit: 80 } },
+  { name: 'Juliana T.', mat: '4838', initials: 'JT', // Horse
+    scores: { tickets_per_hour: 48, response_time: 52, fcr: 50, csat: 88, nps: 90, audit: 84 } },
+  { name: 'Bruno A.', mat: '4861', initials: 'BA', // Cow
+    scores: { tickets_per_hour: 81, response_time: 79, fcr: 84, csat: 50, nps: 48, audit: 52 } },
+];
+
+// INDICATORS
+let INDICATORS = [
+  { id: 'tickets_per_hour', name_pt: 'Atendimentos por hora', name_en: 'Tickets per hour', axis: 'x', weight: 30, active: true },
+  { id: 'response_time', name_pt: 'Tempo médio resposta', name_en: 'Avg response time', axis: 'x', weight: 20, active: true },
+  { id: 'fcr', name_pt: 'Resolução primeiro contato', name_en: 'First-contact resolution', axis: 'x', weight: 50, active: true },
+  { id: 'csat', name_pt: 'CSAT médio', name_en: 'Avg CSAT', axis: 'y', weight: 40, active: true },
+  { id: 'nps', name_pt: 'NPS contribuído', name_en: 'NPS contribution', axis: 'y', weight: 25, active: true },
+  { id: 'audit', name_pt: 'Auditoria qualidade', name_en: 'Quality audit', axis: 'y', weight: 35, active: true },
+];
+
+function calcPosition(agent) {
+  const xWeightSum = INDICATORS.filter(i => i.axis === 'x' && i.active).reduce((s, i) => s + i.weight, 0) || 1;
+  const yWeightSum = INDICATORS.filter(i => i.axis === 'y' && i.active).reduce((s, i) => s + i.weight, 0) || 1;
+  const x = INDICATORS.filter(i => i.axis === 'x' && i.active).reduce((s, i) => s + (agent.scores[i.id] || 0) * i.weight, 0) / xWeightSum;
+  const y = INDICATORS.filter(i => i.axis === 'y' && i.active).reduce((s, i) => s + (agent.scores[i.id] || 0) * i.weight, 0) / yWeightSum;
+  return { x, y };
+}
+
+function quadrantOf(x, y) {
+  if (x >= 50 && y >= 50) return 'star';
+  if (x < 50 && y >= 50) return 'horse';
+  if (x >= 50 && y < 50) return 'cow';
+  return 'dog';
+}
+
+function renderDots(containerId, highlightMat) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.querySelectorAll('.q-dot').forEach(d => d.remove());
+  AGENTS.forEach(agent => {
+    const { x, y } = calcPosition(agent);
+    const q = quadrantOf(x, y);
+    const dot = document.createElement('div');
+    dot.className = 'q-dot ' + q;
+    if (agent.mat === highlightMat) dot.classList.add('highlight');
+    dot.style.left = x + '%';
+    dot.style.bottom = y + '%';
+    dot.textContent = agent.initials;
+    dot.addEventListener('mouseenter', (e) => showTooltip(e, agent, x, y));
+    dot.addEventListener('mouseleave', hideTooltip);
+    container.appendChild(dot);
+  });
+}
+
+function showTooltip(e, agent, x, y) {
+  const tt = document.getElementById('tooltip');
+  tt.innerHTML = `<strong>${agent.name} · MAT ${agent.mat}</strong><span>${I18N[currentLang]['tooltip-pos']}: ${Math.round(x)} / ${Math.round(y)}</span>`;
+  tt.classList.add('show');
+  const rect = e.target.getBoundingClientRect();
+  tt.style.left = (rect.left + window.scrollX + 20) + 'px';
+  tt.style.top = (rect.top + window.scrollY - 30) + 'px';
+}
+function hideTooltip() {
+  document.getElementById('tooltip').classList.remove('show');
+}
+
+function renderIndicators() {
+  const list = document.getElementById('indicator-list');
+  if (!list) return;
+  list.innerHTML = '';
+  INDICATORS.forEach((ind, idx) => {
+    const row = document.createElement('div');
+    row.className = 'indicator-row';
+    const indName = currentLang === 'pt' ? ind.name_pt : ind.name_en;
+    const axisLabel = ind.axis === 'x'
+      ? (currentLang === 'pt' ? 'EIXO X' : 'X AXIS')
+      : (currentLang === 'pt' ? 'EIXO Y' : 'Y AXIS');
+    row.innerHTML = `
+      <div class="name">
+        <strong>${indName}</strong>
+        <span>${currentLang === 'pt' ? 'Contribui para' : 'Contributes to'} ${ind.axis === 'x' ? (currentLang === 'pt' ? 'Produtividade' : 'Productivity') : (currentLang === 'pt' ? 'Qualidade' : 'Quality')}</span>
+      </div>
+      <span class="axis-tag ${ind.axis}">${axisLabel}</span>
+      <div class="weight-control">
+        <input type="range" min="0" max="100" value="${ind.weight}" data-idx="${idx}" />
+        <span class="weight-val">${ind.weight}</span>
+      </div>
+      <div class="toggle-active ${ind.active ? '' : 'off'}" data-idx="${idx}"></div>
+    `;
+    list.appendChild(row);
+  });
+  list.querySelectorAll('input[type="range"]').forEach(input => {
+    input.addEventListener('input', e => {
+      const idx = parseInt(e.target.dataset.idx, 10);
+      INDICATORS[idx].weight = parseInt(e.target.value, 10);
+      e.target.nextElementSibling.textContent = e.target.value;
+      renderDots('quad-chart-live');
+      renderDots('quad-chart');
+      renderDots('quad-chart-full');
+      renderDots('quad-chart-agent', '4827');
+      renderAgentList();
+    });
+  });
+  list.querySelectorAll('.toggle-active').forEach(toggle => {
+    toggle.addEventListener('click', e => {
+      const idx = parseInt(e.target.dataset.idx, 10);
+      INDICATORS[idx].active = !INDICATORS[idx].active;
+      renderIndicators();
+      renderDots('quad-chart-live');
+      renderDots('quad-chart');
+      renderDots('quad-chart-full');
+      renderDots('quad-chart-agent', '4827');
+      renderAgentList();
+    });
+  });
+}
+
+function renderAgentList() {
+  const list = document.getElementById('agent-list');
+  if (!list) return;
+  list.innerHTML = '';
+  AGENTS.forEach(agent => {
+    const { x, y } = calcPosition(agent);
+    const q = quadrantOf(x, y);
+    const qLabel = I18N[currentLang]['q-' + q];
+    const row = document.createElement('div');
+    row.className = 'agent-row';
+    row.innerHTML = `
+      <div class="avatar">${agent.initials}</div>
+      <div class="info">
+        <strong>${agent.name}</strong>
+        <div class="mat">MAT ${agent.mat}</div>
+      </div>
+      <span class="axis-mini">${Math.round(x)}</span>
+      <span class="axis-mini">${Math.round(y)}</span>
+      <span class="quadrant-pill ${q}">${qLabel}</span>
+      <span style="color:var(--text-3); font-size:14px">›</span>
+    `;
+    list.appendChild(row);
+  });
+}
+
+function renderAgentIndicators() {
+  const list = document.getElementById('my-indicators-list');
+  if (!list) return;
+  const agent = AGENTS[0]; // Ana C. demo
+  list.innerHTML = '';
+  INDICATORS.filter(i => i.active).forEach(ind => {
+    const score = agent.scores[ind.id] || 0;
+    const indName = currentLang === 'pt' ? ind.name_pt : ind.name_en;
+    const axisLabel = ind.axis === 'x'
+      ? (currentLang === 'pt' ? 'EIXO X · PRODUTIVIDADE' : 'X AXIS · PRODUCTIVITY')
+      : (currentLang === 'pt' ? 'EIXO Y · QUALIDADE' : 'Y AXIS · QUALITY');
+    const row = document.createElement('div');
+    row.className = 'agent-row';
+    row.style.gridTemplateColumns = '1fr auto auto';
+    row.innerHTML = `
+      <div class="info">
+        <strong>${indName}</strong>
+        <div class="mat">${axisLabel} · ${currentLang === 'pt' ? 'Peso' : 'Weight'} ${ind.weight}</div>
+      </div>
+      <div style="width:200px; height:8px; background:var(--bg-warm); border-radius:4px; overflow:hidden">
+        <div style="width:${score}%; height:100%; background: ${score >= 70 ? 'var(--q-star)' : score >= 50 ? 'var(--q-cow)' : 'var(--q-dog)'}; border-radius:4px"></div>
+      </div>
+      <span class="axis-mini" style="min-width:50px; font-size:13px">${score}</span>
+    `;
+    list.appendChild(row);
+  });
+}
+
+// VIEW SWITCHING
+function show(viewName) {
+  document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.dataset.view === viewName));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.view === viewName));
+  document.getElementById('url-path').textContent = '/' + viewName;
+  // Update dots in current view
+  setTimeout(() => {
+    renderDots('quad-chart');
+    renderDots('quad-chart-full');
+    renderDots('quad-chart-live');
+    renderDots('quad-chart-agent', '4827');
+  }, 50);
+}
+
+document.querySelectorAll('.nav-item[data-view]').forEach(n => {
+  n.addEventListener('click', () => show(n.dataset.view));
+});
+
+// Role toggle
+document.getElementById('role-toggle').addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  document.querySelectorAll('#role-toggle button').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  currentRole = b.dataset.role;
+  if (currentRole === 'admin') {
+    document.getElementById('admin-nav').style.display = '';
+    document.getElementById('agent-nav').style.display = 'none';
+    document.getElementById('user-avatar').textContent = 'RH';
+    document.getElementById('user-name').textContent = currentLang === 'pt' ? 'RH Admin' : 'HR Admin';
+    document.getElementById('user-role').textContent = I18N[currentLang]['role-admin'];
+    show('dashboard');
+  } else {
+    document.getElementById('admin-nav').style.display = 'none';
+    document.getElementById('agent-nav').style.display = '';
+    document.getElementById('user-avatar').textContent = 'AC';
+    document.getElementById('user-name').textContent = 'Ana C.';
+    document.getElementById('user-role').textContent = I18N[currentLang]['role-agent'];
+    show('agent-home');
+  }
+});
+
+// Language
+document.getElementById('lang-toggle').addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  document.querySelectorAll('#lang-toggle button').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  currentLang = b.dataset.lang;
+  applyI18n();
+  renderAgentList();
+});
+
+// Restart
+document.getElementById('restart-btn').addEventListener('click', () => {
+  INDICATORS = [
+    { id: 'tickets_per_hour', name_pt: 'Atendimentos por hora', name_en: 'Tickets per hour', axis: 'x', weight: 30, active: true },
+    { id: 'response_time', name_pt: 'Tempo médio resposta', name_en: 'Avg response time', axis: 'x', weight: 20, active: true },
+    { id: 'fcr', name_pt: 'Resolução primeiro contato', name_en: 'First-contact resolution', axis: 'x', weight: 50, active: true },
+    { id: 'csat', name_pt: 'CSAT médio', name_en: 'Avg CSAT', axis: 'y', weight: 40, active: true },
+    { id: 'nps', name_pt: 'NPS contribuído', name_en: 'NPS contribution', axis: 'y', weight: 25, active: true },
+    { id: 'audit', name_pt: 'Auditoria qualidade', name_en: 'Quality audit', axis: 'y', weight: 35, active: true },
+  ];
+  applyI18n();
+  renderAgentList();
+  show('dashboard');
+});
+
+// Initial render
+applyI18n();
+renderAgentList();
+renderIndicators();
+renderAgentIndicators();
+renderDots('quad-chart');
+renderDots('quad-chart-full');
+renderDots('quad-chart-live');
+renderDots('quad-chart-agent', '4827');
+</script>
+</body>
+</html>
