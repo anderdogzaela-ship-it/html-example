@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Protecta – Demo 3D</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  :root{
+    --brand:#00d4aa;
+    --brand-dark:#00a882;
+    --bg:#0a0a0f;
+    --surface:#12121a;
+    --text:#f0f4ff;
+    --muted:#8892a4;
+  }
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;
+    background:var(--bg);color:var(--text);
+    min-height:100vh;overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ── NAV ── */
+  nav{
+    position:fixed;top:0;left:0;right:0;z-index:100;
+    padding:16px 20px;
+    display:flex;align-items:center;justify-content:space-between;
+    background:rgba(10,10,15,0.85);backdrop-filter:blur(20px);
+    border-bottom:1px solid rgba(255,255,255,0.06);
+  }
+  .logo{font-size:18px;font-weight:800;letter-spacing:-0.5px;color:var(--text);}
+  .logo span{color:var(--brand);}
+  .nav-badge{
+    font-size:11px;font-weight:700;
+    background:rgba(0,212,170,0.15);color:var(--brand);
+    border:1px solid rgba(0,212,170,0.3);
+    border-radius:20px;padding:4px 12px;
+  }
+
+  /* ── HERO SECTION ── */
+  .hero{
+    min-height:100vh;
+    display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+    padding:80px 24px 32px;
+    position:relative;overflow:hidden;
+  }
+  .hero-glow{
+    position:absolute;top:20%;left:50%;transform:translateX(-50%);
+    width:600px;height:600px;
+    background:radial-gradient(circle,rgba(0,212,170,0.12) 0%,transparent 70%);
+    pointer-events:none;
+  }
+  .hero-label{
+    font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;
+    color:var(--brand);margin-bottom:16px;
+    display:flex;align-items:center;gap:8px;
+  }
+  .hero-label::before,.hero-label::after{content:'';flex:1;max-width:40px;height:1px;background:var(--brand);}
+  .hero-title{
+    font-size:clamp(28px,7vw,52px);font-weight:800;
+    letter-spacing:-1px;line-height:1.05;
+    text-align:center;margin-bottom:12px;
+  }
+  .hero-sub{
+    font-size:16px;color:var(--muted);text-align:center;
+    max-width:340px;line-height:1.5;margin-bottom:40px;
+  }
+
+  /* ── 3D SCENE ── */
+  #scene-wrap{
+    position:relative;width:100%;max-width:360px;
+    display:flex;flex-direction:column;align-items:center;
+    margin-bottom:32px;
+  }
+  #three-canvas{
+    width:100%;max-width:320px;height:480px;
+    border-radius:24px;
+    display:block;
+    background:transparent;
+  }
+
+  /* Layer status indicators */
+  .layer-indicators{
+    position:absolute;right:-8px;top:50%;transform:translateY(-50%);
+    display:flex;flex-direction:column;gap:8px;
+  }
+  .layer-ind{
+    width:36px;height:36px;border-radius:10px;
+    border:1.5px solid rgba(255,255,255,0.1);
+    background:rgba(18,18,26,0.9);
+    display:flex;align-items:center;justify-content:center;
+    font-size:14px;
+    transition:all 0.4s ease;
+    cursor:default;
+  }
+  .layer-ind.applied{
+    border-color:var(--brand);
+    background:rgba(0,212,170,0.15);
+    box-shadow:0 0 12px rgba(0,212,170,0.3);
+  }
+  .layer-ind.current{
+    border-color:var(--brand);
+    background:rgba(0,212,170,0.25);
+    animation:indPulse 1s ease-in-out infinite;
+  }
+  @keyframes indPulse{0%,100%{box-shadow:0 0 8px rgba(0,212,170,0.3)}50%{box-shadow:0 0 20px rgba(0,212,170,0.6)}}
+
+  /* ── STEP PANEL ── */
+  .step-panel{
+    width:100%;max-width:360px;
+    padding:0 24px;
+  }
+  .step-info{
+    background:var(--surface);
+    border:1px solid rgba(255,255,255,0.08);
+    border-radius:20px;
+    padding:20px;
+    margin-bottom:20px;
+    min-height:110px;
+    transition:all 0.3s ease;
+  }
+  .step-number{
+    font-size:10px;font-weight:700;text-transform:uppercase;
+    letter-spacing:1.5px;color:var(--brand);margin-bottom:8px;
+  }
+  .step-title{
+    font-size:20px;font-weight:800;letter-spacing:-0.3px;
+    margin-bottom:6px;
+    transition:all 0.3s ease;
+  }
+  .step-desc{
+    font-size:13px;color:var(--muted);line-height:1.5;
+    transition:all 0.3s ease;
+  }
+  .step-tech{
+    display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;
+  }
+  .tech-chip{
+    font-size:10px;font-weight:600;
+    background:rgba(255,255,255,0.06);
+    border:1px solid rgba(255,255,255,0.08);
+    border-radius:6px;padding:3px 8px;color:var(--muted);
+  }
+  .tech-chip.highlight{
+    background:rgba(0,212,170,0.1);border-color:rgba(0,212,170,0.2);color:var(--brand);
+  }
+
+  /* ── PROGRESS ── */
+  .progress-track{
+    display:flex;gap:6px;margin-bottom:16px;align-items:center;
+  }
+  .progress-dot{
+    flex:1;height:3px;border-radius:2px;
+    background:rgba(255,255,255,0.1);
+    transition:background 0.4s ease;
+  }
+  .progress-dot.done{background:var(--brand);}
+  .progress-dot.active{background:var(--brand);opacity:0.5;}
+
+  /* ── CTA BUTTON ── */
+  .cta-btn{
+    width:100%;padding:16px;
+    background:linear-gradient(135deg,var(--brand),var(--brand-dark));
+    color:#000;font-size:15px;font-weight:800;
+    border:none;border-radius:16px;cursor:pointer;
+    letter-spacing:-0.2px;
+    transition:all 0.2s ease;
+    box-shadow:0 8px 24px rgba(0,212,170,0.3);
+    position:relative;overflow:hidden;
+  }
+  .cta-btn:active{transform:scale(0.98);}
+  .cta-btn::after{
+    content:'';position:absolute;inset:0;
+    background:linear-gradient(rgba(255,255,255,0.15),transparent);
+    pointer-events:none;
+  }
+  .cta-btn.checkout{
+    background:linear-gradient(135deg,#6366f1,#4f46e5);
+    box-shadow:0 8px 24px rgba(99,102,241,0.3);
+    color:white;
+  }
+  .cta-btn.restart-btn-main{
+    background:rgba(255,255,255,0.06);
+    color:var(--text);border:1px solid rgba(255,255,255,0.1);
+    box-shadow:none;margin-top:10px;
+  }
+
+  /* ── MODEL SELECTOR ── */
+  .model-selector{
+    display:flex;gap:8px;margin-bottom:20px;
+    overflow-x:auto;padding-bottom:4px;
+  }
+  .model-selector::-webkit-scrollbar{display:none;}
+  .model-chip{
+    flex-shrink:0;padding:8px 16px;
+    background:var(--surface);border:1.5px solid rgba(255,255,255,0.1);
+    border-radius:12px;font-size:12px;font-weight:700;color:var(--muted);
+    cursor:pointer;transition:all 0.2s;white-space:nowrap;
+  }
+  .model-chip.active{
+    border-color:var(--brand);color:var(--brand);
+    background:rgba(0,212,170,0.1);
+  }
+
+  /* ── BOTTOM TECH NOTE ── */
+  .tech-note{
+    text-align:center;padding:24px 24px 40px;
+    font-size:11px;color:rgba(136,146,164,0.5);
+    line-height:1.6;
+  }
+  .tech-note strong{color:rgba(136,146,164,0.8);}
+
+  /* ── COMPLETE STATE ── */
+  .complete-badge{
+    display:none;
+    background:rgba(0,212,170,0.1);
+    border:1px solid rgba(0,212,170,0.3);
+    border-radius:12px;padding:12px 16px;
+    margin-bottom:12px;
+    text-align:center;
+    font-size:13px;font-weight:600;color:var(--brand);
+  }
+
+  /* perf badge */
+  .perf-badge{
+    position:absolute;top:12px;left:12px;
+    background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);
+    border:1px solid rgba(255,255,255,0.1);
+    border-radius:8px;padding:4px 10px;
+    font-size:10px;font-weight:700;color:#8892a4;
+    display:flex;align-items:center;gap:5px;
+  }
+  .fps-dot{width:6px;height:6px;border-radius:50%;background:#3fb950;animation:fpsAnim 1s infinite;}
+  @keyframes fpsAnim{0%,100%{opacity:1}50%{opacity:0.4}}
+
+  @media(min-width:600px){
+    .hero{padding-top:100px;}
+    #three-canvas{height:560px;}
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Protec<span>ta</span></div>
+  <div class="nav-badge">Demo 3D · Mobile-first</div>
+</nav>
+
+<div class="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-label">Experiência interativa</div>
+  <h1 class="hero-title">Proteja seu<br>iPhone em 3D</h1>
+  <p class="hero-sub">Veja cada camada de proteção sendo aplicada em tempo real</p>
+
+  <!-- Model selector -->
+  <div class="step-panel">
+    <div class="model-selector" id="modelSelector">
+      <div class="model-chip active" onclick="selectModel(this,'15 Pro Max')">iPhone 15 Pro Max</div>
+      <div class="model-chip" onclick="selectModel(this,'15 Pro')">iPhone 15 Pro</div>
+      <div class="model-chip" onclick="selectModel(this,'14 Pro')">iPhone 14 Pro</div>
+      <div class="model-chip" onclick="selectModel(this,'14')">iPhone 14</div>
+    </div>
+  </div>
+
+  <!-- 3D Scene -->
+  <div id="scene-wrap">
+    <canvas id="three-canvas"></canvas>
+    <div class="perf-badge"><div class="fps-dot"></div><span id="fpsLabel">60 fps</span></div>
+
+    <!-- Layer indicators -->
+    <div class="layer-indicators">
+      <div class="layer-ind" id="ind-film" title="Película">🛡️</div>
+      <div class="layer-ind" id="ind-case" title="Capinha">📱</div>
+      <div class="layer-ind" id="ind-lens" title="Protetor de lente">🔭</div>
+    </div>
+  </div>
+
+  <!-- Step panel -->
+  <div class="step-panel">
+    <div class="progress-track" id="progressTrack"></div>
+
+    <div class="complete-badge" id="completeBadge">✅ iPhone totalmente protegido!</div>
+
+    <div class="step-info" id="stepInfo">
+      <div class="step-number" id="stepNumber">Etapa 1 de 4</div>
+      <div class="step-title" id="stepTitle">Carregando…</div>
+      <div class="step-desc" id="stepDesc"></div>
+      <div class="step-tech" id="stepTech"></div>
+    </div>
+
+    <button class="cta-btn" id="mainBtn" onclick="advance()">Começar proteção →</button>
+    <button class="cta-btn restart-btn-main" id="restartBtnMain" onclick="restart()" style="display:none">↺ Reiniciar</button>
+  </div>
+</div>
+
+<div class="tech-note">
+  Protótipo de desenvolvimento · <strong>React Three Fiber + glTF + KTX2</strong><br>
+  Assets 3D finais requerem modelagem por artista 3D<br>
+  Otimizado para GPU mobile · draw calls sob orçamento Snapdragon
+</div>
+
+<!-- Three.js via CDN -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.min.js"></script>
+
+<script>
+// ─── STEPS DATA ──────────────────────────────────────────────────────────────
+const STEPS = [
+  {
+    id: 'start',
+    number: 'Selecione o modelo',
+    title: 'iPhone 15 Pro Max',
+    desc: 'Seu iPhone está sem proteção. Vamos aplicar as camadas uma a uma.',
+    btn: 'Aplicar película protetora →',
+    tech: ['glTF + Three.js','60 fps mobile'],
+    chips: [false, true],
+    indState: [false, false, false],
+    showDevice: true, showFilm: false, showCase: false, showLens: false,
+  },
+  {
+    id: 'film',
+    number: 'Etapa 1 de 3 · Película',
+    title: '🛡️ Película protetora aplicada',
+    desc: 'Cobertura total da tela contra arranhões e impactos. Tratamento anti-reflexo e toque preservado.',
+    btn: 'Aplicar capinha protetora →',
+    tech: ['Camada 1','Mesh separado no glTF'],
+    chips: [false, true],
+    indState: [true, false, false],
+    showDevice: true, showFilm: true, showCase: false, showLens: false,
+  },
+  {
+    id: 'case',
+    number: 'Etapa 2 de 3 · Capinha',
+    title: '📱 Capinha MagSafe aplicada',
+    desc: 'Proteção lateral e traseira contra quedas até 2m. Compatível com carregamento MagSafe.',
+    btn: 'Aplicar protetor de lente →',
+    tech: ['Camada 2','Geometria separada'],
+    chips: [false, true],
+    indState: [true, true, false],
+    showDevice: true, showFilm: true, showCase: true, showLens: false,
+  },
+  {
+    id: 'lens',
+    number: 'Etapa 3 de 3 · Protetor de lente',
+    title: '🔭 Protetor de lente aplicado',
+    desc: 'Proteção de vidro temperado para o sistema de câmera tripla. Sem perda de qualidade fotográfica.',
+    btn: 'Ver resultado final →',
+    tech: ['Camada 3','Animação por step index'],
+    chips: [false, true],
+    indState: [true, true, true],
+    showDevice: true, showFilm: true, showCase: true, showLens: true,
+  },
+  {
+    id: 'done',
+    number: 'Proteção completa',
+    title: '✨ iPhone totalmente protegido',
+    desc: 'Tela, corpo e câmera protegidos. Pronto para finalizar a compra.',
+    btn: '🛒 Ir para o checkout',
+    tech: ['KTX2 textures','Estrutura p/ gateway de pag.'],
+    chips: [true, false],
+    indState: [true, true, true],
+    showDevice: true, showFilm: true, showCase: true, showLens: true,
+  },
+];
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let stepIdx = 0;
+let selectedModel = 'iPhone 15 Pro Max';
+let animFrame = null;
+let frameCount = 0, lastFpsTime = performance.now();
+
+// ─── THREE.JS SETUP ──────────────────────────────────────────────────────────
+const canvas = document.getElementById('three-canvas');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // mobile GPU cap
+renderer.setClearColor(0x000000, 0);
+renderer.shadowMap.enabled = false; // perf: no shadows on mobile
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
+camera.position.set(0, 0, 5.5);
+
+// ── Lighting
+const ambient = new THREE.AmbientLight(0xffffff, 0.6);
+scene.add(ambient);
+const key = new THREE.DirectionalLight(0xffffff, 1.2);
+key.position.set(2, 4, 3);
+scene.add(key);
+const fill = new THREE.DirectionalLight(0x88ccff, 0.4);
+fill.position.set(-2, -1, 2);
+scene.add(fill);
+const rim = new THREE.DirectionalLight(0x00d4aa, 0.3);
+rim.position.set(0, -3, -2);
+scene.add(rim);
+
+// ── Build iPhone group (procedural geometry — production uses glTF)
+const phoneGroup = new THREE.Group();
+scene.add(phoneGroup);
+
+// Device body
+const bodyGeo = new THREE.BoxGeometry(1.4, 2.85, 0.14, 1, 1, 1);
+// Round the corners via custom shader not needed — use CylinderGeometry trick with merged geo
+// For demo we use a slightly rounded box appearance with a normal map trick
+const bodyMat = new THREE.MeshPhysicalMaterial({
+  color: 0x1a1a2e,
+  metalness: 0.95,
+  roughness: 0.1,
+  reflectivity: 1.0,
+});
+const body = new THREE.Mesh(bodyGeo, bodyMat);
+phoneGroup.add(body);
+
+// Screen glass
+const screenGeo = new THREE.PlaneGeometry(1.22, 2.65);
+const screenMat = new THREE.MeshPhysicalMaterial({
+  color: 0x080818,
+  metalness: 0.0,
+  roughness: 0.05,
+  transmission: 0.1,
+  transparent: true,
+  opacity: 0.98,
+});
+const screen = new THREE.Mesh(screenGeo, screenMat);
+screen.position.z = 0.072;
+phoneGroup.add(screen);
+
+// Fake screen glow (sprite)
+const glowGeo = new THREE.PlaneGeometry(1.1, 2.5);
+const glowCanvas2d = document.createElement('canvas');
+glowCanvas2d.width = 256; glowCanvas2d.height = 512;
+const gc = glowCanvas2d.getContext('2d');
+const grad = gc.createLinearGradient(0, 0, 0, 512);
+grad.addColorStop(0, 'rgba(0,212,170,0.25)');
+grad.addColorStop(0.5, 'rgba(30,30,80,0.6)');
+grad.addColorStop(1, 'rgba(80,0,120,0.2)');
+gc.fillStyle = grad;
+gc.fillRect(0, 0, 256, 512);
+const glowTex = new THREE.CanvasTexture(glowCanvas2d);
+const glowMat = new THREE.MeshBasicMaterial({ map: glowTex, transparent: true, opacity: 0.85 });
+const glowMesh = new THREE.Mesh(glowGeo, glowMat);
+glowMesh.position.z = 0.073;
+phoneGroup.add(glowMesh);
+
+// Dynamic island
+const diGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.04, 24);
+diGeo.rotateX(Math.PI / 2);
+const diMat = new THREE.MeshPhysicalMaterial({ color: 0x000000, roughness: 0.2 });
+const di = new THREE.Mesh(diGeo, diMat);
+di.position.set(0, 1.2, 0.075);
+di.scale.set(1.8, 1, 1);
+phoneGroup.add(di);
+
+// Camera bump (back)
+const camBumpGeo = new THREE.CylinderGeometry(0.36, 0.36, 0.06, 32);
+camBumpGeo.rotateX(Math.PI / 2);
+const camBumpMat = new THREE.MeshPhysicalMaterial({ color: 0x111122, metalness: 0.9, roughness: 0.2 });
+const camBump = new THREE.Mesh(camBumpGeo, camBumpMat);
+camBump.position.set(-0.28, 0.78, -0.1);
+camBump.visible = false; // only visible when case is not applied
+
+// 3 camera lenses
+const lensGeo = new THREE.CylinderGeometry(0.1, 0.1, 0.04, 20);
+lensGeo.rotateX(Math.PI / 2);
+const lensMat = new THREE.MeshPhysicalMaterial({ color: 0x000005, metalness: 1.0, roughness: 0.0, transmission: 0.2 });
+const lenses = [];
+[[-0.12, 0.94], [0.12, 0.94], [-0.12, 0.64], [0.12, 0.64]].slice(0, 3).forEach(([x, y]) => {
+  const l = new THREE.Mesh(lensGeo, lensMat);
+  l.position.set(x - 0.28, y - 0.04, -0.13);
+  lenses.push(l);
+  phoneGroup.add(l);
+});
+
+// Side buttons
+[-1.18].forEach(x => {
+  const btnGeo = new THREE.BoxGeometry(0.04, 0.22, 0.06);
+  const btnMat = new THREE.MeshPhysicalMaterial({ color: 0x2a2a3e, metalness: 0.9, roughness: 0.1 });
+  const btn = new THREE.Mesh(btnGeo, btnMat);
+  btn.position.set(x * -0.62, 0.3, 0);
+  phoneGroup.add(btn);
+});
+
+// ── LAYER MESHES (separate meshes = glTF approach signal) ──
+
+// Film layer (thin plane on screen, slightly inset glass look)
+const filmGeo = new THREE.PlaneGeometry(1.22, 2.65);
+const filmMat = new THREE.MeshPhysicalMaterial({
+  color: 0xaaddff,
+  transparent: true,
+  opacity: 0.0,
+  metalness: 0.0,
+  roughness: 0.0,
+  transmission: 0.8,
+});
+const filmMesh = new THREE.Mesh(filmGeo, filmMat);
+filmMesh.position.z = 0.075;
+filmMesh.visible = false;
+phoneGroup.add(filmMesh);
+
+// Film edge shimmer
+const filmEdgeGeo = new THREE.EdgesGeometry(new THREE.PlaneGeometry(1.22, 2.65));
+const filmEdgeMat = new THREE.LineBasicMaterial({ color: 0x00d4aa, transparent: true, opacity: 0.0 });
+const filmEdge = new THREE.LineSegments(filmEdgeGeo, filmEdgeMat);
+filmEdge.position.z = 0.076;
+filmEdge.visible = false;
+phoneGroup.add(filmEdge);
+
+// Case layer (slightly larger than phone, rounded box look)
+const caseGeo = new THREE.BoxGeometry(1.52, 2.98, 0.18);
+const caseMat = new THREE.MeshPhysicalMaterial({
+  color: 0x1a3a2a,
+  transparent: true,
+  opacity: 0.0,
+  roughness: 0.35,
+  metalness: 0.0,
+  clearcoat: 0.5,
+});
+const caseMesh = new THREE.Mesh(caseGeo, caseMat);
+caseMesh.visible = false;
+phoneGroup.add(caseMesh);
+
+// Case rim edge
+const caseEdgeGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(1.52, 2.98, 0.18));
+const caseEdgeMat = new THREE.LineBasicMaterial({ color: 0x00d4aa, transparent: true, opacity: 0.0 });
+const caseEdge = new THREE.LineSegments(caseEdgeGeo, caseEdgeMat);
+caseEdge.visible = false;
+phoneGroup.add(caseEdge);
+
+// Lens protector (disc over camera area)
+const lensProtGeo = new THREE.CircleGeometry(0.44, 32);
+const lensProtMat = new THREE.MeshPhysicalMaterial({
+  color: 0x00d4aa,
+  transparent: true,
+  opacity: 0.0,
+  roughness: 0.05,
+  metalness: 0.1,
+  transmission: 0.5,
+  side: THREE.DoubleSide,
+});
+const lensProtMesh = new THREE.Mesh(lensProtGeo, lensProtMat);
+lensProtMesh.position.set(-0.28, 0.74, -0.072);
+lensProtMesh.visible = false;
+phoneGroup.add(lensProtMesh);
+
+const lensProtEdgeGeo = new THREE.RingGeometry(0.38, 0.44, 32);
+const lensProtEdgeMat = new THREE.MeshBasicMaterial({ color: 0x00d4aa, transparent: true, opacity: 0.0, side: THREE.DoubleSide });
+const lensProtEdge = new THREE.Mesh(lensProtEdgeGeo, lensProtEdgeMat);
+lensProtEdge.position.set(-0.28, 0.74, -0.071);
+lensProtEdge.visible = false;
+phoneGroup.add(lensProtEdge);
+
+// ── Initial sizing
+function resizeRenderer() {
+  const w = Math.min(canvas.offsetWidth, 320);
+  const h = canvas.offsetHeight || 480;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+}
+resizeRenderer();
+window.addEventListener('resize', resizeRenderer);
+
+// ── Animation targets
+const targets = {
+  filmOpacity: 0, filmEdgeOpacity: 0,
+  caseOpacity: 0, caseEdgeOpacity: 0,
+  lensProtOpacity: 0, lensProtEdgeOpacity: 0,
+  rotY: 0, rotX: 0.04,
+  scaleExtra: 0,
+};
+
+let showFilm = false, showCase = false, showLens = false;
+let completeGlow = 0;
+
+// Touch/mouse drag for rotation
+let isDragging = false, lastX = 0, lastY = 0, velX = 0, velY = 0;
+let manualRotY = 0, manualRotX = 0;
+canvas.addEventListener('mousedown', e => { isDragging = true; lastX = e.clientX; lastY = e.clientY; velX = velY = 0; });
+canvas.addEventListener('mousemove', e => {
+  if (!isDragging) return;
+  velX = (e.clientX - lastX) * 0.012;
+  velY = (e.clientY - lastY) * 0.008;
+  manualRotY += velX; manualRotX += velY;
+  lastX = e.clientX; lastY = e.clientY;
+});
+canvas.addEventListener('mouseup', () => { isDragging = false; });
+canvas.addEventListener('touchstart', e => { isDragging = true; lastX = e.touches[0].clientX; lastY = e.touches[0].clientY; velX = velY = 0; }, { passive: true });
+canvas.addEventListener('touchmove', e => {
+  if (!isDragging) return;
+  velX = (e.touches[0].clientX - lastX) * 0.012;
+  velY = (e.touches[0].clientY - lastY) * 0.008;
+  manualRotY += velX; manualRotX += velY;
+  lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
+}, { passive: true });
+canvas.addEventListener('touchend', () => { isDragging = false; });
+
+const clock = new THREE.Clock();
+function animate() {
+  animFrame = requestAnimationFrame(animate);
+  const t = clock.getElapsedTime();
+  const dt = clock.getDelta ? 0.016 : 0.016;
+
+  // Inertia
+  if (!isDragging) {
+    velX *= 0.92; velY *= 0.92;
+    manualRotY += velX; manualRotX += velY;
+    manualRotX *= 0.95; // drift back
+    manualRotY += (targets.rotY - manualRotY) * 0.003;
+  }
+  manualRotX = Math.max(-0.6, Math.min(0.6, manualRotX));
+
+  // Idle auto-rotation
+  const autoRotY = Math.sin(t * 0.4) * 0.18;
+  phoneGroup.rotation.y = autoRotY + manualRotY;
+  phoneGroup.rotation.x = 0.04 + manualRotX;
+
+  // Complete state: slow rotation
+  if (stepIdx >= 4) {
+    phoneGroup.rotation.y = t * 0.3 + manualRotY;
+    completeGlow = Math.min(1, completeGlow + 0.02);
+    rim.intensity = 0.3 + completeGlow * 0.8;
+  }
+
+  // Lerp opacities
+  const lerpSpeed = 0.06;
+  const targetFilm = showFilm ? 0.35 : 0;
+  const targetFilmEdge = showFilm ? 0.8 : 0;
+  const targetCase = showCase ? 0.7 : 0;
+  const targetCaseEdge = showCase ? 0.5 : 0;
+  const targetLensProt = showLens ? 0.55 : 0;
+  const targetLensProtEdge = showLens ? 1.0 : 0;
+
+  filmMat.opacity += (targetFilm - filmMat.opacity) * lerpSpeed;
+  filmEdgeMat.opacity += (targetFilmEdge - filmEdgeMat.opacity) * lerpSpeed;
+  caseMat.opacity += (targetCase - caseMat.opacity) * lerpSpeed;
+  caseEdgeMat.opacity += (targetCaseEdge - caseEdgeMat.opacity) * lerpSpeed;
+  lensProtMat.opacity += (targetLensProt - lensProtMat.opacity) * lerpSpeed;
+  lensProtEdgeMat.opacity += (targetLensProtEdge - lensProtEdgeMat.opacity) * lerpSpeed;
+
+  filmMesh.visible = filmMat.opacity > 0.01;
+  filmEdge.visible = filmEdgeMat.opacity > 0.01;
+  caseMesh.visible = caseMat.opacity > 0.01;
+  caseEdge.visible = caseEdgeMat.opacity > 0.01;
+  lensProtMesh.visible = lensProtMat.opacity > 0.01;
+  lensProtEdge.visible = lensProtEdgeMat.opacity > 0.01;
+
+  // Case hides camera lenses from front view
+  lenses.forEach(l => { l.visible = !showCase; });
+
+  // Case color when complete
+  if (stepIdx >= 4) {
+    caseMat.color.setHex(0x003322);
+    caseMat.opacity += (0.82 - caseMat.opacity) * 0.02;
+  }
+
+  renderer.render(scene, camera);
+
+  // FPS counter
+  frameCount++;
+  const now = performance.now();
+  if (now - lastFpsTime > 1000) {
+    const fps = Math.round(frameCount * 1000 / (now - lastFpsTime));
+    document.getElementById('fpsLabel').textContent = fps + ' fps';
+    frameCount = 0;
+    lastFpsTime = now;
+  }
+}
+animate();
+
+// ─── UI LOGIC ────────────────────────────────────────────────────────────────
+function buildProgressDots() {
+  const track = document.getElementById('progressTrack');
+  track.innerHTML = '';
+  // 4 dots: film, case, lens, done
+  for (let i = 0; i < 4; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'progress-dot' +
+      (i < stepIdx - 1 ? ' done' : i === stepIdx - 1 ? ' active' : '');
+    track.appendChild(dot);
+  }
+}
+
+function updateIndicators(state) {
+  ['film', 'case', 'lens'].forEach((id, i) => {
+    const el = document.getElementById('ind-' + id);
+    el.classList.remove('applied', 'current');
+    if (state[i]) el.classList.add('applied');
+    // current = about to apply
+    if (!state[i] && (i === 0 ? stepIdx === 0 : i === 1 ? stepIdx === 1 : stepIdx === 2)) {
+      el.classList.add('current');
+    }
+  });
+}
+
+function renderStep() {
+  const s = STEPS[Math.min(stepIdx, STEPS.length - 1)];
+  document.getElementById('stepNumber').textContent = s.number;
+  document.getElementById('stepTitle').textContent = s.title;
+  document.getElementById('stepDesc').textContent = s.desc;
+
+  const techEl = document.getElementById('stepTech');
+  techEl.innerHTML = s.tech.map((t, i) =>
+    `<span class="tech-chip ${s.chips[i] ? 'highlight' : ''}">${t}</span>`
+  ).join('');
+
+  const btn = document.getElementById('mainBtn');
+  btn.textContent = s.btn;
+  btn.className = 'cta-btn' + (stepIdx >= 4 ? ' checkout' : '');
+
+  showFilm = s.showFilm;
+  showCase = s.showCase;
+  showLens = s.showLens;
+
+  document.getElementById('completeBadge').style.display = stepIdx >= 4 ? 'block' : 'none';
+  document.getElementById('restartBtnMain').style.display = stepIdx >= 4 ? 'block' : 'none';
+  updateIndicators(s.indState);
+  buildProgressDots();
+}
+
+function advance() {
+  if (stepIdx >= STEPS.length - 1) {
+    // Checkout
+    alert('Redirecionando para o checkout… (integração com gateway de pagamento na fase 2)');
+    return;
+  }
+  stepIdx++;
+  renderStep();
+}
+
+function restart() {
+  stepIdx = 0;
+  completeGlow = 0;
+  rim.intensity = 0.3;
+  manualRotY = 0; manualRotX = 0; velX = 0; velY = 0;
+  renderStep();
+}
+
+function selectModel(el, model) {
+  document.querySelectorAll('.model-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  selectedModel = model;
+  document.getElementById('stepTitle').textContent = stepIdx === 0
+    ? model
+    : STEPS[stepIdx].title;
+  // Visual tweak: scale phone slightly for larger models
+  const scale = model.includes('Max') ? 1.05 : model.includes('14') ? 0.97 : 1.0;
+  phoneGroup.scale.setScalar(scale);
+}
+
+// Init
+renderStep();
+</script>
+</body>
+</html>
