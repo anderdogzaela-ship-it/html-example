@@ -5,479 +5,642 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Protecta – Demo 3D</title>
 <style>
-  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-  :root{
-    --brand:#00d4aa;--brand-dark:#00a882;
-    --bg:#0a0a0f;--surface:#12121a;
-    --text:#f0f4ff;--muted:#8892a4;
-  }
-  body{
-    font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;
-    background:var(--bg);color:var(--text);
-    min-height:100vh;overflow-x:hidden;
-    -webkit-font-smoothing:antialiased;
-  }
-  nav{
-    position:fixed;top:0;left:0;right:0;z-index:100;
-    padding:14px 20px;
-    display:flex;align-items:center;justify-content:space-between;
-    background:rgba(10,10,15,0.9);backdrop-filter:blur(20px);
-    border-bottom:1px solid rgba(255,255,255,0.07);
-  }
-  .logo{font-size:18px;font-weight:800;letter-spacing:-0.5px;}
-  .logo span{color:var(--brand);}
-  .nav-badge{font-size:11px;font-weight:700;background:rgba(0,212,170,0.12);color:var(--brand);border:1px solid rgba(0,212,170,0.25);border-radius:20px;padding:4px 12px;}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+:root{
+  --brand:#00d4aa;--brand-dark:#009e81;
+  --bg:#080c10;--sur:#0f1520;
+  --txt:#eef2ff;--mut:#7a8899;
+}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;
+  background:var(--bg);color:var(--txt);min-height:100vh;
+  overflow-x:hidden;-webkit-font-smoothing:antialiased;
+}
 
-  .page{padding:70px 0 40px;display:flex;flex-direction:column;align-items:center;}
+/* ── NAV */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:200;
+  padding:13px 20px;display:flex;align-items:center;justify-content:space-between;
+  background:rgba(8,12,16,0.92);backdrop-filter:blur(18px);
+  border-bottom:1px solid rgba(255,255,255,0.07);
+}
+.logo{font-size:18px;font-weight:800;letter-spacing:-.5px;}
+.logo em{color:var(--brand);font-style:normal;}
+.nbadge{font-size:11px;font-weight:700;background:rgba(0,212,170,.12);color:var(--brand);border:1px solid rgba(0,212,170,.25);border-radius:20px;padding:4px 12px;}
 
-  .hero-top{text-align:center;padding:28px 24px 20px;}
-  .eyebrow{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--brand);margin-bottom:12px;}
-  .hero-title{font-size:clamp(28px,8vw,48px);font-weight:800;letter-spacing:-1px;line-height:1.05;margin-bottom:10px;}
-  .hero-sub{font-size:14px;color:var(--muted);line-height:1.5;max-width:300px;margin:0 auto;}
+/* ── PAGE */
+.page{padding:66px 0 48px;display:flex;flex-direction:column;align-items:center;}
 
-  /* Model selector */
-  .model-selector{display:flex;gap:7px;padding:16px 20px 0;overflow-x:auto;width:100%;max-width:400px;}
-  .model-selector::-webkit-scrollbar{display:none;}
-  .model-chip{flex-shrink:0;padding:7px 14px;background:var(--surface);border:1.5px solid rgba(255,255,255,0.1);border-radius:10px;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer;transition:all .2s;white-space:nowrap;}
-  .model-chip.active{border-color:var(--brand);color:var(--brand);background:rgba(0,212,170,0.1);}
+/* ── HERO */
+.hero{text-align:center;padding:28px 24px 18px;}
+.eyebrow{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--brand);margin-bottom:11px;}
+h1{font-size:clamp(30px,9vw,52px);font-weight:800;letter-spacing:-1.2px;line-height:1.04;margin-bottom:10px;}
+.sub{font-size:14px;color:var(--mut);line-height:1.5;max-width:300px;margin:0 auto;}
 
-  /* 3D viewport */
-  #viewport{
-    position:relative;width:100%;max-width:400px;
-    margin:16px 0 0;
-  }
-  #three-canvas{
-    display:block;
-    width:100% !important;
-    height:380px !important;
-  }
-  .perf-pill{
-    position:absolute;top:10px;left:10px;
-    background:rgba(0,0,0,0.65);backdrop-filter:blur(6px);
-    border:1px solid rgba(255,255,255,0.08);border-radius:8px;
-    padding:3px 10px;font-size:10px;font-weight:700;color:var(--muted);
-    display:flex;align-items:center;gap:5px;
-  }
-  .fps-dot{width:6px;height:6px;border-radius:50%;background:#3fb950;animation:blink 1.2s infinite;}
-  @keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+/* ── MODEL SELECTOR */
+.msel{display:flex;gap:7px;padding:16px 20px 0;overflow-x:auto;width:100%;max-width:400px;}
+.msel::-webkit-scrollbar{display:none;}
+.mchip{flex-shrink:0;padding:7px 14px;background:var(--sur);border:1.5px solid rgba(255,255,255,.1);border-radius:10px;font-size:11px;font-weight:700;color:var(--mut);cursor:pointer;transition:all .2s;white-space:nowrap;}
+.mchip.on{border-color:var(--brand);color:var(--brand);background:rgba(0,212,170,.1);}
 
-  /* Layer indicators */
-  .layer-pills{
-    position:absolute;right:10px;top:50%;transform:translateY(-50%);
-    display:flex;flex-direction:column;gap:7px;
-  }
-  .lpill{
-    width:34px;height:34px;border-radius:9px;
-    background:rgba(18,18,26,0.85);border:1.5px solid rgba(255,255,255,0.08);
-    display:flex;align-items:center;justify-content:center;
-    font-size:15px;transition:all .35s;
-  }
-  .lpill.on{border-color:var(--brand);background:rgba(0,212,170,0.18);box-shadow:0 0 10px rgba(0,212,170,.3);}
-  .lpill.cur{border-color:var(--brand);background:rgba(0,212,170,.28);animation:curPulse 1s ease-in-out infinite;}
-  @keyframes curPulse{0%,100%{box-shadow:0 0 6px rgba(0,212,170,.3)}50%{box-shadow:0 0 18px rgba(0,212,170,.6)}}
+/* ── 3D VIEWPORT */
+#vp{
+  position:relative;width:100%;max-width:400px;
+  height:420px;display:flex;align-items:center;justify-content:center;
+  margin:20px 0 0;
+  overflow:hidden;
+}
 
-  /* Step panel */
-  .step-panel{width:100%;max-width:400px;padding:14px 20px 0;}
-  .prog-track{display:flex;gap:5px;margin-bottom:14px;}
-  .prog-seg{flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,0.1);transition:background .4s;}
-  .prog-seg.done{background:var(--brand);}
-  .prog-seg.cur{background:var(--brand);opacity:.5;}
+/* The perspective scene */
+#scene{
+  perspective:900px;
+  perspective-origin:50% 48%;
+  width:240px;height:400px;
+  position:relative;
+}
 
-  .step-card{
-    background:var(--surface);border:1px solid rgba(255,255,255,0.08);
-    border-radius:18px;padding:18px;margin-bottom:14px;
-    min-height:108px;
-  }
-  .step-num{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--brand);margin-bottom:7px;}
-  .step-title{font-size:19px;font-weight:800;letter-spacing:-.3px;margin-bottom:5px;}
-  .step-desc{font-size:13px;color:var(--muted);line-height:1.5;}
-  .step-tech{display:flex;gap:5px;margin-top:10px;flex-wrap:wrap;}
-  .tchip{font-size:10px;font-weight:600;border-radius:6px;padding:3px 8px;}
-  .tchip.dim{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:var(--muted);}
-  .tchip.hi{background:rgba(0,212,170,.1);border:1px solid rgba(0,212,170,.2);color:var(--brand);}
+/* iPhone wrapper — rotates in 3D */
+#phone{
+  width:240px;height:400px;
+  transform-style:preserve-3d;
+  transform:rotateX(4deg) rotateY(-18deg);
+  transition:transform .05s linear;
+  position:relative;
+  cursor:grab;
+}
+#phone:active{cursor:grabbing;}
 
-  .done-banner{display:none;background:rgba(0,212,170,.08);border:1px solid rgba(0,212,170,.25);border-radius:10px;padding:10px 14px;text-align:center;font-size:13px;font-weight:700;color:var(--brand);margin-bottom:12px;}
+/* ── iPhone FACES ── */
+.face{position:absolute;backface-visibility:hidden;}
 
-  .cta{width:100%;padding:15px;border:none;border-radius:14px;font-size:15px;font-weight:800;cursor:pointer;letter-spacing:-.2px;transition:transform .15s,opacity .15s;margin-bottom:8px;}
-  .cta:active{transform:scale(.98);}
-  .cta.green{background:linear-gradient(135deg,#00d4aa,#00a882);color:#000;box-shadow:0 6px 20px rgba(0,212,170,.3);}
-  .cta.indigo{background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;box-shadow:0 6px 20px rgba(99,102,241,.3);}
-  .cta.ghost{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:var(--text);box-shadow:none;}
+/* Front face */
+.f-front{
+  width:240px;height:400px;left:0;top:0;
+  background:linear-gradient(160deg,#2a2d38 0%,#1a1d28 60%,#0e1018 100%);
+  border-radius:40px;
+  border:2px solid #3a3d4a;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.15),
+    inset 0 -1px 0 rgba(0,0,0,.4),
+    0 0 0 1px rgba(0,0,0,.5);
+  overflow:hidden;
+  display:flex;flex-direction:column;align-items:center;
+}
 
-  .tech-note{text-align:center;padding:20px 24px 40px;font-size:11px;color:rgba(136,146,164,.45);line-height:1.6;}
-  .tech-note strong{color:rgba(136,146,164,.75);}
+/* Titanium side frame feel */
+.f-front::before{
+  content:'';position:absolute;inset:0;border-radius:40px;
+  border:3px solid transparent;
+  background:linear-gradient(135deg,rgba(255,255,255,.18),rgba(255,255,255,.04),rgba(255,255,255,.12)) border-box;
+  -webkit-mask:linear-gradient(#fff 0 0) padding-box,linear-gradient(#fff 0 0);
+  -webkit-mask-composite:destination-out;mask-composite:exclude;
+  pointer-events:none;
+}
+
+/* Screen */
+.screen{
+  width:210px;height:360px;margin-top:20px;
+  border-radius:28px;overflow:hidden;position:relative;
+  background:linear-gradient(160deg,#060a14 0%,#0a0f22 40%,#050817 100%);
+  box-shadow:inset 0 0 30px rgba(0,0,0,.8);
+}
+.screen-glow{
+  position:absolute;inset:0;
+  background:radial-gradient(ellipse 80% 60% at 50% 30%,rgba(0,212,170,.25) 0%,transparent 70%);
+  animation:glowPulse 3s ease-in-out infinite;
+}
+@keyframes glowPulse{0%,100%{opacity:.7}50%{opacity:1}}
+.screen-content{
+  position:absolute;bottom:24px;left:0;right:0;
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  padding:0 16px;
+}
+.screen-label{font-size:11px;font-weight:700;color:rgba(0,212,170,.8);letter-spacing:.5px;text-align:center;}
+.screen-icons{display:flex;gap:8px;}
+.sicon{font-size:22px;}
+
+/* Dynamic Island */
+.di{
+  width:90px;height:22px;background:#000;border-radius:12px;
+  margin:12px auto 8px;
+  box-shadow:0 0 0 1.5px rgba(255,255,255,.05);
+}
+
+/* Side buttons (right) */
+.f-right{
+  position:absolute;right:-6px;top:110px;
+  width:6px;height:70px;
+  background:linear-gradient(90deg,#2a2d38,#3a3d4a);
+  border-radius:0 3px 3px 0;
+  box-shadow:2px 0 4px rgba(0,0,0,.4);
+}
+.f-right::before{
+  content:'';position:absolute;top:-40px;left:0;
+  width:6px;height:32px;
+  background:linear-gradient(90deg,#2a2d38,#3a3d4a);
+  border-radius:0 3px 3px 0;
+}
+
+/* Side buttons (left) */
+.f-left{
+  position:absolute;left:-6px;top:90px;
+  display:flex;flex-direction:column;gap:10px;
+}
+.lbtn{
+  width:6px;border-radius:3px 0 0 3px;
+  background:linear-gradient(270deg,#2a2d38,#3a3d4a);
+  box-shadow:-2px 0 4px rgba(0,0,0,.4);
+}
+
+/* Camera module (back face hint via pseudo on front) */
+.cam-hint{
+  position:absolute;top:18px;left:18px;
+  width:68px;height:68px;
+  background:rgba(0,0,0,.0);
+  border-radius:18px;
+  /* only visible when phone is rotated to show back - simulated with opacity */
+  opacity:0;transition:opacity .3s;
+}
+
+/* Back face */
+.f-back{
+  position:absolute;width:240px;height:400px;left:0;top:0;
+  background:linear-gradient(160deg,#1e2130 0%,#151820 60%,#0c0e18 100%);
+  border-radius:40px;border:2px solid #3a3d4a;
+  transform:rotateY(180deg) translateZ(0px);
+  overflow:hidden;
+  display:flex;align-items:flex-start;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08);
+}
+.cam-module{
+  margin:22px 0 0 18px;
+  width:88px;height:88px;
+  background:linear-gradient(135deg,#0a0c14,#181a24);
+  border-radius:22px;
+  box-shadow:0 0 0 1.5px #2a2d38;
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:8px;padding:12px;align-content:start;
+}
+.cam-lens{
+  width:28px;height:28px;
+  background:radial-gradient(circle at 35% 35%,#1a1d28,#000);
+  border-radius:50%;border:1.5px solid #3a3d38;
+  box-shadow:0 0 0 2px #0a0c10,inset 0 0 6px rgba(0,212,170,.15);
+}
+.cam-flash{
+  width:14px;height:14px;
+  background:radial-gradient(#ffe4a0,#c8a050);
+  border-radius:50%;margin:auto;
+  box-shadow:0 0 6px rgba(255,220,100,.4);
+}
+
+/* ── LAYER OVERLAYS ── */
+
+/* Film — glass shimmer */
+#layer-film{
+  position:absolute;inset:0;border-radius:40px;
+  pointer-events:none;z-index:10;
+  opacity:0;transition:opacity .6s ease;
+  background:linear-gradient(135deg,rgba(180,230,255,.12) 0%,rgba(255,255,255,.04) 50%,rgba(150,220,255,.08) 100%);
+  box-shadow:inset 0 0 0 1.5px rgba(100,220,255,.4),0 0 20px rgba(0,212,170,.15);
+}
+#layer-film::after{
+  content:'';position:absolute;
+  top:0;left:0;right:0;height:40%;
+  background:linear-gradient(180deg,rgba(255,255,255,.12),transparent);
+  border-radius:40px 40px 0 0;
+}
+
+/* Case */
+#layer-case{
+  position:absolute;inset:-8px;border-radius:48px;
+  pointer-events:none;z-index:8;
+  opacity:0;transition:opacity .6s ease;
+  background:linear-gradient(145deg,#005a42,#003828);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.15),
+    inset 0 -1px 0 rgba(0,0,0,.3),
+    0 0 0 1.5px rgba(0,212,170,.3),
+    0 8px 32px rgba(0,0,0,.5);
+}
+#layer-case::before{
+  content:'';position:absolute;inset:6px;border-radius:42px;
+  background:transparent;
+  box-shadow:inset 0 0 0 1px rgba(0,212,170,.15);
+}
+
+/* Lens protector */
+#layer-lens{
+  position:absolute;
+  width:96px;height:96px;
+  top:22px;left:22px;
+  border-radius:24px;
+  pointer-events:none;z-index:12;
+  opacity:0;transition:opacity .6s ease;
+  background:radial-gradient(circle at 40% 40%,rgba(0,212,170,.25),rgba(0,212,170,.06));
+  box-shadow:0 0 0 2px rgba(0,212,170,.5),0 0 20px rgba(0,212,170,.2),inset 0 1px 0 rgba(255,255,255,.2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:800;color:rgba(0,212,170,.9);letter-spacing:.5px;
+  /* Only visible on back — we fake by always showing it on the visible face */
+}
+#layer-lens-front{
+  position:absolute;
+  /* Small lens-protector badge on front corner */
+  bottom:30px;left:12px;
+  width:40px;height:40px;
+  border-radius:12px;
+  pointer-events:none;z-index:12;
+  opacity:0;transition:opacity .5s ease;
+  background:radial-gradient(circle,rgba(0,212,170,.3),rgba(0,212,170,.05));
+  box-shadow:0 0 0 1.5px rgba(0,212,170,.5),0 0 10px rgba(0,212,170,.2);
+  display:flex;align-items:center;justify-content:center;font-size:16px;
+}
+
+/* Application flash effect */
+.apply-flash{
+  position:absolute;inset:0;border-radius:40px;
+  pointer-events:none;z-index:20;
+  background:radial-gradient(circle,rgba(0,212,170,.4),transparent 70%);
+  opacity:0;
+}
+.apply-flash.pop{animation:flashPop .5s ease forwards;}
+@keyframes flashPop{0%{opacity:0;transform:scale(0.9)}30%{opacity:1}100%{opacity:0;transform:scale(1.05)}}
+
+/* Back lens flash */
+.lens-flash{
+  position:absolute;inset:0;pointer-events:none;z-index:20;opacity:0;
+}
+.lens-flash.pop{animation:lensPop .6s ease forwards;}
+@keyframes lensPop{0%{opacity:0}20%{opacity:1}100%{opacity:0}}
+
+/* ── LAYER INDICATORS */
+.lpills{
+  position:absolute;right:12px;top:50%;transform:translateY(-50%);
+  display:flex;flex-direction:column;gap:8px;
+}
+.lpill{
+  width:36px;height:36px;border-radius:10px;
+  background:rgba(15,21,32,.85);border:1.5px solid rgba(255,255,255,.08);
+  display:flex;align-items:center;justify-content:center;font-size:16px;
+  transition:all .35s;
+}
+.lpill.on{border-color:var(--brand);background:rgba(0,212,170,.18);box-shadow:0 0 10px rgba(0,212,170,.3);}
+.lpill.cur{border-color:var(--brand);background:rgba(0,212,170,.28);animation:cur 1s ease-in-out infinite;}
+@keyframes cur{0%,100%{box-shadow:0 0 6px rgba(0,212,170,.3)}50%{box-shadow:0 0 18px rgba(0,212,170,.65)}}
+
+/* FPS */
+.fps-pill{
+  position:absolute;top:10px;left:10px;
+  background:rgba(0,0,0,.6);backdrop-filter:blur(6px);
+  border:1px solid rgba(255,255,255,.07);border-radius:8px;
+  padding:3px 10px;font-size:10px;font-weight:700;color:var(--mut);
+  display:flex;align-items:center;gap:5px;
+}
+.fdot{width:6px;height:6px;border-radius:50%;background:#3fb950;animation:blink 1.2s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+
+/* ── STEP PANEL */
+.panel{width:100%;max-width:400px;padding:14px 20px 0;}
+.progt{display:flex;gap:5px;margin-bottom:14px;}
+.pseg{flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,.1);transition:background .4s;}
+.pseg.done{background:var(--brand);}.pseg.cur{background:var(--brand);opacity:.5;}
+
+.dbanner{display:none;background:rgba(0,212,170,.08);border:1px solid rgba(0,212,170,.25);border-radius:10px;padding:10px;text-align:center;font-size:13px;font-weight:700;color:var(--brand);margin-bottom:12px;}
+
+.scard{background:var(--sur);border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:18px;margin-bottom:14px;min-height:106px;}
+.snum{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--brand);margin-bottom:7px;}
+.stitle{font-size:19px;font-weight:800;letter-spacing:-.3px;margin-bottom:5px;}
+.sdesc{font-size:13px;color:var(--mut);line-height:1.5;}
+.stech{display:flex;gap:5px;margin-top:10px;flex-wrap:wrap;}
+.tchip{font-size:10px;font-weight:600;border-radius:6px;padding:3px 8px;}
+.dim{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:var(--mut);}
+.hi{background:rgba(0,212,170,.1);border:1px solid rgba(0,212,170,.2);color:var(--brand);}
+
+.cta{width:100%;padding:15px;border:none;border-radius:14px;font-size:15px;font-weight:800;cursor:pointer;letter-spacing:-.2px;margin-bottom:8px;transition:transform .15s,opacity .15s;}
+.cta:active{transform:scale(.98);}
+.green{background:linear-gradient(135deg,#00d4aa,#009e81);color:#000;box-shadow:0 6px 20px rgba(0,212,170,.28);}
+.indigo{background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;box-shadow:0 6px 20px rgba(99,102,241,.28);}
+.ghost{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:var(--txt);box-shadow:none;}
+
+.tnote{text-align:center;padding:20px 24px 40px;font-size:11px;color:rgba(122,136,153,.45);line-height:1.7;}
+.tnote strong{color:rgba(122,136,153,.75);}
 </style>
 </head>
 <body>
 
 <nav>
-  <div class="logo">Protec<span>ta</span></div>
-  <div class="nav-badge">Demo 3D · Mobile-first</div>
+  <div class="logo">Protec<em>ta</em></div>
+  <div class="nbadge">Demo 3D · CSS3</div>
 </nav>
 
 <div class="page">
-  <div class="hero-top">
+  <div class="hero">
     <div class="eyebrow">Experiência interativa</div>
-    <h1 class="hero-title">Proteja seu<br>iPhone em 3D</h1>
-    <p class="hero-sub">Veja cada camada de proteção sendo aplicada em tempo real</p>
+    <h1>Proteja seu<br>iPhone em 3D</h1>
+    <p class="sub">Veja cada camada de proteção sendo aplicada em tempo real</p>
   </div>
 
-  <div class="model-selector" id="modelSel">
-    <div class="model-chip active" onclick="selModel(this,'iPhone 15 Pro Max',1.06)">iPhone 15 Pro Max</div>
-    <div class="model-chip" onclick="selModel(this,'iPhone 15 Pro',1.0)">iPhone 15 Pro</div>
-    <div class="model-chip" onclick="selModel(this,'iPhone 14 Pro',0.98)">iPhone 14 Pro</div>
-    <div class="model-chip" onclick="selModel(this,'iPhone 14',0.96)">iPhone 14</div>
+  <!-- Model selector -->
+  <div class="msel" id="msel">
+    <div class="mchip on" onclick="setModel(this,'iPhone 15 Pro Max',1.06)">iPhone 15 Pro Max</div>
+    <div class="mchip" onclick="setModel(this,'iPhone 15 Pro',1.0)">iPhone 15 Pro</div>
+    <div class="mchip" onclick="setModel(this,'iPhone 14 Pro',0.97)">iPhone 14 Pro</div>
+    <div class="mchip" onclick="setModel(this,'iPhone 14',0.94)">iPhone 14</div>
   </div>
 
-  <div id="viewport">
-    <canvas id="three-canvas"></canvas>
-    <div class="perf-pill"><div class="fps-dot"></div><span id="fpsLbl">60 fps</span></div>
-    <div class="layer-pills">
+  <!-- 3D Viewport -->
+  <div id="vp">
+    <div id="scene">
+      <div id="phone">
+        <!-- Front face -->
+        <div class="face f-front">
+          <!-- Side buttons -->
+          <div class="f-right"></div>
+          <div class="f-left">
+            <div class="lbtn" style="height:26px"></div>
+            <div class="lbtn" style="height:36px"></div>
+            <div class="lbtn" style="height:36px"></div>
+          </div>
+          <!-- Dynamic Island -->
+          <div class="di"></div>
+          <!-- Screen -->
+          <div class="screen">
+            <div class="screen-glow"></div>
+            <div class="screen-content">
+              <div class="screen-label" id="scrLabel">TOQUE PARA COMEÇAR</div>
+              <div class="screen-icons" id="scrIcons">
+                <span class="sicon">🛡️</span>
+                <span class="sicon">📱</span>
+                <span class="sicon">🔭</span>
+              </div>
+            </div>
+          </div>
+          <!-- Layer overlays (on front face) -->
+          <div id="layer-film"></div>
+          <div id="layer-case"></div>
+          <div id="layer-lens-front"></div>
+          <div class="apply-flash" id="flash"></div>
+        </div>
+
+        <!-- Back face -->
+        <div class="face f-back">
+          <div class="cam-module">
+            <div class="cam-lens"></div>
+            <div class="cam-lens"></div>
+            <div class="cam-lens"></div>
+            <div class="cam-flash"></div>
+          </div>
+          <!-- Lens protector on back -->
+          <div id="layer-lens">LENS<br>PRO</div>
+        </div>
+      </div><!-- /phone -->
+    </div><!-- /scene -->
+
+    <!-- UI overlays -->
+    <div class="lpills">
       <div class="lpill cur" id="lp0">🛡️</div>
       <div class="lpill" id="lp1">📱</div>
       <div class="lpill" id="lp2">🔭</div>
     </div>
-  </div>
+    <div class="fps-pill"><div class="fdot"></div><span id="fpsLbl">60 fps</span></div>
+  </div><!-- /vp -->
 
-  <div class="step-panel">
-    <div class="prog-track" id="progTrack"></div>
-    <div class="done-banner" id="doneBanner">✅ iPhone totalmente protegido!</div>
-    <div class="step-card">
-      <div class="step-num" id="sNum">Selecione o modelo</div>
-      <div class="step-title" id="sTitle">iPhone 15 Pro Max</div>
-      <div class="step-desc" id="sDesc">Toque em "Aplicar película" para começar. Arraste o iPhone para rotacionar.</div>
-      <div class="step-tech" id="sTech"></div>
+  <!-- Step panel -->
+  <div class="panel">
+    <div class="progt" id="progt"></div>
+    <div class="dbanner" id="dbanner">✅ iPhone totalmente protegido!</div>
+    <div class="scard">
+      <div class="snum" id="snum">Selecione o modelo</div>
+      <div class="stitle" id="stitle">iPhone 15 Pro Max</div>
+      <div class="sdesc" id="sdesc">Arraste o iPhone para rotacionar. Toque em "Aplicar película" para começar a proteção.</div>
+      <div class="stech" id="stech"></div>
     </div>
-    <button class="cta green" id="mainCta" onclick="advance()">Aplicar película protetora →</button>
-    <button class="cta ghost" id="restartCta" onclick="restart()" style="display:none">↺ Reiniciar demonstração</button>
+    <button class="cta green" id="mcta" onclick="advance()">Aplicar película protetora →</button>
+    <button class="cta ghost" id="rcta" onclick="restart()" style="display:none">↺ Reiniciar demonstração</button>
   </div>
 </div>
 
-<div class="tech-note">
-  Protótipo de desenvolvimento · <strong>Three.js + glTF (meshes separadas por camada)</strong><br>
-  Assets 3D finais requerem modelagem 3D · Otimizado para GPU mobile · <strong>KTX2 textures</strong>
+<div class="tnote">
+  Demo de desenvolvimento · <strong>CSS 3D + animações por camada</strong><br>
+  Produção usa <strong>React Three Fiber + glTF</strong> com meshes separadas por camada<br>
+  Otimizado para GPU mobile · KTX2 textures · 60fps garantido
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.min.js"></script>
 <script>
 // ─── STEPS ───────────────────────────────────────────────────────────────────
 const STEPS = [
   { num:'Selecione o modelo', title:'iPhone 15 Pro Max',
-    desc:'Toque em "Aplicar película" para começar. Arraste o iPhone para rotacionar.',
-    btn:'Aplicar película protetora →', btnCls:'green',
-    tech:[['glTF','hi'],['Three.js','dim'],['60fps mobile','hi']],
-    lp:[false,false,false], film:false, cas:false, lens:false },
-  { num:'Etapa 1 de 3 · Película',  title:'🛡️ Película aplicada',
-    desc:'Cobertura total da tela contra arranhões e impactos. Anti-reflexo. Toque 100% preservado.',
-    btn:'Aplicar capinha protetora →', btnCls:'green',
-    tech:[['Mesh layer 1','hi'],['Opacidade lerp','dim']],
-    lp:[true,false,false], film:true, cas:false, lens:false },
-  { num:'Etapa 2 de 3 · Capinha',   title:'📱 Capinha MagSafe aplicada',
-    desc:'Proteção lateral e traseira contra quedas até 2 m. Compatível com carregamento MagSafe.',
-    btn:'Aplicar protetor de lente →', btnCls:'green',
-    tech:[['Mesh layer 2','hi'],['Step-index anim','dim']],
-    lp:[true,true,false], film:true, cas:true, lens:false },
-  { num:'Etapa 3 de 3 · Lente',     title:'🔭 Protetor de lente aplicado',
+    desc:'Arraste o iPhone para rotacionar. Toque em "Aplicar película" para começar a proteção.',
+    btn:'Aplicar película protetora →', cls:'green',
+    tech:[['CSS 3D','hi'],['Three.js (produção)','dim'],['60fps mobile','hi']],
+    lp:[0,0,0], scr:'TOQUE PARA COMEÇAR', scrIco:'🛡️📱🔭',
+    film:false,cas:false,lens:false },
+  { num:'Etapa 1 de 3 · Película', title:'🛡️ Película aplicada',
+    desc:'Cobertura total da tela contra arranhões e impactos. Anti-reflexo. Sensibilidade ao toque preservada.',
+    btn:'Aplicar capinha protetora →', cls:'green',
+    tech:[['Mesh layer 1','hi'],['Opacidade lerp','dim'],['glTF separado','hi']],
+    lp:[1,0,0], scr:'PELÍCULA APLICADA ✓', scrIco:'🛡️',
+    film:true,cas:false,lens:false },
+  { num:'Etapa 2 de 3 · Capinha', title:'📱 Capinha MagSafe aplicada',
+    desc:'Proteção lateral e traseira contra quedas até 2 m. Compatível com carregamento MagSafe sem fio.',
+    btn:'Aplicar protetor de lente →', cls:'green',
+    tech:[['Mesh layer 2','hi'],['Step-index anim','dim'],['MagSafe','hi']],
+    lp:[1,1,0], scr:'CAPINHA APLICADA ✓', scrIco:'📱',
+    film:true,cas:true,lens:false },
+  { num:'Etapa 3 de 3 · Lente', title:'🔭 Protetor de lente aplicado',
     desc:'Vidro temperado sobre o sistema de câmera tripla. Zero perda de qualidade fotográfica.',
-    btn:'Ver resultado final →', btnCls:'green',
-    tech:[['Mesh layer 3','hi'],['KTX2 textures','dim']],
-    lp:[true,true,true], film:true, cas:true, lens:true },
-  { num:'Proteção completa',         title:'✨ iPhone totalmente protegido',
-    desc:'Tela, corpo e câmera protegidos. Pronto para finalizar sua compra.',
-    btn:'🛒 Ir para o checkout', btnCls:'indigo',
-    tech:[['Gateway p. integrado','dim'],['Fase 2','hi']],
-    lp:[true,true,true], film:true, cas:true, lens:true },
+    btn:'Ver resultado final →', cls:'green',
+    tech:[['Mesh layer 3','hi'],['KTX2 textures','dim'],['Câmera tripla','hi']],
+    lp:[1,1,1], scr:'PROTEÇÃO TOTAL ✓', scrIco:'🔭',
+    film:true,cas:true,lens:true },
+  { num:'Proteção completa', title:'✨ iPhone totalmente protegido',
+    desc:'Tela, corpo e câmera protegidos. Seu iPhone está 100% seguro. Pronto para finalizar a compra.',
+    btn:'🛒 Ir para o checkout', cls:'indigo',
+    tech:[['Integração gateway','dim'],['Fase 2','hi'],['Checkout','dim']],
+    lp:[1,1,1], scr:'100% PROTEGIDO', scrIco:'✨',
+    film:true,cas:true,lens:true },
 ];
 
-let si = 0;          // step index
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let si = 0;
+let rotY = -18, rotX = 4;
+let isDrag = false, startX = 0, startY = 0, velX = 0, velY = 0;
+let rafId = null;
 let modelScale = 1.06;
 
-// ─── THREE.JS ────────────────────────────────────────────────────────────────
-const canvas = document.getElementById('three-canvas');
+const phone = document.getElementById('phone');
+const flashEl = document.getElementById('flash');
 
-// Force explicit pixel size before renderer init
-const W = Math.min(window.innerWidth, 400);
-const H = 380;
-canvas.width  = W * window.devicePixelRatio;
-canvas.height = H * window.devicePixelRatio;
-canvas.style.width  = W + 'px';
-canvas.style.height = H + 'px';
-
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-renderer.setSize(W, H, false);
-renderer.setClearColor(0x000000, 0);
-
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(38, W / H, 0.1, 100);
-camera.position.z = 5.8;
-
-// Lighting — bright so phone is clearly visible on dark bg
-scene.add(new THREE.AmbientLight(0xffffff, 1.0));
-const key = new THREE.DirectionalLight(0xffffff, 2.0);
-key.position.set(3, 5, 4);
-scene.add(key);
-const fill = new THREE.DirectionalLight(0x88bbff, 0.8);
-fill.position.set(-3, -1, 3);
-scene.add(fill);
-const rim = new THREE.DirectionalLight(0x00d4aa, 0.6);
-rim.position.set(0, -4, -2);
-scene.add(rim);
-const rimR = new THREE.DirectionalLight(0xffffff, 0.5);
-rimR.position.set(4, 2, -3);
-scene.add(rimR);
-
-// Phone group
-const G = new THREE.Group();
-scene.add(G);
-
-// ── Body — visible titanium/silver color
-const bodyM = new THREE.MeshStandardMaterial({ color:0xc8cad0, metalness:0.85, roughness:0.15 });
-const body   = new THREE.Mesh(new THREE.BoxGeometry(1.4,2.85,0.16), bodyM);
-G.add(body);
-
-// Body edge highlight (slightly larger wireframe)
-const edgeGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(1.405,2.855,0.162));
-const edgeM   = new THREE.LineBasicMaterial({color:0xffffff, transparent:true, opacity:0.15});
-G.add(new THREE.LineSegments(edgeGeo, edgeM));
-
-// Screen — dark glass with subtle tint
-const scrM = new THREE.MeshPhysicalMaterial({ color:0x0a0a18, metalness:0, roughness:0.05, transmission:0.15, transparent:true, opacity:0.97 });
-const scr  = new THREE.Mesh(new THREE.PlaneGeometry(1.22,2.65), scrM);
-scr.position.z = 0.085;
-G.add(scr);
-
-// Screen gradient/glow painted on canvas
-const gc2d = document.createElement('canvas'); gc2d.width=256; gc2d.height=512;
-const gctx = gc2d.getContext('2d');
-const lg = gctx.createLinearGradient(0,0,0,512);
-lg.addColorStop(0,'rgba(0,212,170,0.3)'); lg.addColorStop(0.4,'rgba(20,20,60,0.7)'); lg.addColorStop(1,'rgba(80,0,140,0.25)');
-gctx.fillStyle=lg; gctx.fillRect(0,0,256,512);
-const glowM = new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(gc2d), transparent:true, opacity:0.9});
-const glow  = new THREE.Mesh(new THREE.PlaneGeometry(1.18,2.60), glowM);
-glow.position.z = 0.086;
-G.add(glow);
-
-// Dynamic Island
-const diGeo = new THREE.BoxGeometry(0.5,0.12,0.04); diGeo.translate(0,0,0);
-const diM   = new THREE.MeshPhysicalMaterial({color:0x000005, roughness:0.1, metalness:0.2});
-const di    = new THREE.Mesh(diGeo, diM);
-di.position.set(0, 1.2, 0.09); di.position.z = 0.09;
-const diC = new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,0.04,16).rotateX(Math.PI/2), diM);
-diC.position.set(-0.19, 1.2, 0.09); G.add(di); G.add(diC);
-const diC2 = diC.clone(); diC2.position.x=0.19; G.add(diC2);
-
-// Side buttons (right)
-[[0.72,0.35],[0.72,-0.15],[0.72,-0.55],[-0.74,0.35],[-0.74,-0.05]].forEach(([x,y])=>{
-  const bGeo = new THREE.BoxGeometry(0.04, x>0 ? 0.3:0.15, 0.07);
-  const bM   = new THREE.MeshStandardMaterial({color:0xb0b2b8, metalness:0.9, roughness:0.1});
-  const b = new THREE.Mesh(bGeo,bM);
-  b.position.set(x,y,0); G.add(b);
-});
-
-// Camera module (back face)
-const camBG = new THREE.BoxGeometry(0.72,0.72,0.06);
-const camBM = new THREE.MeshStandardMaterial({color:0x18181f, metalness:0.7, roughness:0.2});
-const camB  = new THREE.Mesh(camBG, camBM);
-camB.position.set(-0.28, 0.78, -0.11);
-G.add(camB);
-
-// 3 lenses (back, visible when no case)
-const lensGeo = new THREE.CylinderGeometry(0.09,0.09,0.06,20).rotateX(Math.PI/2);
-const lensM   = new THREE.MeshPhysicalMaterial({color:0x000005, metalness:1.0, roughness:0.0, transmission:0.15});
-const lensArr = [];
-[[-0.14,0.9],[ 0.13,0.9],[-0.14,0.64]].forEach(([x,y])=>{
-  const l = new THREE.Mesh(lensGeo,lensM);
-  l.position.set(x-0.28,y-0.04,-0.14); G.add(l); lensArr.push(l);
-});
-// Lens ring highlights
-lensArr.forEach(l=>{
-  const ring = new THREE.Mesh(
-    new THREE.TorusGeometry(0.09,0.012,8,24).rotateX(Math.PI/2),
-    new THREE.MeshStandardMaterial({color:0xb8bac0, metalness:1.0, roughness:0.05})
-  );
-  ring.position.copy(l.position); G.add(ring);
-});
-
-// ── LAYER MESHES (separate meshes = glTF pattern demo) ──
-
-// Layer 1: Screen film (thin glass shimmer on top of screen)
-const filmGeo = new THREE.PlaneGeometry(1.22,2.65);
-const filmM   = new THREE.MeshPhysicalMaterial({
-  color:0x88ddff, transparent:true, opacity:0, roughness:0.0, metalness:0.0, transmission:0.7,
-});
-const filmMsh = new THREE.Mesh(filmGeo, filmM);
-filmMsh.position.z = 0.089; filmMsh.visible = false; G.add(filmMsh);
-
-// Film edge glow
-const filmEdgGeo = new THREE.EdgesGeometry(new THREE.PlaneGeometry(1.22,2.65));
-const filmEdgM   = new THREE.LineBasicMaterial({color:0x00ffcc, transparent:true, opacity:0});
-const filmEdg    = new THREE.LineSegments(filmEdgGeo, filmEdgM);
-filmEdg.position.z = 0.091; filmEdg.visible = false; G.add(filmEdg);
-
-// Layer 2: Case
-const caseMsh = new THREE.Mesh(
-  new THREE.BoxGeometry(1.54,2.98,0.22),
-  new THREE.MeshPhysicalMaterial({color:0x005040, transparent:true, opacity:0, roughness:0.4, metalness:0.05, clearcoat:0.6})
-);
-caseMsh.visible = false; G.add(caseMsh);
-
-// Case edge glow
-const caseEdgGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(1.54,2.98,0.22));
-const caseEdgM   = new THREE.LineBasicMaterial({color:0x00d4aa, transparent:true, opacity:0});
-const caseEdg    = new THREE.LineSegments(caseEdgGeo, caseEdgM);
-caseEdg.visible = false; G.add(caseEdg);
-
-// Layer 3: Lens protector disc
-const lensProtMsh = new THREE.Mesh(
-  new THREE.CircleGeometry(0.42,32),
-  new THREE.MeshPhysicalMaterial({color:0x00d4aa, transparent:true, opacity:0, roughness:0.02, metalness:0.1, transmission:0.6, side:THREE.DoubleSide})
-);
-lensProtMsh.position.set(-0.28,0.74,-0.075); lensProtMsh.visible=false; G.add(lensProtMsh);
-
-const lensProtRing = new THREE.Mesh(
-  new THREE.TorusGeometry(0.42,0.025,8,32),
-  new THREE.MeshBasicMaterial({color:0x00d4aa, transparent:true, opacity:0})
-);
-lensProtRing.position.set(-0.28,0.74,-0.074); lensProtRing.visible=false; G.add(lensProtRing);
-
-// ─── ANIMATION STATE ─────────────────────────────────────────────────────────
-let tFilm=0,tFilmEdg=0,tCase=0,tCaseEdg=0,tLens=0,tLensRing=0;
-let wantFilm=false,wantCase=false,wantLens=false;
-let isDrag=false,lastX=0,lastY=0,vX=0,vY=0,manY=0,manX=0;
-let fCount=0,fTime=performance.now();
-let doneGlow=0;
-
-// Touch / mouse drag
-function onDown(x,y){isDrag=true;lastX=x;lastY=y;vX=vY=0;}
-function onMove(x,y){if(!isDrag)return;vX=(x-lastX)*0.014;vY=(y-lastY)*0.01;manY+=vX;manX+=vY;lastX=x;lastY=y;}
-function onUp(){isDrag=false;}
-canvas.addEventListener('mousedown',e=>onDown(e.clientX,e.clientY));
-canvas.addEventListener('mousemove',e=>onMove(e.clientX,e.clientY));
-canvas.addEventListener('mouseup',onUp);
-canvas.addEventListener('touchstart',e=>{onDown(e.touches[0].clientX,e.touches[0].clientY);},{passive:true});
-canvas.addEventListener('touchmove',e=>{onMove(e.touches[0].clientX,e.touches[0].clientY);},{passive:true});
-canvas.addEventListener('touchend',onUp);
-
-const clock = new THREE.Clock();
-function lerp(a,b,t){return a+(b-a)*t;}
-const LS = 0.07; // lerp speed
-
-function animate(){
-  requestAnimationFrame(animate);
-  const t = clock.getElapsedTime();
-
-  // Inertia
-  if(!isDrag){vX*=0.90;vY*=0.90;manY+=vX;manX+=vY;}
-  manX=Math.max(-0.55,Math.min(0.55,manX));
-
-  G.rotation.y = Math.sin(t*0.35)*0.2 + manY;
-  G.rotation.x = 0.05 + manX;
-  if(si>=4) G.rotation.y = t*0.32 + manY;
-
-  // Scale
-  G.scale.setScalar(lerp(G.scale.x, modelScale, 0.05));
-
-  // Lerp layer opacities
-  tFilm    = lerp(tFilm,    wantFilm ? 0.30 : 0, LS);
-  tFilmEdg = lerp(tFilmEdg, wantFilm ? 0.90 : 0, LS);
-  tCase    = lerp(tCase,    wantCase ? 0.78 : 0, LS);
-  tCaseEdg = lerp(tCaseEdg, wantCase ? 0.55 : 0, LS);
-  tLens    = lerp(tLens,    wantLens ? 0.55 : 0, LS);
-  tLensRing= lerp(tLensRing,wantLens ? 1.00 : 0, LS);
-
-  filmM.opacity   = tFilm;    filmMsh.visible  = tFilm>0.01;
-  filmEdgM.opacity= tFilmEdg; filmEdg.visible  = tFilmEdg>0.01;
-  caseMsh.material.opacity=tCase; caseMsh.visible=tCase>0.01;
-  caseEdgM.opacity=tCaseEdg; caseEdg.visible=tCaseEdg>0.01;
-  lensProtMsh.material.opacity=tLens; lensProtMsh.visible=tLens>0.01;
-  lensProtRing.material.opacity=tLensRing; lensProtRing.visible=tLensRing>0.01;
-
-  // Lenses hidden by case
-  lensArr.forEach(l=>l.visible=!wantCase||tCase<0.5);
-
-  // Complete rim glow
-  if(si>=4){doneGlow=Math.min(1,doneGlow+0.015);rim.intensity=0.6+doneGlow*1.2;}
-
-  renderer.render(scene,camera);
-
-  fCount++;
-  const now=performance.now();
-  if(now-fTime>1000){
-    document.getElementById('fpsLbl').textContent=Math.round(fCount*1000/(now-fTime))+' fps';
-    fCount=0;fTime=now;
+// ─── DRAG ROTATION ───────────────────────────────────────────────────────────
+function getEvt(e){ return e.touches ? e.touches[0] : e; }
+function onDown(e){
+  isDrag = true;
+  const ev = getEvt(e);
+  startX = ev.clientX; startY = ev.clientY;
+  velX = velY = 0;
+  cancelAnimationFrame(rafId);
+}
+function onMove(e){
+  if(!isDrag) return;
+  const ev = getEvt(e);
+  const dx = ev.clientX - startX;
+  const dy = ev.clientY - startY;
+  velX = dx * 0.4; velY = dy * 0.25;
+  rotY += dx * 0.55; rotX += dy * 0.35;
+  rotX = Math.max(-35, Math.min(35, rotX));
+  startX = ev.clientX; startY = ev.clientY;
+  applyRot();
+}
+function onUp(){
+  isDrag = false;
+  inertia();
+}
+function inertia(){
+  if(Math.abs(velX) < 0.1 && Math.abs(velY) < 0.1){
+    // Drift back to default
+    driftBack();
+    return;
+  }
+  rotY += velX * 0.08; rotX += velY * 0.05;
+  rotX = Math.max(-35, Math.min(35, rotX));
+  velX *= 0.88; velY *= 0.88;
+  applyRot();
+  rafId = requestAnimationFrame(inertia);
+}
+function driftBack(){
+  const targetY = si >= 4 ? rotY : -18;
+  const targetX = 4;
+  rotY += (targetY - rotY) * 0.04;
+  rotX += (targetX - rotX) * 0.04;
+  applyRot();
+  if(Math.abs(rotY - targetY) > 0.2 || Math.abs(rotX - targetX) > 0.2){
+    rafId = requestAnimationFrame(driftBack);
   }
 }
-animate();
 
-// Handle resize
-window.addEventListener('resize',()=>{
-  const nw=Math.min(window.innerWidth,400);
-  renderer.setSize(nw,H,false);
-  canvas.style.width=nw+'px';
-  camera.aspect=nw/H;
-  camera.updateProjectionMatrix();
-});
+phone.addEventListener('mousedown', onDown);
+window.addEventListener('mousemove', onMove);
+window.addEventListener('mouseup', onUp);
+phone.addEventListener('touchstart', onDown, {passive:true});
+window.addEventListener('touchmove', onMove, {passive:true});
+window.addEventListener('touchend', onUp);
+
+function applyRot(){
+  phone.style.transform = `scale(${modelScale}) rotateX(${rotX}deg) rotateY(${rotY}deg)`;
+}
+applyRot();
+
+// Auto-rotate on complete
+let autoRotAngle = -18;
+function autoRotate(){
+  if(si >= 4 && !isDrag){
+    autoRotAngle += 0.4;
+    rotY = autoRotAngle;
+    applyRot();
+  }
+  requestAnimationFrame(autoRotate);
+}
+autoRotate();
+
+// ─── FPS COUNTER (real) ───────────────────────────────────────────────────────
+let fCount = 0, fTime = performance.now();
+function fpsTick(){
+  fCount++;
+  const now = performance.now();
+  if(now - fTime > 1000){
+    document.getElementById('fpsLbl').textContent = Math.round(fCount*1000/(now-fTime)) + ' fps';
+    fCount=0; fTime=now;
+  }
+  requestAnimationFrame(fpsTick);
+}
+fpsTick();
+
+// ─── LAYERS ──────────────────────────────────────────────────────────────────
+function setLayer(id, on){
+  document.getElementById(id).style.opacity = on ? '1' : '0';
+}
+
+function flashAnim(){
+  flashEl.classList.remove('pop');
+  void flashEl.offsetWidth; // reflow
+  flashEl.classList.add('pop');
+}
 
 // ─── UI ──────────────────────────────────────────────────────────────────────
 function buildProg(){
-  const el=document.getElementById('progTrack');
+  const el = document.getElementById('progt');
   el.innerHTML='';
   for(let i=0;i<4;i++){
     const d=document.createElement('div');
-    d.className='prog-seg'+(i<si-1?' done':i===si-1?' cur':'');
+    d.className='pseg'+(i<si-1?' done':i===si-1?' cur':'');
     el.appendChild(d);
   }
 }
 
-function updIndicators(s){
+function updLP(lp){
   [0,1,2].forEach(i=>{
     const el=document.getElementById('lp'+i);
     el.classList.remove('on','cur');
-    if(s.lp[i]) el.classList.add('on');
+    if(lp[i]) el.classList.add('on');
     else if(i===si) el.classList.add('cur');
   });
 }
 
-function renderStep(){
-  const s=STEPS[Math.min(si,STEPS.length-1)];
-  document.getElementById('sNum').textContent=s.num;
-  document.getElementById('sTitle').textContent=si===0?document.querySelector('.model-chip.active').textContent:s.title;
-  document.getElementById('sDesc').textContent=s.desc;
-  document.getElementById('sTech').innerHTML=s.tech.map(([t,c])=>`<span class="tchip ${c}">${t}</span>`).join('');
+function updScreen(s){
+  document.getElementById('scrLabel').textContent = s.scr;
+  document.getElementById('scrIcons').innerHTML = [...s.scrIco].map(c=>`<span class="sicon">${c}</span>`).join('');
+}
 
-  const btn=document.getElementById('mainCta');
-  btn.textContent=s.btn;
-  btn.className='cta '+s.btnCls;
+function render(){
+  const s = STEPS[Math.min(si, STEPS.length-1)];
+  document.getElementById('snum').textContent  = s.num;
+  document.getElementById('stitle').textContent = si===0
+    ? document.querySelector('.mchip.on').textContent
+    : s.title;
+  document.getElementById('sdesc').textContent  = s.desc;
+  document.getElementById('stech').innerHTML    = s.tech.map(([t,c])=>`<span class="tchip ${c}">${t}</span>`).join('');
 
-  document.getElementById('doneBanner').style.display=si>=4?'block':'none';
-  document.getElementById('restartCta').style.display=si>=4?'block':'none';
+  const btn = document.getElementById('mcta');
+  btn.textContent = s.btn;
+  btn.className   = 'cta ' + s.cls;
 
-  wantFilm=s.film; wantCase=s.cas; wantLens=s.lens;
-  updIndicators(s);
+  document.getElementById('dbanner').style.display = si>=4 ? 'block' : 'none';
+  document.getElementById('rcta').style.display    = si>=4 ? 'block' : 'none';
+
+  setLayer('layer-film', s.film);
+  setLayer('layer-case', s.cas);
+  setLayer('layer-lens', s.lens);
+  setLayer('layer-lens-front', s.lens);
+  updLP(s.lp);
+  updScreen(s);
   buildProg();
 }
 
 function advance(){
-  if(si>=STEPS.length-1){alert('Redirecionando para o checkout…\n(gateway de pagamento integrado na Fase 2)');return;}
+  if(si >= STEPS.length-1){
+    alert('Redirecionando para o checkout…\n(integração com gateway de pagamento na Fase 2)');
+    return;
+  }
   si++;
-  renderStep();
+  flashAnim();
+  render();
 }
 
 function restart(){
-  si=0; doneGlow=0; rim.intensity=0.6;
-  manY=0; manX=0; vX=0; vY=0;
-  renderStep();
+  si=0; autoRotAngle=-18; rotY=-18; rotX=4; velX=0; velY=0;
+  applyRot();
+  render();
 }
 
-function selModel(el,name,scale){
-  document.querySelectorAll('.model-chip').forEach(c=>c.classList.remove('active'));
-  el.classList.add('active');
-  modelScale=scale;
-  if(si===0) document.getElementById('sTitle').textContent=name;
+function setModel(el,name,scale){
+  document.querySelectorAll('.mchip').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');
+  modelScale = scale;
+  applyRot();
+  if(si===0) document.getElementById('stitle').textContent = name;
 }
 
-renderStep();
+render();
 </script>
 </body>
 </html>
