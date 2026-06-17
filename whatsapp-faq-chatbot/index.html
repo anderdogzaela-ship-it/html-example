@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WhatsApp FAQ Bot – Demo</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #111b21; color: #e9edef; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+
+  /* Layout */
+  .app-wrapper { display: flex; gap: 0; width: 980px; height: 680px; background: #111b21; border-radius: 16px; overflow: hidden; box-shadow: 0 32px 80px rgba(0,0,0,0.7); border: 1px solid #2a3942; }
+
+  /* Sidebar nav */
+  .sidebar { width: 200px; background: #1f2c33; display: flex; flex-direction: column; border-right: 1px solid #2a3942; flex-shrink: 0; }
+  .sidebar-logo { padding: 20px 16px 16px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #2a3942; }
+  .sidebar-logo-icon { width: 36px; height: 36px; background: #25d366; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .sidebar-logo-text { font-size: 13px; font-weight: 700; color: #e9edef; line-height: 1.2; }
+  .sidebar-logo-sub { font-size: 10px; color: #8696a0; }
+  .sidebar-nav { flex: 1; padding: 8px 0; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 16px; cursor: pointer; border-left: 3px solid transparent; transition: all 0.15s; font-size: 12px; color: #8696a0; }
+  .nav-item:hover { background: #2a3942; color: #e9edef; }
+  .nav-item.active { background: #2a3942; color: #25d366; border-left-color: #25d366; }
+  .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+  .sidebar-footer { padding: 12px 16px; border-top: 1px solid #2a3942; }
+  .status-dot { width: 8px; height: 8px; background: #25d366; border-radius: 50%; display: inline-block; margin-right: 6px; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .status-label { font-size: 11px; color: #8696a0; }
+
+  /* Main content */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  /* Views */
+  .view { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+  .view.active { display: flex; }
+
+  /* ===== CHAT VIEW ===== */
+  .chat-layout { display: flex; flex: 1; overflow: hidden; }
+
+  /* Contact list */
+  .contact-list { width: 240px; background: #1f2c33; border-right: 1px solid #2a3942; display: flex; flex-direction: column; }
+  .contact-list-header { padding: 12px 16px; border-bottom: 1px solid #2a3942; font-size: 12px; font-weight: 600; color: #8696a0; text-transform: uppercase; letter-spacing: 0.5px; }
+  .contact-item { padding: 10px 16px; cursor: pointer; border-bottom: 1px solid #1a2228; display: flex; align-items: center; gap: 10px; transition: background 0.1s; }
+  .contact-item:hover { background: #2a3942; }
+  .contact-item.active { background: #2a3942; }
+  .contact-avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; flex-shrink: 0; }
+  .contact-info { flex: 1; min-width: 0; }
+  .contact-name { font-size: 13px; font-weight: 600; color: #e9edef; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .contact-preview { font-size: 11px; color: #8696a0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+  .contact-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+  .contact-time { font-size: 10px; color: #8696a0; }
+  .unread-badge { background: #25d366; color: #111b21; font-size: 10px; font-weight: 700; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+  .window-badge { font-size: 9px; padding: 2px 5px; border-radius: 4px; font-weight: 600; }
+  .window-open { background: rgba(37,211,102,0.2); color: #25d366; }
+  .window-closed { background: rgba(234,160,49,0.2); color: #eba849; }
+  .window-unknown { background: rgba(134,150,160,0.2); color: #8696a0; }
+
+  /* Chat window */
+  .chat-window { flex: 1; display: flex; flex-direction: column; background: #0b141a; }
+  .chat-header { padding: 10px 16px; background: #1f2c33; border-bottom: 1px solid #2a3942; display: flex; align-items: center; gap: 12px; }
+  .chat-header-avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; }
+  .chat-header-info { flex: 1; }
+  .chat-header-name { font-size: 14px; font-weight: 600; color: #e9edef; }
+  .chat-header-status { font-size: 11px; color: #8696a0; }
+  .window-indicator { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; display: flex; align-items: center; gap: 5px; }
+  .window-open-badge { background: rgba(37,211,102,0.15); color: #25d366; border: 1px solid rgba(37,211,102,0.3); }
+  .window-closed-badge { background: rgba(234,160,49,0.15); color: #eba849; border: 1px solid rgba(234,160,49,0.3); }
+  .window-countdown { font-size: 10px; opacity: 0.8; }
+
+  .chat-messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 6px; }
+  .chat-messages::-webkit-scrollbar { width: 4px; }
+  .chat-messages::-webkit-scrollbar-thumb { background: #2a3942; border-radius: 2px; }
+
+  .msg { max-width: 72%; padding: 7px 12px 5px; border-radius: 8px; font-size: 13px; line-height: 1.4; position: relative; animation: msgIn 0.2s ease-out; }
+  @keyframes msgIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+  .msg-in { background: #1f2c33; color: #e9edef; align-self: flex-start; border-bottom-left-radius: 2px; }
+  .msg-out { background: #005c4b; color: #e9edef; align-self: flex-end; border-bottom-right-radius: 2px; }
+  .msg-bot { background: #1a2e3a; border-left: 3px solid #25d366; align-self: flex-start; border-bottom-left-radius: 2px; }
+  .msg-system { background: rgba(37,211,102,0.08); border: 1px solid rgba(37,211,102,0.2); color: #25d366; align-self: center; font-size: 11px; padding: 5px 12px; border-radius: 12px; text-align: center; }
+  .msg-template { background: #2a1a00; border-left: 3px solid #eba849; align-self: flex-start; border-bottom-left-radius: 2px; }
+  .msg-time { font-size: 10px; color: #8696a0; margin-top: 3px; display: flex; align-items: center; gap: 4px; }
+  .msg-bot-label { font-size: 10px; color: #25d366; font-weight: 600; margin-bottom: 3px; }
+  .msg-template-label { font-size: 10px; color: #eba849; font-weight: 600; margin-bottom: 3px; }
+  .tick { color: #53bdeb; }
+  .date-divider { text-align: center; font-size: 11px; color: #8696a0; background: rgba(17,27,33,0.8); padding: 3px 10px; border-radius: 8px; align-self: center; margin: 6px 0; }
+  .handoff-card { background: #1f2c33; border: 1px solid #2a3942; border-radius: 10px; padding: 10px 14px; align-self: center; font-size: 12px; color: #8696a0; text-align: center; max-width: 260px; }
+  .handoff-card-title { color: #eba849; font-weight: 700; margin-bottom: 4px; font-size: 13px; }
+  .handoff-avatar-row { display: flex; gap: 6px; align-items: center; justify-content: center; margin-top: 8px; }
+  .agent-chip { background: #2a3942; border-radius: 12px; padding: 3px 10px; font-size: 11px; color: #e9edef; display: flex; align-items: center; gap: 5px; }
+  .agent-dot { width: 6px; height: 6px; background: #25d366; border-radius: 50%; }
+
+  .chat-input { padding: 10px 16px; background: #1f2c33; border-top: 1px solid #2a3942; display: flex; align-items: center; gap: 10px; }
+  .chat-input-box { flex: 1; background: #2a3942; border: none; border-radius: 20px; padding: 8px 14px; color: #e9edef; font-size: 13px; outline: none; }
+  .chat-input-box::placeholder { color: #8696a0; }
+  .send-btn { width: 36px; height: 36px; background: #25d366; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #111b21; font-size: 16px; transition: background 0.15s; }
+  .send-btn:hover { background: #1fbe58; }
+  .quick-replies { padding: 6px 16px; display: flex; gap: 6px; flex-wrap: wrap; border-top: 1px solid #1a2228; }
+  .qr-btn { background: #1f2c33; border: 1px solid #2a3942; border-radius: 14px; padding: 5px 12px; font-size: 11px; color: #25d366; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+  .qr-btn:hover { background: #2a3942; border-color: #25d366; }
+
+  /* ===== FLOW EDITOR VIEW ===== */
+  .flow-view { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .flow-toolbar { padding: 12px 20px; background: #1f2c33; border-bottom: 1px solid #2a3942; display: flex; align-items: center; gap: 12px; }
+  .flow-title { font-size: 14px; font-weight: 700; color: #e9edef; flex: 1; }
+  .btn-sm { padding: 6px 14px; border-radius: 8px; border: none; cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.15s; }
+  .btn-primary { background: #25d366; color: #111b21; }
+  .btn-primary:hover { background: #1fbe58; }
+  .btn-secondary { background: #2a3942; color: #e9edef; }
+  .btn-secondary:hover { background: #3a4a52; }
+  .btn-warning { background: rgba(234,160,49,0.2); color: #eba849; border: 1px solid rgba(234,160,49,0.3); }
+  .flow-body { flex: 1; display: flex; overflow: hidden; }
+  .flow-canvas { flex: 1; padding: 20px; overflow: auto; position: relative; }
+  .flow-nodes { display: flex; flex-direction: column; gap: 12px; }
+  .flow-node { background: #1f2c33; border: 1px solid #2a3942; border-radius: 10px; padding: 12px 16px; cursor: pointer; transition: all 0.2s; position: relative; }
+  .flow-node:hover { border-color: #25d366; }
+  .flow-node.selected { border-color: #25d366; box-shadow: 0 0 0 2px rgba(37,211,102,0.2); }
+  .flow-node-type { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; margin-bottom: 6px; }
+  .node-trigger { color: #eba849; }
+  .node-message { color: #25d366; }
+  .node-condition { color: #53bdeb; }
+  .node-handoff { color: #ea4f4f; }
+  .node-template { color: #a855f7; }
+  .flow-node-content { font-size: 13px; color: #e9edef; }
+  .flow-node-sub { font-size: 11px; color: #8696a0; margin-top: 4px; }
+  .flow-arrow { text-align: center; color: #2a3942; font-size: 16px; margin: -4px 0; }
+  .node-badges { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+  .node-badge { font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
+  .badge-keyword { background: rgba(37,211,102,0.15); color: #25d366; border: 1px solid rgba(37,211,102,0.2); }
+  .badge-window { background: rgba(83,189,235,0.15); color: #53bdeb; border: 1px solid rgba(83,189,235,0.2); }
+  .badge-template { background: rgba(168,85,247,0.15); color: #a855f7; border: 1px solid rgba(168,85,247,0.2); }
+  .badge-handoff { background: rgba(234,79,79,0.15); color: #ea4f4f; border: 1px solid rgba(234,79,79,0.2); }
+  .flow-sidebar { width: 240px; background: #1f2c33; border-left: 1px solid #2a3942; padding: 16px; overflow-y: auto; }
+  .flow-sidebar-title { font-size: 12px; font-weight: 700; color: #8696a0; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+  .faq-item { background: #0b141a; border: 1px solid #2a3942; border-radius: 8px; padding: 10px; margin-bottom: 8px; cursor: pointer; transition: border-color 0.15s; }
+  .faq-item:hover { border-color: #25d366; }
+  .faq-q { font-size: 12px; color: #e9edef; font-weight: 600; }
+  .faq-a { font-size: 11px; color: #8696a0; margin-top: 4px; }
+  .faq-tags { display: flex; gap: 4px; margin-top: 6px; flex-wrap: wrap; }
+  .faq-tag { font-size: 10px; background: #2a3942; color: #8696a0; padding: 1px 6px; border-radius: 6px; }
+  .add-faq-btn { width: 100%; padding: 8px; background: rgba(37,211,102,0.1); border: 1px dashed rgba(37,211,102,0.3); border-radius: 8px; color: #25d366; font-size: 12px; cursor: pointer; text-align: center; transition: all 0.15s; }
+  .add-faq-btn:hover { background: rgba(37,211,102,0.15); }
+
+  /* ===== REPORTS VIEW ===== */
+  .reports-view { flex: 1; padding: 20px; overflow-y: auto; }
+  .reports-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .reports-title { font-size: 16px; font-weight: 700; color: #e9edef; }
+  .date-range { font-size: 12px; color: #8696a0; background: #1f2c33; border: 1px solid #2a3942; border-radius: 8px; padding: 6px 12px; }
+  .metrics-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+  .metric-card { background: #1f2c33; border: 1px solid #2a3942; border-radius: 10px; padding: 14px 16px; }
+  .metric-label { font-size: 11px; color: #8696a0; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.4px; }
+  .metric-value { font-size: 22px; font-weight: 700; color: #e9edef; }
+  .metric-delta { font-size: 11px; margin-top: 4px; }
+  .delta-up { color: #25d366; }
+  .delta-down { color: #ea4f4f; }
+  .reports-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .report-card { background: #1f2c33; border: 1px solid #2a3942; border-radius: 10px; padding: 16px; }
+  .report-card-title { font-size: 13px; font-weight: 700; color: #e9edef; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; }
+  .report-card-badge { font-size: 10px; background: rgba(37,211,102,0.15); color: #25d366; border-radius: 8px; padding: 2px 8px; }
+  /* Bar chart */
+  .bar-chart { display: flex; flex-direction: column; gap: 8px; }
+  .bar-row { display: flex; align-items: center; gap: 8px; }
+  .bar-label { font-size: 11px; color: #8696a0; width: 120px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bar-track { flex: 1; background: #0b141a; border-radius: 4px; height: 8px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 4px; transition: width 1s ease; }
+  .bar-val { font-size: 11px; color: #e9edef; width: 30px; text-align: right; flex-shrink: 0; }
+  /* Volume chart */
+  .vol-chart { display: flex; align-items: flex-end; gap: 4px; height: 80px; }
+  .vol-bar { flex: 1; border-radius: 3px 3px 0 0; transition: height 0.5s ease; cursor: pointer; position: relative; }
+  .vol-bar:hover::after { content: attr(data-tip); position: absolute; bottom: 105%; left: 50%; transform: translateX(-50%); background: #2a3942; color: #e9edef; font-size: 10px; padding: 3px 6px; border-radius: 4px; white-space: nowrap; }
+  .vol-labels { display: flex; gap: 4px; margin-top: 4px; }
+  .vol-label { flex: 1; font-size: 9px; color: #8696a0; text-align: center; }
+  /* Window stats */
+  .window-stats { display: flex; gap: 12px; margin-bottom: 12px; }
+  .window-stat { flex: 1; background: #0b141a; border-radius: 8px; padding: 10px; text-align: center; }
+  .window-stat-val { font-size: 18px; font-weight: 700; }
+  .window-stat-label { font-size: 10px; color: #8696a0; margin-top: 2px; }
+  .window-open-color { color: #25d366; }
+  .window-closed-color { color: #eba849; }
+  .handoff-list { display: flex; flex-direction: column; gap: 8px; }
+  .handoff-row { display: flex; align-items: center; gap: 10px; padding: 8px; background: #0b141a; border-radius: 8px; }
+  .handoff-avatar-sm { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+  .handoff-info { flex: 1; }
+  .handoff-name { font-size: 12px; font-weight: 600; color: #e9edef; }
+  .handoff-reason { font-size: 11px; color: #8696a0; }
+  .handoff-time { font-size: 10px; color: #8696a0; }
+  .resolved-chip { font-size: 10px; background: rgba(37,211,102,0.15); color: #25d366; border-radius: 6px; padding: 2px 8px; }
+  .pending-chip { font-size: 10px; background: rgba(234,160,49,0.15); color: #eba849; border-radius: 6px; padding: 2px 8px; }
+
+  /* Restart button */
+  .restart-btn { position: fixed; bottom: 20px; right: 20px; background: #1f2c33; border: 1px solid #2a3942; color: #8696a0; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-size: 12px; transition: all 0.2s; z-index: 100; }
+  .restart-btn:hover { background: #2a3942; color: #e9edef; }
+
+  /* Responsive */
+  @media (max-width: 900px) { .app-wrapper { width: 100%; height: 100vh; border-radius: 0; } }
+
+  /* Scroll */
+  ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-thumb { background: #2a3942; border-radius: 2px; }
+
+  /* Session window warning banner */
+  .window-banner { margin: 8px 16px; padding: 8px 12px; background: rgba(234,160,49,0.1); border: 1px solid rgba(234,160,49,0.3); border-radius: 8px; font-size: 11px; color: #eba849; display: flex; align-items: center; gap: 8px; }
+  .window-banner-icon { font-size: 14px; flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<div class="app-wrapper">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">&#128172;</div>
+      <div>
+        <div class="sidebar-logo-text">FAQ Bot</div>
+        <div class="sidebar-logo-sub">WhatsApp Business</div>
+      </div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-item active" onclick="switchView('chat')">
+        <span class="nav-icon">&#128172;</span> Conversas
+      </div>
+      <div class="nav-item" onclick="switchView('flow')">
+        <span class="nav-icon">&#9881;</span> Fluxos FAQ
+      </div>
+      <div class="nav-item" onclick="switchView('reports')">
+        <span class="nav-icon">&#128202;</span> Relatórios
+      </div>
+    </div>
+    <div class="sidebar-footer">
+      <div><span class="status-dot"></span><span class="status-label">Bot ativo</span></div>
+      <div style="font-size:10px;color:#8696a0;margin-top:4px;">WhatsApp Cloud API</div>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+
+    <!-- CHAT VIEW -->
+    <div class="view active" id="view-chat">
+      <div class="chat-layout">
+        <!-- Contact list -->
+        <div class="contact-list">
+          <div class="contact-list-header">Conversas recentes</div>
+          <div id="contactList"></div>
+        </div>
+        <!-- Chat window -->
+        <div class="chat-window">
+          <div class="chat-header">
+            <div class="chat-header-avatar" id="chatAvatar" style="background:#4ade80;color:#111b21">M</div>
+            <div class="chat-header-info">
+              <div class="chat-header-name" id="chatName">Mariana Costa</div>
+              <div class="chat-header-status" id="chatStatus">+55 11 99100-2345</div>
+            </div>
+            <div class="window-indicator window-open-badge" id="windowBadge">
+              <span>&#128308;</span> <span id="windowText">Janela aberta</span>
+            </div>
+          </div>
+          <div id="windowBanner" class="window-banner" style="display:none">
+            <span class="window-banner-icon">&#9888;</span>
+            <span>Janela de 24h expirada. Próxima mensagem será enviada como <strong>template aprovado pela Meta</strong>.</span>
+          </div>
+          <div class="chat-messages" id="chatMessages"></div>
+          <div class="quick-replies" id="quickReplies"></div>
+          <div class="chat-input">
+            <input class="chat-input-box" id="chatInput" placeholder="Digite uma mensagem..." onkeydown="if(event.key==='Enter')sendUserMsg()">
+            <button class="send-btn" onclick="sendUserMsg()">&#10148;</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FLOW VIEW -->
+    <div class="view" id="view-flow">
+      <div class="flow-view">
+        <div class="flow-toolbar">
+          <div class="flow-title">&#9881; Editor de Fluxo FAQ</div>
+          <button class="btn-sm btn-secondary">+ Novo nó</button>
+          <button class="btn-sm btn-primary">&#10003; Publicar</button>
+        </div>
+        <div class="flow-body">
+          <div class="flow-canvas">
+            <div class="flow-nodes" id="flowNodes"></div>
+          </div>
+          <div class="flow-sidebar">
+            <div class="flow-sidebar-title">Perguntas Frequentes</div>
+            <div id="faqList"></div>
+            <button class="add-faq-btn" onclick="addFaq()">+ Nova pergunta</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REPORTS VIEW -->
+    <div class="view" id="view-reports">
+      <div class="reports-view">
+        <div class="reports-header">
+          <div class="reports-title">&#128202; Relatórios de Performance</div>
+          <div class="date-range">01/06/2026 – 17/06/2026</div>
+        </div>
+        <div class="metrics-row" id="metricsRow"></div>
+        <div class="reports-grid" id="reportsGrid"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<button class="restart-btn" onclick="restartDemo()">&#8635; Reiniciar demo</button>
+
+<script>
+// ─── Data ───────────────────────────────────────────────────────────────────
+const contacts = [
+  { id: 0, name: 'Mariana Costa', phone: '+55 11 99100-2345', avatar: 'M', color: '#4ade80', preview: 'Qual o prazo de entrega?', time: '14:32', unread: 0, window: 'open', windowLabel: 'Aberta' },
+  { id: 1, name: 'Carlos Lima', phone: '+55 21 98200-1122', avatar: 'C', color: '#60a5fa', preview: 'Não encontrei meu pedido...', time: '13:15', unread: 2, window: 'closed', windowLabel: 'Expirada' },
+  { id: 2, name: 'Bruna Alves', phone: '+55 31 97300-4455', avatar: 'B', color: '#f472b6', preview: 'Bot: Transferindo para atend...', time: '12:48', unread: 0, window: 'open', windowLabel: 'Aberta' },
+  { id: 3, name: 'Fábio Mendes', phone: '+55 85 99400-6677', avatar: 'F', color: '#fb923c', preview: 'Obrigado!', time: '11:20', unread: 0, window: 'closed', windowLabel: 'Expirada' },
+];
+
+const conversations = {
+  0: [
+    { type: 'date', text: 'Hoje' },
+    { type: 'in', text: 'Oi, queria saber o prazo de entrega para São Paulo.', time: '14:28' },
+    { type: 'bot', text: 'Olá! Aqui é o assistente virtual da loja. Para São Paulo capital, o prazo é de 2 a 3 dias úteis via transportadora padrão, ou 1 dia útil no Express. Posso te ajudar com mais alguma coisa?', time: '14:28', label: '&#129302; Bot respondeu automaticamente' },
+    { type: 'in', text: 'E para o interior?', time: '14:30' },
+    { type: 'bot', text: 'Para o interior de São Paulo o prazo é de 3 a 5 dias úteis. O frete é calculado pelo CEP no momento do checkout. Quer que eu te passe o link para calcular?', time: '14:30', label: '&#129302; Bot respondeu automaticamente' },
+    { type: 'in', text: 'Qual o prazo de entrega?', time: '14:32' },
+  ],
+  1: [
+    { type: 'date', text: 'Ontem' },
+    { type: 'in', text: 'Quero saber sobre meu pedido #4521', time: '13:10' },
+    { type: 'bot', text: 'Claro! Para consultar um pedido, preciso do seu CPF ou e-mail cadastrado.', time: '13:10', label: '&#129302; Bot respondeu automaticamente' },
+    { type: 'in', text: 'Não encontrei meu pedido no sistema. Pode verificar?', time: '13:15' },
+    { type: 'date', text: 'Hoje – 26h depois da última mensagem' },
+    { type: 'template', text: 'Olá Carlos! Ainda posso te ajudar com o pedido #4521? Estamos à disposição. Responda SIM para continuar ou NÃO para encerrar.', time: '15:12', label: '&#128249; Template aprovado Meta – janela de 24h expirada' },
+  ],
+  2: [
+    { type: 'date', text: 'Hoje' },
+    { type: 'in', text: 'Meu produto chegou com defeito', time: '12:40' },
+    { type: 'bot', text: 'Lamentamos o inconveniente! Para casos de produto com defeito, nosso time de suporte especializado pode resolver mais rapidamente. Vou transferir você agora.', time: '12:41', label: '&#129302; Bot detectou: assunto fora do FAQ' },
+    { type: 'system', text: '&#128101; Transferido para atendente humano' },
+    { type: 'handoff', time: '12:42' },
+    { type: 'out', text: 'Olá Bruna, aqui é a Ana da equipe de qualidade. Vi que seu produto chegou com defeito. Pode me enviar uma foto do problema?', time: '12:45' },
+    { type: 'in', text: 'Sim, vou enviar agora!', time: '12:48' },
+  ],
+  3: [
+    { type: 'date', text: 'Hoje' },
+    { type: 'in', text: 'Qual o horário de funcionamento?', time: '11:15' },
+    { type: 'bot', text: 'Nosso atendimento funciona de segunda a sexta das 8h às 18h e sábados das 9h às 14h. Posso te ajudar com mais alguma coisa?', time: '11:15', label: '&#129302; Bot respondeu automaticamente' },
+    { type: 'in', text: 'Obrigado!', time: '11:20' },
+    { type: 'bot', text: 'De nada! Qualquer dúvida estou aqui &#128522;', time: '11:20', label: '&#129302; Bot respondeu automaticamente' },
+  ]
+};
+
+const quickRepliesByContact = {
+  0: ['Prazo Express', 'Calcular frete', 'Status do pedido', 'Falar com atendente'],
+  1: ['Consultar pedido', 'Política de troca', 'Falar com atendente'],
+  2: ['Política de troca', 'Abrir chamado'],
+  3: ['Ver produtos', 'Calcular frete', 'Formas de pagamento'],
+};
+
+const flowNodes = [
+  { type: 'trigger', label: 'Gatilho', content: 'Cliente envia qualquer mensagem', sub: 'Início do fluxo', badges: ['window'] },
+  { type: 'condition', label: 'Verificação', content: 'Janela de 24h está aberta?', sub: 'Controle automático por timestamp', badges: ['window'] },
+  { type: 'message', label: 'Resposta livre', content: 'Bot analisa intenção por palavra-chave', sub: 'Roteia para FAQ ou handoff', badges: ['keyword'] },
+  { type: 'template', label: 'Template Meta', content: 'Envia template pré-aprovado', sub: 'Obrigatório quando janela expirada', badges: ['template'] },
+  { type: 'message', label: 'FAQ Match', content: 'Resposta automática da base de FAQ', sub: '23 perguntas configuradas', badges: ['keyword'] },
+  { type: 'handoff', label: 'Handoff humano', content: 'Transfere para atendente disponível', sub: 'Trigger: palavra-chave ou confiança baixa', badges: ['handoff'] },
+];
+
+const faqs = [
+  { q: 'Qual o prazo de entrega?', a: 'SP capital: 2-3 dias. Interior: 3-5 dias.', tags: ['logística', 'entrega'] },
+  { q: 'Como rastrear meu pedido?', a: 'Acesse [link] com seu CPF.', tags: ['pedido', 'rastreio'] },
+  { q: 'Qual o horário de atendimento?', a: 'Seg-Sex 8h-18h, Sáb 9h-14h.', tags: ['horário'] },
+  { q: 'Como trocar um produto?', a: 'Até 30 dias com nota fiscal.', tags: ['troca', 'devolução'] },
+  { q: 'Quais são as formas de pagamento?', a: 'Pix, cartão crédito/débito, boleto.', tags: ['pagamento'] },
+];
+
+// ─── State ───────────────────────────────────────────────────────────────────
+let activeContact = 0;
+let typingTimeout = null;
+let botQueue = [];
+let isTyping = false;
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+function init() {
+  renderContacts();
+  loadConversation(0);
+  renderFlow();
+  renderFaqs();
+  renderReports();
+}
+
+// ─── View switching ───────────────────────────────────────────────────────────
+function switchView(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('view-' + id).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+
+// ─── Contacts ─────────────────────────────────────────────────────────────────
+function renderContacts() {
+  const el = document.getElementById('contactList');
+  el.innerHTML = contacts.map((c, i) => `
+    <div class="contact-item ${i === activeContact ? 'active' : ''}" onclick="loadConversation(${i})">
+      <div class="contact-avatar" style="background:${c.color};color:#111b21">${c.avatar}</div>
+      <div class="contact-info">
+        <div class="contact-name">${c.name}</div>
+        <div class="contact-preview">${c.preview}</div>
+      </div>
+      <div class="contact-meta">
+        <div class="contact-time">${c.time}</div>
+        <div class="window-badge ${c.window === 'open' ? 'window-open' : 'window-closed'}">${c.windowLabel}</div>
+        ${c.unread ? `<div class="unread-badge">${c.unread}</div>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+function loadConversation(idx) {
+  activeContact = idx;
+  const c = contacts[idx];
+  document.getElementById('chatAvatar').textContent = c.avatar;
+  document.getElementById('chatAvatar').style.background = c.color;
+  document.getElementById('chatName').textContent = c.name;
+  document.getElementById('chatStatus').textContent = c.phone;
+
+  const wb = document.getElementById('windowBadge');
+  const banner = document.getElementById('windowBanner');
+  if (c.window === 'open') {
+    wb.className = 'window-indicator window-open-badge';
+    wb.innerHTML = '<span style="color:#25d366">&#11044;</span> Janela aberta <span class="window-countdown">22h restantes</span>';
+    banner.style.display = 'none';
+  } else {
+    wb.className = 'window-indicator window-closed-badge';
+    wb.innerHTML = '<span style="color:#eba849">&#11044;</span> Janela expirada';
+    banner.style.display = 'flex';
+  }
+
+  renderMessages(conversations[idx] || []);
+  renderQuickReplies(idx);
+  renderContacts();
+}
+
+function renderMessages(msgs) {
+  const el = document.getElementById('chatMessages');
+  el.innerHTML = msgs.map(m => renderMsg(m)).join('');
+  el.scrollTop = el.scrollHeight;
+}
+
+function renderMsg(m) {
+  if (m.type === 'date') return `<div class="date-divider">${m.text}</div>`;
+  if (m.type === 'system') return `<div class="msg msg-system">${m.text}</div>`;
+  if (m.type === 'handoff') return `
+    <div class="handoff-card">
+      <div class="handoff-card-title">&#128101; Handoff para atendente</div>
+      <div style="font-size:11px;color:#8696a0">Bot não conseguiu resolver. Transferindo...</div>
+      <div class="handoff-avatar-row">
+        <div class="agent-chip"><div class="agent-dot"></div> Ana S. – online</div>
+        <div class="agent-chip" style="color:#8696a0">Marcos T. – ocupado</div>
+      </div>
+    </div>`;
+  if (m.type === 'bot') return `
+    <div class="msg msg-bot">
+      <div class="msg-bot-label">${m.label}</div>
+      ${m.text}
+      <div class="msg-time">${m.time} <span class="tick">&#10003;&#10003;</span></div>
+    </div>`;
+  if (m.type === 'template') return `
+    <div class="msg msg-template">
+      <div class="msg-template-label">${m.label}</div>
+      ${m.text}
+      <div class="msg-time">${m.time} <span class="tick">&#10003;&#10003;</span></div>
+    </div>`;
+  if (m.type === 'out') return `
+    <div class="msg msg-out">${m.text}
+      <div class="msg-time">${m.time} <span class="tick">&#10003;&#10003;</span></div>
+    </div>`;
+  return `<div class="msg msg-in">${m.text}<div class="msg-time">${m.time}</div></div>`;
+}
+
+function renderQuickReplies(idx) {
+  const qrs = quickRepliesByContact[idx] || [];
+  document.getElementById('quickReplies').innerHTML = qrs.map(q =>
+    `<button class="qr-btn" onclick="clickQR('${q}')">${q}</button>`
+  ).join('');
+}
+
+// ─── Chat interaction ─────────────────────────────────────────────────────────
+const botResponses = {
+  'prazo': 'Para São Paulo capital o prazo é de 2 a 3 dias úteis. Para o interior são 3 a 5 dias. Precisa de mais alguma informação?',
+  'entrega': 'Trabalhamos com entrega padrão (2-5 dias úteis) e Express (1 dia útil). O frete é calculado no checkout pelo CEP.',
+  'frete': 'O valor do frete é calculado automaticamente pelo seu CEP durante o checkout. Posso te ajudar com mais alguma coisa?',
+  'pedido': 'Para consultar seu pedido, acesse nossa área do cliente com seu CPF ou e-mail. Quer que eu te envie o link direto?',
+  'rastreio': 'O rastreio fica disponível em até 24h após a emissão da nota fiscal. O código chega por e-mail e SMS.',
+  'pagamento': 'Aceitamos Pix (5% de desconto), cartão de crédito em até 12x, débito e boleto bancário.',
+  'troca': 'Trocas são aceitas em até 30 dias com nota fiscal. Para defeito de fabricação o prazo é de 90 dias.',
+  'horário': 'Atendemos de segunda a sexta das 8h às 18h e sábados das 9h às 14h.',
+  'atendente': null, // triggers handoff
+  'humano': null,
+  'status': 'Para consultar o status do pedido, acesse nossa área do cliente ou me informe seu número de pedido.',
+  'express': 'O Express entrega em até 1 dia útil para capitais. O valor é calculado no checkout. Quer calcular para seu CEP?',
+};
+
+function getUserTime() {
+  const d = new Date();
+  return d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+}
+
+function addMessage(msg) {
+  conversations[activeContact] = conversations[activeContact] || [];
+  conversations[activeContact].push(msg);
+  const el = document.getElementById('chatMessages');
+  const div = document.createElement('div');
+  div.innerHTML = renderMsg(msg);
+  Array.from(div.children).forEach(c => el.appendChild(c));
+  el.scrollTop = el.scrollHeight;
+}
+
+function sendUserMsg() {
+  const inp = document.getElementById('chatInput');
+  const text = inp.value.trim();
+  if (!text) return;
+  inp.value = '';
+  addMessage({ type: 'in', text, time: getUserTime() });
+  scheduleBot(text);
+}
+
+function clickQR(text) {
+  addMessage({ type: 'in', text, time: getUserTime() });
+  scheduleBot(text);
+}
+
+function scheduleBot(text) {
+  clearTimeout(typingTimeout);
+  typingTimeout = setTimeout(() => respondBot(text), 900);
+}
+
+function respondBot(text) {
+  const lower = text.toLowerCase();
+  // Check handoff
+  if (lower.includes('atendente') || lower.includes('humano') || lower.includes('falar com')) {
+    addMessage({ type: 'bot', text: 'Claro! Vou te conectar com um atendente disponível agora.', time: getUserTime(), label: '&#129302; Bot' });
+    setTimeout(() => {
+      addMessage({ type: 'system', text: '&#128101; Transferido para atendente humano' });
+      addMessage({ type: 'handoff', time: getUserTime() });
+    }, 600);
+    return;
+  }
+  // Check window for closed contacts
+  if (contacts[activeContact].window === 'closed') {
+    addMessage({ type: 'template', text: 'Olá! Notamos que você entrou em contato. Para continuar o atendimento, responda SIM e nossa equipe irá te ajudar.', time: getUserTime(), label: '&#128249; Template Meta – janela de 24h expirada' });
+    return;
+  }
+  // Match FAQ
+  for (const key of Object.keys(botResponses)) {
+    if (lower.includes(key) && botResponses[key]) {
+      addMessage({ type: 'bot', text: botResponses[key], time: getUserTime(), label: '&#129302; Bot respondeu automaticamente' });
+      return;
+    }
+  }
+  // Fallback
+  addMessage({ type: 'bot', text: 'Entendido! Deixa eu verificar isso para você. Para agilizar, pode me dizer seu número de pedido ou CPF?', time: getUserTime(), label: '&#129302; Bot (baixa confiança – considere handoff)' });
+}
+
+// ─── Flow ─────────────────────────────────────────────────────────────────────
+function renderFlow() {
+  const el = document.getElementById('flowNodes');
+  el.innerHTML = flowNodes.map((n, i) => `
+    <div class="flow-node" onclick="this.classList.toggle('selected')">
+      <div class="flow-node-type node-${n.type}">${n.label.toUpperCase()}</div>
+      <div class="flow-node-content">${n.content}</div>
+      <div class="flow-node-sub">${n.sub}</div>
+      <div class="node-badges">
+        ${(n.badges||[]).map(b => `<span class="node-badge badge-${b}">${badgeLabel(b)}</span>`).join('')}
+      </div>
+    </div>
+    ${i < flowNodes.length - 1 ? '<div class="flow-arrow">&#8595;</div>' : ''}
+  `).join('');
+}
+
+function badgeLabel(b) {
+  return { window: '&#9200; Janela 24h', keyword: '&#128269; Palavra-chave', template: '&#128249; Template Meta', handoff: '&#128101; Handoff' }[b] || b;
+}
+
+function renderFaqs() {
+  const el = document.getElementById('faqList');
+  el.innerHTML = faqs.map(f => `
+    <div class="faq-item">
+      <div class="faq-q">${f.q}</div>
+      <div class="faq-a">${f.a}</div>
+      <div class="faq-tags">${f.tags.map(t => `<span class="faq-tag">${t}</span>`).join('')}</div>
+    </div>
+  `).join('');
+}
+
+function addFaq() {
+  const q = prompt('Nova pergunta:');
+  if (!q) return;
+  faqs.push({ q, a: 'Resposta não configurada ainda.', tags: ['novo'] });
+  renderFaqs();
+}
+
+// ─── Reports ──────────────────────────────────────────────────────────────────
+function renderReports() {
+  document.getElementById('metricsRow').innerHTML = [
+    { label: 'Mensagens recebidas', value: '1.247', delta: '+18% vs mês ant.', up: true },
+    { label: 'Respostas automáticas', value: '89%', delta: 'Taxa de automação', up: true },
+    { label: 'Handoffs para humano', value: '134', delta: '11% do total', up: false },
+    { label: 'Tempo médio de resposta', value: '< 2s', delta: 'Bot. 4h humano.', up: true },
+  ].map(m => `
+    <div class="metric-card">
+      <div class="metric-label">${m.label}</div>
+      <div class="metric-value">${m.value}</div>
+      <div class="metric-delta ${m.up ? 'delta-up' : 'delta-down'}">${m.delta}</div>
+    </div>
+  `).join('');
+
+  const volData = [420,380,510,490,540,430,390,480,520,560,490,510,530,470,600,580,540];
+  const maxVol = Math.max(...volData);
+  const days = ['1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17'];
+
+  const topFaqs = [
+    { label: 'Prazo de entrega', val: 38, pct: 100 },
+    { label: 'Rastreio de pedido', val: 27, pct: 71 },
+    { label: 'Formas de pagamento', val: 19, pct: 50 },
+    { label: 'Horário de atendimento', val: 15, pct: 39 },
+    { label: 'Política de troca', val: 11, pct: 29 },
+  ];
+
+  const handoffs = [
+    { name: 'Produto com defeito', reason: 'Fora do FAQ', time: '12:48', status: 'resolved', agent: 'Ana S.' },
+    { name: 'Contestação de cobrança', reason: 'Fora do FAQ', time: '11:33', status: 'pending', agent: 'Marcos T.' },
+    { name: 'Pedido extraviado', reason: 'Baixa confiança', time: '10:15', status: 'resolved', agent: 'Ana S.' },
+  ];
+
+  document.getElementById('reportsGrid').innerHTML = `
+    <div class="report-card">
+      <div class="report-card-title">Volume diário de mensagens <span class="report-card-badge">Jun 2026</span></div>
+      <div class="vol-chart">
+        ${volData.map((v,i) => `<div class="vol-bar" style="height:${Math.round(v/maxVol*100)}%;background:${i===16?'#25d366':'#2a3942'}" data-tip="${days[i]}/06: ${v} msgs"></div>`).join('')}
+      </div>
+      <div class="vol-labels">
+        ${days.map(d => `<div class="vol-label">${d}</div>`).join('')}
+      </div>
+    </div>
+    <div class="report-card">
+      <div class="report-card-title">Janelas de sessão</div>
+      <div class="window-stats">
+        <div class="window-stat"><div class="window-stat-val window-open-color">78%</div><div class="window-stat-label">Janela aberta</div></div>
+        <div class="window-stat"><div class="window-stat-val window-closed-color">22%</div><div class="window-stat-label">Janela expirada</div></div>
+      </div>
+      <div style="font-size:11px;color:#8696a0;margin-bottom:8px">22% das sessões atingiram a janela de 24h. Templates enviados: <strong style="color:#eba849">274</strong></div>
+      <div class="bar-row">
+        <div class="bar-label">Template Reativação</div>
+        <div class="bar-track"><div class="bar-fill" style="width:68%;background:#eba849"></div></div>
+        <div class="bar-val">186</div>
+      </div>
+      <div class="bar-row" style="margin-top:6px">
+        <div class="bar-label">Template Follow-up</div>
+        <div class="bar-track"><div class="bar-fill" style="width:32%;background:#a855f7"></div></div>
+        <div class="bar-val">88</div>
+      </div>
+    </div>
+    <div class="report-card">
+      <div class="report-card-title">Perguntas mais frequentes</div>
+      <div class="bar-chart">
+        ${topFaqs.map(f => `
+          <div class="bar-row">
+            <div class="bar-label">${f.label}</div>
+            <div class="bar-track"><div class="bar-fill" style="width:${f.pct}%;background:#25d366"></div></div>
+            <div class="bar-val">${f.val}%</div>
+          </div>`).join('')}
+      </div>
+    </div>
+    <div class="report-card">
+      <div class="report-card-title">Handoffs recentes <span class="report-card-badge">${handoffs.length} hoje</span></div>
+      <div class="handoff-list">
+        ${handoffs.map(h => `
+          <div class="handoff-row">
+            <div class="handoff-avatar-sm" style="background:#2a3942;color:#8696a0">${h.agent.charAt(0)}</div>
+            <div class="handoff-info">
+              <div class="handoff-name">${h.name}</div>
+              <div class="handoff-reason">${h.reason} · ${h.agent}</div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+              <div class="handoff-time">${h.time}</div>
+              <div class="${h.status === 'resolved' ? 'resolved-chip' : 'pending-chip'}">${h.status === 'resolved' ? 'Resolvido' : 'Em andamento'}</div>
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>
+  `;
+}
+
+// ─── Restart ──────────────────────────────────────────────────────────────────
+function restartDemo() {
+  activeContact = 0;
+  init();
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('view-chat').classList.add('active');
+  document.querySelectorAll('.nav-item')[0].classList.add('active');
+}
+
+init();
+</script>
+</body>
+</html>
