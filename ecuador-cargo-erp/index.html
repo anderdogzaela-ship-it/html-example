@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CargoERP Ecuador – Demo</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0d1117;color:#e6edf3;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;}
+
+  .app{width:1100px;height:700px;background:#161b22;border-radius:14px;overflow:hidden;display:flex;box-shadow:0 40px 100px rgba(0,0,0,0.7);border:1px solid #30363d;}
+
+  /* Sidebar */
+  .sidebar{width:200px;background:#0d1117;display:flex;flex-direction:column;border-right:1px solid #21262d;flex-shrink:0;}
+  .sidebar-logo{padding:18px 14px 14px;border-bottom:1px solid #21262d;}
+  .logo-icon{font-size:20px;margin-bottom:4px;}
+  .logo-title{font-size:13px;font-weight:800;color:#f0f6fc;line-height:1.2;}
+  .logo-sub{font-size:10px;color:#8b949e;margin-top:2px;}
+  .sidebar-nav{flex:1;padding:8px 0;}
+  .nav-group{padding:6px 14px 4px;font-size:10px;font-weight:700;color:#484f58;text-transform:uppercase;letter-spacing:0.6px;}
+  .nav-item{display:flex;align-items:center;gap:8px;padding:7px 14px;cursor:pointer;border-left:3px solid transparent;font-size:12px;color:#8b949e;transition:all .15s;border-radius:0 6px 6px 0;margin-right:8px;}
+  .nav-item:hover{background:#21262d;color:#e6edf3;}
+  .nav-item.active{background:#1f2d3d;color:#58a6ff;border-left-color:#58a6ff;}
+  .nav-icon{font-size:14px;width:18px;text-align:center;}
+  .nav-badge{margin-left:auto;background:#da3633;color:white;font-size:9px;font-weight:700;padding:1px 5px;border-radius:8px;}
+  .sidebar-footer{padding:12px 14px;border-top:1px solid #21262d;}
+  .company-chip{background:#21262d;border-radius:8px;padding:8px 10px;}
+  .company-name{font-size:11px;font-weight:700;color:#f0f6fc;}
+  .company-sub{font-size:9px;color:#8b949e;margin-top:1px;}
+  .online-dot{display:inline-block;width:6px;height:6px;background:#3fb950;border-radius:50%;margin-right:4px;}
+
+  /* Main */
+  .main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+  .topbar{padding:0 20px;height:48px;background:#161b22;border-bottom:1px solid #21262d;display:flex;align-items:center;gap:14px;flex-shrink:0;}
+  .topbar-title{font-size:14px;font-weight:700;color:#f0f6fc;flex:1;}
+  .topbar-action{padding:5px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:none;transition:all .15s;}
+  .btn-primary{background:#238636;color:white;}
+  .btn-primary:hover{background:#2ea043;}
+  .btn-secondary{background:#21262d;color:#c9d1d9;border:1px solid #30363d;}
+  .btn-secondary:hover{background:#30363d;}
+  .period-chip{background:#21262d;border:1px solid #30363d;border-radius:6px;padding:5px 10px;font-size:11px;color:#8b949e;}
+
+  /* Views */
+  .view{display:none;flex:1;flex-direction:column;overflow:hidden;}
+  .view.active{display:flex;}
+
+  /* ─── DASHBOARD ─── */
+  .dash-body{flex:1;overflow-y:auto;padding:16px 20px;}
+  .dash-body::-webkit-scrollbar{width:4px;}
+  .dash-body::-webkit-scrollbar-thumb{background:#30363d;border-radius:2px;}
+
+  .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;}
+  .kpi{background:#0d1117;border:1px solid #21262d;border-radius:10px;padding:14px 16px;}
+  .kpi-label{font-size:11px;color:#8b949e;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.4px;}
+  .kpi-value{font-size:22px;font-weight:800;color:#f0f6fc;}
+  .kpi-delta{font-size:11px;margin-top:4px;}
+  .delta-pos{color:#3fb950;}
+  .delta-neg{color:#f85149;}
+  .delta-neu{color:#8b949e;}
+
+  .dash-grid{display:grid;grid-template-columns:1fr 340px;gap:14px;}
+  .card{background:#0d1117;border:1px solid #21262d;border-radius:10px;padding:16px;overflow:hidden;}
+  .card-title{font-size:12px;font-weight:700;color:#8b949e;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;}
+  .card-badge{font-size:10px;padding:2px 8px;border-radius:8px;font-weight:600;}
+  .badge-green{background:rgba(63,185,80,.15);color:#3fb950;}
+  .badge-red{background:rgba(248,81,73,.15);color:#f85149;}
+  .badge-blue{background:rgba(88,166,255,.15);color:#58a6ff;}
+  .badge-amber{background:rgba(227,179,65,.15);color:#e3b341;}
+
+  /* Margin per trip table */
+  .trip-table{width:100%;border-collapse:collapse;}
+  .trip-table th{font-size:10px;color:#484f58;text-transform:uppercase;letter-spacing:0.4px;padding:6px 10px;text-align:left;border-bottom:1px solid #21262d;}
+  .trip-table td{font-size:12px;padding:8px 10px;border-bottom:1px solid #161b22;vertical-align:middle;}
+  .trip-table tr:last-child td{border-bottom:none;}
+  .trip-table tr:hover td{background:#161b22;}
+  .route-cell{font-weight:600;color:#f0f6fc;}
+  .route-sub{font-size:10px;color:#8b949e;margin-top:1px;}
+  .margin-bar-wrap{display:flex;align-items:center;gap:6px;}
+  .margin-bar-track{flex:1;height:6px;background:#21262d;border-radius:3px;overflow:hidden;}
+  .margin-bar-fill{height:100%;border-radius:3px;transition:width .8s ease;}
+  .margin-pos{background:#3fb950;}
+  .margin-neg{background:#f85149;}
+  .margin-val{font-size:11px;font-weight:700;width:50px;text-align:right;}
+  .status-dot-op{width:8px;height:8px;border-radius:50%;flex-shrink:0;display:inline-block;}
+
+  /* AR list */
+  .ar-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #161b22;}
+  .ar-item:last-child{border-bottom:none;}
+  .ar-avatar{width:30px;height:30px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;}
+  .ar-info{flex:1;min-width:0;}
+  .ar-name{font-size:12px;font-weight:600;color:#f0f6fc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .ar-sub{font-size:10px;color:#8b949e;}
+  .ar-amount{font-size:13px;font-weight:800;text-align:right;}
+  .ar-days{font-size:10px;text-align:right;margin-top:1px;}
+  .days-ok{color:#3fb950;}
+  .days-warn{color:#e3b341;}
+  .days-late{color:#f85149;}
+
+  /* Cash flow mini chart */
+  .cf-bars{display:flex;align-items:flex-end;gap:3px;height:60px;margin-top:8px;}
+  .cf-bar{flex:1;border-radius:3px 3px 0 0;cursor:pointer;position:relative;transition:opacity .15s;}
+  .cf-bar:hover{opacity:.85;}
+  .cf-labels{display:flex;gap:3px;margin-top:4px;}
+  .cf-label{flex:1;font-size:9px;color:#484f58;text-align:center;}
+
+  /* ─── OPERACIONES ─── */
+  .ops-body{flex:1;overflow:hidden;display:flex;flex-direction:column;}
+  .ops-filter{padding:10px 20px;background:#161b22;border-bottom:1px solid #21262d;display:flex;gap:8px;align-items:center;flex-shrink:0;}
+  .filter-chip{padding:5px 12px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid #30363d;color:#8b949e;background:#0d1117;transition:all .15s;}
+  .filter-chip.active{background:#1f2d3d;color:#58a6ff;border-color:#58a6ff;}
+  .filter-search{flex:1;background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:5px 10px;color:#c9d1d9;font-size:12px;outline:none;}
+  .filter-search::placeholder{color:#484f58;}
+  .kanban{flex:1;overflow-x:auto;overflow-y:hidden;padding:14px 20px;display:flex;gap:12px;}
+  .kanban::-webkit-scrollbar{height:4px;}
+  .kanban::-webkit-scrollbar-thumb{background:#30363d;border-radius:2px;}
+  .kanban-col{width:190px;flex-shrink:0;display:flex;flex-direction:column;gap:8px;}
+  .kanban-header{padding:8px 10px;border-radius:8px;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+  .col-cotizacion{background:rgba(139,148,158,.1);color:#8b949e;}
+  .col-asignado{background:rgba(88,166,255,.1);color:#58a6ff;}
+  .col-transito{background:rgba(227,179,65,.1);color:#e3b341;}
+  .col-entregada{background:rgba(63,185,80,.1);color:#3fb950;}
+  .col-facturada{background:rgba(188,140,255,.1);color:#bc8cff;}
+  .col-cobrada{background:rgba(63,185,80,.15);color:#3fb950;}
+  .kanban-count{background:rgba(255,255,255,.08);border-radius:8px;padding:1px 6px;font-size:10px;}
+  .guia-card{background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:10px;cursor:pointer;transition:all .2s;font-size:12px;}
+  .guia-card:hover{border-color:#58a6ff;box-shadow:0 0 0 2px rgba(88,166,255,.1);}
+  .guia-id{font-size:10px;color:#484f58;margin-bottom:4px;font-weight:600;}
+  .guia-route{font-weight:700;color:#f0f6fc;margin-bottom:6px;font-size:12px;line-height:1.3;}
+  .guia-meta{display:flex;flex-direction:column;gap:3px;}
+  .guia-meta-row{display:flex;align-items:center;gap:5px;font-size:10px;color:#8b949e;}
+  .guia-amount{font-size:13px;font-weight:800;color:#3fb950;margin-top:6px;}
+  .guia-client{font-size:10px;color:#8b949e;}
+  .guia-driver-chip{display:inline-flex;align-items:center;gap:4px;background:#21262d;border-radius:6px;padding:2px 7px;font-size:10px;color:#c9d1d9;}
+  .progress-dot{width:6px;height:6px;border-radius:50%;}
+
+  /* ─── SRI ─── */
+  .sri-body{flex:1;overflow:hidden;display:flex;flex-direction:column;}
+  .sri-topbar{padding:10px 20px;border-bottom:1px solid #21262d;display:flex;gap:8px;align-items:center;flex-shrink:0;}
+  .sri-list{flex:1;overflow-y:auto;padding:14px 20px;}
+  .sri-list::-webkit-scrollbar{width:4px;}
+  .sri-list::-webkit-scrollbar-thumb{background:#30363d;border-radius:2px;}
+  .sri-row{background:#0d1117;border:1px solid #21262d;border-radius:10px;padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:border-color .15s;}
+  .sri-row:hover{border-color:#30363d;}
+  .sri-row.selected{border-color:#58a6ff;}
+  .sri-status{width:90px;flex-shrink:0;}
+  .sri-pill{font-size:10px;font-weight:700;padding:3px 10px;border-radius:12px;display:inline-flex;align-items:center;gap:4px;}
+  .sri-auth{background:rgba(63,185,80,.15);color:#3fb950;}
+  .sri-pending{background:rgba(227,179,65,.15);color:#e3b341;}
+  .sri-reject{background:rgba(248,81,73,.15);color:#f85149;}
+  .sri-number{font-size:12px;font-weight:600;color:#58a6ff;width:130px;flex-shrink:0;}
+  .sri-client{flex:1;min-width:0;}
+  .sri-client-name{font-size:13px;font-weight:600;color:#f0f6fc;}
+  .sri-client-ruc{font-size:10px;color:#8b949e;}
+  .sri-amount{font-size:14px;font-weight:800;color:#f0f6fc;width:90px;text-align:right;flex-shrink:0;}
+  .sri-date{font-size:11px;color:#8b949e;width:70px;text-align:right;flex-shrink:0;}
+  .sri-xml-panel{background:#0d1117;border:1px solid #21262d;border-radius:10px;margin:0 20px 14px;padding:14px;display:none;animation:fadeIn .2s ease;}
+  .sri-xml-panel.visible{display:block;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+  .xml-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+  .xml-title{font-size:12px;font-weight:700;color:#8b949e;text-transform:uppercase;letter-spacing:0.4px;}
+  .xml-auth-number{font-size:11px;font-weight:700;color:#3fb950;background:rgba(63,185,80,.1);border:1px solid rgba(63,185,80,.2);border-radius:6px;padding:3px 10px;}
+  pre.xml-code{font-family:'Menlo','Courier New',monospace;font-size:10px;color:#79c0ff;background:#010409;border:1px solid #21262d;border-radius:8px;padding:12px;overflow-x:auto;line-height:1.6;}
+  pre.xml-code .tag{color:#7ee787;}
+  pre.xml-code .attr{color:#ffa657;}
+  pre.xml-code .val{color:#a5d6ff;}
+
+  /* ─── FLOTA ─── */
+  .fleet-body{flex:1;overflow-y:auto;padding:16px 20px;}
+  .fleet-body::-webkit-scrollbar{width:4px;}
+  .fleet-body::-webkit-scrollbar-thumb{background:#30363d;border-radius:2px;}
+  .fleet-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;}
+  .truck-card{background:#0d1117;border:1px solid #21262d;border-radius:10px;padding:14px;transition:border-color .2s;cursor:pointer;}
+  .truck-card:hover{border-color:#30363d;}
+  .truck-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+  .truck-plate{font-size:13px;font-weight:800;color:#f0f6fc;font-family:monospace;background:#21262d;padding:3px 8px;border-radius:4px;}
+  .truck-status-pill{font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;}
+  .truck-active{background:rgba(63,185,80,.15);color:#3fb950;}
+  .truck-maint{background:rgba(248,81,73,.15);color:#f85149;}
+  .truck-idle{background:rgba(139,148,158,.15);color:#8b949e;}
+  .truck-model{font-size:12px;color:#8b949e;margin-bottom:10px;}
+  .truck-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .truck-stat{background:#161b22;border-radius:6px;padding:7px;}
+  .truck-stat-val{font-size:13px;font-weight:700;color:#f0f6fc;}
+  .truck-stat-label{font-size:10px;color:#484f58;margin-top:1px;}
+  .driver-table{background:#0d1117;border:1px solid #21262d;border-radius:10px;overflow:hidden;}
+  .driver-row{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid #161b22;transition:background .1s;}
+  .driver-row:last-child{border-bottom:none;}
+  .driver-row:hover{background:#0d1117;}
+  .driver-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0;}
+  .driver-name{font-size:13px;font-weight:600;color:#f0f6fc;flex:1;}
+  .driver-plate{font-size:11px;font-family:monospace;background:#21262d;padding:1px 7px;border-radius:4px;color:#8b949e;}
+  .driver-trips{font-size:12px;color:#8b949e;width:80px;text-align:right;}
+  .driver-earn{font-size:13px;font-weight:700;color:#3fb950;width:80px;text-align:right;}
+
+  .restart-btn{position:fixed;bottom:18px;right:18px;background:#161b22;border:1px solid #30363d;color:#8b949e;padding:7px 14px;border-radius:16px;cursor:pointer;font-size:11px;z-index:100;transition:all .2s;}
+  .restart-btn:hover{background:#21262d;color:#e6edf3;}
+
+  @media(max-width:1100px){.app{width:100%;height:100vh;border-radius:0;}}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">&#128666;</div>
+      <div class="logo-title">CargoERP</div>
+      <div class="logo-sub">Sistema Administrativo</div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-group">Principal</div>
+      <div class="nav-item active" onclick="switchView('dashboard',this)"><span class="nav-icon">&#128202;</span> Dashboard</div>
+      <div class="nav-item" onclick="switchView('ops',this)"><span class="nav-icon">&#128230;</span> Operaciones <span class="nav-badge">6</span></div>
+      <div class="nav-group">Contabilidad</div>
+      <div class="nav-item" onclick="switchView('sri',this)"><span class="nav-icon">&#128196;</span> Fact. SRI <span class="nav-badge" style="background:#e3b341;color:#000">2</span></div>
+      <div class="nav-item" onclick="switchView('dashboard',this)"><span class="nav-icon">&#128184;</span> Cuentas x Cobrar</div>
+      <div class="nav-item" onclick="switchView('dashboard',this)"><span class="nav-icon">&#128199;</span> Cuentas x Pagar</div>
+      <div class="nav-group">Recursos</div>
+      <div class="nav-item" onclick="switchView('fleet',this)"><span class="nav-icon">&#128666;</span> Flota & Choferes</div>
+    </div>
+    <div class="sidebar-footer">
+      <div class="company-chip">
+        <div class="company-name"><span class="online-dot"></span>Transportes J.M.</div>
+        <div class="company-sub">RUC 1790123456001 · Ecuador</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+
+    <!-- DASHBOARD -->
+    <div class="view active" id="view-dashboard">
+      <div class="topbar">
+        <div class="topbar-title">&#128202; Dashboard Ejecutivo</div>
+        <div class="period-chip">Junio 2026</div>
+        <button class="topbar-action btn-secondary">&#128197; Exportar</button>
+        <button class="topbar-action btn-primary">+ Nueva guía</button>
+      </div>
+      <div class="dash-body">
+        <div class="kpi-row">
+          <div class="kpi">
+            <div class="kpi-label">Ingresos del mes</div>
+            <div class="kpi-value">$48.320</div>
+            <div class="kpi-delta delta-pos">&#8679; +12% vs mayo</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Margen operativo</div>
+            <div class="kpi-value">34%</div>
+            <div class="kpi-delta delta-pos">&#8679; +4pp vs mayo</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">C x Cobrar vencida</div>
+            <div class="kpi-value" style="color:#f85149">$9.150</div>
+            <div class="kpi-delta delta-neg">&#9888; 3 clientes &gt;30 días</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Viajes este mes</div>
+            <div class="kpi-value">29</div>
+            <div class="kpi-delta delta-neu">&#128666; 7 en tránsito ahora</div>
+          </div>
+        </div>
+        <div class="dash-grid">
+          <div style="display:flex;flex-direction:column;gap:14px;">
+            <div class="card">
+              <div class="card-title">Margen por viaje – junio <span class="card-badge badge-blue">Vista clave</span></div>
+              <table class="trip-table">
+                <thead>
+                  <tr>
+                    <th>Ruta / Cliente</th>
+                    <th>Ingreso</th>
+                    <th>Costo viaje</th>
+                    <th style="width:140px">Margen</th>
+                  </tr>
+                </thead>
+                <tbody id="tripTableBody"></tbody>
+              </table>
+            </div>
+            <div class="card">
+              <div class="card-title">Flujo de caja mensual</div>
+              <div class="cf-bars" id="cfBars"></div>
+              <div class="cf-labels" id="cfLabels"></div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:14px;">
+            <div class="card">
+              <div class="card-title">Facturas SRI pendientes <span class="card-badge badge-amber">2 por emitir</span></div>
+              <div id="sriQuickList"></div>
+            </div>
+            <div class="card">
+              <div class="card-title">Cuentas x cobrar abiertas</div>
+              <div id="arList"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- OPERACIONES KANBAN -->
+    <div class="view" id="view-ops">
+      <div class="topbar">
+        <div class="topbar-title">&#128230; Guías de Carga – Estado en tiempo real</div>
+        <button class="topbar-action btn-primary">+ Nueva guía</button>
+      </div>
+      <div class="ops-body">
+        <div class="ops-filter">
+          <input class="filter-search" placeholder="&#128269; Buscar guía, cliente o chofer...">
+          <div class="filter-chip active">Todas</div>
+          <div class="filter-chip">En tránsito</div>
+          <div class="filter-chip">Vencidas</div>
+          <div style="margin-left:auto;font-size:11px;color:#484f58">&#128666; 7 en tránsito · 3 por facturar</div>
+        </div>
+        <div class="kanban" id="kanban"></div>
+      </div>
+    </div>
+
+    <!-- FACTURACIÓN SRI -->
+    <div class="view" id="view-sri">
+      <div class="topbar">
+        <div class="topbar-title">&#128196; Facturación Electrónica – SRI Ecuador</div>
+        <button class="topbar-action btn-secondary">&#128196; Exportar XML</button>
+        <button class="topbar-action btn-primary">+ Emitir factura</button>
+      </div>
+      <div class="sri-body">
+        <div class="sri-topbar">
+          <div class="filter-chip active">Todas (18)</div>
+          <div class="filter-chip">Autorizadas (14)</div>
+          <div class="filter-chip" style="border-color:#f85149;color:#f85149">Rechazadas (2)</div>
+          <div class="filter-chip" style="border-color:#e3b341;color:#e3b341">Pendientes (2)</div>
+          <input class="filter-search" style="max-width:200px" placeholder="&#128269; Buscar...">
+        </div>
+        <div class="sri-xml-panel" id="xmlPanel">
+          <div class="xml-header">
+            <div class="xml-title">Comprobante electrónico XML – autorizado por SRI</div>
+            <div class="xml-auth-number">&#10003; CLAVE: 1706202601179012345600110010010000002341234567810</div>
+          </div>
+<pre class="xml-code"><span class="tag">&lt;factura</span> <span class="attr">id</span>=<span class="val">"comprobante"</span> <span class="attr">version</span>=<span class="val">"2.1.0"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;infoTributaria&gt;</span>
+    <span class="tag">&lt;ambiente&gt;</span>2<span class="tag">&lt;/ambiente&gt;</span>
+    <span class="tag">&lt;tipoEmision&gt;</span>1<span class="tag">&lt;/tipoEmision&gt;</span>
+    <span class="tag">&lt;razonSocial&gt;</span>Transportes J.M. S.A.<span class="tag">&lt;/razonSocial&gt;</span>
+    <span class="tag">&lt;ruc&gt;</span>1790123456001<span class="tag">&lt;/ruc&gt;</span>
+    <span class="tag">&lt;claveAcceso&gt;</span>1706202601179012345600110010010000002341234567810<span class="tag">&lt;/claveAcceso&gt;</span>
+    <span class="tag">&lt;codDoc&gt;</span>01<span class="tag">&lt;/codDoc&gt;</span>
+    <span class="tag">&lt;estab&gt;</span>001<span class="tag">&lt;/estab&gt;</span>
+    <span class="tag">&lt;ptoEmi&gt;</span>001<span class="tag">&lt;/ptoEmi&gt;</span>
+    <span class="tag">&lt;secuencial&gt;</span>000000234<span class="tag">&lt;/secuencial&gt;</span>
+  <span class="tag">&lt;/infoTributaria&gt;</span>
+  <span class="tag">&lt;infoFactura&gt;</span>
+    <span class="tag">&lt;fechaEmision&gt;</span>17/06/2026<span class="tag">&lt;/fechaEmision&gt;</span>
+    <span class="tag">&lt;razonSocialComprador&gt;</span>Cemento Nacional S.A.<span class="tag">&lt;/razonSocialComprador&gt;</span>
+    <span class="tag">&lt;identificacionComprador&gt;</span>0990012345001<span class="tag">&lt;/identificacionComprador&gt;</span>
+    <span class="tag">&lt;totalSinImpuestos&gt;</span>3750.00<span class="tag">&lt;/totalSinImpuestos&gt;</span>
+    <span class="tag">&lt;totalImpuesto&gt;</span>450.00<span class="tag">&lt;/totalImpuesto&gt;</span>
+    <span class="tag">&lt;importeTotal&gt;</span>4200.00<span class="tag">&lt;/importeTotal&gt;</span>
+  <span class="tag">&lt;/infoFactura&gt;</span>
+<span class="tag">&lt;/factura&gt;</span></pre>
+        </div>
+        <div class="sri-list" id="sriList"></div>
+      </div>
+    </div>
+
+    <!-- FLOTA -->
+    <div class="view" id="view-fleet">
+      <div class="topbar">
+        <div class="topbar-title">&#128666; Flota & Choferes</div>
+        <button class="topbar-action btn-secondary">&#128196; Reporte flota</button>
+        <button class="topbar-action btn-primary">+ Registrar unidad</button>
+      </div>
+      <div class="fleet-body">
+        <div class="card-title" style="margin-bottom:10px">CAMIONES – 8 unidades</div>
+        <div class="fleet-grid" id="fleetGrid"></div>
+        <div class="card-title" style="margin:10px 0">CHOFERES – junio 2026</div>
+        <div class="driver-table" id="driverTable"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<button class="restart-btn" onclick="restartDemo()">&#8635; Reiniciar</button>
+
+<script>
+// ─── DATA ───────────────────────────────────────────────────────────────────
+const trips = [
+  {route:'Guayaquil → Quito',client:'Cemento Nacional S.A.',revenue:4200,cost:2730,pct:35},
+  {route:'Quito → Cuenca',client:'Almacenes TIA',revenue:3100,cost:2170,pct:30},
+  {route:'Guayaquil → Manta',client:'Pesca Ecuador Cía.',revenue:2800,cost:1680,pct:40},
+  {route:'Cuenca → Loja',client:'Distribuidora Sur',revenue:1950,cost:1560,pct:20},
+  {route:'Quito → Esmeraldas',client:'Agro Norte S.A.',revenue:2600,cost:2340,pct:10},
+  {route:'Guayaquil → Ambato',client:'Textil Andina',revenue:3400,cost:1870,pct:45},
+];
+
+const arData = [
+  {name:'Cemento Nacional S.A.',amount:'$8.400',days:'Vence hoy',cls:'days-warn'},
+  {name:'Pesca Ecuador Cía.',amount:'$3.200',days:'Hace 38 días',cls:'days-late'},
+  {name:'Almacenes TIA',amount:'$5.100',days:'12 días restantes',cls:'days-ok'},
+  {name:'Distribuidora Sur',amount:'$1.950',days:'Hace 8 días',cls:'days-warn'},
+];
+
+const arColors=['#3b82f6','#10b981','#f59e0b','#6366f1'];
+
+const sriRows=[
+  {status:'auth',num:'001-001-000000234',client:'Cemento Nacional S.A.',ruc:'0990012345001',amount:'$4.200',date:'17/06'},
+  {status:'auth',num:'001-001-000000233',client:'Almacenes TIA',ruc:'0990056789001',amount:'$3.100',date:'15/06'},
+  {status:'pending',num:'001-001-000000235',client:'Pesca Ecuador Cía.',ruc:'0992001234001',amount:'$2.800',date:'17/06'},
+  {status:'auth',num:'001-001-000000232',client:'Textil Andina',ruc:'0990111222001',amount:'$3.400',date:'14/06'},
+  {status:'reject',num:'001-001-000000231',client:'Agro Norte S.A.',ruc:'0990333444001',amount:'$2.600',date:'12/06'},
+  {status:'pending',num:'001-001-000000236',client:'Distribuidora Sur',ruc:'0991555666001',amount:'$1.950',date:'17/06'},
+  {status:'auth',num:'001-001-000000230',client:'Cemento Nacional S.A.',ruc:'0990012345001',amount:'$3.800',date:'10/06'},
+];
+
+const kanbanCols=[
+  {id:'cotizacion',label:'Cotización',cls:'col-cotizacion',cards:[
+    {id:'GC-0041',route:'Quito → Guayaquil',client:'Plasticos Sur',amount:'$2.800',driver:'R. Lema',date:'19/06',cargo:'Resinas plásticas 18t'},
+    {id:'GC-0042',route:'Guayaquil → Ibarra',client:'Mariscos del Norte',amount:'$3.100',driver:'—',date:'21/06',cargo:'Carga refrigerada 12t'},
+  ]},
+  {id:'asignado',label:'Camión asignado',cls:'col-asignado',cards:[
+    {id:'GC-0039',route:'Cuenca → Machala',client:'Bananera Castro',amount:'$1.850',driver:'J. Romero',date:'18/06',cargo:'Banano exportación 22t'},
+    {id:'GC-0040',route:'Quito → Esmeraldas',client:'Agro Norte S.A.',amount:'$2.600',driver:'M. Torres',date:'18/06',cargo:'Fertilizantes 20t'},
+  ]},
+  {id:'transito',label:'En tránsito',cls:'col-transito',cards:[
+    {id:'GC-0034',route:'Guayaquil → Quito',client:'Cemento Nacional',amount:'$4.200',driver:'C. Vásquez',date:'17/06',cargo:'Cemento 30t'},
+    {id:'GC-0035',route:'Guayaquil → Ambato',client:'Textil Andina',amount:'$3.400',driver:'L. Pinto',date:'17/06',cargo:'Tela industrial 15t'},
+    {id:'GC-0036',route:'Quito → Cuenca',client:'Almacenes TIA',amount:'$3.100',driver:'H. Aguirre',date:'17/06',cargo:'Electrodomésticos 18t'},
+  ]},
+  {id:'entregada',label:'Entregada',cls:'col-entregada',cards:[
+    {id:'GC-0031',route:'Guayaquil → Manta',client:'Pesca Ecuador',amount:'$2.800',driver:'F. Molina',date:'15/06',cargo:'Redes de pesca 10t'},
+  ]},
+  {id:'facturada',label:'Facturada SRI',cls:'col-facturada',cards:[
+    {id:'GC-0028',route:'Cuenca → Loja',client:'Distribuidora Sur',amount:'$1.950',driver:'A. Ríos',date:'14/06',cargo:'Abarrotes 14t'},
+    {id:'GC-0029',route:'Quito → Sto. Domingo',client:'Agro Norte S.A.',amount:'$2.100',driver:'N. Cruz',date:'13/06',cargo:'Agroquímicos 16t'},
+  ]},
+  {id:'cobrada',label:'Cobrada',cls:'col-cobrada',cards:[
+    {id:'GC-0025',route:'Guayaquil → Quito',client:'Cemento Nacional',amount:'$4.400',driver:'C. Vásquez',date:'10/06',cargo:'Cemento 30t'},
+  ]},
+];
+
+const trucks=[
+  {plate:'GKT-1823',model:'Volvo FH 460 · 2022',status:'active',slabel:'En ruta',trips:18,km:'14.280',cargo:'Cemento Nacional',maint:'Sep 2026'},
+  {plate:'PCM-0471',model:'Kenworth T680 · 2021',status:'active',slabel:'En ruta',trips:15,km:'11.900',cargo:'Textil Andina',maint:'Ago 2026'},
+  {plate:'AEL-3309',model:'Mercedes Actros · 2023',status:'active',slabel:'En ruta',trips:21,km:'17.650',cargo:'Almacenes TIA',maint:'Nov 2026'},
+  {plate:'MHQ-7712',model:'Scania R450 · 2020',status:'maint',slabel:'Mantenimiento',trips:0,km:'22.100',cargo:'—',maint:'En taller'},
+  {plate:'BNR-5580',model:'Volvo FH 420 · 2021',status:'idle',slabel:'Disponible',trips:9,km:'8.400',cargo:'—',maint:'Jul 2026'},
+  {plate:'LPT-2246',model:'Kenworth T680 · 2022',status:'active',slabel:'En ruta',trips:12,km:'9.750',cargo:'Agro Norte',maint:'Oct 2026'},
+];
+
+const drivers=[
+  {name:'Carlos Vásquez',init:'CV',color:'#3b82f6',plate:'GKT-1823',trips:18,earn:'$2.160'},
+  {name:'Luis Pinto',init:'LP',color:'#10b981',plate:'PCM-0471',trips:15,earn:'$1.800'},
+  {name:'Hernán Aguirre',init:'HA',color:'#8b5cf6',plate:'AEL-3309',trips:21,earn:'$2.520'},
+  {name:'Freddy Molina',init:'FM',color:'#f59e0b',plate:'LPT-2246',trips:12,earn:'$1.440'},
+  {name:'Jorge Romero',init:'JR',color:'#ef4444',plate:'BNR-5580',trips:9,earn:'$1.080'},
+  {name:'Marco Torres',init:'MT',color:'#06b6d4',plate:'BNR-5580',trips:8,earn:'$960'},
+];
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+function init(){
+  renderTripTable();
+  renderCF();
+  renderSRIQuick();
+  renderAR();
+  renderKanban();
+  renderSRI();
+  renderFleet();
+}
+
+// ─── VIEW SWITCH ──────────────────────────────────────────────────────────────
+function switchView(id,el){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('view-'+id).classList.add('active');
+  if(el) el.classList.add('active');
+}
+
+// ─── TRIP TABLE ───────────────────────────────────────────────────────────────
+function renderTripTable(){
+  const tbody=document.getElementById('tripTableBody');
+  tbody.innerHTML=trips.map(t=>{
+    const isPos=t.pct>=25;
+    return `<tr>
+      <td><div class="route-cell">${t.route}</div><div class="route-sub">${t.client}</div></td>
+      <td style="font-weight:700;color:#f0f6fc">$${t.revenue.toLocaleString()}</td>
+      <td style="color:#8b949e">$${t.cost.toLocaleString()}</td>
+      <td>
+        <div class="margin-bar-wrap">
+          <div class="margin-bar-track"><div class="margin-bar-fill ${isPos?'margin-pos':'margin-neg'}" style="width:${t.pct*2}%"></div></div>
+          <div class="margin-val ${isPos?'delta-pos':'delta-neg'}">${t.pct}%</div>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ─── CASH FLOW ────────────────────────────────────────────────────────────────
+const cfData=[18200,22400,19800,31500,28900,35200,41800,38600,44200,48320,0,0];
+const cfMonths=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Jun','',''];
+function renderCF(){
+  const max=Math.max(...cfData.filter(v=>v>0));
+  document.getElementById('cfBars').innerHTML=cfData.slice(0,9).map((v,i)=>`
+    <div class="cf-bar" style="height:${Math.round(v/max*100)}%;background:${i===9?'#58a6ff':i<5?'#21262d':'#2d3f50'}" data-tip="${cfMonths[i]}: $${v.toLocaleString()}"></div>
+  `).join('');
+  document.getElementById('cfLabels').innerHTML=cfMonths.slice(0,9).map(m=>`<div class="cf-label">${m}</div>`).join('');
+}
+
+// ─── SRI QUICK ────────────────────────────────────────────────────────────────
+function renderSRIQuick(){
+  document.getElementById('sriQuickList').innerHTML=sriRows.filter(r=>r.status!=='auth').map(r=>`
+    <div class="ar-item">
+      <div class="ar-avatar" style="background:${r.status==='pending'?'rgba(227,179,65,.15)':'rgba(248,81,73,.15)'};color:${r.status==='pending'?'#e3b341':'#f85149'}">${r.status==='pending'?'&#9203;':'&#10060;'}</div>
+      <div class="ar-info"><div class="ar-name">${r.client}</div><div class="ar-sub">${r.num}</div></div>
+      <div><div class="ar-amount" style="color:#f0f6fc">${r.amount}</div><div class="ar-days" style="color:${r.status==='pending'?'#e3b341':'#f85149'}">${r.status==='pending'?'Pendiente envío':'Rechazada SRI'}</div></div>
+    </div>`).join('');
+}
+
+// ─── AR ───────────────────────────────────────────────────────────────────────
+function renderAR(){
+  document.getElementById('arList').innerHTML=arData.map((a,i)=>`
+    <div class="ar-item">
+      <div class="ar-avatar" style="background:${arColors[i]}22;color:${arColors[i]}">${a.name.charAt(0)}</div>
+      <div class="ar-info"><div class="ar-name">${a.name}</div></div>
+      <div><div class="ar-amount" style="color:#f0f6fc">${a.amount}</div><div class="ar-days ${a.cls}">${a.days}</div></div>
+    </div>`).join('');
+}
+
+// ─── KANBAN ───────────────────────────────────────────────────────────────────
+function renderKanban(){
+  document.getElementById('kanban').innerHTML=kanbanCols.map(col=>`
+    <div class="kanban-col">
+      <div class="kanban-header ${col.cls}">
+        <span>${col.label}</span>
+        <span class="kanban-count">${col.cards.length}</span>
+      </div>
+      ${col.cards.map(c=>`
+        <div class="guia-card">
+          <div class="guia-id">${c.id}</div>
+          <div class="guia-route">${c.route}</div>
+          <div class="guia-meta">
+            <div class="guia-meta-row">&#128100; ${c.client}</div>
+            <div class="guia-meta-row">&#128666; ${c.cargo}</div>
+            <div class="guia-meta-row">&#128197; Entrega ${c.date}</div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px">
+            <div class="guia-amount">${c.amount}</div>
+            <div class="guia-driver-chip">&#128100; ${c.driver}</div>
+          </div>
+        </div>`).join('')}
+    </div>`).join('');
+}
+
+// ─── SRI LIST ─────────────────────────────────────────────────────────────────
+let selectedSRI=null;
+function renderSRI(){
+  document.getElementById('sriList').innerHTML=sriRows.map((r,i)=>`
+    <div class="sri-row" onclick="toggleXML(${i},this)">
+      <div class="sri-status">
+        <span class="sri-pill ${r.status==='auth'?'sri-auth':r.status==='pending'?'sri-pending':'sri-reject'}">
+          ${r.status==='auth'?'&#10003; Autorizada':r.status==='pending'?'&#9203; Pendiente':'&#10060; Rechazada'}
+        </span>
+      </div>
+      <div class="sri-number">${r.num}</div>
+      <div class="sri-client"><div class="sri-client-name">${r.client}</div><div class="sri-client-ruc">RUC ${r.ruc}</div></div>
+      <div class="sri-amount">${r.amount}</div>
+      <div class="sri-date">${r.date}/2026</div>
+    </div>`).join('');
+}
+
+function toggleXML(i,el){
+  const panel=document.getElementById('xmlPanel');
+  if(selectedSRI===i){
+    panel.classList.remove('visible');
+    document.querySelectorAll('.sri-row').forEach(r=>r.classList.remove('selected'));
+    selectedSRI=null;
+  } else {
+    document.querySelectorAll('.sri-row').forEach(r=>r.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedSRI=i;
+    if(sriRows[i].status==='auth'){
+      panel.classList.add('visible');
+    } else {
+      panel.classList.remove('visible');
+    }
+  }
+}
+
+// ─── FLEET ───────────────────────────────────────────────────────────────────
+function renderFleet(){
+  document.getElementById('fleetGrid').innerHTML=trucks.map(t=>`
+    <div class="truck-card">
+      <div class="truck-header">
+        <div class="truck-plate">${t.plate}</div>
+        <span class="truck-status-pill ${t.status==='active'?'truck-active':t.status==='maint'?'truck-maint':'truck-idle'}">${t.slabel}</span>
+      </div>
+      <div class="truck-model">${t.model}</div>
+      <div class="truck-stats">
+        <div class="truck-stat"><div class="truck-stat-val">${t.trips}</div><div class="truck-stat-label">Viajes jun</div></div>
+        <div class="truck-stat"><div class="truck-stat-val">${t.km} km</div><div class="truck-stat-label">Km totales</div></div>
+        <div class="truck-stat" style="grid-column:1/-1"><div class="truck-stat-val" style="font-size:11px;color:#8b949e">${t.status==='active'?'&#128230; '+t.cargo:t.status==='maint'?'&#128295; '+t.maint:'&#10003; Libre para asignar'}</div><div class="truck-stat-label">Estado actual</div></div>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('driverTable').innerHTML=drivers.map(d=>`
+    <div class="driver-row">
+      <div class="driver-avatar" style="background:${d.color}22;color:${d.color}">${d.init}</div>
+      <div class="driver-name">${d.name}</div>
+      <div class="driver-plate">${d.plate}</div>
+      <div class="driver-trips">${d.trips} viajes</div>
+      <div class="driver-earn">${d.earn}</div>
+    </div>`).join('');
+}
+
+function restartDemo(){
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.querySelector('.nav-item').classList.add('active');
+  switchView('dashboard',null);
+}
+
+init();
+</script>
+</body>
+</html>
