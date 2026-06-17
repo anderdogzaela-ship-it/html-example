@@ -1,0 +1,1743 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0A0E1A">
+<title>OcuML — Predictive Occupancy MLOps Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0A0E1A;
+  --bg-2: #0F1729;
+  --surface: #161F38;
+  --surface-2: #1F2A47;
+  --border: rgba(255,255,255,0.08);
+  --border-strong: rgba(255,255,255,0.16);
+  --text: #E2E8F0;
+  --text-2: rgba(255,255,255,0.6);
+  --text-3: rgba(255,255,255,0.38);
+  --indigo: #6366F1;
+  --indigo-soft: rgba(99, 102, 241, 0.18);
+  --cyan: #06B6D4;
+  --cyan-soft: rgba(6, 182, 212, 0.18);
+  --success: #10B981;
+  --success-soft: rgba(16, 185, 129, 0.18);
+  --warning: #F59E0B;
+  --warning-soft: rgba(245, 158, 11, 0.18);
+  --danger: #EF4444;
+  --danger-soft: rgba(239, 68, 68, 0.18);
+  --grid: rgba(255,255,255,0.04);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: linear-gradient(135deg, #050811 0%, #0A0E1A 100%);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+.mono { font-family: 'JetBrains Mono', monospace; }
+
+.stage {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 22px;
+}
+.demo-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.brand-mark {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--indigo), var(--cyan));
+  display: grid;
+  place-items: center;
+  color: white;
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.35);
+}
+.brand-name {
+  font-weight: 800;
+  font-size: 20px;
+  letter-spacing: -0.5px;
+}
+.brand-sub {
+  font-size: 11px;
+  color: var(--text-3);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface);
+  padding: 6px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.tool-toggle {
+  display: flex;
+  background: var(--bg-2);
+  padding: 3px;
+  border-radius: 7px;
+}
+.tool-toggle button {
+  border: 0;
+  background: transparent;
+  padding: 6px 12px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+  cursor: pointer;
+  border-radius: 5px;
+}
+.tool-toggle button.active {
+  background: var(--indigo);
+  color: white;
+}
+.btn-restart {
+  border: 0;
+  background: var(--surface-2);
+  color: var(--text);
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* LEAD INSIGHT */
+.lead-insight {
+  background: linear-gradient(135deg, var(--indigo-soft), var(--cyan-soft));
+  border: 1px solid var(--indigo);
+  border-radius: 14px;
+  padding: 14px 18px;
+  margin-bottom: 20px;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+.lead-insight .ic {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--indigo);
+  color: white;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.lead-insight h3 {
+  font-size: 14px;
+  font-weight: 800;
+  margin-bottom: 4px;
+  letter-spacing: -0.2px;
+  color: var(--text);
+}
+.lead-insight p {
+  font-size: 12px;
+  color: var(--text-2);
+  line-height: 1.55;
+}
+
+/* APP */
+.app {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 18px;
+}
+.sidebar {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px 12px;
+}
+.sidebar-user {
+  padding: 8px 8px 14px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sidebar-user .avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--indigo);
+  color: white;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 12px;
+}
+.sidebar-user strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+}
+.sidebar-user span {
+  font-size: 10px;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--text-2);
+  font-weight: 600;
+  cursor: pointer;
+  border: 0;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+}
+.nav-item:hover { background: var(--bg-2); }
+.nav-item.active {
+  background: var(--indigo);
+  color: white;
+}
+.nav-item svg { flex-shrink: 0; }
+.model-status {
+  margin-top: 14px;
+  padding: 12px;
+  background: var(--bg-2);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+.model-status .label {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-3);
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.model-status .version {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 800;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+.model-status .status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--success-soft);
+  color: var(--success);
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+}
+.live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pulse 1.4s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+.main {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px;
+  min-height: 720px;
+  overflow: hidden;
+}
+
+.view { display: none; }
+.view.active { display: block; }
+
+.view-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.view-title {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.4px;
+}
+.view-sub {
+  color: var(--text-2);
+  font-size: 12px;
+  margin-top: 2px;
+}
+.btn-primary {
+  background: var(--indigo);
+  color: white;
+  border: 0;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* KPI GRID */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.kpi {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+}
+.kpi .top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.kpi .label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-3);
+  font-weight: 700;
+}
+.kpi .pill {
+  font-size: 9px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.kpi .pill.good { background: var(--success-soft); color: var(--success); }
+.kpi .pill.warn { background: var(--warning-soft); color: var(--warning); }
+.kpi .pill.bad { background: var(--danger-soft); color: var(--danger); }
+.kpi .value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.8px;
+  line-height: 1.1;
+}
+.kpi .unit {
+  font-size: 12px;
+  color: var(--text-3);
+  margin-left: 4px;
+  font-weight: 600;
+}
+.kpi .delta {
+  font-size: 11px;
+  color: var(--success);
+  font-weight: 600;
+  margin-top: 4px;
+}
+.kpi .delta.down { color: var(--danger); }
+.kpi .delta.warn { color: var(--warning); }
+
+/* CHART PANEL */
+.chart-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.panel {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+}
+.panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+.panel-title {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: -0.2px;
+}
+.panel-sub {
+  font-size: 10px;
+  color: var(--text-3);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.chart-svg {
+  width: 100%;
+  height: 220px;
+}
+.legend-row {
+  display: flex;
+  gap: 14px;
+  margin-top: 10px;
+  font-size: 11px;
+  flex-wrap: wrap;
+}
+.legend-row .item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-2);
+}
+.legend-row .item .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+/* ROUTE TABLE */
+.route-table {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.route-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  align-items: center;
+}
+.route-row:last-child { border: 0; }
+.route-row.head {
+  background: var(--surface-2);
+  font-weight: 800;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-3);
+}
+.route-row .name strong { font-weight: 700; display: block; }
+.route-row .name span { font-size: 10px; color: var(--text-3); }
+.route-row .num { font-family: 'JetBrains Mono', monospace; font-weight: 700; }
+.route-row .num.good { color: var(--success); }
+.route-row .num.warn { color: var(--warning); }
+.route-row .num.bad { color: var(--danger); }
+.mini-spark {
+  width: 80px;
+  height: 22px;
+}
+
+/* WALK-FORWARD VIZ (the senior signal made visible) */
+.split-compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+.split-card {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px;
+}
+.split-card.bad {
+  border-color: var(--danger);
+}
+.split-card.good {
+  border-color: var(--success);
+}
+.split-card .head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.split-card .label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+.split-card.bad .label { background: var(--danger-soft); color: var(--danger); }
+.split-card.good .label { background: var(--success-soft); color: var(--success); }
+.split-card h3 {
+  font-size: 14px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+.timeline-bar {
+  display: flex;
+  height: 24px;
+  border-radius: 6px;
+  overflow: hidden;
+  margin: 12px 0;
+  background: var(--surface-2);
+}
+.timeline-bar .seg {
+  flex: 1;
+  font-size: 9px;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.timeline-bar .train { background: var(--indigo); }
+.timeline-bar .val { background: var(--warning); }
+.timeline-bar .test { background: var(--success); }
+.timeline-bar .future { background: rgba(255,255,255,0.1); color: var(--text-3); }
+.metric-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: var(--text-2);
+}
+.metric-row .v {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 800;
+  color: var(--text);
+}
+.outcome-line {
+  margin-top: 12px;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.split-card.bad .outcome-line {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+.split-card.good .outcome-line {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+/* WALK-FORWARD FOLDS */
+.fold-viz {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px;
+}
+.fold-row {
+  display: grid;
+  grid-template-columns: 80px 1fr 80px;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.fold-row .label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-2);
+  font-family: 'JetBrains Mono', monospace;
+}
+.fold-row .bar {
+  display: flex;
+  height: 22px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--surface-2);
+}
+.fold-row .bar .train { background: var(--indigo); }
+.fold-row .bar .val { background: var(--warning); }
+.fold-row .bar .future { background: rgba(255,255,255,0.06); }
+.fold-row .metric {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: right;
+}
+.fold-row .metric.good { color: var(--success); }
+.fold-row .metric.mid { color: var(--warning); }
+.fold-row .axis {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+  margin-left: 94px;
+  margin-right: 94px;
+  font-size: 9px;
+  color: var(--text-3);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* DRIFT VIEW */
+.alert-row {
+  display: grid;
+  grid-template-columns: 24px 1fr auto;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: 10px;
+  align-items: center;
+}
+.alert-row.warn { border-color: var(--warning); }
+.alert-row.bad { border-color: var(--danger); }
+.alert-row.good { border-color: var(--success); }
+.alert-row .icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+}
+.alert-row.warn .icon { background: var(--warning-soft); color: var(--warning); }
+.alert-row.bad .icon { background: var(--danger-soft); color: var(--danger); }
+.alert-row.good .icon { background: var(--success-soft); color: var(--success); }
+.alert-row .info strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+}
+.alert-row .info span {
+  font-size: 11px;
+  color: var(--text-2);
+}
+.alert-row .time {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--text-3);
+  text-align: right;
+}
+
+/* EXPERIMENT TABLE */
+.exp-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr 80px;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  align-items: center;
+}
+.exp-row:last-child { border: 0; }
+.exp-row.head {
+  background: var(--surface-2);
+  font-weight: 800;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-3);
+}
+.exp-row.head + .exp-row {
+  background: var(--success-soft);
+}
+.exp-row .run-id {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  color: var(--indigo);
+}
+.exp-row .num {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+}
+.exp-row .model {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-2);
+}
+.tag {
+  font-size: 9px;
+  font-weight: 800;
+  padding: 3px 7px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: inline-block;
+}
+.tag.prod { background: var(--success); color: white; }
+.tag.staging { background: var(--warning); color: white; }
+.tag.archived { background: var(--surface-2); color: var(--text-3); }
+
+/* API LOGS */
+.endpoint-card {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 14px;
+}
+.endpoint-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+}
+.endpoint-row:last-child { border: 0; }
+.endpoint-row .method {
+  background: var(--success);
+  color: white;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 800;
+  width: 56px;
+  text-align: center;
+}
+.endpoint-row .method.post { background: var(--indigo); }
+.endpoint-row .path { color: var(--text); flex: 1; }
+.endpoint-row .latency { color: var(--text-2); font-size: 11px; }
+.endpoint-row .latency.fast { color: var(--success); }
+
+.req-table {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.req-row {
+  display: grid;
+  grid-template-columns: 100px 1fr 90px 90px 60px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+  align-items: center;
+  font-family: 'JetBrains Mono', monospace;
+}
+.req-row:last-child { border: 0; }
+.req-row.head {
+  background: var(--surface-2);
+  font-weight: 800;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-3);
+  font-family: 'Inter', sans-serif;
+}
+.req-row .ts { color: var(--text-3); }
+.req-row .num { font-weight: 700; }
+.req-row .status {
+  font-weight: 800;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-align: center;
+  font-family: 'JetBrains Mono', monospace;
+}
+.req-row .status.s200 { background: var(--success-soft); color: var(--success); }
+.req-row .status.s500 { background: var(--danger-soft); color: var(--danger); }
+
+@media (max-width: 1100px) {
+  .stage { padding: 12px; }
+  .app { grid-template-columns: 1fr; }
+  .sidebar { display: none; }
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .chart-row { grid-template-columns: 1fr; }
+  .split-compare { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="stage">
+
+  <!-- HEADER -->
+  <div class="demo-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="3 17 9 11 13 15 21 7"/>
+          <polyline points="14 7 21 7 21 14"/>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-name">OcuML</div>
+        <div class="brand-sub" data-i18n="brand-sub">Predictive occupancy + MLOps</div>
+      </div>
+    </div>
+    <div class="toolbar">
+      <div class="tool-toggle" id="lang-toggle">
+        <button class="active" data-lang="es">Español</button>
+        <button data-lang="en">English</button>
+      </div>
+      <button class="btn-restart" id="restart-btn">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+        <span data-i18n="restart">Reiniciar</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- LEAD INSIGHT -->
+  <div class="lead-insight">
+    <div class="ic">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg>
+    </div>
+    <div>
+      <h3 data-i18n="insight-h">El gap entre el modelo del notebook y el de producción es la mitad del trabajo real</h3>
+      <p data-i18n="insight-p">La mayoría de proyectos colapsan porque el split temporal está mal hecho y porque no hay monitoreo de drift estacional. Este dashboard muestra los dos núcleos que evitan ese gap. Validación walk-forward sin leakage y reentrenamiento automático cuando el drift cruza el umbral definido. Sin esto el modelo funciona la primera semana y deja de servir tres meses después.</p>
+    </div>
+  </div>
+
+  <!-- APP -->
+  <div class="app">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-user">
+        <div class="avatar">DS</div>
+        <div>
+          <strong>Data Sci</strong>
+          <span data-i18n="role">Transporte SA</span>
+        </div>
+      </div>
+      <button class="nav-item active" data-view="overview">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        <span data-i18n="nav-overview">Resumen</span>
+      </button>
+      <button class="nav-item" data-view="walkforward">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
+        <span data-i18n="nav-walk">Walk-forward</span>
+      </button>
+      <button class="nav-item" data-view="drift">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 9 12 13 8 21 16"/><polyline points="15 16 21 16 21 10"/></svg>
+        <span data-i18n="nav-drift">Drift y alertas</span>
+      </button>
+      <button class="nav-item" data-view="experiments">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3v6l-7 13h20l-7-13V3"/><line x1="5" y1="3" x2="19" y2="3"/></svg>
+        <span data-i18n="nav-exp">Experimentos</span>
+      </button>
+      <button class="nav-item" data-view="api">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        <span data-i18n="nav-api">Serving + logs</span>
+      </button>
+
+      <div class="model-status">
+        <div class="label" data-i18n="model-label">Modelo en producción</div>
+        <div class="version">v2.4.1-prod</div>
+        <span class="status-pill">
+          <span class="live-dot"></span>
+          <span data-i18n="model-ok">Sirviendo</span>
+        </span>
+        <div style="font-size:10px; color:var(--text-3); margin-top:8px; font-family:'JetBrains Mono', monospace">
+          <span data-i18n="trained">Entrenado</span>: 14 jun 02:14<br>
+          <span data-i18n="retrain-due">Próx. retrain</span>: drift trigger
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <div class="main">
+
+      <!-- VIEW: OVERVIEW -->
+      <section class="view active" data-view="overview">
+        <div class="view-head">
+          <div>
+            <div class="view-title" data-i18n="overview-h">Resumen del modelo</div>
+            <div class="view-sub" data-i18n="overview-sub">Métricas en tiempo real del modelo de ocupación.</div>
+          </div>
+          <button class="btn-primary" data-i18n="trigger-retrain">Disparar reentrenamiento</button>
+        </div>
+
+        <div class="kpi-grid">
+          <div class="kpi">
+            <div class="top">
+              <div class="label">MAPE 7d</div>
+              <span class="pill good" data-i18n="status-ok">OK</span>
+            </div>
+            <div class="value">8.4<span class="unit">%</span></div>
+            <div class="delta" data-i18n="vs-baseline">↓ 0.6pp vs baseline</div>
+          </div>
+          <div class="kpi">
+            <div class="top">
+              <div class="label">RMSE</div>
+              <span class="pill good" data-i18n="status-ok">OK</span>
+            </div>
+            <div class="value">4.2</div>
+            <div class="delta" data-i18n="vs-baseline">↓ 0.3 vs baseline</div>
+          </div>
+          <div class="kpi">
+            <div class="top">
+              <div class="label" data-i18n="api-latency">Latencia API p95</div>
+              <span class="pill good" data-i18n="status-ok">OK</span>
+            </div>
+            <div class="value">62<span class="unit">ms</span></div>
+            <div class="delta" data-i18n="under-target">↓ 38ms bajo SLA</div>
+          </div>
+          <div class="kpi">
+            <div class="top">
+              <div class="label" data-i18n="drift-score">Score de drift</div>
+              <span class="pill warn" data-i18n="watch">WATCH</span>
+            </div>
+            <div class="value">0.32</div>
+            <div class="delta warn" data-i18n="drift-rise">↑ 0.08 últimas 48h</div>
+          </div>
+        </div>
+
+        <div class="chart-row">
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title" data-i18n="pred-vs-actual">Predicción vs ocupación real</div>
+                <div class="panel-sub" data-i18n="last-30">Últimos 30 días · agregado por hora</div>
+              </div>
+            </div>
+            <svg class="chart-svg" viewBox="0 0 700 220" preserveAspectRatio="none">
+              <!-- Grid -->
+              <line x1="0" y1="44" x2="700" y2="44" stroke="var(--grid)" stroke-width="1"/>
+              <line x1="0" y1="88" x2="700" y2="88" stroke="var(--grid)" stroke-width="1"/>
+              <line x1="0" y1="132" x2="700" y2="132" stroke="var(--grid)" stroke-width="1"/>
+              <line x1="0" y1="176" x2="700" y2="176" stroke="var(--grid)" stroke-width="1"/>
+              <!-- Predicted (blue) -->
+              <polyline points="20,130 60,110 100,75 140,55 180,42 220,55 260,82 300,120 340,148 380,135 420,98 460,68 500,52 540,72 580,108 620,130 660,108" fill="none" stroke="#6366F1" stroke-width="2.4" stroke-linecap="round"/>
+              <!-- Actual (green dashed) -->
+              <polyline points="20,134 60,108 100,82 140,52 180,46 220,58 260,86 300,118 340,152 380,140 420,102 460,72 500,48 540,68 580,112 620,128 660,110" fill="none" stroke="#10B981" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="5 4"/>
+              <!-- Dots -->
+              <circle cx="660" cy="108" r="4" fill="#6366F1"/>
+              <circle cx="660" cy="110" r="4" fill="#10B981"/>
+            </svg>
+            <div class="legend-row">
+              <div class="item"><span class="dot" style="background:#6366F1"></span><span data-i18n="legend-pred">Predicción</span></div>
+              <div class="item"><span class="dot" style="background:#10B981"></span><span data-i18n="legend-actual">Ocupación real</span></div>
+              <div class="item" style="margin-left:auto; color:var(--text-3)" data-i18n="last-update">Actualizado 14:32</div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title" data-i18n="feature-imp">Importancia de features</div>
+                <div class="panel-sub" data-i18n="model-version">Modelo v2.4.1</div>
+              </div>
+            </div>
+            <div style="display:grid; gap:8px">
+              <div>
+                <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:3px">
+                  <span data-i18n="f-hour">hour_of_day</span>
+                  <span class="mono" style="color:var(--text-3)">0.342</span>
+                </div>
+                <div style="height:6px; background:var(--surface-2); border-radius:3px; overflow:hidden">
+                  <div style="width:88%; height:100%; background:var(--indigo); border-radius:3px"></div>
+                </div>
+              </div>
+              <div>
+                <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:3px">
+                  <span data-i18n="f-dow">day_of_week</span>
+                  <span class="mono" style="color:var(--text-3)">0.218</span>
+                </div>
+                <div style="height:6px; background:var(--surface-2); border-radius:3px; overflow:hidden">
+                  <div style="width:56%; height:100%; background:var(--indigo); border-radius:3px"></div>
+                </div>
+              </div>
+              <div>
+                <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:3px">
+                  <span data-i18n="f-lag1">lag_1h</span>
+                  <span class="mono" style="color:var(--text-3)">0.164</span>
+                </div>
+                <div style="height:6px; background:var(--surface-2); border-radius:3px; overflow:hidden">
+                  <div style="width:42%; height:100%; background:var(--indigo); border-radius:3px"></div>
+                </div>
+              </div>
+              <div>
+                <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:3px">
+                  <span data-i18n="f-rolling">rolling_mean_24h</span>
+                  <span class="mono" style="color:var(--text-3)">0.108</span>
+                </div>
+                <div style="height:6px; background:var(--surface-2); border-radius:3px; overflow:hidden">
+                  <div style="width:28%; height:100%; background:var(--indigo); border-radius:3px"></div>
+                </div>
+              </div>
+              <div>
+                <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:3px">
+                  <span data-i18n="f-holiday">is_holiday</span>
+                  <span class="mono" style="color:var(--text-3)">0.094</span>
+                </div>
+                <div style="height:6px; background:var(--surface-2); border-radius:3px; overflow:hidden">
+                  <div style="width:24%; height:100%; background:var(--indigo); border-radius:3px"></div>
+                </div>
+              </div>
+              <div>
+                <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:3px">
+                  <span data-i18n="f-temp">temperature</span>
+                  <span class="mono" style="color:var(--text-3)">0.074</span>
+                </div>
+                <div style="height:6px; background:var(--surface-2); border-radius:3px; overflow:hidden">
+                  <div style="width:19%; height:100%; background:var(--indigo); border-radius:3px"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Routes table -->
+        <div class="route-table">
+          <div class="route-row head">
+            <span data-i18n="th-route">Ruta</span>
+            <span data-i18n="th-mape">MAPE</span>
+            <span data-i18n="th-rmse">RMSE</span>
+            <span data-i18n="th-trend">Tendencia 7d</span>
+            <span data-i18n="th-pred">Próx hora</span>
+          </div>
+          <div class="route-row">
+            <div class="name"><strong>Centro - Microcentro</strong><span data-i18n="route-1-sub">Línea B · pico mañana</span></div>
+            <span class="num good">6.2%</span>
+            <span class="num">3.1</span>
+            <svg class="mini-spark" viewBox="0 0 80 22"><polyline points="0,16 12,12 24,14 36,8 48,10 60,6 72,8" fill="none" stroke="#10B981" stroke-width="1.6"/></svg>
+            <span class="num">84.2%</span>
+          </div>
+          <div class="route-row">
+            <div class="name"><strong>Constitución - Once</strong><span data-i18n="route-2-sub">Línea C · pico tarde</span></div>
+            <span class="num good">7.8%</span>
+            <span class="num">3.9</span>
+            <svg class="mini-spark" viewBox="0 0 80 22"><polyline points="0,14 12,10 24,12 36,12 48,8 60,10 72,10" fill="none" stroke="#10B981" stroke-width="1.6"/></svg>
+            <span class="num">71.5%</span>
+          </div>
+          <div class="route-row">
+            <div class="name"><strong>Retiro - Tigre</strong><span data-i18n="route-3-sub">Mitre · fin de semana</span></div>
+            <span class="num warn">11.4%</span>
+            <span class="num">5.2</span>
+            <svg class="mini-spark" viewBox="0 0 80 22"><polyline points="0,12 12,14 24,8 36,16 48,12 60,18 72,14" fill="none" stroke="#F59E0B" stroke-width="1.6"/></svg>
+            <span class="num">62.1%</span>
+          </div>
+          <div class="route-row">
+            <div class="name"><strong>Pacheco - Tigre</strong><span data-i18n="route-4-sub">Mitre · contraflujo</span></div>
+            <span class="num warn">12.1%</span>
+            <span class="num">5.8</span>
+            <svg class="mini-spark" viewBox="0 0 80 22"><polyline points="0,10 12,16 24,12 36,18 48,14 60,20 72,16" fill="none" stroke="#F59E0B" stroke-width="1.6"/></svg>
+            <span class="num">38.7%</span>
+          </div>
+          <div class="route-row">
+            <div class="name"><strong>Caballito - Plaza Italia</strong><span data-i18n="route-5-sub">Línea A · evento Boca</span></div>
+            <span class="num bad">18.4%</span>
+            <span class="num">8.1</span>
+            <svg class="mini-spark" viewBox="0 0 80 22"><polyline points="0,14 12,12 24,18 36,8 48,20 60,4 72,18" fill="none" stroke="#EF4444" stroke-width="1.6"/></svg>
+            <span class="num">91.3%</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW: WALK-FORWARD (the WOW view) -->
+      <section class="view" data-view="walkforward">
+        <div class="view-head">
+          <div>
+            <div class="view-title" data-i18n="walk-h">Estrategia de validación temporal</div>
+            <div class="view-sub" data-i18n="walk-sub">El error técnico que destruye proyectos de predicción de demanda. Visible aquí.</div>
+          </div>
+        </div>
+
+        <div class="split-compare">
+          <!-- Bad: naive random split -->
+          <div class="split-card bad">
+            <div class="head">
+              <h3 data-i18n="naive-h">Naive random split</h3>
+              <span class="label" data-i18n="anti-pattern">ANTIPATRÓN</span>
+            </div>
+            <div style="font-size:11px; color:var(--text-2); margin-bottom:8px" data-i18n="naive-sub">Lo que la mayoría de las propuestas implementa.</div>
+            <div class="timeline-bar">
+              <div class="seg train">TRAIN</div>
+              <div class="seg val">VAL</div>
+              <div class="seg train">TRAIN</div>
+              <div class="seg test">TEST</div>
+              <div class="seg train">TRAIN</div>
+              <div class="seg val">VAL</div>
+              <div class="seg train">TRAIN</div>
+              <div class="seg test">TEST</div>
+            </div>
+            <div style="font-size:10px; color:var(--text-3); margin-bottom:14px" data-i18n="timeline-jan">ene 2024 → jun 2026 · folds aleatorios</div>
+            <div class="metric-row">
+              <span data-i18n="val-mape">MAPE validación</span>
+              <span class="v" style="color:var(--success)">3.8%</span>
+            </div>
+            <div class="metric-row">
+              <span data-i18n="prod-mape">MAPE producción</span>
+              <span class="v" style="color:var(--danger)">24.6%</span>
+            </div>
+            <div class="metric-row">
+              <span data-i18n="gap">Gap notebook → prod</span>
+              <span class="v" style="color:var(--danger)">+547%</span>
+            </div>
+            <div class="outcome-line" data-i18n="naive-outcome">El modelo predice horas que ya conoce. En producción nunca tiene esa ventaja. Falla.</div>
+          </div>
+
+          <!-- Good: walk-forward -->
+          <div class="split-card good">
+            <div class="head">
+              <h3 data-i18n="wf-h">Walk-forward validation</h3>
+              <span class="label" data-i18n="correct">CORRECTO</span>
+            </div>
+            <div style="font-size:11px; color:var(--text-2); margin-bottom:8px" data-i18n="wf-sub">Lo que esta propuesta implementa desde semana 1.</div>
+            <div class="timeline-bar">
+              <div class="seg train" style="flex:4">TRAIN</div>
+              <div class="seg val">VAL</div>
+              <div class="seg future" style="flex:3" data-i18n="future">FUTURO</div>
+            </div>
+            <div style="font-size:10px; color:var(--text-3); margin-bottom:14px" data-i18n="timeline-rolling">ene 2024 → jun 2026 · ventana móvil cronológica</div>
+            <div class="metric-row">
+              <span data-i18n="val-mape">MAPE validación</span>
+              <span class="v" style="color:var(--warning)">9.2%</span>
+            </div>
+            <div class="metric-row">
+              <span data-i18n="prod-mape">MAPE producción</span>
+              <span class="v" style="color:var(--success)">8.4%</span>
+            </div>
+            <div class="metric-row">
+              <span data-i18n="gap">Gap notebook → prod</span>
+              <span class="v" style="color:var(--success)">-9%</span>
+            </div>
+            <div class="outcome-line" data-i18n="wf-outcome">El modelo se evalúa como predice. El número del notebook es el número real en producción.</div>
+          </div>
+        </div>
+
+        <!-- Walk-forward folds -->
+        <div class="fold-viz">
+          <div class="panel-head" style="margin-bottom:14px">
+            <div>
+              <div class="panel-title" data-i18n="folds-h">Walk-forward folds del entrenamiento actual</div>
+              <div class="panel-sub" data-i18n="folds-sub">7 folds con ventana expansiva · gap de 1 hora · validación 1 semana</div>
+            </div>
+          </div>
+          <div class="fold-row">
+            <span class="label">fold_1</span>
+            <div class="bar">
+              <div class="train" style="width:30%"></div>
+              <div class="val" style="width:6%"></div>
+              <div class="future" style="width:64%"></div>
+            </div>
+            <span class="metric good">MAPE 8.7%</span>
+          </div>
+          <div class="fold-row">
+            <span class="label">fold_2</span>
+            <div class="bar">
+              <div class="train" style="width:40%"></div>
+              <div class="val" style="width:6%"></div>
+              <div class="future" style="width:54%"></div>
+            </div>
+            <span class="metric good">MAPE 9.1%</span>
+          </div>
+          <div class="fold-row">
+            <span class="label">fold_3</span>
+            <div class="bar">
+              <div class="train" style="width:50%"></div>
+              <div class="val" style="width:6%"></div>
+              <div class="future" style="width:44%"></div>
+            </div>
+            <span class="metric good">MAPE 8.9%</span>
+          </div>
+          <div class="fold-row">
+            <span class="label">fold_4</span>
+            <div class="bar">
+              <div class="train" style="width:60%"></div>
+              <div class="val" style="width:6%"></div>
+              <div class="future" style="width:34%"></div>
+            </div>
+            <span class="metric mid">MAPE 10.3%</span>
+          </div>
+          <div class="fold-row">
+            <span class="label">fold_5</span>
+            <div class="bar">
+              <div class="train" style="width:70%"></div>
+              <div class="val" style="width:6%"></div>
+              <div class="future" style="width:24%"></div>
+            </div>
+            <span class="metric good">MAPE 8.2%</span>
+          </div>
+          <div class="fold-row">
+            <span class="label">fold_6</span>
+            <div class="bar">
+              <div class="train" style="width:80%"></div>
+              <div class="val" style="width:6%"></div>
+              <div class="future" style="width:14%"></div>
+            </div>
+            <span class="metric good">MAPE 8.6%</span>
+          </div>
+          <div class="fold-row">
+            <span class="label">fold_7</span>
+            <div class="bar">
+              <div class="train" style="width:90%"></div>
+              <div class="val" style="width:6%"></div>
+              <div class="future" style="width:4%"></div>
+            </div>
+            <span class="metric good">MAPE 9.0%</span>
+          </div>
+          <div class="fold-row axis">
+            <span>ene 2024</span>
+            <span>jun 2026</span>
+          </div>
+          <div style="margin-top:16px; padding-top:14px; border-top:1px solid var(--border); display:flex; justify-content:space-between; align-items:center">
+            <div style="font-size:11px; color:var(--text-2)">
+              <span data-i18n="folds-avg">MAPE promedio walk-forward</span>: <span class="mono" style="color:var(--success); font-weight:800">9.0%</span> · std 0.6
+            </div>
+            <div style="font-size:11px; color:var(--text-2)">
+              <span data-i18n="folds-leak">Data leakage detectado</span>: <span class="mono" style="color:var(--success); font-weight:800">NONE</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW: DRIFT -->
+      <section class="view" data-view="drift">
+        <div class="view-head">
+          <div>
+            <div class="view-title" data-i18n="drift-h">Monitoreo de drift y alertas</div>
+            <div class="view-sub" data-i18n="drift-sub">El modelo pierde precisión silenciosamente sin esto. Aquí lo detectamos antes que las predicciones se vuelvan inútiles.</div>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-bottom:14px">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title" data-i18n="drift-chart">Score de drift últimas 8 semanas</div>
+              <div class="panel-sub" data-i18n="drift-method">Population Stability Index sobre features clave</div>
+            </div>
+          </div>
+          <svg class="chart-svg" viewBox="0 0 700 220" preserveAspectRatio="none">
+            <!-- Grid -->
+            <line x1="0" y1="44" x2="700" y2="44" stroke="var(--grid)" stroke-width="1"/>
+            <line x1="0" y1="88" x2="700" y2="88" stroke="var(--grid)" stroke-width="1"/>
+            <line x1="0" y1="132" x2="700" y2="132" stroke="var(--grid)" stroke-width="1"/>
+            <line x1="0" y1="176" x2="700" y2="176" stroke="var(--grid)" stroke-width="1"/>
+            <!-- Warning threshold -->
+            <line x1="0" y1="100" x2="700" y2="100" stroke="#F59E0B" stroke-width="1" stroke-dasharray="6 4"/>
+            <text x="10" y="96" fill="#F59E0B" font-size="10" font-family="JetBrains Mono">WATCH 0.25</text>
+            <!-- Critical threshold -->
+            <line x1="0" y1="60" x2="700" y2="60" stroke="#EF4444" stroke-width="1" stroke-dasharray="6 4"/>
+            <text x="10" y="56" fill="#EF4444" font-size="10" font-family="JetBrains Mono">RETRAIN 0.40</text>
+            <!-- Drift line (rises near end) -->
+            <polyline points="20,180 110,172 200,160 290,164 380,158 470,140 560,118 640,84" fill="none" stroke="#6366F1" stroke-width="2.4" stroke-linecap="round"/>
+            <!-- Current point with glow -->
+            <circle cx="640" cy="84" r="6" fill="#F59E0B" opacity="0.3"/>
+            <circle cx="640" cy="84" r="4" fill="#F59E0B"/>
+            <!-- Retraining markers -->
+            <line x1="200" y1="20" x2="200" y2="200" stroke="#10B981" stroke-width="1" stroke-dasharray="3 3" opacity="0.4"/>
+            <text x="200" y="14" fill="#10B981" font-size="9" font-family="JetBrains Mono" text-anchor="middle">RETRAIN</text>
+          </svg>
+          <div class="legend-row">
+            <div class="item"><span class="dot" style="background:#6366F1"></span><span data-i18n="drift-psi">PSI drift score</span></div>
+            <div class="item"><span class="dot" style="background:#F59E0B"></span><span data-i18n="watch-threshold">Watch threshold</span></div>
+            <div class="item"><span class="dot" style="background:#EF4444"></span><span data-i18n="retrain-threshold">Retrain threshold</span></div>
+            <div class="item"><span class="dot" style="background:#10B981"></span><span data-i18n="retrain-event">Reentrenamiento</span></div>
+          </div>
+        </div>
+
+        <div class="alert-row warn">
+          <div class="icon">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="13"/><circle cx="12" cy="17" r="0.5"/></svg>
+          </div>
+          <div class="info">
+            <strong data-i18n="alert-1">Drift hora pico nocturno superó WATCH</strong>
+            <span data-i18n="alert-1-sub">feature hour_of_day · PSI 0.32 · evento Boca Juniors detectado en calendario</span>
+          </div>
+          <div class="time">hace 2h<br>14 jun 22:18</div>
+        </div>
+
+        <div class="alert-row good">
+          <div class="icon">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div class="info">
+            <strong data-i18n="alert-2">Reentrenamiento automático completado</strong>
+            <span data-i18n="alert-2-sub">v2.4.1-prod desplegado · MAPE mejoró 8.7% → 8.4% · sin intervención manual</span>
+          </div>
+          <div class="time">hace 4d<br>14 jun 02:14</div>
+        </div>
+
+        <div class="alert-row warn">
+          <div class="icon">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="13"/><circle cx="12" cy="17" r="0.5"/></svg>
+          </div>
+          <div class="info">
+            <strong data-i18n="alert-3">Temperatura saliendo del rango histórico</strong>
+            <span data-i18n="alert-3-sub">feature temperature · ola de calor · valores fuera del p99 entrenamiento</span>
+          </div>
+          <div class="time">hace 6d<br>11 jun 09:42</div>
+        </div>
+
+        <div class="alert-row good">
+          <div class="icon">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div class="info">
+            <strong data-i18n="alert-4">Test estadístico Kolmogorov-Smirnov dentro de tolerancia</strong>
+            <span data-i18n="alert-4-sub">distribución de predicciones vs ventana entrenamiento · p-value 0.41</span>
+          </div>
+          <div class="time">hace 8d<br>09 jun 06:00</div>
+        </div>
+      </section>
+
+      <!-- VIEW: EXPERIMENTS -->
+      <section class="view" data-view="experiments">
+        <div class="view-head">
+          <div>
+            <div class="view-title" data-i18n="exp-h">Experiment tracking · MLflow</div>
+            <div class="view-sub" data-i18n="exp-sub">Cada experimento entrenado con su configuración hiperparámetros métricas y artefactos.</div>
+          </div>
+          <button class="btn-primary" data-i18n="new-exp">Nuevo experimento</button>
+        </div>
+
+        <div class="route-table" style="overflow:hidden">
+          <div class="exp-row head">
+            <span data-i18n="th-run">Run ID</span>
+            <span data-i18n="th-model">Modelo</span>
+            <span data-i18n="th-mape">MAPE</span>
+            <span data-i18n="th-rmse">RMSE</span>
+            <span data-i18n="th-trained">Entrenado</span>
+            <span data-i18n="th-stage">Stage</span>
+          </div>
+          <div class="exp-row">
+            <span class="run-id">run-2871</span>
+            <span class="model">lgb_v2.4.1</span>
+            <span class="num good">9.0%</span>
+            <span class="num">4.2</span>
+            <span class="num" style="color:var(--text-2)">14 jun 02:14</span>
+            <span class="tag prod" data-i18n="stage-prod">PROD</span>
+          </div>
+          <div class="exp-row">
+            <span class="run-id">run-2864</span>
+            <span class="model">lgb_v2.4.0</span>
+            <span class="num good">9.4%</span>
+            <span class="num">4.5</span>
+            <span class="num" style="color:var(--text-2)">10 jun 02:14</span>
+            <span class="tag archived" data-i18n="stage-arch">ARCHIVED</span>
+          </div>
+          <div class="exp-row">
+            <span class="run-id">run-2860</span>
+            <span class="model">xgb_v3.0.0</span>
+            <span class="num good">9.6%</span>
+            <span class="num">4.7</span>
+            <span class="num" style="color:var(--text-2)">08 jun 18:32</span>
+            <span class="tag staging" data-i18n="stage-staging">STAGING</span>
+          </div>
+          <div class="exp-row">
+            <span class="run-id">run-2852</span>
+            <span class="model">lgb_v2.3.8</span>
+            <span class="num good">9.9%</span>
+            <span class="num">4.9</span>
+            <span class="num" style="color:var(--text-2)">06 jun 02:14</span>
+            <span class="tag archived" data-i18n="stage-arch">ARCHIVED</span>
+          </div>
+          <div class="exp-row">
+            <span class="run-id">run-2845</span>
+            <span class="model">lstm_v1.2.0</span>
+            <span class="num warn">12.4%</span>
+            <span class="num">6.1</span>
+            <span class="num" style="color:var(--text-2)">04 jun 14:51</span>
+            <span class="tag archived" data-i18n="stage-arch">ARCHIVED</span>
+          </div>
+          <div class="exp-row">
+            <span class="run-id">run-2841</span>
+            <span class="model">lgb_v2.3.7</span>
+            <span class="num good">10.1%</span>
+            <span class="num">5.0</span>
+            <span class="num" style="color:var(--text-2)">02 jun 02:14</span>
+            <span class="tag archived" data-i18n="stage-arch">ARCHIVED</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW: API SERVING -->
+      <section class="view" data-view="api">
+        <div class="view-head">
+          <div>
+            <div class="view-title" data-i18n="api-h">Endpoint de inferencia</div>
+            <div class="view-sub" data-i18n="api-sub">REST API con autoescalado horizontal · uvicorn + FastAPI en producción.</div>
+          </div>
+        </div>
+
+        <div class="endpoint-card">
+          <div class="panel-head" style="margin-bottom:10px">
+            <div class="panel-title" data-i18n="endpoints">Endpoints disponibles</div>
+          </div>
+          <div class="endpoint-row">
+            <span class="method">GET</span>
+            <span class="path">/v2/predict/occupancy?route_id={'{'}id{'}'}&horizon=1h</span>
+            <span class="latency fast">62 ms p95</span>
+          </div>
+          <div class="endpoint-row">
+            <span class="method post">POST</span>
+            <span class="path">/v2/predict/batch</span>
+            <span class="latency fast">184 ms p95</span>
+          </div>
+          <div class="endpoint-row">
+            <span class="method">GET</span>
+            <span class="path">/v2/model/info</span>
+            <span class="latency fast">8 ms p95</span>
+          </div>
+          <div class="endpoint-row">
+            <span class="method">GET</span>
+            <span class="path">/v2/health</span>
+            <span class="latency fast">3 ms p95</span>
+          </div>
+        </div>
+
+        <div class="kpi-grid">
+          <div class="kpi">
+            <div class="top">
+              <div class="label" data-i18n="kpi-rps">Requests / sec</div>
+              <span class="pill good">OK</span>
+            </div>
+            <div class="value">142</div>
+            <div class="delta" data-i18n="vs-yesterday">↑ 8% vs ayer</div>
+          </div>
+          <div class="kpi">
+            <div class="top">
+              <div class="label" data-i18n="kpi-error">Tasa de error</div>
+              <span class="pill good">OK</span>
+            </div>
+            <div class="value">0.02<span class="unit">%</span></div>
+            <div class="delta" data-i18n="vs-week">↓ 0.01pp semanal</div>
+          </div>
+          <div class="kpi">
+            <div class="top">
+              <div class="label" data-i18n="kpi-p50">Latencia p50</div>
+              <span class="pill good">OK</span>
+            </div>
+            <div class="value">28<span class="unit">ms</span></div>
+            <div class="delta" data-i18n="under-sla">SLA 100ms</div>
+          </div>
+          <div class="kpi">
+            <div class="top">
+              <div class="label" data-i18n="kpi-uptime">Uptime 30d</div>
+              <span class="pill good">OK</span>
+            </div>
+            <div class="value">99.97<span class="unit">%</span></div>
+            <div class="delta" data-i18n="incidents">2 incidentes</div>
+          </div>
+        </div>
+
+        <div class="req-table">
+          <div class="req-row head">
+            <span>Timestamp</span>
+            <span>Route + horizon</span>
+            <span data-i18n="th-prediction">Predicción</span>
+            <span data-i18n="th-latency">Latencia</span>
+            <span>Status</span>
+          </div>
+          <div class="req-row">
+            <span class="ts">14:32:18.241</span>
+            <span>r-centro-mc / 1h</span>
+            <span class="num">84.2%</span>
+            <span>54 ms</span>
+            <span class="status s200">200</span>
+          </div>
+          <div class="req-row">
+            <span class="ts">14:32:17.992</span>
+            <span>r-retiro-tigre / 30m</span>
+            <span class="num">62.1%</span>
+            <span>61 ms</span>
+            <span class="status s200">200</span>
+          </div>
+          <div class="req-row">
+            <span class="ts">14:32:17.741</span>
+            <span>r-once-const / 2h</span>
+            <span class="num">71.5%</span>
+            <span>72 ms</span>
+            <span class="status s200">200</span>
+          </div>
+          <div class="req-row">
+            <span class="ts">14:32:17.502</span>
+            <span>batch (24 routes)</span>
+            <span class="num">--</span>
+            <span>168 ms</span>
+            <span class="status s200">200</span>
+          </div>
+          <div class="req-row">
+            <span class="ts">14:32:16.811</span>
+            <span>r-caballito-pi / 1h</span>
+            <span class="num">91.3%</span>
+            <span>49 ms</span>
+            <span class="status s200">200</span>
+          </div>
+          <div class="req-row">
+            <span class="ts">14:32:16.524</span>
+            <span>r-pacheco-tigre / 1h</span>
+            <span class="num">38.7%</span>
+            <span>58 ms</span>
+            <span class="status s200">200</span>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<script>
+const I18N = {
+  es: {
+    'brand-sub': 'Predicción de ocupación + MLOps',
+    'restart': 'Reiniciar',
+    'insight-h': 'El gap entre el modelo del notebook y el de producción es la mitad del trabajo real',
+    'insight-p': 'La mayoría de proyectos colapsan porque el split temporal está mal hecho y porque no hay monitoreo de drift estacional. Este dashboard muestra los dos núcleos que evitan ese gap. Validación walk-forward sin leakage y reentrenamiento automático cuando el drift cruza el umbral definido. Sin esto el modelo funciona la primera semana y deja de servir tres meses después.',
+    'role': 'Transporte SA',
+    'nav-overview': 'Resumen',
+    'nav-walk': 'Walk-forward',
+    'nav-drift': 'Drift y alertas',
+    'nav-exp': 'Experimentos',
+    'nav-api': 'Serving + logs',
+    'model-label': 'Modelo en producción',
+    'model-ok': 'Sirviendo',
+    'trained': 'Entrenado',
+    'retrain-due': 'Próx. retrain',
+    'overview-h': 'Resumen del modelo',
+    'overview-sub': 'Métricas en tiempo real del modelo de ocupación.',
+    'trigger-retrain': 'Disparar reentrenamiento',
+    'status-ok': 'OK',
+    'vs-baseline': '↓ 0.6pp vs baseline',
+    'api-latency': 'Latencia API p95',
+    'under-target': '↓ 38ms bajo SLA',
+    'drift-score': 'Score de drift',
+    'watch': 'WATCH',
+    'drift-rise': '↑ 0.08 últimas 48h',
+    'pred-vs-actual': 'Predicción vs ocupación real',
+    'last-30': 'Últimos 30 días · agregado por hora',
+    'legend-pred': 'Predicción',
+    'legend-actual': 'Ocupación real',
+    'last-update': 'Actualizado 14:32',
+    'feature-imp': 'Importancia de features',
+    'model-version': 'Modelo v2.4.1',
+    'f-hour': 'hour_of_day',
+    'f-dow': 'day_of_week',
+    'f-lag1': 'lag_1h',
+    'f-rolling': 'rolling_mean_24h',
+    'f-holiday': 'is_holiday',
+    'f-temp': 'temperature',
+    'th-route': 'Ruta',
+    'th-mape': 'MAPE',
+    'th-rmse': 'RMSE',
+    'th-trend': 'Tendencia 7d',
+    'th-pred': 'Próx hora',
+    'route-1-sub': 'Línea B · pico mañana',
+    'route-2-sub': 'Línea C · pico tarde',
+    'route-3-sub': 'Mitre · fin de semana',
+    'route-4-sub': 'Mitre · contraflujo',
+    'route-5-sub': 'Línea A · evento Boca',
+    'walk-h': 'Estrategia de validación temporal',
+    'walk-sub': 'El error técnico que destruye proyectos de predicción de demanda. Visible aquí.',
+    'naive-h': 'Naive random split',
+    'anti-pattern': 'ANTIPATRÓN',
+    'naive-sub': 'Lo que la mayoría de las propuestas implementa.',
+    'timeline-jan': 'ene 2024 → jun 2026 · folds aleatorios',
+    'val-mape': 'MAPE validación',
+    'prod-mape': 'MAPE producción',
+    'gap': 'Gap notebook → prod',
+    'naive-outcome': 'El modelo predice horas que ya conoce. En producción nunca tiene esa ventaja. Falla.',
+    'wf-h': 'Walk-forward validation',
+    'correct': 'CORRECTO',
+    'wf-sub': 'Lo que esta propuesta implementa desde semana 1.',
+    'future': 'FUTURO',
+    'timeline-rolling': 'ene 2024 → jun 2026 · ventana móvil cronológica',
+    'wf-outcome': 'El modelo se evalúa como predice. El número del notebook es el número real en producción.',
+    'folds-h': 'Walk-forward folds del entrenamiento actual',
+    'folds-sub': '7 folds con ventana expansiva · gap de 1 hora · validación 1 semana',
+    'folds-avg': 'MAPE promedio walk-forward',
+    'folds-leak': 'Data leakage detectado',
+    'drift-h': 'Monitoreo de drift y alertas',
+    'drift-sub': 'El modelo pierde precisión silenciosamente sin esto. Aquí lo detectamos antes que las predicciones se vuelvan inútiles.',
+    'drift-chart': 'Score de drift últimas 8 semanas',
+    'drift-method': 'Population Stability Index sobre features clave',
+    'drift-psi': 'PSI drift score',
+    'watch-threshold': 'Watch threshold',
+    'retrain-threshold': 'Retrain threshold',
+    'retrain-event': 'Reentrenamiento',
+    'alert-1': 'Drift hora pico nocturno superó WATCH',
+    'alert-1-sub': 'feature hour_of_day · PSI 0.32 · evento Boca Juniors detectado en calendario',
+    'alert-2': 'Reentrenamiento automático completado',
+    'alert-2-sub': 'v2.4.1-prod desplegado · MAPE mejoró 8.7% → 8.4% · sin intervención manual',
+    'alert-3': 'Temperatura saliendo del rango histórico',
+    'alert-3-sub': 'feature temperature · ola de calor · valores fuera del p99 entrenamiento',
+    'alert-4': 'Test estadístico Kolmogorov-Smirnov dentro de tolerancia',
+    'alert-4-sub': 'distribución de predicciones vs ventana entrenamiento · p-value 0.41',
+    'exp-h': 'Experiment tracking · MLflow',
+    'exp-sub': 'Cada experimento entrenado con su configuración hiperparámetros métricas y artefactos.',
+    'new-exp': 'Nuevo experimento',
+    'th-run': 'Run ID',
+    'th-model': 'Modelo',
+    'th-trained': 'Entrenado',
+    'th-stage': 'Stage',
+    'stage-prod': 'PROD',
+    'stage-arch': 'ARCHIVED',
+    'stage-staging': 'STAGING',
+    'api-h': 'Endpoint de inferencia',
+    'api-sub': 'REST API con autoescalado horizontal · uvicorn + FastAPI en producción.',
+    'endpoints': 'Endpoints disponibles',
+    'kpi-rps': 'Requests / sec',
+    'vs-yesterday': '↑ 8% vs ayer',
+    'kpi-error': 'Tasa de error',
+    'vs-week': '↓ 0.01pp semanal',
+    'kpi-p50': 'Latencia p50',
+    'under-sla': 'SLA 100ms',
+    'kpi-uptime': 'Uptime 30d',
+    'incidents': '2 incidentes',
+    'th-prediction': 'Predicción',
+    'th-latency': 'Latencia',
+  },
+  en: {
+    'brand-sub': 'Predictive occupancy + MLOps',
+    'restart': 'Restart',
+    'insight-h': 'The gap between notebook model and production model is half the actual work',
+    'insight-p': 'Most projects collapse because temporal split is wrong and seasonal drift goes unmonitored. This dashboard shows the two cores that prevent the gap. Walk-forward validation without leakage and automatic retraining when drift crosses the defined threshold. Without these the model works week one and stops being useful three months later.',
+    'role': 'Transport SA',
+    'nav-overview': 'Overview',
+    'nav-walk': 'Walk-forward',
+    'nav-drift': 'Drift + alerts',
+    'nav-exp': 'Experiments',
+    'nav-api': 'Serving + logs',
+    'model-label': 'Production model',
+    'model-ok': 'Serving',
+    'trained': 'Trained',
+    'retrain-due': 'Next retrain',
+    'overview-h': 'Model overview',
+    'overview-sub': 'Real-time metrics for the occupancy model.',
+    'trigger-retrain': 'Trigger retraining',
+    'status-ok': 'OK',
+    'vs-baseline': '↓ 0.6pp vs baseline',
+    'api-latency': 'API latency p95',
+    'under-target': '↓ 38ms under SLA',
+    'drift-score': 'Drift score',
+    'watch': 'WATCH',
+    'drift-rise': '↑ 0.08 last 48h',
+    'pred-vs-actual': 'Predicted vs actual occupancy',
+    'last-30': 'Last 30 days · hourly aggregate',
+    'legend-pred': 'Predicted',
+    'legend-actual': 'Actual',
+    'last-update': 'Updated 14:32',
+    'feature-imp': 'Feature importance',
+    'model-version': 'Model v2.4.1',
+    'th-route': 'Route',
+    'th-mape': 'MAPE',
+    'th-rmse': 'RMSE',
+    'th-trend': '7d trend',
+    'th-pred': 'Next hour',
+    'route-1-sub': 'Line B · morning peak',
+    'route-2-sub': 'Line C · evening peak',
+    'route-3-sub': 'Mitre · weekend',
+    'route-4-sub': 'Mitre · reverse',
+    'route-5-sub': 'Line A · Boca event',
+    'walk-h': 'Temporal validation strategy',
+    'walk-sub': 'The technical error that destroys demand prediction projects. Visible here.',
+    'naive-h': 'Naive random split',
+    'anti-pattern': 'ANTI-PATTERN',
+    'naive-sub': 'What most proposals implement.',
+    'timeline-jan': 'Jan 2024 → Jun 2026 · random folds',
+    'val-mape': 'Validation MAPE',
+    'prod-mape': 'Production MAPE',
+    'gap': 'Notebook → prod gap',
+    'naive-outcome': 'Model predicts hours it already saw. Production never has that advantage. Fails.',
+    'wf-h': 'Walk-forward validation',
+    'correct': 'CORRECT',
+    'wf-sub': 'What this proposal implements from week 1.',
+    'future': 'FUTURE',
+    'timeline-rolling': 'Jan 2024 → Jun 2026 · rolling chronological window',
+    'wf-outcome': 'Model is evaluated as it predicts. The notebook number is the production number.',
+    'folds-h': 'Walk-forward folds of the current training',
+    'folds-sub': '7 folds with expanding window · 1 hour gap · 1 week validation',
+    'folds-avg': 'Walk-forward avg MAPE',
+    'folds-leak': 'Data leakage detected',
+    'drift-h': 'Drift monitoring and alerts',
+    'drift-sub': 'Model loses accuracy silently without this. Here we catch it before predictions become useless.',
+    'drift-chart': 'Drift score last 8 weeks',
+    'drift-method': 'Population Stability Index on key features',
+    'drift-psi': 'PSI drift score',
+    'watch-threshold': 'Watch threshold',
+    'retrain-threshold': 'Retrain threshold',
+    'retrain-event': 'Retraining',
+    'alert-1': 'Night peak hour drift crossed WATCH',
+    'alert-1-sub': 'feature hour_of_day · PSI 0.32 · Boca Juniors event detected in calendar',
+    'alert-2': 'Automatic retraining completed',
+    'alert-2-sub': 'v2.4.1-prod deployed · MAPE improved 8.7% → 8.4% · no manual intervention',
+    'alert-3': 'Temperature leaving historic range',
+    'alert-3-sub': 'feature temperature · heat wave · values outside training p99',
+    'alert-4': 'Kolmogorov-Smirnov test within tolerance',
+    'alert-4-sub': 'prediction distribution vs training window · p-value 0.41',
+    'exp-h': 'Experiment tracking · MLflow',
+    'exp-sub': 'Every experiment with its config hyperparameters metrics and artifacts.',
+    'new-exp': 'New experiment',
+    'th-run': 'Run ID',
+    'th-model': 'Model',
+    'th-trained': 'Trained',
+    'th-stage': 'Stage',
+    'stage-prod': 'PROD',
+    'stage-arch': 'ARCHIVED',
+    'stage-staging': 'STAGING',
+    'api-h': 'Inference endpoint',
+    'api-sub': 'REST API with horizontal autoscaling · uvicorn + FastAPI in production.',
+    'endpoints': 'Available endpoints',
+    'kpi-rps': 'Requests / sec',
+    'vs-yesterday': '↑ 8% vs yesterday',
+    'kpi-error': 'Error rate',
+    'vs-week': '↓ 0.01pp weekly',
+    'kpi-p50': 'Latency p50',
+    'under-sla': 'SLA 100ms',
+    'kpi-uptime': 'Uptime 30d',
+    'incidents': '2 incidents',
+    'th-prediction': 'Prediction',
+    'th-latency': 'Latency',
+  }
+};
+let currentLang = 'es';
+function applyI18n() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    const val = I18N[currentLang][key];
+    if (val !== undefined) el.textContent = val;
+  });
+  document.documentElement.lang = currentLang;
+}
+
+document.querySelectorAll('.nav-item').forEach(n => {
+  n.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active'));
+    n.classList.add('active');
+    const target = n.dataset.view;
+    document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.dataset.view === target));
+  });
+});
+
+document.getElementById('lang-toggle').addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  document.querySelectorAll('#lang-toggle button').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  currentLang = b.dataset.lang;
+  applyI18n();
+});
+
+document.getElementById('restart-btn').addEventListener('click', () => {
+  document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active'));
+  document.querySelector('.nav-item[data-view="overview"]').classList.add('active');
+  document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.dataset.view === 'overview'));
+});
+
+applyI18n();
+</script>
+</body>
+</html>
