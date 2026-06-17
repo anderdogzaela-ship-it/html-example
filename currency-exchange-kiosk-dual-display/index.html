@@ -1,0 +1,1701 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#1E3A8A">
+<title>FXKiosk — Currency Exchange Kiosk with Dual-Display Architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --primary: #1E3A8A;
+  --primary-dark: #1E1B4B;
+  --primary-soft: #DBEAFE;
+  --accent: #06B6D4;
+  --money: #16A34A;
+  --money-soft: #DCFCE7;
+  --warning: #F59E0B;
+  --warning-soft: #FEF3C7;
+  --danger: #DC2626;
+  --danger-soft: #FEE2E2;
+  --bg: #F8FAFC;
+  --bg-warm: #F1F5F9;
+  --surface: #FFFFFF;
+  --text: #0F172A;
+  --text-2: #475569;
+  --text-3: #94A3B8;
+  --border: #E2E8F0;
+  --border-strong: #CBD5E1;
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 6px 18px rgba(15, 23, 42, 0.08);
+  --shadow-lg: 0 24px 60px rgba(15, 23, 42, 0.18);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: linear-gradient(135deg, #DBEAFE 0%, #F8FAFC 50%, #ECFEFF 100%);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+.mono { font-family: 'JetBrains Mono', monospace; }
+
+.stage {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px;
+}
+.demo-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.brand-mark {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  display: grid;
+  place-items: center;
+  color: white;
+  box-shadow: var(--shadow-sm);
+}
+.brand-name {
+  font-weight: 800;
+  font-size: 20px;
+  letter-spacing: -0.5px;
+}
+.brand-sub {
+  font-size: 11px;
+  color: var(--text-3);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: white;
+  padding: 6px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  flex-wrap: wrap;
+}
+.tool-toggle {
+  display: flex;
+  background: var(--bg);
+  padding: 3px;
+  border-radius: 7px;
+}
+.tool-toggle button {
+  border: 0;
+  background: transparent;
+  padding: 6px 12px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+  cursor: pointer;
+  border-radius: 5px;
+}
+.tool-toggle button.active {
+  background: white;
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
+}
+.btn-restart {
+  border: 0;
+  background: var(--primary);
+  color: white;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* INSIGHT BANNER */
+.lead-insight {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 18px;
+  margin-bottom: 18px;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  box-shadow: var(--shadow-sm);
+}
+.lead-insight .ic {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: white;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.lead-insight h3 {
+  font-size: 14px;
+  font-weight: 800;
+  margin-bottom: 4px;
+  letter-spacing: -0.2px;
+}
+.lead-insight p {
+  font-size: 12px;
+  color: var(--text-2);
+  line-height: 1.55;
+}
+
+/* VIEWS */
+.view {
+  display: none;
+}
+.view.active { display: block; }
+
+/* DUAL DISPLAY */
+.dual-display {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+.monitor {
+  background: #0F172A;
+  border-radius: 16px;
+  padding: 14px;
+  box-shadow: var(--shadow-lg);
+  position: relative;
+}
+.monitor::before {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 8px;
+  background: #1E293B;
+  border-radius: 0 0 12px 12px;
+}
+.monitor-screen {
+  background: var(--bg);
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+  aspect-ratio: 16 / 10;
+}
+.monitor-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.monitor-label .pid {
+  font-family: 'JetBrains Mono', monospace;
+  background: rgba(255,255,255,0.1);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+}
+.monitor-label .live {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--money-soft);
+  color: var(--money);
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 9px;
+}
+.live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--money);
+  animation: pulse 1.4s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+/* KIOSK SCREEN (left monitor) */
+.kiosk-screen {
+  height: 100%;
+  background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  position: relative;
+}
+.kiosk-header {
+  text-align: center;
+  margin-bottom: 12px;
+}
+.kiosk-header .clinic {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-3);
+  font-weight: 800;
+}
+.kiosk-header h1 {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.4px;
+  color: var(--primary);
+  margin-top: 2px;
+}
+.fx-table {
+  background: white;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+.fx-row {
+  display: grid;
+  grid-template-columns: 50px 1fr 1fr;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+}
+.fx-row:last-child { border-bottom: 0; }
+.fx-row .flag {
+  font-size: 16px;
+}
+.fx-row .currency strong {
+  display: block;
+  font-weight: 700;
+  font-size: 12px;
+}
+.fx-row .currency span {
+  font-size: 9px;
+  color: var(--text-3);
+}
+.fx-row .rate {
+  text-align: right;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 800;
+  font-size: 13px;
+}
+.fx-row .rate span {
+  display: block;
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--money);
+}
+.fx-row .rate span.down { color: var(--danger); }
+.fx-table-head {
+  display: grid;
+  grid-template-columns: 50px 1fr 1fr;
+  padding: 6px 12px;
+  background: var(--primary);
+  color: white;
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.fx-table-head span:last-child { text-align: right; }
+.kiosk-cta {
+  margin-top: auto;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: white;
+  border-radius: 12px;
+  padding: 14px;
+  text-align: center;
+}
+.kiosk-cta .arrow {
+  font-size: 22px;
+  display: block;
+  margin-bottom: 4px;
+  animation: bounce 1.4s infinite;
+}
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+.kiosk-cta strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+}
+.kiosk-cta span {
+  font-size: 10px;
+  opacity: 0.86;
+  display: block;
+  margin-top: 2px;
+}
+.kiosk-status {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--money-soft);
+  color: var(--money);
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 800;
+}
+.kiosk-status .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--money);
+}
+.kiosk-status.cached { background: var(--warning-soft); color: var(--warning); }
+.kiosk-status.cached .dot { background: var(--warning); }
+.kiosk-source {
+  text-align: center;
+  font-size: 9px;
+  color: var(--text-3);
+  margin-top: 6px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* AD SCREEN (right monitor) */
+.ad-screen {
+  height: 100%;
+  background: black;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+.ad {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  opacity: 0;
+  transition: opacity 0.6s;
+}
+.ad.active { opacity: 1; }
+.ad-1 {
+  background: linear-gradient(135deg, #B45309 0%, #F59E0B 100%);
+  color: white;
+}
+.ad-2 {
+  background: linear-gradient(135deg, #064E3B 0%, #10B981 100%);
+  color: white;
+}
+.ad-3 {
+  background: linear-gradient(135deg, #7C2D12 0%, #EA580C 100%);
+  color: white;
+}
+.ad-4 {
+  background: linear-gradient(135deg, #1E3A8A 0%, #3B82F6 100%);
+  color: white;
+}
+.ad-content {
+  font-family: 'Inter', sans-serif;
+}
+.ad-content .small-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  font-weight: 800;
+  opacity: 0.86;
+  margin-bottom: 8px;
+}
+.ad-content h2 {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.6px;
+  margin-bottom: 6px;
+  line-height: 1.1;
+}
+.ad-content p {
+  font-size: 11px;
+  opacity: 0.92;
+  font-weight: 500;
+}
+.ad-progress {
+  position: absolute;
+  bottom: 12px;
+  left: 16px;
+  right: 16px;
+  display: flex;
+  gap: 4px;
+  z-index: 5;
+}
+.ad-progress .bar {
+  flex: 1;
+  height: 3px;
+  background: rgba(255,255,255,0.3);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.ad-progress .bar span {
+  display: block;
+  height: 100%;
+  background: white;
+  width: 0%;
+  transition: width 0.1s linear;
+}
+.ad-progress .bar.done span { width: 100%; }
+.ad-progress .bar.current span {
+  animation: adProgress 6s linear forwards;
+}
+@keyframes adProgress {
+  to { width: 100%; }
+}
+
+/* ARCHITECTURE DIAGRAM */
+.arch-panel {
+  background: white;
+  border-radius: 14px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+.arch-panel h3 {
+  font-size: 14px;
+  font-weight: 800;
+  margin-bottom: 4px;
+  letter-spacing: -0.2px;
+}
+.arch-panel .sub {
+  font-size: 11px;
+  color: var(--text-2);
+  margin-bottom: 14px;
+}
+.arch-svg {
+  width: 100%;
+  height: 240px;
+}
+.arch-node {
+  fill: white;
+  stroke: var(--border-strong);
+  stroke-width: 1.5;
+}
+.arch-node.backend { fill: var(--primary-soft); stroke: var(--primary); }
+.arch-node.frontend { fill: var(--money-soft); stroke: var(--money); }
+.arch-node.ad { fill: var(--warning-soft); stroke: var(--warning); }
+.arch-node.db { fill: #F1F5F9; stroke: var(--text-2); }
+.arch-edge {
+  fill: none;
+  stroke: var(--text-3);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 4;
+}
+.arch-label {
+  font-size: 11px;
+  font-weight: 700;
+  font-family: 'Inter', sans-serif;
+  fill: var(--text);
+}
+.arch-sublabel {
+  font-size: 9px;
+  font-family: 'JetBrains Mono', monospace;
+  fill: var(--text-2);
+}
+
+/* CUSTOMER JOURNEY (View 2) */
+.journey-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+.journey-step {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.journey-step-head {
+  padding: 10px 14px;
+  background: var(--bg-warm);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.journey-step-head .num {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: white;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.journey-step-head strong {
+  font-size: 12px;
+  font-weight: 800;
+}
+.journey-step-screen {
+  background: var(--bg);
+  padding: 14px;
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* DENOMINATION SELECT */
+.deno-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+.deno-card {
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+  text-align: center;
+  cursor: pointer;
+}
+.deno-card.selected {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+}
+.deno-card .flag {
+  font-size: 20px;
+  margin-bottom: 4px;
+}
+.deno-card strong {
+  display: block;
+  font-size: 12px;
+  font-weight: 800;
+}
+.deno-card span {
+  font-size: 10px;
+  color: var(--text-2);
+}
+
+.insert-display {
+  background: white;
+  border: 2px dashed var(--border-strong);
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.insert-display .amount {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  color: var(--primary);
+}
+.insert-display .lbl {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-3);
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.insert-display .progress {
+  height: 4px;
+  background: var(--bg-warm);
+  border-radius: 2px;
+  margin-top: 12px;
+  overflow: hidden;
+}
+.insert-display .progress span {
+  display: block;
+  height: 100%;
+  width: 70%;
+  background: var(--money);
+  border-radius: 2px;
+  animation: inserting 2s ease-in-out infinite;
+}
+@keyframes inserting {
+  0%, 100% { width: 35%; }
+  50% { width: 78%; }
+}
+
+.conversion-display {
+  background: white;
+  border-radius: 12px;
+  padding: 14px;
+  border: 1px solid var(--border);
+}
+.conv-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  font-size: 12px;
+}
+.conv-row.total {
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+  margin-top: 6px;
+  font-weight: 800;
+  font-size: 14px;
+}
+.conv-row .v {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+}
+.conv-row.total .v { color: var(--money); font-size: 18px; }
+
+.dispensing-area {
+  background: linear-gradient(180deg, #0F172A 0%, #1E293B 100%);
+  border-radius: 12px;
+  padding: 16px;
+  color: white;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+}
+.dispensing-area .icon {
+  font-size: 32px;
+  margin-bottom: 8px;
+}
+.dispensing-area strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 800;
+}
+.dispensing-area span {
+  font-size: 10px;
+  opacity: 0.86;
+  margin-top: 4px;
+  display: block;
+}
+.coin-fall {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  margin: 10px 0;
+}
+.coin-fall .coin {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #F59E0B, #B45309);
+  border: 1px solid #92400E;
+  animation: drop 1.6s ease-in-out infinite;
+}
+.coin-fall .coin:nth-child(2) { animation-delay: 0.3s; }
+.coin-fall .coin:nth-child(3) { animation-delay: 0.6s; }
+.coin-fall .coin:nth-child(4) { animation-delay: 0.9s; }
+@keyframes drop {
+  0% { transform: translateY(-10px); opacity: 0; }
+  20% { opacity: 1; }
+  100% { transform: translateY(20px); opacity: 0.4; }
+}
+
+.success-receipt {
+  background: white;
+  border-radius: 12px;
+  padding: 18px;
+  text-align: center;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.success-receipt .check {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--money);
+  margin: 0 auto 10px;
+  display: grid;
+  place-items: center;
+  color: white;
+}
+.success-receipt strong {
+  font-size: 14px;
+  font-weight: 800;
+}
+.receipt-line {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  padding: 4px 0;
+  border-bottom: 1px dashed var(--border);
+}
+.receipt-line:last-child { border: 0; }
+.receipt-line .v { font-family: 'JetBrains Mono', monospace; font-weight: 700; }
+
+/* ADMIN PANEL */
+.admin-grid {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 0;
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-md);
+}
+.admin-sidebar {
+  background: var(--primary-dark);
+  padding: 18px 12px;
+  color: white;
+}
+.admin-sidebar .user {
+  padding: 10px 8px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.admin-sidebar .user .avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--primary-dark);
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 12px;
+}
+.admin-sidebar .user strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+}
+.admin-sidebar .user span {
+  font-size: 10px;
+  opacity: 0.7;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+.admin-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: rgba(255,255,255,0.7);
+  font-weight: 600;
+  cursor: pointer;
+  border: 0;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+}
+.admin-nav-item.active {
+  background: rgba(255,255,255,0.1);
+  color: white;
+}
+.admin-content {
+  padding: 22px;
+  min-height: 540px;
+}
+.admin-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.admin-head h2 {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+}
+
+.rate-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.rate-kpi {
+  background: var(--bg);
+  border-radius: 12px;
+  padding: 14px;
+  border: 1px solid var(--border);
+}
+.rate-kpi .label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-3);
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.rate-kpi .value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+.rate-kpi .delta {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--money);
+  margin-top: 2px;
+}
+.rate-kpi .delta.warn { color: var(--warning); }
+.rate-kpi .delta.bad { color: var(--danger); }
+
+.source-status {
+  background: var(--bg);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 18px;
+  border: 1px solid var(--border);
+}
+.source-status h3 {
+  font-size: 12px;
+  font-weight: 800;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.source-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+.source-row:last-child { border: 0; }
+.source-row .name strong { font-weight: 700; }
+.source-row .name span { color: var(--text-2); font-size: 10px; display: block; }
+.source-row .latency {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-2);
+}
+.source-row .checked {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--text-3);
+}
+.source-pill {
+  font-size: 9px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.source-pill.live { background: var(--money-soft); color: var(--money); }
+.source-pill.cached { background: var(--warning-soft); color: var(--warning); }
+.source-pill.fallback { background: var(--danger-soft); color: var(--danger); }
+
+.tx-table {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.tx-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr 100px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+  align-items: center;
+}
+.tx-row:last-child { border: 0; }
+.tx-row.head {
+  background: var(--bg-warm);
+  font-weight: 800;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-3);
+}
+.tx-row .id { font-family: 'JetBrains Mono', monospace; font-weight: 700; }
+.tx-row .amount { font-family: 'JetBrains Mono', monospace; font-weight: 700; }
+.tx-row .time { font-family: 'JetBrains Mono', monospace; color: var(--text-3); font-size: 10px; }
+.tx-status {
+  font-size: 9px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.tx-status.ok { background: var(--money-soft); color: var(--money); }
+.tx-status.cached { background: var(--warning-soft); color: var(--warning); }
+
+@media (max-width: 1100px) {
+  .stage { padding: 12px; }
+  .dual-display { grid-template-columns: 1fr; }
+  .admin-grid { grid-template-columns: 1fr; }
+  .admin-sidebar { display: none; }
+  .rate-kpis { grid-template-columns: 1fr; }
+  .journey-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="stage">
+
+  <!-- HEADER -->
+  <div class="demo-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/>
+          <line x1="12" y1="6" x2="12" y2="8"/>
+          <line x1="12" y1="16" x2="12" y2="18"/>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-name">FXKiosk</div>
+        <div class="brand-sub" data-i18n="brand-sub">Dual-display currency exchange</div>
+      </div>
+    </div>
+    <div class="toolbar">
+      <div class="tool-toggle" id="view-toggle">
+        <button class="active" data-view="dual">Dual display</button>
+        <button data-view="journey">Customer journey</button>
+        <button data-view="admin">Admin panel</button>
+      </div>
+      <div class="tool-toggle" id="lang-toggle">
+        <button class="active" data-lang="es">Español</button>
+        <button data-lang="en">English</button>
+      </div>
+      <button class="btn-restart" id="restart-btn">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+        <span data-i18n="restart">Reiniciar</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- LEAD INSIGHT (the senior signal made visible) -->
+  <div class="lead-insight">
+    <div class="ic">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="9" height="14" rx="2"/><rect x="13" y="4" width="9" height="14" rx="2"/></svg>
+    </div>
+    <div>
+      <h3 data-i18n="insight-h">Arquitectura de dos procesos separados desde el día uno</h3>
+      <p data-i18n="insight-p">El error más común en kioscos con doble pantalla es montar todo en un solo proceso y descubrir que el segundo monitor muestra un espejo del primero. FXKiosk separa backend Python que consulta tasas con caché SQLite y dos procesos frontend independientes que muestran información distinta en cada monitor. El módulo publicitario rota anuncios sin interferir con el flujo de la transacción.</p>
+    </div>
+  </div>
+
+  <!-- VIEW 1: DUAL DISPLAY -->
+  <section class="view active" data-view="dual">
+    <div class="dual-display">
+      <!-- LEFT: Customer kiosk -->
+      <div>
+        <div class="monitor">
+          <div class="monitor-screen">
+            <div class="kiosk-screen">
+              <div class="kiosk-status" id="rate-status">
+                <span class="dot"></span>
+                <span data-i18n="rate-live">Tasas en vivo</span>
+              </div>
+              <div class="kiosk-header">
+                <div class="clinic" data-i18n="kiosk-est">CASA DE CAMBIO · DESDE 2018</div>
+                <h1 data-i18n="kiosk-h">Tipos de cambio del día</h1>
+              </div>
+              <div class="fx-table">
+                <div class="fx-table-head">
+                  <span></span>
+                  <span data-i18n="th-currency">Moneda</span>
+                  <span data-i18n="th-rate">Compra / Venta</span>
+                </div>
+                <div class="fx-row">
+                  <span class="flag">🇺🇸</span>
+                  <div class="currency">
+                    <strong>USD</strong>
+                    <span data-i18n="dollar">Dólar estadounidense</span>
+                  </div>
+                  <div class="rate">
+                    18.42 / 18.78
+                    <span>↑ +0.08</span>
+                  </div>
+                </div>
+                <div class="fx-row">
+                  <span class="flag">🇪🇺</span>
+                  <div class="currency">
+                    <strong>EUR</strong>
+                    <span data-i18n="euro">Euro</span>
+                  </div>
+                  <div class="rate">
+                    19.65 / 20.02
+                    <span>↑ +0.12</span>
+                  </div>
+                </div>
+                <div class="fx-row">
+                  <span class="flag">🇬🇧</span>
+                  <div class="currency">
+                    <strong>GBP</strong>
+                    <span data-i18n="pound">Libra esterlina</span>
+                  </div>
+                  <div class="rate">
+                    22.81 / 23.18
+                    <span class="down">↓ -0.04</span>
+                  </div>
+                </div>
+                <div class="fx-row">
+                  <span class="flag">🇨🇦</span>
+                  <div class="currency">
+                    <strong>CAD</strong>
+                    <span data-i18n="cad">Dólar canadiense</span>
+                  </div>
+                  <div class="rate">
+                    13.42 / 13.71
+                    <span>↑ +0.03</span>
+                  </div>
+                </div>
+              </div>
+              <div class="kiosk-cta">
+                <span class="arrow">↓</span>
+                <strong data-i18n="kiosk-cta">Toque para comenzar</strong>
+                <span data-i18n="kiosk-cta-sub">Inserte billetes o monedas para cambiar a pesos</span>
+              </div>
+              <div class="kiosk-source mono" id="rate-source">
+                Source: Banxico · Updated 12s ago · SHA: 4f8b
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="monitor-label">
+          <span data-i18n="main-monitor">MONITOR PRINCIPAL · /dev/fb0</span>
+          <span class="pid">PID 4827 · kiosk-display</span>
+          <span class="live">
+            <span class="live-dot"></span>
+            <span>LIVE</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- RIGHT: Ad display -->
+      <div>
+        <div class="monitor">
+          <div class="monitor-screen">
+            <div class="ad-screen">
+              <div class="ad ad-1 active" data-ad="1">
+                <div class="ad-content">
+                  <div class="small-label">SOLO HOY</div>
+                  <h2>Hospedaje 30% off</h2>
+                  <p>Reserva con tu cambio de divisas</p>
+                </div>
+              </div>
+              <div class="ad ad-2" data-ad="2">
+                <div class="ad-content">
+                  <div class="small-label">AEROPUERTO MEX</div>
+                  <h2>Transporte directo</h2>
+                  <p>Centro histórico desde 250 MXN</p>
+                </div>
+              </div>
+              <div class="ad ad-3" data-ad="3">
+                <div class="ad-content">
+                  <div class="small-label">RESTAURANTES</div>
+                  <h2>Tacos al pastor</h2>
+                  <p>20% off mostrando tu recibo</p>
+                </div>
+              </div>
+              <div class="ad ad-4" data-ad="4">
+                <div class="ad-content">
+                  <div class="small-label">SEGURIDAD</div>
+                  <h2>Cambia con confianza</h2>
+                  <p>Tasas oficiales del Banco de México</p>
+                </div>
+              </div>
+              <div class="ad-progress">
+                <div class="bar current"><span></span></div>
+                <div class="bar"><span></span></div>
+                <div class="bar"><span></span></div>
+                <div class="bar"><span></span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="monitor-label">
+          <span data-i18n="ad-monitor">MONITOR PUBLICITARIO · /dev/fb1</span>
+          <span class="pid">PID 4828 · ad-rotator</span>
+          <span class="live">
+            <span class="live-dot"></span>
+            <span>LIVE</span>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ARCHITECTURE DIAGRAM -->
+    <div class="arch-panel">
+      <h3 data-i18n="arch-h">Arquitectura del sistema</h3>
+      <div class="sub" data-i18n="arch-sub">Tres procesos independientes que no se bloquean entre sí. Si la fuente externa cae el kiosko sigue operando con caché.</div>
+      <svg class="arch-svg" viewBox="0 0 800 240">
+        <!-- External rate source -->
+        <rect class="arch-node" x="20" y="20" width="160" height="56" rx="8"/>
+        <text class="arch-label" x="100" y="42" text-anchor="middle">Banxico API</text>
+        <text class="arch-sublabel" x="100" y="58" text-anchor="middle">api.banxico.org.mx</text>
+
+        <!-- Backend Python -->
+        <rect class="arch-node backend" x="240" y="20" width="200" height="56" rx="8"/>
+        <text class="arch-label" x="340" y="42" text-anchor="middle">rate-poller (Python)</text>
+        <text class="arch-sublabel" x="340" y="58" text-anchor="middle">fetch · validate · cache · log</text>
+
+        <!-- SQLite -->
+        <rect class="arch-node db" x="500" y="20" width="160" height="56" rx="8"/>
+        <text class="arch-label" x="580" y="42" text-anchor="middle">SQLite local</text>
+        <text class="arch-sublabel" x="580" y="58" text-anchor="middle">rates · tx · audit_log</text>
+
+        <!-- Edge: Banxico -> backend -->
+        <path class="arch-edge" d="M180 48 L240 48"/>
+        <!-- Edge: backend -> sqlite -->
+        <path class="arch-edge" d="M440 48 L500 48"/>
+
+        <!-- Main kiosk frontend -->
+        <rect class="arch-node frontend" x="180" y="140" width="200" height="56" rx="8"/>
+        <text class="arch-label" x="280" y="162" text-anchor="middle">kiosk-display</text>
+        <text class="arch-sublabel" x="280" y="178" text-anchor="middle">PID 4827 · /dev/fb0</text>
+
+        <!-- Ad rotator -->
+        <rect class="arch-node ad" x="440" y="140" width="200" height="56" rx="8"/>
+        <text class="arch-label" x="540" y="162" text-anchor="middle">ad-rotator</text>
+        <text class="arch-sublabel" x="540" y="178" text-anchor="middle">PID 4828 · /dev/fb1</text>
+
+        <!-- Edges from SQLite to frontends -->
+        <path class="arch-edge" d="M580 76 L580 110 L280 110 L280 140"/>
+        <path class="arch-edge" d="M580 76 L580 140"/>
+
+        <!-- Customer interaction -->
+        <rect class="arch-node" x="20" y="140" width="120" height="56" rx="8"/>
+        <text class="arch-label" x="80" y="162" text-anchor="middle">Cliente</text>
+        <text class="arch-sublabel" x="80" y="178" text-anchor="middle">touch + coin sensor</text>
+        <path class="arch-edge" d="M140 168 L180 168"/>
+      </svg>
+    </div>
+  </section>
+
+  <!-- VIEW 2: CUSTOMER JOURNEY -->
+  <section class="view" data-view="journey">
+    <div class="journey-grid">
+      <!-- Step 1: Choose currency -->
+      <div class="journey-step">
+        <div class="journey-step-head">
+          <div class="num">1</div>
+          <strong data-i18n="j1-h">Cliente selecciona moneda a cambiar</strong>
+        </div>
+        <div class="journey-step-screen">
+          <div class="deno-grid">
+            <div class="deno-card selected">
+              <div class="flag">🇺🇸</div>
+              <strong>USD</strong>
+              <span data-i18n="dollar">Dólar</span>
+            </div>
+            <div class="deno-card">
+              <div class="flag">🇪🇺</div>
+              <strong>EUR</strong>
+              <span data-i18n="euro">Euro</span>
+            </div>
+            <div class="deno-card">
+              <div class="flag">🇬🇧</div>
+              <strong>GBP</strong>
+              <span data-i18n="pound">Libra</span>
+            </div>
+            <div class="deno-card">
+              <div class="flag">🇨🇦</div>
+              <strong>CAD</strong>
+              <span data-i18n="cad">CAD</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Insert -->
+      <div class="journey-step">
+        <div class="journey-step-head">
+          <div class="num">2</div>
+          <strong data-i18n="j2-h">Inserción de billetes o monedas</strong>
+        </div>
+        <div class="journey-step-screen">
+          <div class="insert-display">
+            <div class="lbl" data-i18n="inserted">Insertado hasta el momento</div>
+            <div class="amount">USD 50.00</div>
+            <div class="progress"><span></span></div>
+            <div style="font-size:10px; color:var(--text-3); margin-top:6px" data-i18n="validator">Validando con SBV-1000...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Conversion preview -->
+      <div class="journey-step">
+        <div class="journey-step-head">
+          <div class="num">3</div>
+          <strong data-i18n="j3-h">Conversión calculada y mostrada</strong>
+        </div>
+        <div class="journey-step-screen">
+          <div class="conversion-display">
+            <div class="conv-row">
+              <span data-i18n="conv-in">Recibido</span>
+              <span class="v">USD 50.00</span>
+            </div>
+            <div class="conv-row">
+              <span data-i18n="conv-rate">Tasa aplicada</span>
+              <span class="v">18.42</span>
+            </div>
+            <div class="conv-row">
+              <span data-i18n="conv-fee">Comisión 1.5%</span>
+              <span class="v" style="color:var(--danger)">-13.82</span>
+            </div>
+            <div class="conv-row total">
+              <span data-i18n="conv-total">Total a entregar</span>
+              <span class="v">907.18 MXN</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4: Dispensing -->
+      <div class="journey-step">
+        <div class="journey-step-head">
+          <div class="num">4</div>
+          <strong data-i18n="j4-h">Dispensador entrega cambio</strong>
+        </div>
+        <div class="journey-step-screen">
+          <div class="dispensing-area">
+            <div class="icon">🏧</div>
+            <strong data-i18n="dispensing">Dispensando 907.18 MXN</strong>
+            <div class="coin-fall">
+              <div class="coin"></div>
+              <div class="coin"></div>
+              <div class="coin"></div>
+              <div class="coin"></div>
+            </div>
+            <span data-i18n="dispensing-sub">Combinación óptima de billetes y monedas</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 5: Receipt -->
+      <div class="journey-step" style="grid-column: 1 / -1">
+        <div class="journey-step-head">
+          <div class="num">5</div>
+          <strong data-i18n="j5-h">Transacción completada y registrada</strong>
+        </div>
+        <div class="journey-step-screen">
+          <div class="success-receipt">
+            <div class="check">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <strong data-i18n="receipt-h">¡Gracias por tu transacción!</strong>
+            <div style="margin: 14px 0; max-width: 360px; margin-left: auto; margin-right: auto">
+              <div class="receipt-line">
+                <span data-i18n="r-id">ID transacción</span>
+                <span class="v">FX-208417</span>
+              </div>
+              <div class="receipt-line">
+                <span data-i18n="r-date">Fecha y hora</span>
+                <span class="v">17 jun 2026 · 14:32</span>
+              </div>
+              <div class="receipt-line">
+                <span data-i18n="r-from">Recibido</span>
+                <span class="v">USD 50.00</span>
+              </div>
+              <div class="receipt-line">
+                <span data-i18n="r-rate">Tasa aplicada</span>
+                <span class="v">18.42 MXN/USD</span>
+              </div>
+              <div class="receipt-line">
+                <span data-i18n="r-out">Entregado</span>
+                <span class="v" style="color:var(--money)">907.18 MXN</span>
+              </div>
+            </div>
+            <div style="font-size:10px; color:var(--text-3); margin-top:8px" data-i18n="r-audit">Registrado en SQL para auditoría · audit_log INSERT OK</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VIEW 3: ADMIN PANEL -->
+  <section class="view" data-view="admin">
+    <div class="admin-grid">
+      <aside class="admin-sidebar">
+        <div class="user">
+          <div class="avatar">OP</div>
+          <div>
+            <strong>Operador</strong>
+            <span data-i18n="admin-role">Casa de cambio</span>
+          </div>
+        </div>
+        <button class="admin-nav-item active">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          <span data-i18n="admin-nav-rates">Tasas y fuentes</span>
+        </button>
+        <button class="admin-nav-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          <span data-i18n="admin-nav-ads">Publicidad</span>
+        </button>
+        <button class="admin-nav-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+          <span data-i18n="admin-nav-tx">Transacciones</span>
+        </button>
+        <button class="admin-nav-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><line x1="6" y1="12" x2="6" y2="12"/><line x1="10" y1="12" x2="10" y2="12"/></svg>
+          <span data-i18n="admin-nav-hw">Hardware</span>
+        </button>
+      </aside>
+      <div class="admin-content">
+        <div class="admin-head">
+          <div>
+            <h2 data-i18n="admin-rates-h">Tasas y fuentes en tiempo real</h2>
+            <div style="font-size:12px; color:var(--text-2); margin-top:2px" data-i18n="admin-rates-sub">Monitoreo de las fuentes externas y caché local. Toque cualquier tasa para sobrescribir manualmente.</div>
+          </div>
+          <button style="background:var(--primary); color:white; border:0; padding:8px 14px; border-radius:8px; font-family:inherit; font-size:12px; font-weight:700; cursor:pointer" data-i18n="admin-rates-cta">Sobrescribir manualmente</button>
+        </div>
+
+        <div class="rate-kpis">
+          <div class="rate-kpi">
+            <div class="label" data-i18n="kpi-pairs">Pares activos</div>
+            <div class="value">4</div>
+            <div class="delta" data-i18n="kpi-pairs-d">USD EUR GBP CAD</div>
+          </div>
+          <div class="rate-kpi">
+            <div class="label" data-i18n="kpi-source">Fuente principal</div>
+            <div class="value" style="font-size:16px">Banxico</div>
+            <div class="delta" data-i18n="kpi-source-d">↑ 99.8% uptime últimas 30d</div>
+          </div>
+          <div class="rate-kpi">
+            <div class="label" data-i18n="kpi-cache">Caché válido por</div>
+            <div class="value">15:00</div>
+            <div class="delta warn" data-i18n="kpi-cache-d">⚠ caída de internet protegida</div>
+          </div>
+        </div>
+
+        <div class="source-status">
+          <h3>
+            <span data-i18n="src-h">Fuentes de tasas</span>
+            <span style="font-size:10px; font-weight:600; color:var(--text-3)" data-i18n="src-poll">Polling cada 30 segundos</span>
+          </h3>
+          <div class="source-row">
+            <div class="name">
+              <strong>Banxico SIE</strong>
+              <span>api.banxico.org.mx/SieAPIRest</span>
+            </div>
+            <span class="source-pill live"><span data-i18n="status-live">EN VIVO</span></span>
+            <span class="latency">142 ms</span>
+            <span class="checked" data-i18n="checked-12s">hace 12 seg</span>
+          </div>
+          <div class="source-row">
+            <div class="name">
+              <strong>Yahoo Finance fallback</strong>
+              <span>query1.finance.yahoo.com</span>
+            </div>
+            <span class="source-pill live"><span data-i18n="status-live">EN VIVO</span></span>
+            <span class="latency">218 ms</span>
+            <span class="checked" data-i18n="checked-12s">hace 12 seg</span>
+          </div>
+          <div class="source-row">
+            <div class="name">
+              <strong>Caché SQLite local</strong>
+              <span>/var/lib/fxkiosk/rates.db</span>
+            </div>
+            <span class="source-pill cached"><span data-i18n="status-warm">CALIENTE</span></span>
+            <span class="latency">1 ms</span>
+            <span class="checked" data-i18n="checked-0s">hace 0 seg</span>
+          </div>
+        </div>
+
+        <h3 style="font-size:13px; font-weight:800; margin-bottom:10px" data-i18n="recent-tx">Transacciones recientes</h3>
+        <div class="tx-table">
+          <div class="tx-row head">
+            <span>ID</span>
+            <span data-i18n="tx-from">De</span>
+            <span data-i18n="tx-to">A</span>
+            <span data-i18n="tx-rate">Tasa</span>
+            <span data-i18n="tx-time">Hora</span>
+            <span data-i18n="tx-status">Estado</span>
+          </div>
+          <div class="tx-row">
+            <span class="id">FX-208417</span>
+            <span class="amount">USD 50.00</span>
+            <span class="amount" style="color:var(--money)">907.18 MXN</span>
+            <span class="amount">18.42</span>
+            <span class="time">14:32:18</span>
+            <span class="tx-status ok" data-i18n="tx-ok">OK</span>
+          </div>
+          <div class="tx-row">
+            <span class="id">FX-208416</span>
+            <span class="amount">EUR 100.00</span>
+            <span class="amount" style="color:var(--money)">1,952.50 MXN</span>
+            <span class="amount">19.65</span>
+            <span class="time">14:28:42</span>
+            <span class="tx-status ok" data-i18n="tx-ok">OK</span>
+          </div>
+          <div class="tx-row">
+            <span class="id">FX-208415</span>
+            <span class="amount">USD 20.00</span>
+            <span class="amount" style="color:var(--money)">362.40 MXN</span>
+            <span class="amount">18.42</span>
+            <span class="time">14:21:09</span>
+            <span class="tx-status ok" data-i18n="tx-ok">OK</span>
+          </div>
+          <div class="tx-row">
+            <span class="id">FX-208414</span>
+            <span class="amount">GBP 30.00</span>
+            <span class="amount" style="color:var(--money)">681.30 MXN</span>
+            <span class="amount">22.81</span>
+            <span class="time">14:18:33</span>
+            <span class="tx-status cached" data-i18n="tx-cached">CACHÉ</span>
+          </div>
+          <div class="tx-row">
+            <span class="id">FX-208413</span>
+            <span class="amount">USD 100.00</span>
+            <span class="amount" style="color:var(--money)">1,814.36 MXN</span>
+            <span class="amount">18.42</span>
+            <span class="time">14:12:01</span>
+            <span class="tx-status ok" data-i18n="tx-ok">OK</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+const I18N = {
+  es: {
+    'brand-sub': 'Casa de cambio con doble pantalla',
+    'restart': 'Reiniciar',
+    'insight-h': 'Arquitectura de dos procesos separados desde el día uno',
+    'insight-p': 'El error más común en kioscos con doble pantalla es montar todo en un solo proceso y descubrir que el segundo monitor muestra un espejo del primero. FXKiosk separa backend Python que consulta tasas con caché SQLite y dos procesos frontend independientes que muestran información distinta en cada monitor. El módulo publicitario rota anuncios sin interferir con el flujo de la transacción.',
+    'rate-live': 'Tasas en vivo',
+    'rate-cached': 'Tasas en caché',
+    'kiosk-est': 'CASA DE CAMBIO · DESDE 2018',
+    'kiosk-h': 'Tipos de cambio del día',
+    'th-currency': 'Moneda',
+    'th-rate': 'Compra / Venta',
+    'dollar': 'Dólar estadounidense',
+    'euro': 'Euro',
+    'pound': 'Libra esterlina',
+    'cad': 'Dólar canadiense',
+    'kiosk-cta': 'Toque para comenzar',
+    'kiosk-cta-sub': 'Inserte billetes o monedas para cambiar a pesos',
+    'main-monitor': 'MONITOR PRINCIPAL · /dev/fb0',
+    'ad-monitor': 'MONITOR PUBLICITARIO · /dev/fb1',
+    'arch-h': 'Arquitectura del sistema',
+    'arch-sub': 'Tres procesos independientes que no se bloquean entre sí. Si la fuente externa cae el kiosko sigue operando con caché.',
+    'j1-h': 'Cliente selecciona moneda a cambiar',
+    'j2-h': 'Inserción de billetes o monedas',
+    'j3-h': 'Conversión calculada y mostrada',
+    'j4-h': 'Dispensador entrega cambio',
+    'j5-h': 'Transacción completada y registrada',
+    'inserted': 'Insertado hasta el momento',
+    'validator': 'Validando con SBV-1000...',
+    'conv-in': 'Recibido',
+    'conv-rate': 'Tasa aplicada',
+    'conv-fee': 'Comisión 1.5%',
+    'conv-total': 'Total a entregar',
+    'dispensing': 'Dispensando 907.18 MXN',
+    'dispensing-sub': 'Combinación óptima de billetes y monedas',
+    'receipt-h': '¡Gracias por tu transacción!',
+    'r-id': 'ID transacción',
+    'r-date': 'Fecha y hora',
+    'r-from': 'Recibido',
+    'r-rate': 'Tasa aplicada',
+    'r-out': 'Entregado',
+    'r-audit': 'Registrado en SQL para auditoría · audit_log INSERT OK',
+    'admin-role': 'Casa de cambio',
+    'admin-nav-rates': 'Tasas y fuentes',
+    'admin-nav-ads': 'Publicidad',
+    'admin-nav-tx': 'Transacciones',
+    'admin-nav-hw': 'Hardware',
+    'admin-rates-h': 'Tasas y fuentes en tiempo real',
+    'admin-rates-sub': 'Monitoreo de las fuentes externas y caché local. Toque cualquier tasa para sobrescribir manualmente.',
+    'admin-rates-cta': 'Sobrescribir manualmente',
+    'kpi-pairs': 'Pares activos',
+    'kpi-pairs-d': 'USD EUR GBP CAD',
+    'kpi-source': 'Fuente principal',
+    'kpi-source-d': '↑ 99.8% uptime últimas 30d',
+    'kpi-cache': 'Caché válido por',
+    'kpi-cache-d': '⚠ caída de internet protegida',
+    'src-h': 'Fuentes de tasas',
+    'src-poll': 'Polling cada 30 segundos',
+    'status-live': 'EN VIVO',
+    'status-warm': 'CALIENTE',
+    'checked-12s': 'hace 12 seg',
+    'checked-0s': 'hace 0 seg',
+    'recent-tx': 'Transacciones recientes',
+    'tx-from': 'De',
+    'tx-to': 'A',
+    'tx-rate': 'Tasa',
+    'tx-time': 'Hora',
+    'tx-status': 'Estado',
+    'tx-ok': 'OK',
+    'tx-cached': 'CACHÉ',
+  },
+  en: {
+    'brand-sub': 'Dual-display currency exchange',
+    'restart': 'Restart',
+    'insight-h': 'Two separate processes from day one',
+    'insight-p': 'The most common mistake in dual-display kiosks is bundling everything into one process and discovering the second monitor mirrors the first. FXKiosk separates a Python backend polling rates with SQLite cache and two independent frontend processes that render different content on each monitor. The ad module rotates without interfering with the transaction flow.',
+    'rate-live': 'Live rates',
+    'rate-cached': 'Cached rates',
+    'kiosk-est': 'EXCHANGE BUREAU · SINCE 2018',
+    'kiosk-h': 'Daily exchange rates',
+    'th-currency': 'Currency',
+    'th-rate': 'Buy / Sell',
+    'dollar': 'US Dollar',
+    'euro': 'Euro',
+    'pound': 'British Pound',
+    'cad': 'Canadian Dollar',
+    'kiosk-cta': 'Tap to start',
+    'kiosk-cta-sub': 'Insert bills or coins to exchange to MXN pesos',
+    'main-monitor': 'MAIN MONITOR · /dev/fb0',
+    'ad-monitor': 'AD MONITOR · /dev/fb1',
+    'arch-h': 'System architecture',
+    'arch-sub': 'Three independent processes that do not block one another. If the external source goes down the kiosk keeps operating from cache.',
+    'j1-h': 'Customer picks the currency to exchange',
+    'j2-h': 'Bills or coins inserted',
+    'j3-h': 'Conversion calculated and shown',
+    'j4-h': 'Dispenser hands out the change',
+    'j5-h': 'Transaction completed and logged',
+    'inserted': 'Inserted so far',
+    'validator': 'Validating with SBV-1000...',
+    'conv-in': 'Received',
+    'conv-rate': 'Applied rate',
+    'conv-fee': 'Fee 1.5%',
+    'conv-total': 'Total to dispense',
+    'dispensing': 'Dispensing 907.18 MXN',
+    'dispensing-sub': 'Optimal bill + coin combination',
+    'receipt-h': 'Thanks for your transaction!',
+    'r-id': 'Transaction ID',
+    'r-date': 'Date and time',
+    'r-from': 'Received',
+    'r-rate': 'Applied rate',
+    'r-out': 'Dispensed',
+    'r-audit': 'Logged to SQL audit table · audit_log INSERT OK',
+    'admin-role': 'Exchange bureau',
+    'admin-nav-rates': 'Rates and sources',
+    'admin-nav-ads': 'Advertising',
+    'admin-nav-tx': 'Transactions',
+    'admin-nav-hw': 'Hardware',
+    'admin-rates-h': 'Live rates and sources',
+    'admin-rates-sub': 'Monitor external sources and the local cache. Tap any rate to override manually.',
+    'admin-rates-cta': 'Override manually',
+    'kpi-pairs': 'Active pairs',
+    'kpi-pairs-d': 'USD EUR GBP CAD',
+    'kpi-source': 'Primary source',
+    'kpi-source-d': '↑ 99.8% uptime last 30d',
+    'kpi-cache': 'Cache valid for',
+    'kpi-cache-d': '⚠ internet outage protected',
+    'src-h': 'Rate sources',
+    'src-poll': 'Polling every 30 seconds',
+    'status-live': 'LIVE',
+    'status-warm': 'WARM',
+    'checked-12s': '12s ago',
+    'checked-0s': '0s ago',
+    'recent-tx': 'Recent transactions',
+    'tx-from': 'From',
+    'tx-to': 'To',
+    'tx-rate': 'Rate',
+    'tx-time': 'Time',
+    'tx-status': 'Status',
+    'tx-ok': 'OK',
+    'tx-cached': 'CACHE',
+  }
+};
+
+let currentLang = 'es';
+function applyI18n() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    const val = I18N[currentLang][key];
+    if (val !== undefined) el.textContent = val;
+  });
+  document.documentElement.lang = currentLang === 'es' ? 'es' : 'en';
+}
+
+// View switching
+document.querySelectorAll('#view-toggle button').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('#view-toggle button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    const target = b.dataset.view;
+    document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.dataset.view === target));
+  });
+});
+
+// Language
+document.getElementById('lang-toggle').addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  document.querySelectorAll('#lang-toggle button').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  currentLang = b.dataset.lang;
+  applyI18n();
+});
+
+// Restart
+document.getElementById('restart-btn').addEventListener('click', () => {
+  document.querySelectorAll('#view-toggle button').forEach(x => x.classList.remove('active'));
+  document.querySelector('#view-toggle button[data-view="dual"]').classList.add('active');
+  document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.dataset.view === 'dual'));
+  // Reset ad cycle
+  currentAd = 1;
+  showAd(1);
+});
+
+// Ad rotation
+let currentAd = 1;
+function showAd(n) {
+  document.querySelectorAll('.ad').forEach(a => a.classList.remove('active'));
+  document.querySelector(`.ad[data-ad="${n}"]`).classList.add('active');
+  // Update progress bars
+  const bars = document.querySelectorAll('.ad-progress .bar');
+  bars.forEach((bar, i) => {
+    bar.classList.remove('current', 'done');
+    if (i + 1 < n) bar.classList.add('done');
+    else if (i + 1 === n) bar.classList.add('current');
+  });
+}
+setInterval(() => {
+  currentAd = (currentAd % 4) + 1;
+  showAd(currentAd);
+}, 6000);
+
+applyI18n();
+</script>
+</body>
+</html>
