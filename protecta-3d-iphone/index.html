@@ -2,645 +2,651 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Protecta – Demo 3D</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Protecta – Proteção iPhone 3D</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 :root{
-  --brand:#00d4aa;--brand-dark:#009e81;
-  --bg:#080c10;--sur:#0f1520;
-  --txt:#eef2ff;--mut:#7a8899;
+  --g:#00d4aa;--gd:#009e81;--g2:#00ffcc;
+  --bg:#06090f;--s1:#0d1320;--s2:#111827;
+  --t1:#f0f4ff;--t2:#8494a8;--t3:#3d4d60;
 }
+html,body{height:100%;overflow:hidden;}
 body{
   font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;
-  background:var(--bg);color:var(--txt);min-height:100vh;
-  overflow-x:hidden;-webkit-font-smoothing:antialiased;
+  background:var(--bg);color:var(--t1);
+  -webkit-font-smoothing:antialiased;
+  overscroll-behavior:none;
 }
 
-/* ── NAV */
-nav{
-  position:fixed;top:0;left:0;right:0;z-index:200;
-  padding:13px 20px;display:flex;align-items:center;justify-content:space-between;
-  background:rgba(8,12,16,0.92);backdrop-filter:blur(18px);
-  border-bottom:1px solid rgba(255,255,255,0.07);
+/* ══ SCREEN MANAGER ══ */
+.screen{
+  position:fixed;inset:0;
+  display:flex;flex-direction:column;
+  opacity:0;pointer-events:none;
+  transition:opacity .38s ease,transform .38s ease;
+  transform:translateX(28px);
 }
-.logo{font-size:18px;font-weight:800;letter-spacing:-.5px;}
-.logo em{color:var(--brand);font-style:normal;}
-.nbadge{font-size:11px;font-weight:700;background:rgba(0,212,170,.12);color:var(--brand);border:1px solid rgba(0,212,170,.25);border-radius:20px;padding:4px 12px;}
+.screen.active{opacity:1;pointer-events:all;transform:translateX(0);}
+.screen.exit{opacity:0;transform:translateX(-36px);}
 
-/* ── PAGE */
-.page{padding:66px 0 48px;display:flex;flex-direction:column;align-items:center;}
-
-/* ── HERO */
-.hero{text-align:center;padding:28px 24px 18px;}
-.eyebrow{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--brand);margin-bottom:11px;}
-h1{font-size:clamp(30px,9vw,52px);font-weight:800;letter-spacing:-1.2px;line-height:1.04;margin-bottom:10px;}
-.sub{font-size:14px;color:var(--mut);line-height:1.5;max-width:300px;margin:0 auto;}
-
-/* ── MODEL SELECTOR */
-.msel{display:flex;gap:7px;padding:16px 20px 0;overflow-x:auto;width:100%;max-width:400px;}
-.msel::-webkit-scrollbar{display:none;}
-.mchip{flex-shrink:0;padding:7px 14px;background:var(--sur);border:1.5px solid rgba(255,255,255,.1);border-radius:10px;font-size:11px;font-weight:700;color:var(--mut);cursor:pointer;transition:all .2s;white-space:nowrap;}
-.mchip.on{border-color:var(--brand);color:var(--brand);background:rgba(0,212,170,.1);}
-
-/* ── 3D VIEWPORT */
-#vp{
-  position:relative;width:100%;max-width:400px;
-  height:420px;display:flex;align-items:center;justify-content:center;
-  margin:20px 0 0;
-  overflow:hidden;
+/* ══ SCREEN 0: MODEL SELECTION ══ */
+#s0{
+  background:radial-gradient(ellipse 80% 55% at 50% -5%,rgba(0,212,170,.18),transparent 65%),var(--bg);
+  justify-content:space-between;padding:0 0 32px;overflow:hidden;
 }
+.s0-top{padding:52px 28px 0;flex-shrink:0;}
+.brand{font-size:13px;font-weight:900;letter-spacing:3px;text-transform:uppercase;color:var(--g);margin-bottom:22px;}
+.s0-h{font-size:clamp(32px,10vw,52px);font-weight:900;letter-spacing:-1.5px;line-height:1.02;}
+.s0-h span{background:linear-gradient(90deg,var(--g),var(--g2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.s0-sub{font-size:13px;color:var(--t2);margin-top:10px;line-height:1.55;max-width:300px;}
 
-/* The perspective scene */
-#scene{
-  perspective:900px;
-  perspective-origin:50% 48%;
-  width:240px;height:400px;
-  position:relative;
-}
-
-/* iPhone wrapper — rotates in 3D */
-#phone{
-  width:240px;height:400px;
-  transform-style:preserve-3d;
-  transform:rotateX(4deg) rotateY(-18deg);
-  transition:transform .05s linear;
-  position:relative;
-  cursor:grab;
-}
-#phone:active{cursor:grabbing;}
-
-/* ── iPhone FACES ── */
-.face{position:absolute;backface-visibility:hidden;}
-
-/* Front face */
-.f-front{
-  width:240px;height:400px;left:0;top:0;
-  background:linear-gradient(160deg,#2a2d38 0%,#1a1d28 60%,#0e1018 100%);
-  border-radius:40px;
-  border:2px solid #3a3d4a;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.15),
-    inset 0 -1px 0 rgba(0,0,0,.4),
-    0 0 0 1px rgba(0,0,0,.5);
-  overflow:hidden;
+/* floating phone preview */
+.stack{flex:1;display:flex;align-items:center;justify-content:center;perspective:900px;position:relative;min-height:0;}
+.stack-phone{
+  width:152px;height:268px;border-radius:32px;
+  background:linear-gradient(150deg,#252838,#181b28,#0e1018);
+  border:2px solid rgba(255,255,255,.12);
+  box-shadow:0 40px 80px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.14);
+  transform:rotateX(8deg) rotateY(-16deg);
+  position:relative;overflow:hidden;
+  animation:floatPh 4s ease-in-out infinite;
   display:flex;flex-direction:column;align-items:center;
 }
+@keyframes floatPh{0%,100%{transform:rotateX(8deg) rotateY(-16deg) translateY(0)}50%{transform:rotateX(6deg) rotateY(-20deg) translateY(-9px)}}
+.stack-phone::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.13) 0%,transparent 50%);border-radius:30px;}
+.sp-island{width:66px;height:17px;background:#000;border-radius:10px;margin:12px auto 9px;flex-shrink:0;}
+.sp-screen{
+  width:132px;height:190px;border-radius:20px;
+  background:linear-gradient(160deg,#060a14,#0a0f22,#050817);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
+}
+.sp-logo{font-size:30px;font-weight:900;letter-spacing:-1px;background:linear-gradient(135deg,var(--g),var(--g2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.sp-tag{font-size:8px;font-weight:800;letter-spacing:1.5px;color:rgba(0,212,170,.6);text-transform:uppercase;}
+/* rings */
+.ring{position:absolute;border-radius:50%;border:1px solid rgba(0,212,170,.1);animation:rp 3s ease-in-out infinite;pointer-events:none;}
+.ring:nth-child(1){width:250px;height:250px;top:50%;left:50%;transform:translate(-50%,-50%);animation-delay:0s;}
+.ring:nth-child(2){width:330px;height:330px;top:50%;left:50%;transform:translate(-50%,-50%);animation-delay:.7s;}
+.ring:nth-child(3){width:410px;height:410px;top:50%;left:50%;transform:translate(-50%,-50%);animation-delay:1.4s;}
+@keyframes rp{0%,100%{opacity:.25}50%{opacity:.75}}
 
-/* Titanium side frame feel */
-.f-front::before{
-  content:'';position:absolute;inset:0;border-radius:40px;
+/* model grid */
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px;padding:0 18px;flex-shrink:0;}
+.mcard{
+  background:var(--s1);border:1.5px solid rgba(255,255,255,.07);border-radius:14px;
+  padding:13px;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;gap:3px;
+}
+.mcard.sel{border-color:var(--g);background:rgba(0,212,170,.08);}
+.mcard:active{transform:scale(.97);}
+.mcard-name{font-size:13px;font-weight:800;letter-spacing:-.3px;}
+.mcard-size{font-size:11px;color:var(--t2);}
+.mcard-price{font-size:10px;font-weight:700;color:var(--g);margin-top:2px;}
+
+.btn-primary{
+  margin:14px 18px 0;padding:16px;border:none;border-radius:15px;
+  background:linear-gradient(135deg,var(--g),var(--gd));color:#000;
+  font-size:16px;font-weight:900;cursor:pointer;
+  box-shadow:0 8px 28px rgba(0,212,170,.3);
+  transition:transform .15s,box-shadow .15s;letter-spacing:-.2px;
+}
+.btn-primary:active{transform:scale(.98);box-shadow:0 4px 14px rgba(0,212,170,.18);}
+
+/* ══ SCREEN 1: PROTECTION EXPERIENCE ══ */
+#s1{background:var(--bg);padding:0;}
+
+/* top bar */
+.xbar{
+  position:absolute;top:0;left:0;right:0;z-index:50;
+  padding:14px 18px 10px;
+  display:flex;align-items:center;justify-content:space-between;
+  background:rgba(6,9,15,.92);backdrop-filter:blur(20px);
+  border-bottom:1px solid rgba(255,255,255,.06);
+}
+.back-btn{
+  width:34px;height:34px;border-radius:10px;border:1.5px solid rgba(255,255,255,.1);
+  background:rgba(255,255,255,.05);cursor:pointer;font-size:17px;
+  display:flex;align-items:center;justify-content:center;color:var(--t1);
+  flex-shrink:0;
+}
+.xbar-info{margin-left:10px;flex:1;}
+.xbar-model{font-size:14px;font-weight:800;letter-spacing:-.3px;}
+.xbar-step{font-size:11px;color:var(--t2);}
+.pdots{display:flex;gap:5px;align-items:center;}
+.pdot{width:6px;height:6px;border-radius:3px;background:rgba(255,255,255,.14);transition:all .35s;}
+.pdot.done{background:var(--g);}
+.pdot.cur{width:20px;background:var(--g);}
+
+/* viewport */
+#vp{
+  position:absolute;top:64px;left:0;right:0;bottom:0;
+  display:flex;flex-direction:column;align-items:center;
+}
+#stage{
+  flex:1;display:flex;align-items:center;justify-content:center;
+  perspective:900px;perspective-origin:50% 48%;
+  width:100%;position:relative;min-height:0;
+}
+
+/* phone */
+#phone{
+  width:200px;height:358px;
+  transform-style:preserve-3d;
+  transform:rotateX(4deg) rotateY(-18deg);
+  position:relative;cursor:grab;user-select:none;
+}
+#phone:active{cursor:grabbing;}
+.pfront{
+  width:200px;height:358px;border-radius:38px;
+  background:linear-gradient(150deg,#252838 0%,#181b28 55%,#0e1018 100%);
+  border:2px solid rgba(255,255,255,.1);
+  box-shadow:
+    inset 0 1.5px 0 rgba(255,255,255,.18),
+    inset 0 -1.5px 0 rgba(0,0,0,.4),
+    0 0 0 1px rgba(0,0,0,.5),
+    0 30px 60px rgba(0,0,0,.6);
+  position:absolute;inset:0;overflow:hidden;
+  display:flex;flex-direction:column;align-items:center;
+}
+.pfront::before{
+  content:'';position:absolute;inset:0;border-radius:38px;
   border:3px solid transparent;
-  background:linear-gradient(135deg,rgba(255,255,255,.18),rgba(255,255,255,.04),rgba(255,255,255,.12)) border-box;
+  background:linear-gradient(125deg,rgba(255,255,255,.22),rgba(255,255,255,.02),rgba(255,255,255,.14)) border-box;
   -webkit-mask:linear-gradient(#fff 0 0) padding-box,linear-gradient(#fff 0 0);
-  -webkit-mask-composite:destination-out;mask-composite:exclude;
-  pointer-events:none;
+  -webkit-mask-composite:destination-out;mask-composite:exclude;pointer-events:none;
 }
+.di{width:78px;height:20px;background:#000;border-radius:11px;margin:13px auto 8px;flex-shrink:0;}
+.pscreen{
+  width:174px;height:288px;border-radius:24px;flex-shrink:0;
+  background:linear-gradient(160deg,#060a14,#0a0f22,#050817);
+  position:relative;overflow:hidden;
+  box-shadow:inset 0 0 40px rgba(0,0,0,.9);
+}
+.pscreen::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 70% 50% at 50% 30%,rgba(0,212,170,.2),transparent 70%);
+  animation:ag 3.5s ease-in-out infinite;pointer-events:none;
+}
+@keyframes ag{0%,100%{opacity:.55}50%{opacity:1}}
+.screen-msg{
+  position:absolute;bottom:20px;left:0;right:0;text-align:center;
+  display:flex;flex-direction:column;align-items:center;gap:5px;
+}
+.smsg-icon{font-size:26px;line-height:1;}
+.smsg-txt{font-size:9px;font-weight:800;letter-spacing:.8px;color:rgba(0,212,170,.85);text-transform:uppercase;}
 
-/* Screen */
-.screen{
-  width:210px;height:360px;margin-top:20px;
-  border-radius:28px;overflow:hidden;position:relative;
-  background:linear-gradient(160deg,#060a14 0%,#0a0f22 40%,#050817 100%);
-  box-shadow:inset 0 0 30px rgba(0,0,0,.8);
-}
-.screen-glow{
-  position:absolute;inset:0;
-  background:radial-gradient(ellipse 80% 60% at 50% 30%,rgba(0,212,170,.25) 0%,transparent 70%);
-  animation:glowPulse 3s ease-in-out infinite;
-}
-@keyframes glowPulse{0%,100%{opacity:.7}50%{opacity:1}}
-.screen-content{
-  position:absolute;bottom:24px;left:0;right:0;
-  display:flex;flex-direction:column;align-items:center;gap:6px;
-  padding:0 16px;
-}
-.screen-label{font-size:11px;font-weight:700;color:rgba(0,212,170,.8);letter-spacing:.5px;text-align:center;}
-.screen-icons{display:flex;gap:8px;}
-.sicon{font-size:22px;}
-
-/* Dynamic Island */
-.di{
-  width:90px;height:22px;background:#000;border-radius:12px;
-  margin:12px auto 8px;
-  box-shadow:0 0 0 1.5px rgba(255,255,255,.05);
-}
-
-/* Side buttons (right) */
-.f-right{
-  position:absolute;right:-6px;top:110px;
-  width:6px;height:70px;
-  background:linear-gradient(90deg,#2a2d38,#3a3d4a);
-  border-radius:0 3px 3px 0;
-  box-shadow:2px 0 4px rgba(0,0,0,.4);
-}
-.f-right::before{
-  content:'';position:absolute;top:-40px;left:0;
-  width:6px;height:32px;
-  background:linear-gradient(90deg,#2a2d38,#3a3d4a);
-  border-radius:0 3px 3px 0;
-}
-
-/* Side buttons (left) */
-.f-left{
-  position:absolute;left:-6px;top:90px;
-  display:flex;flex-direction:column;gap:10px;
-}
-.lbtn{
-  width:6px;border-radius:3px 0 0 3px;
-  background:linear-gradient(270deg,#2a2d38,#3a3d4a);
-  box-shadow:-2px 0 4px rgba(0,0,0,.4);
-}
-
-/* Camera module (back face hint via pseudo on front) */
-.cam-hint{
-  position:absolute;top:18px;left:18px;
-  width:68px;height:68px;
-  background:rgba(0,0,0,.0);
-  border-radius:18px;
-  /* only visible when phone is rotated to show back - simulated with opacity */
-  opacity:0;transition:opacity .3s;
-}
-
-/* Back face */
-.f-back{
-  position:absolute;width:240px;height:400px;left:0;top:0;
-  background:linear-gradient(160deg,#1e2130 0%,#151820 60%,#0c0e18 100%);
-  border-radius:40px;border:2px solid #3a3d4a;
-  transform:rotateY(180deg) translateZ(0px);
-  overflow:hidden;
-  display:flex;align-items:flex-start;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.08);
-}
-.cam-module{
-  margin:22px 0 0 18px;
-  width:88px;height:88px;
-  background:linear-gradient(135deg,#0a0c14,#181a24);
-  border-radius:22px;
-  box-shadow:0 0 0 1.5px #2a2d38;
-  display:grid;grid-template-columns:1fr 1fr;
-  gap:8px;padding:12px;align-content:start;
-}
-.cam-lens{
-  width:28px;height:28px;
-  background:radial-gradient(circle at 35% 35%,#1a1d28,#000);
-  border-radius:50%;border:1.5px solid #3a3d38;
-  box-shadow:0 0 0 2px #0a0c10,inset 0 0 6px rgba(0,212,170,.15);
-}
-.cam-flash{
-  width:14px;height:14px;
-  background:radial-gradient(#ffe4a0,#c8a050);
-  border-radius:50%;margin:auto;
-  box-shadow:0 0 6px rgba(255,220,100,.4);
-}
+/* side buttons */
+.pbtn-r{position:absolute;right:-5px;top:98px;width:5px;height:60px;background:linear-gradient(90deg,#222537,#2d3044);border-radius:0 3px 3px 0;}
+.pbtn-r::before{content:'';position:absolute;top:-34px;left:0;width:5px;height:27px;background:inherit;border-radius:0 3px 3px 0;}
+.pbtn-l{position:absolute;left:-5px;top:82px;display:flex;flex-direction:column;gap:9px;}
+.pbl{width:5px;border-radius:3px 0 0 3px;background:linear-gradient(270deg,#222537,#2d3044);}
 
 /* ── LAYER OVERLAYS ── */
-
-/* Film — glass shimmer */
-#layer-film{
-  position:absolute;inset:0;border-radius:40px;
-  pointer-events:none;z-index:10;
-  opacity:0;transition:opacity .6s ease;
-  background:linear-gradient(135deg,rgba(180,230,255,.12) 0%,rgba(255,255,255,.04) 50%,rgba(150,220,255,.08) 100%);
-  box-shadow:inset 0 0 0 1.5px rgba(100,220,255,.4),0 0 20px rgba(0,212,170,.15);
+#ov-film{
+  position:absolute;inset:0;border-radius:38px;z-index:10;pointer-events:none;
+  opacity:0;transition:opacity .65s ease;
+  background:linear-gradient(135deg,rgba(200,240,255,.13) 0%,rgba(255,255,255,.04) 50%,rgba(180,230,255,.09) 100%);
+  box-shadow:inset 0 0 0 1.5px rgba(140,220,255,.42),0 0 22px rgba(0,212,170,.1);
 }
-#layer-film::after{
-  content:'';position:absolute;
-  top:0;left:0;right:0;height:40%;
-  background:linear-gradient(180deg,rgba(255,255,255,.12),transparent);
-  border-radius:40px 40px 0 0;
-}
+#ov-film::after{content:'';position:absolute;top:0;left:0;right:0;height:38%;border-radius:38px 38px 0 0;background:linear-gradient(180deg,rgba(255,255,255,.14),transparent);}
+#ov-film.on{opacity:1;}
 
-/* Case */
-#layer-case{
-  position:absolute;inset:-8px;border-radius:48px;
-  pointer-events:none;z-index:8;
-  opacity:0;transition:opacity .6s ease;
-  background:linear-gradient(145deg,#005a42,#003828);
+#ov-case{
+  position:absolute;inset:-10px;border-radius:46px;z-index:8;pointer-events:none;
+  opacity:0;transition:opacity .65s ease;
+  background:linear-gradient(145deg,#004d38,#002e22,#001a13);
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.15),
-    inset 0 -1px 0 rgba(0,0,0,.3),
-    0 0 0 1.5px rgba(0,212,170,.3),
-    0 8px 32px rgba(0,0,0,.5);
+    inset 0 1.5px 0 rgba(255,255,255,.17),
+    inset 0 -1.5px 0 rgba(0,0,0,.3),
+    0 0 0 1.5px rgba(0,212,170,.33),
+    0 0 30px rgba(0,0,0,.5);
 }
-#layer-case::before{
-  content:'';position:absolute;inset:6px;border-radius:42px;
-  background:transparent;
-  box-shadow:inset 0 0 0 1px rgba(0,212,170,.15);
-}
+#ov-case::before{content:'';position:absolute;inset:8px;border-radius:40px;box-shadow:inset 0 0 0 1.5px rgba(0,212,170,.14);}
+#ov-case::after{content:'';position:absolute;inset:0;border-radius:46px;background:linear-gradient(135deg,rgba(255,255,255,.11) 0%,transparent 50%,rgba(0,212,170,.07) 100%);}
+#ov-case.on{opacity:1;}
 
-/* Lens protector */
-#layer-lens{
-  position:absolute;
-  width:96px;height:96px;
-  top:22px;left:22px;
-  border-radius:24px;
-  pointer-events:none;z-index:12;
-  opacity:0;transition:opacity .6s ease;
-  background:radial-gradient(circle at 40% 40%,rgba(0,212,170,.25),rgba(0,212,170,.06));
-  box-shadow:0 0 0 2px rgba(0,212,170,.5),0 0 20px rgba(0,212,170,.2),inset 0 1px 0 rgba(255,255,255,.2);
+#ov-lens{
+  position:absolute;bottom:26px;left:12px;
+  width:50px;height:50px;border-radius:14px;z-index:12;pointer-events:none;
+  opacity:0;transition:opacity .55s ease;
+  background:radial-gradient(circle at 40% 40%,rgba(0,212,170,.33),rgba(0,212,170,.07));
+  box-shadow:0 0 0 2px rgba(0,212,170,.52),0 0 16px rgba(0,212,170,.22),inset 0 1px 0 rgba(255,255,255,.22);
   display:flex;align-items:center;justify-content:center;
-  font-size:11px;font-weight:800;color:rgba(0,212,170,.9);letter-spacing:.5px;
-  /* Only visible on back — we fake by always showing it on the visible face */
+  font-size:9px;font-weight:900;color:rgba(0,212,170,.92);letter-spacing:.3px;text-align:center;line-height:1.25;
 }
-#layer-lens-front{
-  position:absolute;
-  /* Small lens-protector badge on front corner */
-  bottom:30px;left:12px;
-  width:40px;height:40px;
-  border-radius:12px;
-  pointer-events:none;z-index:12;
-  opacity:0;transition:opacity .5s ease;
-  background:radial-gradient(circle,rgba(0,212,170,.3),rgba(0,212,170,.05));
-  box-shadow:0 0 0 1.5px rgba(0,212,170,.5),0 0 10px rgba(0,212,170,.2);
-  display:flex;align-items:center;justify-content:center;font-size:16px;
-}
+#ov-lens.on{opacity:1;}
 
-/* Application flash effect */
-.apply-flash{
-  position:absolute;inset:0;border-radius:40px;
-  pointer-events:none;z-index:20;
-  background:radial-gradient(circle,rgba(0,212,170,.4),transparent 70%);
-  opacity:0;
-}
-.apply-flash.pop{animation:flashPop .5s ease forwards;}
-@keyframes flashPop{0%{opacity:0;transform:scale(0.9)}30%{opacity:1}100%{opacity:0;transform:scale(1.05)}}
+/* flash burst */
+#flash{position:absolute;inset:-10px;border-radius:48px;z-index:20;pointer-events:none;opacity:0;}
+#flash.burst{animation:fb .55s ease forwards;}
+@keyframes fb{0%{opacity:0;box-shadow:0 0 0 0 rgba(0,212,170,.8)}25%{opacity:1;box-shadow:0 0 0 22px rgba(0,212,170,.28)}100%{opacity:0;box-shadow:0 0 0 55px rgba(0,212,170,0)}}
 
-/* Back lens flash */
-.lens-flash{
-  position:absolute;inset:0;pointer-events:none;z-index:20;opacity:0;
+/* particles */
+.particle{
+  position:absolute;width:4px;height:4px;border-radius:50%;
+  background:var(--g);pointer-events:none;z-index:25;
+  animation:pf .72s ease forwards;opacity:0;
 }
-.lens-flash.pop{animation:lensPop .6s ease forwards;}
-@keyframes lensPop{0%{opacity:0}20%{opacity:1}100%{opacity:0}}
+@keyframes pf{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:var(--pend) scale(0)}}
 
-/* ── LAYER INDICATORS */
-.lpills{
-  position:absolute;right:12px;top:50%;transform:translateY(-50%);
-  display:flex;flex-direction:column;gap:8px;
-}
+/* layer pills */
+.lpills{position:absolute;right:-6px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:7px;z-index:30;}
 .lpill{
-  width:36px;height:36px;border-radius:10px;
-  background:rgba(15,21,32,.85);border:1.5px solid rgba(255,255,255,.08);
-  display:flex;align-items:center;justify-content:center;font-size:16px;
-  transition:all .35s;
+  width:32px;height:32px;border-radius:9px;
+  background:rgba(13,19,32,.9);border:1.5px solid rgba(255,255,255,.08);
+  display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .35s;
 }
-.lpill.on{border-color:var(--brand);background:rgba(0,212,170,.18);box-shadow:0 0 10px rgba(0,212,170,.3);}
-.lpill.cur{border-color:var(--brand);background:rgba(0,212,170,.28);animation:cur 1s ease-in-out infinite;}
-@keyframes cur{0%,100%{box-shadow:0 0 6px rgba(0,212,170,.3)}50%{box-shadow:0 0 18px rgba(0,212,170,.65)}}
+.lpill.act{border-color:var(--g);background:rgba(0,212,170,.18);box-shadow:0 0 10px rgba(0,212,170,.3);}
+.lpill.cur{border-color:var(--g);background:rgba(0,212,170,.1);animation:lc 1.2s ease-in-out infinite;}
+@keyframes lc{0%,100%{box-shadow:0 0 4px rgba(0,212,170,.2)}50%{box-shadow:0 0 16px rgba(0,212,170,.6)}}
 
-/* FPS */
-.fps-pill{
-  position:absolute;top:10px;left:10px;
-  background:rgba(0,0,0,.6);backdrop-filter:blur(6px);
-  border:1px solid rgba(255,255,255,.07);border-radius:8px;
-  padding:3px 10px;font-size:10px;font-weight:700;color:var(--mut);
-  display:flex;align-items:center;gap:5px;
+/* fps */
+.fps{position:absolute;top:8px;left:8px;z-index:30;background:rgba(0,0,0,.65);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.06);border-radius:7px;padding:3px 9px;font-size:9px;font-weight:700;color:var(--t3);display:flex;align-items:center;gap:4px;}
+.fdot{width:5px;height:5px;border-radius:50%;background:#3fb950;animation:blink 1.3s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* bottom panel */
+.bpanel{
+  width:100%;max-width:420px;padding:13px 18px 24px;
+  background:rgba(6,9,15,.96);backdrop-filter:blur(20px);
+  border-top:1px solid rgba(255,255,255,.06);flex-shrink:0;
 }
-.fdot{width:6px;height:6px;border-radius:50%;background:#3fb950;animation:blink 1.2s infinite;}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+.bcard{min-height:88px;margin-bottom:11px;}
+.bc-sub{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--g);margin-bottom:5px;}
+.bc-h{font-size:19px;font-weight:900;letter-spacing:-.4px;margin-bottom:4px;}
+.bc-d{font-size:13px;color:var(--t2);line-height:1.5;}
+.tags{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap;}
+.tag{font-size:10px;font-weight:700;padding:3px 9px;border-radius:7px;}
+.tag-g{background:rgba(0,212,170,.1);border:1px solid rgba(0,212,170,.2);color:var(--g);}
+.tag-d{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:var(--t2);}
+.mcta{width:100%;padding:15px;border:none;border-radius:14px;font-size:15px;font-weight:900;cursor:pointer;letter-spacing:-.2px;transition:transform .15s,box-shadow .15s;}
+.mcta:active{transform:scale(.98);}
+.cta-g{background:linear-gradient(135deg,var(--g),var(--gd));color:#000;box-shadow:0 8px 24px rgba(0,212,170,.28);}
+.cta-g:active{box-shadow:0 4px 12px rgba(0,212,170,.14);}
 
-/* ── STEP PANEL */
-.panel{width:100%;max-width:400px;padding:14px 20px 0;}
-.progt{display:flex;gap:5px;margin-bottom:14px;}
-.pseg{flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,.1);transition:background .4s;}
-.pseg.done{background:var(--brand);}.pseg.cur{background:var(--brand);opacity:.5;}
+/* ══ SCREEN 2: CHECKOUT ══ */
+#s2{
+  background:radial-gradient(ellipse 80% 50% at 50% 0%,rgba(0,212,170,.2),transparent 65%),var(--bg);
+  justify-content:space-between;padding:0 0 36px;overflow-y:auto;
+}
+.s2-top{padding:54px 26px 0;flex-shrink:0;}
+.s2-badge{
+  width:76px;height:76px;border-radius:20px;
+  background:linear-gradient(135deg,rgba(0,212,170,.22),rgba(0,212,170,.05));
+  border:2px solid rgba(0,212,170,.38);
+  display:flex;align-items:center;justify-content:center;font-size:36px;
+  margin-bottom:18px;
+  box-shadow:0 0 40px rgba(0,212,170,.18),inset 0 1px 0 rgba(255,255,255,.18);
+  animation:bp 2.2s ease-in-out infinite;
+}
+@keyframes bp{0%,100%{box-shadow:0 0 28px rgba(0,212,170,.18)}50%{box-shadow:0 0 55px rgba(0,212,170,.38)}}
+.s2-h{font-size:clamp(28px,9vw,44px);font-weight:900;letter-spacing:-1.2px;line-height:1.05;margin-bottom:9px;}
+.s2-h em{background:linear-gradient(90deg,var(--g),var(--g2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-style:normal;}
+.s2-sub{font-size:13px;color:var(--t2);line-height:1.55;max-width:300px;}
 
-.dbanner{display:none;background:rgba(0,212,170,.08);border:1px solid rgba(0,212,170,.25);border-radius:10px;padding:10px;text-align:center;font-size:13px;font-weight:700;color:var(--brand);margin-bottom:12px;}
+/* protection score */
+.score-wrap{padding:18px 18px 0;flex-shrink:0;}
+.score-card{background:var(--s1);border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:18px;}
+.sc-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--t2);margin-bottom:14px;}
+.sc-rows{display:flex;flex-direction:column;gap:11px;}
+.sc-row{display:flex;align-items:center;gap:11px;}
+.sc-ico{font-size:17px;flex-shrink:0;}
+.sc-info{flex:1;}
+.sc-name{font-size:12px;font-weight:700;margin-bottom:4px;}
+.sc-bw{height:4px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden;}
+.sc-bar{height:4px;border-radius:2px;background:linear-gradient(90deg,var(--g),var(--g2));width:0;transition:width 1.1s ease .35s;}
+.sc-pct{font-size:12px;font-weight:800;color:var(--g);flex-shrink:0;width:33px;text-align:right;}
+.sc-total{margin-top:14px;padding-top:13px;border-top:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between;}
+.sc-total-l{font-size:13px;color:var(--t2);}
+.sc-total-r{font-size:22px;font-weight:900;background:linear-gradient(90deg,var(--g),var(--g2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
 
-.scard{background:var(--sur);border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:18px;margin-bottom:14px;min-height:106px;}
-.snum{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--brand);margin-bottom:7px;}
-.stitle{font-size:19px;font-weight:800;letter-spacing:-.3px;margin-bottom:5px;}
-.sdesc{font-size:13px;color:var(--mut);line-height:1.5;}
-.stech{display:flex;gap:5px;margin-top:10px;flex-wrap:wrap;}
-.tchip{font-size:10px;font-weight:600;border-radius:6px;padding:3px 8px;}
-.dim{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:var(--mut);}
-.hi{background:rgba(0,212,170,.1);border:1px solid rgba(0,212,170,.2);color:var(--brand);}
+/* items */
+.items{padding:14px 18px 0;flex-shrink:0;}
+.item-row{display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05);}
+.item-row:last-child{border:none;}
+.item-icon{font-size:20px;}
+.item-name{font-size:13px;font-weight:700;flex:1;}
+.item-badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:7px;background:rgba(0,212,170,.1);border:1px solid rgba(0,212,170,.2);color:var(--g);}
 
-.cta{width:100%;padding:15px;border:none;border-radius:14px;font-size:15px;font-weight:800;cursor:pointer;letter-spacing:-.2px;margin-bottom:8px;transition:transform .15s,opacity .15s;}
-.cta:active{transform:scale(.98);}
-.green{background:linear-gradient(135deg,#00d4aa,#009e81);color:#000;box-shadow:0 6px 20px rgba(0,212,170,.28);}
-.indigo{background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;box-shadow:0 6px 20px rgba(99,102,241,.28);}
-.ghost{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:var(--txt);box-shadow:none;}
-
-.tnote{text-align:center;padding:20px 24px 40px;font-size:11px;color:rgba(122,136,153,.45);line-height:1.7;}
-.tnote strong{color:rgba(122,136,153,.75);}
+.s2-cta{
+  margin:14px 18px 0;padding:17px;border:none;border-radius:16px;
+  background:linear-gradient(135deg,var(--g),var(--gd));color:#000;
+  font-size:16px;font-weight:900;cursor:pointer;
+  box-shadow:0 8px 28px rgba(0,212,170,.28);
+  transition:transform .15s;letter-spacing:-.2px;
+}
+.s2-cta:active{transform:scale(.98);}
+.s2-restart{
+  margin:10px 18px 0;padding:13px;border:1.5px solid rgba(255,255,255,.09);
+  border-radius:13px;background:transparent;color:var(--t2);
+  font-size:13px;font-weight:700;cursor:pointer;transition:color .2s;
+}
+.s2-restart:active{color:var(--t1);}
 </style>
 </head>
 <body>
 
-<nav>
-  <div class="logo">Protec<em>ta</em></div>
-  <div class="nbadge">Demo 3D · CSS3</div>
-</nav>
+<!-- ══ SCREEN 0: MODEL SELECTION ══ -->
+<div class="screen active" id="s0">
+  <div class="s0-top">
+    <div class="brand">Protecta</div>
+    <h1 class="s0-h">Proteja seu<br><span>iPhone agora</span></h1>
+    <p class="s0-sub">Escolha o modelo e veja a proteção sendo aplicada em 3D</p>
+  </div>
+  <div class="stack">
+    <div class="ring"></div><div class="ring"></div><div class="ring"></div>
+    <div class="stack-phone">
+      <div class="sp-island"></div>
+      <div class="sp-screen">
+        <div class="sp-logo">P</div>
+        <div class="sp-tag">Proteção total</div>
+      </div>
+    </div>
+  </div>
+  <div class="mgrid" id="mgrid">
+    <div class="mcard sel" onclick="selectModel(this,'iPhone 15 Pro Max')">
+      <div class="mcard-name">15 Pro Max</div>
+      <div class="mcard-size">6.7″ · Titânio</div>
+      <div class="mcard-price">Kit a partir de R$189</div>
+    </div>
+    <div class="mcard" onclick="selectModel(this,'iPhone 15 Pro')">
+      <div class="mcard-name">15 Pro</div>
+      <div class="mcard-size">6.1″ · Titânio</div>
+      <div class="mcard-price">Kit a partir de R$169</div>
+    </div>
+    <div class="mcard" onclick="selectModel(this,'iPhone 14 Pro')">
+      <div class="mcard-name">14 Pro</div>
+      <div class="mcard-size">6.1″ · Aço</div>
+      <div class="mcard-price">Kit a partir de R$149</div>
+    </div>
+    <div class="mcard" onclick="selectModel(this,'iPhone 14')">
+      <div class="mcard-name">14</div>
+      <div class="mcard-size">6.1″ · Alumínio</div>
+      <div class="mcard-price">Kit a partir de R$129</div>
+    </div>
+  </div>
+  <button class="btn-primary" onclick="gotoExp()">Iniciar proteção →</button>
+</div>
 
-<div class="page">
-  <div class="hero">
-    <div class="eyebrow">Experiência interativa</div>
-    <h1>Proteja seu<br>iPhone em 3D</h1>
-    <p class="sub">Veja cada camada de proteção sendo aplicada em tempo real</p>
+<!-- ══ SCREEN 1: PROTECTION EXPERIENCE ══ -->
+<div class="screen" id="s1">
+  <div class="xbar">
+    <div class="back-btn" onclick="goBack()">‹</div>
+    <div class="xbar-info">
+      <div class="xbar-model" id="xbModel">iPhone 15 Pro Max</div>
+      <div class="xbar-step" id="xbStep">Passo 1 de 3</div>
+    </div>
+    <div class="pdots" id="pdots">
+      <div class="pdot cur"></div>
+      <div class="pdot"></div>
+      <div class="pdot"></div>
+    </div>
   </div>
 
-  <!-- Model selector -->
-  <div class="msel" id="msel">
-    <div class="mchip on" onclick="setModel(this,'iPhone 15 Pro Max',1.06)">iPhone 15 Pro Max</div>
-    <div class="mchip" onclick="setModel(this,'iPhone 15 Pro',1.0)">iPhone 15 Pro</div>
-    <div class="mchip" onclick="setModel(this,'iPhone 14 Pro',0.97)">iPhone 14 Pro</div>
-    <div class="mchip" onclick="setModel(this,'iPhone 14',0.94)">iPhone 14</div>
-  </div>
-
-  <!-- 3D Viewport -->
   <div id="vp">
-    <div id="scene">
+    <div id="stage">
       <div id="phone">
-        <!-- Front face -->
-        <div class="face f-front">
-          <!-- Side buttons -->
-          <div class="f-right"></div>
-          <div class="f-left">
-            <div class="lbtn" style="height:26px"></div>
-            <div class="lbtn" style="height:36px"></div>
-            <div class="lbtn" style="height:36px"></div>
+        <div class="pfront">
+          <div class="pbtn-r"></div>
+          <div class="pbtn-l">
+            <div class="pbl" style="height:22px"></div>
+            <div class="pbl" style="height:31px"></div>
+            <div class="pbl" style="height:31px"></div>
           </div>
-          <!-- Dynamic Island -->
           <div class="di"></div>
-          <!-- Screen -->
-          <div class="screen">
-            <div class="screen-glow"></div>
-            <div class="screen-content">
-              <div class="screen-label" id="scrLabel">TOQUE PARA COMEÇAR</div>
-              <div class="screen-icons" id="scrIcons">
-                <span class="sicon">🛡️</span>
-                <span class="sicon">📱</span>
-                <span class="sicon">🔭</span>
-              </div>
+          <div class="pscreen">
+            <div class="screen-msg">
+              <div class="smsg-icon" id="smsgIcon">🛡️</div>
+              <div class="smsg-txt" id="smsgTxt">INICIAR PROTEÇÃO</div>
             </div>
           </div>
-          <!-- Layer overlays (on front face) -->
-          <div id="layer-film"></div>
-          <div id="layer-case"></div>
-          <div id="layer-lens-front"></div>
-          <div class="apply-flash" id="flash"></div>
+          <div id="ov-film"></div>
+          <div id="ov-case"></div>
+          <div id="ov-lens">LENS<br>PRO</div>
         </div>
+        <div id="flash"></div>
+      </div>
+      <div class="lpills">
+        <div class="lpill cur" id="lp0">🛡️</div>
+        <div class="lpill" id="lp1">📱</div>
+        <div class="lpill" id="lp2">🔭</div>
+      </div>
+      <div class="fps"><div class="fdot"></div><span id="fpsLbl">60 fps</span></div>
+    </div>
 
-        <!-- Back face -->
-        <div class="face f-back">
-          <div class="cam-module">
-            <div class="cam-lens"></div>
-            <div class="cam-lens"></div>
-            <div class="cam-lens"></div>
-            <div class="cam-flash"></div>
-          </div>
-          <!-- Lens protector on back -->
-          <div id="layer-lens">LENS<br>PRO</div>
+    <div class="bpanel">
+      <div class="bcard">
+        <div class="bc-sub" id="bcSub">Etapa 1 de 3</div>
+        <div class="bc-h" id="bcH">Película protetora</div>
+        <div class="bc-d" id="bcD">Cobertura total da tela contra arranhões e impactos. Anti-reflexo premium com sensibilidade ao toque 100% preservada.</div>
+        <div class="tags" id="bcTags">
+          <span class="tag tag-g">Anti-arranhão</span>
+          <span class="tag tag-g">Anti-reflexo</span>
+          <span class="tag tag-d">Vidro temperado 9H</span>
         </div>
-      </div><!-- /phone -->
-    </div><!-- /scene -->
-
-    <!-- UI overlays -->
-    <div class="lpills">
-      <div class="lpill cur" id="lp0">🛡️</div>
-      <div class="lpill" id="lp1">📱</div>
-      <div class="lpill" id="lp2">🔭</div>
+      </div>
+      <button class="mcta cta-g" id="mainBtn" onclick="advance()">Aplicar película →</button>
     </div>
-    <div class="fps-pill"><div class="fdot"></div><span id="fpsLbl">60 fps</span></div>
-  </div><!-- /vp -->
-
-  <!-- Step panel -->
-  <div class="panel">
-    <div class="progt" id="progt"></div>
-    <div class="dbanner" id="dbanner">✅ iPhone totalmente protegido!</div>
-    <div class="scard">
-      <div class="snum" id="snum">Selecione o modelo</div>
-      <div class="stitle" id="stitle">iPhone 15 Pro Max</div>
-      <div class="sdesc" id="sdesc">Arraste o iPhone para rotacionar. Toque em "Aplicar película" para começar a proteção.</div>
-      <div class="stech" id="stech"></div>
-    </div>
-    <button class="cta green" id="mcta" onclick="advance()">Aplicar película protetora →</button>
-    <button class="cta ghost" id="rcta" onclick="restart()" style="display:none">↺ Reiniciar demonstração</button>
   </div>
 </div>
 
-<div class="tnote">
-  Demo de desenvolvimento · <strong>CSS 3D + animações por camada</strong><br>
-  Produção usa <strong>React Three Fiber + glTF</strong> com meshes separadas por camada<br>
-  Otimizado para GPU mobile · KTX2 textures · 60fps garantido
+<!-- ══ SCREEN 2: RESULT + CHECKOUT ══ -->
+<div class="screen" id="s2">
+  <div class="s2-top">
+    <div class="s2-badge">✅</div>
+    <h2 class="s2-h">iPhone<br><em>100% protegido</em></h2>
+    <p class="s2-sub">Tela, corpo e câmera protegidos. Seu kit está pronto para envio.</p>
+  </div>
+
+  <div class="score-wrap">
+    <div class="score-card">
+      <div class="sc-title">Índice de proteção Protecta</div>
+      <div class="sc-rows">
+        <div class="sc-row">
+          <div class="sc-ico">🛡️</div>
+          <div class="sc-info">
+            <div class="sc-name">Tela (película 9H)</div>
+            <div class="sc-bw"><div class="sc-bar" id="sb0"></div></div>
+          </div>
+          <div class="sc-pct" id="sp0">0%</div>
+        </div>
+        <div class="sc-row">
+          <div class="sc-ico">📱</div>
+          <div class="sc-info">
+            <div class="sc-name">Corpo (capinha MagSafe)</div>
+            <div class="sc-bw"><div class="sc-bar" id="sb1"></div></div>
+          </div>
+          <div class="sc-pct" id="sp1">0%</div>
+        </div>
+        <div class="sc-row">
+          <div class="sc-ico">🔭</div>
+          <div class="sc-info">
+            <div class="sc-name">Câmera (protetor de lente)</div>
+            <div class="sc-bw"><div class="sc-bar" id="sb2"></div></div>
+          </div>
+          <div class="sc-pct" id="sp2">0%</div>
+        </div>
+      </div>
+      <div class="sc-total">
+        <div class="sc-total-l">Proteção total</div>
+        <div class="sc-total-r">100%</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="items">
+    <div class="item-row">
+      <div class="item-icon">🛡️</div>
+      <div class="item-name">Película protetora 9H</div>
+      <div class="item-badge">Incluído</div>
+    </div>
+    <div class="item-row">
+      <div class="item-icon">📱</div>
+      <div class="item-name">Capinha MagSafe protetora</div>
+      <div class="item-badge">Incluído</div>
+    </div>
+    <div class="item-row">
+      <div class="item-icon">🔭</div>
+      <div class="item-name">Protetor de lente tripla</div>
+      <div class="item-badge">Incluído</div>
+    </div>
+  </div>
+
+  <button class="s2-cta" onclick="alert('Gateway integrado na Fase 2\n(Stripe · Pagar.me · Mercado Pago)')">🛒 Finalizar compra</button>
+  <button class="s2-restart" onclick="restart()">↺ Escolher outro modelo</button>
 </div>
 
 <script>
-// ─── STEPS ───────────────────────────────────────────────────────────────────
-const STEPS = [
-  { num:'Selecione o modelo', title:'iPhone 15 Pro Max',
-    desc:'Arraste o iPhone para rotacionar. Toque em "Aplicar película" para começar a proteção.',
-    btn:'Aplicar película protetora →', cls:'green',
-    tech:[['CSS 3D','hi'],['Three.js (produção)','dim'],['60fps mobile','hi']],
-    lp:[0,0,0], scr:'TOQUE PARA COMEÇAR', scrIco:'🛡️📱🔭',
-    film:false,cas:false,lens:false },
-  { num:'Etapa 1 de 3 · Película', title:'🛡️ Película aplicada',
-    desc:'Cobertura total da tela contra arranhões e impactos. Anti-reflexo. Sensibilidade ao toque preservada.',
-    btn:'Aplicar capinha protetora →', cls:'green',
-    tech:[['Mesh layer 1','hi'],['Opacidade lerp','dim'],['glTF separado','hi']],
-    lp:[1,0,0], scr:'PELÍCULA APLICADA ✓', scrIco:'🛡️',
-    film:true,cas:false,lens:false },
-  { num:'Etapa 2 de 3 · Capinha', title:'📱 Capinha MagSafe aplicada',
-    desc:'Proteção lateral e traseira contra quedas até 2 m. Compatível com carregamento MagSafe sem fio.',
-    btn:'Aplicar protetor de lente →', cls:'green',
-    tech:[['Mesh layer 2','hi'],['Step-index anim','dim'],['MagSafe','hi']],
-    lp:[1,1,0], scr:'CAPINHA APLICADA ✓', scrIco:'📱',
-    film:true,cas:true,lens:false },
-  { num:'Etapa 3 de 3 · Lente', title:'🔭 Protetor de lente aplicado',
-    desc:'Vidro temperado sobre o sistema de câmera tripla. Zero perda de qualidade fotográfica.',
-    btn:'Ver resultado final →', cls:'green',
-    tech:[['Mesh layer 3','hi'],['KTX2 textures','dim'],['Câmera tripla','hi']],
-    lp:[1,1,1], scr:'PROTEÇÃO TOTAL ✓', scrIco:'🔭',
-    film:true,cas:true,lens:true },
-  { num:'Proteção completa', title:'✨ iPhone totalmente protegido',
-    desc:'Tela, corpo e câmera protegidos. Seu iPhone está 100% seguro. Pronto para finalizar a compra.',
-    btn:'🛒 Ir para o checkout', cls:'indigo',
-    tech:[['Integração gateway','dim'],['Fase 2','hi'],['Checkout','dim']],
-    lp:[1,1,1], scr:'100% PROTEGIDO', scrIco:'✨',
-    film:true,cas:true,lens:true },
+// ══ STATE ══
+let MODEL = 'iPhone 15 Pro Max';
+let STEP = 0; // 0=before film, 1=after film (before case), 2=after case (before lens), 3=done
+let curScr = 0;
+
+const CONTENT = [
+  {
+    sub:'Etapa 1 de 3 · Película', h:'Película protetora',
+    d:'Cobertura total da tela contra arranhões e impactos. Anti-reflexo premium com sensibilidade ao toque 100% preservada.',
+    tags:[['Anti-arranhão','g'],['Anti-reflexo','g'],['Vidro temperado 9H','d']],
+    btn:'Aplicar película →', icon:'🛡️', msg:'APLICAR PELÍCULA',
+  },
+  {
+    sub:'Etapa 2 de 3 · Capinha', h:'Capinha MagSafe',
+    d:'Proteção lateral e traseira contra quedas até 2 m. Compatível com carregamento sem fio MagSafe. Encaixe perfeito.',
+    tags:[['Proteção queda 2m','g'],['MagSafe','g'],['Microfibra interna','d']],
+    btn:'Aplicar capinha →', icon:'📱', msg:'PELÍCULA APLICADA ✓',
+  },
+  {
+    sub:'Etapa 3 de 3 · Lente', h:'Protetor de lente tripla',
+    d:'Vidro temperado sobre o sistema de câmera. Zero perda de qualidade fotográfica. Proteção contra arranhões e impactos diretos.',
+    tags:[['Câmera tripla','g'],['Vidro temperado','g'],['Sem reflexo','d']],
+    btn:'Aplicar protetor de lente →', icon:'🔭', msg:'CAPINHA APLICADA ✓',
+  },
 ];
 
-// ─── STATE ───────────────────────────────────────────────────────────────────
-let si = 0;
-let rotY = -18, rotX = 4;
-let isDrag = false, startX = 0, startY = 0, velX = 0, velY = 0;
-let rafId = null;
-let modelScale = 1.06;
+// ══ SCREEN TRANSITIONS ══
+function showScr(n){
+  const ss=[document.getElementById('s0'),document.getElementById('s1'),document.getElementById('s2')];
+  ss[curScr].classList.remove('active');
+  ss[curScr].classList.add('exit');
+  setTimeout(()=>ss[curScr].classList.remove('exit'),420);
+  curScr=n;
+  ss[n].classList.add('active');
+}
+function gotoExp(){
+  STEP=0;
+  renderPanel();renderDots();renderPills();
+  document.getElementById('xbModel').textContent=MODEL;
+  showScr(1);
+}
+function goBack(){showScr(0);}
+function restart(){
+  STEP=0;
+  ['ov-film','ov-case','ov-lens'].forEach(id=>document.getElementById(id).classList.remove('on'));
+  showScr(0);
+}
 
-const phone = document.getElementById('phone');
-const flashEl = document.getElementById('flash');
+// ══ MODEL SELECTION ══
+function selectModel(el,name){
+  document.querySelectorAll('.mcard').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');
+  MODEL=name;
+}
 
-// ─── DRAG ROTATION ───────────────────────────────────────────────────────────
-function getEvt(e){ return e.touches ? e.touches[0] : e; }
-function onDown(e){
-  isDrag = true;
-  const ev = getEvt(e);
-  startX = ev.clientX; startY = ev.clientY;
-  velX = velY = 0;
-  cancelAnimationFrame(rafId);
-}
-function onMove(e){
-  if(!isDrag) return;
-  const ev = getEvt(e);
-  const dx = ev.clientX - startX;
-  const dy = ev.clientY - startY;
-  velX = dx * 0.4; velY = dy * 0.25;
-  rotY += dx * 0.55; rotX += dy * 0.35;
-  rotX = Math.max(-35, Math.min(35, rotX));
-  startX = ev.clientX; startY = ev.clientY;
-  applyRot();
-}
-function onUp(){
-  isDrag = false;
-  inertia();
-}
-function inertia(){
-  if(Math.abs(velX) < 0.1 && Math.abs(velY) < 0.1){
-    // Drift back to default
-    driftBack();
-    return;
+// ══ PROTECTION FLOW ══
+function advance(){
+  if(STEP>=3){showScr(2);animScore();return;}
+  // apply layer
+  if(STEP===0) document.getElementById('ov-film').classList.add('on');
+  if(STEP===1) document.getElementById('ov-case').classList.add('on');
+  if(STEP===2) document.getElementById('ov-lens').classList.add('on');
+  burst();spawnParticles();
+  STEP++;
+  if(STEP>=3){
+    // all applied — CTA goes to checkout
+    document.getElementById('bcSub').textContent='Proteção completa';
+    document.getElementById('bcH').textContent='✨ iPhone totalmente protegido';
+    document.getElementById('bcD').textContent='Tela, corpo e câmera protegidos. Toque para ver o resumo e finalizar sua compra.';
+    document.getElementById('bcTags').innerHTML='<span class="tag tag-g">Proteção 100%</span><span class="tag tag-g">Pronto para envio</span>';
+    document.getElementById('mainBtn').textContent='Ver resumo e finalizar compra →';
+    document.getElementById('smsgIcon').textContent='✨';
+    document.getElementById('smsgTxt').textContent='PROTEÇÃO TOTAL';
+    document.getElementById('xbStep').textContent='Proteção completa';
+  } else {
+    renderPanel();
+    document.getElementById('xbStep').textContent=`Passo ${STEP+1} de 3`;
   }
-  rotY += velX * 0.08; rotX += velY * 0.05;
-  rotX = Math.max(-35, Math.min(35, rotX));
-  velX *= 0.88; velY *= 0.88;
-  applyRot();
-  rafId = requestAnimationFrame(inertia);
-}
-function driftBack(){
-  const targetY = si >= 4 ? rotY : -18;
-  const targetX = 4;
-  rotY += (targetY - rotY) * 0.04;
-  rotX += (targetX - rotX) * 0.04;
-  applyRot();
-  if(Math.abs(rotY - targetY) > 0.2 || Math.abs(rotX - targetX) > 0.2){
-    rafId = requestAnimationFrame(driftBack);
-  }
+  renderDots();renderPills();
 }
 
-phone.addEventListener('mousedown', onDown);
-window.addEventListener('mousemove', onMove);
-window.addEventListener('mouseup', onUp);
-phone.addEventListener('touchstart', onDown, {passive:true});
-window.addEventListener('touchmove', onMove, {passive:true});
-window.addEventListener('touchend', onUp);
-
-function applyRot(){
-  phone.style.transform = `scale(${modelScale}) rotateX(${rotX}deg) rotateY(${rotY}deg)`;
+function renderPanel(){
+  const c=CONTENT[STEP];
+  document.getElementById('bcSub').textContent=c.sub;
+  document.getElementById('bcH').textContent=c.h;
+  document.getElementById('bcD').textContent=c.d;
+  document.getElementById('bcTags').innerHTML=c.tags.map(([t,cls])=>`<span class="tag tag-${cls}">${t}</span>`).join('');
+  document.getElementById('mainBtn').textContent=c.btn;
+  document.getElementById('smsgIcon').textContent=c.icon;
+  document.getElementById('smsgTxt').textContent=c.msg;
 }
-applyRot();
-
-// Auto-rotate on complete
-let autoRotAngle = -18;
-function autoRotate(){
-  if(si >= 4 && !isDrag){
-    autoRotAngle += 0.4;
-    rotY = autoRotAngle;
-    applyRot();
-  }
-  requestAnimationFrame(autoRotate);
+function renderDots(){
+  document.querySelectorAll('.pdot').forEach((d,i)=>{
+    d.classList.remove('done','cur');
+    if(i<STEP) d.classList.add('done');
+    else if(i===STEP&&STEP<3) d.classList.add('cur');
+  });
 }
-autoRotate();
-
-// ─── FPS COUNTER (real) ───────────────────────────────────────────────────────
-let fCount = 0, fTime = performance.now();
-function fpsTick(){
-  fCount++;
-  const now = performance.now();
-  if(now - fTime > 1000){
-    document.getElementById('fpsLbl').textContent = Math.round(fCount*1000/(now-fTime)) + ' fps';
-    fCount=0; fTime=now;
-  }
-  requestAnimationFrame(fpsTick);
-}
-fpsTick();
-
-// ─── LAYERS ──────────────────────────────────────────────────────────────────
-function setLayer(id, on){
-  document.getElementById(id).style.opacity = on ? '1' : '0';
-}
-
-function flashAnim(){
-  flashEl.classList.remove('pop');
-  void flashEl.offsetWidth; // reflow
-  flashEl.classList.add('pop');
-}
-
-// ─── UI ──────────────────────────────────────────────────────────────────────
-function buildProg(){
-  const el = document.getElementById('progt');
-  el.innerHTML='';
-  for(let i=0;i<4;i++){
-    const d=document.createElement('div');
-    d.className='pseg'+(i<si-1?' done':i===si-1?' cur':'');
-    el.appendChild(d);
-  }
-}
-
-function updLP(lp){
+function renderPills(){
   [0,1,2].forEach(i=>{
     const el=document.getElementById('lp'+i);
-    el.classList.remove('on','cur');
-    if(lp[i]) el.classList.add('on');
-    else if(i===si) el.classList.add('cur');
+    el.classList.remove('act','cur');
+    if(i<STEP) el.classList.add('act');
+    else if(i===STEP&&STEP<3) el.classList.add('cur');
   });
 }
 
-function updScreen(s){
-  document.getElementById('scrLabel').textContent = s.scr;
-  document.getElementById('scrIcons').innerHTML = [...s.scrIco].map(c=>`<span class="sicon">${c}</span>`).join('');
+// ══ BURST + PARTICLES ══
+function burst(){
+  const f=document.getElementById('flash');
+  f.classList.remove('burst');void f.offsetWidth;f.classList.add('burst');
 }
-
-function render(){
-  const s = STEPS[Math.min(si, STEPS.length-1)];
-  document.getElementById('snum').textContent  = s.num;
-  document.getElementById('stitle').textContent = si===0
-    ? document.querySelector('.mchip.on').textContent
-    : s.title;
-  document.getElementById('sdesc').textContent  = s.desc;
-  document.getElementById('stech').innerHTML    = s.tech.map(([t,c])=>`<span class="tchip ${c}">${t}</span>`).join('');
-
-  const btn = document.getElementById('mcta');
-  btn.textContent = s.btn;
-  btn.className   = 'cta ' + s.cls;
-
-  document.getElementById('dbanner').style.display = si>=4 ? 'block' : 'none';
-  document.getElementById('rcta').style.display    = si>=4 ? 'block' : 'none';
-
-  setLayer('layer-film', s.film);
-  setLayer('layer-case', s.cas);
-  setLayer('layer-lens', s.lens);
-  setLayer('layer-lens-front', s.lens);
-  updLP(s.lp);
-  updScreen(s);
-  buildProg();
-}
-
-function advance(){
-  if(si >= STEPS.length-1){
-    alert('Redirecionando para o checkout…\n(integração com gateway de pagamento na Fase 2)');
-    return;
+function spawnParticles(){
+  const st=document.getElementById('stage');
+  const cx=st.offsetWidth/2,cy=st.offsetHeight/2;
+  for(let i=0;i<12;i++){
+    const p=document.createElement('div');p.className='particle';
+    const a=Math.random()*Math.PI*2,d=70+Math.random()*90;
+    p.style.cssText=`left:${cx}px;top:${cy}px;--pend:translate(${Math.cos(a)*d}px,${Math.sin(a)*d}px);animation-delay:${Math.random()*.15}s`;
+    st.appendChild(p);setTimeout(()=>p.remove(),900);
   }
-  si++;
-  flashAnim();
-  render();
 }
 
-function restart(){
-  si=0; autoRotAngle=-18; rotY=-18; rotX=4; velX=0; velY=0;
-  applyRot();
-  render();
+// ══ SCORE ANIMATION ══
+function animScore(){
+  setTimeout(()=>{
+    [[0,98],[1,95],[2,97]].forEach(([i,v])=>{
+      document.getElementById('sb'+i).style.width=v+'%';
+      let n=0;const t=setInterval(()=>{n+=3;if(n>v)n=v;document.getElementById('sp'+i).textContent=n+'%';if(n>=v)clearInterval(t);},18);
+    });
+  },450);
 }
 
-function setModel(el,name,scale){
-  document.querySelectorAll('.mchip').forEach(c=>c.classList.remove('on'));
-  el.classList.add('on');
-  modelScale = scale;
-  applyRot();
-  if(si===0) document.getElementById('stitle').textContent = name;
-}
+// ══ DRAG ROTATION ══
+let rotX=4,rotY=-18,velX=0,velY=0,isDrag=false,sx=0,sy=0,rid;
+const phoneEl=document.getElementById('phone');
+function applyR(){phoneEl.style.transform=`rotateX(${rotX}deg) rotateY(${rotY}deg)`;}
+function gp(e){return e.touches?e.touches[0]:e;}
+phoneEl.addEventListener('mousedown',e=>{isDrag=true;const p=gp(e);sx=p.clientX;sy=p.clientY;velX=velY=0;cancelAnimationFrame(rid);});
+window.addEventListener('mousemove',e=>{if(!isDrag)return;const p=gp(e);const dx=p.clientX-sx,dy=p.clientY-sy;velX=dx*.35;velY=dy*.22;rotY+=dx*.5;rotX+=dy*.3;rotX=Math.max(-30,Math.min(30,rotX));sx=p.clientX;sy=p.clientY;applyR();});
+window.addEventListener('mouseup',()=>{isDrag=false;inert();});
+phoneEl.addEventListener('touchstart',e=>{isDrag=true;const p=gp(e);sx=p.clientX;sy=p.clientY;velX=velY=0;cancelAnimationFrame(rid);},{passive:true});
+window.addEventListener('touchmove',e=>{if(!isDrag)return;const p=gp(e);const dx=p.clientX-sx,dy=p.clientY-sy;velX=dx*.35;velY=dy*.22;rotY+=dx*.5;rotX+=dy*.3;rotX=Math.max(-30,Math.min(30,rotX));sx=p.clientX;sy=p.clientY;applyR();},{passive:true});
+window.addEventListener('touchend',()=>{isDrag=false;inert();});
+function inert(){if(Math.abs(velX)<.1&&Math.abs(velY)<.1){drift();return;}rotY+=velX*.08;rotX+=velY*.05;rotX=Math.max(-30,Math.min(30,rotX));velX*=.88;velY*=.88;applyR();rid=requestAnimationFrame(inert);}
+function drift(){rotY+=(-18-rotY)*.04;rotX+=(4-rotX)*.04;applyR();if(Math.abs(rotY+18)>.2||Math.abs(rotX-4)>.2)rid=requestAnimationFrame(drift);}
+applyR();
 
-render();
+// ══ FPS ══
+let fc=0,ft=performance.now();
+(function fps(){fc++;const n=performance.now();if(n-ft>1000){document.getElementById('fpsLbl').textContent=Math.round(fc*1000/(n-ft))+' fps';fc=0;ft=n;}requestAnimationFrame(fps);})();
 </script>
 </body>
 </html>
