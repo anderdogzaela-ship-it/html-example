@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ticash — Carteira Digital Internacional</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0a0f1e;
+    --card: #111827;
+    --surface: #1a2234;
+    --border: #1e2d45;
+    --accent: #00c896;
+    --accent2: #3b82f6;
+    --gold: #f59e0b;
+    --text: #f1f5f9;
+    --muted: #64748b;
+    --danger: #ef4444;
+    --success: #10b981;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #060d1a;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px 40px;
+  }
+
+  .demo-wrap { max-width: 400px; width: 100%; }
+
+  .demo-label {
+    text-align: center;
+    color: #4a6080;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+
+  /* PHONE */
+  .phone {
+    width: 100%;
+    max-width: 360px;
+    margin: 0 auto;
+    background: var(--bg);
+    border-radius: 40px;
+    border: 8px solid #0d1420;
+    box-shadow: 0 0 0 2px #1a2a3a, 0 40px 80px rgba(0,0,0,.7), inset 0 0 0 1px rgba(255,255,255,.04);
+    overflow: hidden;
+    position: relative;
+    min-height: 700px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* STATUS */
+  .status-bar {
+    background: var(--bg);
+    padding: 10px 20px 6px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--text);
+    flex-shrink: 0;
+  }
+
+  /* SCREENS */
+  .screen { display: none; flex-direction: column; flex: 1; animation: fadeUp .25s ease; }
+  .screen.active { display: flex; }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+  /* ========= SCREEN 1: HOME ========= */
+  .home-header {
+    background: linear-gradient(160deg, #0d2040 0%, #0a1628 100%);
+    padding: 16px 20px 0;
+    flex-shrink: 0;
+  }
+
+  .top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .brand { font-size: 18px; font-weight: 800; color: var(--accent); letter-spacing: 1px; }
+  .brand span { color: var(--text); }
+
+  .notif-btn {
+    width: 34px; height: 34px;
+    background: rgba(255,255,255,.06);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; cursor: pointer;
+    position: relative;
+  }
+
+  .notif-dot {
+    position: absolute; top: 4px; right: 4px;
+    width: 8px; height: 8px;
+    background: var(--accent); border-radius: 50%;
+    border: 2px solid var(--bg);
+  }
+
+  .balance-card {
+    background: linear-gradient(135deg, #00c896 0%, #0ea5e9 100%);
+    border-radius: 16px 16px 0 0;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .balance-card::before {
+    content: '';
+    position: absolute;
+    top: -30px; right: -30px;
+    width: 120px; height: 120px;
+    background: rgba(255,255,255,.08);
+    border-radius: 50%;
+  }
+
+  .balance-card::after {
+    content: '';
+    position: absolute;
+    bottom: -20px; left: 20px;
+    width: 80px; height: 80px;
+    background: rgba(255,255,255,.05);
+    border-radius: 50%;
+  }
+
+  .balance-label { font-size: 11px; color: rgba(255,255,255,.7); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+  .balance-amount { font-size: 32px; font-weight: 800; color: #fff; letter-spacing: -1px; }
+  .balance-usd { font-size: 12px; color: rgba(255,255,255,.7); margin-top: 4px; }
+  .flag-row { display: flex; gap: 6px; margin-top: 12px; }
+  .flag { font-size: 18px; }
+  .card-number { font-size: 11px; color: rgba(255,255,255,.5); margin-top: 8px; letter-spacing: 2px; }
+
+  /* ACTIONS */
+  .actions-row {
+    background: var(--card);
+    padding: 16px 20px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .action-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+  }
+
+  .action-icon {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    transition: transform .15s;
+  }
+
+  .action-icon:hover { transform: scale(1.08); }
+  .action-icon.green { background: rgba(0,200,150,.15); }
+  .action-icon.blue { background: rgba(59,130,246,.15); }
+  .action-icon.gold { background: rgba(245,158,11,.15); }
+  .action-icon.purple { background: rgba(139,92,246,.15); }
+
+  .action-label { font-size: 10px; color: var(--muted); text-align: center; }
+
+  /* TRANSACTIONS */
+  .tx-section { flex: 1; overflow-y: auto; padding: 16px 20px; }
+  .tx-section::-webkit-scrollbar { width: 3px; }
+  .tx-section::-webkit-scrollbar-thumb { background: var(--border); }
+
+  .section-title {
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .section-title a { font-size: 11px; color: var(--accent); cursor: pointer; }
+
+  .tx-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: opacity .15s;
+  }
+
+  .tx-item:hover { opacity: .8; }
+  .tx-item:last-child { border-bottom: none; }
+
+  .tx-icon {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .tx-info { flex: 1; }
+  .tx-name { font-size: 13px; color: var(--text); }
+  .tx-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+  .tx-amount { font-size: 13px; font-weight: 600; }
+  .tx-amount.pos { color: var(--success); }
+  .tx-amount.neg { color: var(--text); }
+
+  /* ========= SCREEN 2: SEND ========= */
+  .screen-header {
+    background: var(--card);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .back-btn {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    background: var(--surface);
+    border: none;
+    color: var(--text);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .15s;
+  }
+
+  .back-btn:hover { background: var(--border); }
+  .screen-title { font-size: 15px; font-weight: 600; color: var(--text); }
+
+  .send-body { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+
+  /* COUNTRY SELECT */
+  .country-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+  }
+
+  .country-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 4px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: all .2s;
+  }
+
+  .country-item:hover { border-color: var(--accent); }
+  .country-item.selected { border-color: var(--accent); background: rgba(0,200,150,.08); }
+  .country-item .cflag { font-size: 22px; }
+  .country-item .ccode { font-size: 9px; color: var(--muted); }
+
+  .field-label { font-size: 11px; color: var(--muted); letter-spacing: .5px; text-transform: uppercase; margin-bottom: 6px; }
+
+  .input-field {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    color: var(--text);
+    font-size: 15px;
+    width: 100%;
+    outline: none;
+    font-family: inherit;
+    transition: border-color .2s;
+  }
+
+  .input-field:focus { border-color: var(--accent); }
+
+  .amount-row {
+    display: flex;
+    align-items: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .currency-badge {
+    padding: 12px 14px;
+    background: rgba(0,200,150,.1);
+    border-right: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--accent);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .amount-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    padding: 12px 14px;
+    color: var(--text);
+    font-size: 18px;
+    font-weight: 700;
+    outline: none;
+    font-family: inherit;
+  }
+
+  .convert-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .convert-label { font-size: 12px; color: var(--muted); }
+  .convert-value { font-size: 14px; font-weight: 700; color: var(--accent); }
+  .convert-rate { font-size: 10px; color: var(--muted); margin-top: 2px; text-align: right; }
+
+  .fee-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--muted);
+    padding: 0 2px;
+  }
+
+  .fee-row span:last-child { color: var(--text); }
+
+  .btn-send {
+    background: linear-gradient(135deg, var(--accent), #0ea5e9);
+    border: none;
+    border-radius: 12px;
+    padding: 16px;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    width: 100%;
+    margin-top: auto;
+    transition: opacity .2s;
+    letter-spacing: .3px;
+  }
+
+  .btn-send:hover { opacity: .9; }
+
+  /* ========= SCREEN 3: AGENT ========= */
+  .agent-header {
+    background: linear-gradient(160deg, #0d1f3a 0%, #0a1628 100%);
+    padding: 16px 20px 20px;
+    flex-shrink: 0;
+  }
+
+  .agent-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(245,158,11,.15);
+    border: 1px solid rgba(245,158,11,.3);
+    color: var(--gold);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    margin-bottom: 12px;
+    letter-spacing: .5px;
+  }
+
+  .agent-name-lg { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+  .agent-id { font-size: 11px; color: var(--muted); }
+
+  .agent-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 14px;
+  }
+
+  .agent-stat {
+    background: rgba(255,255,255,.04);
+    border-radius: 10px;
+    padding: 10px;
+    text-align: center;
+  }
+
+  .agent-stat-n { font-size: 16px; font-weight: 700; color: var(--text); }
+  .agent-stat-l { font-size: 9px; color: var(--muted); margin-top: 2px; text-transform: uppercase; letter-spacing: .5px; }
+
+  .agent-body { flex: 1; overflow-y: auto; padding: 16px 20px; display: flex; flex-direction: column; gap: 14px; }
+
+  .agent-section-title { font-size: 11px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
+
+  .queue-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: border-color .2s;
+  }
+
+  .queue-item:hover { border-color: var(--accent); }
+
+  .queue-avatar {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+  }
+
+  .queue-info { flex: 1; }
+  .queue-name { font-size: 13px; color: var(--text); }
+  .queue-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+  .queue-amount { text-align: right; }
+  .queue-val { font-size: 13px; font-weight: 600; color: var(--text); }
+  .queue-type {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-top: 3px;
+    display: inline-block;
+    font-weight: 600;
+  }
+
+  .type-in { background: rgba(16,185,129,.15); color: var(--success); }
+  .type-out { background: rgba(239,68,68,.15); color: var(--danger); }
+  .type-kyc { background: rgba(245,158,11,.15); color: var(--gold); }
+
+  /* BOTTOM NAV */
+  .bottom-nav {
+    background: var(--card);
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-around;
+    padding: 10px 0 14px;
+    flex-shrink: 0;
+  }
+
+  .bnav {
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    cursor: pointer; color: var(--muted); font-size: 9px;
+    letter-spacing: .5px; text-transform: uppercase;
+    transition: color .2s;
+  }
+
+  .bnav.active { color: var(--accent); }
+  .bnav-icon { font-size: 18px; }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 100px;
+    left: 50%; transform: translateX(-50%) translateY(10px);
+    background: var(--success);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    opacity: 0;
+    transition: all .3s;
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 999;
+  }
+
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* RESTART */
+  .restart-btn {
+    display: block;
+    margin: 14px auto 0;
+    background: transparent;
+    border: 1px solid #1e3050;
+    color: #4a6080;
+    padding: 6px 18px;
+    border-radius: 20px;
+    font-size: 11px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all .2s;
+    letter-spacing: .5px;
+  }
+
+  .restart-btn:hover { border-color: var(--accent); color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="demo-wrap">
+  <div class="demo-label">Protótipo · Ticash / Cash Lakay · Carteira Digital Internacional</div>
+
+  <div class="phone">
+    <!-- STATUS BAR -->
+    <div class="status-bar">
+      <span>9:41</span>
+      <div style="display:flex;gap:6px;align-items:center;font-size:10px">
+        <span>▐▐▐▐</span><span>WiFi</span><span>🔋</span>
+      </div>
+    </div>
+
+    <!-- ===== SCREEN 1: HOME ===== -->
+    <div class="screen active" id="s1">
+      <div class="home-header">
+        <div class="top-row">
+          <div class="brand">TI<span>CASH</span></div>
+          <div class="notif-btn">🔔<div class="notif-dot"></div></div>
+        </div>
+        <div class="balance-card">
+          <div class="balance-label">Saldo disponível</div>
+          <div class="balance-amount">R$ 4.280,00</div>
+          <div class="balance-usd">≈ USD 820.00 · ≈ HTG 108.400</div>
+          <div class="flag-row">
+            <span class="flag">🇧🇷</span>
+            <span class="flag">🇺🇸</span>
+            <span class="flag">🇭🇹</span>
+            <span class="flag">🇲🇽</span>
+            <span class="flag">🇩🇴</span>
+          </div>
+          <div class="card-number">TICASH •••• •••• 4291</div>
+        </div>
+      </div>
+
+      <div class="actions-row">
+        <div class="action-item" onclick="goScreen('s2')">
+          <div class="action-icon green">↗</div>
+          <div class="action-label">Enviar</div>
+        </div>
+        <div class="action-item" onclick="toast('Receber: QR Code gerado!')">
+          <div class="action-icon blue">↙</div>
+          <div class="action-label">Receber</div>
+        </div>
+        <div class="action-item" onclick="toast('Top Up: selecione a operadora')">
+          <div class="action-icon gold">📱</div>
+          <div class="action-label">Top Up</div>
+        </div>
+        <div class="action-item" onclick="goScreen('s3')">
+          <div class="action-icon purple">🏪</div>
+          <div class="action-label">Agentes</div>
+        </div>
+      </div>
+
+      <div class="tx-section">
+        <div class="section-title">
+          <span>Últimas transações</span>
+          <a>Ver todas</a>
+        </div>
+
+        <div class="tx-item">
+          <div class="tx-icon" style="background:rgba(16,185,129,.12)">📥</div>
+          <div class="tx-info">
+            <div class="tx-name">Recebido — Pierre J.</div>
+            <div class="tx-sub">🇭🇹 Haiti · hoje 14:22</div>
+          </div>
+          <div class="tx-amount pos">+R$ 850,00</div>
+        </div>
+
+        <div class="tx-item" onclick="goScreen('s2')">
+          <div class="tx-icon" style="background:rgba(59,130,246,.12)">↗</div>
+          <div class="tx-info">
+            <div class="tx-name">Envio — Maria Santos</div>
+            <div class="tx-sub">🇩🇴 Rep. Dominicana · ontem</div>
+          </div>
+          <div class="tx-amount neg">-R$ 320,00</div>
+        </div>
+
+        <div class="tx-item">
+          <div class="tx-icon" style="background:rgba(245,158,11,.12)">₿</div>
+          <div class="tx-info">
+            <div class="tx-name">Compra USDT</div>
+            <div class="tx-sub">Cripto · 18 jun · 2.5 USDT</div>
+          </div>
+          <div class="tx-amount neg">-R$ 14,20</div>
+        </div>
+
+        <div class="tx-item">
+          <div class="tx-icon" style="background:rgba(139,92,246,.12)">📱</div>
+          <div class="tx-info">
+            <div class="tx-name">Top Up Digicel</div>
+            <div class="tx-sub">🇭🇹 Haiti · 17 jun</div>
+          </div>
+          <div class="tx-amount neg">-R$ 45,00</div>
+        </div>
+
+        <div class="tx-item">
+          <div class="tx-icon" style="background:rgba(16,185,129,.12)">📥</div>
+          <div class="tx-info">
+            <div class="tx-name">Cash In — Agente SP-07</div>
+            <div class="tx-sub">🇧🇷 São Paulo · 17 jun</div>
+          </div>
+          <div class="tx-amount pos">+R$ 1.200,00</div>
+        </div>
+      </div>
+
+      <div class="bottom-nav">
+        <div class="bnav active"><div class="bnav-icon">🏠</div>Início</div>
+        <div class="bnav" onclick="goScreen('s2')"><div class="bnav-icon">↗</div>Enviar</div>
+        <div class="bnav" onclick="toast('Histórico completo')"><div class="bnav-icon">📋</div>Histórico</div>
+        <div class="bnav" onclick="toast('Perfil e KYC')"><div class="bnav-icon">👤</div>Perfil</div>
+      </div>
+    </div>
+
+    <!-- ===== SCREEN 2: SEND ===== -->
+    <div class="screen" id="s2">
+      <div class="screen-header">
+        <button class="back-btn" onclick="goScreen('s1')">←</button>
+        <div class="screen-title">Enviar Dinheiro</div>
+      </div>
+
+      <div class="send-body">
+        <div>
+          <div class="field-label">Destino</div>
+          <div class="country-grid">
+            <div class="country-item selected" onclick="selectCountry(this,'HTG')">
+              <div class="cflag">🇭🇹</div>
+              <div class="ccode">Haiti</div>
+            </div>
+            <div class="country-item" onclick="selectCountry(this,'USD')">
+              <div class="cflag">🇺🇸</div>
+              <div class="ccode">EUA</div>
+            </div>
+            <div class="country-item" onclick="selectCountry(this,'MXN')">
+              <div class="cflag">🇲🇽</div>
+              <div class="ccode">México</div>
+            </div>
+            <div class="country-item" onclick="selectCountry(this,'DOP')">
+              <div class="cflag">🇩🇴</div>
+              <div class="ccode">R. Dom.</div>
+            </div>
+            <div class="country-item" onclick="selectCountry(this,'BRL')">
+              <div class="cflag">🇧🇷</div>
+              <div class="ccode">Brasil</div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="field-label">Destinatário</div>
+          <input class="input-field" placeholder="Nome ou número de telefone" value="Pierre Jean-Baptiste">
+        </div>
+
+        <div>
+          <div class="field-label">Valor a enviar (BRL)</div>
+          <div class="amount-row">
+            <div class="currency-badge">🇧🇷 BRL</div>
+            <input class="amount-input" value="500" id="sendAmt" oninput="updateConvert(this.value)" type="number">
+          </div>
+        </div>
+
+        <div class="convert-box">
+          <div>
+            <div class="convert-label">Destinatário recebe</div>
+            <div class="convert-rate" id="rateLabel">Câmbio: 1 BRL = 26.50 HTG</div>
+          </div>
+          <div>
+            <div class="convert-value" id="convertVal">HTG 13.250</div>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div class="fee-row"><span>Taxa de envio</span><span>R$ 4,90</span></div>
+          <div class="fee-row"><span>Total debitado</span><span style="color:var(--accent)">R$ 504,90</span></div>
+        </div>
+
+        <button class="btn-send" onclick="confirmSend()">Confirmar Envio · R$ 504,90</button>
+      </div>
+    </div>
+
+    <!-- ===== SCREEN 3: AGENT DASHBOARD ===== -->
+    <div class="screen" id="s3">
+      <div class="agent-header">
+        <div class="agent-badge">⭐ AGENTE VERIFICADO</div>
+        <div class="agent-name-lg">Carlos Duval</div>
+        <div class="agent-id">ID: AGT-BR-0047 · São Paulo · SP</div>
+        <div class="agent-stats">
+          <div class="agent-stat">
+            <div class="agent-stat-n">R$ 12.4k</div>
+            <div class="agent-stat-l">Volume mês</div>
+          </div>
+          <div class="agent-stat">
+            <div class="agent-stat-n">48</div>
+            <div class="agent-stat-l">Transações</div>
+          </div>
+          <div class="agent-stat">
+            <div class="agent-stat-n">R$ 620</div>
+            <div class="agent-stat-l">Comissão</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="agent-body">
+        <div>
+          <div class="agent-section-title">Fila de atendimento · 3 pendentes</div>
+
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div class="queue-item" onclick="toast('Cash In processado!')">
+              <div class="queue-avatar">👤</div>
+              <div class="queue-info">
+                <div class="queue-name">Beatriz Moreau</div>
+                <div class="queue-sub">🇧🇷→🇭🇹 · há 2 min</div>
+              </div>
+              <div class="queue-amount">
+                <div class="queue-val">R$ 800</div>
+                <div class="queue-type type-in">CASH IN</div>
+              </div>
+            </div>
+
+            <div class="queue-item" onclick="toast('Cash Out: entregar R$ 350 em espécie')">
+              <div class="queue-avatar">👤</div>
+              <div class="queue-info">
+                <div class="queue-name">Jean-Marc Louis</div>
+                <div class="queue-sub">🇭🇹→🇧🇷 · há 8 min</div>
+              </div>
+              <div class="queue-amount">
+                <div class="queue-val">R$ 350</div>
+                <div class="queue-type type-out">CASH OUT</div>
+              </div>
+            </div>
+
+            <div class="queue-item" onclick="toast('KYC: verificar documento')">
+              <div class="queue-avatar">👤</div>
+              <div class="queue-info">
+                <div class="queue-name">Ana Prospere</div>
+                <div class="queue-sub">Novo cliente · há 15 min</div>
+              </div>
+              <div class="queue-amount">
+                <div class="queue-val">—</div>
+                <div class="queue-type type-kyc">KYC</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="agent-section-title">Saldo de caixa</div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+              <span style="font-size:12px;color:var(--muted)">Disponível para Cash Out</span>
+              <span style="font-size:13px;font-weight:700;color:var(--success)">R$ 3.200,00</span>
+            </div>
+            <div style="display:flex;justify-content:space-between">
+              <span style="font-size:12px;color:var(--muted)">Limite diário restante</span>
+              <span style="font-size:13px;color:var(--text)">R$ 6.800 / R$ 10.000</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bottom-nav">
+        <div class="bnav" onclick="goScreen('s1')"><div class="bnav-icon">🏠</div>Início</div>
+        <div class="bnav active"><div class="bnav-icon">🏪</div>Painel</div>
+        <div class="bnav" onclick="toast('Relatório de comissões')"><div class="bnav-icon">📊</div>Relatório</div>
+        <div class="bnav" onclick="toast('Suporte ao agente')"><div class="bnav-icon">🎧</div>Suporte</div>
+      </div>
+    </div>
+  </div>
+
+  <button class="restart-btn" onclick="goScreen('s1')">↺ Voltar ao início</button>
+</div>
+
+<div class="toast" id="toastEl"></div>
+
+<script>
+  const rates = { HTG: 26.5, USD: 0.192, MXN: 3.4, DOP: 11.2, BRL: 1 };
+  const symbols = { HTG: 'HTG', USD: 'USD', MXN: 'MX$', DOP: 'DOP', BRL: 'R$' };
+  const rateLabels = {
+    HTG: '1 BRL = 26.50 HTG',
+    USD: '1 BRL = 0.192 USD',
+    MXN: '1 BRL = 3.40 MXN',
+    DOP: '1 BRL = 11.20 DOP',
+    BRL: '1 BRL = 1.00 BRL'
+  };
+
+  let selectedCurrency = 'HTG';
+
+  function goScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+
+  function selectCountry(el, currency) {
+    document.querySelectorAll('.country-item').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedCurrency = currency;
+    updateConvert(document.getElementById('sendAmt').value || 500);
+    document.getElementById('rateLabel').textContent = 'Câmbio: ' + rateLabels[currency];
+  }
+
+  function updateConvert(val) {
+    const num = parseFloat(val) || 0;
+    const converted = (num * rates[selectedCurrency]).toFixed(2);
+    const sym = symbols[selectedCurrency];
+    document.getElementById('convertVal').textContent = sym + ' ' + Number(converted).toLocaleString('pt-BR', {minimumFractionDigits: 0});
+  }
+
+  let toastTimer;
+  function toast(msg) {
+    const el = document.getElementById('toastEl');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+  }
+
+  function confirmSend() {
+    toast('✅ Envio confirmado! Pierre receberá em até 10 min.');
+    setTimeout(() => goScreen('s1'), 1800);
+  }
+</script>
+</body>
+</html>
