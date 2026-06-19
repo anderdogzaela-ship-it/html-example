@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PGISC — Plataforma de Gestão e Inteligência em Saúde Corporativa</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --gold:#C9A227;
+  --gold-light:#E8C555;
+  --gold-pale:#FFF8E7;
+  --dark:#1A2340;
+  --dark2:#243054;
+  --sidebar:#162032;
+  --white:#FFFFFF;
+  --gray:#F4F6FB;
+  --gray2:#E8ECF4;
+  --text:#1A2340;
+  --muted:#6B7A99;
+  --green:#1DB97B;
+  --red:#E05858;
+  --blue:#3B7DD8;
+}
+body{font-family:'Nunito',sans-serif;background:var(--gray);color:var(--text);min-height:100vh;overflow-x:hidden}
+
+/* LOGIN */
+#login-screen{
+  display:flex;align-items:center;justify-content:center;
+  min-height:100vh;
+  background:linear-gradient(135deg,var(--dark) 0%,var(--dark2) 50%,#1e3a5f 100%);
+  animation:fadein 0.5s ease;
+}
+.login-card{
+  background:white;border-radius:24px;padding:48px 40px;width:100%;max-width:420px;
+  box-shadow:0 24px 64px rgba(0,0,0,0.3);
+  animation:slideup 0.5s ease;
+}
+.login-logo{display:flex;align-items:center;gap:12px;margin-bottom:32px;justify-content:center}
+.login-logo-icon{
+  width:48px;height:48px;border-radius:12px;
+  background:linear-gradient(135deg,var(--gold),var(--gold-light));
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;color:white;
+}
+.login-logo-text{font-size:20px;font-weight:800;color:var(--dark);letter-spacing:-0.5px}
+.login-logo-text span{color:var(--gold)}
+.login-title{font-size:26px;font-weight:800;color:var(--dark);text-align:center;margin-bottom:6px}
+.login-sub{font-size:14px;color:var(--muted);text-align:center;margin-bottom:32px}
+.form-group{margin-bottom:18px}
+.form-group label{display:block;font-size:13px;font-weight:700;color:var(--dark);margin-bottom:8px}
+.form-group input{
+  width:100%;padding:13px 16px;border:2px solid var(--gray2);border-radius:12px;
+  font-family:'Nunito',sans-serif;font-size:14px;color:var(--dark);
+  transition:border 0.2s;outline:none;
+}
+.form-group input:focus{border-color:var(--gold)}
+.btn-login{
+  width:100%;padding:15px;border:none;border-radius:12px;
+  background:linear-gradient(135deg,var(--gold),var(--gold-light));
+  color:white;font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;
+  cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;
+  box-shadow:0 4px 16px rgba(201,162,39,0.4);
+}
+.btn-login:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(201,162,39,0.5)}
+.login-hint{text-align:center;font-size:12px;color:var(--muted);margin-top:20px}
+
+/* DASHBOARD */
+#dashboard{display:none;min-height:100vh;flex-direction:row}
+.sidebar{
+  width:240px;min-height:100vh;background:var(--sidebar);
+  position:fixed;left:0;top:0;z-index:100;
+  display:flex;flex-direction:column;
+  transition:transform 0.3s;
+}
+.sidebar-logo{
+  padding:28px 24px 20px;
+  border-bottom:1px solid rgba(255,255,255,0.07);
+}
+.sidebar-logo-wrap{display:flex;align-items:center;gap:10px}
+.sidebar-logo-icon{
+  width:38px;height:38px;border-radius:10px;
+  background:linear-gradient(135deg,var(--gold),var(--gold-light));
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;color:white;flex-shrink:0;
+}
+.sidebar-logo-text{font-size:13px;font-weight:800;color:white;line-height:1.2}
+.sidebar-logo-text span{color:var(--gold);display:block;font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-top:2px}
+.sidebar-company{padding:16px 24px;border-bottom:1px solid rgba(255,255,255,0.07)}
+.company-select{
+  width:100%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);
+  border-radius:10px;padding:10px 14px;color:white;font-family:'Nunito',sans-serif;
+  font-size:12px;font-weight:600;cursor:pointer;outline:none;
+}
+.company-select option{background:var(--dark2);color:white}
+.sidebar-nav{flex:1;padding:16px 0;overflow-y:auto}
+.nav-section{padding:8px 24px 4px;font-size:10px;font-weight:700;color:rgba(255,255,255,0.3);letter-spacing:1.5px;text-transform:uppercase}
+.nav-item{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 24px;cursor:pointer;
+  color:rgba(255,255,255,0.55);font-size:13px;font-weight:600;
+  transition:all 0.2s;border-left:3px solid transparent;
+  text-decoration:none;
+}
+.nav-item:hover{background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.9)}
+.nav-item.active{
+  background:rgba(201,162,39,0.12);color:var(--gold-light);
+  border-left-color:var(--gold);
+}
+.nav-item i{width:18px;text-align:center;font-size:14px}
+.nav-badge{
+  margin-left:auto;background:var(--gold);color:white;
+  border-radius:20px;padding:2px 8px;font-size:10px;font-weight:700;
+}
+.sidebar-footer{
+  padding:20px 24px;border-top:1px solid rgba(255,255,255,0.07);
+}
+.user-info{display:flex;align-items:center;gap:10px}
+.user-avatar{
+  width:36px;height:36px;border-radius:50%;
+  background:linear-gradient(135deg,var(--gold),var(--gold-light));
+  display:flex;align-items:center;justify-content:center;
+  color:white;font-size:14px;font-weight:800;flex-shrink:0;
+}
+.user-name{font-size:12px;font-weight:700;color:white}
+.user-role{font-size:11px;color:rgba(255,255,255,0.4);font-weight:400}
+.logout-btn{
+  margin-left:auto;background:none;border:none;
+  color:rgba(255,255,255,0.35);cursor:pointer;font-size:14px;
+  transition:color 0.2s;
+}
+.logout-btn:hover{color:rgba(255,255,255,0.7)}
+
+/* MAIN */
+.main{margin-left:240px;min-height:100vh;display:flex;flex-direction:column}
+.topbar{
+  background:white;padding:0 32px;height:64px;
+  display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid var(--gray2);
+  position:sticky;top:0;z-index:50;
+}
+.topbar-title{font-size:18px;font-weight:800;color:var(--dark)}
+.topbar-title span{color:var(--muted);font-weight:600;font-size:14px;margin-left:8px}
+.topbar-actions{display:flex;align-items:center;gap:12px}
+.date-range{
+  display:flex;align-items:center;gap:8px;
+  background:var(--gray);border:1px solid var(--gray2);
+  border-radius:10px;padding:8px 14px;cursor:pointer;
+  font-size:13px;font-weight:600;color:var(--dark);
+}
+.date-range i{color:var(--gold)}
+.btn-export{
+  display:flex;align-items:center;gap:8px;
+  background:linear-gradient(135deg,var(--gold),var(--gold-light));
+  color:white;border:none;border-radius:10px;
+  padding:9px 18px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;
+  cursor:pointer;transition:all 0.2s;box-shadow:0 2px 8px rgba(201,162,39,0.3);
+}
+.btn-export:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(201,162,39,0.4)}
+.topbar-notif{
+  width:38px;height:38px;border-radius:10px;background:var(--gray);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:var(--muted);font-size:14px;position:relative;
+}
+.notif-dot{
+  width:8px;height:8px;background:var(--red);border-radius:50%;
+  position:absolute;top:8px;right:8px;border:2px solid white;
+}
+
+/* CONTENT */
+.content{padding:28px 32px;flex:1}
+.section-header{margin-bottom:20px}
+.section-header h2{font-size:15px;font-weight:800;color:var(--dark);margin-bottom:4px}
+.section-header p{font-size:13px;color:var(--muted);font-weight:600}
+
+/* KPI GRID */
+.kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
+.kpi-card{
+  background:white;border-radius:16px;padding:22px 24px;
+  box-shadow:0 2px 12px rgba(26,35,64,0.06);
+  transition:transform 0.2s,box-shadow 0.2s;
+  cursor:default;
+  animation:fadein 0.5s ease both;
+}
+.kpi-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(26,35,64,0.1)}
+.kpi-card:nth-child(1){animation-delay:0.05s}
+.kpi-card:nth-child(2){animation-delay:0.1s}
+.kpi-card:nth-child(3){animation-delay:0.15s}
+.kpi-card:nth-child(4){animation-delay:0.2s}
+.kpi-card:nth-child(5){animation-delay:0.25s}
+.kpi-card:nth-child(6){animation-delay:0.3s}
+.kpi-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px}
+.kpi-icon{
+  width:44px;height:44px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;
+}
+.kpi-icon.gold{background:linear-gradient(135deg,var(--gold),var(--gold-light));color:white}
+.kpi-icon.blue{background:rgba(59,125,216,0.12);color:var(--blue)}
+.kpi-icon.green{background:rgba(29,185,123,0.12);color:var(--green)}
+.kpi-icon.red{background:rgba(224,88,88,0.12);color:var(--red)}
+.kpi-icon.purple{background:rgba(129,97,210,0.12);color:#8161D2}
+.kpi-trend{
+  display:flex;align-items:center;gap:4px;
+  font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px;
+}
+.kpi-trend.up{background:rgba(224,88,88,0.1);color:var(--red)}
+.kpi-trend.down{background:rgba(29,185,123,0.1);color:var(--green)}
+.kpi-trend.neutral{background:rgba(107,122,153,0.1);color:var(--muted)}
+.kpi-value{font-size:30px;font-weight:900;color:var(--dark);line-height:1;margin-bottom:6px}
+.kpi-label{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px}
+.kpi-card.highlight{
+  background:linear-gradient(135deg,var(--gold) 0%,#E8C555 100%);
+  color:white;
+}
+.kpi-card.highlight .kpi-value{color:white}
+.kpi-card.highlight .kpi-label{color:rgba(255,255,255,0.75)}
+.kpi-card.highlight .kpi-top .kpi-icon{background:rgba(255,255,255,0.2);color:white}
+.kpi-card.highlight .kpi-trend{background:rgba(255,255,255,0.2);color:white}
+
+/* CHARTS ROW */
+.charts-row{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;margin-bottom:24px}
+.chart-card{
+  background:white;border-radius:16px;padding:24px;
+  box-shadow:0 2px 12px rgba(26,35,64,0.06);
+  animation:fadein 0.6s ease both;
+  animation-delay:0.35s;
+}
+.chart-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.chart-title{font-size:14px;font-weight:800;color:var(--dark)}
+.chart-sub{font-size:12px;color:var(--muted);font-weight:600;margin-top:2px}
+.chart-tag{
+  background:var(--gold-pale);color:var(--gold);
+  border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;
+}
+.chart-wrap{position:relative;height:200px}
+
+/* TABLE */
+.table-card{
+  background:white;border-radius:16px;
+  box-shadow:0 2px 12px rgba(26,35,64,0.06);
+  overflow:hidden;
+  animation:fadein 0.6s ease both;
+  animation-delay:0.4s;
+}
+.table-header{
+  padding:20px 24px;display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid var(--gray2);
+}
+.table-title{font-size:14px;font-weight:800;color:var(--dark)}
+.table-search{
+  display:flex;align-items:center;gap:8px;
+  background:var(--gray);border:1px solid var(--gray2);border-radius:10px;
+  padding:7px 14px;font-size:12px;color:var(--muted);
+}
+table{width:100%;border-collapse:collapse}
+th{
+  padding:12px 24px;background:var(--gray);
+  font-size:11px;font-weight:700;color:var(--muted);text-align:left;
+  text-transform:uppercase;letter-spacing:0.5px;
+}
+td{padding:14px 24px;font-size:13px;color:var(--text);border-top:1px solid var(--gray2);font-weight:600}
+tr:hover td{background:var(--gold-pale)}
+.rank-num{
+  width:28px;height:28px;border-radius:8px;
+  background:var(--gray2);color:var(--muted);
+  display:inline-flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:800;
+}
+.rank-num.top{background:linear-gradient(135deg,var(--gold),var(--gold-light));color:white}
+.progress-bar{width:100%;background:var(--gray2);border-radius:20px;height:6px;overflow:hidden}
+.progress-fill{height:100%;border-radius:20px;background:linear-gradient(90deg,var(--gold),var(--gold-light))}
+.badge{
+  display:inline-flex;align-items:center;gap:4px;
+  border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;
+}
+.badge.high{background:rgba(224,88,88,0.1);color:var(--red)}
+.badge.med{background:rgba(201,162,39,0.12);color:var(--gold)}
+.badge.low{background:rgba(29,185,123,0.1);color:var(--green)}
+
+/* ABSENTEISMO VIEW */
+#view-absenteismo{display:none}
+.charts-3col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:24px}
+.alert-banner{
+  background:linear-gradient(135deg,rgba(224,88,88,0.08),rgba(224,88,88,0.04));
+  border:1px solid rgba(224,88,88,0.2);border-radius:14px;
+  padding:16px 20px;margin-bottom:20px;
+  display:flex;align-items:center;gap:14px;
+  animation:fadein 0.4s ease;
+}
+.alert-icon{font-size:20px;color:var(--red)}
+.alert-text{font-size:13px;font-weight:700;color:var(--dark)}
+.alert-text span{color:var(--red)}
+.alert-sub{font-size:12px;color:var(--muted);margin-top:2px;font-weight:500}
+
+/* MODAL */
+.modal-overlay{
+  display:none;position:fixed;inset:0;background:rgba(26,35,64,0.5);
+  z-index:200;align-items:center;justify-content:center;
+  animation:fadein 0.2s ease;
+}
+.modal-overlay.open{display:flex}
+.modal{
+  background:white;border-radius:20px;padding:36px;width:100%;max-width:400px;
+  box-shadow:0 24px 64px rgba(0,0,0,0.2);
+  animation:slideup 0.3s ease;text-align:center;
+}
+.modal-icon{font-size:40px;margin-bottom:16px}
+.modal-title{font-size:20px;font-weight:800;color:var(--dark);margin-bottom:8px}
+.modal-text{font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:24px}
+.modal-btns{display:flex;gap:12px;justify-content:center}
+.btn-modal{
+  padding:12px 24px;border-radius:12px;font-family:'Nunito',sans-serif;
+  font-size:14px;font-weight:700;cursor:pointer;border:none;
+  transition:all 0.2s;
+}
+.btn-modal.primary{background:linear-gradient(135deg,var(--gold),var(--gold-light));color:white;box-shadow:0 4px 14px rgba(201,162,39,0.4)}
+.btn-modal.secondary{background:var(--gray);color:var(--muted)}
+.btn-modal:hover{transform:translateY(-1px)}
+
+/* ANIMATIONS */
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+@keyframes slideup{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+/* TOAST */
+.toast{
+  position:fixed;bottom:24px;right:24px;
+  background:var(--dark);color:white;border-radius:12px;
+  padding:14px 20px;font-size:13px;font-weight:600;
+  display:flex;align-items:center;gap:10px;
+  box-shadow:0 8px 24px rgba(0,0,0,0.2);
+  transform:translateY(80px);opacity:0;
+  transition:all 0.3s;z-index:300;
+}
+.toast.show{transform:translateY(0);opacity:1}
+.toast i{color:var(--gold-light);font-size:16px}
+
+/* MOBILE */
+@media(max-width:900px){
+  .sidebar{transform:translateX(-240px)}
+  .sidebar.open{transform:translateX(0)}
+  .main{margin-left:0}
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+  .charts-row{grid-template-columns:1fr}
+  .charts-3col{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-icon"><i class="fa-solid fa-heart-pulse"></i></div>
+      <div class="login-logo-text">PGISC <span style="color:var(--muted);font-weight:600;font-size:13px">Saúde Corporativa</span></div>
+    </div>
+    <div class="login-title">Bem-vindo de volta</div>
+    <div class="login-sub">Acesse sua plataforma de inteligência em saúde</div>
+    <div class="form-group">
+      <label>E-mail corporativo</label>
+      <input type="email" value="gestor@empresa.com.br" id="login-email">
+    </div>
+    <div class="form-group">
+      <label>Senha</label>
+      <input type="password" value="••••••••" id="login-pass">
+    </div>
+    <button class="btn-login" onclick="doLogin()"><i class="fa-solid fa-right-to-bracket" style="margin-right:8px"></i>Entrar na plataforma</button>
+    <div class="login-hint">Credenciais de demonstração já preenchidas</div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-wrap">
+        <div class="sidebar-logo-icon"><i class="fa-solid fa-heart-pulse"></i></div>
+        <div class="sidebar-logo-text">PGISC <span>Saúde Corporativa</span></div>
+      </div>
+    </div>
+    <div class="sidebar-company">
+      <select class="company-select" onchange="changeCompany(this.value)">
+        <option value="metal">Metalúrgica São Paulo S.A.</option>
+        <option value="logis">Logística Brasil Ltda.</option>
+        <option value="const">Construtora Horizonte</option>
+      </select>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-section">Dashboards</div>
+      <div class="nav-item active" onclick="showView('executivo',this)">
+        <i class="fa-solid fa-chart-pie"></i> Dashboard Executivo
+      </div>
+      <div class="nav-item" onclick="showView('absenteismo',this)">
+        <i class="fa-solid fa-calendar-xmark"></i> Absenteísmo
+        <span class="nav-badge">!</span>
+      </div>
+      <div class="nav-item" onclick="showLocked('Epidemiológico')">
+        <i class="fa-solid fa-viruses"></i> Epidemiológico
+      </div>
+      <div class="nav-item" onclick="showLocked('Saúde Mental')">
+        <i class="fa-solid fa-brain"></i> Saúde Mental
+      </div>
+      <div class="nav-item" onclick="showLocked('Financeiro')">
+        <i class="fa-solid fa-coins"></i> Financeiro
+      </div>
+      <div class="nav-section" style="margin-top:12px">Gestão</div>
+      <div class="nav-item" onclick="showLocked('Importação de Dados')">
+        <i class="fa-solid fa-file-excel"></i> Importar Dados
+      </div>
+      <div class="nav-item" onclick="showLocked('Relatórios PDF')">
+        <i class="fa-solid fa-file-pdf"></i> Relatórios PDF
+      </div>
+      <div class="nav-item" onclick="showLocked('Usuários e Permissões')">
+        <i class="fa-solid fa-users-gear"></i> Usuários
+      </div>
+    </div>
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="user-avatar">AG</div>
+        <div>
+          <div class="user-name">Alexandre Gestão</div>
+          <div class="user-role">Administrador</div>
+        </div>
+        <button class="logout-btn" onclick="doLogout()" title="Sair"><i class="fa-solid fa-right-from-bracket"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="page-title">Dashboard Executivo <span>Jan — Jun 2026</span></div>
+      <div class="topbar-actions">
+        <div class="date-range"><i class="fa-solid fa-calendar-range"></i> Jan 2026 — Jun 2026 <i class="fa-solid fa-chevron-down" style="font-size:11px;color:var(--muted);margin-left:4px"></i></div>
+        <button class="btn-export" onclick="showToast('Gerando relatório PDF...')"><i class="fa-solid fa-file-arrow-down"></i> Exportar PDF</button>
+        <div class="topbar-notif"><i class="fa-solid fa-bell"></i><div class="notif-dot"></div></div>
+      </div>
+    </div>
+    <div class="content">
+
+      <!-- VIEW: EXECUTIVO -->
+      <div id="view-executivo">
+        <div class="section-header">
+          <h2>Indicadores de Saúde — Visão Geral</h2>
+          <p>Metalúrgica São Paulo S.A. &nbsp;·&nbsp; 847 colaboradores ativos &nbsp;·&nbsp; Atualizado hoje</p>
+        </div>
+
+        <!-- KPIs -->
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-top">
+              <div class="kpi-icon blue"><i class="fa-solid fa-stethoscope"></i></div>
+              <div class="kpi-trend up"><i class="fa-solid fa-arrow-up"></i> +8%</div>
+            </div>
+            <div class="kpi-value" id="kv1">1.247</div>
+            <div class="kpi-label">Total de Atendimentos</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-top">
+              <div class="kpi-icon red"><i class="fa-solid fa-clock"></i></div>
+              <div class="kpi-trend up"><i class="fa-solid fa-arrow-up"></i> +5%</div>
+            </div>
+            <div class="kpi-value" id="kv2">3.842</div>
+            <div class="kpi-label">Horas Perdidas</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-top">
+              <div class="kpi-icon purple"><i class="fa-solid fa-calendar-minus"></i></div>
+              <div class="kpi-trend up"><i class="fa-solid fa-arrow-up"></i> +3%</div>
+            </div>
+            <div class="kpi-value" id="kv3">481</div>
+            <div class="kpi-label">Dias Perdidos</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-top">
+              <div class="kpi-icon red"><i class="fa-solid fa-bed-pulse"></i></div>
+              <div class="kpi-trend down"><i class="fa-solid fa-arrow-down"></i> -2%</div>
+            </div>
+            <div class="kpi-value" id="kv4">89</div>
+            <div class="kpi-label">Casos com Afastamento</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-top">
+              <div class="kpi-icon gold"><i class="fa-solid fa-rotate"></i></div>
+              <div class="kpi-trend neutral"><i class="fa-solid fa-minus"></i> 0%</div>
+            </div>
+            <div class="kpi-value" id="kv5">134</div>
+            <div class="kpi-label">Casos Recorrentes</div>
+          </div>
+          <div class="kpi-card highlight">
+            <div class="kpi-top">
+              <div class="kpi-icon"><i class="fa-solid fa-chart-line"></i></div>
+              <div class="kpi-trend"><i class="fa-solid fa-arrow-down"></i> -0.4pp</div>
+            </div>
+            <div class="kpi-value" id="kv6">7,3%</div>
+            <div class="kpi-label">IIOS — Índice de Impacto Operacional</div>
+          </div>
+        </div>
+
+        <!-- CHARTS -->
+        <div class="charts-row">
+          <div class="chart-card">
+            <div class="chart-header">
+              <div>
+                <div class="chart-title">Evolução de Atendimentos</div>
+                <div class="chart-sub">Mensal — Jan a Jun 2026</div>
+              </div>
+              <div class="chart-tag">Histórico</div>
+            </div>
+            <div class="chart-wrap"><canvas id="chartTrend"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-header">
+              <div>
+                <div class="chart-title">Distribuição por Sexo</div>
+                <div class="chart-sub">Total de casos com afastamento</div>
+              </div>
+              <div class="chart-tag">89 casos</div>
+            </div>
+            <div class="chart-wrap"><canvas id="chartGender"></canvas></div>
+          </div>
+        </div>
+
+        <!-- TABLE -->
+        <div class="table-card">
+          <div class="table-header">
+            <div class="table-title">Top 10 Motivos de Atendimento</div>
+            <div class="table-search"><i class="fa-solid fa-magnifying-glass"></i> Filtrar resultados</div>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Motivo de Atendimento</th>
+                <th>Atendimentos</th>
+                <th>% do Total</th>
+                <th>Impacto</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="rank-num top">1</span></td>
+                <td>Dor lombar / Problemas musculoesqueléticos</td>
+                <td>218</td>
+                <td><div style="display:flex;align-items:center;gap:10px"><div class="progress-bar"><div class="progress-fill" style="width:85%"></div></div>17,5%</div></td>
+                <td><span class="badge high"><i class="fa-solid fa-circle-exclamation"></i> Alto</span></td>
+              </tr>
+              <tr>
+                <td><span class="rank-num top">2</span></td>
+                <td>Hipertensão arterial sistêmica</td>
+                <td>167</td>
+                <td><div style="display:flex;align-items:center;gap:10px"><div class="progress-bar"><div class="progress-fill" style="width:65%"></div></div>13,4%</div></td>
+                <td><span class="badge high"><i class="fa-solid fa-circle-exclamation"></i> Alto</span></td>
+              </tr>
+              <tr>
+                <td><span class="rank-num top">3</span></td>
+                <td>Transtornos de ansiedade (CID F41)</td>
+                <td>143</td>
+                <td><div style="display:flex;align-items:center;gap:10px"><div class="progress-bar"><div class="progress-fill" style="width:56%"></div></div>11,5%</div></td>
+                <td><span class="badge high"><i class="fa-solid fa-circle-exclamation"></i> Alto</span></td>
+              </tr>
+              <tr>
+                <td><span class="rank-num">4</span></td>
+                <td>Infecções respiratórias agudas</td>
+                <td>112</td>
+                <td><div style="display:flex;align-items:center;gap:10px"><div class="progress-bar"><div class="progress-fill" style="width:44%"></div></div>9,0%</div></td>
+                <td><span class="badge med"><i class="fa-solid fa-circle-minus"></i> Médio</span></td>
+              </tr>
+              <tr>
+                <td><span class="rank-num">5</span></td>
+                <td>Diabetes mellitus tipo 2</td>
+                <td>98</td>
+                <td><div style="display:flex;align-items:center;gap:10px"><div class="progress-bar"><div class="progress-fill" style="width:38%"></div></div>7,9%</div></td>
+                <td><span class="badge med"><i class="fa-solid fa-circle-minus"></i> Médio</span></td>
+              </tr>
+              <tr>
+                <td><span class="rank-num">6</span></td>
+                <td>Lesões por esforço repetitivo (LER/DORT)</td>
+                <td>87</td>
+                <td><div style="display:flex;align-items:center;gap:10px"><div class="progress-bar"><div class="progress-fill" style="width:34%"></div></div>7,0%</div></td>
+                <td><span class="badge med"><i class="fa-solid fa-circle-minus"></i> Médio</span></td>
+              </tr>
+              <tr>
+                <td><span class="rank-num">7</span></td>
+                <td>Episódio depressivo moderado (CID F32)</td>
+                <td>74</td>
+                <td><div style="display:flex;align-items:center;gap:10px"><div class="progress-bar"><div class="progress-fill" style="width:29%"></div></div>5,9%</div></td>
+                <td><span class="badge low"><i class="fa-solid fa-circle-check"></i> Baixo</span></td>
+              </tr>
+              <tr>
+                <td><span class="rank-num">8</span></td>
+                <td>Enxaqueca e cefaléias</td>
+                <td>61</td>
+                <td><div style="display:flex;align-items:center;gap:10px"><div class="progress-bar"><div class="progress-fill" style="width:24%"></div></div>4,9%</div></td>
+                <td><span class="badge low"><i class="fa-solid fa-circle-check"></i> Baixo</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- VIEW: ABSENTEISMO -->
+      <div id="view-absenteismo" style="display:none">
+        <div class="section-header">
+          <h2>Dashboard de Absenteísmo</h2>
+          <p>Metalúrgica São Paulo S.A. &nbsp;·&nbsp; Jan — Jun 2026 &nbsp;·&nbsp; Impacto operacional por setor e cargo</p>
+        </div>
+
+        <div class="alert-banner">
+          <div class="alert-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+          <div>
+            <div class="alert-text">Produção — setor com maior impacto: <span>+34% acima da média</span></div>
+            <div class="alert-sub">Recomendado: ação preventiva de ergonomia e saúde mental no setor de montagem</div>
+          </div>
+        </div>
+
+        <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr)">
+          <div class="kpi-card">
+            <div class="kpi-top">
+              <div class="kpi-icon red"><i class="fa-solid fa-calendar-xmark"></i></div>
+              <div class="kpi-trend up"><i class="fa-solid fa-arrow-up"></i> +3%</div>
+            </div>
+            <div class="kpi-value">481</div>
+            <div class="kpi-label">Dias Perdidos</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-top">
+              <div class="kpi-icon red"><i class="fa-solid fa-clock-rotate-left"></i></div>
+              <div class="kpi-trend up"><i class="fa-solid fa-arrow-up"></i> +5%</div>
+            </div>
+            <div class="kpi-value">3.842</div>
+            <div class="kpi-label">Horas Perdidas</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-top">
+              <div class="kpi-icon gold"><i class="fa-solid fa-percent"></i></div>
+              <div class="kpi-trend neutral"><i class="fa-solid fa-minus"></i> estável</div>
+            </div>
+            <div class="kpi-value">2,8%</div>
+            <div class="kpi-label">Taxa de Absenteísmo</div>
+          </div>
+          <div class="kpi-card highlight">
+            <div class="kpi-top">
+              <div class="kpi-icon"><i class="fa-solid fa-building-circle-exclamation"></i></div>
+              <div class="kpi-trend"><i class="fa-solid fa-arrow-up"></i> +34%</div>
+            </div>
+            <div class="kpi-value">Produção</div>
+            <div class="kpi-label">Setor mais impactado</div>
+          </div>
+        </div>
+
+        <div class="charts-3col">
+          <div class="chart-card" style="grid-column:span 2">
+            <div class="chart-header">
+              <div>
+                <div class="chart-title">Ranking de Setores — Dias Perdidos</div>
+                <div class="chart-sub">Acumulado Jan–Jun 2026</div>
+              </div>
+              <div class="chart-tag">Top 6 setores</div>
+            </div>
+            <div class="chart-wrap"><canvas id="chartSetores"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-header">
+              <div>
+                <div class="chart-title">Evolução Mensal</div>
+                <div class="chart-sub">Dias perdidos por mês</div>
+              </div>
+            </div>
+            <div class="chart-wrap"><canvas id="chartAbsEvol"></canvas></div>
+          </div>
+        </div>
+
+        <div class="table-card">
+          <div class="table-header">
+            <div class="table-title">Ranking de Cargos — Maior Impacto</div>
+            <div class="table-search"><i class="fa-solid fa-arrow-down-a-z"></i> Ordenar por dias</div>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Cargo</th>
+                <th>Setor</th>
+                <th>Dias Perdidos</th>
+                <th>Horas Perdidas</th>
+                <th>% do Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="rank-num top">1</span></td>
+                <td>Operador de Produção I</td>
+                <td>Produção</td>
+                <td><strong>94</strong></td>
+                <td>752h</td>
+                <td><div style="display:flex;align-items:center;gap:8px"><div class="progress-bar"><div class="progress-fill" style="width:90%"></div></div><b>19,5%</b></div></td>
+              </tr>
+              <tr>
+                <td><span class="rank-num top">2</span></td>
+                <td>Auxiliar de Manutenção</td>
+                <td>Manutenção</td>
+                <td><strong>71</strong></td>
+                <td>568h</td>
+                <td><div style="display:flex;align-items:center;gap:8px"><div class="progress-bar"><div class="progress-fill" style="width:70%"></div></div>14,8%</div></td>
+              </tr>
+              <tr>
+                <td><span class="rank-num top">3</span></td>
+                <td>Conferente de Estoque</td>
+                <td>Logística</td>
+                <td><strong>58</strong></td>
+                <td>464h</td>
+                <td><div style="display:flex;align-items:center;gap:8px"><div class="progress-bar"><div class="progress-fill" style="width:57%"></div></div>12,1%</div></td>
+              </tr>
+              <tr>
+                <td><span class="rank-num">4</span></td>
+                <td>Soldador Qualificado</td>
+                <td>Produção</td>
+                <td><strong>47</strong></td>
+                <td>376h</td>
+                <td><div style="display:flex;align-items:center;gap:8px"><div class="progress-bar"><div class="progress-fill" style="width:46%"></div></div>9,8%</div></td>
+              </tr>
+              <tr>
+                <td><span class="rank-num">5</span></td>
+                <td>Analista Administrativo</td>
+                <td>Administrativo</td>
+                <td><strong>38</strong></td>
+                <td>304h</td>
+                <td><div style="display:flex;align-items:center;gap:8px"><div class="progress-bar"><div class="progress-fill" style="width:37%"></div></div>7,9%</div></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-icon">🔒</div>
+    <div class="modal-title" id="modal-title">Módulo em desenvolvimento</div>
+    <div class="modal-text" id="modal-text">Este dashboard faz parte da Fase 2 da PGISC e estará disponível em breve. O MVP inclui os dashboards Executivo e de Absenteísmo.</div>
+    <div class="modal-btns">
+      <button class="btn-modal secondary" onclick="closeModal()">Fechar</button>
+      <button class="btn-modal primary" onclick="closeModal()">Entendido</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"><i class="fa-solid fa-check-circle"></i> <span id="toast-text"></span></div>
+
+<script>
+// DATA
+const datasets = {
+  metal: {atend:1247,horas:3842,dias:481,afastamento:89,recorrente:134,iios:'7,3%',trend:[156,187,198,223,241,242]},
+  logis: {atend:843,horas:2210,dias:276,afastamento:54,recorrente:89,iios:'5,1%',trend:[110,132,145,158,141,157]},
+  const: {atend:1104,horas:3320,dias:415,afastamento:72,recorrente:110,iios:'6,8%',trend:[145,172,183,201,198,205]},
+};
+let activeData = datasets.metal;
+
+// LOGIN
+function doLogin(){
+  const email=document.getElementById('login-email').value;
+  const pass=document.getElementById('login-pass').value;
+  if(!email||!pass){showToast('Preencha os campos de acesso');return}
+  document.getElementById('login-screen').style.opacity='0';
+  document.getElementById('login-screen').style.transition='opacity 0.4s';
+  setTimeout(()=>{
+    document.getElementById('login-screen').style.display='none';
+    const d=document.getElementById('dashboard');
+    d.style.display='flex';
+    d.style.opacity='0';
+    d.style.transition='opacity 0.4s';
+    setTimeout(()=>{d.style.opacity='1';},50);
+    initCharts();
+    showToast('Acesso realizado com sucesso');
+  },500);
+}
+document.getElementById('login-pass').addEventListener('keypress',function(e){if(e.key==='Enter')doLogin()});
+
+// LOGOUT
+function doLogout(){
+  document.getElementById('dashboard').style.display='none';
+  const ls=document.getElementById('login-screen');
+  ls.style.display='flex';ls.style.opacity='1';
+}
+
+// COMPANY CHANGE
+function changeCompany(val){
+  activeData=datasets[val]||datasets.metal;
+  updateKPIs();
+  updateCharts();
+}
+
+// UPDATE KPIs
+function updateKPIs(){
+  animateNum('kv1',activeData.atend);
+  animateNum('kv2',activeData.horas);
+  animateNum('kv3',activeData.dias);
+  animateNum('kv4',activeData.afastamento);
+  animateNum('kv5',activeData.recorrente);
+  document.getElementById('kv6').textContent=activeData.iios;
+}
+
+function animateNum(id,target){
+  const el=document.getElementById(id);
+  if(!el)return;
+  const start=parseInt(el.textContent.replace(/[^\d]/g,''))||0;
+  const steps=30;let step=0;
+  const timer=setInterval(()=>{
+    step++;
+    const val=Math.round(start+(target-start)*(step/steps));
+    el.textContent=val.toLocaleString('pt-BR');
+    if(step>=steps){el.textContent=target.toLocaleString('pt-BR');clearInterval(timer)}
+  },20);
+}
+
+// VIEWS
+function showView(view,el){
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('view-executivo').style.display=view==='executivo'?'block':'none';
+  document.getElementById('view-absenteismo').style.display=view==='absenteismo'?'block':'none';
+  const titles={executivo:'Dashboard Executivo <span>Jan — Jun 2026</span>',absenteismo:'Dashboard de Absenteísmo <span>Jan — Jun 2026</span>'};
+  document.getElementById('page-title').innerHTML=titles[view]||'';
+  if(view==='absenteismo'){initAbsCharts()}
+}
+
+function showLocked(name){
+  document.getElementById('modal-title').textContent=name+' — Em breve';
+  document.getElementById('modal-text').textContent='O módulo '+name+' faz parte da Fase 2 da PGISC. O MVP entregado inclui os dashboards Executivo e de Absenteísmo com toda a funcionalidade de importação e PDF.';
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal(){document.getElementById('modal').classList.remove('open')}
+
+// TOAST
+function showToast(msg){
+  const t=document.getElementById('toast');
+  document.getElementById('toast-text').textContent=msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// CHARTS
+let chartTrend,chartGender,chartSetores,chartAbsEvol;
+
+function initCharts(){
+  const gold='#C9A227',goldLight='#E8C555',blue='#3B7DD8',red='#E05858',green='#1DB97B';
+
+  // TREND
+  chartTrend=new Chart(document.getElementById('chartTrend'),{
+    type:'line',
+    data:{
+      labels:['Jan','Fev','Mar','Abr','Mai','Jun'],
+      datasets:[{
+        label:'Atendimentos',
+        data:activeData.trend,
+        borderColor:gold,backgroundColor:'rgba(201,162,39,0.1)',
+        tension:0.4,fill:true,pointBackgroundColor:gold,pointRadius:5,pointHoverRadius:8,
+        borderWidth:2.5,
+      }]
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{backgroundColor:'#1A2340',titleColor:'#fff',bodyColor:'#E8C555',padding:12,borderRadius:10}},
+      scales:{x:{grid:{display:false},ticks:{font:{family:'Nunito',size:11},color:'#6B7A99'}},
+        y:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{font:{family:'Nunito',size:11},color:'#6B7A99'}}}}
+  });
+
+  // GENDER DONUT
+  chartGender=new Chart(document.getElementById('chartGender'),{
+    type:'doughnut',
+    data:{
+      labels:['Masculino','Feminino'],
+      datasets:[{data:[62,38],backgroundColor:[blue,'rgba(201,162,39,0.85)'],borderWidth:0,hoverOffset:6}]
+    },
+    options:{responsive:true,maintainAspectRatio:false,cutout:'68%',
+      plugins:{legend:{position:'bottom',labels:{font:{family:'Nunito',size:12,weight:'700'},padding:20,color:'#1A2340'}},
+        tooltip:{backgroundColor:'#1A2340',padding:12,borderRadius:10}}}
+  });
+}
+
+function updateCharts(){
+  if(chartTrend){chartTrend.data.datasets[0].data=activeData.trend;chartTrend.update()}
+}
+
+function initAbsCharts(){
+  if(chartSetores)return;
+  const gold='#C9A227',red='#E05858';
+  chartSetores=new Chart(document.getElementById('chartSetores'),{
+    type:'bar',
+    data:{
+      labels:['Produção','Manutenção','Logística','Administrativo','Qualidade','Segurança'],
+      datasets:[{
+        label:'Dias Perdidos',
+        data:[162,94,73,58,52,42],
+        backgroundColor:['rgba(201,162,39,0.9)','rgba(224,88,88,0.75)','rgba(59,125,216,0.75)','rgba(29,185,123,0.75)','rgba(129,97,210,0.75)','rgba(107,122,153,0.5)'],
+        borderRadius:8,borderWidth:0,
+      }]
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{backgroundColor:'#1A2340',padding:12,borderRadius:10}},
+      scales:{x:{grid:{display:false},ticks:{font:{family:'Nunito',size:11},color:'#6B7A99'}},
+        y:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{font:{family:'Nunito',size:11},color:'#6B7A99'}}}}
+  });
+  chartAbsEvol=new Chart(document.getElementById('chartAbsEvol'),{
+    type:'line',
+    data:{
+      labels:['Jan','Fev','Mar','Abr','Mai','Jun'],
+      datasets:[{
+        label:'Dias',data:[68,82,91,78,89,73],
+        borderColor:red,backgroundColor:'rgba(224,88,88,0.1)',
+        tension:0.4,fill:true,pointBackgroundColor:red,pointRadius:4,borderWidth:2,
+      }]
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{backgroundColor:'#1A2340',padding:12,borderRadius:10}},
+      scales:{x:{grid:{display:false},ticks:{font:{family:'Nunito',size:10},color:'#6B7A99'}},
+        y:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{font:{family:'Nunito',size:10},color:'#6B7A99'}}}}
+  });
+}
+</script>
+</body>
+</html>
