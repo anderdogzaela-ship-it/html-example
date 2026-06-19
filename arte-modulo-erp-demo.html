@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ArtePrint — Módulo de Preparación de Arte</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    :root {
+      --bg: #0d1018;
+      --panel: #141720;
+      --card: #1c2030;
+      --border: #252a3d;
+      --gold: #f0b429;
+      --green: #10b981;
+      --red: #ef4444;
+      --text: #e8eaf0;
+      --muted: #7a7f99;
+      --accent: #7c6af5;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Nunito',sans-serif; background:var(--bg); color:var(--text); height:100vh; overflow:hidden; }
+
+    .hdr {
+      background:var(--panel); border-bottom:1px solid var(--border);
+      padding:0 20px; height:52px;
+      display:flex; align-items:center; justify-content:space-between; gap:16px;
+    }
+    .logo { display:flex; align-items:center; gap:10px; font-weight:900; font-size:15px; white-space:nowrap; }
+    .logo-icon {
+      width:30px; height:30px;
+      background:linear-gradient(135deg,var(--gold),#d97706);
+      border-radius:7px; display:flex; align-items:center; justify-content:center;
+      color:#000; font-size:13px;
+    }
+    .hdr-file {
+      display:flex; align-items:center; gap:8px;
+      background:var(--card); border:1px solid var(--border);
+      border-radius:8px; padding:6px 14px; font-size:12px; color:var(--muted);
+    }
+    .hdr-file i { color:var(--gold); }
+    .hdr-actions { display:flex; gap:8px; }
+    .btn {
+      padding:7px 14px; border-radius:7px;
+      font-family:'Nunito',sans-serif; font-weight:700; font-size:12px;
+      cursor:pointer; border:none; transition:all 0.2s; white-space:nowrap;
+    }
+    .btn-ghost { background:transparent; color:var(--muted); border:1px solid var(--border); }
+    .btn-ghost:hover { border-color:var(--gold); color:var(--gold); }
+    .btn-gold { background:var(--gold); color:#000; }
+    .btn-gold:hover { background:#fcd34d; }
+
+    .layout {
+      display:grid; grid-template-columns:240px 1fr 260px;
+      height:calc(100vh - 52px);
+    }
+
+    .lpanel, .rpanel {
+      background:var(--panel); overflow-y:auto; padding:14px;
+      scrollbar-width:thin; scrollbar-color:var(--border) transparent;
+    }
+    .lpanel { border-right:1px solid var(--border); }
+    .rpanel { border-left:1px solid var(--border); }
+    .sec-title {
+      font-size:10px; font-weight:800; text-transform:uppercase;
+      letter-spacing:0.1em; color:var(--muted); margin-bottom:10px;
+    }
+    .section { margin-bottom:20px; }
+
+    .canvas-zone {
+      background:#080b12; position:relative;
+      display:flex; align-items:center; justify-content:center; overflow:hidden;
+    }
+    .canvas-wrap { position:relative; }
+    #artCanvas, #overlayCanvas { display:block; border-radius:3px; }
+    #overlayCanvas { position:absolute; top:0; left:0; pointer-events:none; }
+
+    .toolbar {
+      position:absolute; top:14px; left:50%; transform:translateX(-50%);
+      display:flex; gap:6px; align-items:center;
+      background:var(--panel); border:1px solid var(--border);
+      border-radius:10px; padding:5px 10px;
+    }
+    .tbtn {
+      width:30px; height:30px; border:none; background:transparent;
+      color:var(--muted); border-radius:6px; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      font-size:13px; transition:all 0.2s;
+    }
+    .tbtn.active { background:var(--gold); color:#000; }
+    .tbtn:hover:not(.active) { background:var(--card); color:var(--text); }
+    .tbtn-sep { width:1px; height:20px; background:var(--border); }
+
+    .status-row {
+      position:absolute; bottom:16px; left:50%; transform:translateX(-50%);
+      display:flex; gap:8px;
+    }
+    .chip {
+      padding:5px 12px; border-radius:20px; font-size:11px; font-weight:700;
+      background:var(--panel); border:1px solid var(--border);
+      color:var(--muted); display:flex; align-items:center; gap:6px;
+    }
+    .chip.ok { border-color:var(--green); color:var(--green); }
+    .chip.warn { border-color:var(--gold); color:var(--gold); }
+
+    .toggle-row {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:8px 0; border-bottom:1px solid var(--border);
+    }
+    .toggle-label { font-size:12px; font-weight:700; }
+    .tog {
+      width:38px; height:20px; background:var(--border);
+      border-radius:10px; cursor:pointer; position:relative; transition:all 0.3s; flex-shrink:0;
+    }
+    .tog.on { background:var(--gold); }
+    .tog::after {
+      content:''; position:absolute; width:14px; height:14px;
+      background:#fff; border-radius:50%; top:3px; left:3px; transition:all 0.3s;
+    }
+    .tog.on::after { left:21px; }
+
+    .sl-group { margin:12px 0 8px; }
+    .sl-hdr { display:flex; justify-content:space-between; font-size:11px; margin-bottom:5px; }
+    .sl-lbl { color:var(--muted); font-weight:700; }
+    .sl-val { color:var(--gold); font-weight:800; }
+    input[type=range] { width:100%; height:3px; accent-color:var(--gold); cursor:pointer; }
+
+    .info-box {
+      background:var(--card); border-radius:8px; padding:10px 12px;
+      font-size:11px; margin:8px 0; line-height:1.7;
+    }
+    .info-box .val { color:var(--gold); font-weight:800; }
+
+    .dpi-box { background:var(--card); border-radius:8px; padding:10px 12px; margin-bottom:8px; }
+    .dpi-num { font-size:32px; font-weight:900; color:var(--gold); line-height:1; }
+    .dpi-unit { font-size:13px; color:var(--muted); }
+    .dpi-ok { font-size:11px; color:var(--green); margin-top:4px; }
+    .dpi-detail { font-size:10px; color:var(--muted); margin-top:6px; line-height:1.7; }
+
+    .mat-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:10px; }
+    .mat-card {
+      border:2px solid var(--border); border-radius:9px;
+      overflow:hidden; cursor:pointer; transition:all 0.2s; position:relative;
+    }
+    .mat-card.active { border-color:var(--gold); box-shadow:0 0 0 1px var(--gold); }
+    .mat-prev { height:44px; }
+    .m-holo { background:linear-gradient(135deg,#ff0080,#ff8c00,#40e0d0,#8b00ff,#ff0080); background-size:300% 300%; animation:holo 2s linear infinite; }
+    .m-chrome { background:linear-gradient(160deg,#f0f0f0 0%,#888 30%,#fff 50%,#999 70%,#ddd 100%); }
+    .m-trans { background:repeating-conic-gradient(#3a3a3a 0% 25%,#555 0% 50%) 0 0/10px 10px; }
+    .m-glitter { background:linear-gradient(135deg,#b91c1c,#7c3aed,#1d4ed8,#b91c1c); background-size:300% 300%; animation:holo 1.5s linear infinite; }
+    .m-matte { background:linear-gradient(135deg,#e8d5b7,#c9a97d); }
+    @keyframes holo { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+    .mat-name { padding:4px 6px; font-size:10px; font-weight:800; background:var(--card); text-align:center; }
+    .mat-check {
+      position:absolute; top:4px; right:4px;
+      width:15px; height:15px; background:var(--gold);
+      border-radius:50%; display:none; align-items:center; justify-content:center;
+      font-size:8px; color:#000;
+    }
+    .mat-card.active .mat-check { display:flex; }
+
+    .nlp-box {
+      background:var(--card); border:1px solid var(--border);
+      border-radius:9px; padding:10px; margin-bottom:10px;
+    }
+    .nlp-hint { font-size:11px; color:var(--muted); margin-bottom:6px; }
+    .nlp-input {
+      width:100%; background:var(--bg); border:1px solid var(--border);
+      border-radius:7px; color:var(--text); font-family:'Nunito',sans-serif;
+      font-size:12px; padding:8px 10px; resize:none;
+    }
+    .nlp-input:focus { outline:none; border-color:var(--gold); }
+    .nlp-input::placeholder { color:var(--muted); }
+    .nlp-tags { display:flex; flex-wrap:wrap; gap:4px; margin-top:6px; }
+    .nlp-tag {
+      background:var(--bg); border:1px solid var(--border); border-radius:12px;
+      padding:2px 8px; font-size:10px; color:var(--muted); cursor:pointer; transition:all 0.2s;
+    }
+    .nlp-tag:hover { border-color:var(--gold); color:var(--gold); }
+    .nlp-result {
+      display:none; margin-top:8px; padding:8px 10px;
+      background:rgba(240,180,41,0.08); border-left:2px solid var(--gold);
+      border-radius:0 6px 6px 0; font-size:11px; line-height:1.6;
+    }
+
+    .export-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+    .exp-btn {
+      padding:10px 8px; border:1px solid var(--border);
+      border-radius:8px; background:var(--card); color:var(--text);
+      font-family:'Nunito',sans-serif; font-weight:800; font-size:11px; cursor:pointer;
+      display:flex; flex-direction:column; align-items:center; gap:5px; transition:all 0.2s;
+    }
+    .exp-btn:hover { border-color:var(--gold); color:var(--gold); }
+    .exp-btn i { font-size:20px; }
+
+    .print-sheet {
+      background:#fff; color:#222; border-radius:8px; padding:10px 12px; font-size:10px;
+    }
+    .ps-title {
+      font-weight:900; font-size:11px; color:#111; text-align:center;
+      border-bottom:1px solid #ddd; padding-bottom:6px; margin-bottom:8px; letter-spacing:0.05em;
+    }
+    .ps-row {
+      display:flex; justify-content:space-between;
+      padding:2px 0; border-bottom:1px dotted #eee;
+    }
+    .ps-k { color:#888; }
+    .ps-v { font-weight:800; color:#111; }
+    .ps-row.hl .ps-v { color:#d97706; }
+    .btn-ps {
+      width:100%; margin-top:8px; padding:7px;
+      background:#f9f6f0; border:1px solid #ddd; border-radius:6px;
+      font-family:'Nunito',sans-serif; font-weight:700; font-size:11px; cursor:pointer; color:#555;
+    }
+    .btn-ps:hover { background:#fef3c7; }
+
+    #exportFlash {
+      display:none; position:fixed; inset:0; z-index:9999;
+      background:rgba(0,0,0,0.85); align-items:center; justify-content:center;
+    }
+    .flash-box {
+      background:var(--panel); border:1px solid var(--border);
+      border-radius:16px; padding:36px; text-align:center; max-width:320px; width:90%;
+    }
+    .flash-icon {
+      width:60px; height:60px; background:rgba(16,185,129,0.15);
+      border-radius:50%; display:flex; align-items:center; justify-content:center;
+      margin:0 auto 18px; border:2px solid var(--green);
+    }
+    .flash-log {
+      margin:14px 0; padding:10px 12px; background:var(--card);
+      border-radius:8px; font-size:11px; text-align:left; line-height:1.8;
+    }
+
+    ::-webkit-scrollbar { width:4px; }
+    ::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+  </style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="logo">
+    <div class="logo-icon"><i class="fa-solid fa-layer-group"></i></div>
+    <span>ArtePrint <span style="color:var(--muted);font-weight:400;font-size:13px">— Módulo ERP</span></span>
+  </div>
+  <div class="hdr-file">
+    <i class="fa-solid fa-file-image"></i>
+    etiqueta_vino_malbec_v3.pdf
+    <span style="margin:0 6px;color:var(--border)">|</span>
+    <i class="fa-solid fa-server" style="color:var(--muted)"></i>
+    <span style="margin-left:4px">JOB-4892</span>
+  </div>
+  <div class="hdr-actions">
+    <button class="btn btn-ghost"><i class="fa-solid fa-clock-rotate-left" style="margin-right:5px"></i>Historial</button>
+    <button class="btn btn-ghost"><i class="fa-solid fa-rotate-left" style="margin-right:5px"></i>Revertir</button>
+    <button class="btn btn-gold" onclick="showExport()">
+      <i class="fa-solid fa-file-export" style="margin-right:5px"></i>Exportar
+    </button>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- LEFT PANEL -->
+  <div class="lpanel">
+
+    <div class="section">
+      <div class="sec-title">Detección Die Cut</div>
+      <div class="toggle-row">
+        <span class="toggle-label"><i class="fa-solid fa-vector-square" style="margin-right:6px;color:var(--gold)"></i>Contorno activo</span>
+        <div class="tog on" id="togContour" onclick="toggleContour()"></div>
+      </div>
+      <div class="sl-group">
+        <div class="sl-hdr"><span class="sl-lbl">Sensibilidad Canny</span><span class="sl-val" id="vSens">72</span></div>
+        <input type="range" min="10" max="100" value="72" oninput="document.getElementById('vSens').textContent=this.value">
+      </div>
+      <div class="sl-group">
+        <div class="sl-hdr"><span class="sl-lbl">Expansión (mm)</span><span class="sl-val" id="vExp">3.0</span></div>
+        <input type="range" min="5" max="80" value="30" oninput="document.getElementById('vExp').textContent=(this.value/10).toFixed(1);epx=this.value*0.5">
+      </div>
+      <div class="sl-group">
+        <div class="sl-hdr"><span class="sl-lbl">Suavizado</span><span class="sl-val" id="vSmooth">5</span></div>
+        <input type="range" min="1" max="10" value="5" oninput="document.getElementById('vSmooth').textContent=this.value">
+      </div>
+      <div class="info-box">
+        <i class="fa-solid fa-circle-check" style="color:var(--green);margin-right:5px"></i>
+        <strong>Contorno válido</strong><br>
+        <span style="color:var(--muted)">Nodos: </span><span class="val">48</span>
+        <span style="color:var(--muted);margin-left:8px">Área: </span><span class="val">210×297mm</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="sec-title">Tinta Blanca</div>
+      <div class="toggle-row">
+        <span class="toggle-label"><i class="fa-solid fa-droplet" style="margin-right:6px;color:#e2e8f0"></i>Simulación activa</span>
+        <div class="tog on" onclick="this.classList.toggle('on')"></div>
+      </div>
+      <div class="toggle-row">
+        <span class="toggle-label">Vista canal blanco</span>
+        <div class="tog" onclick="this.classList.toggle('on')"></div>
+      </div>
+      <div class="info-box" style="margin-top:8px">
+        <i class="fa-solid fa-circle-info" style="color:var(--gold);margin-right:5px"></i>
+        Zonas detectadas: <span class="val">4</span><br>
+        Cobertura estimada: <span class="val">18.4%</span><br>
+        <span style="color:var(--muted)">Algoritmo: análisis CMYK K=0 + alfa</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="sec-title">Resolución</div>
+      <div class="dpi-box">
+        <div><span class="dpi-num">312</span><span class="dpi-unit"> DPI</span></div>
+        <div class="dpi-ok"><i class="fa-solid fa-circle-check" style="margin-right:4px"></i>Listo para impresión</div>
+        <div class="dpi-detail">
+          Original: 96 DPI<br>
+          Algoritmo: Sharp Lanczos4 ×3.25<br>
+          Perfil: Fogra39 CMYK
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="sec-title">Desde ERP</div>
+      <div class="info-box">
+        <i class="fa-solid fa-server" style="color:var(--accent);margin-right:5px"></i>
+        <strong>JOB-4892</strong><br>
+        <span style="color:var(--muted)">Cliente: Bodega Altamira S.A.</span><br>
+        <span style="color:var(--muted)">Máquina: Epson SC-S80600</span><br>
+        <span style="color:var(--muted)">Prioridad: <span style="color:var(--gold)">Alta</span></span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- CANVAS -->
+  <div class="canvas-zone">
+    <div class="toolbar">
+      <button class="tbtn active"><i class="fa-solid fa-arrow-pointer"></i></button>
+      <button class="tbtn"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+      <button class="tbtn"><i class="fa-solid fa-hand"></i></button>
+      <div class="tbtn-sep"></div>
+      <button class="tbtn" onclick="toggleContour()"><i class="fa-solid fa-vector-square"></i></button>
+      <button class="tbtn" onclick="toggleGrid()"><i class="fa-solid fa-border-all"></i></button>
+      <button class="tbtn"><i class="fa-solid fa-ruler-combined"></i></button>
+      <div class="tbtn-sep"></div>
+      <button class="tbtn"><i class="fa-solid fa-rotate-left"></i></button>
+      <button class="tbtn"><i class="fa-solid fa-rotate-right"></i></button>
+    </div>
+
+    <div class="canvas-wrap">
+      <canvas id="artCanvas" width="440" height="500"></canvas>
+      <canvas id="overlayCanvas" width="440" height="500"></canvas>
+    </div>
+
+    <div class="status-row">
+      <div class="chip ok"><i class="fa-solid fa-circle-check"></i>Contorno validado</div>
+      <div class="chip ok"><i class="fa-solid fa-circle-check"></i>312 DPI</div>
+      <div class="chip warn"><i class="fa-solid fa-palette"></i><span id="matChip">Cromo</span></div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="rpanel">
+
+    <div class="section">
+      <div class="sec-title">Material</div>
+      <div class="mat-grid">
+        <div class="mat-card" onclick="selMat(this,'Holográfico')">
+          <div class="mat-prev m-holo"></div>
+          <div class="mat-name">Holográfico</div>
+          <div class="mat-check"><i class="fa-solid fa-check"></i></div>
+        </div>
+        <div class="mat-card active" onclick="selMat(this,'Cromo')">
+          <div class="mat-prev m-chrome"></div>
+          <div class="mat-name">Cromo</div>
+          <div class="mat-check"><i class="fa-solid fa-check"></i></div>
+        </div>
+        <div class="mat-card" onclick="selMat(this,'Transparente')">
+          <div class="mat-prev m-trans"></div>
+          <div class="mat-name">Transparente</div>
+          <div class="mat-check"><i class="fa-solid fa-check"></i></div>
+        </div>
+        <div class="mat-card" onclick="selMat(this,'Glitter')">
+          <div class="mat-prev m-glitter"></div>
+          <div class="mat-name">Glitter</div>
+          <div class="mat-check"><i class="fa-solid fa-check"></i></div>
+        </div>
+        <div class="mat-card" onclick="selMat(this,'Mate')">
+          <div class="mat-prev m-matte"></div>
+          <div class="mat-name">Mate</div>
+          <div class="mat-check"><i class="fa-solid fa-check"></i></div>
+        </div>
+      </div>
+      <div class="sl-group">
+        <div class="sl-hdr"><span class="sl-lbl">Opacidad efecto</span><span class="sl-val">80%</span></div>
+        <input type="range" min="20" max="100" value="80">
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="sec-title"><i class="fa-solid fa-wand-magic-sparkles" style="color:var(--gold);margin-right:5px"></i>Panel de Instrucciones (IA)</div>
+      <div class="nlp-box">
+        <div class="nlp-hint">Describí la modificación en lenguaje natural</div>
+        <textarea class="nlp-input" rows="2" id="nlpTxt" placeholder="Ej: aumentar brillo del logo 15%..."></textarea>
+        <div class="nlp-tags">
+          <span class="nlp-tag" onclick="setNLP('Centrar logo')">Centrar logo</span>
+          <span class="nlp-tag" onclick="setNLP('Oscurecer fondo 20%')">Oscurecer fondo 20%</span>
+          <span class="nlp-tag" onclick="setNLP('Aplicar sangría 3mm')">Sangría 3mm</span>
+          <span class="nlp-tag" onclick="setNLP('Ajustar contraste +15%')">Contraste +15%</span>
+        </div>
+        <button class="btn btn-gold" style="width:100%;margin-top:8px;font-size:11px" onclick="runNLP()">
+          <i class="fa-solid fa-bolt" style="margin-right:5px"></i>Aplicar instrucción
+        </button>
+        <div class="nlp-result" id="nlpResult"></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="sec-title">Exportar alta resolución</div>
+      <div class="export-grid">
+        <button class="exp-btn" onclick="showExport()">
+          <i class="fa-solid fa-file-pdf" style="color:#ef4444"></i>PDF
+        </button>
+        <button class="exp-btn" onclick="showExport()">
+          <i class="fa-solid fa-file-image" style="color:#3b82f6"></i>PNG
+        </button>
+        <button class="exp-btn" onclick="showExport()">
+          <i class="fa-solid fa-image" style="color:#f59e0b"></i>JPG
+        </button>
+        <button class="exp-btn" onclick="showExport()">
+          <i class="fa-solid fa-file-code" style="color:#10b981"></i>TIFF
+        </button>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="sec-title">Planilla de Impresión</div>
+      <div class="print-sheet">
+        <div class="ps-title">PLANILLA #4892 — 19/06/2026</div>
+        <div class="ps-row"><span class="ps-k">Archivo</span><span class="ps-v">etiqueta_vino_v3</span></div>
+        <div class="ps-row"><span class="ps-k">Cliente</span><span class="ps-v">Bodega Altamira</span></div>
+        <div class="ps-row hl"><span class="ps-k">Material</span><span class="ps-v" id="matPlnl">Cromo mate</span></div>
+        <div class="ps-row"><span class="ps-k">Resolución</span><span class="ps-v">312 DPI</span></div>
+        <div class="ps-row"><span class="ps-k">Dimensiones</span><span class="ps-v">210 × 297 mm</span></div>
+        <div class="ps-row"><span class="ps-k">Sangría</span><span class="ps-v">3.0 mm</span></div>
+        <div class="ps-row hl"><span class="ps-k">Die cut</span><span class="ps-v">Validado</span></div>
+        <div class="ps-row"><span class="ps-k">Tinta blanca</span><span class="ps-v">Si — 18.4%</span></div>
+        <div class="ps-row"><span class="ps-k">Modo color</span><span class="ps-v">CMYK</span></div>
+        <div class="ps-row"><span class="ps-k">Perfil ICC</span><span class="ps-v">Fogra39</span></div>
+        <div class="ps-row"><span class="ps-k">Operador</span><span class="ps-v">ERP Auto</span></div>
+        <div class="ps-row"><span class="ps-k">Estado</span><span class="ps-v" style="color:#10b981">Listo</span></div>
+        <button class="btn-ps"><i class="fa-solid fa-download" style="margin-right:5px"></i>Exportar planilla PDF</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- EXPORT MODAL -->
+<div id="exportFlash">
+  <div class="flash-box">
+    <div class="flash-icon">
+      <i class="fa-solid fa-circle-check" style="font-size:28px;color:var(--green)"></i>
+    </div>
+    <div style="font-size:18px;font-weight:900;margin-bottom:8px">Archivo exportado</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:4px">etiqueta_vino_malbec_v3_300dpi.tiff</div>
+    <div style="font-size:11px;color:var(--muted)">312 DPI · Fogra39 · CMYK · Die cut validado</div>
+    <div class="flash-log">
+      <span style="color:var(--muted);display:block;margin-bottom:4px;font-size:10px">Pipeline servidor (Sharp/node-canvas):</span>
+      <span style="color:var(--green);font-family:monospace">
+        Upscaling Lanczos4 x3.25 OK<br>
+        Perfil ICC Fogra39 embebido OK<br>
+        Planilla adjunta OK<br>
+        Enviado a JOB-4892 ERP OK
+      </span>
+    </div>
+    <button class="btn btn-gold" onclick="document.getElementById('exportFlash').style.display='none'" style="width:100%">
+      Cerrar
+    </button>
+  </div>
+</div>
+
+<script>
+const AC = document.getElementById('artCanvas');
+const OC = document.getElementById('overlayCanvas');
+const ctx = AC.getContext('2d');
+const octx = OC.getContext('2d');
+let contourOn = true;
+let gridOn = false;
+let epx = 15;
+let dash = 0;
+let mat = 'Cromo';
+
+function drawLabel() {
+  ctx.clearRect(0,0,440,500);
+  const bg = ctx.createLinearGradient(0,0,440,500);
+  bg.addColorStop(0,'#1a0805'); bg.addColorStop(0.5,'#2d1009'); bg.addColorStop(1,'#1a0805');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,440,500);
+
+  ctx.strokeStyle='#c9a96e'; ctx.lineWidth=2.5; ctx.strokeRect(22,22,396,456);
+  ctx.strokeStyle='#7a5a30'; ctx.lineWidth=1; ctx.strokeRect(30,30,380,440);
+  ctx.fillStyle='#c9a96e'; ctx.fillRect(22,58,396,1); ctx.fillRect(22,448,396,1);
+
+  applyMat();
+
+  ctx.textAlign='center';
+  ctx.font='bold 34px serif'; ctx.fillStyle='#f0d090'; ctx.fillText('ALTAMIRA',220,140);
+  ctx.font='12px serif'; ctx.fillStyle='#b89050'; ctx.fillText('MALBEC GRAN RESERVA',220,163);
+  ctx.fillStyle='rgba(200,169,110,0.25)'; ctx.fillRect(100,175,240,1);
+
+  ctx.font='bold 52px serif'; ctx.fillStyle='#ffffff'; ctx.fillText('2021',220,265);
+  ctx.font='11px serif'; ctx.fillStyle='#906a38'; ctx.fillText('VALLE DE UCO - MENDOZA - ARGENTINA',220,295);
+  ctx.fillStyle='rgba(200,169,110,0.2)'; ctx.fillRect(80,315,280,1);
+
+  drawGrapes(95,215,0.85); drawGrapes(320,215,0.85);
+
+  ctx.font='11px serif'; ctx.fillStyle='#7a5a30'; ctx.fillText('Producto Artesanal - Cosecha Selectiva',220,405);
+  ctx.font='12px serif'; ctx.fillStyle='#9a7040'; ctx.fillText('750 ml - 14.0% Vol. Alc.',220,425);
+
+  if(gridOn) {
+    ctx.strokeStyle='rgba(255,255,255,0.05)'; ctx.lineWidth=0.5;
+    for(let x=0;x<440;x+=20){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,500);ctx.stroke();}
+    for(let y=0;y<500;y+=20){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(440,y);ctx.stroke();}
+  }
+}
+
+function drawGrapes(x,y,sc) {
+  ctx.fillStyle='rgba(160,100,50,0.28)';
+  for(let i=0;i<9;i++){
+    ctx.beginPath();
+    ctx.arc(x+(i%3-1)*13*sc, y+Math.floor(i/3)*14*sc, 9*sc, 0, Math.PI*2);
+    ctx.fill();
+  }
+}
+
+function applyMat() {
+  let g;
+  if(mat==='Cromo'){
+    g=ctx.createLinearGradient(0,0,0,500);
+    g.addColorStop(0,'rgba(255,255,255,0.18)'); g.addColorStop(0.4,'rgba(180,180,180,0.05)'); g.addColorStop(1,'rgba(80,80,80,0.12)');
+    ctx.fillStyle=g; ctx.fillRect(0,0,440,500);
+  } else if(mat==='Holografico'||mat==='Holográfico'){
+    g=ctx.createLinearGradient(0,0,440,500);
+    g.addColorStop(0,'rgba(255,0,128,0.1)'); g.addColorStop(0.33,'rgba(0,255,255,0.1)');
+    g.addColorStop(0.66,'rgba(255,200,0,0.1)'); g.addColorStop(1,'rgba(200,0,255,0.1)');
+    ctx.fillStyle=g; ctx.fillRect(0,0,440,500);
+  } else if(mat==='Glitter'){
+    g=ctx.createLinearGradient(0,0,440,500);
+    g.addColorStop(0,'rgba(185,28,28,0.12)'); g.addColorStop(0.5,'rgba(124,58,237,0.12)'); g.addColorStop(1,'rgba(29,78,216,0.12)');
+    ctx.fillStyle=g; ctx.fillRect(0,0,440,500);
+  } else if(mat==='Transparente'){
+    ctx.fillStyle='rgba(200,220,255,0.06)'; ctx.fillRect(0,0,440,500);
+  }
+}
+
+function drawOverlay() {
+  octx.clearRect(0,0,440,500);
+  if(!contourOn) return;
+  const x=22-epx, y=22-epx, w=396+epx*2, h=456+epx*2, r=10;
+  octx.strokeStyle='#00ff88'; octx.lineWidth=1.8;
+  octx.setLineDash([8,4]); octx.lineDashOffset=-dash;
+  octx.beginPath();
+  octx.moveTo(x+r,y); octx.lineTo(x+w-r,y); octx.quadraticCurveTo(x+w,y,x+w,y+r);
+  octx.lineTo(x+w,y+h-r); octx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  octx.lineTo(x+r,y+h); octx.quadraticCurveTo(x,y+h,x,y+h-r);
+  octx.lineTo(x,y+r); octx.quadraticCurveTo(x,y,x+r,y);
+  octx.closePath(); octx.stroke();
+  octx.setLineDash([]);
+  octx.fillStyle='rgba(0,255,136,0.18)';
+  [[x,y],[x+w,y],[x,y+h],[x+w,y+h]].forEach(([cx,cy])=>{
+    octx.beginPath(); octx.arc(cx,cy,5,0,Math.PI*2); octx.fill();
+    octx.strokeStyle='#00ff88'; octx.lineWidth=1.5; octx.stroke();
+  });
+  octx.fillStyle='rgba(255,255,255,0.05)';
+  octx.fillRect(76,120,288,54); octx.fillRect(96,238,248,58);
+}
+
+function toggleContour() {
+  contourOn=!contourOn;
+  document.getElementById('togContour').classList.toggle('on',contourOn);
+  drawOverlay();
+}
+function toggleGrid() { gridOn=!gridOn; drawLabel(); drawOverlay(); }
+
+function selMat(el,name) {
+  document.querySelectorAll('.mat-card').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active'); mat=name;
+  document.getElementById('matChip').textContent=name;
+  document.getElementById('matPlnl').textContent=name+' mate';
+  drawLabel(); drawOverlay();
+}
+
+const nlpMap = {
+  'centrar':'align(center) sobre capa "logo". Coord X: 220px.',
+  'oscurecer':'brightness(-20%) sobre capa "fondo". Factor: 0.80.',
+  'sangria':'bleed(3.0mm). Contorno expandido +8.5px en export.',
+  'sangría':'bleed(3.0mm). Contorno expandido +8.5px en export.',
+  'contraste':'contrast(+15%) sobre capa "composicion". Factor: 1.15.',
+};
+function setNLP(txt) { document.getElementById('nlpTxt').value=txt; }
+function runNLP() {
+  const txt=(document.getElementById('nlpTxt').value||'centrar').toLowerCase();
+  const key=Object.keys(nlpMap).find(k=>txt.includes(k))||'centrar';
+  const r=document.getElementById('nlpResult');
+  r.style.display='block';
+  r.innerHTML='<strong style="color:var(--gold)">GPT-4o-mini</strong> — funcion detectada<br>'
+    +'<span style="color:var(--muted)">'+nlpMap[key]+'<br>Tokens: 38 - Costo: $0.0001</span>';
+}
+
+function showExport() { document.getElementById('exportFlash').style.display='flex'; }
+
+(function loop(){
+  dash=(dash+0.4)%12;
+  if(contourOn) drawOverlay();
+  requestAnimationFrame(loop);
+})();
+
+drawLabel(); drawOverlay();
+</script>
+</body>
+</html>
