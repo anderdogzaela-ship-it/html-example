@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EduPlus — Plataforma de Cursos Online</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #f8f9fc;
+    --white: #ffffff;
+    --surface: #f1f3f8;
+    --border: #e4e7ef;
+    --accent: #6c47ff;
+    --accent2: #8b6bff;
+    --accent-bg: #f0ecff;
+    --green: #10b981;
+    --green-bg: #ecfdf5;
+    --orange: #f59e0b;
+    --dark: #0f172a;
+    --mid: #334155;
+    --muted: #94a3b8;
+    --text: #1e293b;
+  }
+
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); }
+
+  /* NAV */
+  nav {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 0 40px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 1px 3px rgba(0,0,0,.04);
+  }
+
+  .logo { font-size: 20px; font-weight: 800; color: var(--accent); letter-spacing: -.5px; }
+  .logo span { color: var(--dark); }
+
+  .nav-links { display: flex; gap: 24px; align-items: center; }
+  .nav-links a { font-size: 13px; color: var(--mid); text-decoration: none; cursor: pointer; transition: color .2s; }
+  .nav-links a:hover { color: var(--accent); }
+
+  .nav-right { display: flex; gap: 10px; align-items: center; }
+
+  .btn { padding: 8px 18px; border-radius: 8px; font-size: 13px; font-family: inherit; cursor: pointer; border: none; font-weight: 500; transition: all .2s; }
+  .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--mid); }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent2); }
+
+  /* SCREENS */
+  .screen { display: none; }
+  .screen.active { display: block; animation: fadeIn .25s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ===== SCREEN 1: CATALOG ===== */
+  .hero-band {
+    background: linear-gradient(135deg, #1e0b4f 0%, #3b1f9e 50%, #6c47ff 100%);
+    padding: 60px 40px;
+    color: #fff;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-band::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 70% 50%, rgba(255,255,255,.06) 0%, transparent 60%);
+  }
+
+  .hero-eyebrow { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: rgba(255,255,255,.6); margin-bottom: 12px; }
+  .hero-h1 { font-size: 40px; font-weight: 800; line-height: 1.15; margin-bottom: 14px; letter-spacing: -.5px; }
+  .hero-h1 span { color: #c4b5fd; }
+  .hero-sub { font-size: 15px; color: rgba(255,255,255,.7); max-width: 480px; margin: 0 auto 28px; line-height: 1.6; }
+
+  .hero-stats { display: flex; justify-content: center; gap: 40px; margin-top: 32px; }
+  .hstat-n { font-size: 28px; font-weight: 800; color: #fff; }
+  .hstat-l { font-size: 11px; color: rgba(255,255,255,.5); letter-spacing: 1px; margin-top: 2px; }
+
+  /* FILTERS */
+  .catalog-filters {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 40px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .filter-label { font-size: 11px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-right: 4px; }
+
+  .tag {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--mid);
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all .2s;
+    user-select: none;
+  }
+
+  .tag:hover { border-color: var(--accent); color: var(--accent); }
+  .tag.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  /* COURSE GRID */
+  .catalog-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    padding: 32px 40px;
+  }
+
+  .course-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform .2s, box-shadow .2s, border-color .2s;
+  }
+
+  .course-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(108,71,255,.1); border-color: var(--accent); }
+
+  .course-thumb {
+    height: 160px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 52px;
+    position: relative;
+  }
+
+  .course-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 4px;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+  }
+
+  .badge-new { background: var(--green); color: #fff; }
+  .badge-hot { background: #ef4444; color: #fff; }
+  .badge-sale { background: var(--orange); color: #fff; }
+
+  .course-body { padding: 16px; }
+  .course-category { font-size: 10px; letter-spacing: 1.5px; color: var(--accent); text-transform: uppercase; font-weight: 600; margin-bottom: 6px; }
+  .course-name { font-size: 15px; font-weight: 700; color: var(--dark); margin-bottom: 6px; line-height: 1.3; }
+  .course-desc { font-size: 12px; color: var(--muted); line-height: 1.6; margin-bottom: 12px; }
+
+  .course-meta { display: flex; gap: 12px; font-size: 11px; color: var(--muted); margin-bottom: 14px; }
+  .course-meta span { display: flex; align-items: center; gap: 4px; }
+
+  .course-footer { display: flex; align-items: center; justify-content: space-between; padding-top: 12px; border-top: 1px solid var(--border); }
+  .course-price { font-size: 18px; font-weight: 800; color: var(--dark); }
+  .course-price-old { font-size: 12px; color: var(--muted); text-decoration: line-through; font-weight: 400; margin-left: 4px; }
+  .btn-buy { background: var(--accent); color: #fff; padding: 7px 16px; border-radius: 7px; font-size: 12px; border: none; cursor: pointer; font-family: inherit; font-weight: 600; transition: background .2s; }
+  .btn-buy:hover { background: var(--accent2); }
+
+  /* ===== SCREEN 2: COURSE DETAIL ===== */
+  .detail-hero {
+    background: linear-gradient(135deg, #1e0b4f, #3b1f9e);
+    padding: 40px;
+    color: #fff;
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 40px;
+    align-items: start;
+  }
+
+  .detail-back { font-size: 12px; color: rgba(255,255,255,.6); cursor: pointer; margin-bottom: 16px; display: inline-flex; align-items: center; gap: 6px; transition: color .2s; }
+  .detail-back:hover { color: #fff; }
+
+  .detail-category { font-size: 10px; letter-spacing: 2px; color: #c4b5fd; text-transform: uppercase; margin-bottom: 10px; }
+  .detail-title { font-size: 28px; font-weight: 800; line-height: 1.2; margin-bottom: 12px; }
+  .detail-sub { font-size: 14px; color: rgba(255,255,255,.7); line-height: 1.6; margin-bottom: 20px; }
+
+  .detail-meta { display: flex; gap: 20px; font-size: 12px; color: rgba(255,255,255,.6); }
+  .detail-meta span { display: flex; align-items: center; gap: 5px; }
+
+  /* PURCHASE CARD */
+  .purchase-card {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 24px;
+    color: var(--text);
+    box-shadow: 0 8px 32px rgba(0,0,0,.15);
+  }
+
+  .purchase-preview { font-size: 48px; text-align: center; margin-bottom: 16px; background: var(--accent-bg); border-radius: 8px; padding: 20px; }
+  .purchase-price-big { font-size: 32px; font-weight: 800; color: var(--dark); }
+  .purchase-price-old { font-size: 14px; color: var(--muted); text-decoration: line-through; margin-left: 8px; }
+  .purchase-off { background: var(--green-bg); color: var(--green); font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px; margin-left: 8px; }
+
+  .purchase-includes { margin: 16px 0; }
+  .purchase-includes-title { font-size: 11px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; }
+  .include-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--mid); padding: 6px 0; border-bottom: 1px solid var(--border); }
+  .include-item:last-child { border-bottom: none; }
+  .include-icon { color: var(--green); font-size: 14px; }
+
+  .btn-enroll {
+    width: 100%;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 14px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background .2s;
+    margin-top: 4px;
+  }
+
+  .btn-enroll:hover { background: var(--accent2); }
+
+  .purchase-guarantee { text-align: center; font-size: 11px; color: var(--muted); margin-top: 12px; }
+
+  .detail-body { padding: 40px; display: grid; grid-template-columns: 1fr 340px; gap: 40px; }
+
+  .curriculum { }
+  .curriculum-title { font-size: 16px; font-weight: 700; color: var(--dark); margin-bottom: 16px; }
+
+  .module {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    overflow: hidden;
+  }
+
+  .module-header {
+    padding: 14px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    background: var(--surface);
+  }
+
+  .module-name { font-size: 13px; font-weight: 600; color: var(--dark); }
+  .module-count { font-size: 11px; color: var(--muted); }
+
+  .lesson-list { padding: 8px 0; }
+  .lesson-item { padding: 10px 16px; display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--mid); border-bottom: 1px solid var(--border); }
+  .lesson-item:last-child { border-bottom: none; }
+  .lesson-icon { font-size: 14px; }
+  .lesson-lock { color: var(--muted); font-size: 12px; margin-left: auto; }
+  .lesson-free { color: var(--green); font-size: 10px; font-weight: 700; margin-left: auto; background: var(--green-bg); padding: 2px 8px; border-radius: 3px; }
+
+  /* ===== SCREEN 3: DASHBOARD ===== */
+  .dashboard-layout { display: grid; grid-template-columns: 240px 1fr; min-height: calc(100vh - 64px); }
+
+  .sidebar {
+    background: var(--white);
+    border-right: 1px solid var(--border);
+    padding: 24px 0;
+  }
+
+  .sidebar-user { padding: 0 20px 20px; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+  .user-avatar { width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center; font-size: 18px; margin-bottom: 10px; }
+  .user-name { font-size: 14px; font-weight: 600; color: var(--dark); }
+  .user-sub { font-size: 11px; color: var(--muted); }
+
+  .sidebar-label { font-size: 10px; letter-spacing: 1.5px; color: var(--muted); text-transform: uppercase; padding: 0 20px; margin-bottom: 6px; margin-top: 16px; }
+
+  .sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 20px;
+    font-size: 13px;
+    color: var(--mid);
+    cursor: pointer;
+    transition: all .2s;
+    border-left: 3px solid transparent;
+  }
+
+  .sidebar-item:hover { background: var(--accent-bg); color: var(--accent); }
+  .sidebar-item.active { background: var(--accent-bg); color: var(--accent); border-left-color: var(--accent); font-weight: 600; }
+  .sidebar-icon { font-size: 16px; }
+
+  .dashboard-main { padding: 32px 40px; }
+
+  .dash-welcome { margin-bottom: 28px; }
+  .dash-welcome h2 { font-size: 22px; font-weight: 800; color: var(--dark); margin-bottom: 4px; }
+  .dash-welcome p { font-size: 13px; color: var(--muted); }
+
+  .dash-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 28px; }
+
+  .stat-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .stat-icon { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+  .stat-icon.purple { background: var(--accent-bg); }
+  .stat-icon.green { background: var(--green-bg); }
+  .stat-icon.orange { background: #fff7ed; }
+  .stat-val { font-size: 22px; font-weight: 800; color: var(--dark); }
+  .stat-lbl { font-size: 11px; color: var(--muted); }
+
+  .section-title { font-size: 15px; font-weight: 700; color: var(--dark); margin-bottom: 16px; }
+
+  .enrolled-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-bottom: 28px; }
+
+  .enrolled-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    display: flex;
+    gap: 14px;
+    cursor: pointer;
+    transition: border-color .2s;
+  }
+
+  .enrolled-card:hover { border-color: var(--accent); }
+
+  .enrolled-thumb { width: 52px; height: 52px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
+
+  .enrolled-info { flex: 1; }
+  .enrolled-name { font-size: 13px; font-weight: 600; color: var(--dark); margin-bottom: 4px; }
+  .enrolled-progress-label { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+
+  .progress-bar { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width .5s ease; }
+
+  .continue-btn {
+    background: var(--accent-bg);
+    color: var(--accent);
+    border: none;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: background .2s;
+  }
+
+  .continue-btn:hover { background: var(--accent); color: #fff; }
+
+  /* ACCESS LOCK BANNER */
+  .access-banner {
+    background: var(--green-bg);
+    border: 1px solid #a7f3d0;
+    border-radius: 8px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 13px;
+    color: #065f46;
+    margin-bottom: 20px;
+  }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-10px);
+    background: var(--dark);
+    color: #fff;
+    padding: 10px 22px;
+    border-radius: 8px;
+    font-size: 13px;
+    opacity: 0;
+    transition: all .3s;
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 9999;
+    box-shadow: 0 4px 16px rgba(0,0,0,.2);
+  }
+
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* RESTART */
+  .screen-back { background: var(--white); border-bottom: 1px solid var(--border); padding: 12px 40px; }
+  .back-link { font-size: 13px; color: var(--mid); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: color .2s; }
+  .back-link:hover { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">Edu<span>Plus</span></div>
+  <div class="nav-links">
+    <a onclick="goScreen('s1')">Cursos</a>
+    <a>Categorias</a>
+    <a>Blog</a>
+  </div>
+  <div class="nav-right">
+    <button class="btn btn-ghost" onclick="goScreen('s3')">Minha Área</button>
+    <button class="btn btn-primary" onclick="goScreen('s1')">Explorar Cursos</button>
+  </div>
+</nav>
+
+<!-- ===== SCREEN 1: CATALOG ===== -->
+<div class="screen active" id="s1">
+  <div class="hero-band">
+    <div class="hero-eyebrow">Plataforma de Cursos Online</div>
+    <h1 class="hero-h1">Aprenda com quem<br><span>realmente entende</span></h1>
+    <p class="hero-sub">Acesso imediato ao conteúdo após a confirmação do pagamento. Estude no seu ritmo.</p>
+    <div class="hero-stats">
+      <div><div class="hstat-n">12.400+</div><div class="hstat-l">Alunos</div></div>
+      <div><div class="hstat-n">38</div><div class="hstat-l">Cursos</div></div>
+      <div><div class="hstat-n">4.9★</div><div class="hstat-l">Avaliação</div></div>
+    </div>
+  </div>
+
+  <div class="catalog-filters">
+    <span class="filter-label">Categoria</span>
+    <div class="tag active" onclick="filterTag(this)">Todos</div>
+    <div class="tag" onclick="filterTag(this)">Marketing Digital</div>
+    <div class="tag" onclick="filterTag(this)">Design</div>
+    <div class="tag" onclick="filterTag(this)">Tecnologia</div>
+    <div class="tag" onclick="filterTag(this)">Negócios</div>
+    <div class="tag" onclick="filterTag(this)">Finanças</div>
+  </div>
+
+  <div class="catalog-grid">
+    <div class="course-card" onclick="goDetail()">
+      <div class="course-thumb" style="background:linear-gradient(135deg,#f0ecff,#ddd6fe)">
+        📱<div class="course-badge badge-hot">🔥 Mais vendido</div>
+      </div>
+      <div class="course-body">
+        <div class="course-category">Marketing Digital</div>
+        <div class="course-name">Instagram para Negócios: Do Zero ao Cliente</div>
+        <div class="course-desc">Estratégias comprovadas para crescer no Instagram e converter seguidores em clientes.</div>
+        <div class="course-meta">
+          <span>⏱ 12h de conteúdo</span>
+          <span>📚 48 aulas</span>
+          <span>⭐ 4.9</span>
+        </div>
+        <div class="course-footer">
+          <div><div class="course-price">R$ 197 <span>R$ 397</span></div></div>
+          <button class="btn-buy">Comprar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="course-card" onclick="goDetail()">
+      <div class="course-thumb" style="background:linear-gradient(135deg,#ecfdf5,#a7f3d0)">
+        🎨<div class="course-badge badge-new">Novo</div>
+      </div>
+      <div class="course-body">
+        <div class="course-category">Design</div>
+        <div class="course-name">Canva Pro: Design Profissional Sem Experiência</div>
+        <div class="course-desc">Crie artes profissionais para redes sociais, apresentações e materiais de venda.</div>
+        <div class="course-meta">
+          <span>⏱ 8h de conteúdo</span>
+          <span>📚 32 aulas</span>
+          <span>⭐ 4.8</span>
+        </div>
+        <div class="course-footer">
+          <div><div class="course-price">R$ 147</div></div>
+          <button class="btn-buy">Comprar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="course-card" onclick="goDetail()">
+      <div class="course-thumb" style="background:linear-gradient(135deg,#fff7ed,#fed7aa)">
+        💰<div class="course-badge badge-sale">Oferta</div>
+      </div>
+      <div class="course-body">
+        <div class="course-category">Finanças</div>
+        <div class="course-name">Finanças Pessoais: Organize e Invista</div>
+        <div class="course-desc">Saia das dívidas, organize seu orçamento e comece a investir com segurança.</div>
+        <div class="course-meta">
+          <span>⏱ 10h de conteúdo</span>
+          <span>📚 40 aulas</span>
+          <span>⭐ 4.9</span>
+        </div>
+        <div class="course-footer">
+          <div><div class="course-price">R$ 89 <span>R$ 247</span></div></div>
+          <button class="btn-buy">Comprar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SCREEN 2: DETAIL + PURCHASE ===== -->
+<div class="screen" id="s2">
+  <div class="detail-hero">
+    <div>
+      <div class="detail-back" onclick="goScreen('s1')">← Voltar aos cursos</div>
+      <div class="detail-category">Marketing Digital</div>
+      <div class="detail-title">Instagram para Negócios:<br>Do Zero ao Cliente</div>
+      <div class="detail-sub">Aprenda a usar o Instagram como ferramenta de vendas. Estratégias reais de criadores que faturam com conteúdo.</div>
+      <div class="detail-meta">
+        <span>⭐ 4.9 (312 avaliações)</span>
+        <span>👥 2.847 alunos</span>
+        <span>⏱ 12h de conteúdo</span>
+        <span>📅 Atualizado jun 2026</span>
+      </div>
+    </div>
+    <div class="purchase-card">
+      <div class="purchase-preview">📱</div>
+      <div style="margin-bottom:12px">
+        <span class="purchase-price-big">R$ 197</span>
+        <span class="purchase-price-old">R$ 397</span>
+        <span class="purchase-off">-50%</span>
+      </div>
+      <div class="purchase-includes">
+        <div class="purchase-includes-title">O que está incluso</div>
+        <div class="include-item"><span class="include-icon">✓</span> 48 videoaulas em HD</div>
+        <div class="include-item"><span class="include-icon">✓</span> Acesso imediato após pagamento</div>
+        <div class="include-item"><span class="include-icon">✓</span> Acesso vitalício</div>
+        <div class="include-item"><span class="include-icon">✓</span> Certificado de conclusão</div>
+        <div class="include-item"><span class="include-icon">✓</span> Materiais para download</div>
+      </div>
+      <button class="btn-enroll" onclick="simulatePurchase()">Comprar agora · R$ 197</button>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="btn-enroll" style="background:var(--surface);color:var(--mid);font-size:12px;padding:10px" onclick="toast('PIX: copie o código e pague!')">PIX</button>
+        <button class="btn-enroll" style="background:var(--surface);color:var(--mid);font-size:12px;padding:10px" onclick="toast('Parcelamento: 12x R$ 18,90')">Parcelar</button>
+      </div>
+      <div class="purchase-guarantee">🔒 Pagamento seguro · Garantia de 7 dias</div>
+    </div>
+  </div>
+
+  <div class="detail-body">
+    <div>
+      <div class="curriculum-title">Conteúdo do Curso</div>
+      <div class="module">
+        <div class="module-header">
+          <div class="module-name">Módulo 1 — Fundamentos do Instagram</div>
+          <div class="module-count">6 aulas · 1h 20min</div>
+        </div>
+        <div class="lesson-list">
+          <div class="lesson-item"><span class="lesson-icon">▶</span> Introdução à plataforma <span class="lesson-free">Grátis</span></div>
+          <div class="lesson-item"><span class="lesson-icon">▶</span> Configurando o perfil profissional <span class="lesson-lock">🔒</span></div>
+          <div class="lesson-item"><span class="lesson-icon">▶</span> Entendendo o algoritmo <span class="lesson-lock">🔒</span></div>
+        </div>
+      </div>
+      <div class="module">
+        <div class="module-header">
+          <div class="module-name">Módulo 2 — Criação de Conteúdo</div>
+          <div class="module-count">10 aulas · 2h 45min</div>
+        </div>
+        <div class="lesson-list">
+          <div class="lesson-item"><span class="lesson-icon">▶</span> Tipos de conteúdo que vendem <span class="lesson-lock">🔒</span></div>
+          <div class="lesson-item"><span class="lesson-icon">▶</span> Reels que viralizam <span class="lesson-lock">🔒</span></div>
+        </div>
+      </div>
+      <div class="module">
+        <div class="module-header">
+          <div class="module-name">Módulo 3 — Vendas e Conversão</div>
+          <div class="module-count">12 aulas · 3h 10min</div>
+        </div>
+        <div class="lesson-list">
+          <div class="lesson-item"><span class="lesson-icon">▶</span> Funil de vendas pelo Direct <span class="lesson-lock">🔒</span></div>
+          <div class="lesson-item"><span class="lesson-icon">▶</span> Stories que convertem <span class="lesson-lock">🔒</span></div>
+        </div>
+      </div>
+    </div>
+    <div></div>
+  </div>
+</div>
+
+<!-- ===== SCREEN 3: STUDENT DASHBOARD ===== -->
+<div class="screen" id="s3">
+  <div class="dashboard-layout">
+    <div class="sidebar">
+      <div class="sidebar-user">
+        <div class="user-avatar">👩</div>
+        <div class="user-name">Maria Oliveira</div>
+        <div class="user-sub">Aluna desde jun 2026</div>
+      </div>
+      <div class="sidebar-label">Menu</div>
+      <div class="sidebar-item active"><span class="sidebar-icon">🏠</span> Meus Cursos</div>
+      <div class="sidebar-item" onclick="toast('Certificados disponíveis!')"><span class="sidebar-icon">🏆</span> Certificados</div>
+      <div class="sidebar-item" onclick="toast('Abrindo histórico...')"><span class="sidebar-icon">📋</span> Histórico</div>
+      <div class="sidebar-label">Conta</div>
+      <div class="sidebar-item" onclick="toast('Configurações da conta')"><span class="sidebar-icon">⚙️</span> Configurações</div>
+      <div class="sidebar-item" onclick="goScreen('s1')"><span class="sidebar-icon">🛒</span> Comprar mais cursos</div>
+    </div>
+    <div class="dashboard-main">
+      <div class="dash-welcome">
+        <h2>Olá, Maria! 👋</h2>
+        <p>Continue de onde parou. Seu progresso está salvo.</p>
+      </div>
+
+      <div class="access-banner">
+        <span>🔐</span>
+        <span>Acesso liberado automaticamente após confirmação do pagamento. Seus cursos ficam disponíveis para sempre.</span>
+      </div>
+
+      <div class="dash-stats">
+        <div class="stat-card">
+          <div class="stat-icon purple">📚</div>
+          <div><div class="stat-val">3</div><div class="stat-lbl">Cursos ativos</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green">✅</div>
+          <div><div class="stat-val">1</div><div class="stat-lbl">Concluídos</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon orange">⏱</div>
+          <div><div class="stat-val">24h</div><div class="stat-lbl">Estudadas</div></div>
+        </div>
+      </div>
+
+      <div class="section-title">Continuar estudando</div>
+      <div class="enrolled-grid">
+        <div class="enrolled-card" onclick="toast('Abrindo aula: Reels que viralizam...')">
+          <div class="enrolled-thumb" style="background:linear-gradient(135deg,#f0ecff,#ddd6fe)">📱</div>
+          <div class="enrolled-info">
+            <div class="enrolled-name">Instagram para Negócios</div>
+            <div class="enrolled-progress-label">Módulo 2 · Aula 3 de 10 · 65% concluído</div>
+            <div class="progress-bar"><div class="progress-fill" style="width:65%"></div></div>
+            <button class="continue-btn">▶ Continuar</button>
+          </div>
+        </div>
+        <div class="enrolled-card" onclick="toast('Abrindo aula: Sair das dívidas...')">
+          <div class="enrolled-thumb" style="background:linear-gradient(135deg,#fff7ed,#fed7aa)">💰</div>
+          <div class="enrolled-info">
+            <div class="enrolled-name">Finanças Pessoais</div>
+            <div class="enrolled-progress-label">Módulo 1 · Aula 2 de 8 · 18% concluído</div>
+            <div class="progress-bar"><div class="progress-fill" style="width:18%"></div></div>
+            <button class="continue-btn">▶ Continuar</button>
+          </div>
+        </div>
+        <div class="enrolled-card" onclick="toast('Abrindo aula: Ferramentas Canva...')">
+          <div class="enrolled-thumb" style="background:linear-gradient(135deg,#ecfdf5,#a7f3d0)">🎨</div>
+          <div class="enrolled-info">
+            <div class="enrolled-name">Canva Pro: Design Profissional</div>
+            <div class="enrolled-progress-label">Módulo 4 · Concluído ✅</div>
+            <div class="progress-bar"><div class="progress-fill" style="width:100%;background:var(--green)"></div></div>
+            <button class="continue-btn" style="background:var(--green-bg);color:var(--green)">🏆 Ver Certificado</button>
+          </div>
+        </div>
+        <div class="enrolled-card" onclick="goScreen('s1')">
+          <div class="enrolled-thumb" style="background:var(--surface);font-size:28px;color:var(--muted)">+</div>
+          <div class="enrolled-info" style="display:flex;align-items:center;height:100%">
+            <div>
+              <div class="enrolled-name" style="color:var(--accent)">Explorar mais cursos</div>
+              <div class="enrolled-progress-label">Descubra novos conteúdos</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toastEl"></div>
+
+<script>
+  function goScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    window.scrollTo(0,0);
+  }
+
+  function goDetail() { goScreen('s2'); }
+
+  function filterTag(el) {
+    document.querySelectorAll('.tag').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  let toastTimer;
+  function toast(msg) {
+    const el = document.getElementById('toastEl');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+  }
+
+  function simulatePurchase() {
+    toast('✅ Pagamento confirmado! Acesso liberado agora.');
+    setTimeout(() => goScreen('s3'), 1500);
+  }
+</script>
+</body>
+</html>
