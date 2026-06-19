@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IntelBot — Chatbot WhatsApp IA</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --wa-bg: #0b141a;
+    --wa-panel: #111b21;
+    --wa-surface: #202c33;
+    --wa-bubble-in: #202c33;
+    --wa-bubble-out: #005c4b;
+    --wa-green: #00a884;
+    --wa-green-light: #25d366;
+    --wa-text: #e9edef;
+    --wa-muted: #8696a0;
+    --wa-border: #313d45;
+    --wa-blue: #53bdeb;
+    --accent: #00a884;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #1a1a2e;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .demo-wrapper {
+    max-width: 900px;
+    width: 100%;
+  }
+
+  .demo-label {
+    text-align: center;
+    color: #aaa;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  /* PHONE SHELL */
+  .phone {
+    width: 360px;
+    height: 720px;
+    background: var(--wa-panel);
+    border-radius: 36px;
+    border: 8px solid #1a1a1a;
+    box-shadow: 0 0 0 2px #333, 0 40px 80px rgba(0,0,0,.6);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  /* STATUS BAR */
+  .status-bar {
+    background: var(--wa-panel);
+    padding: 8px 20px 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: var(--wa-text);
+    flex-shrink: 0;
+  }
+
+  .status-icons { display: flex; gap: 6px; align-items: center; font-size: 10px; }
+
+  /* WA HEADER */
+  .wa-header {
+    background: var(--wa-surface);
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--wa-border);
+  }
+
+  .back-arrow { color: var(--wa-green); font-size: 18px; cursor: pointer; }
+
+  .contact-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--wa-green), #128c7e);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .contact-info { flex: 1; }
+  .contact-name { font-size: 14px; color: var(--wa-text); font-weight: 500; }
+  .contact-status { font-size: 11px; color: var(--wa-green); }
+
+  .header-icons { display: flex; gap: 14px; color: var(--wa-muted); font-size: 16px; }
+
+  /* CHAT AREA */
+  .chat-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+    background: var(--wa-bg);
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.02'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .chat-area::-webkit-scrollbar { width: 4px; }
+  .chat-area::-webkit-scrollbar-thumb { background: var(--wa-border); border-radius: 2px; }
+
+  /* DATE DIVIDER */
+  .date-chip {
+    text-align: center;
+    margin: 8px 0;
+  }
+  .date-chip span {
+    background: var(--wa-surface);
+    color: var(--wa-muted);
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 6px;
+  }
+
+  /* BUBBLES */
+  .bubble-wrap {
+    display: flex;
+    margin: 2px 0;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: all .3s ease;
+  }
+
+  .bubble-wrap.show { opacity: 1; transform: translateY(0); }
+  .bubble-wrap.out { justify-content: flex-end; }
+  .bubble-wrap.in { justify-content: flex-start; }
+
+  .bubble {
+    max-width: 75%;
+    padding: 7px 10px 6px;
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.4;
+    position: relative;
+  }
+
+  .bubble.in-b {
+    background: var(--wa-bubble-in);
+    color: var(--wa-text);
+    border-top-left-radius: 2px;
+  }
+
+  .bubble.out-b {
+    background: var(--wa-bubble-out);
+    color: var(--wa-text);
+    border-top-right-radius: 2px;
+  }
+
+  .bubble-time {
+    font-size: 10px;
+    color: var(--wa-muted);
+    text-align: right;
+    margin-top: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 3px;
+  }
+
+  .check { color: var(--wa-blue); font-size: 12px; }
+
+  /* BOT INDICATOR */
+  .bot-tag {
+    display: inline-block;
+    background: rgba(0,168,132,.15);
+    border: 1px solid rgba(0,168,132,.3);
+    color: var(--wa-green);
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 3px;
+    margin-bottom: 4px;
+    font-weight: 500;
+    letter-spacing: .3px;
+  }
+
+  /* QUICK REPLIES */
+  .quick-replies {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 8px;
+  }
+
+  .qr-btn {
+    background: var(--wa-panel);
+    border: 1px solid var(--wa-green);
+    color: var(--wa-green);
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    text-align: center;
+    transition: all .2s;
+    font-family: inherit;
+  }
+
+  .qr-btn:hover { background: rgba(0,168,132,.15); }
+  .qr-btn:disabled { opacity: .4; cursor: default; }
+
+  /* TYPING INDICATOR */
+  .typing {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 10px 12px;
+    background: var(--wa-bubble-in);
+    border-radius: 8px;
+    border-top-left-radius: 2px;
+    width: fit-content;
+  }
+
+  .typing-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--wa-muted);
+    animation: typingBounce 1.2s infinite;
+  }
+
+  .typing-dot:nth-child(2) { animation-delay: .2s; }
+  .typing-dot:nth-child(3) { animation-delay: .4s; }
+
+  @keyframes typingBounce {
+    0% 60% 100% { transform: translateY(0); }
+    30% { transform: translateY(-4px); }
+  }
+
+  /* HUMAN HANDOFF */
+  .handoff-card {
+    background: var(--wa-surface);
+    border: 1px solid var(--wa-border);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-top: 4px;
+  }
+
+  .handoff-header {
+    background: rgba(0,168,132,.1);
+    border-bottom: 1px solid var(--wa-border);
+    padding: 8px 12px;
+    font-size: 11px;
+    color: var(--wa-green);
+    font-weight: 600;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+  }
+
+  .handoff-body { padding: 10px 12px; font-size: 12px; color: var(--wa-text); line-height: 1.5; }
+
+  .agent-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    padding: 8px;
+    background: var(--wa-panel);
+    border-radius: 6px;
+  }
+
+  .agent-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--wa-green-light); flex-shrink: 0; }
+  .agent-name { font-size: 12px; color: var(--wa-text); font-weight: 500; }
+  .agent-sub { font-size: 10px; color: var(--wa-muted); }
+
+  /* ANALYTICS PANEL */
+  .analytics {
+    background: var(--wa-surface);
+    border-top: 1px solid var(--wa-border);
+    padding: 10px 16px;
+    flex-shrink: 0;
+  }
+
+  .analytics-title {
+    font-size: 10px;
+    color: var(--wa-muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .analytics-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .metric {
+    flex: 1;
+    background: var(--wa-panel);
+    border-radius: 6px;
+    padding: 6px 8px;
+    text-align: center;
+  }
+
+  .metric-n { font-size: 15px; color: var(--wa-green); font-weight: bold; }
+  .metric-l { font-size: 9px; color: var(--wa-muted); letter-spacing: .3px; }
+
+  /* INPUT */
+  .chat-input {
+    background: var(--wa-surface);
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  .input-field {
+    flex: 1;
+    background: var(--wa-panel);
+    border: none;
+    border-radius: 20px;
+    padding: 8px 14px;
+    color: var(--wa-text);
+    font-size: 13px;
+    outline: none;
+  }
+
+  .input-field::placeholder { color: var(--wa-muted); }
+  .send-btn { color: var(--wa-green); font-size: 20px; cursor: pointer; }
+
+  /* RESTART */
+  .restart-btn {
+    display: block;
+    margin: 12px auto 0;
+    background: transparent;
+    border: 1px solid #444;
+    color: #888;
+    padding: 6px 18px;
+    border-radius: 20px;
+    font-size: 11px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all .2s;
+    letter-spacing: .5px;
+  }
+  .restart-btn:hover { border-color: var(--wa-green); color: var(--wa-green); }
+</style>
+</head>
+<body>
+
+<div class="demo-wrapper">
+  <div class="demo-label">Protótipo — Chatbot WhatsApp com IA · IntelBot</div>
+
+  <div class="phone">
+    <!-- STATUS BAR -->
+    <div class="status-bar">
+      <span>9:41</span>
+      <div class="status-icons">
+        <span>▐▐▐</span>
+        <span>WiFi</span>
+        <span>🔋</span>
+      </div>
+    </div>
+
+    <!-- WA HEADER -->
+    <div class="wa-header">
+      <div class="back-arrow">←</div>
+      <div class="contact-avatar">🤖</div>
+      <div class="contact-info">
+        <div class="contact-name">Atendimento · IntelBot</div>
+        <div class="contact-status">● online</div>
+      </div>
+      <div class="header-icons">
+        <span>📞</span>
+        <span>⋮</span>
+      </div>
+    </div>
+
+    <!-- CHAT AREA -->
+    <div class="chat-area" id="chatArea">
+      <div class="date-chip"><span>HOJE</span></div>
+    </div>
+
+    <!-- ANALYTICS -->
+    <div class="analytics">
+      <div class="analytics-title">Painel de desempenho — tempo real</div>
+      <div class="analytics-row">
+        <div class="metric"><div class="metric-n" id="m1">0</div><div class="metric-l">Msgs hoje</div></div>
+        <div class="metric"><div class="metric-n" id="m2">—</div><div class="metric-l">Resolvidos IA</div></div>
+        <div class="metric"><div class="metric-n" id="m3">—</div><div class="metric-l">Tempo médio</div></div>
+        <div class="metric"><div class="metric-n" id="m4">—</div><div class="metric-l">Escalados</div></div>
+      </div>
+    </div>
+
+    <!-- INPUT -->
+    <div class="chat-input">
+      <span style="color:var(--wa-muted);font-size:18px">😊</span>
+      <input class="input-field" placeholder="Mensagem" readonly>
+      <span class="send-btn">🎤</span>
+    </div>
+  </div>
+
+  <button class="restart-btn" onclick="restartDemo()">↺ Reiniciar demonstração</button>
+</div>
+
+<script>
+const chat = document.getElementById('chatArea');
+let step = 0;
+let running = false;
+let timers = [];
+
+function sleep(ms) {
+  return new Promise(r => {
+    const t = setTimeout(r, ms);
+    timers.push(t);
+  });
+}
+
+function addBubble(type, content, showBotTag) {
+  const wrap = document.createElement('div');
+  wrap.className = 'bubble-wrap ' + (type === 'out' ? 'out' : 'in');
+
+  const b = document.createElement('div');
+  b.className = 'bubble ' + (type === 'out' ? 'out-b' : 'in-b');
+
+  if (showBotTag) {
+    const tag = document.createElement('div');
+    tag.className = 'bot-tag';
+    tag.textContent = '🤖 IA';
+    b.appendChild(tag);
+  }
+
+  const txt = document.createElement('div');
+  txt.innerHTML = content;
+  b.appendChild(txt);
+
+  const time = document.createElement('div');
+  time.className = 'bubble-time';
+  const now = new Date();
+  time.innerHTML = `${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}` +
+    (type === 'out' ? ' <span class="check">✓✓</span>' : '');
+  b.appendChild(time);
+
+  wrap.appendChild(b);
+  chat.appendChild(wrap);
+  requestAnimationFrame(() => wrap.classList.add('show'));
+  chat.scrollTop = chat.scrollHeight;
+  return wrap;
+}
+
+function addTyping() {
+  const wrap = document.createElement('div');
+  wrap.className = 'bubble-wrap in';
+  wrap.innerHTML = '<div class="typing"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>';
+  chat.appendChild(wrap);
+  requestAnimationFrame(() => wrap.classList.add('show'));
+  chat.scrollTop = chat.scrollHeight;
+  return wrap;
+}
+
+function addQuickReplies(options, onSelect) {
+  const wrap = document.createElement('div');
+  wrap.className = 'bubble-wrap in';
+  const qr = document.createElement('div');
+  qr.className = 'quick-replies';
+  options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'qr-btn';
+    btn.textContent = opt.label;
+    btn.onclick = () => {
+      qr.querySelectorAll('.qr-btn').forEach(b => b.disabled = true);
+      onSelect(opt);
+    };
+    qr.appendChild(btn);
+  });
+  wrap.appendChild(qr);
+  chat.appendChild(wrap);
+  requestAnimationFrame(() => wrap.classList.add('show'));
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function addHandoff() {
+  const wrap = document.createElement('div');
+  wrap.className = 'bubble-wrap in';
+  const b = document.createElement('div');
+  b.className = 'bubble in-b';
+  b.style.maxWidth = '85%';
+
+  const tag = document.createElement('div');
+  tag.className = 'bot-tag';
+  tag.textContent = '🤖 IA';
+  b.appendChild(tag);
+
+  const card = document.createElement('div');
+  card.className = 'handoff-card';
+  card.innerHTML = `
+    <div class="handoff-header">🔄 Transferindo para atendente</div>
+    <div class="handoff-body">
+      Entendido. Vou conectar você com um de nossos especialistas agora mesmo.
+      <div class="agent-chip">
+        <div class="agent-dot"></div>
+        <div>
+          <div class="agent-name">Carla Souza</div>
+          <div class="agent-sub">Atendente disponível · responde em ~2 min</div>
+        </div>
+      </div>
+    </div>`;
+  b.appendChild(card);
+
+  const time = document.createElement('div');
+  time.className = 'bubble-time';
+  const now = new Date();
+  time.textContent = `${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
+  b.appendChild(time);
+
+  wrap.appendChild(b);
+  chat.appendChild(wrap);
+  requestAnimationFrame(() => wrap.classList.add('show'));
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function updateMetrics(msgs, resolved, time, escalated) {
+  document.getElementById('m1').textContent = msgs;
+  document.getElementById('m2').textContent = resolved != null ? resolved + '%' : '—';
+  document.getElementById('m3').textContent = time != null ? time + 's' : '—';
+  document.getElementById('m4').textContent = escalated != null ? escalated + '%' : '—';
+}
+
+async function runDemo() {
+  running = true;
+
+  // Step 1 — bot greets
+  await sleep(600);
+  let t = addTyping();
+  await sleep(1400);
+  t.remove();
+  addBubble('in', 'Olá! Bem-vindo ao atendimento. 👋<br><br>Sou o assistente virtual da empresa. Como posso ajudar você hoje?', true);
+  updateMetrics(1, null, null, null);
+
+  await sleep(800);
+  addQuickReplies([
+    { label: '📦 Status do meu pedido' },
+    { label: '💳 Informações de pagamento' },
+    { label: '🔄 Trocas e devoluções' },
+    { label: '👤 Falar com atendente' },
+  ], async (opt) => {
+    await sleep(300);
+    addBubble('out', opt.label);
+    updateMetrics(2, null, null, null);
+    await sleep(400);
+
+    if (opt.label.includes('Status')) {
+      await handleOrder();
+    } else if (opt.label.includes('Falar')) {
+      await handleHandoff();
+    } else {
+      await handleGeneric(opt.label);
+    }
+  });
+}
+
+async function handleOrder() {
+  let t = addTyping();
+  await sleep(1200);
+  t.remove();
+  addBubble('in', 'Claro! Para localizar seu pedido preciso do número. Por favor informe o código do pedido ou o CPF utilizado na compra.', true);
+  updateMetrics(3, null, null, null);
+
+  await sleep(900);
+  addBubble('out', 'CPF: 123.456.789-00');
+  updateMetrics(4, null, null, null);
+
+  await sleep(500);
+  let t2 = addTyping();
+  await sleep(1800);
+  t2.remove();
+  addBubble('in', '✅ <strong>Pedido #BR-48291</strong> encontrado.<br><br>📦 <strong>Status:</strong> Em trânsito<br>🚚 <strong>Transportadora:</strong> Correios PAC<br>📅 <strong>Previsão:</strong> 23 de junho<br>🔍 <strong>Rastreio:</strong> BR48291SP9BR<br><br>Posso ajudar com mais alguma coisa?', true);
+  updateMetrics(5, 78, 18, null);
+
+  await sleep(900);
+  addQuickReplies([
+    { label: '✅ Obrigado, resolvido!' },
+    { label: '❓ Tenho outra dúvida' },
+  ], async (opt) => {
+    addBubble('out', opt.label);
+    if (opt.label.includes('resolvido')) {
+      await sleep(400);
+      let t3 = addTyping();
+      await sleep(1000);
+      t3.remove();
+      addBubble('in', 'Ótimo! Fico feliz em ter ajudado. 😊<br><br>Se precisar de algo mais é só enviar uma mensagem aqui. Tenha um ótimo dia!', true);
+      updateMetrics(6, 82, 16, 12);
+    }
+  });
+}
+
+async function handleHandoff() {
+  let t = addTyping();
+  await sleep(1000);
+  t.remove();
+  addHandoff();
+  updateMetrics(3, null, null, null);
+  await sleep(1200);
+  addBubble('in', '👋 Oi! Aqui é a Carla. Vi que você quer falar com um atendente. Pode me contar o que está acontecendo?', false);
+  updateMetrics(4, 65, 22, 18);
+}
+
+async function handleGeneric(label) {
+  let t = addTyping();
+  await sleep(1500);
+  t.remove();
+  addBubble('in', `Entendi! Sobre <strong>${label.replace(/[^a-zA-ZÀ-ú\s]/g,'').trim()}</strong>:<br><br>Nossa política permite troca ou devolução em até <strong>30 dias</strong> após o recebimento. O produto deve estar sem uso e na embalagem original.<br><br>Quer que eu inicie o processo de troca ou devolução agora?`, true);
+  updateMetrics(4, 74, 20, null);
+
+  await sleep(800);
+  addQuickReplies([
+    { label: '✅ Iniciar processo' },
+    { label: '👤 Falar com atendente' },
+  ], async (opt) => {
+    addBubble('out', opt.label);
+    if (opt.label.includes('Iniciar')) {
+      await sleep(500);
+      let t2 = addTyping();
+      await sleep(1000);
+      t2.remove();
+      addBubble('in', 'Perfeito! Vou gerar o código de devolução e enviar por email nos próximos minutos. Mais alguma dúvida?', true);
+      updateMetrics(5, 79, 17, 14);
+    } else {
+      await sleep(400);
+      await handleHandoff();
+    }
+  });
+}
+
+function restartDemo() {
+  timers.forEach(t => clearTimeout(t));
+  timers = [];
+  running = false;
+  chat.innerHTML = '<div class="date-chip"><span>HOJE</span></div>';
+  updateMetrics(0, null, null, null);
+  setTimeout(runDemo, 400);
+}
+
+window.addEventListener('load', () => setTimeout(runDemo, 800));
+</script>
+</body>
+</html>
