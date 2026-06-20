@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MonitorHub - Painel de Monitoramento e Alertas</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+    <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --gold: #C9961A;
+            --gold-light: #F5C842;
+            --gold-dim: rgba(201,150,26,0.14);
+            --gold-glow: rgba(201,150,26,0.08);
+            --bg-deep: #09091A;
+            --bg-card: #111127;
+            --bg-card2: #181832;
+            --text: #F0F0FF;
+            --text-muted: #7878A0;
+            --success: #22C55E;
+            --warning: #F59E0B;
+            --danger: #EF4444;
+            --info: #3B82F6;
+            --border: rgba(201,150,26,0.16);
+            --border-soft: rgba(255,255,255,0.06);
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: var(--bg-deep);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ---- SIDEBAR ---- */
+        .sidebar {
+            position: fixed;
+            left: 0; top: 0;
+            width: 248px; height: 100vh;
+            background: var(--bg-card);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            z-index: 200;
+            transition: transform 0.3s cubic-bezier(.4,0,.2,1);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            padding: 24px 20px 22px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo-mark {
+            width: 38px; height: 38px;
+            background: linear-gradient(135deg, var(--gold), var(--gold-light));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 19px;
+            color: #09091A;
+            flex-shrink: 0;
+        }
+
+        .logo-name {
+            font-size: 18px;
+            font-weight: 900;
+            letter-spacing: -0.3px;
+        }
+
+        .logo-name span { color: var(--gold-light); }
+
+        .nav {
+            flex: 1;
+            padding: 14px 10px;
+            overflow-y: auto;
+        }
+
+        .nav-group-label {
+            font-size: 9.5px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            padding: 10px 10px 6px;
+            margin-top: 8px;
+        }
+
+        .nav-group-label:first-child { margin-top: 0; }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 10px;
+            border-radius: 9px;
+            cursor: pointer;
+            font-size: 13.5px;
+            font-weight: 600;
+            color: var(--text-muted);
+            transition: all 0.18s;
+            margin-bottom: 1px;
+            position: relative;
+        }
+
+        .nav-item:hover { background: var(--gold-glow); color: var(--text); }
+
+        .nav-item.active {
+            background: var(--gold-dim);
+            color: var(--gold-light);
+            border: 1px solid rgba(201,150,26,0.25);
+        }
+
+        .nav-item i { font-size: 17px; flex-shrink: 0; }
+
+        .nav-badge {
+            margin-left: auto;
+            background: var(--danger);
+            color: #fff;
+            font-size: 9.5px;
+            font-weight: 800;
+            padding: 2px 6px;
+            border-radius: 20px;
+            min-width: 18px;
+            text-align: center;
+        }
+
+        .sidebar-foot {
+            padding: 14px 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        .user-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-ava {
+            width: 34px; height: 34px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--gold), var(--gold-light));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 800;
+            color: #09091A;
+            flex-shrink: 0;
+        }
+
+        .user-name { font-size: 13px; font-weight: 700; }
+        .user-role { font-size: 11px; color: var(--text-muted); }
+
+        /* ---- MAIN ---- */
+        .main {
+            margin-left: 248px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ---- TOPBAR ---- */
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 28px;
+            height: 60px;
+            background: rgba(9,9,26,0.85);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .topbar-left { display: flex; align-items: center; gap: 14px; }
+
+        .burger {
+            display: none;
+            width: 34px; height: 34px;
+            border-radius: 8px;
+            background: var(--bg-card2);
+            border: 1px solid var(--border);
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 17px;
+            color: var(--text-muted);
+        }
+
+        .page-title {
+            font-size: 17px;
+            font-weight: 800;
+        }
+
+        .breadcrumb {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-left: 4px;
+        }
+
+        .topbar-right { display: flex; align-items: center; gap: 10px; }
+
+        .api-pill {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 5px 12px;
+            background: rgba(34,197,94,0.1);
+            border: 1px solid rgba(34,197,94,0.28);
+            border-radius: 20px;
+            font-size: 11.5px;
+            font-weight: 700;
+            color: var(--success);
+        }
+
+        .api-dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: blink 2s ease-in-out infinite;
+        }
+
+        @keyframes blink {
+            0%,100% { opacity:1; transform:scale(1); }
+            50% { opacity:.5; transform:scale(.75); }
+        }
+
+        .icon-btn {
+            width: 34px; height: 34px;
+            border-radius: 8px;
+            background: var(--bg-card2);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 17px;
+            position: relative;
+            transition: all 0.18s;
+            color: var(--text-muted);
+        }
+
+        .icon-btn:hover { border-color: var(--gold); color: var(--gold-light); }
+
+        .red-dot {
+            position: absolute;
+            top: 5px; right: 5px;
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            background: var(--danger);
+            border: 2px solid var(--bg-deep);
+        }
+
+        /* ---- PAGES ---- */
+        .page { padding: 26px 28px; display: none; animation: fadeIn .25s ease; }
+        .page.active { display: block; }
+
+        @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+
+        /* reveal */
+        .rev {
+            opacity: 0;
+            transform: translateY(18px);
+            transition: opacity .45s ease, transform .45s ease;
+        }
+        .rev.in { opacity:1; transform:none; }
+
+        /* ---- KPI GRID ---- */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 22px;
+        }
+
+        .kpi {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 20px 20px 18px;
+            position: relative;
+            overflow: hidden;
+            cursor: default;
+            transition: transform .2s, box-shadow .2s;
+        }
+
+        .kpi:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,0,0,.35); }
+
+        .kpi-stripe {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+        }
+
+        .kpi-stripe.g { background: linear-gradient(90deg, var(--gold), var(--gold-light)); }
+        .kpi-stripe.s { background: linear-gradient(90deg, #22C55E, #4ADE80); }
+        .kpi-stripe.w { background: linear-gradient(90deg, #F59E0B, #FCD34D); }
+        .kpi-stripe.d { background: linear-gradient(90deg, #EF4444, #F87171); }
+
+        .kpi-ico {
+            width: 38px; height: 38px;
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            margin-bottom: 12px;
+        }
+
+        .kpi-ico.g { background:rgba(201,150,26,.14); color:var(--gold-light); }
+        .kpi-ico.s { background:rgba(34,197,94,.12); color:var(--success); }
+        .kpi-ico.w { background:rgba(245,158,11,.12); color:var(--warning); }
+        .kpi-ico.d { background:rgba(239,68,68,.12); color:var(--danger); }
+
+        .kpi-val { font-size: 30px; font-weight: 900; line-height: 1; margin-bottom: 3px; }
+        .kpi-val sup { font-size: 15px; font-weight: 700; vertical-align: middle; }
+
+        .kpi-lbl {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: .5px;
+        }
+
+        .kpi-tag {
+            position: absolute;
+            top: 18px; right: 16px;
+            font-size: 10.5px;
+            font-weight: 800;
+            padding: 2px 7px;
+            border-radius: 6px;
+        }
+
+        .kpi-tag.up { background:rgba(34,197,94,.12); color:var(--success); }
+        .kpi-tag.dn { background:rgba(239,68,68,.12); color:var(--danger); }
+
+        /* ---- CHARTS ROW ---- */
+        .charts-row {
+            display: grid;
+            grid-template-columns: 1.9fr 1fr;
+            gap: 16px;
+            margin-bottom: 22px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 22px;
+        }
+
+        .card-hdr {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 18px;
+        }
+
+        .card-title { font-size: 14px; font-weight: 800; }
+        .card-sub { font-size: 11px; color:var(--text-muted); margin-top:2px; font-weight:600; }
+
+        .legend-row { display:flex; gap:14px; }
+        .leg { display:flex; align-items:center; gap:5px; font-size:11px; color:var(--text-muted); font-weight:700; }
+        .leg-dot { width:7px; height:7px; border-radius:50%; }
+
+        /* ---- ALERT LIST ---- */
+        .alert-list { }
+
+        .al-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 11px 0;
+            border-bottom: 1px solid var(--border-soft);
+        }
+
+        .al-item:last-child { border-bottom: none; }
+
+        .al-ico {
+            width: 34px; height: 34px;
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            flex-shrink: 0;
+        }
+
+        .al-ico.crit { background:rgba(239,68,68,.14); color:var(--danger); }
+        .al-ico.warn { background:rgba(245,158,11,.14); color:var(--warning); }
+        .al-ico.info { background:rgba(59,130,246,.14); color:var(--info); }
+        .al-ico.ok   { background:rgba(34,197,94,.14);  color:var(--success); }
+
+        .al-body { flex:1; }
+        .al-title { font-size:13px; font-weight:700; margin-bottom:1px; }
+        .al-meta  { font-size:11px; color:var(--text-muted); }
+
+        .badge {
+            font-size: 10px;
+            font-weight: 800;
+            padding: 2px 9px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: .4px;
+            white-space: nowrap;
+        }
+
+        .b-crit { background:rgba(239,68,68,.14); color:var(--danger);   border:1px solid rgba(239,68,68,.3); }
+        .b-warn { background:rgba(245,158,11,.14); color:var(--warning);  border:1px solid rgba(245,158,11,.3); }
+        .b-info { background:rgba(59,130,246,.14);  color:var(--info);    border:1px solid rgba(59,130,246,.3); }
+        .b-ok   { background:rgba(34,197,94,.14);   color:var(--success); border:1px solid rgba(34,197,94,.3); }
+
+        /* ---- ALERTS PAGE ---- */
+        .filter-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 18px;
+        }
+
+        .fb {
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text-muted);
+            transition: all .18s;
+        }
+
+        .fb:hover, .fb.on {
+            background: var(--gold-dim);
+            border-color: rgba(201,150,26,.35);
+            color: var(--gold-light);
+        }
+
+        .alerts-tbl {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            overflow: hidden;
+        }
+
+        .tbl-head, .tbl-row {
+            display: grid;
+            grid-template-columns: 28px 1fr 140px 100px 95px 88px;
+            align-items: center;
+            padding: 12px 18px;
+            gap: 12px;
+        }
+
+        .tbl-head {
+            background: var(--bg-card2);
+            border-bottom: 1px solid var(--border);
+            font-size: 10.5px;
+            font-weight: 800;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: .5px;
+        }
+
+        .tbl-row {
+            border-bottom: 1px solid var(--border-soft);
+            transition: background .14s;
+        }
+
+        .tbl-row:hover { background: rgba(255,255,255,.025); }
+        .tbl-row:last-child { border-bottom: none; }
+
+        .sev-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+        }
+
+        .sev-crit { background:var(--danger); box-shadow:0 0 6px var(--danger); }
+        .sev-warn { background:var(--warning); }
+        .sev-info { background:var(--info); }
+        .sev-ok   { background:var(--success); }
+
+        .row-title { font-size:13px; font-weight:700; }
+        .row-src   { font-size:11px; color:var(--text-muted); margin-top:1px; }
+        .row-time  { font-size:12px; color:var(--text-muted); font-weight:600; }
+        .row-val   { font-size:13px; font-weight:800; }
+
+        /* ---- BOTS PAGE ---- */
+        .bots-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .bot-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 20px;
+        }
+
+        .bot-hdr {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 14px;
+        }
+
+        .bot-name { font-size: 14px; font-weight: 800; margin-bottom: 3px; }
+        .bot-desc { font-size: 11.5px; color: var(--text-muted); font-weight: 600; line-height: 1.4; }
+
+        .toggle {
+            width: 42px; height: 23px;
+            border-radius: 12px;
+            cursor: pointer;
+            position: relative;
+            transition: background .25s;
+            flex-shrink: 0;
+        }
+
+        .toggle.on  { background: var(--gold); }
+        .toggle.off { background: rgba(255,255,255,.14); }
+
+        .toggle-knob {
+            position: absolute;
+            top: 3px;
+            width: 17px; height: 17px;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 1px 5px rgba(0,0,0,.3);
+            transition: left .25s;
+        }
+
+        .toggle.on  .toggle-knob { left: 22px; }
+        .toggle.off .toggle-knob { left: 3px; }
+
+        .bot-rule {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: var(--bg-card2);
+            border-radius: 8px;
+            margin-bottom: 6px;
+            font-size: 12.5px;
+        }
+
+        .bot-rule-k { font-weight: 600; color: var(--text-muted); }
+        .bot-rule-v { font-weight: 800; color: var(--gold-light); }
+
+        .bot-stats {
+            display: flex;
+            gap: 0;
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid var(--border);
+        }
+
+        .bs { flex: 1; text-align: center; }
+        .bs + .bs { border-left: 1px solid var(--border); }
+        .bs-val { font-size: 19px; font-weight: 900; color: var(--gold-light); line-height: 1; }
+        .bs-lbl { font-size: 9.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .4px; margin-top: 3px; }
+
+        /* ---- VIEW ALL LINK ---- */
+        .view-all {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--gold);
+            cursor: pointer;
+            transition: color .15s;
+        }
+
+        .view-all:hover { color: var(--gold-light); }
+
+        /* ---- MOBILE OVERLAY ---- */
+        .overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,.6);
+            z-index: 150;
+        }
+
+        @media (max-width: 960px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .overlay.show { display: block; }
+            .main { margin-left: 0; }
+            .burger { display: flex; }
+            .kpi-grid { grid-template-columns: 1fr 1fr; }
+            .charts-row { grid-template-columns: 1fr; }
+            .bots-grid { grid-template-columns: 1fr; }
+            .page { padding: 18px 16px; }
+            .tbl-head, .tbl-row { grid-template-columns: 24px 1fr 80px 60px; }
+            .tbl-head > *:nth-child(5),
+            .tbl-head > *:nth-child(6),
+            .tbl-row  > *:nth-child(5),
+            .tbl-row  > *:nth-child(6) { display: none; }
+        }
+
+        @media (max-width: 480px) {
+            .kpi-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+            .kpi-val { font-size: 24px; }
+            .topbar { padding: 0 14px 0 52px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+    <div class="logo">
+        <div class="logo-mark"><i class="ph-fill ph-chart-line-up"></i></div>
+        <div class="logo-name">Monitor<span>Hub</span></div>
+    </div>
+
+    <nav class="nav">
+        <div class="nav-group-label">Principal</div>
+        <div class="nav-item active" id="nav-dashboard" onclick="go('dashboard',this)">
+            <i class="ph-fill ph-squares-four"></i> Dashboard
+        </div>
+        <div class="nav-item" id="nav-alertas" onclick="go('alertas',this)">
+            <i class="ph-fill ph-bell-ringing"></i> Alertas
+            <span class="nav-badge">5</span>
+        </div>
+        <div class="nav-item" id="nav-bots" onclick="go('bots',this)">
+            <i class="ph-fill ph-robot"></i> Bots
+        </div>
+
+        <div class="nav-group-label">Dados</div>
+        <div class="nav-item" onclick="go('dashboard',document.getElementById('nav-dashboard'))">
+            <i class="ph-fill ph-plugs-connected"></i> Integrações
+        </div>
+        <div class="nav-item" onclick="go('dashboard',document.getElementById('nav-dashboard'))">
+            <i class="ph-fill ph-chart-bar"></i> Relatórios
+        </div>
+
+        <div class="nav-group-label">Configuração</div>
+        <div class="nav-item" onclick="go('dashboard',document.getElementById('nav-dashboard'))">
+            <i class="ph-fill ph-gear-six"></i> Configurações
+        </div>
+        <div class="nav-item" onclick="go('dashboard',document.getElementById('nav-dashboard'))">
+            <i class="ph-fill ph-users"></i> Usuários
+        </div>
+    </nav>
+
+    <div class="sidebar-foot">
+        <div class="user-row">
+            <div class="user-ava">RA</div>
+            <div>
+                <div class="user-name">Reyk Admin</div>
+                <div class="user-role">Administrador</div>
+            </div>
+        </div>
+    </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+    <!-- TOPBAR -->
+    <header class="topbar">
+        <div class="topbar-left">
+            <div class="burger" onclick="openSidebar()"><i class="ph-fill ph-list"></i></div>
+            <div>
+                <span class="page-title" id="topTitle">Dashboard</span>
+                <span class="breadcrumb" id="topSub">Visão geral</span>
+            </div>
+        </div>
+        <div class="topbar-right">
+            <div class="api-pill"><div class="api-dot"></div> API Conectada</div>
+            <div class="icon-btn">
+                <i class="ph-fill ph-bell"></i>
+                <span class="red-dot"></span>
+            </div>
+            <div class="icon-btn"><i class="ph-fill ph-user-circle"></i></div>
+        </div>
+    </header>
+
+    <!-- ===== DASHBOARD PAGE ===== -->
+    <div class="page active" id="page-dashboard">
+        <!-- KPIs -->
+        <div class="kpi-grid">
+            <div class="kpi rev" style="transition-delay:.05s">
+                <div class="kpi-stripe g"></div>
+                <div class="kpi-ico g"><i class="ph-fill ph-activity"></i></div>
+                <div class="kpi-tag up">+12.4%</div>
+                <div class="kpi-val"><span id="k1">0</span></div>
+                <div class="kpi-lbl">Requisições / hora</div>
+            </div>
+            <div class="kpi rev" style="transition-delay:.12s">
+                <div class="kpi-stripe s"></div>
+                <div class="kpi-ico s"><i class="ph-fill ph-check-circle"></i></div>
+                <div class="kpi-tag up">SLA ok</div>
+                <div class="kpi-val"><span id="k2">0</span><sup>%</sup></div>
+                <div class="kpi-lbl">Uptime da API</div>
+            </div>
+            <div class="kpi rev" style="transition-delay:.19s">
+                <div class="kpi-stripe w"></div>
+                <div class="kpi-ico w"><i class="ph-fill ph-warning"></i></div>
+                <div class="kpi-tag dn">2 críticos</div>
+                <div class="kpi-val"><span id="k3">0</span></div>
+                <div class="kpi-lbl">Alertas Ativos</div>
+            </div>
+            <div class="kpi rev" style="transition-delay:.26s">
+                <div class="kpi-stripe d"></div>
+                <div class="kpi-ico d"><i class="ph-fill ph-clock"></i></div>
+                <div class="kpi-tag up">-18ms</div>
+                <div class="kpi-val"><span id="k4">0</span><sup>ms</sup></div>
+                <div class="kpi-lbl">Latência média</div>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="charts-row">
+            <div class="card rev" style="transition-delay:.33s">
+                <div class="card-hdr">
+                    <div>
+                        <div class="card-title">Volume de Requisições</div>
+                        <div class="card-sub">Últimas 24 horas</div>
+                    </div>
+                    <div class="legend-row">
+                        <div class="leg"><div class="leg-dot" style="background:var(--gold)"></div>Hoje</div>
+                        <div class="leg"><div class="leg-dot" style="background:rgba(201,150,26,.35)"></div>Ontem</div>
+                    </div>
+                </div>
+                <div style="position:relative;height:190px">
+                    <canvas id="lineChart"></canvas>
+                </div>
+            </div>
+
+            <div class="card rev" style="transition-delay:.4s">
+                <div class="card-hdr">
+                    <div>
+                        <div class="card-title">Alertas por Tipo</div>
+                        <div class="card-sub">Esta semana</div>
+                    </div>
+                </div>
+                <div style="position:relative;height:190px">
+                    <canvas id="donutChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent alerts -->
+        <div class="card rev" style="transition-delay:.47s">
+            <div class="card-hdr">
+                <div class="card-title">Alertas Recentes</div>
+                <div class="view-all" onclick="go('alertas',document.getElementById('nav-alertas'))">
+                    Ver todos <i class="ph ph-arrow-right"></i>
+                </div>
+            </div>
+
+            <div class="alert-list">
+                <div class="al-item">
+                    <div class="al-ico crit"><i class="ph-fill ph-x-circle"></i></div>
+                    <div class="al-body">
+                        <div class="al-title">Taxa de erro acima do limite</div>
+                        <div class="al-meta">Endpoint /api/v2/data &mdash; há 3 minutos</div>
+                    </div>
+                    <span class="badge b-crit">Crítico</span>
+                </div>
+                <div class="al-item">
+                    <div class="al-ico warn"><i class="ph-fill ph-warning-circle"></i></div>
+                    <div class="al-body">
+                        <div class="al-title">Latência elevada detectada</div>
+                        <div class="al-meta">Serviço de processamento &mdash; há 18 minutos</div>
+                    </div>
+                    <span class="badge b-warn">Aviso</span>
+                </div>
+                <div class="al-item">
+                    <div class="al-ico warn"><i class="ph-fill ph-currency-circle-dollar"></i></div>
+                    <div class="al-body">
+                        <div class="al-title">Cota da API paga em 85%</div>
+                        <div class="al-meta">Limite mensal &mdash; há 2 horas</div>
+                    </div>
+                    <span class="badge b-warn">Aviso</span>
+                </div>
+                <div class="al-item">
+                    <div class="al-ico info"><i class="ph-fill ph-trend-up"></i></div>
+                    <div class="al-body">
+                        <div class="al-title">Pico de tráfego registrado</div>
+                        <div class="al-meta">API Principal &mdash; há 42 minutos</div>
+                    </div>
+                    <span class="badge b-info">Info</span>
+                </div>
+                <div class="al-item">
+                    <div class="al-ico ok"><i class="ph-fill ph-check-circle"></i></div>
+                    <div class="al-body">
+                        <div class="al-title">Serviço de backup restaurado</div>
+                        <div class="al-meta">Database cluster &mdash; há 1 hora</div>
+                    </div>
+                    <span class="badge b-ok">Resolvido</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== ALERTAS PAGE ===== -->
+    <div class="page" id="page-alertas">
+        <div class="filter-row rev">
+            <div class="fb on" onclick="filt(this)">Todos (20)</div>
+            <div class="fb" onclick="filt(this)">Crítico (2)</div>
+            <div class="fb" onclick="filt(this)">Aviso (8)</div>
+            <div class="fb" onclick="filt(this)">Info (5)</div>
+            <div class="fb" onclick="filt(this)">Resolvido (5)</div>
+        </div>
+
+        <div class="alerts-tbl rev" style="transition-delay:.1s">
+            <div class="tbl-head">
+                <div></div>
+                <div>Alerta</div>
+                <div>Origem</div>
+                <div>Momento</div>
+                <div>Valor</div>
+                <div>Status</div>
+            </div>
+
+            <div class="tbl-row">
+                <div><div class="sev-dot sev-crit"></div></div>
+                <div><div class="row-title">Taxa de erro &gt; 5%</div><div class="row-src">Endpoint /api/v2/data</div></div>
+                <div style="font-size:12px;color:var(--text-muted)">API Principal</div>
+                <div class="row-time">há 3 min</div>
+                <div class="row-val" style="color:var(--danger)">7.3%</div>
+                <div><span class="badge b-crit">Crítico</span></div>
+            </div>
+
+            <div class="tbl-row">
+                <div><div class="sev-dot sev-crit"></div></div>
+                <div><div class="row-title">Cota API em 95%</div><div class="row-src">Limite mensal atingindo</div></div>
+                <div style="font-size:12px;color:var(--text-muted)">Cobrança</div>
+                <div class="row-time">há 11 min</div>
+                <div class="row-val" style="color:var(--danger)">95%</div>
+                <div><span class="badge b-crit">Crítico</span></div>
+            </div>
+
+            <div class="tbl-row">
+                <div><div class="sev-dot sev-warn"></div></div>
+                <div><div class="row-title">Latência p95 acima do SLA</div><div class="row-src">Serviço de processamento</div></div>
+                <div style="font-size:12px;color:var(--text-muted)">Performance</div>
+                <div class="row-time">há 18 min</div>
+                <div class="row-val" style="color:var(--warning)">480ms</div>
+                <div><span class="badge b-warn">Aviso</span></div>
+            </div>
+
+            <div class="tbl-row">
+                <div><div class="sev-dot sev-warn"></div></div>
+                <div><div class="row-title">Cota em 85% do limite</div><div class="row-src">API paga &mdash; plano atual</div></div>
+                <div style="font-size:12px;color:var(--text-muted)">Cobrança</div>
+                <div class="row-time">há 2 h</div>
+                <div class="row-val" style="color:var(--warning)">85%</div>
+                <div><span class="badge b-warn">Aviso</span></div>
+            </div>
+
+            <div class="tbl-row">
+                <div><div class="sev-dot sev-warn"></div></div>
+                <div><div class="row-title">Tempo de resposta degradado</div><div class="row-src">Endpoint /api/reports</div></div>
+                <div style="font-size:12px;color:var(--text-muted)">Performance</div>
+                <div class="row-time">há 3 h</div>
+                <div class="row-val" style="color:var(--warning)">620ms</div>
+                <div><span class="badge b-warn">Aviso</span></div>
+            </div>
+
+            <div class="tbl-row">
+                <div><div class="sev-dot sev-info"></div></div>
+                <div><div class="row-title">Pico de tráfego detectado</div><div class="row-src">API Principal</div></div>
+                <div style="font-size:12px;color:var(--text-muted)">Tráfego</div>
+                <div class="row-time">há 42 min</div>
+                <div class="row-val" style="color:var(--info)">2.1k/min</div>
+                <div><span class="badge b-info">Info</span></div>
+            </div>
+
+            <div class="tbl-row">
+                <div><div class="sev-dot sev-info"></div></div>
+                <div><div class="row-title">Deploy concluído</div><div class="row-src">Ambiente de produção</div></div>
+                <div style="font-size:12px;color:var(--text-muted)">Sistema</div>
+                <div class="row-time">há 1 h</div>
+                <div class="row-val" style="color:var(--info)">v2.4.1</div>
+                <div><span class="badge b-info">Info</span></div>
+            </div>
+
+            <div class="tbl-row">
+                <div><div class="sev-dot sev-ok"></div></div>
+                <div><div class="row-title">Backup restaurado</div><div class="row-src">Database cluster</div></div>
+                <div style="font-size:12px;color:var(--text-muted)">Banco de dados</div>
+                <div class="row-time">há 1 h</div>
+                <div class="row-val" style="color:var(--success)">OK</div>
+                <div><span class="badge b-ok">Resolvido</span></div>
+            </div>
+
+            <div class="tbl-row">
+                <div><div class="sev-dot sev-ok"></div></div>
+                <div><div class="row-title">Falha de conexão recuperada</div><div class="row-src">Banco de dados primário</div></div>
+                <div style="font-size:12px;color:var(--text-muted)">Conectividade</div>
+                <div class="row-time">há 3 h</div>
+                <div class="row-val" style="color:var(--success)">OK</div>
+                <div><span class="badge b-ok">Resolvido</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== BOTS PAGE ===== -->
+    <div class="page" id="page-bots">
+        <div class="bots-grid">
+
+            <div class="bot-card rev" style="transition-delay:.05s">
+                <div class="bot-hdr">
+                    <div>
+                        <div class="bot-name"><i class="ph-fill ph-warning" style="color:var(--danger)"></i> Bot Crítico</div>
+                        <div class="bot-desc">Disparo imediato para eventos de alta severidade</div>
+                    </div>
+                    <div class="toggle on" onclick="this.classList.toggle('on');this.classList.toggle('off')"><div class="toggle-knob"></div></div>
+                </div>
+                <div class="bot-rule"><span class="bot-rule-k">Condição de disparo</span><span class="bot-rule-v">Taxa de erro &gt; 5%</span></div>
+                <div class="bot-rule"><span class="bot-rule-k">Canal de notificação</span><span class="bot-rule-v">WhatsApp + E-mail</span></div>
+                <div class="bot-rule"><span class="bot-rule-k">Verificação a cada</span><span class="bot-rule-v">1 minuto</span></div>
+                <div class="bot-rule"><span class="bot-rule-k">Silêncio pós-disparo</span><span class="bot-rule-v">10 minutos</span></div>
+                <div class="bot-stats">
+                    <div class="bs"><div class="bs-val">24</div><div class="bs-lbl">Disparos / mês</div></div>
+                    <div class="bs"><div class="bs-val">1.8m</div><div class="bs-lbl">Tempo médio</div></div>
+                    <div class="bs"><div class="bs-val">100%</div><div class="bs-lbl">Precisão</div></div>
+                </div>
+            </div>
+
+            <div class="bot-card rev" style="transition-delay:.12s">
+                <div class="bot-hdr">
+                    <div>
+                        <div class="bot-name"><i class="ph-fill ph-currency-circle-dollar" style="color:var(--warning)"></i> Bot Cota</div>
+                        <div class="bot-desc">Monitora consumo da API paga em tempo real</div>
+                    </div>
+                    <div class="toggle on" onclick="this.classList.toggle('on');this.classList.toggle('off')"><div class="toggle-knob"></div></div>
+                </div>
+                <div class="bot-rule"><span class="bot-rule-k">Aviso em</span><span class="bot-rule-v">80% da cota</span></div>
+                <div class="bot-rule"><span class="bot-rule-k">Alerta crítico em</span><span class="bot-rule-v">95% da cota</span></div>
+                <div class="bot-rule"><span class="bot-rule-k">Canal de notificação</span><span class="bot-rule-v">E-mail</span></div>
+                <div class="bot-rule"><span class="bot-rule-k">Verificação a cada</span><span class="bot-rule-v">1 hora</span></div>
+                <div class="bot-stats">
+                    <div class="bs"><div class="bs-val">6</div><div class="bs-lbl">Disparos / mês</div></div>
+                    <div class="bs"><div class="bs-val">58m</div><div class="bs-lbl">Tempo médio</div></div>
+                    <div class="bs"><div class="bs-val">100%</div><div class="bs-lbl">Precisão</div></div>
+                </div>
+            </div>
+
+            <div class="bot-card rev" style="transition-delay:.19s">
+                <div class="bot-hdr">
+                    <div>
+                        <div class="bot-name"><i class="ph-fill ph-gauge" style="color:var(--info)"></i> Bot Performance</div>
+                        <div class="bot-desc">Alerta quando latência ultrapassa o SLA</div>
+                    </div>
+                    <div class="toggle on" onclick="this.classList.toggle('on');this.classList.toggle('off')"><div class="toggle-knob"></div></div>
+                </div>
+                <div class="bot-rule"><span class="bot-rule-k">Limite de latência</span><span class="bot-rule-v">300ms (p95)</span></div>
+                <div class="bot-rule"><span class="bot-rule-k">Canal de notificação</span><span class="bot-rule-v">Slack</span></div>
+                <div class="bot-rule"><span class="bot-rule-k">Janela de avaliação</span><span class="bot-rule-v">5 minutos</span></div>
+                <div class="bot-rule"><span class="bot-rule-k">Mínimo de amostras</span><span class="bot-rule-v">50 requisições</span></div>
+                <div class="bot-stats">
+                    <div class="bs"><div class="bs-val">11</div><div class="bs-lbl">Disparos / mês</div></div>
+                    <div class="bs"><div class="bs-val">4.2m</div><div class="bs-lbl">Tempo médio</div></div>
+                    <div class="bs"><div class="bs-val">97%</div><div class="bs-lbl">Precisão</div></div>
+                </div>
+            </div>
+
+            <div class="bot-card rev" style="transition-delay:.26s">
+                <div class="bot-hdr">
+                    <div>
+                        <div class="bot-name"><i class="ph-fill ph-trend-up" style="color:var(--success)"></i> Bot Tráfego</div>
+                        <div class="bot-desc">Detecta picos e quedas anômalas de volume</div>
+                    </div>
+                    <div class="toggle off" onclick="this.classList.toggle('on');this.classList.toggle('off')"><div class="toggle-knob"></div></div>
+                </div>
+                <div class="bot-rule"><span class="bot-rule-k">Pico para alerta</span><span class="bot-rule-v">+150% da média</span></div>
+                <div class="bot-rule"><span class="bot-rule-k">Queda para alerta</span><span class="bot-rule-v">-60% da média</span></div>
+                <div class="bot-rule"><span class="bot-rule-k">Canal de notificação</span><span class="bot-rule-v">E-mail + Slack</span></div>
+                <div class="bot-rule"><span class="bot-rule-k">Janela de referência</span><span class="bot-rule-v">Últimas 4 semanas</span></div>
+                <div class="bot-stats">
+                    <div class="bs"><div class="bs-val">3</div><div class="bs-lbl">Disparos / mês</div></div>
+                    <div class="bs"><div class="bs-val">2.1m</div><div class="bs-lbl">Tempo médio</div></div>
+                    <div class="bs"><div class="bs-val">89%</div><div class="bs-lbl">Precisão</div></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</main>
+
+<script>
+// --- Navigation ---
+const pages = { dashboard:'Dashboard', alertas:'Alertas', bots:'Bots' };
+const subs  = { dashboard:'Visão geral', alertas:'Central de alertas', bots:'Gestão de regras' };
+
+function go(name, navEl) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('page-' + name).classList.add('active');
+    if (navEl) navEl.classList.add('active');
+    document.getElementById('topTitle').textContent = pages[name] || name;
+    document.getElementById('topSub').textContent = subs[name] || '';
+    revealAll();
+    if (window.innerWidth < 960) closeSidebar();
+}
+
+function openSidebar()  { document.getElementById('sidebar').classList.add('open'); document.getElementById('overlay').classList.add('show'); }
+function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('overlay').classList.remove('show'); }
+
+// --- Filter buttons ---
+function filt(el) {
+    el.closest('.filter-row').querySelectorAll('.fb').forEach(b => b.classList.remove('on'));
+    el.classList.add('on');
+}
+
+// --- Reveal on page switch ---
+function revealAll() {
+    requestAnimationFrame(() => {
+        document.querySelectorAll('.page.active .rev').forEach(el => {
+            el.classList.remove('in');
+            requestAnimationFrame(() => setTimeout(() => el.classList.add('in'), 20));
+        });
+    });
+}
+
+// --- Counter animation ---
+function count(id, target, decimals = 0) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    let n = 0;
+    const dur = 1100, fps = 60, step = target / (dur / (1000 / fps));
+    const t = setInterval(() => {
+        n = Math.min(n + step, target);
+        el.textContent = decimals ? n.toFixed(decimals) : Math.round(n).toLocaleString('pt-BR');
+        if (n >= target) clearInterval(t);
+    }, 1000 / fps);
+}
+
+// --- Charts ---
+function buildCharts() {
+    const labels = ['00h','02h','04h','06h','08h','10h','12h','14h','16h','18h','20h','22h'];
+    const today  = [310,270,185,245,475,815,1235,1565,1810,2090,1755,1390];
+    const yest   = [285,255,175,220,415,740,1100,1455,1670,1910,1595,1270];
+
+    const tip = {
+        backgroundColor:'#181832',
+        borderColor:'rgba(201,150,26,.3)',
+        borderWidth:1,
+        titleColor:'#F5C842',
+        bodyColor:'#F0F0FF',
+        cornerRadius:8,
+        padding:10
+    };
+
+    new Chart(document.getElementById('lineChart'), {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [
+                { label:'Hoje', data:today, borderColor:'#C9961A', backgroundColor:'rgba(201,150,26,.08)', borderWidth:2.5, pointRadius:3, pointBackgroundColor:'#C9961A', tension:.4, fill:true },
+                { label:'Ontem', data:yest, borderColor:'rgba(201,150,26,.3)', backgroundColor:'transparent', borderWidth:1.5, pointRadius:0, tension:.4, borderDash:[5,3] }
+            ]
+        },
+        options: {
+            responsive:true, maintainAspectRatio:false,
+            plugins:{ legend:{display:false}, tooltip:{...tip} },
+            scales:{
+                x:{ grid:{color:'rgba(255,255,255,.04)'}, ticks:{color:'#7878A0', font:{family:'Nunito', size:11}} },
+                y:{ grid:{color:'rgba(255,255,255,.04)'}, ticks:{color:'#7878A0', font:{family:'Nunito', size:11}} }
+            }
+        }
+    });
+
+    new Chart(document.getElementById('donutChart'), {
+        type: 'doughnut',
+        data: {
+            labels:['Crítico','Aviso','Info','Resolvido'],
+            datasets:[{ data:[2,8,5,5], backgroundColor:['#EF4444','#F59E0B','#3B82F6','#22C55E'], borderColor:'#111127', borderWidth:3, hoverOffset:6 }]
+        },
+        options: {
+            responsive:true, maintainAspectRatio:false,
+            plugins:{
+                legend:{ position:'bottom', labels:{color:'#7878A0', font:{family:'Nunito', size:11}, padding:14, usePointStyle:true, pointStyleWidth:7} },
+                tooltip:{...tip}
+            },
+            cutout:'68%'
+        }
+    });
+}
+
+// --- Init ---
+window.addEventListener('load', () => {
+    revealAll();
+    buildCharts();
+    setTimeout(() => {
+        count('k1', 2847);
+        count('k2', 99);
+        count('k3', 5);
+        count('k4', 142);
+    }, 250);
+});
+</script>
+</body>
+</html>
