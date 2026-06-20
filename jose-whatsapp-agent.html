@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WhatsApp AI Agent — Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --gold: #C9A84C;
+    --gold-light: #E8C96D;
+    --gold-dark: #9E7A2F;
+    --gold-pale: #FBF4E3;
+    --gold-muted: #F5E9C8;
+    --dark: #1A1208;
+    --dark-2: #2C1F0A;
+    --mid: #6B5120;
+    --text: #3D2C0F;
+    --text-muted: #8B7040;
+    --white: #FFFFFF;
+    --wa-green: #25D366;
+    --wa-dark: #075E54;
+    --wa-bg: #ECE5DD;
+    --wa-bubble-out: #DCF8C6;
+    --wa-bubble-in: #FFFFFF;
+    --surface: #FEFCF7;
+    --border: #E8D9B0;
+    --radius: 16px;
+    --shadow: 0 4px 24px rgba(201,168,76,0.12);
+    --shadow-lg: 0 12px 48px rgba(201,168,76,0.20);
+  }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--dark);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    background: linear-gradient(135deg, var(--dark) 0%, var(--dark-2) 50%, #1F1505 100%);
+    padding: 64px 24px 48px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(201,168,76,0.18) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(201,168,76,0.15);
+    border: 1px solid rgba(201,168,76,0.35);
+    color: var(--gold-light);
+    border-radius: 100px;
+    padding: 6px 18px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+    animation: fadeDown 0.6s ease both;
+  }
+  .hero h1 {
+    font-size: clamp(28px, 5vw, 52px);
+    font-weight: 900;
+    color: var(--white);
+    line-height: 1.15;
+    margin-bottom: 16px;
+    animation: fadeDown 0.7s ease both 0.1s;
+  }
+  .hero h1 span { color: var(--gold-light); }
+  .hero p {
+    font-size: clamp(15px, 2vw, 18px);
+    color: rgba(255,255,255,0.6);
+    max-width: 600px;
+    margin: 0 auto 36px;
+    line-height: 1.7;
+    animation: fadeDown 0.7s ease both 0.2s;
+  }
+  .hero-stats {
+    display: flex;
+    justify-content: center;
+    gap: 48px;
+    flex-wrap: wrap;
+    animation: fadeDown 0.7s ease both 0.3s;
+  }
+  .stat { text-align: center; }
+  .stat-num {
+    font-size: 32px;
+    font-weight: 900;
+    color: var(--gold-light);
+    line-height: 1;
+  }
+  .stat-label {
+    font-size: 12px;
+    color: rgba(255,255,255,0.45);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 4px;
+  }
+
+  /* ── MAIN LAYOUT ── */
+  .main {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    align-items: start;
+  }
+  @media (max-width: 900px) {
+    .main { grid-template-columns: 1fr; }
+  }
+
+  /* ── PANEL SHELL ── */
+  .panel {
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(28px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .panel.visible { opacity: 1; transform: translateY(0); }
+  .panel-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--white);
+  }
+  .panel-icon {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .panel-icon.gold { background: var(--gold-muted); color: var(--gold-dark); }
+  .panel-icon.green { background: #E6F9EF; color: var(--wa-green); }
+  .panel-title { font-size: 15px; font-weight: 800; color: var(--dark); }
+  .panel-sub { font-size: 12px; color: var(--text-muted); font-weight: 600; }
+
+  /* ── WHATSAPP SIMULATOR ── */
+  .wa-window {
+    background: var(--wa-bg);
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    min-height: 400px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 440px;
+    overflow-y: auto;
+  }
+
+  .wa-date {
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-muted);
+    background: rgba(255,255,255,0.75);
+    border-radius: 100px;
+    padding: 3px 12px;
+    display: inline-block;
+    margin: 0 auto;
+    align-self: center;
+    font-weight: 600;
+  }
+
+  .wa-msg {
+    display: flex;
+    flex-direction: column;
+    max-width: 78%;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .wa-msg.visible { opacity: 1; transform: translateY(0); }
+  .wa-msg.out { align-self: flex-end; align-items: flex-end; }
+  .wa-msg.in { align-self: flex-start; align-items: flex-start; }
+
+  .wa-bubble {
+    padding: 9px 14px;
+    border-radius: 12px;
+    font-size: 14px;
+    line-height: 1.55;
+    position: relative;
+    font-weight: 500;
+  }
+  .wa-msg.out .wa-bubble {
+    background: var(--wa-bubble-out);
+    color: var(--text);
+    border-bottom-right-radius: 4px;
+  }
+  .wa-msg.in .wa-bubble {
+    background: var(--wa-bubble-in);
+    color: var(--text);
+    border-bottom-left-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  .wa-time {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 3px;
+    font-weight: 600;
+  }
+  .wa-sender {
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--wa-dark);
+    margin-bottom: 3px;
+  }
+
+  .typing-indicator {
+    display: none;
+    align-self: flex-start;
+    background: var(--wa-bubble-in);
+    border-radius: 12px;
+    border-bottom-left-radius: 4px;
+    padding: 12px 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  .typing-indicator.active { display: flex; gap: 4px; align-items: center; }
+  .dot {
+    width: 8px; height: 8px;
+    background: var(--text-muted);
+    border-radius: 50%;
+    animation: bounce 1.2s infinite;
+  }
+  .dot:nth-child(2) { animation-delay: 0.2s; }
+  .dot:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes bounce {
+    0%, 60%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-6px); }
+  }
+
+  .wa-controls {
+    padding: 12px 16px;
+    background: var(--white);
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .wa-input {
+    flex: 1;
+    border: 1.5px solid var(--border);
+    border-radius: 24px;
+    padding: 10px 16px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .wa-input:focus { border-color: var(--gold); }
+  .wa-send {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: var(--wa-green);
+    border: none;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: white;
+    font-size: 16px;
+    transition: background 0.2s, transform 0.15s;
+  }
+  .wa-send:hover { background: #1fb855; transform: scale(1.08); }
+
+  .sim-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 14px 16px;
+    padding: 12px 20px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+    color: var(--white);
+    border: none;
+    cursor: pointer;
+    font-family: 'Nunito', sans-serif;
+    font-size: 14px;
+    font-weight: 800;
+    justify-content: center;
+    transition: opacity 0.2s, transform 0.15s;
+    box-shadow: 0 4px 16px rgba(201,168,76,0.35);
+  }
+  .sim-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+  .sim-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  /* ── ADMIN PANEL ── */
+  .admin-body { padding: 20px; display: flex; flex-direction: column; gap: 18px; }
+
+  .status-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #E6F9EF;
+    border: 1px solid #B3EDD0;
+    border-radius: 10px;
+    padding: 10px 14px;
+  }
+  .status-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--wa-green);
+    animation: pulse-green 2s infinite;
+    flex-shrink: 0;
+  }
+  @keyframes pulse-green {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(37,211,102,0.5); }
+    50% { box-shadow: 0 0 0 6px rgba(37,211,102,0); }
+  }
+  .status-text { font-size: 13px; font-weight: 700; color: #1A7A45; }
+  .status-sub { font-size: 12px; color: #3A9960; font-weight: 600; margin-left: auto; }
+
+  .metrics-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  .metric-card {
+    background: var(--gold-pale);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 12px;
+    text-align: center;
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+  .metric-card.visible { opacity: 1; transform: translateY(0); }
+  .metric-num { font-size: 26px; font-weight: 900; color: var(--gold-dark); line-height: 1; }
+  .metric-lbl { font-size: 11px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; margin-top: 4px; }
+
+  .section-title {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--mid);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  /* Conversation Log */
+  .conv-log { display: flex; flex-direction: column; gap: 8px; max-height: 220px; overflow-y: auto; }
+  .conv-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    opacity: 0;
+    transform: translateX(-12px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .conv-item.visible { opacity: 1; transform: translateX(0); }
+  .conv-avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--gold-muted);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+    color: var(--gold-dark);
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+  .conv-info { flex: 1; min-width: 0; }
+  .conv-name { font-size: 13px; font-weight: 800; color: var(--dark); }
+  .conv-preview { font-size: 12px; color: var(--text-muted); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .conv-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+  .conv-time { font-size: 11px; color: var(--text-muted); font-weight: 700; }
+  .conv-badge {
+    font-size: 10px;
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: 100px;
+  }
+  .badge-active { background: #E6F9EF; color: #1A7A45; }
+  .badge-closed { background: var(--gold-muted); color: var(--gold-dark); }
+
+  /* Knowledge Editor */
+  .kb-editor {
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .kb-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: var(--gold-pale);
+    border-bottom: 1px solid var(--border);
+  }
+  .kb-toolbar-title { font-size: 13px; font-weight: 800; color: var(--mid); }
+  .kb-save {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 14px;
+    background: var(--gold);
+    color: var(--white);
+    border: none;
+    border-radius: 8px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .kb-save:hover { background: var(--gold-dark); }
+  .kb-textarea {
+    width: 100%;
+    border: none;
+    outline: none;
+    padding: 14px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    resize: none;
+    height: 120px;
+    background: var(--white);
+    line-height: 1.6;
+  }
+  .kb-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 14px;
+    border-top: 1px solid var(--border);
+    background: var(--gold-pale);
+  }
+  .kb-footer-text { font-size: 12px; color: var(--text-muted); font-weight: 700; }
+  .kb-synced { font-size: 12px; font-weight: 800; color: #1A7A45; display: flex; align-items: center; gap: 5px; }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    background: var(--dark-2);
+    border: 1px solid var(--gold);
+    color: var(--gold-light);
+    padding: 14px 20px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transform: translateY(80px);
+    opacity: 0;
+    transition: transform 0.35s ease, opacity 0.35s ease;
+    z-index: 999;
+    box-shadow: var(--shadow-lg);
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  /* ── FLOW SECTION ── */
+  .flow-section {
+    grid-column: 1 / -1;
+    opacity: 0;
+    transform: translateY(28px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .flow-section.visible { opacity: 1; transform: translateY(0); }
+  .flow-header {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+  .flow-header h2 {
+    font-size: clamp(22px, 3vw, 32px);
+    font-weight: 900;
+    color: var(--white);
+    margin-bottom: 8px;
+  }
+  .flow-header p { font-size: 15px; color: rgba(255,255,255,0.5); font-weight: 600; }
+
+  .flow-steps {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0;
+    align-items: center;
+  }
+  @media (max-width: 700px) {
+    .flow-steps { grid-template-columns: 1fr 1fr; gap: 16px; }
+    .flow-arrow { display: none; }
+  }
+
+  .flow-step {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(201,168,76,0.2);
+    border-radius: 14px;
+    padding: 20px 16px;
+    text-align: center;
+    position: relative;
+    transition: background 0.3s, border-color 0.3s, transform 0.3s;
+  }
+  .flow-step.active {
+    background: rgba(201,168,76,0.12);
+    border-color: var(--gold);
+    transform: translateY(-4px);
+  }
+  .flow-step-icon {
+    width: 48px; height: 48px;
+    border-radius: 14px;
+    background: rgba(201,168,76,0.12);
+    border: 1px solid rgba(201,168,76,0.25);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    color: var(--gold);
+    margin: 0 auto 12px;
+    transition: background 0.3s;
+  }
+  .flow-step.active .flow-step-icon {
+    background: var(--gold);
+    color: var(--dark);
+  }
+  .flow-step-title {
+    font-size: 13px;
+    font-weight: 800;
+    color: rgba(255,255,255,0.8);
+    margin-bottom: 4px;
+  }
+  .flow-step-desc {
+    font-size: 11px;
+    color: rgba(255,255,255,0.4);
+    font-weight: 600;
+    line-height: 1.5;
+  }
+  .flow-arrow {
+    text-align: center;
+    color: rgba(201,168,76,0.4);
+    font-size: 20px;
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge">
+    <i class="fa-solid fa-robot"></i>
+    WhatsApp AI Agent
+  </div>
+  <h1>Respuestas automaticas<br><span>inteligentes en WhatsApp</span></h1>
+  <p>Agente de IA integrado con WhatsApp Business Cloud API. Comprende el contexto de la conversacion y responde desde tu base de conocimiento.</p>
+  <div class="hero-stats">
+    <div class="stat">
+      <div class="stat-num">&lt;2s</div>
+      <div class="stat-label">Tiempo de respuesta</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">24/7</div>
+      <div class="stat-label">Disponibilidad</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">100%</div>
+      <div class="stat-label">Contexto por sesion</div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN GRID -->
+<div class="main">
+
+  <!-- LEFT: WhatsApp Simulator -->
+  <div class="panel" id="panelWa">
+    <div class="panel-header">
+      <div class="panel-icon green"><i class="fa-brands fa-whatsapp"></i></div>
+      <div>
+        <div class="panel-title">Simulador de Conversacion</div>
+        <div class="panel-sub">Flujo real del agente en accion</div>
+      </div>
+    </div>
+
+    <div class="wa-window" id="waWindow">
+      <div class="wa-date">Hoy</div>
+
+      <div class="wa-msg out visible" id="msg1">
+        <div class="wa-bubble">Hola buenos dias. Quiero saber el horario de atencion</div>
+        <div class="wa-time">09:14</div>
+      </div>
+
+      <div class="wa-msg in visible" id="msg2">
+        <div class="wa-sender">Asistente Virtual</div>
+        <div class="wa-bubble">Hola! Nuestro horario de atencion es de lunes a viernes de 9:00 a 18:00 y sabados de 10:00 a 14:00. Te puedo ayudar con algo mas?</div>
+        <div class="wa-time">09:14</div>
+      </div>
+
+      <div class="typing-indicator" id="typingIndicator">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </div>
+    </div>
+
+    <button class="sim-btn" id="simBtn" onclick="runSimulation()">
+      <i class="fa-solid fa-play"></i>
+      Simular Conversacion con Contexto
+    </button>
+
+    <div class="wa-controls">
+      <input class="wa-input" type="text" placeholder="Escribe un mensaje..." readonly>
+      <button class="wa-send"><i class="fa-solid fa-paper-plane"></i></button>
+    </div>
+  </div>
+
+  <!-- RIGHT: Admin Panel -->
+  <div class="panel" id="panelAdmin" style="transition-delay: 0.15s">
+    <div class="panel-header">
+      <div class="panel-icon gold"><i class="fa-solid fa-gauge-high"></i></div>
+      <div>
+        <div class="panel-title">Panel de Administracion</div>
+        <div class="panel-sub">Estado del agente y sesiones activas</div>
+      </div>
+    </div>
+
+    <div class="admin-body">
+
+      <!-- Status -->
+      <div class="status-bar">
+        <div class="status-dot"></div>
+        <span class="status-text">Webhook activo — Meta Cloud API</span>
+        <span class="status-sub">+34 612 XXX XXX</span>
+      </div>
+
+      <!-- Metrics -->
+      <div class="metrics-row">
+        <div class="metric-card" id="mc1">
+          <div class="metric-num" id="mcNum1">0</div>
+          <div class="metric-lbl">Mensajes hoy</div>
+        </div>
+        <div class="metric-card" id="mc2">
+          <div class="metric-num" id="mcNum2">0</div>
+          <div class="metric-lbl">Sesiones activas</div>
+        </div>
+        <div class="metric-card" id="mc3">
+          <div class="metric-num" id="mcNum3">0%</div>
+          <div class="metric-lbl">Resueltos por IA</div>
+        </div>
+      </div>
+
+      <!-- Conversation Log -->
+      <div>
+        <div class="section-title">
+          <i class="fa-solid fa-comments"></i>
+          Sesiones recientes
+        </div>
+        <div class="conv-log" id="convLog">
+          <div class="conv-item" id="ci1">
+            <div class="conv-avatar">MR</div>
+            <div class="conv-info">
+              <div class="conv-name">Maria R.</div>
+              <div class="conv-preview">Hola buenos dias. Quiero saber el horario...</div>
+            </div>
+            <div class="conv-meta">
+              <div class="conv-time">09:14</div>
+              <span class="conv-badge badge-active">Activa</span>
+            </div>
+          </div>
+          <div class="conv-item" id="ci2">
+            <div class="conv-avatar">JP</div>
+            <div class="conv-info">
+              <div class="conv-name">Jorge P.</div>
+              <div class="conv-preview">Necesito informacion sobre los productos...</div>
+            </div>
+            <div class="conv-meta">
+              <div class="conv-time">08:52</div>
+              <span class="conv-badge badge-closed">Cerrada</span>
+            </div>
+          </div>
+          <div class="conv-item" id="ci3">
+            <div class="conv-avatar">AL</div>
+            <div class="conv-info">
+              <div class="conv-name">Ana L.</div>
+              <div class="conv-preview">Quiero hacer un pedido para el sabado...</div>
+            </div>
+            <div class="conv-meta">
+              <div class="conv-time">08:30</div>
+              <span class="conv-badge badge-closed">Cerrada</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Knowledge Base Editor -->
+      <div>
+        <div class="section-title">
+          <i class="fa-solid fa-book-open"></i>
+          Base de conocimiento
+        </div>
+        <div class="kb-editor">
+          <div class="kb-toolbar">
+            <span class="kb-toolbar-title">FAQ del negocio</span>
+            <button class="kb-save" onclick="saveKb()">
+              <i class="fa-solid fa-floppy-disk"></i>
+              Guardar
+            </button>
+          </div>
+          <textarea class="kb-textarea" id="kbText">Horario de atencion: Lunes a viernes 9:00-18:00, Sabados 10:00-14:00.
+Metodos de pago: Efectivo, tarjeta de credito/debito, transferencia bancaria.
+Zona de entrega: Madrid y alrededores hasta 30km.
+Tiempo de entrega estimado: 24-48 horas habiles.
+Contacto: info@empresa.com | Tel: +34 612 000 000</textarea>
+          <div class="kb-footer">
+            <span class="kb-footer-text"><i class="fa-solid fa-circle-info"></i> El agente usa este contenido como fuente de respuestas</span>
+            <span class="kb-synced"><i class="fa-solid fa-circle-check"></i> Sincronizado</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- FLOW SECTION -->
+  <div class="flow-section" id="flowSection">
+    <div class="flow-header">
+      <h2>Pipeline de procesamiento</h2>
+      <p>Cada mensaje pasa por cinco etapas antes de entregar la respuesta</p>
+    </div>
+    <div class="flow-steps">
+      <div class="flow-step" id="fs1">
+        <div class="flow-step-icon"><i class="fa-brands fa-whatsapp"></i></div>
+        <div class="flow-step-title">Mensaje entrante</div>
+        <div class="flow-step-desc">Webhook Meta Cloud API recibe el evento</div>
+      </div>
+      <div class="flow-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+      <div class="flow-step" id="fs2">
+        <div class="flow-step-icon"><i class="fa-solid fa-layer-group"></i></div>
+        <div class="flow-step-title">Gestion de sesion</div>
+        <div class="flow-step-desc">Historial de conversacion por numero de telefono</div>
+      </div>
+      <div class="flow-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+      <div class="flow-step" id="fs3">
+        <div class="flow-step-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
+        <div class="flow-step-title">Busqueda en KB</div>
+        <div class="flow-step-desc">Recupera contexto relevante de la base de conocimiento</div>
+      </div>
+      <div class="flow-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+      <div class="flow-step" id="fs4">
+        <div class="flow-step-icon"><i class="fa-solid fa-brain"></i></div>
+        <div class="flow-step-title">LLM</div>
+        <div class="flow-step-desc">Genera respuesta coherente con contexto de sesion</div>
+      </div>
+      <div class="flow-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+      <div class="flow-step" id="fs5">
+        <div class="flow-step-icon"><i class="fa-solid fa-paper-plane"></i></div>
+        <div class="flow-step-title">Entrega</div>
+        <div class="flow-step-desc">Respuesta enviada al usuario via WhatsApp</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <i class="fa-solid fa-circle-check"></i>
+  <span id="toastMsg"></span>
+</div>
+
+<script>
+  // ── Intersection Observer for reveal ──
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        if (e.target.id === 'panelAdmin') startCounters();
+        if (e.target.id === 'flowSection') startFlow();
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.panel, .flow-section').forEach(el => observer.observe(el));
+
+  // Conv items reveal
+  setTimeout(() => {
+    ['ci1','ci2','ci3'].forEach((id, i) => {
+      setTimeout(() => document.getElementById(id).classList.add('visible'), i * 120);
+    });
+  }, 500);
+
+  // ── Counters ──
+  let countersStarted = false;
+  function startCounters() {
+    if (countersStarted) return;
+    countersStarted = true;
+    setTimeout(() => {
+      ['mc1','mc2','mc3'].forEach((id, i) => {
+        setTimeout(() => document.getElementById(id).classList.add('visible'), i * 150);
+      });
+    }, 200);
+    animateCounter('mcNum1', 0, 47, 1200, '');
+    animateCounter('mcNum2', 0, 3, 800, '');
+    animateCounter('mcNum3', 0, 94, 1400, '%');
+  }
+
+  function animateCounter(id, from, to, dur, suffix) {
+    const el = document.getElementById(id);
+    const start = performance.now();
+    function step(now) {
+      const p = Math.min((now - start) / dur, 1);
+      const ease = 1 - Math.pow(1 - p, 3);
+      el.textContent = Math.round(from + (to - from) * ease) + suffix;
+      if (p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  // ── Flow highlight ──
+  let flowStarted = false;
+  function startFlow() {
+    if (flowStarted) return;
+    flowStarted = true;
+    const steps = ['fs1','fs2','fs3','fs4','fs5'];
+    steps.forEach((id, i) => {
+      setTimeout(() => {
+        steps.forEach(s => document.getElementById(s).classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        if (i === steps.length - 1) {
+          setTimeout(() => steps.forEach(s => document.getElementById(s).classList.add('active')), 600);
+        }
+      }, i * 500);
+    });
+  }
+
+  // ── Simulation ──
+  const simConversation = [
+    { dir: 'out', text: 'Cuales son los metodos de pago que aceptan?', time: '09:16' },
+    { dir: 'in', text: 'Aceptamos efectivo, tarjeta de credito y debito, y transferencia bancaria. Quieres que te pase el numero de cuenta para transferencia?', time: '09:16' },
+    { dir: 'out', text: 'Si por favor. Y tambien queria saber si llegan a Getafe', time: '09:17' },
+    { dir: 'in', text: 'El numero de cuenta te lo envio en un momento por este mismo chat. Respecto a Getafe, si esta dentro de nuestra zona de entrega en Madrid y alrededores hasta 30km. El tiempo estimado es de 24 a 48 horas habiles.', time: '09:17' },
+  ];
+
+  let simRunning = false;
+
+  async function runSimulation() {
+    if (simRunning) return;
+    simRunning = true;
+    document.getElementById('simBtn').disabled = true;
+
+    const win = document.getElementById('waWindow');
+    const typing = document.getElementById('typingIndicator');
+
+    for (const msg of simConversation) {
+      // Show typing if agent response
+      if (msg.dir === 'in') {
+        win.appendChild(typing);
+        typing.classList.add('active');
+        win.scrollTop = win.scrollHeight;
+        await delay(1400);
+        typing.classList.remove('active');
+      } else {
+        await delay(700);
+      }
+
+      const el = document.createElement('div');
+      el.className = `wa-msg ${msg.dir}`;
+      el.innerHTML = `
+        ${msg.dir === 'in' ? '<div class="wa-sender">Asistente Virtual</div>' : ''}
+        <div class="wa-bubble">${msg.text}</div>
+        <div class="wa-time">${msg.time}</div>
+      `;
+      win.insertBefore(el, typing);
+      requestAnimationFrame(() => el.classList.add('visible'));
+      win.scrollTop = win.scrollHeight;
+
+      // Update counter
+      const cur = parseInt(document.getElementById('mcNum1').textContent) + 1;
+      document.getElementById('mcNum1').textContent = cur;
+
+      await delay(msg.dir === 'in' ? 600 : 1000);
+    }
+
+    showToast('Simulacion completada. El agente mantuvo el contexto en todos los mensajes.');
+    document.getElementById('simBtn').disabled = false;
+    document.getElementById('simBtn').innerHTML = '<i class="fa-solid fa-rotate-right"></i> Reiniciar simulacion';
+    simRunning = false;
+  }
+
+  function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  // ── KB Save ──
+  function saveKb() {
+    showToast('Base de conocimiento actualizada. El agente usa la nueva version.');
+  }
+
+  // ── Toast ──
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    document.getElementById('toastMsg').textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3500);
+  }
+</script>
+</body>
+</html>
