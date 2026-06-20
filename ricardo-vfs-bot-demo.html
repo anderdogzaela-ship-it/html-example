@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bot VFS - Painel de Automacao</title>
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --gold: #C9A84C;
+      --gold-light: #E8C97A;
+      --gold-dark: #A07828;
+      --bg: #0D0E12;
+      --surface: #14161C;
+      --surface2: #1C1F28;
+      --surface3: #232738;
+      --text: #F0EDE6;
+      --text-muted: #8B8A96;
+      --green: #3ECF8E;
+      --red: #E05252;
+      --blue: #5B8AF5;
+      --border: rgba(201,168,76,0.15);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Lexend', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* TOP NAV */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 2rem;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--gold);
+    }
+    .nav-brand i { font-size: 1.2rem; }
+    .nav-status {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+      color: var(--green);
+      font-weight: 500;
+    }
+    .pulse-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse 1.8s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.7); }
+    }
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .nav-badge {
+      background: var(--surface3);
+      border: 1px solid var(--border);
+      padding: 0.3rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    /* HERO */
+    .hero {
+      padding: 3.5rem 2rem 2rem;
+      text-align: center;
+      background: radial-gradient(ellipse 70% 50% at 50% -10%, rgba(201,168,76,0.12) 0%, transparent 60%);
+    }
+    .hero-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(201,168,76,0.1);
+      border: 1px solid var(--border);
+      padding: 0.35rem 0.9rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      color: var(--gold);
+      margin-bottom: 1.2rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .hero h1 {
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 0.9rem;
+    }
+    .hero h1 span { color: var(--gold); }
+    .hero p {
+      color: var(--text-muted);
+      max-width: 520px;
+      margin: 0 auto 2rem;
+      font-size: 0.95rem;
+      line-height: 1.65;
+      font-weight: 300;
+    }
+
+    /* STATS STRIP */
+    .stats-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      max-width: 900px;
+      margin: 0 auto 3rem;
+    }
+    .stat-card {
+      background: var(--surface);
+      padding: 1.2rem 1rem;
+      text-align: center;
+      transition: background 0.3s;
+    }
+    .stat-card:hover { background: var(--surface2); }
+    .stat-icon {
+      width: 36px; height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 0.5rem;
+      font-size: 0.9rem;
+    }
+    .stat-icon.gold { background: rgba(201,168,76,0.15); color: var(--gold); }
+    .stat-icon.green { background: rgba(62,207,142,0.12); color: var(--green); }
+    .stat-icon.blue { background: rgba(91,138,245,0.12); color: var(--blue); }
+    .stat-icon.red { background: rgba(224,82,82,0.12); color: var(--red); }
+    .stat-value {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1;
+      margin-bottom: 0.2rem;
+    }
+    .stat-label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    /* MAIN GRID */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 1.5rem 3rem;
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .panel-title {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .panel-title i { color: var(--gold); font-size: 0.9rem; }
+    .panel-count {
+      background: var(--surface3);
+      padding: 0.2rem 0.6rem;
+      border-radius: 10px;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+    .panel-body { padding: 0.75rem; max-height: 360px; overflow-y: auto; }
+    .panel-body::-webkit-scrollbar { width: 4px; }
+    .panel-body::-webkit-scrollbar-track { background: transparent; }
+    .panel-body::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 2px; }
+
+    /* TASK ITEMS */
+    .task-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.7rem 0.75rem;
+      border-radius: 8px;
+      margin-bottom: 0.4rem;
+      background: var(--surface2);
+      border: 1px solid transparent;
+      transition: all 0.3s;
+    }
+    .task-item.running {
+      border-color: rgba(201,168,76,0.3);
+      background: rgba(201,168,76,0.05);
+    }
+    .task-item.completed {
+      border-color: rgba(62,207,142,0.2);
+      background: rgba(62,207,142,0.04);
+    }
+    .task-item.error {
+      border-color: rgba(224,82,82,0.2);
+      background: rgba(224,82,82,0.04);
+    }
+    .task-status-icon {
+      width: 28px; height: 28px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      flex-shrink: 0;
+    }
+    .task-status-icon.pending { background: var(--surface3); color: var(--text-muted); }
+    .task-status-icon.running { background: rgba(201,168,76,0.15); color: var(--gold); animation: spin 1.5s linear infinite; }
+    .task-status-icon.completed { background: rgba(62,207,142,0.12); color: var(--green); }
+    .task-status-icon.error { background: rgba(224,82,82,0.12); color: var(--red); }
+    @keyframes spin {
+      from { transform: rotate(0deg); } to { transform: rotate(360deg); }
+    }
+    .task-info { flex: 1; min-width: 0; }
+    .task-name {
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .task-meta {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      margin-top: 0.15rem;
+    }
+    .task-badge {
+      font-size: 0.65rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: 8px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .badge-pending { background: var(--surface3); color: var(--text-muted); }
+    .badge-running { background: rgba(201,168,76,0.15); color: var(--gold); }
+    .badge-done { background: rgba(62,207,142,0.12); color: var(--green); }
+    .badge-error { background: rgba(224,82,82,0.12); color: var(--red); }
+
+    /* PROGRESS BAR */
+    .progress-bar {
+      height: 3px;
+      background: var(--surface3);
+      border-radius: 2px;
+      margin-top: 0.4rem;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--gold-dark), var(--gold));
+      border-radius: 2px;
+      transition: width 0.4s ease;
+    }
+
+    /* LOG ITEMS */
+    .log-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.6rem;
+      padding: 0.55rem 0.75rem;
+      border-radius: 6px;
+      margin-bottom: 0.35rem;
+      font-size: 0.75rem;
+      line-height: 1.4;
+      animation: fadeSlideIn 0.35s ease;
+    }
+    @keyframes fadeSlideIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .log-item.info { background: rgba(91,138,245,0.06); }
+    .log-item.success { background: rgba(62,207,142,0.06); }
+    .log-item.warn { background: rgba(201,168,76,0.06); }
+    .log-item.err { background: rgba(224,82,82,0.06); }
+    .log-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      margin-top: 0.2rem;
+      flex-shrink: 0;
+    }
+    .log-dot.info { background: var(--blue); }
+    .log-dot.success { background: var(--green); }
+    .log-dot.warn { background: var(--gold); }
+    .log-dot.err { background: var(--red); }
+    .log-text { color: var(--text-muted); flex: 1; }
+    .log-text strong { color: var(--text); font-weight: 500; }
+    .log-time {
+      color: var(--surface3);
+      font-size: 0.65rem;
+      flex-shrink: 0;
+      font-family: monospace;
+    }
+
+    /* FILE TREE PANEL */
+    .tree-panel {
+      grid-column: 1 / -1;
+    }
+    .file-tree {
+      padding: 0.75rem;
+      font-family: monospace;
+      font-size: 0.78rem;
+    }
+    .tree-node {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.3rem 0.5rem;
+      border-radius: 5px;
+      color: var(--text-muted);
+      transition: all 0.3s;
+      cursor: default;
+    }
+    .tree-node:hover { background: var(--surface2); color: var(--text); }
+    .tree-node i { font-size: 0.8rem; }
+    .tree-node.folder i { color: var(--gold); }
+    .tree-node.file i { color: var(--blue); }
+    .tree-node.file.processed i { color: var(--green); }
+    .tree-node.file.error i { color: var(--red); }
+    .tree-indent { padding-left: 1.4rem; }
+    .tree-file-tag {
+      margin-left: auto;
+      font-size: 0.62rem;
+      padding: 0.1rem 0.45rem;
+      border-radius: 6px;
+    }
+    .tree-file-tag.ok { background: rgba(62,207,142,0.12); color: var(--green); }
+    .tree-file-tag.pending { background: var(--surface3); color: var(--text-muted); }
+    .tree-file-tag.active { background: rgba(201,168,76,0.15); color: var(--gold); }
+
+    /* SIMULATE BUTTON */
+    .sim-section {
+      text-align: center;
+      padding: 0 1.5rem 4rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .sim-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.7rem;
+      background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+      color: #0D0E12;
+      border: none;
+      padding: 0.9rem 2.4rem;
+      border-radius: 10px;
+      font-family: 'Lexend', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.25s;
+      box-shadow: 0 4px 24px rgba(201,168,76,0.25);
+      letter-spacing: 0.01em;
+    }
+    .sim-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(201,168,76,0.35);
+    }
+    .sim-btn:active { transform: translateY(0); }
+    .sim-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .sim-note {
+      margin-top: 0.75rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    /* FOOTER */
+    footer {
+      text-align: center;
+      padding: 1.5rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+    footer span { color: var(--gold); }
+
+    /* RESPONSIVE */
+    @media (max-width: 768px) {
+      .stats-strip { grid-template-columns: repeat(2, 1fr); }
+      .main-grid { grid-template-columns: 1fr; }
+      .tree-panel { grid-column: 1; }
+      nav { padding: 0.75rem 1rem; }
+      .hero { padding: 2.5rem 1rem 1.5rem; }
+      .main-grid { padding: 0 1rem 2rem; }
+      .sim-section { padding: 0 1rem 2.5rem; }
+    }
+
+    /* SCROLL REVEAL */
+    .reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.55s ease, transform 0.55s ease; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-brand">
+    <i class="fa-solid fa-robot"></i>
+    VFS AutoBot
+  </div>
+  <div class="nav-status">
+    <div class="pulse-dot"></div>
+    Bot Ativo
+  </div>
+  <div class="nav-right">
+    <div class="nav-badge"><i class="fa-solid fa-code-branch"></i> Python 3.12</div>
+    <div class="nav-badge">v2.4.1</div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-label">
+    <i class="fa-solid fa-bolt"></i>
+    Automacao com Integracao VFS
+  </div>
+  <h1>Bot de <span>Automacao de Tarefas</span><br/>com Integracao VFS</h1>
+  <p>Visualize o fluxo completo em operacao: fila de tarefas, operacoes no sistema de arquivos virtual e log de atividade em tempo real.</p>
+</section>
+
+<!-- STATS -->
+<div class="stats-strip reveal">
+  <div class="stat-card">
+    <div class="stat-icon gold"><i class="fa-solid fa-circle-check"></i></div>
+    <div class="stat-value" id="stat-tasks">142</div>
+    <div class="stat-label">Tarefas Concluidas</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon green"><i class="fa-solid fa-file-lines"></i></div>
+    <div class="stat-value" id="stat-files">893</div>
+    <div class="stat-label">Arquivos Processados</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon blue"><i class="fa-solid fa-clock"></i></div>
+    <div class="stat-value" id="stat-uptime">48h</div>
+    <div class="stat-label">Uptime Continuo</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon red"><i class="fa-solid fa-triangle-exclamation"></i></div>
+    <div class="stat-value" id="stat-errors">0.4%</div>
+    <div class="stat-label">Taxa de Erros</div>
+  </div>
+</div>
+
+<!-- MAIN PANELS -->
+<div class="main-grid">
+
+  <!-- TASK QUEUE -->
+  <div class="panel reveal">
+    <div class="panel-header">
+      <div class="panel-title"><i class="fa-solid fa-layer-group"></i> Fila de Tarefas</div>
+      <div class="panel-count" id="queue-count">5 tarefas</div>
+    </div>
+    <div class="panel-body" id="task-queue">
+      <div class="task-item completed" id="task-1">
+        <div class="task-status-icon completed"><i class="fa-solid fa-check"></i></div>
+        <div class="task-info">
+          <div class="task-name">Sincronizar catalogo de produtos</div>
+          <div class="task-meta">VFS:/produtos/ &middot; 234 arquivos</div>
+          <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+        </div>
+        <span class="task-badge badge-done">Concluido</span>
+      </div>
+      <div class="task-item completed" id="task-2">
+        <div class="task-status-icon completed"><i class="fa-solid fa-check"></i></div>
+        <div class="task-info">
+          <div class="task-name">Exportar relatorios de estoque</div>
+          <div class="task-meta">VFS:/relatorios/ &middot; 12 arquivos</div>
+          <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+        </div>
+        <span class="task-badge badge-done">Concluido</span>
+      </div>
+      <div class="task-item" id="task-3">
+        <div class="task-status-icon pending"><i class="fa-solid fa-clock"></i></div>
+        <div class="task-info">
+          <div class="task-name">Processar logs de transacoes</div>
+          <div class="task-meta">VFS:/logs/2026-06/ &middot; 48 arquivos</div>
+          <div class="progress-bar"><div class="progress-fill" style="width:0%"></div></div>
+        </div>
+        <span class="task-badge badge-pending" id="badge-3">Na Fila</span>
+      </div>
+      <div class="task-item" id="task-4">
+        <div class="task-status-icon pending"><i class="fa-solid fa-clock"></i></div>
+        <div class="task-info">
+          <div class="task-name">Arquivar dados de clientes</div>
+          <div class="task-meta">VFS:/clientes/arquivo/ &middot; 310 registros</div>
+          <div class="progress-bar"><div class="progress-fill" style="width:0%"></div></div>
+        </div>
+        <span class="task-badge badge-pending" id="badge-4">Na Fila</span>
+      </div>
+      <div class="task-item" id="task-5">
+        <div class="task-status-icon pending"><i class="fa-solid fa-clock"></i></div>
+        <div class="task-info">
+          <div class="task-name">Limpar arquivos temporarios</div>
+          <div class="task-meta">VFS:/tmp/ &middot; limpeza programada</div>
+          <div class="progress-bar"><div class="progress-fill" style="width:0%"></div></div>
+        </div>
+        <span class="task-badge badge-pending" id="badge-5">Na Fila</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ACTIVITY LOG -->
+  <div class="panel reveal">
+    <div class="panel-header">
+      <div class="panel-title"><i class="fa-solid fa-terminal"></i> Log de Atividade VFS</div>
+      <div class="panel-count" id="log-count">8 entradas</div>
+    </div>
+    <div class="panel-body" id="activity-log">
+      <div class="log-item info">
+        <div class="log-dot info"></div>
+        <div class="log-text"><strong>BOT_INIT</strong> Bot iniciado. Conectando ao VFS...</div>
+        <div class="log-time">08:00:01</div>
+      </div>
+      <div class="log-item success">
+        <div class="log-dot success"></div>
+        <div class="log-text"><strong>VFS_CONNECT</strong> Conexao estabelecida. API respondendo 200.</div>
+        <div class="log-time">08:00:02</div>
+      </div>
+      <div class="log-item info">
+        <div class="log-dot info"></div>
+        <div class="log-text"><strong>TASK_START</strong> Iniciando: Sincronizar catalogo de produtos</div>
+        <div class="log-time">08:00:05</div>
+      </div>
+      <div class="log-item success">
+        <div class="log-dot success"></div>
+        <div class="log-text"><strong>VFS_READ</strong> /produtos/ &rarr; 234 arquivos listados</div>
+        <div class="log-time">08:00:07</div>
+      </div>
+      <div class="log-item success">
+        <div class="log-dot success"></div>
+        <div class="log-text"><strong>VFS_WRITE</strong> /sync/produtos_export.json &rarr; 1.4 MB gravado</div>
+        <div class="log-time">08:00:09</div>
+      </div>
+      <div class="log-item success">
+        <div class="log-dot success"></div>
+        <div class="log-text"><strong>TASK_DONE</strong> Sincronizar catalogo concluido. 234/234 arquivos.</div>
+        <div class="log-time">08:00:11</div>
+      </div>
+      <div class="log-item info">
+        <div class="log-dot info"></div>
+        <div class="log-text"><strong>TASK_START</strong> Iniciando: Exportar relatorios de estoque</div>
+        <div class="log-time">08:00:14</div>
+      </div>
+      <div class="log-item success">
+        <div class="log-dot success"></div>
+        <div class="log-text"><strong>TASK_DONE</strong> Exportar relatorios concluido. 12 relatorios gerados.</div>
+        <div class="log-time">08:00:22</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FILE TREE -->
+  <div class="panel tree-panel reveal">
+    <div class="panel-header">
+      <div class="panel-title"><i class="fa-solid fa-folder-tree"></i> Estrutura VFS</div>
+      <div class="panel-count">Sistema de Arquivos Virtual</div>
+    </div>
+    <div class="file-tree" id="file-tree">
+      <div class="tree-node folder"><i class="fa-solid fa-folder-open"></i> /vfs-root/</div>
+      <div class="tree-indent">
+        <div class="tree-node folder"><i class="fa-solid fa-folder-open"></i> produtos/</div>
+        <div class="tree-indent">
+          <div class="tree-node file processed"><i class="fa-solid fa-file-code"></i> catalogo_2026.json <span class="tree-file-tag ok">Sincronizado</span></div>
+          <div class="tree-node file processed"><i class="fa-solid fa-file-code"></i> estoque_atual.json <span class="tree-file-tag ok">Sincronizado</span></div>
+          <div class="tree-node file processed"><i class="fa-solid fa-file-image"></i> imagens/ (234 itens) <span class="tree-file-tag ok">Processado</span></div>
+        </div>
+        <div class="tree-node folder"><i class="fa-solid fa-folder-open"></i> relatorios/</div>
+        <div class="tree-indent">
+          <div class="tree-node file processed"><i class="fa-solid fa-file-lines"></i> relatorio_jun2026.pdf <span class="tree-file-tag ok">Exportado</span></div>
+          <div class="tree-node file processed"><i class="fa-solid fa-file-csv"></i> estoque_semana23.csv <span class="tree-file-tag ok">Exportado</span></div>
+        </div>
+        <div class="tree-node folder"><i class="fa-solid fa-folder"></i> logs/</div>
+        <div class="tree-indent">
+          <div class="tree-node file" id="tree-logs"><i class="fa-solid fa-file-lines"></i> 2026-06/ (48 arquivos) <span class="tree-file-tag pending" id="tree-logs-tag">Aguardando</span></div>
+        </div>
+        <div class="tree-node folder"><i class="fa-solid fa-folder"></i> clientes/</div>
+        <div class="tree-indent">
+          <div class="tree-node file" id="tree-clients"><i class="fa-solid fa-file-lines"></i> arquivo/ (310 registros) <span class="tree-file-tag pending" id="tree-clients-tag">Aguardando</span></div>
+        </div>
+        <div class="tree-node folder"><i class="fa-solid fa-folder"></i> tmp/</div>
+        <div class="tree-indent">
+          <div class="tree-node file" id="tree-tmp"><i class="fa-solid fa-file"></i> temp_cache/ (1.2 GB) <span class="tree-file-tag pending" id="tree-tmp-tag">Aguardando</span></div>
+        </div>
+        <div class="tree-node folder"><i class="fa-solid fa-folder-open"></i> sync/</div>
+        <div class="tree-indent">
+          <div class="tree-node file processed"><i class="fa-solid fa-file-code"></i> produtos_export.json <span class="tree-file-tag ok">Gerado</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- SIMULATE BUTTON -->
+<div class="sim-section reveal">
+  <button class="sim-btn" id="sim-btn" onclick="runSimulation()">
+    <i class="fa-solid fa-play"></i>
+    Simular Execucao
+  </button>
+  <div class="sim-note">Dispara o fluxo completo: fila de tarefas, operacoes VFS e log em tempo real</div>
+</div>
+
+<footer>
+  <p>Prototipo <span>VFS AutoBot</span> &mdash; Python + API + System Analysis &mdash; <span>Yevhenii | Technical Partner</span></p>
+</footer>
+
+<script>
+  // SCROLL REVEAL
+  const reveals = document.querySelectorAll('.reveal');
+  const io = new IntersectionObserver(entries => {
+    entries.forEach((e, i) => {
+      if (e.isIntersecting) {
+        setTimeout(() => e.target.classList.add('visible'), i * 80);
+      }
+    });
+  }, { threshold: 0.08 });
+  reveals.forEach(r => io.observe(r));
+
+  // COUNTER ANIMATION
+  function animateCounter(el, from, to, suffix = '', duration = 1200) {
+    const start = performance.now();
+    const step = ts => {
+      const p = Math.min((ts - start) / duration, 1);
+      const ease = 1 - Math.pow(1 - p, 3);
+      el.textContent = Math.round(from + (to - from) * ease) + suffix;
+      if (p < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+
+  // SIMULATION STATE
+  let simRunning = false;
+  let logCounter = 9;
+  let tasksDone = 142;
+  let filesProcessed = 893;
+
+  function getTime() {
+    const now = new Date();
+    return now.toTimeString().slice(0, 8);
+  }
+
+  function addLog(type, tag, message) {
+    const log = document.getElementById('activity-log');
+    const item = document.createElement('div');
+    item.className = `log-item ${type}`;
+    item.innerHTML = `
+      <div class="log-dot ${type}"></div>
+      <div class="log-text"><strong>${tag}</strong> ${message}</div>
+      <div class="log-time">${getTime()}</div>
+    `;
+    log.prepend(item);
+    logCounter++;
+    document.getElementById('log-count').textContent = logCounter + ' entradas';
+  }
+
+  function setTaskRunning(id) {
+    const el = document.getElementById(`task-${id}`);
+    const badge = document.getElementById(`badge-${id}`);
+    const icon = el.querySelector('.task-status-icon');
+    el.className = 'task-item running';
+    icon.className = 'task-status-icon running';
+    icon.innerHTML = '<i class="fa-solid fa-gear"></i>';
+    badge.className = 'task-badge badge-running';
+    badge.textContent = 'Executando';
+  }
+
+  function setTaskDone(id) {
+    const el = document.getElementById(`task-${id}`);
+    const badge = document.getElementById(`badge-${id}`);
+    const icon = el.querySelector('.task-status-icon');
+    const progress = el.querySelector('.progress-fill');
+    el.className = 'task-item completed';
+    icon.className = 'task-status-icon completed';
+    icon.innerHTML = '<i class="fa-solid fa-check"></i>';
+    badge.className = 'task-badge badge-done';
+    badge.textContent = 'Concluido';
+    progress.style.width = '100%';
+  }
+
+  function setProgress(id, pct) {
+    const el = document.getElementById(`task-${id}`);
+    const progress = el.querySelector('.progress-fill');
+    if (progress) progress.style.width = pct + '%';
+  }
+
+  function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  async function runSimulation() {
+    if (simRunning) return;
+    simRunning = true;
+    const btn = document.getElementById('sim-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-gear fa-spin"></i> Executando...';
+
+    // TASK 3 - Processar logs
+    addLog('info', 'TASK_START', 'Iniciando: Processar logs de transacoes');
+    setTaskRunning(3);
+    document.getElementById('tree-logs-tag').textContent = 'Processando';
+    document.getElementById('tree-logs-tag').className = 'tree-file-tag active';
+    await delay(600);
+    addLog('info', 'VFS_READ', '/logs/2026-06/ &rarr; 48 arquivos encontrados');
+    setProgress(3, 30);
+    await delay(700);
+    addLog('success', 'VFS_PROCESS', 'Analisando padroes de transacao...');
+    setProgress(3, 65);
+    await delay(700);
+    addLog('success', 'VFS_WRITE', '/sync/logs_report_jun2026.json &rarr; 287 KB gravado');
+    setProgress(3, 90);
+    await delay(500);
+    addLog('success', 'TASK_DONE', 'Processar logs concluido. 48/48 arquivos processados.');
+    setTaskDone(3);
+    document.getElementById('tree-logs-tag').textContent = 'Processado';
+    document.getElementById('tree-logs-tag').className = 'tree-file-tag ok';
+    document.getElementById('tree-logs').className = 'tree-node file processed';
+    tasksDone++;
+    filesProcessed += 48;
+    animateCounter(document.getElementById('stat-tasks'), tasksDone - 1, tasksDone);
+    animateCounter(document.getElementById('stat-files'), filesProcessed - 48, filesProcessed);
+    await delay(500);
+
+    // TASK 4 - Arquivar clientes
+    addLog('info', 'TASK_START', 'Iniciando: Arquivar dados de clientes');
+    setTaskRunning(4);
+    document.getElementById('tree-clients-tag').textContent = 'Processando';
+    document.getElementById('tree-clients-tag').className = 'tree-file-tag active';
+    await delay(600);
+    addLog('info', 'VFS_READ', '/clientes/arquivo/ &rarr; 310 registros carregados');
+    setProgress(4, 35);
+    await delay(600);
+    addLog('warn', 'VFS_VALIDATE', '3 registros com campos incompletos &rarr; ignorados com log');
+    setProgress(4, 60);
+    await delay(600);
+    addLog('success', 'VFS_WRITE', '/backup/clientes_jun2026.zip &rarr; 307 registros arquivados');
+    setProgress(4, 95);
+    await delay(400);
+    addLog('success', 'TASK_DONE', 'Arquivar clientes concluido. 307/310 registros (3 ignorados).');
+    setTaskDone(4);
+    document.getElementById('tree-clients-tag').textContent = 'Arquivado';
+    document.getElementById('tree-clients-tag').className = 'tree-file-tag ok';
+    document.getElementById('tree-clients').className = 'tree-node file processed';
+    tasksDone++;
+    filesProcessed += 307;
+    animateCounter(document.getElementById('stat-tasks'), tasksDone - 1, tasksDone);
+    animateCounter(document.getElementById('stat-files'), filesProcessed - 307, filesProcessed);
+    await delay(500);
+
+    // TASK 5 - Limpar tmp
+    addLog('info', 'TASK_START', 'Iniciando: Limpar arquivos temporarios');
+    setTaskRunning(5);
+    document.getElementById('tree-tmp-tag').textContent = 'Limpando';
+    document.getElementById('tree-tmp-tag').className = 'tree-file-tag active';
+    await delay(600);
+    addLog('info', 'VFS_SCAN', '/tmp/ &rarr; 1.2 GB de cache identificado');
+    setProgress(5, 40);
+    await delay(700);
+    addLog('success', 'VFS_DELETE', '/tmp/temp_cache/ &rarr; 1.2 GB removidos');
+    setProgress(5, 90);
+    await delay(400);
+    addLog('success', 'TASK_DONE', 'Limpeza concluida. 1.2 GB liberados no VFS.');
+    setTaskDone(5);
+    document.getElementById('tree-tmp-tag').textContent = 'Limpo';
+    document.getElementById('tree-tmp-tag').className = 'tree-file-tag ok';
+    document.getElementById('tree-tmp').className = 'tree-node file processed';
+    tasksDone++;
+    filesProcessed += 12;
+    animateCounter(document.getElementById('stat-tasks'), tasksDone - 1, tasksDone);
+    animateCounter(document.getElementById('stat-files'), filesProcessed - 12, filesProcessed);
+    await delay(400);
+
+    addLog('success', 'BOT_CYCLE', 'Ciclo de automacao concluido. Aguardando proxima execucao programada.');
+    document.getElementById('queue-count').textContent = '5 tarefas';
+
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-rotate-right"></i> Executar Novamente';
+    simRunning = false;
+  }
+</script>
+</body>
+</html>
