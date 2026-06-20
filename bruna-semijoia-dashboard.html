@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BellaJoias — Painel de Gestão</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Nunito',sans-serif;background:#F8F4EC;color:#2C2A26}
+:root{
+  --gold:#C9A84C;--gold-l:#E8D5A3;--gold-pale:#FBF5E6;--gold-d:#9A7A28;
+  --dark:#1C1A12;--white:#FFF;--success:#48A87A;--warn:#E89B2E;
+  --danger:#D95A5A;--muted:#8A7E6E;--border:#E8DEC8
+}
+/* SIDEBAR */
+.sidebar{position:fixed;top:0;left:0;width:240px;height:100vh;background:var(--dark);display:flex;flex-direction:column;z-index:100;transition:transform .3s ease}
+.sb-logo{padding:26px 20px 22px;border-bottom:1px solid rgba(201,168,76,.2)}
+.sb-logo h1{font-size:19px;font-weight:900;color:var(--gold);letter-spacing:.5px}
+.sb-logo p{font-size:10px;color:rgba(255,255,255,.35);margin-top:3px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase}
+.sb-nav{padding:18px 12px;flex:1}
+.nav-sect-label{font-size:10px;font-weight:800;color:rgba(255,255,255,.3);letter-spacing:1.5px;text-transform:uppercase;padding:0 8px;margin-bottom:8px;margin-top:18px}
+.nav-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;cursor:pointer;color:rgba(255,255,255,.5);font-size:13px;font-weight:700;transition:all .2s;margin-bottom:2px}
+.nav-item:hover{background:rgba(201,168,76,.1);color:rgba(255,255,255,.8)}
+.nav-item.active{background:rgba(201,168,76,.18);color:var(--gold)}
+.nav-item i{width:17px;text-align:center;font-size:14px}
+.nav-badge{margin-left:auto;background:var(--danger);color:#fff;font-size:10px;padding:2px 7px;border-radius:20px;font-weight:800}
+.sb-foot{padding:14px 18px;border-top:1px solid rgba(201,168,76,.15);display:flex;align-items:center;gap:10px}
+.sb-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-d));display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:900}
+.sb-foot .uname{font-size:13px;font-weight:800;color:#fff}
+.sb-foot .urole{font-size:10px;color:rgba(255,255,255,.35)}
+/* MAIN */
+.main{margin-left:240px;min-height:100vh}
+/* TOPBAR */
+.topbar{background:#fff;border-bottom:1px solid var(--border);padding:15px 26px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.tb-left h2{font-size:19px;font-weight:900;color:var(--dark)}
+.tb-left p{font-size:11px;color:var(--muted);margin-top:2px;font-weight:600}
+.tb-right{display:flex;align-items:center;gap:10px}
+.tb-btn{width:38px;height:38px;border-radius:10px;border:1px solid var(--border);background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px;transition:all .2s;position:relative}
+.tb-btn:hover{background:var(--gold-pale);color:var(--gold)}
+.tb-btn .dot{position:absolute;top:7px;right:7px;width:7px;height:7px;border-radius:50%;background:var(--danger);border:1.5px solid #fff}
+.sim-btn{padding:9px 18px;background:linear-gradient(135deg,var(--gold),var(--gold-d));color:#fff;border:none;border-radius:10px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .2s;box-shadow:0 3px 12px rgba(201,168,76,.35)}
+.sim-btn:hover{transform:translateY(-1px);box-shadow:0 5px 18px rgba(201,168,76,.45)}
+/* CONTENT */
+.content{padding:26px}
+.view{display:none}.view.active{display:block}
+/* KPIS */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+.kpi-card{background:#fff;border-radius:16px;padding:20px;border:1px solid var(--border);opacity:0;transform:translateY(18px);animation:fadeUp .5s forwards;transition:transform .2s}
+.kpi-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.07)}
+.kpi-card:nth-child(1){animation-delay:.05s}.kpi-card:nth-child(2){animation-delay:.1s}.kpi-card:nth-child(3){animation-delay:.15s}.kpi-card:nth-child(4){animation-delay:.2s}
+@keyframes fadeUp{to{opacity:1;transform:translateY(0)}}
+.kpi-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.kpi-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.kpi-icon.gold{background:rgba(201,168,76,.12);color:var(--gold-d)}
+.kpi-icon.success{background:rgba(72,168,122,.12);color:var(--success)}
+.kpi-icon.danger{background:rgba(217,90,90,.12);color:var(--danger)}
+.kpi-icon.info{background:rgba(90,154,232,.12);color:#5A9AE8}
+.kpi-badge{font-size:11px;font-weight:800;padding:3px 8px;border-radius:20px}
+.kpi-badge.up{background:rgba(72,168,122,.12);color:var(--success)}
+.kpi-badge.dw{background:rgba(217,90,90,.12);color:var(--danger)}
+.kpi-val{font-size:24px;font-weight:900;color:var(--dark);line-height:1.1}
+.kpi-lbl{font-size:11px;color:var(--muted);margin-top:4px;font-weight:700}
+/* GRID 2 */
+.grid2{display:grid;grid-template-columns:1.6fr 1fr;gap:18px;margin-bottom:22px}
+.card{background:#fff;border-radius:16px;border:1px solid var(--border);padding:22px;opacity:0;animation:fadeUp .5s .22s forwards}
+.card-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.card-title{font-size:14px;font-weight:900;color:var(--dark)}
+.card-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.card-link{font-size:12px;font-weight:800;color:var(--gold);cursor:pointer}
+/* ALERTS */
+.alert-list{display:flex;flex-direction:column;gap:10px}
+.alert-item{display:flex;align-items:flex-start;gap:11px;padding:11px;border-radius:12px;background:var(--gold-pale);border:1px solid rgba(201,168,76,.2);transition:all .2s;cursor:pointer}
+.alert-item:hover{background:rgba(201,168,76,.14)}
+.a-icon{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px}
+.a-icon.warn{background:rgba(232,155,46,.15);color:var(--warn)}
+.a-icon.danger{background:rgba(217,90,90,.15);color:var(--danger)}
+.a-icon.info{background:rgba(90,154,232,.15);color:#5A9AE8}
+.a-icon.success{background:rgba(72,168,122,.15);color:var(--success)}
+.a-body p{font-size:12px;font-weight:800;color:var(--dark)}
+.a-body span{font-size:11px;color:var(--muted)}
+.a-tag{margin-left:auto;flex-shrink:0;font-size:10px;font-weight:800;padding:3px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:.5px;align-self:center}
+.a-tag.ok{background:rgba(72,168,122,.12);color:var(--success)}
+.a-tag.pend{background:rgba(232,155,46,.12);color:var(--warn)}
+/* TABLE */
+.filter-bar{display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.search-box{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border);border-radius:10px;padding:8px 14px;flex:1;min-width:180px}
+.search-box input{border:none;outline:none;background:transparent;font-family:'Nunito',sans-serif;font-size:13px;color:var(--dark);width:100%}
+.search-box i{color:var(--muted);font-size:12px}
+.fbtn{padding:8px 13px;border-radius:10px;border:1.5px solid var(--border);background:#fff;font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;cursor:pointer;color:var(--muted);transition:all .2s}
+.fbtn.active{background:var(--dark);color:#fff;border-color:var(--dark)}
+.fbtn.fp.active{background:var(--warn);border-color:var(--warn);color:#fff}
+.fbtn.fi.active{background:var(--danger);border-color:var(--danger);color:#fff}
+.table-wrap{background:#fff;border-radius:16px;border:1px solid var(--border);overflow:hidden;opacity:0;animation:fadeUp .5s .1s forwards}
+table{width:100%;border-collapse:collapse}
+th{background:var(--gold-pale);padding:11px 14px;font-size:10px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;text-align:left;border-bottom:1px solid var(--border)}
+td{padding:13px 14px;font-size:13px;color:var(--dark);border-bottom:1px solid rgba(232,222,200,.5);font-weight:600}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--gold-pale)}
+.sbadge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:800}
+.sbadge.ok{background:rgba(72,168,122,.12);color:var(--success)}
+.sbadge.pend{background:rgba(232,155,46,.12);color:var(--warn)}
+.sbadge.inac{background:rgba(217,90,90,.12);color:var(--danger)}
+.sdot{width:5px;height:5px;border-radius:50%;background:currentColor}
+/* LIDERES */
+.lid-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px}
+.lid-card{background:#fff;border-radius:16px;border:1px solid var(--border);padding:20px;opacity:0;animation:fadeUp .5s forwards;transition:transform .2s,box-shadow .2s}
+.lid-card:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(0,0,0,.08)}
+.lid-rank{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.rank-num{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--gold),var(--gold-d));color:#fff;font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center}
+.rank-num.silver{background:linear-gradient(135deg,#C0C0C0,#909090)}
+.rank-num.bronze{background:linear-gradient(135deg,#CD7F32,#A0522D)}
+.trend{font-size:12px;font-weight:800;display:flex;align-items:center;gap:4px}
+.trend.up{color:var(--success)}.trend.dw{color:var(--danger)}
+.lid-name{font-size:16px;font-weight:900;color:var(--dark)}
+.lid-meta{font-size:11px;color:var(--muted);margin-top:2px;font-weight:700}
+.lid-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+.lid-stat{padding:10px;background:var(--gold-pale);border-radius:10px}
+.lid-stat span{display:block;font-size:9px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.lid-stat strong{display:block;font-size:15px;font-weight:900;color:var(--dark);margin-top:2px}
+.prog-bar{height:4px;background:rgba(201,168,76,.15);border-radius:2px;margin-top:12px;overflow:hidden}
+.prog-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--gold),var(--gold-d));transition:width 1s ease}
+/* WPP */
+.wpp-wrap{display:grid;grid-template-columns:310px 1fr;gap:18px;height:calc(100vh - 190px);min-height:500px}
+.wpp-side{background:#fff;border-radius:16px;border:1px solid var(--border);overflow:hidden;display:flex;flex-direction:column}
+.wpp-side-h{padding:14px 16px;background:#075E54;color:#fff}
+.wpp-side-h h3{font-size:14px;font-weight:800}
+.wpp-side-h p{font-size:10px;opacity:.65;margin-top:2px}
+.chat-list{overflow-y:auto;flex:1}
+.chat-item{display:flex;align-items:center;gap:11px;padding:11px 14px;cursor:pointer;border-bottom:1px solid #f0f0f0;transition:background .15s}
+.chat-item:hover{background:#f5f5f5}.chat-item.active{background:#E7F3EE}
+.chat-av{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-d));display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:900;flex-shrink:0}
+.chat-info h4{font-size:13px;font-weight:800;color:#111}
+.chat-info p{font-size:11px;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px}
+.wpp-unread{margin-left:auto;background:#25D366;color:#fff;font-size:10px;font-weight:800;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.wpp-main{background:#fff;border-radius:16px;border:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.wpp-hdr{padding:13px 16px;background:#075E54;display:flex;align-items:center;gap:11px;color:#fff}
+.wpp-hdr h3{font-size:14px;font-weight:800}
+.wpp-hdr p{font-size:10px;opacity:.65}
+.wpp-msgs{flex:1;overflow-y:auto;padding:14px;background:#ECE5DD;display:flex;flex-direction:column;gap:10px}
+.bubble{max-width:70%;padding:10px 14px;border-radius:12px;font-size:13px;line-height:1.55;position:relative;font-weight:600}
+.bubble.recv{background:#fff;align-self:flex-start;border-bottom-left-radius:2px;box-shadow:0 1px 2px rgba(0,0,0,.1);color:#111}
+.bubble.sent{background:#DCF8C6;align-self:flex-end;border-bottom-right-radius:2px;box-shadow:0 1px 2px rgba(0,0,0,.1);color:#111}
+.bubble .btime{font-size:10px;color:#888;text-align:right;margin-top:4px}
+.bubble.sent .btime{color:#68B56B}
+.wpp-bar{padding:10px 14px;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px;background:#F0F2F5}
+.wpp-inp{flex:1;padding:9px 15px;background:#fff;border-radius:24px;border:none;outline:none;font-family:'Nunito',sans-serif;font-size:13px;color:var(--dark)}
+.wpp-send{width:38px;height:38px;border-radius:50%;background:#25D366;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;font-size:15px;transition:background .2s;flex-shrink:0}
+.wpp-send:hover{background:#1DA856}
+/* PIPELINE MODAL */
+.pipe-ov{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.pipe-ov.show{display:flex}
+.pipe-modal{background:#fff;border-radius:20px;padding:30px;width:480px;max-width:92vw;box-shadow:0 25px 60px rgba(0,0,0,.25)}
+.pipe-modal h3{font-size:17px;font-weight:900;color:var(--dark);margin-bottom:4px}
+.pipe-modal > p{font-size:13px;color:var(--muted);margin-bottom:24px}
+.pipe-steps{display:flex;flex-direction:column;gap:12px;margin-bottom:22px}
+.pstep{display:flex;align-items:center;gap:13px;padding:13px 15px;border-radius:12px;border:1.5px solid var(--border);transition:all .4s}
+.pstep.active{border-color:var(--gold);background:var(--gold-pale)}
+.pstep.done{border-color:var(--success);background:rgba(72,168,122,.06)}
+.p-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px;background:rgba(0,0,0,.05);color:var(--muted);transition:all .4s}
+.pstep.active .p-icon{background:rgba(201,168,76,.18);color:var(--gold-d)}
+.pstep.done .p-icon{background:rgba(72,168,122,.15);color:var(--success)}
+.p-info h4{font-size:13px;font-weight:800;color:var(--dark)}
+.p-info p{font-size:11px;color:var(--muted);margin-top:1px}
+.p-status{margin-left:auto;font-size:11px;font-weight:800;color:var(--muted)}
+.pstep.active .p-status{color:var(--gold-d)}.pstep.done .p-status{color:var(--success)}
+.spin{animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.pipe-result{background:linear-gradient(135deg,rgba(72,168,122,.08),rgba(72,168,122,.03));border:1.5px solid rgba(72,168,122,.3);border-radius:12px;padding:15px;display:none}
+.pipe-result.show{display:block}
+.pipe-result h4{font-size:14px;font-weight:900;color:var(--success);margin-bottom:10px}
+.res-stats{display:flex;gap:18px;flex-wrap:wrap}
+.res-stat span{display:block;font-size:10px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.4px}
+.res-stat strong{display:block;font-size:16px;font-weight:900;color:var(--dark)}
+.close-btn{width:100%;padding:12px;background:var(--dark);color:#fff;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;margin-top:18px;transition:background .2s}
+.close-btn:hover{background:var(--gold-d)}
+/* MOBILE */
+.mob-h{display:none}
+.ov-bg{position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:99;display:none}
+.ov-bg.show{display:block}
+@media(max-width:900px){
+  .sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}
+  .main{margin-left:0}.mob-h{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;background:var(--dark);position:sticky;top:0;z-index:90}
+  .mob-h h2{font-size:15px;font-weight:900;color:var(--gold)}.hamburger{background:none;border:none;color:#fff;font-size:20px;cursor:pointer}
+  .kpi-grid{grid-template-columns:1fr 1fr}.grid2{grid-template-columns:1fr}.wpp-wrap{grid-template-columns:1fr;height:auto}.wpp-side{height:280px}
+  .lid-grid{grid-template-columns:1fr}.content{padding:14px}.pipe-modal{width:95vw}
+}
+@media(max-width:500px){.kpi-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="mob-h">
+  <h2><i class="fa-solid fa-gem"></i> BellaJoias</h2>
+  <button class="hamburger" onclick="toggleSB()"><i class="fa-solid fa-bars"></i></button>
+</div>
+
+<div class="ov-bg" id="ovBg" onclick="closeSB()"></div>
+
+<div class="sidebar" id="sidebar">
+  <div class="sb-logo">
+    <h1><i class="fa-solid fa-gem"></i> BellaJoias</h1>
+    <p>Gestão de Semijoias</p>
+  </div>
+  <nav class="sb-nav">
+    <div class="nav-sect-label">Principal</div>
+    <div class="nav-item active" onclick="showView('painel',this)"><i class="fa-solid fa-chart-pie"></i> Painel Geral</div>
+    <div class="nav-item" onclick="showView('consultoras',this)"><i class="fa-solid fa-users"></i> Consultoras <span class="nav-badge">23</span></div>
+    <div class="nav-item" onclick="showView('lideres',this)"><i class="fa-solid fa-crown"></i> Líderes</div>
+    <div class="nav-item" onclick="showView('alertas',this)"><i class="fa-brands fa-whatsapp"></i> Alertas WhatsApp <span class="nav-badge">8</span></div>
+    <div class="nav-sect-label">Relatórios</div>
+    <div class="nav-item" onclick="showView('painel',this)"><i class="fa-solid fa-file-chart-column"></i> Fechamento Mensal</div>
+    <div class="nav-item" onclick="showView('lideres',this)"><i class="fa-solid fa-ranking-star"></i> Ranking de Vendas</div>
+  </nav>
+  <div class="sb-foot">
+    <div class="sb-avatar">B</div>
+    <div><div class="uname">Bruna</div><div class="urole">Administrador</div></div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <div class="tb-left">
+      <h2 id="vTitle">Painel Geral</h2>
+      <p id="vSub">Junho 2026 — Fechamento em andamento</p>
+    </div>
+    <div class="tb-right">
+      <button class="tb-btn"><i class="fa-solid fa-bell"></i><span class="dot"></span></button>
+      <button class="tb-btn"><i class="fa-solid fa-gear"></i></button>
+      <button class="sim-btn" onclick="openPipe()"><i class="fa-solid fa-bolt"></i> Simular Fechamento</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- PAINEL -->
+    <div class="view active" id="view-painel">
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-top"><div class="kpi-icon gold"><i class="fa-solid fa-coins"></i></div><span class="kpi-badge up"><i class="fa-solid fa-arrow-up"></i> 12%</span></div>
+          <div class="kpi-val" id="kFat">R$ 284.500</div><div class="kpi-lbl">Faturamento Total — Junho</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-top"><div class="kpi-icon success"><i class="fa-solid fa-user-check"></i></div><span class="kpi-badge up"><i class="fa-solid fa-arrow-up"></i> 5</span></div>
+          <div class="kpi-val" id="kAtivas">387</div><div class="kpi-lbl">Consultoras Ativas</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-top"><div class="kpi-icon danger"><i class="fa-solid fa-triangle-exclamation"></i></div><span class="kpi-badge dw"><i class="fa-solid fa-arrow-up"></i> 3</span></div>
+          <div class="kpi-val" id="kPend">23</div><div class="kpi-lbl">Pagamentos Pendentes</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-top"><div class="kpi-icon info"><i class="fa-solid fa-hand-holding-dollar"></i></div><span class="kpi-badge up"><i class="fa-solid fa-arrow-up"></i> 8%</span></div>
+          <div class="kpi-val">R$ 18.420</div><div class="kpi-lbl">Comissões Estimadas</div>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="card-h">
+            <div><div class="card-title">Faturamento por Líder</div><div class="card-sub">Junho 2026</div></div>
+            <span class="card-link">Ver tudo</span>
+          </div>
+          <canvas id="chartFat" height="210"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-h">
+            <div><div class="card-title">Alertas Recentes</div><div class="card-sub">Últimas 24 horas</div></div>
+            <span class="card-link" onclick="showView('alertas',null)">Ver todos</span>
+          </div>
+          <div class="alert-list">
+            <div class="alert-item"><div class="a-icon warn"><i class="fa-solid fa-clock"></i></div><div class="a-body"><p>Fechamento pendente</p><span>Líder Ana Lima — 5 consultoras</span></div><span class="a-tag pend">Pendente</span></div>
+            <div class="alert-item"><div class="a-icon danger"><i class="fa-solid fa-circle-xmark"></i></div><div class="a-body"><p>Pagamento em atraso</p><span>Fernanda Alves — R$ 890</span></div><span class="a-tag ok">Enviado</span></div>
+            <div class="alert-item"><div class="a-icon info"><i class="fa-solid fa-user-slash"></i></div><div class="a-body"><p>Sem movimentação 30 dias</p><span>Beatriz Gomes — Maria Santos</span></div><span class="a-tag ok">Enviado</span></div>
+            <div class="alert-item"><div class="a-icon warn"><i class="fa-solid fa-user-minus"></i></div><div class="a-body"><p>Queda na captação</p><span>Líder Carla Oliveira — -40% vs maio</span></div><span class="a-tag pend">Pendente</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONSULTORAS -->
+    <div class="view" id="view-consultoras">
+      <div class="filter-bar">
+        <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input type="text" placeholder="Buscar consultora ou líder..." oninput="filterTbl(this.value)"></div>
+        <button class="fbtn active" onclick="filtSt('all',this)">Todas (400)</button>
+        <button class="fbtn fp" onclick="filtSt('pend',this)">Pendentes (23)</button>
+        <button class="fbtn fi" onclick="filtSt('inac',this)">Sem Mov. (18)</button>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Consultora</th><th>Líder</th><th>Vendas Junho</th><th>Status</th><th>Ação</th></tr></thead>
+        <tbody id="tBody"></tbody>
+      </table></div>
+    </div>
+
+    <!-- LIDERES -->
+    <div class="view" id="view-lideres">
+      <div class="lid-grid" id="lidGrid"></div>
+    </div>
+
+    <!-- ALERTAS -->
+    <div class="view" id="view-alertas">
+      <div class="wpp-wrap">
+        <div class="wpp-side">
+          <div class="wpp-side-h"><h3><i class="fa-brands fa-whatsapp"></i> BellaJoias Alertas</h3><p>8 mensagens pendentes</p></div>
+          <div class="chat-list" id="chatList"></div>
+        </div>
+        <div class="wpp-main">
+          <div class="wpp-hdr">
+            <div class="chat-av" id="chatAv">F</div>
+            <div><h3 id="chatName">Fernanda Alves</h3><p id="chatSub">Consultora — Pagamento Pendente</p></div>
+          </div>
+          <div class="wpp-msgs" id="chatMsgs"></div>
+          <div class="wpp-bar">
+            <input class="wpp-inp" type="text" placeholder="Digite uma mensagem..." id="wppInp">
+            <button class="wpp-send" onclick="sendMsg()"><i class="fa-solid fa-paper-plane"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- PIPELINE MODAL -->
+<div class="pipe-ov" id="pipeOv">
+  <div class="pipe-modal">
+    <h3><i class="fa-solid fa-file-import" style="color:var(--gold)"></i> Processando Fechamento</h3>
+    <p>Planilha de Maria Santos — Junho 2026 (48 consultoras)</p>
+    <div class="pipe-steps">
+      <div class="pstep" id="ps1">
+        <div class="p-icon"><i class="fa-solid fa-file-excel"></i></div>
+        <div class="p-info"><h4>Recebimento da Planilha</h4><p>Fechamento_Maria_Santos_Jun26.xlsx</p></div>
+        <span class="p-status" id="ps1s">Aguardando</span>
+      </div>
+      <div class="pstep" id="ps2">
+        <div class="p-icon"><i class="fa-solid fa-shield-check"></i></div>
+        <div class="p-info"><h4>Validação de Formato</h4><p>Verificando colunas e integridade dos dados</p></div>
+        <span class="p-status" id="ps2s">Aguardando</span>
+      </div>
+      <div class="pstep" id="ps3">
+        <div class="p-icon"><i class="fa-solid fa-database"></i></div>
+        <div class="p-info"><h4>Atualização do Painel</h4><p>Consolidando 48 registros na base</p></div>
+        <span class="p-status" id="ps3s">Aguardando</span>
+      </div>
+      <div class="pstep" id="ps4">
+        <div class="p-icon"><i class="fa-brands fa-whatsapp"></i></div>
+        <div class="p-info"><h4>Confirmação WhatsApp</h4><p>Aviso automático enviado para Maria Santos</p></div>
+        <span class="p-status" id="ps4s">Aguardando</span>
+      </div>
+    </div>
+    <div class="pipe-result" id="pRes">
+      <h4><i class="fa-solid fa-circle-check"></i> Fechamento Processado com Sucesso</h4>
+      <div class="res-stats">
+        <div class="res-stat"><span>Consultoras</span><strong>48</strong></div>
+        <div class="res-stat"><span>Faturamento</span><strong>R$ 52.300</strong></div>
+        <div class="res-stat"><span>Pendentes</span><strong>3</strong></div>
+        <div class="res-stat"><span>Tempo</span><strong>4,2s</strong></div>
+      </div>
+    </div>
+    <button class="close-btn" id="closePBtn" onclick="closePipe()" style="display:none"><i class="fa-solid fa-check"></i> Concluído — Fechar</button>
+  </div>
+</div>
+
+<script>
+const consultoras=[
+  {n:'Aline Ferreira',l:'Maria Santos',v:'R$ 2.340',s:'ok'},
+  {n:'Beatriz Gomes',l:'Ana Lima',v:'R$ 0',s:'inac'},
+  {n:'Camila Rodrigues',l:'Maria Santos',v:'R$ 1.890',s:'pend'},
+  {n:'Daniela Nunes',l:'Juliana Costa',v:'R$ 3.120',s:'ok'},
+  {n:'Fernanda Alves',l:'Patricia Souza',v:'R$ 890',s:'pend'},
+  {n:'Gabriela Martins',l:'Ana Lima',v:'R$ 2.670',s:'ok'},
+  {n:'Helena Cunha',l:'Carla Oliveira',v:'R$ 1.450',s:'ok'},
+  {n:'Isabela Moura',l:'Juliana Costa',v:'R$ 0',s:'inac'},
+  {n:'Joana Pereira',l:'Maria Santos',v:'R$ 3.780',s:'ok'},
+  {n:'Karina Torres',l:'Patricia Souza',v:'R$ 1.200',s:'pend'},
+  {n:'Laura Azevedo',l:'Ana Lima',v:'R$ 4.210',s:'ok'},
+  {n:'Marina Castro',l:'Carla Oliveira',v:'R$ 0',s:'inac'},
+];
+
+const lideres=[
+  {n:'Maria Santos',c:48,f:'R$ 52.300',p:95,t:'+8%',up:true},
+  {n:'Ana Lima',c:39,f:'R$ 41.800',p:82,t:'+3%',up:true},
+  {n:'Juliana Costa',c:35,f:'R$ 38.200',p:75,t:'+1%',up:true},
+  {n:'Patricia Souza',c:31,f:'R$ 29.400',p:60,t:'-2%',up:false},
+  {n:'Carla Oliveira',c:28,f:'R$ 22.800',p:45,t:'-40%',up:false},
+];
+
+const chats=[
+  {n:'Fernanda Alves',s:'Pagamento pendente R$ 890',msgs:[
+    {t:'sent',m:'Fernanda, identificamos um pagamento pendente de R$ 890 referente ao ciclo de maio. Quando consegue regularizar?',h:'09:14'},
+    {t:'recv',m:'Oi! Vou verificar e te respondo em breve.',h:'09:32'},
+    {t:'sent',m:'Perfeito! Assim que puder confirma por aqui para atualizarmos o sistema.',h:'09:33'},
+  ]},
+  {n:'Beatriz Gomes',s:'Sem movimentação há 30 dias',msgs:[
+    {t:'sent',m:'Beatriz, notamos que você não registrou vendas nos últimos 30 dias. Está tudo bem? Precisando de algum suporte?',h:'10:05'},
+  ]},
+  {n:'Maria Santos',s:'Fechamento de 3 consultoras pendente',msgs:[
+    {t:'sent',m:'Maria, o fechamento de junho de 3 consultoras do seu grupo ainda não foi enviado. Pode confirmar quando envia?',h:'11:20'},
+    {t:'recv',m:'Sim! Vou solicitar para elas agora mesmo.',h:'11:45'},
+  ]},
+  {n:'Carla Oliveira',s:'Queda de 40% na captação',msgs:[
+    {t:'sent',m:'Carla, comparando com maio a captação de novas consultoras caiu 40% em junho. Posso ajudar com alguma estratégia?',h:'14:00'},
+  ]},
+];
+
+const statusLabel={ok:'Ativa',pend:'Pendente',inac:'Sem Mov.'};
+const statusMeta={'Fernanda Alves':'Consultora — Pagamento Pendente','Beatriz Gomes':'Consultora — Sem Movimentação 30 dias','Maria Santos':'Líder — 48 Consultoras','Carla Oliveira':'Líder — Queda na Captação'};
+
+let activeChat=0;
+
+function renderTbl(data){
+  document.getElementById('tBody').innerHTML=data.map(c=>`
+    <tr>
+      <td><strong>${c.n}</strong></td>
+      <td>${c.l}</td>
+      <td>${c.v}</td>
+      <td><span class="sbadge ${c.s}"><span class="sdot"></span>${statusLabel[c.s]}</span></td>
+      <td><span style="color:var(--gold);font-weight:800;cursor:pointer;font-size:12px" onclick="showView('alertas',null)"><i class="fa-brands fa-whatsapp"></i> Alertar</span></td>
+    </tr>`).join('');
+}
+
+function filtSt(st,btn){
+  document.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTbl(st==='all'?consultoras:consultoras.filter(c=>c.s===st));
+}
+
+function filterTbl(q){
+  renderTbl(consultoras.filter(c=>c.n.toLowerCase().includes(q.toLowerCase())||c.l.toLowerCase().includes(q.toLowerCase())));
+}
+
+function renderLideres(){
+  const ranks=['gold','silver','bronze','',''];
+  document.getElementById('lidGrid').innerHTML=lideres.map((l,i)=>`
+    <div class="lid-card" style="animation-delay:${i*.08}s">
+      <div class="lid-rank">
+        <div class="rank-num ${ranks[i]||''}">#${i+1}</div>
+        <span class="trend ${l.up?'up':'dw'}"><i class="fa-solid fa-arrow-${l.up?'up':'down'}"></i> ${l.t}</span>
+      </div>
+      <div class="lid-name">${l.n}</div>
+      <div class="lid-meta">${l.c} consultoras ativas</div>
+      <div class="lid-stats">
+        <div class="lid-stat"><span>Faturamento</span><strong>${l.f}</strong></div>
+        <div class="lid-stat"><span>Meta atingida</span><strong>${l.p}%</strong></div>
+      </div>
+      <div class="prog-bar"><div class="prog-fill" style="width:0%" data-w="${l.p}"></div></div>
+    </div>`).join('');
+  setTimeout(()=>document.querySelectorAll('.prog-fill').forEach(el=>el.style.width=el.dataset.w+'%'),100);
+}
+
+function renderChatList(){
+  document.getElementById('chatList').innerHTML=chats.map((c,i)=>`
+    <div class="chat-item${i===activeChat?' active':''}" onclick="renderChat(${i})">
+      <div class="chat-av">${c.n[0]}</div>
+      <div class="chat-info"><h4>${c.n}</h4><p>${c.s}</p></div>
+      ${i<3?'<span class="wpp-unread">1</span>':''}
+    </div>`).join('');
+}
+
+function renderChat(idx){
+  activeChat=idx;
+  const c=chats[idx];
+  document.getElementById('chatName').textContent=c.n;
+  document.getElementById('chatAv').textContent=c.n[0];
+  document.getElementById('chatSub').textContent=statusMeta[c.n]||'Consultora';
+  const msgs=document.getElementById('chatMsgs');
+  msgs.innerHTML=c.msgs.map(m=>`
+    <div class="bubble ${m.t==='sent'?'sent':'recv'}">
+      ${m.m}
+      <div class="btime">${m.h}${m.t==='sent'?' <i class="fa-solid fa-check-double" style="color:#68B56B"></i>':''}</div>
+    </div>`).join('');
+  msgs.scrollTop=msgs.scrollHeight;
+  renderChatList();
+}
+
+function sendMsg(){
+  const inp=document.getElementById('wppInp');
+  const txt=inp.value.trim();
+  if(!txt)return;
+  const msgs=document.getElementById('chatMsgs');
+  const b=document.createElement('div');
+  b.className='bubble sent';
+  const now=new Date();
+  b.innerHTML=`${txt}<div class="btime">${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')} <i class="fa-solid fa-check-double" style="color:#68B56B"></i></div>`;
+  msgs.appendChild(b);
+  msgs.scrollTop=msgs.scrollHeight;
+  inp.value='';
+}
+
+function initChart(){
+  const ctx=document.getElementById('chartFat');
+  if(!ctx)return;
+  new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels:lideres.map(l=>l.n.split(' ')[0]),
+      datasets:[{
+        data:[52300,41800,38200,29400,22800],
+        backgroundColor:['rgba(201,168,76,.85)','rgba(201,168,76,.7)','rgba(201,168,76,.55)','rgba(201,168,76,.38)','rgba(201,168,76,.22)'],
+        borderRadius:8,borderSkipped:false
+      }]
+    },
+    options:{
+      responsive:true,
+      plugins:{legend:{display:false}},
+      scales:{
+        y:{grid:{color:'rgba(0,0,0,.05)'},ticks:{callback:v=>'R$'+(v/1000).toFixed(0)+'k',font:{family:'Nunito',weight:'700',size:11}}},
+        x:{grid:{display:false},ticks:{font:{family:'Nunito',weight:'800',size:12}}}
+      }
+    }
+  });
+}
+
+function showView(v,el){
+  document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
+  document.getElementById('view-'+v).classList.add('active');
+  if(el)el.classList.add('active');
+  const titles={painel:['Painel Geral','Junho 2026 — Fechamento em andamento'],consultoras:['Consultoras','400 consultoras cadastradas'],lideres:['Líderes','Ranking de desempenho — Junho 2026'],alertas:['Alertas WhatsApp','8 mensagens ativas']};
+  if(titles[v]){document.getElementById('vTitle').textContent=titles[v][0];document.getElementById('vSub').textContent=titles[v][1];}
+  closeSB();
+}
+
+function openPipe(){
+  document.getElementById('pipeOv').classList.add('show');
+  document.getElementById('pRes').classList.remove('show');
+  document.getElementById('closePBtn').style.display='none';
+  ['ps1','ps2','ps3','ps4'].forEach(s=>{
+    const el=document.getElementById(s);
+    el.className='pstep';
+    document.getElementById(s+'s').textContent='Aguardando';
+    el.querySelector('.p-icon i').className={ps1:'fa-solid fa-file-excel',ps2:'fa-solid fa-shield-check',ps3:'fa-solid fa-database',ps4:'fa-brands fa-whatsapp'}[s];
+  });
+  runPipe();
+}
+
+async function runPipe(){
+  const steps=[
+    {id:'ps1',am:'Recebendo...',dm:'Recebido',ic:'fa-solid fa-file-excel',d:1100},
+    {id:'ps2',am:'Validando...',dm:'48 registros OK',ic:'fa-solid fa-shield-check',d:1400},
+    {id:'ps3',am:'Atualizando...',dm:'Painel atualizado',ic:'fa-solid fa-database',d:900},
+    {id:'ps4',am:'Enviando...',dm:'Enviado',ic:'fa-brands fa-whatsapp',d:700},
+  ];
+  for(const s of steps){
+    const el=document.getElementById(s.id);
+    el.className='pstep active';
+    document.getElementById(s.id+'s').textContent=s.am;
+    el.querySelector('.p-icon i').className='fa-solid fa-spinner spin';
+    await wait(s.d);
+    el.className='pstep done';
+    document.getElementById(s.id+'s').textContent=s.dm;
+    el.querySelector('.p-icon i').className=s.ic;
+  }
+  document.getElementById('kAtivas').textContent='388';
+  document.getElementById('kPend').textContent='20';
+  document.getElementById('pRes').classList.add('show');
+  document.getElementById('closePBtn').style.display='block';
+}
+
+function wait(ms){return new Promise(r=>setTimeout(r,ms))}
+
+function closePipe(){document.getElementById('pipeOv').classList.remove('show')}
+
+function toggleSB(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('ovBg').classList.toggle('show')}
+function closeSB(){document.getElementById('sidebar').classList.remove('open');document.getElementById('ovBg').classList.remove('show')}
+
+document.getElementById('pipeOv').addEventListener('click',function(e){if(e.target===this)closePipe()});
+document.getElementById('wppInp').addEventListener('keypress',function(e){if(e.key==='Enter')sendMsg()});
+
+renderTbl(consultoras);
+renderLideres();
+renderChatList();
+renderChat(0);
+initChart();
+</script>
+</body>
+</html>
