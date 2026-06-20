@@ -1,0 +1,1496 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AuthCapture - Demo</title>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&family=Nunito:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --gold: #C9A84C;
+    --gold-light: #E8C96A;
+    --gold-dark: #8B6914;
+    --dark: #0A0A0F;
+    --dark2: #12121A;
+    --dark3: #1A1A28;
+    --card: #1E1E30;
+    --border: #2A2A40;
+    --text: #E8E8F0;
+    --text-dim: #8888A8;
+    --green: #22C55E;
+    --green-dim: #16A34A;
+    --green-glow: rgba(34,197,94,0.2);
+    --red: #EF4444;
+  }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--dark);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+    overflow-x: hidden;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 48px;
+    opacity: 0;
+    transform: translateY(-20px);
+    animation: fadeUp 0.7s ease forwards;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .logo-icon {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    color: white;
+    box-shadow: 0 4px 20px rgba(201,168,76,0.3);
+  }
+
+  .logo h1 {
+    font-family: 'Lexend', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.5px;
+  }
+
+  .logo h1 span { color: var(--gold); }
+
+  .header p {
+    font-size: 15px;
+    color: var(--text-dim);
+    font-weight: 400;
+  }
+
+  /* Main layout */
+  .main {
+    display: flex;
+    gap: 60px;
+    align-items: flex-start;
+    max-width: 1100px;
+    width: 100%;
+    opacity: 0;
+    animation: fadeUp 0.7s 0.2s ease forwards;
+  }
+
+  /* Phone shell */
+  .phone-wrapper {
+    position: sticky;
+    top: 40px;
+    flex-shrink: 0;
+  }
+
+  .phone {
+    width: 320px;
+    height: 640px;
+    background: #0D0D18;
+    border-radius: 42px;
+    border: 2px solid #2A2A45;
+    box-shadow:
+      0 0 0 6px #0A0A14,
+      0 0 0 8px #1A1A28,
+      0 30px 80px rgba(0,0,0,0.8),
+      0 0 40px rgba(201,168,76,0.05);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Notch */
+  .notch {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 28px;
+    background: #0D0D18;
+    border-radius: 0 0 18px 18px;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .notch-camera {
+    width: 10px;
+    height: 10px;
+    background: #222;
+    border-radius: 50%;
+    border: 1px solid #333;
+  }
+
+  .notch-speaker {
+    width: 40px;
+    height: 4px;
+    background: #1A1A2E;
+    border-radius: 2px;
+  }
+
+  /* Status bar */
+  .status-bar {
+    position: absolute;
+    top: 32px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    font-size: 11px;
+    font-weight: 600;
+    z-index: 90;
+    color: white;
+  }
+
+  .status-bar .time { font-family: 'Lexend', sans-serif; }
+  .status-icons { display: flex; gap: 5px; align-items: center; }
+
+  /* Screens container */
+  .screens {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 42px;
+    overflow: hidden;
+  }
+
+  .screen {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+  }
+
+  .screen.active {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  /* ========== SCREEN 1: CAMERA ========== */
+  .screen-camera {
+    background: #000;
+  }
+
+  .camera-view {
+    position: relative;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .camera-bg {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: brightness(0.7);
+  }
+
+  .camera-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to bottom,
+      rgba(0,0,0,0.4) 0%,
+      transparent 30%,
+      transparent 60%,
+      rgba(0,0,0,0.7) 100%
+    );
+  }
+
+  /* Viewfinder grid */
+  .viewfinder {
+    position: absolute;
+    inset: 60px 30px;
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+
+  .viewfinder::before, .viewfinder::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    border-top: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .viewfinder::before { top: 33.33%; }
+  .viewfinder::after { top: 66.66%; }
+
+  .vf-line {
+    position: absolute;
+    height: 100%;
+    border-left: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .vf-line:nth-child(1) { left: 33.33%; }
+  .vf-line:nth-child(2) { left: 66.66%; }
+
+  /* Corner brackets */
+  .corner {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border-color: var(--gold);
+    border-style: solid;
+  }
+
+  .corner.tl { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+  .corner.tr { top: -1px; right: -1px; border-width: 2px 2px 0 0; }
+  .corner.bl { bottom: -1px; left: -1px; border-width: 0 0 2px 2px; }
+  .corner.br { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+
+  /* Focus ring */
+  .focus-ring {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    border: 1px solid var(--gold);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation: focusPulse 2s ease infinite;
+  }
+
+  @keyframes focusPulse {
+    0%, 100% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
+    50% { opacity: 1; transform: translate(-50%, -50%) scale(0.9); }
+  }
+
+  /* Metadata overlay */
+  .meta-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 16px;
+    background: linear-gradient(to top, rgba(0,0,0,0.85), transparent);
+  }
+
+  .meta-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(201,168,76,0.12);
+    border: 1px solid rgba(201,168,76,0.3);
+    border-radius: 8px;
+    padding: 8px 10px;
+    margin-bottom: 6px;
+    backdrop-filter: blur(8px);
+  }
+
+  .meta-badge i {
+    color: var(--gold);
+    font-size: 11px;
+    width: 14px;
+    text-align: center;
+  }
+
+  .meta-badge span {
+    font-size: 10px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.9);
+    font-family: 'Lexend', sans-serif;
+    letter-spacing: 0.3px;
+  }
+
+  .meta-badge .meta-label {
+    font-size: 9px;
+    color: var(--gold);
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-right: 4px;
+  }
+
+  /* Top camera bar */
+  .camera-top-bar {
+    position: absolute;
+    top: 52px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    z-index: 10;
+  }
+
+  .cam-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(255,255,255,0.15);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 14px;
+  }
+
+  .rec-badge {
+    background: rgba(239,68,68,0.85);
+    border: none;
+    border-radius: 20px;
+    padding: 5px 10px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .rec-dot {
+    width: 7px;
+    height: 7px;
+    background: white;
+    border-radius: 50%;
+    animation: blink 1s step-end infinite;
+  }
+
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+  /* Camera bottom bar */
+  .camera-bottom {
+    background: rgba(0,0,0,0.9);
+    padding: 16px 0 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  /* Mode tabs */
+  .mode-tabs {
+    display: flex;
+    gap: 20px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .mode-tab { color: rgba(255,255,255,0.4); }
+  .mode-tab.active { color: var(--gold); }
+
+  .capture-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+    width: 100%;
+    padding: 0 30px;
+  }
+
+  .capture-side-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 16px;
+  }
+
+  .capture-btn {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: white;
+    border: 3px solid rgba(255,255,255,0.3);
+    box-shadow: 0 0 0 4px rgba(255,255,255,0.08), 0 0 20px rgba(201,168,76,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+    position: relative;
+  }
+
+  .capture-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 6px rgba(255,255,255,0.08), 0 0 30px rgba(201,168,76,0.6);
+  }
+
+  .capture-btn:active { transform: scale(0.95); }
+
+  .capture-btn::after {
+    content: '';
+    position: absolute;
+    inset: 5px;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid rgba(0,0,0,0.1);
+  }
+
+  /* ========== SCREEN 2: PROCESSING ========== */
+  .screen-processing {
+    background: var(--dark2);
+    padding: 70px 24px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .proc-title {
+    font-family: 'Lexend', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 6px;
+    margin-top: 32px;
+  }
+
+  .proc-subtitle {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 32px;
+    text-align: center;
+  }
+
+  /* Hash spinner */
+  .hash-spinner {
+    width: 90px;
+    height: 90px;
+    position: relative;
+    margin: 0 auto 32px;
+  }
+
+  .hash-spinner-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 3px solid transparent;
+    border-top-color: var(--gold);
+    animation: spin 1s linear infinite;
+  }
+
+  .hash-spinner-ring.ring2 {
+    inset: 10px;
+    border-top-color: var(--gold-light);
+    animation-duration: 0.7s;
+    animation-direction: reverse;
+  }
+
+  .hash-spinner-center {
+    position: absolute;
+    inset: 20px;
+    border-radius: 50%;
+    background: var(--dark3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    color: var(--gold);
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .proc-steps {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  .proc-step {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    background: var(--dark3);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    opacity: 0;
+    transform: translateX(-10px);
+    transition: all 0.4s ease;
+  }
+
+  .proc-step.visible {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .proc-step.done { border-color: rgba(34,197,94,0.3); background: rgba(34,197,94,0.05); }
+  .proc-step.active { border-color: rgba(201,168,76,0.4); background: rgba(201,168,76,0.05); }
+
+  .step-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    flex-shrink: 0;
+    transition: all 0.4s ease;
+  }
+
+  .proc-step.done .step-icon { background: rgba(34,197,94,0.15); color: var(--green); }
+  .proc-step.active .step-icon { background: rgba(201,168,76,0.15); color: var(--gold); animation: pulse 1s ease infinite; }
+
+  @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+
+  .step-text {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .step-detail {
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+
+  /* Hash fragment */
+  .hash-fragment {
+    background: var(--dark3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    width: 100%;
+    font-family: 'Lexend', monospace;
+    font-size: 9px;
+    color: var(--gold);
+    letter-spacing: 0.5px;
+    word-break: break-all;
+    line-height: 1.6;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+
+  .hash-fragment.visible { opacity: 1; }
+
+  /* ========== SCREEN 3: VERIFICATION ========== */
+  .screen-verification {
+    background: var(--dark2);
+    padding: 70px 20px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-y: auto;
+  }
+
+  .seal-container {
+    position: relative;
+    width: 110px;
+    height: 110px;
+    margin: 16px auto 20px;
+  }
+
+  .seal-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 3px solid var(--green);
+    box-shadow: 0 0 0 6px var(--green-glow), 0 0 30px var(--green-glow);
+    animation: sealReveal 0.6s ease forwards;
+  }
+
+  @keyframes sealReveal {
+    from { transform: scale(0.5); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  .seal-inner {
+    position: absolute;
+    inset: 12px;
+    border-radius: 50%;
+    background: var(--green-glow);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+    color: var(--green);
+    animation: checkReveal 0.5s 0.3s ease both;
+  }
+
+  @keyframes checkReveal {
+    from { transform: scale(0); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  .verified-label {
+    font-family: 'Lexend', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--green);
+    text-align: center;
+    margin-bottom: 4px;
+  }
+
+  .verified-sub {
+    font-size: 11px;
+    color: var(--text-dim);
+    text-align: center;
+    margin-bottom: 18px;
+  }
+
+  /* Hash card */
+  .hash-card {
+    width: 100%;
+    background: var(--dark3);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 12px;
+  }
+
+  .hash-card-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 8px;
+  }
+
+  .hash-value {
+    font-family: 'Lexend', monospace;
+    font-size: 9px;
+    color: var(--text);
+    word-break: break-all;
+    line-height: 1.7;
+    letter-spacing: 0.3px;
+  }
+
+  /* Metadata table */
+  .meta-table {
+    width: 100%;
+    background: var(--dark3);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    margin-bottom: 14px;
+  }
+
+  .meta-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .meta-row:last-child { border-bottom: none; }
+
+  .meta-row i {
+    width: 18px;
+    text-align: center;
+    color: var(--gold);
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+
+  .meta-row-content { flex: 1; min-width: 0; }
+
+  .meta-row-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 2px;
+  }
+
+  .meta-row-value {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text);
+    font-family: 'Lexend', sans-serif;
+  }
+
+  .meta-row-badge {
+    font-size: 9px;
+    font-weight: 700;
+    background: rgba(34,197,94,0.15);
+    color: var(--green);
+    border: 1px solid rgba(34,197,94,0.3);
+    border-radius: 6px;
+    padding: 2px 6px;
+  }
+
+  /* Buttons */
+  .btn-primary {
+    width: 100%;
+    padding: 13px;
+    background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+    color: white;
+    font-family: 'Nunito', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 4px 20px rgba(201,168,76,0.3);
+    margin-bottom: 8px;
+  }
+
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(201,168,76,0.4); }
+  .btn-primary:active { transform: translateY(0); }
+
+  .btn-secondary {
+    width: 100%;
+    padding: 12px;
+    background: transparent;
+    color: var(--text-dim);
+    font-family: 'Nunito', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .btn-secondary:hover { border-color: var(--gold); color: var(--gold); }
+
+  /* App nav */
+  .app-nav {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: rgba(10,10,20,0.95);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 0 20px;
+    backdrop-filter: blur(12px);
+  }
+
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+
+  .nav-item.active { color: var(--gold); }
+  .nav-item i { font-size: 18px; }
+
+  /* Home button bar */
+  .home-bar {
+    position: absolute;
+    bottom: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 4px;
+    background: rgba(255,255,255,0.25);
+    border-radius: 2px;
+    z-index: 200;
+  }
+
+  /* ========== Info panel ========== */
+  .info-panel {
+    flex: 1;
+    max-width: 520px;
+  }
+
+  .section-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(201,168,76,0.1);
+    border: 1px solid rgba(201,168,76,0.25);
+    color: var(--gold);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 5px 12px;
+    border-radius: 20px;
+    margin-bottom: 16px;
+  }
+
+  .info-panel h2 {
+    font-family: 'Lexend', sans-serif;
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.25;
+    margin-bottom: 14px;
+    letter-spacing: -0.5px;
+  }
+
+  .info-panel h2 span { color: var(--gold); }
+
+  .info-panel p {
+    font-size: 14px;
+    color: var(--text-dim);
+    line-height: 1.7;
+    margin-bottom: 28px;
+  }
+
+  /* Steps nav */
+  .steps-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    margin-bottom: 28px;
+  }
+
+  .step-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+    position: relative;
+  }
+
+  .step-nav-item:hover { background: var(--card); }
+
+  .step-nav-item.active {
+    background: var(--card);
+    border-color: rgba(201,168,76,0.2);
+  }
+
+  .step-num {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: var(--dark3);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Lexend', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-dim);
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+
+  .step-nav-item.active .step-num {
+    background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+    border-color: transparent;
+    color: white;
+    box-shadow: 0 4px 12px rgba(201,168,76,0.3);
+  }
+
+  .step-nav-content h4 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 3px;
+  }
+
+  .step-nav-content p {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin: 0;
+    line-height: 1.4;
+  }
+
+  /* Feature cards */
+  .features {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  .feature-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    opacity: 0;
+    transform: translateY(15px);
+    transition: all 0.4s ease;
+  }
+
+  .feature-card.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .feature-card i {
+    font-size: 18px;
+    color: var(--gold);
+    margin-bottom: 8px;
+  }
+
+  .feature-card h5 {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .feature-card p {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  /* Tech pills */
+  .tech-stack {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 24px;
+  }
+
+  .tech-pill {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--dark3);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 5px 11px;
+    border-radius: 20px;
+  }
+
+  .tech-pill i { font-size: 12px; color: var(--gold); }
+
+  /* Restart btn */
+  .restart-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    font-family: 'Nunito', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 9px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .restart-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Responsive */
+  @media (max-width: 800px) {
+    .main { flex-direction: column; align-items: center; }
+    .phone-wrapper { position: static; }
+    .info-panel { max-width: 100%; }
+    .features { grid-template-columns: 1fr 1fr; }
+  }
+
+  @media (max-width: 400px) {
+    .phone { width: 290px; height: 590px; }
+    .features { grid-template-columns: 1fr; }
+  }
+
+  /* Tooltip */
+  .insight-box {
+    background: rgba(201,168,76,0.05);
+    border: 1px solid rgba(201,168,76,0.2);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 24px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .insight-box i { color: var(--gold); font-size: 16px; margin-top: 2px; flex-shrink: 0; }
+
+  .insight-box p {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin: 0;
+    line-height: 1.6;
+  }
+
+  .insight-box strong { color: var(--gold); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">
+    <div class="logo-icon"><i class="fa-solid fa-shield-halved"></i></div>
+    <h1>Auth<span>Capture</span></h1>
+  </div>
+  <p>Demo interativo - Captura segura e autenticacao de midia</p>
+</div>
+
+<div class="main">
+
+  <!-- Phone -->
+  <div class="phone-wrapper">
+    <div class="phone">
+
+      <!-- Notch -->
+      <div class="notch">
+        <div class="notch-camera"></div>
+        <div class="notch-speaker"></div>
+      </div>
+
+      <!-- Status bar -->
+      <div class="status-bar">
+        <span class="time">14:23</span>
+        <div class="status-icons">
+          <i class="fa-solid fa-signal" style="font-size:12px"></i>
+          <i class="fa-solid fa-wifi" style="font-size:12px"></i>
+          <i class="fa-solid fa-battery-three-quarters" style="font-size:12px"></i>
+        </div>
+      </div>
+
+      <div class="screens">
+
+        <!-- SCREEN 1: CAMERA -->
+        <div class="screen screen-camera active" id="screen1">
+          <div class="camera-view">
+            <img class="camera-bg" src="https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=400&q=70" alt="">
+            <div class="camera-overlay"></div>
+
+            <!-- Viewfinder -->
+            <div class="viewfinder">
+              <div class="vf-line"></div>
+              <div class="vf-line"></div>
+              <div class="corner tl"></div>
+              <div class="corner tr"></div>
+              <div class="corner bl"></div>
+              <div class="corner br"></div>
+              <div class="focus-ring"></div>
+            </div>
+
+            <!-- Top bar -->
+            <div class="camera-top-bar">
+              <div class="cam-btn"><i class="fa-solid fa-xmark"></i></div>
+              <div class="rec-badge">
+                <div class="rec-dot"></div>
+                AO VIVO
+              </div>
+              <div class="cam-btn"><i class="fa-solid fa-rotate"></i></div>
+            </div>
+
+            <!-- Metadata overlay -->
+            <div class="meta-overlay">
+              <div class="meta-badge">
+                <i class="fa-solid fa-location-dot"></i>
+                <span class="meta-label">GPS</span>
+                <span id="gpsVal">-23.5505, -46.6333</span>
+              </div>
+              <div class="meta-badge">
+                <i class="fa-solid fa-clock"></i>
+                <span class="meta-label">HORA</span>
+                <span id="timeVal">14:23:07 BRT</span>
+              </div>
+              <div class="meta-badge">
+                <i class="fa-solid fa-server"></i>
+                <span class="meta-label">SERVIDOR</span>
+                <span>Firebase UTC</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="camera-bottom">
+            <div class="mode-tabs">
+              <div class="mode-tab">VIDEO</div>
+              <div class="mode-tab active">FOTO</div>
+              <div class="mode-tab">BURST</div>
+            </div>
+            <div class="capture-row">
+              <div class="capture-side-btn"><i class="fa-solid fa-images"></i></div>
+              <div class="capture-btn" onclick="goToScreen2()" title="Capturar"></div>
+              <div class="capture-side-btn"><i class="fa-solid fa-rotate"></i></div>
+            </div>
+          </div>
+
+          <div class="home-bar"></div>
+        </div>
+
+        <!-- SCREEN 2: PROCESSING -->
+        <div class="screen screen-processing" id="screen2" style="flex-direction:column;align-items:center;">
+          <div class="hash-spinner">
+            <div class="hash-spinner-ring"></div>
+            <div class="hash-spinner-ring ring2"></div>
+            <div class="hash-spinner-center"><i class="fa-solid fa-hashtag"></i></div>
+          </div>
+
+          <div class="proc-title">Gerando Selo de Autenticidade</div>
+          <div class="proc-subtitle">Conectando ao servidor Firebase para ancoragem segura</div>
+
+          <div class="proc-steps" id="procSteps">
+            <div class="proc-step" id="step-capture">
+              <div class="step-icon"><i class="fa-solid fa-camera"></i></div>
+              <div>
+                <div class="step-text">Captura registrada</div>
+                <div class="step-detail">Arquivo salvo temporariamente</div>
+              </div>
+            </div>
+            <div class="proc-step" id="step-meta">
+              <div class="step-icon"><i class="fa-solid fa-location-dot"></i></div>
+              <div>
+                <div class="step-text">Metadados coletados</div>
+                <div class="step-detail">GPS + UID + serverTimestamp</div>
+              </div>
+            </div>
+            <div class="proc-step" id="step-upload">
+              <div class="step-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+              <div>
+                <div class="step-text">Upload para Firebase Storage</div>
+                <div class="step-detail">Criptografado em transito</div>
+              </div>
+            </div>
+            <div class="proc-step" id="step-hash">
+              <div class="step-icon"><i class="fa-solid fa-shield-halved"></i></div>
+              <div>
+                <div class="step-text">Hash SHA-256 gerado no servidor</div>
+                <div class="step-detail">Cloud Function - fora do controle do cliente</div>
+              </div>
+            </div>
+            <div class="proc-step" id="step-store">
+              <div class="step-icon"><i class="fa-solid fa-database"></i></div>
+              <div>
+                <div class="step-text">Selo salvo no Firestore</div>
+                <div class="step-detail">Hash + metadados + timestamp imutavel</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="hash-fragment" id="hashFragment">
+            SHA-256: a7f3c9e2b18d4056ef2c1a39...
+          </div>
+
+          <div class="home-bar"></div>
+        </div>
+
+        <!-- SCREEN 3: VERIFICATION -->
+        <div class="screen screen-verification" id="screen3">
+          <div class="seal-container">
+            <div class="seal-ring"></div>
+            <div class="seal-inner"><i class="fa-solid fa-check"></i></div>
+          </div>
+
+          <div class="verified-label">Midia Autenticada</div>
+          <div class="verified-sub">Selo de originalidade gerado com sucesso</div>
+
+          <div class="hash-card">
+            <div class="hash-card-label"><i class="fa-solid fa-hashtag"></i> Hash SHA-256</div>
+            <div class="hash-value">a7f3c9e2b18d4056ef2c1a3984b7d2c0<br>f9e345a12c67b8901d3e5f2a6b0c9d84<br>3e1f7a8b2c4d6e0f1a3b5c7d9e2f4a6b</div>
+          </div>
+
+          <div class="meta-table">
+            <div class="meta-row">
+              <i class="fa-solid fa-clock"></i>
+              <div class="meta-row-content">
+                <div class="meta-row-label">Data e Hora</div>
+                <div class="meta-row-value">20 Jun 2026 - 14:23:07 UTC</div>
+              </div>
+              <div class="meta-row-badge">Servidor</div>
+            </div>
+            <div class="meta-row">
+              <i class="fa-solid fa-location-dot"></i>
+              <div class="meta-row-content">
+                <div class="meta-row-label">Localizacao</div>
+                <div class="meta-row-value">-23.5505, -46.6333</div>
+              </div>
+              <div class="meta-row-badge">GPS</div>
+            </div>
+            <div class="meta-row">
+              <i class="fa-solid fa-user-shield"></i>
+              <div class="meta-row-content">
+                <div class="meta-row-label">Usuario</div>
+                <div class="meta-row-value">uid:jrd_8f2a1c9e</div>
+              </div>
+              <div class="meta-row-badge">Firebase</div>
+            </div>
+            <div class="meta-row">
+              <i class="fa-solid fa-mobile-screen"></i>
+              <div class="meta-row-content">
+                <div class="meta-row-label">Plataforma</div>
+                <div class="meta-row-value">Android 14 - Samsung S24</div>
+              </div>
+            </div>
+          </div>
+
+          <button class="btn-primary" onclick="shareHash()">
+            <i class="fa-solid fa-share-nodes"></i>
+            Compartilhar Selo de Autenticidade
+          </button>
+          <button class="btn-secondary" onclick="restart()">
+            <i class="fa-solid fa-camera"></i>
+            Nova Captura
+          </button>
+
+          <div style="height:20px"></div>
+          <div class="home-bar"></div>
+        </div>
+
+      </div><!-- /screens -->
+
+    </div><!-- /phone -->
+  </div><!-- /phone-wrapper -->
+
+  <!-- Info panel -->
+  <div class="info-panel">
+
+    <div class="section-tag">
+      <i class="fa-solid fa-shield-halved"></i>
+      MVP DEMO
+    </div>
+
+    <h2>Captura com <span>selo inforjavel</span> de ponta a ponta</h2>
+
+    <p>O aplicativo gera um hash SHA-256 ancorado no servidor Firebase para cada midia capturada. O timestamp e definido pela Cloud Function e fica fora do controle do dispositivo. Clique na tela do celular para simular o fluxo completo.</p>
+
+    <!-- Steps nav -->
+    <div class="steps-nav" id="stepsNav">
+      <div class="step-nav-item active" id="nav1" onclick="goToScreen1()">
+        <div class="step-num">1</div>
+        <div class="step-nav-content">
+          <h4>Camera com metadados em tempo real</h4>
+          <p>GPS + horario do servidor exibidos antes da captura</p>
+        </div>
+      </div>
+      <div class="step-nav-item" id="nav2" onclick="goToScreen2()">
+        <div class="step-num">2</div>
+        <div class="step-nav-content">
+          <h4>Hash SHA-256 gerado no servidor</h4>
+          <p>Cloud Function ancora o hash fora do controle do cliente</p>
+        </div>
+      </div>
+      <div class="step-nav-item" id="nav3" onclick="goToScreen3()">
+        <div class="step-num">3</div>
+        <div class="step-nav-content">
+          <h4>Selo verde e metadados verificados</h4>
+          <p>Hash + localizacao + timestamp imutavel no Firestore</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Insight box -->
+    <div class="insight-box">
+      <i class="fa-solid fa-lightbulb"></i>
+      <p><strong>Detalhe de arquitetura:</strong> o timestamp no hash nao vem do dispositivo - vem do Firebase Cloud Function. Isso impede que alguem manipule o relogio do celular para forjar uma data diferente na midia capturada.</p>
+    </div>
+
+    <!-- Feature cards -->
+    <div class="features" id="featureCards">
+      <div class="feature-card">
+        <i class="fa-solid fa-camera"></i>
+        <h5>Camera Customizada</h5>
+        <p>Video ate 60s e fotos com overlay de metadados em tempo real</p>
+      </div>
+      <div class="feature-card">
+        <i class="fa-solid fa-server"></i>
+        <h5>Hash Server-Side</h5>
+        <p>SHA-256 gerado na Cloud Function com serverTimestamp imutavel</p>
+      </div>
+      <div class="feature-card">
+        <i class="fa-solid fa-wifi-slash"></i>
+        <h5>Modo Offline</h5>
+        <p>Fila local com sincronizacao automatica quando a conexao volta</p>
+      </div>
+      <div class="feature-card">
+        <i class="fa-brands fa-google"></i>
+        <h5>Firebase Auth</h5>
+        <p>Login por e-mail e Google OAuth com sessao persistente</p>
+      </div>
+    </div>
+
+    <!-- Tech stack -->
+    <div class="tech-stack">
+      <div class="tech-pill"><i class="fa-solid fa-mobile-screen"></i> Flutter</div>
+      <div class="tech-pill"><i class="fa-solid fa-fire"></i> Firebase Auth</div>
+      <div class="tech-pill"><i class="fa-solid fa-database"></i> Firestore</div>
+      <div class="tech-pill"><i class="fa-solid fa-cloud"></i> Cloud Storage</div>
+      <div class="tech-pill"><i class="fa-solid fa-code"></i> Cloud Functions</div>
+      <div class="tech-pill"><i class="fa-solid fa-hashtag"></i> SHA-256</div>
+      <div class="tech-pill"><i class="fa-brands fa-android"></i> Android APK</div>
+      <div class="tech-pill"><i class="fa-brands fa-apple"></i> iOS IPA</div>
+    </div>
+
+    <button class="restart-btn" onclick="restart()">
+      <i class="fa-solid fa-rotate-left"></i>
+      Reiniciar demo
+    </button>
+
+  </div><!-- /info-panel -->
+
+</div><!-- /main -->
+
+<script>
+  let currentScreen = 1;
+  let procTimeout = null;
+
+  function showScreen(n) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.step-nav-item').forEach(s => s.classList.remove('active'));
+    document.getElementById('screen' + n).classList.add('active');
+    document.getElementById('nav' + n).classList.add('active');
+    currentScreen = n;
+  }
+
+  function goToScreen1() {
+    showScreen(1);
+    animateGPS();
+  }
+
+  function goToScreen2() {
+    showScreen(2);
+    runProcessingAnimation();
+  }
+
+  function goToScreen3() {
+    showScreen(3);
+  }
+
+  function restart() {
+    resetProcessing();
+    goToScreen1();
+  }
+
+  // GPS live update
+  let gpsInterval = null;
+
+  function animateGPS() {
+    let base = { lat: -23.5505, lng: -46.6333 };
+    let t = 0;
+
+    if (gpsInterval) clearInterval(gpsInterval);
+
+    gpsInterval = setInterval(() => {
+      t++;
+      let lat = (base.lat + Math.sin(t * 0.1) * 0.0001).toFixed(4);
+      let lng = (base.lng + Math.cos(t * 0.08) * 0.0001).toFixed(4);
+      document.getElementById('gpsVal').textContent = lat + ', ' + lng;
+
+      let now = new Date();
+      let h = String(now.getHours()).padStart(2,'0');
+      let m = String(now.getMinutes()).padStart(2,'0');
+      let s = String(now.getSeconds()).padStart(2,'0');
+      document.getElementById('timeVal').textContent = h + ':' + m + ':' + s + ' BRT';
+    }, 1000);
+  }
+
+  // Processing animation
+  function resetProcessing() {
+    if (procTimeout) clearTimeout(procTimeout);
+    document.querySelectorAll('.proc-step').forEach(s => {
+      s.classList.remove('visible', 'done', 'active');
+    });
+    document.getElementById('hashFragment').classList.remove('visible');
+    document.getElementById('hashFragment').textContent = 'SHA-256: a7f3c9e2b18d4056ef2c1a39...';
+  }
+
+  function runProcessingAnimation() {
+    resetProcessing();
+
+    const steps = ['step-capture','step-meta','step-upload','step-hash','step-store'];
+    const delays = [300, 900, 1600, 2400, 3200];
+
+    steps.forEach((id, i) => {
+      setTimeout(() => {
+        // Mark previous as done
+        if (i > 0) {
+          let prev = document.getElementById(steps[i-1]);
+          prev.classList.remove('active');
+          prev.classList.add('done');
+          prev.querySelector('.step-icon i').className = 'fa-solid fa-check';
+        }
+        let el = document.getElementById(id);
+        el.classList.add('visible', 'active');
+      }, delays[i]);
+    });
+
+    // Final: mark last step done
+    setTimeout(() => {
+      let last = document.getElementById(steps[steps.length - 1]);
+      last.classList.remove('active');
+      last.classList.add('done');
+      last.querySelector('.step-icon i').className = 'fa-solid fa-check';
+
+      let frag = document.getElementById('hashFragment');
+      frag.textContent = 'SHA-256: a7f3c9e2b18d4056ef2c1a3984b7d2c0f9e345a12c67b8901d3e5f2a6b0c9d843e1f7a8b2c4d6e0f1a3b5c7d9e2f4a6b';
+      frag.classList.add('visible');
+
+      setTimeout(() => goToScreen3(), 900);
+    }, 4100);
+  }
+
+  function shareHash() {
+    let btn = event.currentTarget;
+    let orig = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-check"></i> Copiado!';
+    btn.style.background = 'linear-gradient(135deg, #22C55E, #16A34A)';
+    setTimeout(() => {
+      btn.innerHTML = orig;
+      btn.style.background = '';
+    }, 2000);
+  }
+
+  // Feature cards scroll reveal
+  function revealCards() {
+    let cards = document.querySelectorAll('.feature-card');
+    cards.forEach((card, i) => {
+      setTimeout(() => card.classList.add('visible'), i * 100);
+    });
+  }
+
+  // Init
+  animateGPS();
+  setTimeout(revealCards, 600);
+</script>
+</body>
+</html>
