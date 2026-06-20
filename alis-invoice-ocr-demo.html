@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FacturaAuto - Panel de Automatizacion OCR + SADE</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    :root {
+      --gold-300: #fcd34d;
+      --gold-400: #fbbf24;
+      --gold-500: #f59e0b;
+      --gold-600: #d97706;
+      --gold-700: #b45309;
+      --dark-900: #080810;
+      --dark-800: #0d0d1c;
+      --dark-700: #111124;
+      --dark-600: #18182e;
+      --surface: #1c1c34;
+      --surface-2: #222240;
+      --text-primary: #f0f0f8;
+      --text-secondary: #8888b0;
+      --text-muted: #50507a;
+      --success: #10b981;
+      --error: #ef4444;
+      --warning: #f59e0b;
+      --info: #6366f1;
+      --border: rgba(255,255,255,0.07);
+      --ease-spring: cubic-bezier(.34,1.56,.64,1);
+      --radius: 14px;
+      --radius-sm: 8px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--dark-900);
+      color: var(--text-primary);
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* NAV */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(8,8,16,0.88);
+      backdrop-filter: blur(24px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 62px;
+    }
+    .nav-logo {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 1.2rem; font-weight: 900; letter-spacing: -0.02em;
+    }
+    .nav-logo i { color: var(--gold-500); font-size: 1.3rem; }
+    .nav-logo .logo-accent { color: var(--gold-500); }
+    .nav-links { display: flex; gap: 2rem; list-style: none; }
+    .nav-links a {
+      color: var(--text-secondary); text-decoration: none;
+      font-weight: 700; font-size: 0.85rem; transition: color 0.2s;
+    }
+    .nav-links a:hover, .nav-links a.active { color: var(--gold-500); }
+    .nav-right { display: flex; align-items: center; gap: 1rem; }
+    .status-pill {
+      display: flex; align-items: center; gap: 7px;
+      background: rgba(16,185,129,0.1);
+      border: 1px solid rgba(16,185,129,0.25);
+      color: var(--success);
+      padding: 4px 13px; border-radius: 20px;
+      font-size: 0.72rem; font-weight: 800; letter-spacing: 0.04em;
+    }
+    .pulse-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--success);
+      animation: pulse-dot 2s infinite;
+    }
+    @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    /* HERO */
+    .hero {
+      position: relative; overflow: hidden;
+      padding: 3.5rem 2rem 2.5rem;
+      background: linear-gradient(180deg, var(--dark-800) 0%, var(--dark-900) 100%);
+    }
+    .hero-orb {
+      position: absolute; top: -120px; right: -80px;
+      width: 520px; height: 520px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(245,158,11,0.14) 0%, transparent 68%);
+      animation: float-orb 9s ease-in-out infinite;
+      pointer-events: none;
+    }
+    .hero-orb-2 {
+      position: absolute; bottom: -100px; left: -60px;
+      width: 380px; height: 380px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(99,102,241,0.09) 0%, transparent 70%);
+      animation: float-orb 13s ease-in-out infinite reverse;
+      pointer-events: none;
+    }
+    @keyframes float-orb {
+      0%,100%{transform:translate(0,0) scale(1)}
+      33%{transform:translate(25px,-18px) scale(1.04)}
+      66%{transform:translate(-15px,12px) scale(0.97)}
+    }
+    .grid-bg {
+      position: absolute; inset: 0; pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
+      background-size: 44px 44px;
+    }
+    .hero-content { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; }
+    .hero-tag {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.22);
+      color: var(--gold-400); padding: 5px 15px; border-radius: 20px;
+      font-size: 0.72rem; font-weight: 800; letter-spacing: 0.07em;
+      text-transform: uppercase; margin-bottom: 1.1rem;
+    }
+    .hero h1 {
+      font-size: clamp(1.75rem, 3.8vw, 2.7rem);
+      font-weight: 900; line-height: 1.1; margin-bottom: 0.9rem;
+      letter-spacing: -0.02em;
+    }
+    .hero h1 .grad {
+      background: linear-gradient(130deg, var(--gold-300), var(--gold-600));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-sub {
+      color: var(--text-secondary); font-size: 1rem; line-height: 1.65;
+      max-width: 540px; margin-bottom: 2rem;
+    }
+    .kpi-strip {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 1rem; margin-top: 0.5rem;
+    }
+    .kpi-card {
+      background: rgba(28,28,52,0.75); backdrop-filter: blur(10px);
+      border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 1.1rem 1.3rem;
+      display: flex; align-items: center; gap: 0.9rem;
+      transition: border-color 0.3s, transform 0.3s var(--ease-spring);
+    }
+    .kpi-card:hover { border-color: rgba(245,158,11,0.28); transform: translateY(-2px); }
+    .kpi-icon {
+      width: 42px; height: 42px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; flex-shrink: 0;
+    }
+    .ki-gold { background: rgba(245,158,11,0.14); color: var(--gold-500); }
+    .ki-green { background: rgba(16,185,129,0.14); color: var(--success); }
+    .ki-indigo { background: rgba(99,102,241,0.14); color: #818cf8; }
+    .ki-red { background: rgba(239,68,68,0.14); color: var(--error); }
+    .kpi-value { font-size: 1.65rem; font-weight: 900; line-height: 1; }
+    .kpi-label {
+      font-size: 0.7rem; color: var(--text-muted);
+      font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px;
+    }
+
+    /* SIMULATE BUTTON */
+    .sim-bar {
+      display: flex; justify-content: center; gap: 1rem;
+      padding: 1.75rem 0 1rem;
+    }
+    .btn-sim {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: linear-gradient(135deg, var(--gold-600), var(--gold-400));
+      color: #07070e; font-family: 'Nunito', sans-serif;
+      font-weight: 900; font-size: 0.97rem;
+      padding: 0.8rem 2.2rem; border-radius: 12px; border: none;
+      cursor: pointer; box-shadow: 0 4px 22px rgba(245,158,11,0.35);
+      transition: all 0.25s var(--ease-spring);
+    }
+    .btn-sim:hover:not(:disabled) { transform: translateY(-2px) scale(1.04); box-shadow: 0 8px 32px rgba(245,158,11,0.5); }
+    .btn-sim:active:not(:disabled) { transform: scale(0.97); }
+    .btn-sim:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-reset {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(255,255,255,0.05); color: var(--text-secondary);
+      font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 0.85rem;
+      padding: 0.8rem 1.6rem; border-radius: 12px;
+      border: 1px solid var(--border); cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-reset:hover { background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.14); }
+
+    /* MAIN */
+    .main { max-width: 1200px; margin: 0 auto; padding: 0 2rem 2rem; }
+    .dashboard-grid {
+      display: grid; grid-template-columns: 1fr 1.5fr 1fr;
+      gap: 1.25rem; margin-bottom: 1.75rem;
+    }
+    .panel {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden;
+    }
+    .panel-hd {
+      padding: 0.9rem 1.1rem; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(255,255,255,0.02);
+    }
+    .panel-title {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 0.78rem; font-weight: 800;
+      text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-secondary);
+    }
+    .panel-title i { color: var(--gold-500); }
+    .panel-badge {
+      background: rgba(245,158,11,0.13); color: var(--gold-400);
+      border-radius: 20px; padding: 2px 10px;
+      font-size: 0.68rem; font-weight: 800;
+    }
+
+    /* QUEUE */
+    .queue-body { padding: 0.6rem; display: flex; flex-direction: column; gap: 0.4rem; }
+    .q-item {
+      display: flex; align-items: center; gap: 0.65rem;
+      padding: 0.7rem 0.8rem; border-radius: var(--radius-sm);
+      background: rgba(255,255,255,0.025); border: 1px solid transparent;
+      transition: all 0.28s; cursor: default;
+    }
+    .q-item.processing {
+      border-color: rgba(245,158,11,0.45);
+      background: rgba(245,158,11,0.07);
+      animation: pulse-bdr 2s infinite;
+    }
+    .q-item.done { border-color: rgba(16,185,129,0.2); background: rgba(16,185,129,0.04); opacity: 0.55; }
+    @keyframes pulse-bdr { 0%,100%{border-color:rgba(245,158,11,0.45)} 50%{border-color:rgba(245,158,11,0.15)} }
+    .q-file-icon {
+      width: 34px; height: 34px; border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.85rem; flex-shrink: 0;
+    }
+    .q-file-icon.email { background: rgba(99,102,241,0.18); color: #818cf8; }
+    .q-file-icon.scan { background: rgba(245,158,11,0.14); color: var(--gold-500); }
+    .q-info { flex: 1; min-width: 0; }
+    .q-name { font-size: 0.74rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .q-src { font-size: 0.65rem; color: var(--text-muted); margin-top: 2px; }
+    .q-badge {
+      font-size: 0.62rem; font-weight: 800; padding: 2px 8px;
+      border-radius: 10px; flex-shrink: 0;
+    }
+    .qb-pending { background: rgba(245,158,11,0.13); color: var(--gold-400); }
+    .qb-proc { background: rgba(99,102,241,0.15); color: #818cf8; }
+    .qb-done { background: rgba(16,185,129,0.13); color: var(--success); }
+
+    /* OCR PANEL */
+    .ocr-body { padding: 1.1rem; }
+    .ocr-preview {
+      background: rgba(255,255,255,0.025); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 0.9rem;
+      display: flex; align-items: center; gap: 0.9rem; margin-bottom: 1rem;
+    }
+    .doc-thumb {
+      width: 46px; height: 56px; border-radius: 7px; flex-shrink: 0;
+      background: rgba(245,158,11,0.09); border: 1px solid rgba(245,158,11,0.2);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--gold-500); font-size: 1.3rem;
+    }
+    .doc-meta { flex: 1; min-width: 0; }
+    .doc-name { font-size: 0.78rem; font-weight: 800; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .doc-src-badge {
+      display: inline-block; font-size: 0.65rem; font-weight: 800;
+      padding: 2px 9px; border-radius: 10px;
+      background: rgba(99,102,241,0.15); color: #818cf8;
+    }
+    .doc-src-badge.scan { background: rgba(245,158,11,0.13); color: var(--gold-500); }
+    .ocr-fields { display: flex; flex-direction: column; gap: 0.42rem; }
+    .ocr-field {
+      display: grid; grid-template-columns: 110px 1fr 22px;
+      align-items: center; gap: 0.65rem;
+      padding: 0.45rem 0.7rem; border-radius: var(--radius-sm);
+      background: rgba(255,255,255,0.02);
+      opacity: 0; transform: translateX(-12px);
+      transition: all 0.32s ease;
+    }
+    .ocr-field.visible { opacity: 1; transform: translateX(0); }
+    .f-label { font-size: 0.67rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+    .f-value { font-size: 0.82rem; font-weight: 800; }
+    .f-value.ncf { color: var(--gold-400); font-family: monospace; letter-spacing: 0.03em; }
+    .f-value.amt { color: var(--success); }
+    .f-value.tipo-cxp { color: #f87171; }
+    .f-value.tipo-cxc { color: var(--success); }
+    .f-check { font-size: 0.8rem; }
+    .f-check.ok { color: var(--success); }
+    .f-check.warn { color: var(--warning); }
+    .ocr-empty {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; padding: 2rem 1rem; color: var(--text-muted);
+      text-align: center;
+    }
+    .ocr-empty i { font-size: 2rem; margin-bottom: 0.6rem; opacity: 0.3; display: block; }
+    .ocr-empty p { font-size: 0.78rem; line-height: 1.5; }
+
+    /* FLOW PANEL */
+    .flow-body { padding: 1rem; }
+    .flow-steps { display: flex; flex-direction: column; }
+    .flow-step {
+      display: flex; align-items: center; gap: 0.7rem;
+      padding: 0.65rem 0.75rem; border-radius: var(--radius-sm);
+      border: 1px solid transparent;
+      background: rgba(255,255,255,0.02);
+      transition: all 0.3s;
+    }
+    .flow-conn {
+      width: 2px; height: 10px; margin-left: 15px;
+      background: var(--border); transition: background 0.4s;
+    }
+    .flow-conn.active { background: var(--gold-500); }
+    .flow-conn.done { background: var(--success); }
+    .flow-step.active { border-color: rgba(245,158,11,0.38); background: rgba(245,158,11,0.06); }
+    .flow-step.done { border-color: rgba(16,185,129,0.28); background: rgba(16,185,129,0.05); }
+    .step-ic {
+      width: 30px; height: 30px; border-radius: 7px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.75rem; background: rgba(255,255,255,0.04); color: var(--text-muted);
+      transition: all 0.3s;
+    }
+    .flow-step.active .step-ic { background: rgba(245,158,11,0.18); color: var(--gold-500); }
+    .flow-step.done .step-ic { background: rgba(16,185,129,0.18); color: var(--success); }
+    .step-lbl { font-size: 0.75rem; font-weight: 700; }
+    .step-sub { font-size: 0.65rem; color: var(--text-muted); margin-top: 1px; }
+    .class-result {
+      margin-top: 0.9rem; padding: 0.85rem;
+      border-radius: var(--radius-sm); text-align: center;
+      border: 1px solid var(--border); min-height: 64px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      transition: all 0.4s;
+    }
+    .class-result.cxp { background: rgba(239,68,68,0.07); border-color: rgba(239,68,68,0.22); }
+    .class-result.cxc { background: rgba(16,185,129,0.07); border-color: rgba(16,185,129,0.22); }
+    .class-badge { font-size: 1.15rem; font-weight: 900; letter-spacing: 0.06em; }
+    .class-badge.cxp { color: #f87171; }
+    .class-badge.cxc { color: var(--success); }
+    .class-sub { font-size: 0.68rem; color: var(--text-muted); margin-top: 3px; }
+
+    /* SADE MATRIX */
+    .section-hd {
+      display: flex; align-items: center; gap: 9px; margin-bottom: 0.85rem;
+      font-size: 0.78rem; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 0.06em; color: var(--text-secondary);
+    }
+    .section-hd i { color: var(--gold-500); }
+    .matrix-wrap {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden; margin-bottom: 1.75rem;
+    }
+    .matrix-scroll { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.76rem; }
+    thead th {
+      padding: 0.7rem 1rem; background: rgba(255,255,255,0.025);
+      color: var(--text-muted); font-size: 0.65rem; font-weight: 800;
+      text-transform: uppercase; letter-spacing: 0.07em; text-align: left;
+      border-bottom: 1px solid var(--border); white-space: nowrap;
+    }
+    tbody td {
+      padding: 0.6rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.035);
+      color: var(--text-primary); white-space: nowrap;
+    }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr.new-row td { animation: row-slide 0.55s var(--ease-spring) both; }
+    @keyframes row-slide {
+      from { opacity: 0; transform: translateY(-10px); background: rgba(245,158,11,0.1); }
+      to { opacity: 1; transform: translateY(0); background: transparent; }
+    }
+    .type-pill {
+      display: inline-block; padding: 2px 10px; border-radius: 10px;
+      font-size: 0.65rem; font-weight: 900; letter-spacing: 0.04em;
+    }
+    .tp-cxp { background: rgba(239,68,68,0.14); color: #f87171; }
+    .tp-cxc { background: rgba(16,185,129,0.14); color: var(--success); }
+    .ncf-mono { color: var(--gold-400); font-weight: 800; font-family: monospace; font-size: 0.78rem; }
+    .amt-val { color: var(--success); font-weight: 700; }
+    .val-ok { color: var(--success); font-size: 0.7rem; font-weight: 700; }
+    .matrix-empty {
+      padding: 2.5rem; text-align: center; color: var(--text-muted);
+    }
+    .matrix-empty i { font-size: 2rem; margin-bottom: 0.6rem; display: block; opacity: 0.3; }
+    .matrix-empty p { font-size: 0.8rem; }
+
+    /* ACTIVITY */
+    .activity-feed {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 0.85rem;
+      display: flex; flex-direction: column; gap: 0.35rem;
+      margin-bottom: 2rem; min-height: 70px;
+    }
+    .act-item {
+      display: flex; align-items: flex-start; gap: 0.65rem;
+      padding: 0.45rem 0.2rem; border-bottom: 1px solid rgba(255,255,255,0.035);
+      animation: fade-up 0.35s ease both;
+    }
+    .act-item:last-child { border-bottom: none; }
+    @keyframes fade-up { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+    .act-icon {
+      width: 26px; height: 26px; border-radius: 6px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 0.65rem;
+    }
+    .act-text { flex: 1; font-size: 0.76rem; line-height: 1.5; color: var(--text-secondary); }
+    .act-text strong { color: var(--gold-400); font-weight: 800; }
+    .act-text .ok-str { color: var(--success); font-weight: 700; }
+    .act-time { font-size: 0.62rem; color: var(--text-muted); flex-shrink: 0; margin-top: 2px; }
+
+    /* TOAST */
+    .toast {
+      position: fixed; bottom: 1.75rem; right: 1.75rem; z-index: 999;
+      background: var(--surface-2); border: 1px solid rgba(16,185,129,0.28);
+      border-radius: var(--radius); padding: 0.9rem 1.4rem;
+      display: flex; align-items: center; gap: 0.7rem;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.55);
+      transform: translateY(90px); opacity: 0;
+      transition: all 0.4s var(--ease-spring);
+      max-width: 340px;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast i { color: var(--success); font-size: 1.1rem; flex-shrink: 0; }
+    .toast-body { font-size: 0.82rem; font-weight: 600; }
+    .toast-body span { color: var(--gold-400); }
+
+    /* REVEAL */
+    .reveal { opacity: 0; transform: translateY(18px); transition: all 0.55s ease; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* FOOTER */
+    footer {
+      text-align: center; padding: 1.5rem;
+      font-size: 0.72rem; color: var(--text-muted);
+      border-top: 1px solid var(--border);
+    }
+    footer span { color: var(--gold-500); font-weight: 700; }
+
+    /* RESPONSIVE */
+    @media(max-width:1024px) {
+      .dashboard-grid { grid-template-columns: 1fr 1fr; }
+      .kpi-strip { grid-template-columns: repeat(2,1fr); }
+    }
+    @media(max-width:768px) {
+      .dashboard-grid { grid-template-columns: 1fr; }
+      .nav-links { display: none; }
+      .hero { padding: 2rem 1rem 1.5rem; }
+      .main { padding: 0 1rem 1.5rem; }
+      .kpi-strip { grid-template-columns: repeat(2,1fr); }
+      table th:nth-child(n+5), table td:nth-child(n+5) { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">
+    <i class="fa-solid fa-file-invoice-dollar"></i>
+    <span>Factura<span class="logo-accent">Auto</span></span>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#" class="active">Dashboard</a></li>
+    <li><a href="#">Historial</a></li>
+    <li><a href="#">Matriz SADE</a></li>
+    <li><a href="#">Configuracion</a></li>
+  </ul>
+  <div class="nav-right">
+    <div class="status-pill">
+      <span class="pulse-dot"></span>
+      SISTEMA ACTIVO
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-orb"></div>
+  <div class="hero-orb-2"></div>
+  <div class="grid-bg"></div>
+  <div class="hero-content">
+    <div class="hero-tag"><i class="fa-solid fa-bolt"></i> OCR + Zapier + ERP SADE</div>
+    <h1>Automatizacion de<br><span class="grad">Facturas CXC y CXP</span></h1>
+    <p class="hero-sub">Pipeline completo para despachos contables. Captura por email o escaner, extraccion OCR con validacion NCF/DGII, clasificacion automatica y escritura directa en la matriz SQL de SADE.</p>
+    <div class="kpi-strip">
+      <div class="kpi-card">
+        <div class="kpi-icon ki-gold"><i class="fa-solid fa-file-invoice"></i></div>
+        <div>
+          <div class="kpi-value" id="kpi-hoy">0</div>
+          <div class="kpi-label">Facturas Hoy</div>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon ki-green"><i class="fa-solid fa-circle-check"></i></div>
+        <div>
+          <div class="kpi-value" id="kpi-proc">0</div>
+          <div class="kpi-label">Procesadas</div>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon ki-indigo"><i class="fa-solid fa-clock"></i></div>
+        <div>
+          <div class="kpi-value" id="kpi-pend">0</div>
+          <div class="kpi-label">Pendientes</div>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon ki-green"><i class="fa-solid fa-chart-line"></i></div>
+        <div>
+          <div class="kpi-value" id="kpi-tasa">0<span style="font-size:1rem">%</span></div>
+          <div class="kpi-label">Tasa de Exito</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SIMULATE BUTTON -->
+<div class="sim-bar">
+  <button class="btn-sim" id="btnSim" onclick="runSimulation()">
+    <i class="fa-solid fa-play" id="btnIcon"></i>
+    <span id="btnText">Simular Procesamiento</span>
+  </button>
+  <button class="btn-reset" onclick="resetDemo()">
+    <i class="fa-solid fa-rotate-left"></i>
+    Reiniciar
+  </button>
+</div>
+
+<!-- DASHBOARD GRID -->
+<div class="main">
+  <div class="dashboard-grid reveal">
+
+    <!-- QUEUE -->
+    <div class="panel">
+      <div class="panel-hd">
+        <div class="panel-title"><i class="fa-solid fa-layer-group"></i> Cola de Documentos</div>
+        <span class="panel-badge" id="queueCount">4</span>
+      </div>
+      <div class="queue-body" id="queueList"></div>
+    </div>
+
+    <!-- OCR PANEL -->
+    <div class="panel">
+      <div class="panel-hd">
+        <div class="panel-title"><i class="fa-solid fa-eye"></i> Extraccion OCR en Tiempo Real</div>
+        <span class="panel-badge" id="ocrStatus">Esperando</span>
+      </div>
+      <div class="ocr-body">
+        <div class="ocr-preview">
+          <div class="doc-thumb"><i class="fa-solid fa-file-pdf" id="thumbIcon"></i></div>
+          <div class="doc-meta">
+            <div class="doc-name" id="docName">Seleccione un documento de la cola</div>
+            <span class="doc-src-badge" id="docSrcBadge">Email / Escaner</span>
+          </div>
+        </div>
+        <div id="ocrFieldsWrap">
+          <div class="ocr-empty">
+            <i class="fa-solid fa-scan"></i>
+            <p>Presione Simular Procesamiento para iniciar la extraccion OCR</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FLOW + CLASSIFICATION -->
+    <div class="panel">
+      <div class="panel-hd">
+        <div class="panel-title"><i class="fa-solid fa-diagram-project"></i> Pipeline Zapier</div>
+      </div>
+      <div class="flow-body">
+        <div class="flow-steps" id="flowSteps"></div>
+        <div class="class-result" id="classResult">
+          <i class="fa-solid fa-shuffle" style="color:var(--text-muted);font-size:1.3rem;margin-bottom:4px;opacity:0.35"></i>
+          <div style="font-size:0.72rem;color:var(--text-muted)">Clasificacion CXC / CXP</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SADE MATRIX -->
+  <div class="reveal" style="transition-delay:0.1s">
+    <div class="section-hd">
+      <i class="fa-solid fa-database"></i>
+      Matriz de Datos SADE - Salida SQL
+    </div>
+    <div class="matrix-wrap">
+      <div class="matrix-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>ID Transac.</th>
+              <th>Tipo</th>
+              <th>NCF</th>
+              <th>RNC Emisor</th>
+              <th>Razon Social</th>
+              <th>Fecha</th>
+              <th>Monto Neto</th>
+              <th>ITBIS 18%</th>
+              <th>Total</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody id="sadeBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ACTIVITY LOG -->
+  <div class="reveal" style="transition-delay:0.2s">
+    <div class="section-hd">
+      <i class="fa-solid fa-scroll"></i>
+      Registro de Actividad
+    </div>
+    <div class="activity-feed" id="actFeed"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <i class="fa-solid fa-circle-check"></i>
+  <div class="toast-body" id="toastMsg">Factura procesada</div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <span>FacturaAuto</span> para Despachos Contables - OCR + Zapier + ERP SADE - Republica Dominicana
+</footer>
+
+<script>
+  const INVOICES = [
+    { id:'TXN-003', filename:'factura_janm_tecnologias_jun.pdf', source:'Email', srcType:'email', ncf:'B02-00000115', rnc:'101-34567-8', razon:'Janm Tecnologias SRL', fecha:'2026-06-20', neto:'45,000.00', itbis:'8,100.00', total:'53,100.00', tipo:'CXP', tipoDesc:'Cuentas por Pagar' },
+    { id:'TXN-004', filename:'scan_cliente_gomez_0089.jpg', source:'Scanner Tablet', srcType:'scan', ncf:'B01-00000089', rnc:'130-12345-6', razon:'Consultoria Gomez y Asoc.', fecha:'2026-06-20', neto:'75,000.00', itbis:'13,500.00', total:'88,500.00', tipo:'CXC', tipoDesc:'Cuentas por Cobrar' },
+    { id:'TXN-005', filename:'recibo_tech_solutions_mayo.pdf', source:'Email', srcType:'email', ncf:'B02-00000116', rnc:'101-78901-2', razon:'Tech Solutions Dominican SRL', fecha:'2026-06-20', neto:'28,500.00', itbis:'5,130.00', total:'33,630.00', tipo:'CXP', tipoDesc:'Cuentas por Pagar' },
+    { id:'TXN-006', filename:'factura_nova_enterprises_0090.pdf', source:'Scanner Fisico', srcType:'scan', ncf:'B01-00000090', rnc:'130-45678-9', razon:'Nova Enterprises DR', fecha:'2026-06-20', neto:'120,000.00', itbis:'21,600.00', total:'141,600.00', tipo:'CXC', tipoDesc:'Cuentas por Cobrar' }
+  ];
+
+  const INIT_ROWS = [
+    { id:'TXN-001', tipo:'CXP', ncf:'B02-00000114', rnc:'101-22345-7', razon:'Servicios Express SRL', fecha:'2026-06-18', neto:'32,000.00', itbis:'5,760.00', total:'37,760.00' },
+    { id:'TXN-002', tipo:'CXC', ncf:'B01-00000088', rnc:'130-99876-5', razon:'Importadora del Este', fecha:'2026-06-18', neto:'95,000.00', itbis:'17,100.00', total:'112,100.00' }
+  ];
+
+  const FLOW_STEPS = [
+    { icon:'fa-inbox', name:'Captura de Documento', sub:'Email / escaner / tablet' },
+    { icon:'fa-eye', name:'OCR Parseur', sub:'Extraccion de campos fiscales' },
+    { icon:'fa-shield-check', name:'Validacion NCF / DGII', sub:'Serie + secuencial + RNC' },
+    { icon:'fa-bolt', name:'Pipeline Zapier', sub:'Ruteo automatico CXC / CXP' },
+    { icon:'fa-database', name:'Matriz SQL SADE', sub:'Escritura en base de datos' }
+  ];
+
+  let currentIdx = 0;
+  let simRunning = false;
+  let kpiProc = 22;
+  let kpiPend = 4;
+
+  function now() {
+    return new Date().toLocaleTimeString('es-DO', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  }
+
+  function countUp(el, target, suffix) {
+    let start = 0;
+    const step = Math.ceil(target / 40);
+    const t = setInterval(() => {
+      start = Math.min(start + step, target);
+      el.innerHTML = start + (suffix || '');
+      if (start >= target) clearInterval(t);
+    }, 28);
+  }
+
+  function initKPIs() {
+    countUp(document.getElementById('kpi-hoy'), 26);
+    countUp(document.getElementById('kpi-proc'), kpiProc);
+    countUp(document.getElementById('kpi-pend'), kpiPend);
+    document.getElementById('kpi-tasa').innerHTML = '0<span style="font-size:1rem">%</span>';
+    let t2 = 0;
+    const iv = setInterval(() => {
+      t2 = Math.min(t2 + 2, 96);
+      document.getElementById('kpi-tasa').innerHTML = t2 + '<span style="font-size:1rem">%</span>';
+      if (t2 >= 96) clearInterval(iv);
+    }, 30);
+  }
+
+  function renderQueue() {
+    const el = document.getElementById('queueList');
+    el.innerHTML = '';
+    INVOICES.forEach((inv, i) => {
+      const state = i < currentIdx ? 'done' : (i === currentIdx && simRunning ? 'processing' : '');
+      const badge = i < currentIdx ? '<span class="q-badge qb-done">LISTO</span>' :
+                    (i === currentIdx && simRunning ? '<span class="q-badge qb-proc">OCR...</span>' :
+                    '<span class="q-badge qb-pending">PENDIENTE</span>');
+      el.innerHTML += `
+        <div class="q-item ${state}">
+          <div class="q-file-icon ${inv.srcType}">
+            <i class="fa-solid ${inv.srcType === 'email' ? 'fa-envelope' : 'fa-scanner'}"></i>
+          </div>
+          <div class="q-info">
+            <div class="q-name">${inv.filename}</div>
+            <div class="q-src"><i class="fa-solid ${inv.srcType === 'email' ? 'fa-envelope' : 'fa-tablet-screen-button'}" style="font-size:0.6rem;margin-right:4px"></i>${inv.source}</div>
+          </div>
+          ${badge}
+        </div>`;
+    });
+    const pending = INVOICES.length - currentIdx;
+    document.getElementById('queueCount').textContent = pending > 0 ? pending : '0';
+  }
+
+  function renderFlowSteps(activeStep) {
+    const el = document.getElementById('flowSteps');
+    el.innerHTML = '';
+    FLOW_STEPS.forEach((s, i) => {
+      const done = i < activeStep;
+      const active = i === activeStep;
+      el.innerHTML += `<div class="flow-step ${done ? 'done' : active ? 'active' : ''}" id="fstep-${i}">
+        <div class="step-ic"><i class="fa-solid ${s.icon}"></i></div>
+        <div>
+          <div class="step-lbl">${s.name}</div>
+          <div class="step-sub">${s.sub}</div>
+        </div>
+        ${done ? '<i class="fa-solid fa-check" style="color:var(--success);margin-left:auto;font-size:0.75rem"></i>' : ''}
+      </div>
+      ${i < FLOW_STEPS.length - 1 ? `<div class="flow-conn ${done ? 'done' : active ? 'active' : ''}"></div>` : ''}`;
+    });
+  }
+
+  function renderInitSADE() {
+    const el = document.getElementById('sadeBody');
+    el.innerHTML = '';
+    INIT_ROWS.forEach(r => {
+      el.innerHTML += buildSADERow(r, false);
+    });
+  }
+
+  function buildSADERow(r, isNew) {
+    return `<tr class="${isNew ? 'new-row' : ''}">
+      <td style="font-weight:700;color:var(--text-secondary)">${r.id}</td>
+      <td><span class="type-pill ${r.tipo === 'CXP' ? 'tp-cxp' : 'tp-cxc'}">${r.tipo}</span></td>
+      <td><span class="ncf-mono">${r.ncf}</span></td>
+      <td style="font-size:0.72rem;color:var(--text-muted)">${r.rnc}</td>
+      <td style="font-size:0.75rem">${r.razon}</td>
+      <td style="font-size:0.73rem;color:var(--text-muted)">${r.fecha}</td>
+      <td class="amt-val">DOP ${r.neto}</td>
+      <td style="color:var(--warning);font-weight:700">DOP ${r.itbis}</td>
+      <td class="amt-val" style="font-size:0.82rem">DOP ${r.total}</td>
+      <td><span class="val-ok"><i class="fa-solid fa-circle-check"></i> VALIDADO</span></td>
+    </tr>`;
+  }
+
+  function renderActivity(entries) {
+    const el = document.getElementById('actFeed');
+    el.innerHTML = entries.map(e => `
+      <div class="act-item">
+        <div class="act-icon" style="background:${e.bg}"><i class="fa-solid ${e.icon}" style="color:${e.color}"></i></div>
+        <div class="act-text">${e.msg}</div>
+        <div class="act-time">${e.time}</div>
+      </div>`).join('');
+  }
+
+  let actLog = [
+    { bg:'rgba(16,185,129,0.12)', icon:'fa-circle-check', color:'#10b981', msg:'<strong>TXN-002</strong> registrado en SADE. NCF <strong>B01-00000088</strong> validado correctamente.', time:'08:44:02' },
+    { bg:'rgba(16,185,129,0.12)', icon:'fa-circle-check', color:'#10b981', msg:'<strong>TXN-001</strong> registrado en SADE. NCF <strong>B02-00000114</strong> clasificado como <span class="ok-str">CXP</span>.', time:'08:41:17' },
+    { bg:'rgba(245,158,11,0.12)', icon:'fa-triangle-exclamation', color:'#f59e0b', msg:'Factura escaneada con baja resolucion. Campo RNC re-procesado con umbral OCR ampliado.', time:'08:39:55' }
+  ];
+
+  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  async function runSimulation() {
+    if (simRunning || currentIdx >= INVOICES.length) return;
+    simRunning = true;
+    const inv = INVOICES[currentIdx];
+    const btn = document.getElementById('btnSim');
+    btn.disabled = true;
+    document.getElementById('btnIcon').className = 'fa-solid fa-spinner fa-spin';
+    document.getElementById('btnText').textContent = 'Procesando...';
+
+    renderQueue();
+
+    // Update OCR header
+    document.getElementById('ocrStatus').textContent = 'Procesando';
+    document.getElementById('docName').textContent = inv.filename;
+    document.getElementById('docSrcBadge').textContent = inv.source;
+    document.getElementById('docSrcBadge').className = 'doc-src-badge' + (inv.srcType === 'scan' ? ' scan' : '');
+    document.getElementById('thumbIcon').className = 'fa-solid ' + (inv.filename.endsWith('.pdf') ? 'fa-file-pdf' : 'fa-file-image');
+
+    // Clear fields
+    document.getElementById('ocrFieldsWrap').innerHTML = '<div class="ocr-fields" id="ocrFields"></div>';
+
+    // Flow steps
+    renderFlowSteps(0);
+    await sleep(500);
+    renderFlowSteps(1);
+    await sleep(400);
+
+    // OCR fields appear one by one
+    const FIELDS = [
+      { label:'NCF', value: inv.ncf, cls:'ncf', check:'ok' },
+      { label:'RNC Emisor', value: inv.rnc, cls:'', check:'ok' },
+      { label:'Razon Social', value: inv.razon, cls:'', check:'ok' },
+      { label:'Fecha', value: inv.fecha, cls:'', check:'ok' },
+      { label:'Monto Neto', value: 'DOP ' + inv.neto, cls:'amt', check:'ok' },
+      { label:'ITBIS 18%', value: 'DOP ' + inv.itbis, cls:'amt', check:'ok' },
+      { label:'Total', value: 'DOP ' + inv.total, cls:'amt', check:'ok' },
+      { label:'Tipo Cuenta', value: inv.tipo, cls: inv.tipo === 'CXP' ? 'tipo-cxp' : 'tipo-cxc', check:'ok' }
+    ];
+
+    const fieldsEl = document.getElementById('ocrFields');
+    for (let f of FIELDS) {
+      const div = document.createElement('div');
+      div.className = 'ocr-field';
+      div.innerHTML = `<span class="f-label">${f.label}</span><span class="f-value ${f.cls}">${f.value}</span><i class="fa-solid fa-circle-check f-check ${f.check}"></i>`;
+      fieldsEl.appendChild(div);
+      await sleep(60);
+      div.classList.add('visible');
+      await sleep(260);
+    }
+
+    // NCF validation step
+    renderFlowSteps(2);
+    await sleep(600);
+
+    // Zapier step
+    renderFlowSteps(3);
+    await sleep(600);
+
+    // SADE step
+    renderFlowSteps(4);
+    await sleep(400);
+
+    // Classification
+    const cls = document.getElementById('classResult');
+    cls.className = 'class-result ' + inv.tipo.toLowerCase();
+    cls.innerHTML = `
+      <div class="class-badge ${inv.tipo.toLowerCase()}">${inv.tipo}</div>
+      <div class="class-sub">${inv.tipoDesc}</div>
+    `;
+
+    // All steps done
+    await sleep(300);
+    renderFlowSteps(5);
+
+    // Add row to SADE matrix
+    const tbody = document.getElementById('sadeBody');
+    const newRow = document.createElement('tr');
+    newRow.className = 'new-row';
+    newRow.innerHTML = `
+      <td style="font-weight:700;color:var(--text-secondary)">${inv.id}</td>
+      <td><span class="type-pill ${inv.tipo === 'CXP' ? 'tp-cxp' : 'tp-cxc'}">${inv.tipo}</span></td>
+      <td><span class="ncf-mono">${inv.ncf}</span></td>
+      <td style="font-size:0.72rem;color:var(--text-muted)">${inv.rnc}</td>
+      <td style="font-size:0.75rem">${inv.razon}</td>
+      <td style="font-size:0.73rem;color:var(--text-muted)">${inv.fecha}</td>
+      <td class="amt-val">DOP ${inv.neto}</td>
+      <td style="color:var(--warning);font-weight:700">DOP ${inv.itbis}</td>
+      <td class="amt-val" style="font-size:0.82rem">DOP ${inv.total}</td>
+      <td><span class="val-ok"><i class="fa-solid fa-circle-check"></i> VALIDADO</span></td>
+    `;
+    tbody.insertBefore(newRow, tbody.firstChild);
+
+    // Activity log
+    actLog.unshift({
+      bg: 'rgba(16,185,129,0.12)', icon:'fa-circle-check', color:'#10b981',
+      msg: `<strong>${inv.id}</strong> registrado en SADE. NCF <strong>${inv.ncf}</strong> validado. Clasificado como <span class="ok-str">${inv.tipo} - ${inv.tipoDesc}</span>.`,
+      time: now()
+    });
+    renderActivity(actLog.slice(0,6));
+
+    // KPIs
+    kpiProc++;
+    kpiPend--;
+    document.getElementById('kpi-proc').textContent = kpiProc;
+    document.getElementById('kpi-pend').textContent = Math.max(0, kpiPend);
+
+    // Toast
+    const t = document.getElementById('toast');
+    document.getElementById('toastMsg').innerHTML = `NCF <span>${inv.ncf}</span> procesado y registrado en SADE`;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3500);
+
+    // OCR status
+    document.getElementById('ocrStatus').textContent = 'Completado';
+
+    currentIdx++;
+    simRunning = false;
+
+    renderQueue();
+
+    if (currentIdx < INVOICES.length) {
+      btn.disabled = false;
+      document.getElementById('btnIcon').className = 'fa-solid fa-play';
+      document.getElementById('btnText').textContent = 'Simular Procesamiento';
+    } else {
+      btn.disabled = true;
+      document.getElementById('btnIcon').className = 'fa-solid fa-check';
+      document.getElementById('btnText').textContent = 'Cola Completada';
+    }
+  }
+
+  function resetDemo() {
+    currentIdx = 0;
+    simRunning = false;
+    kpiProc = 22;
+    kpiPend = 4;
+    const btn = document.getElementById('btnSim');
+    btn.disabled = false;
+    document.getElementById('btnIcon').className = 'fa-solid fa-play';
+    document.getElementById('btnText').textContent = 'Simular Procesamiento';
+    document.getElementById('ocrStatus').textContent = 'Esperando';
+    document.getElementById('docName').textContent = 'Seleccione un documento de la cola';
+    document.getElementById('docSrcBadge').textContent = 'Email / Escaner';
+    document.getElementById('docSrcBadge').className = 'doc-src-badge';
+    document.getElementById('thumbIcon').className = 'fa-solid fa-file-pdf';
+    document.getElementById('ocrFieldsWrap').innerHTML = '<div class="ocr-empty"><i class="fa-solid fa-scan"></i><p>Presione Simular Procesamiento para iniciar la extraccion OCR</p></div>';
+    const cls = document.getElementById('classResult');
+    cls.className = 'class-result';
+    cls.innerHTML = '<i class="fa-solid fa-shuffle" style="color:var(--text-muted);font-size:1.3rem;margin-bottom:4px;opacity:0.35"></i><div style="font-size:0.72rem;color:var(--text-muted)">Clasificacion CXC / CXP</div>';
+    renderFlowSteps(-1);
+    renderInitSADE();
+    initKPIs();
+    renderQueue();
+    actLog = [
+      { bg:'rgba(16,185,129,0.12)', icon:'fa-circle-check', color:'#10b981', msg:'<strong>TXN-002</strong> registrado en SADE. NCF <strong>B01-00000088</strong> validado correctamente.', time:'08:44:02' },
+      { bg:'rgba(16,185,129,0.12)', icon:'fa-circle-check', color:'#10b981', msg:'<strong>TXN-001</strong> registrado en SADE. NCF <strong>B02-00000114</strong> clasificado como <span class="ok-str">CXP</span>.', time:'08:41:17' },
+      { bg:'rgba(245,158,11,0.12)', icon:'fa-triangle-exclamation', color:'#f59e0b', msg:'Factura escaneada con baja resolucion. Campo RNC re-procesado con umbral OCR ampliado.', time:'08:39:55' }
+    ];
+    renderActivity(actLog);
+  }
+
+  // Scroll reveal
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+  // Init
+  initKPIs();
+  renderQueue();
+  renderFlowSteps(-1);
+  renderInitSADE();
+  renderActivity(actLog);
+</script>
+</body>
+</html>
