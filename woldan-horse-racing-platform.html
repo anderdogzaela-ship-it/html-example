@@ -1,0 +1,1530 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GallopPoints — Predicciones de Carreras</title>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800&family=Nunito:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  :root {
+    --gold: #D4AF37;
+    --gold-light: #F0CF6A;
+    --gold-dark: #A8892A;
+    --dark: #0D1117;
+    --dark-2: #161B22;
+    --dark-3: #21262D;
+    --dark-4: #30363D;
+    --text: #E6EDF3;
+    --text-muted: #8B949E;
+    --green: #2EA043;
+    --red: #DA3633;
+    --blue: #388BFD;
+    --purple: #8B5CF6;
+    --font-h: 'Lexend', sans-serif;
+    --font-b: 'Nunito', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--font-b);
+    background: var(--dark);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--dark-2);
+    border-bottom: 1px solid var(--dark-4);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(10px);
+  }
+
+  .header-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-h);
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--gold);
+    letter-spacing: -0.5px;
+    text-decoration: none;
+  }
+
+  .logo .icon {
+    width: 34px;
+    height: 34px;
+    background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: var(--dark);
+  }
+
+  .user-bar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .points-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(135deg, rgba(212,175,55,0.15), rgba(212,175,55,0.05));
+    border: 1px solid rgba(212,175,55,0.3);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-family: var(--font-h);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--gold-light);
+  }
+
+  .points-badge i { color: var(--gold); font-size: 14px; }
+
+  .points-val {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--gold);
+    transition: all 0.4s;
+  }
+
+  .avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-h);
+    font-weight: 700;
+    font-size: 0.8rem;
+    color: var(--dark);
+    cursor: pointer;
+  }
+
+  /* NAV */
+  .nav-tabs {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    gap: 4px;
+    border-bottom: 1px solid var(--dark-4);
+    overflow-x: auto;
+  }
+
+  .nav-tab {
+    padding: 12px 20px;
+    font-family: var(--font-h);
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    border: none;
+    background: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: all 0.2s;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .nav-tab:hover { color: var(--text); }
+
+  .nav-tab.active {
+    color: var(--gold);
+    border-bottom-color: var(--gold);
+  }
+
+  /* CONTENT */
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 32px 20px;
+  }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* HERO BANNER */
+  .hero {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 32px;
+    height: 200px;
+    background: linear-gradient(135deg, #0D2818 0%, #1A3A28 50%, #0D2818 100%);
+    display: flex;
+    align-items: center;
+    padding: 32px;
+  }
+
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    background-image: url('https://images.unsplash.com/photo-1546519638-68e109498ffc?w=1200&q=80');
+    background-size: cover;
+    background-position: center 30%;
+    opacity: 0.2;
+  }
+
+  .hero-content { position: relative; z-index: 1; }
+
+  .hero-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(212,175,55,0.2);
+    border: 1px solid rgba(212,175,55,0.4);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--gold-light);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+  }
+
+  .hero h1 {
+    font-family: var(--font-h);
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+
+  .hero p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+  }
+
+  .hero-stats {
+    position: relative;
+    z-index: 1;
+    margin-left: auto;
+    display: flex;
+    gap: 24px;
+  }
+
+  .hero-stat {
+    text-align: center;
+  }
+
+  .hero-stat .val {
+    font-family: var(--font-h);
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--gold);
+    display: block;
+  }
+
+  .hero-stat .lbl {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* SECTION HEADER */
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .section-title {
+    font-family: var(--font-h);
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-title .dot {
+    width: 8px;
+    height: 8px;
+    background: var(--gold);
+    border-radius: 50%;
+  }
+
+  .live-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(218,54,51,0.15);
+    border: 1px solid rgba(218,54,51,0.3);
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #FF6B6B;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .live-badge .pulse {
+    width: 6px;
+    height: 6px;
+    background: #FF4444;
+    border-radius: 50%;
+    animation: pulse 1.2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.7); }
+  }
+
+  /* RACE CARDS */
+  .races-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .race-card {
+    background: var(--dark-2);
+    border: 1px solid var(--dark-4);
+    border-radius: 14px;
+    overflow: hidden;
+    transition: all 0.25s;
+  }
+
+  .race-card:hover {
+    border-color: rgba(212,175,55,0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  }
+
+  .race-card.selected {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 1px rgba(212,175,55,0.2);
+  }
+
+  .race-img {
+    width: 100%;
+    height: 130px;
+    object-fit: cover;
+    position: relative;
+    display: block;
+  }
+
+  .race-img-wrap {
+    position: relative;
+  }
+
+  .race-img-wrap::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, transparent 40%, rgba(13,17,23,0.9));
+  }
+
+  .race-tags {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 1;
+    display: flex;
+    gap: 6px;
+  }
+
+  .tag {
+    background: rgba(13,17,23,0.85);
+    backdrop-filter: blur(6px);
+    border-radius: 6px;
+    padding: 3px 8px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .tag.live { color: #FF6B6B; border: 1px solid rgba(255,100,100,0.4); }
+  .tag.upcoming { color: var(--gold-light); border: 1px solid rgba(212,175,55,0.3); }
+  .tag.country { color: var(--text-muted); border: 1px solid var(--dark-4); }
+
+  .race-body { padding: 16px; }
+
+  .race-title {
+    font-family: var(--font-h);
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .race-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-bottom: 14px;
+  }
+
+  .race-meta i { font-size: 11px; }
+
+  .horses-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .horse-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1.5px solid var(--dark-4);
+    cursor: pointer;
+    transition: all 0.18s;
+    background: var(--dark-3);
+  }
+
+  .horse-option:hover {
+    border-color: rgba(212,175,55,0.4);
+    background: rgba(212,175,55,0.04);
+  }
+
+  .horse-option.picked {
+    border-color: var(--gold);
+    background: rgba(212,175,55,0.08);
+  }
+
+  .horse-num {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    background: var(--dark-4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-h);
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    flex-shrink: 0;
+    transition: all 0.18s;
+  }
+
+  .horse-option.picked .horse-num {
+    background: var(--gold);
+    color: var(--dark);
+  }
+
+  .horse-name {
+    flex: 1;
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--text);
+  }
+
+  .horse-odds {
+    font-family: var(--font-h);
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    transition: color 0.18s;
+  }
+
+  .horse-option.picked .horse-odds { color: var(--gold-light); }
+
+  .horse-pts {
+    font-size: 0.72rem;
+    color: var(--green);
+    font-weight: 700;
+  }
+
+  .btn-predict {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+    background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+    color: var(--dark);
+    font-family: var(--font-h);
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .btn-predict:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(212,175,55,0.3);
+  }
+
+  .btn-predict:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  .btn-predict.done {
+    background: linear-gradient(135deg, #1a3a1a, #2EA043);
+    color: #fff;
+  }
+
+  .pts-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-align: center;
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+
+  /* LEADERBOARD */
+  .leaderboard-wrap {
+    background: var(--dark-2);
+    border: 1px solid var(--dark-4);
+    border-radius: 14px;
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+
+  .lb-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--dark-4);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .lb-header-title {
+    font-family: var(--font-h);
+    font-size: 1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .lb-filter {
+    display: flex;
+    gap: 8px;
+  }
+
+  .filter-btn {
+    padding: 5px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--dark-4);
+    background: none;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: var(--font-b);
+  }
+
+  .filter-btn.active {
+    background: rgba(212,175,55,0.15);
+    border-color: rgba(212,175,55,0.4);
+    color: var(--gold-light);
+  }
+
+  .lb-table { width: 100%; }
+
+  .lb-row {
+    display: grid;
+    grid-template-columns: 48px 1fr 80px 80px 80px;
+    align-items: center;
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--dark-4);
+    transition: background 0.15s;
+  }
+
+  .lb-row:last-child { border-bottom: none; }
+
+  .lb-row:hover { background: var(--dark-3); }
+
+  .lb-row.me { background: rgba(212,175,55,0.06); }
+
+  .lb-head {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-muted);
+    padding: 10px 24px;
+    border-bottom: 1px solid var(--dark-4);
+    display: grid;
+    grid-template-columns: 48px 1fr 80px 80px 80px;
+  }
+
+  .rank {
+    font-family: var(--font-h);
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-muted);
+  }
+
+  .rank.r1 { color: #FFD700; }
+  .rank.r2 { color: #C0C0C0; }
+  .rank.r3 { color: #CD7F32; }
+
+  .lb-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .lb-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+
+  .lb-name {
+    font-weight: 600;
+    font-size: 0.88rem;
+    color: var(--text);
+  }
+
+  .lb-badge-me {
+    font-size: 0.65rem;
+    font-weight: 700;
+    background: rgba(212,175,55,0.2);
+    color: var(--gold-light);
+    border-radius: 4px;
+    padding: 1px 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .lb-pts {
+    font-family: var(--font-h);
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text);
+    text-align: right;
+  }
+
+  .lb-pts.me { color: var(--gold); }
+
+  .lb-hits {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    text-align: right;
+  }
+
+  .lb-trend {
+    text-align: right;
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+
+  .trend-up { color: var(--green); }
+  .trend-down { color: var(--red); }
+  .trend-eq { color: var(--text-muted); }
+
+  /* PROFILE */
+  .profile-grid {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 20px;
+  }
+
+  .profile-card {
+    background: var(--dark-2);
+    border: 1px solid var(--dark-4);
+    border-radius: 14px;
+    padding: 24px;
+    text-align: center;
+    height: fit-content;
+  }
+
+  .profile-avatar-big {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-h);
+    font-weight: 800;
+    font-size: 1.6rem;
+    color: var(--dark);
+    margin: 0 auto 14px;
+    border: 3px solid rgba(212,175,55,0.4);
+  }
+
+  .profile-name {
+    font-family: var(--font-h);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .profile-level {
+    font-size: 0.78rem;
+    color: var(--gold-light);
+    font-weight: 600;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+
+  .stats-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .stat-box {
+    background: var(--dark-3);
+    border-radius: 10px;
+    padding: 14px;
+    text-align: center;
+  }
+
+  .stat-box .num {
+    font-family: var(--font-h);
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--gold);
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  .stat-box .lbl {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .xp-bar-wrap {
+    margin-bottom: 16px;
+  }
+
+  .xp-bar-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+
+  .xp-bar {
+    height: 6px;
+    background: var(--dark-4);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .xp-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold-dark), var(--gold-light));
+    border-radius: 3px;
+    width: 64%;
+    transition: width 1s ease;
+  }
+
+  .achievements {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .ach {
+    width: 40px;
+    height: 40px;
+    background: var(--dark-3);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    border: 1px solid var(--dark-4);
+    cursor: default;
+    transition: all 0.2s;
+    position: relative;
+  }
+
+  .ach.earned {
+    border-color: rgba(212,175,55,0.3);
+    background: rgba(212,175,55,0.08);
+  }
+
+  .ach i { color: var(--gold); font-size: 14px; }
+  .ach.locked i { color: var(--dark-4); }
+
+  .history-panel {
+    background: var(--dark-2);
+    border: 1px solid var(--dark-4);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .history-header {
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--dark-4);
+    font-family: var(--font-h);
+    font-size: 0.95rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .history-item {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--dark-4);
+    transition: background 0.15s;
+  }
+
+  .history-item:hover { background: var(--dark-3); }
+  .history-item:last-child { border-bottom: none; }
+
+  .hist-race { font-size: 0.85rem; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+  .hist-pick { font-size: 0.78rem; color: var(--text-muted); }
+
+  .hist-result {
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 5px;
+    white-space: nowrap;
+  }
+
+  .hist-result.win { background: rgba(46,160,67,0.15); color: var(--green); }
+  .hist-result.loss { background: rgba(218,54,51,0.12); color: #FF6B6B; }
+  .hist-result.pending { background: rgba(212,175,55,0.12); color: var(--gold-light); }
+
+  .hist-pts {
+    font-family: var(--font-h);
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-align: right;
+    min-width: 60px;
+  }
+
+  .hist-pts.pos { color: var(--green); }
+  .hist-pts.neg { color: #FF6B6B; }
+  .hist-pts.pnd { color: var(--gold); }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    right: 24px;
+    background: var(--dark-3);
+    border: 1px solid rgba(212,175,55,0.4);
+    border-radius: 12px;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text);
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 999;
+    max-width: 320px;
+  }
+
+  .toast.show {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  .toast i { color: var(--gold); font-size: 18px; }
+
+  /* ADMIN TEASER */
+  .admin-teaser {
+    background: var(--dark-2);
+    border: 1px solid var(--dark-4);
+    border-radius: 14px;
+    padding: 40px;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .admin-teaser .icon-big {
+    width: 60px;
+    height: 60px;
+    background: rgba(212,175,55,0.1);
+    border: 1px solid rgba(212,175,55,0.3);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+    font-size: 24px;
+    color: var(--gold);
+  }
+
+  .admin-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 14px;
+    margin-top: 24px;
+  }
+
+  .admin-card {
+    background: var(--dark-3);
+    border: 1px solid var(--dark-4);
+    border-radius: 10px;
+    padding: 16px;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .admin-card:hover {
+    border-color: rgba(212,175,55,0.3);
+    background: rgba(212,175,55,0.04);
+  }
+
+  .admin-card i {
+    font-size: 18px;
+    color: var(--gold);
+    width: 20px;
+    text-align: center;
+  }
+
+  .admin-card-text .title {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+
+  .admin-card-text .sub {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+  }
+
+  /* SCROLL REVEAL */
+  .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.5s, transform 0.5s; }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
+  /* RESPONSIVE */
+  @media (max-width: 768px) {
+    .hero { flex-direction: column; height: auto; gap: 16px; }
+    .hero-stats { margin-left: 0; }
+    .races-grid { grid-template-columns: 1fr; }
+    .profile-grid { grid-template-columns: 1fr; }
+    .lb-row, .lb-head { grid-template-columns: 40px 1fr 80px; }
+    .lb-hits, .lb-trend { display: none; }
+    .hero h1 { font-size: 1.3rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a class="logo" href="#">
+      <div class="icon"><i class="fa-solid fa-horse"></i></div>
+      GallopPoints
+    </a>
+    <div class="user-bar">
+      <div class="points-badge">
+        <i class="fa-solid fa-star"></i>
+        <span>Puntos:</span>
+        <span class="points-val" id="pts-display">3.450</span>
+      </div>
+      <div class="avatar" title="Carlos M.">CM</div>
+    </div>
+  </div>
+
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPanel('carreras', this)">
+      <i class="fa-solid fa-flag-checkered"></i> Carreras
+    </button>
+    <button class="nav-tab" onclick="showPanel('clasificacion', this)">
+      <i class="fa-solid fa-ranking-star"></i> Clasificación
+    </button>
+    <button class="nav-tab" onclick="showPanel('perfil', this)">
+      <i class="fa-solid fa-user"></i> Mi Perfil
+    </button>
+    <button class="nav-tab" onclick="showPanel('admin', this)">
+      <i class="fa-solid fa-shield-halved"></i> Admin
+    </button>
+  </div>
+</header>
+
+<!-- PANEL: CARRERAS -->
+<div class="panel active container" id="panel-carreras">
+
+  <div class="hero reveal">
+    <div class="hero-bg"></div>
+    <div class="hero-content">
+      <div class="hero-label"><i class="fa-solid fa-trophy"></i> Temporada 2024</div>
+      <h1>Predice. Puntua. Domina.</h1>
+      <p>Selecciona el ganador de cada carrera y sube en el ranking global</p>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <span class="val" id="counter-carreras">12</span>
+        <span class="lbl">Carreras hoy</span>
+      </div>
+      <div class="hero-stat">
+        <span class="val" id="counter-users">847</span>
+        <span class="lbl">Jugadores</span>
+      </div>
+      <div class="hero-stat">
+        <span class="val" id="counter-pts">94k</span>
+        <span class="lbl">Puntos repartidos</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-header reveal">
+    <div class="section-title"><div class="dot"></div> En curso y proximas</div>
+    <span class="live-badge"><span class="pulse"></span> En vivo</span>
+  </div>
+
+  <div class="races-grid">
+
+    <!-- Carrera 1 -->
+    <div class="race-card reveal" id="card-1">
+      <div class="race-img-wrap">
+        <img class="race-img" src="https://images.unsplash.com/photo-1511374322-6f8f0f9484f2?w=600&q=80" alt="Carrera">
+        <div class="race-tags">
+          <span class="tag live"><i class="fa-solid fa-circle fa-beat" style="font-size:8px"></i> En vivo</span>
+          <span class="tag country"><i class="fa-solid fa-location-dot"></i> Madrid</span>
+        </div>
+      </div>
+      <div class="race-body">
+        <div class="race-title">Gran Premio de la Hispanidad</div>
+        <div class="race-meta">
+          <span><i class="fa-solid fa-clock"></i> 16:30</span>
+          <span><i class="fa-solid fa-ruler-horizontal"></i> 2.400m</span>
+          <span><i class="fa-solid fa-coins"></i> Hasta 350 pts</span>
+        </div>
+        <div class="horses-list" id="horses-1">
+          <div class="horse-option" onclick="pickHorse(1,1,'Fuego Real','4.2x','350')">
+            <div class="horse-num">1</div>
+            <span class="horse-name">Fuego Real</span>
+            <span class="horse-odds">4.2x</span>
+            <span class="horse-pts">+350 pts</span>
+          </div>
+          <div class="horse-option" onclick="pickHorse(1,2,'Tormenta Azul','2.1x','175')">
+            <div class="horse-num">2</div>
+            <span class="horse-name">Tormenta Azul</span>
+            <span class="horse-odds">2.1x</span>
+            <span class="horse-pts">+175 pts</span>
+          </div>
+          <div class="horse-option" onclick="pickHorse(1,3,'Rey del Sur','3.5x','290')">
+            <div class="horse-num">3</div>
+            <span class="horse-name">Rey del Sur</span>
+            <span class="horse-odds">3.5x</span>
+            <span class="horse-pts">+290 pts</span>
+          </div>
+          <div class="horse-option" onclick="pickHorse(1,4,'Viento Norte','6.0x','480')">
+            <div class="horse-num">4</div>
+            <span class="horse-name">Viento Norte</span>
+            <span class="horse-odds">6.0x</span>
+            <span class="horse-pts">+480 pts</span>
+          </div>
+        </div>
+        <button class="btn-predict" id="btn-1" onclick="confirmPick(1)" disabled>
+          <i class="fa-solid fa-check"></i> Confirmar prediccion
+        </button>
+        <div class="pts-label"><i class="fa-solid fa-info-circle"></i> Selecciona un caballo para predecir</div>
+      </div>
+    </div>
+
+    <!-- Carrera 2 -->
+    <div class="race-card reveal" id="card-2">
+      <div class="race-img-wrap">
+        <img class="race-img" src="https://images.unsplash.com/photo-1553284965-83fd3e82fa5a?w=600&q=80" alt="Carrera">
+        <div class="race-tags">
+          <span class="tag upcoming"><i class="fa-solid fa-hourglass-half"></i> 45 min</span>
+          <span class="tag country"><i class="fa-solid fa-location-dot"></i> Sevilla</span>
+        </div>
+      </div>
+      <div class="race-body">
+        <div class="race-title">Copa Andalucia Elite</div>
+        <div class="race-meta">
+          <span><i class="fa-solid fa-clock"></i> 17:15</span>
+          <span><i class="fa-solid fa-ruler-horizontal"></i> 1.800m</span>
+          <span><i class="fa-solid fa-coins"></i> Hasta 220 pts</span>
+        </div>
+        <div class="horses-list" id="horses-2">
+          <div class="horse-option" onclick="pickHorse(2,1,'Sol Andaluz','2.8x','220')">
+            <div class="horse-num">1</div>
+            <span class="horse-name">Sol Andaluz</span>
+            <span class="horse-odds">2.8x</span>
+            <span class="horse-pts">+220 pts</span>
+          </div>
+          <div class="horse-option" onclick="pickHorse(2,2,'Brisa Marina','1.9x','150')">
+            <div class="horse-num">2</div>
+            <span class="horse-name">Brisa Marina</span>
+            <span class="horse-odds">1.9x</span>
+            <span class="horse-pts">+150 pts</span>
+          </div>
+          <div class="horse-option" onclick="pickHorse(2,3,'Castillo Real','5.0x','390')">
+            <div class="horse-num">3</div>
+            <span class="horse-name">Castillo Real</span>
+            <span class="horse-odds">5.0x</span>
+            <span class="horse-pts">+390 pts</span>
+          </div>
+        </div>
+        <button class="btn-predict" id="btn-2" onclick="confirmPick(2)" disabled>
+          <i class="fa-solid fa-check"></i> Confirmar prediccion
+        </button>
+        <div class="pts-label"><i class="fa-solid fa-info-circle"></i> Selecciona un caballo para predecir</div>
+      </div>
+    </div>
+
+    <!-- Carrera 3 -->
+    <div class="race-card reveal" id="card-3">
+      <div class="race-img-wrap">
+        <img class="race-img" src="https://images.unsplash.com/photo-1598974357801-cbca100e65d3?w=600&q=80" alt="Carrera">
+        <div class="race-tags">
+          <span class="tag upcoming"><i class="fa-solid fa-hourglass-half"></i> 2 horas</span>
+          <span class="tag country"><i class="fa-solid fa-location-dot"></i> Barcelona</span>
+        </div>
+      </div>
+      <div class="race-body">
+        <div class="race-title">Trofeo Mediterraneo</div>
+        <div class="race-meta">
+          <span><i class="fa-solid fa-clock"></i> 18:00</span>
+          <span><i class="fa-solid fa-ruler-horizontal"></i> 3.000m</span>
+          <span><i class="fa-solid fa-coins"></i> Hasta 500 pts</span>
+        </div>
+        <div class="horses-list" id="horses-3">
+          <div class="horse-option" onclick="pickHorse(3,1,'Mediterraneo','3.1x','310')">
+            <div class="horse-num">1</div>
+            <span class="horse-name">Mediterraneo</span>
+            <span class="horse-odds">3.1x</span>
+            <span class="horse-pts">+310 pts</span>
+          </div>
+          <div class="horse-option" onclick="pickHorse(3,2,'Madrugada','7.0x','500')">
+            <div class="horse-num">2</div>
+            <span class="horse-name">Madrugada</span>
+            <span class="horse-odds">7.0x</span>
+            <span class="horse-pts">+500 pts</span>
+          </div>
+          <div class="horse-option" onclick="pickHorse(3,3,'Campeon 22','2.3x','180')">
+            <div class="horse-num">3</div>
+            <span class="horse-name">Campeon 22</span>
+            <span class="horse-odds">2.3x</span>
+            <span class="horse-pts">+180 pts</span>
+          </div>
+          <div class="horse-option" onclick="pickHorse(3,4,'Aguila Dorada','4.8x','420')">
+            <div class="horse-num">4</div>
+            <span class="horse-name">Aguila Dorada</span>
+            <span class="horse-odds">4.8x</span>
+            <span class="horse-pts">+420 pts</span>
+          </div>
+        </div>
+        <button class="btn-predict" id="btn-3" onclick="confirmPick(3)" disabled>
+          <i class="fa-solid fa-check"></i> Confirmar prediccion
+        </button>
+        <div class="pts-label"><i class="fa-solid fa-info-circle"></i> Selecciona un caballo para predecir</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- PANEL: CLASIFICACION -->
+<div class="panel container" id="panel-clasificacion">
+
+  <div class="leaderboard-wrap reveal">
+    <div class="lb-header">
+      <div class="lb-header-title"><i class="fa-solid fa-ranking-star" style="color:var(--gold)"></i> Tabla de Clasificacion</div>
+      <div class="lb-filter">
+        <button class="filter-btn active" onclick="filterLB(this,'global')">Global</button>
+        <button class="filter-btn" onclick="filterLB(this,'semanal')">Semanal</button>
+        <button class="filter-btn" onclick="filterLB(this,'mensual')">Mensual</button>
+      </div>
+    </div>
+
+    <div class="lb-head">
+      <span>#</span>
+      <span>Jugador</span>
+      <span style="text-align:right">Puntos</span>
+      <span style="text-align:right">Aciertos</span>
+      <span style="text-align:right">Tendencia</span>
+    </div>
+
+    <div class="lb-table" id="lb-table">
+      <!-- filled by JS -->
+    </div>
+  </div>
+
+</div>
+
+<!-- PANEL: PERFIL -->
+<div class="panel container" id="panel-perfil">
+
+  <div class="profile-grid reveal">
+
+    <div class="profile-card">
+      <div class="profile-avatar-big">CM</div>
+      <div class="profile-name">Carlos Martinez</div>
+      <div class="profile-level"><i class="fa-solid fa-crown"></i> Experto - Nivel 7</div>
+      <div class="stats-row">
+        <div class="stat-box">
+          <span class="num">3.450</span>
+          <span class="lbl">Puntos</span>
+        </div>
+        <div class="stat-box">
+          <span class="num">#12</span>
+          <span class="lbl">Ranking</span>
+        </div>
+        <div class="stat-box">
+          <span class="num">68%</span>
+          <span class="lbl">Aciertos</span>
+        </div>
+        <div class="stat-box">
+          <span class="num">47</span>
+          <span class="lbl">Predicciones</span>
+        </div>
+      </div>
+      <div class="xp-bar-wrap">
+        <div class="xp-bar-label">
+          <span>Nivel 7</span>
+          <span>3.450 / 5.000 XP</span>
+        </div>
+        <div class="xp-bar"><div class="xp-fill"></div></div>
+      </div>
+      <div class="achievements">
+        <div class="ach earned" title="Primera prediccion"><i class="fa-solid fa-star"></i></div>
+        <div class="ach earned" title="10 aciertos seguidos"><i class="fa-solid fa-fire"></i></div>
+        <div class="ach earned" title="Top 20 global"><i class="fa-solid fa-trophy"></i></div>
+        <div class="ach earned" title="50 predicciones"><i class="fa-solid fa-bolt"></i></div>
+        <div class="ach locked" title="Aun bloqueado"><i class="fa-solid fa-lock"></i></div>
+        <div class="ach locked" title="Aun bloqueado"><i class="fa-solid fa-lock"></i></div>
+      </div>
+    </div>
+
+    <div class="history-panel">
+      <div class="history-header">
+        <i class="fa-solid fa-clock-rotate-left" style="color:var(--gold)"></i> Historial de Predicciones
+      </div>
+      <div class="history-item">
+        <div>
+          <div class="hist-race">Gran Premio de la Hispanidad</div>
+          <div class="hist-pick"><i class="fa-solid fa-horse"></i> Tormenta Azul — Madrid</div>
+        </div>
+        <span class="hist-result win"><i class="fa-solid fa-check"></i> Acertado</span>
+        <span class="hist-pts pos">+175</span>
+      </div>
+      <div class="history-item">
+        <div>
+          <div class="hist-race">Copa del Rey Hipica</div>
+          <div class="hist-pick"><i class="fa-solid fa-horse"></i> Fuego Eterno — Valencia</div>
+        </div>
+        <span class="hist-result loss"><i class="fa-solid fa-xmark"></i> Fallado</span>
+        <span class="hist-pts neg">+0</span>
+      </div>
+      <div class="history-item">
+        <div>
+          <div class="hist-race">Trofeo Zarzuela</div>
+          <div class="hist-pick"><i class="fa-solid fa-horse"></i> Rey del Sur — Madrid</div>
+        </div>
+        <span class="hist-result win"><i class="fa-solid fa-check"></i> Acertado</span>
+        <span class="hist-pts pos">+290</span>
+      </div>
+      <div class="history-item">
+        <div>
+          <div class="hist-race">Copa Andalucia Elite</div>
+          <div class="hist-pick"><i class="fa-solid fa-horse"></i> Sol Andaluz — Sevilla</div>
+        </div>
+        <span class="hist-result pending"><i class="fa-solid fa-hourglass-half"></i> Pendiente</span>
+        <span class="hist-pts pnd">+220</span>
+      </div>
+      <div class="history-item">
+        <div>
+          <div class="hist-race">Gran Premio Cataluna</div>
+          <div class="hist-pick"><i class="fa-solid fa-horse"></i> Aguila Dorada — Barcelona</div>
+        </div>
+        <span class="hist-result win"><i class="fa-solid fa-check"></i> Acertado</span>
+        <span class="hist-pts pos">+420</span>
+      </div>
+      <div class="history-item">
+        <div>
+          <div class="hist-race">Prix de l'Arc de Triomphe</div>
+          <div class="hist-pick"><i class="fa-solid fa-horse"></i> Mediterraneo — Paris</div>
+        </div>
+        <span class="hist-result loss"><i class="fa-solid fa-xmark"></i> Fallado</span>
+        <span class="hist-pts neg">+0</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PANEL: ADMIN -->
+<div class="panel container" id="panel-admin">
+  <div class="admin-teaser reveal">
+    <div class="icon-big"><i class="fa-solid fa-shield-halved"></i></div>
+    <div style="font-family:var(--font-h);font-size:1.2rem;font-weight:700;margin-bottom:8px">Panel de Administracion</div>
+    <div style="color:var(--text-muted);font-size:0.88rem;max-width:480px;margin:0 auto">
+      Gestiona usuarios, importa carreras desde la fuente de datos y configura las reglas de puntuacion sin tocar codigo
+    </div>
+    <div class="admin-grid">
+      <div class="admin-card">
+        <i class="fa-solid fa-users"></i>
+        <div class="admin-card-text">
+          <div class="title">Usuarios</div>
+          <div class="sub">847 registrados</div>
+        </div>
+      </div>
+      <div class="admin-card">
+        <i class="fa-solid fa-flag-checkered"></i>
+        <div class="admin-card-text">
+          <div class="title">Carreras</div>
+          <div class="sub">12 activas hoy</div>
+        </div>
+      </div>
+      <div class="admin-card">
+        <i class="fa-solid fa-sliders"></i>
+        <div class="admin-card-text">
+          <div class="title">Reglas de puntos</div>
+          <div class="sub">Configura multiplicadores</div>
+        </div>
+      </div>
+      <div class="admin-card">
+        <i class="fa-solid fa-plug"></i>
+        <div class="admin-card-text">
+          <div class="title">API de datos</div>
+          <div class="sub">Sincronizacion automatica</div>
+        </div>
+      </div>
+      <div class="admin-card">
+        <i class="fa-solid fa-chart-line"></i>
+        <div class="admin-card-text">
+          <div class="title">Estadisticas</div>
+          <div class="sub">Engagement y retencion</div>
+        </div>
+      </div>
+      <div class="admin-card">
+        <i class="fa-solid fa-shield-check"></i>
+        <div class="admin-card-text">
+          <div class="title">Antifraud</div>
+          <div class="sub">Patrones anomalos</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <i class="fa-solid fa-star"></i>
+  <span id="toast-msg">Prediccion confirmada</span>
+</div>
+
+<script>
+  // STATE
+  const state = {
+    picks: {},
+    confirmed: {},
+    pts: 3450
+  };
+
+  // TABS
+  function showPanel(name, btn) {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('panel-' + name).classList.add('active');
+    btn.classList.add('active');
+    setTimeout(revealAll, 50);
+    if (name === 'clasificacion') buildLeaderboard();
+  }
+
+  // HORSE PICKING
+  function pickHorse(race, horse, name, odds, pts) {
+    if (state.confirmed[race]) return;
+    state.picks[race] = { horse, name, pts: parseInt(pts) };
+
+    const options = document.querySelectorAll('#horses-' + race + ' .horse-option');
+    options.forEach((el, i) => {
+      el.classList.toggle('picked', i + 1 === horse);
+    });
+
+    const btn = document.getElementById('btn-' + race);
+    btn.disabled = false;
+  }
+
+  function confirmPick(race) {
+    if (!state.picks[race]) return;
+    state.confirmed[race] = true;
+
+    const pick = state.picks[race];
+    const earned = pick.pts;
+
+    // Animate points
+    state.pts += earned;
+    animateNum('pts-display', state.pts - earned, state.pts);
+
+    // Update button
+    const btn = document.getElementById('btn-' + race);
+    btn.classList.add('done');
+    btn.innerHTML = '<i class="fa-solid fa-check-double"></i> Prediccion confirmada';
+    btn.disabled = true;
+
+    // Disable options
+    const options = document.querySelectorAll('#horses-' + race + ' .horse-option');
+    options.forEach(el => { el.style.pointerEvents = 'none'; });
+
+    // Highlight card
+    document.getElementById('card-' + race).classList.add('selected');
+
+    showToast('<i class="fa-solid fa-horse"></i> ' + pick.name + ' seleccionado. +' + earned + ' pts potenciales');
+  }
+
+  function animateNum(id, from, to) {
+    const el = document.getElementById(id);
+    const duration = 600;
+    const start = performance.now();
+    function step(ts) {
+      const p = Math.min((ts - start) / duration, 1);
+      const val = Math.round(from + (to - from) * easeOut(p));
+      el.textContent = val.toLocaleString('es-ES');
+      if (p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  function easeOut(t) { return 1 - (1-t)*(1-t); }
+
+  // TOAST
+  function showToast(msg) {
+    const toast = document.getElementById('toast');
+    document.getElementById('toast-msg').innerHTML = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3000);
+  }
+
+  // LEADERBOARD
+  const players = [
+    { name: 'Diego Fernandez', avatar: 'DF', pts: 8940, hits: 72, trend: +3 },
+    { name: 'Laura Gomez', avatar: 'LG', pts: 7320, hits: 68, trend: +1 },
+    { name: 'Marco Ruiz', avatar: 'MR', pts: 6880, hits: 61, trend: -2 },
+    { name: 'Ana Torres', avatar: 'AT', pts: 5990, hits: 59, trend: +5 },
+    { name: 'Pablo Moreno', avatar: 'PM', pts: 5340, hits: 54, trend: 0 },
+    { name: 'Sofia Navarro', avatar: 'SN', pts: 4870, hits: 51, trend: -1 },
+    { name: 'Javier Lopez', avatar: 'JL', pts: 4210, hits: 47, trend: +2 },
+    { name: 'Elena Castro', avatar: 'EC', pts: 3880, hits: 44, trend: +1 },
+    { name: 'Roberto Diaz', avatar: 'RD', pts: 3680, hits: 42, trend: -3 },
+    { name: 'Isabel Vega', avatar: 'IV', pts: 3520, hits: 40, trend: 0 },
+    { name: 'Miguel Sanz', avatar: 'MS', pts: 3490, hits: 39, trend: +1 },
+    { name: 'Carlos Martinez', avatar: 'CM', pts: 3450, hits: 38, trend: +4, isMe: true },
+    { name: 'Carmen Flores', avatar: 'CF', pts: 3100, hits: 35, trend: -1 },
+    { name: 'Antonio Perez', avatar: 'AP', pts: 2870, hits: 31, trend: +2 },
+  ];
+
+  function buildLeaderboard() {
+    const table = document.getElementById('lb-table');
+    table.innerHTML = players.map((p, i) => {
+      const rank = i + 1;
+      const rankClass = rank <= 3 ? 'r' + rank : '';
+      const trendIcon = p.trend > 0
+        ? `<span class="trend-up"><i class="fa-solid fa-arrow-trend-up"></i> +${p.trend}</span>`
+        : p.trend < 0
+          ? `<span class="trend-down"><i class="fa-solid fa-arrow-trend-down"></i> ${p.trend}</span>`
+          : `<span class="trend-eq"><i class="fa-solid fa-minus"></i></span>`;
+
+      const rankIcon = rank === 1 ? '<i class="fa-solid fa-crown" style="color:#FFD700"></i>'
+        : rank === 2 ? '<i class="fa-solid fa-medal" style="color:#C0C0C0"></i>'
+        : rank === 3 ? '<i class="fa-solid fa-medal" style="color:#CD7F32"></i>'
+        : `<span class="rank ${rankClass}">${rank}</span>`;
+
+      const me = p.isMe;
+      return `
+        <div class="lb-row ${me ? 'me' : ''}">
+          <div>${rankIcon}</div>
+          <div class="lb-user">
+            <div class="lb-avatar" style="background:linear-gradient(135deg,var(--gold-dark),var(--gold));display:flex;align-items:center;justify-content:center;font-family:var(--font-h);font-weight:700;font-size:0.7rem;color:var(--dark);width:32px;height:32px;border-radius:50%">${p.avatar}</div>
+            <div>
+              <div class="lb-name">${p.name} ${me ? '<span class="lb-badge-me">Tu</span>' : ''}</div>
+            </div>
+          </div>
+          <div class="lb-pts ${me ? 'me' : ''}">${p.pts.toLocaleString('es-ES')}</div>
+          <div class="lb-hits">${p.hits}%</div>
+          <div class="lb-trend">${trendIcon}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function filterLB(btn, type) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    buildLeaderboard();
+  }
+
+  // SCROLL REVEAL
+  function revealAll() {
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach((e, i) => {
+        if (e.isIntersecting) {
+          setTimeout(() => e.target.classList.add('visible'), i * 60);
+          obs.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.05 });
+    document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+  }
+
+  // INIT
+  buildLeaderboard();
+  revealAll();
+</script>
+</body>
+</html>
