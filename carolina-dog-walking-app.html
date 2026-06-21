@@ -1,0 +1,1471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PawWalk — Dog Walking App Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  :root {
+    --gold: #f59e0b;
+    --gold-dark: #d97706;
+    --gold-darker: #b45309;
+    --gold-light: #fbbf24;
+    --gold-faint: rgba(245,158,11,0.12);
+    --bg: #0a0f1e;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --surface3: #1f2d45;
+    --text: #f1f5f9;
+    --text-muted: #94a3b8;
+    --text-dim: #64748b;
+    --border: rgba(245,158,11,0.15);
+    --shadow: 0 8px 32px rgba(0,0,0,0.5);
+    --radius: 16px;
+    --radius-sm: 10px;
+    --ease-spring: cubic-bezier(.34,1.56,.64,1);
+    --ease-out: cubic-bezier(.22,.68,0,1.2);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* ---- HERO ---- */
+  .hero-bg {
+    position: fixed; inset: 0;
+    background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(245,158,11,0.18) 0%, transparent 70%),
+                radial-gradient(ellipse 60% 40% at 80% 100%, rgba(180,83,9,0.12) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    pointer-events: none;
+    z-index: 0;
+    animation: floatOrb 8s ease-in-out infinite;
+  }
+  .orb-1 { width: 400px; height: 400px; background: rgba(245,158,11,0.08); top: -100px; left: -100px; }
+  .orb-2 { width: 300px; height: 300px; background: rgba(180,83,9,0.07); bottom: 0; right: -50px; animation-delay: -4s; }
+  @keyframes floatOrb { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-30px) scale(1.05); } }
+
+  /* ---- PAGE HEADER ---- */
+  .page-header {
+    position: relative; z-index: 10;
+    text-align: center;
+    padding: clamp(32px, 6vw, 60px) 20px clamp(24px, 4vw, 40px);
+  }
+  .badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--gold-faint);
+    border: 1px solid rgba(245,158,11,0.3);
+    border-radius: 999px;
+    padding: 6px 16px;
+    font-size: 13px; font-weight: 700;
+    color: var(--gold);
+    margin-bottom: 20px;
+    letter-spacing: 0.5px;
+  }
+  .page-title {
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    font-weight: 900;
+    line-height: 1.15;
+    letter-spacing: -0.5px;
+    margin-bottom: 14px;
+  }
+  .page-title span {
+    background: linear-gradient(135deg, var(--gold-light), var(--gold-dark));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .page-subtitle {
+    font-size: clamp(15px, 2vw, 18px);
+    color: var(--text-muted);
+    max-width: 560px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  /* ---- TOGGLE VIEW ---- */
+  .view-toggle {
+    position: relative; z-index: 10;
+    display: flex; align-items: center; gap: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 4px;
+    margin-bottom: 32px;
+  }
+  .toggle-btn {
+    padding: 8px 24px;
+    border-radius: 999px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 14px; font-weight: 700;
+    cursor: pointer; border: none;
+    transition: all 0.3s var(--ease-spring);
+    color: var(--text-muted);
+    background: transparent;
+  }
+  .toggle-btn.active {
+    background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+    color: #000;
+    box-shadow: 0 4px 16px rgba(245,158,11,0.4);
+  }
+
+  /* ---- PHONE SHELL ---- */
+  .demo-area {
+    position: relative; z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 20px 60px;
+    width: 100%;
+  }
+  .phone-wrapper {
+    position: relative;
+    width: 375px;
+    max-width: 100%;
+  }
+  .phone-shell {
+    background: #0d0d0d;
+    border-radius: 44px;
+    border: 2px solid #2a2a2a;
+    box-shadow:
+      0 0 0 1px #111,
+      0 40px 80px rgba(0,0,0,0.7),
+      0 0 120px rgba(245,158,11,0.06);
+    overflow: hidden;
+    position: relative;
+  }
+  .phone-notch {
+    position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    width: 120px; height: 32px;
+    background: #0d0d0d;
+    border-radius: 0 0 20px 20px;
+    z-index: 50;
+  }
+  .phone-notch::after {
+    content: '';
+    position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
+    width: 60px; height: 5px;
+    background: #1a1a1a;
+    border-radius: 99px;
+  }
+  .phone-screen {
+    height: 720px;
+    overflow: hidden;
+    position: relative;
+    background: var(--bg);
+    padding-top: 44px;
+  }
+
+  /* ---- STATUS BAR ---- */
+  .status-bar {
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 44px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 20px;
+    z-index: 40;
+    background: linear-gradient(to bottom, rgba(10,15,30,0.95), rgba(10,15,30,0));
+  }
+  .status-time { font-size: 14px; font-weight: 800; }
+  .status-icons { display: flex; align-items: center; gap: 5px; font-size: 12px; }
+
+  /* ---- SCREENS ---- */
+  .screen {
+    position: absolute; inset: 44px 0 60px;
+    overflow-y: auto; overflow-x: hidden;
+    display: none;
+    flex-direction: column;
+    scrollbar-width: none;
+  }
+  .screen::-webkit-scrollbar { display: none; }
+  .screen.active { display: flex; animation: fadeSlideIn 0.35s var(--ease-out); }
+  @keyframes fadeSlideIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+
+  /* ---- BOTTOM NAV ---- */
+  .bottom-nav {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 60px;
+    background: rgba(17,24,39,0.95);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center;
+    z-index: 40;
+  }
+  .nav-item {
+    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
+    cursor: pointer; padding: 8px 0;
+    transition: all 0.25s var(--ease-spring);
+    color: var(--text-dim);
+    font-size: 10px; font-weight: 700;
+  }
+  .nav-item i { font-size: 18px; }
+  .nav-item.active { color: var(--gold); transform: translateY(-2px); }
+
+  /* ============================
+     SCREEN 1 - HOME / FIND
+     ============================ */
+  .home-header {
+    padding: 16px 18px 10px;
+  }
+  .home-greeting { font-size: 13px; color: var(--text-muted); font-weight: 600; }
+  .home-name { font-size: 22px; font-weight: 900; }
+  .home-search {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 12px 14px;
+    margin: 12px 18px 0;
+  }
+  .home-search i { color: var(--gold); font-size: 15px; }
+  .home-search span { color: var(--text-dim); font-size: 14px; font-weight: 600; }
+
+  .filter-row {
+    display: flex; gap: 8px;
+    padding: 12px 18px;
+    overflow-x: auto; scrollbar-width: none;
+  }
+  .filter-chip {
+    flex-shrink: 0;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 12px; font-weight: 700;
+    border: 1.5px solid var(--border);
+    color: var(--text-muted);
+    cursor: pointer; transition: all 0.2s;
+    background: transparent;
+    font-family: 'Nunito', sans-serif;
+  }
+  .filter-chip.active {
+    background: var(--gold-faint);
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+
+  .section-label {
+    padding: 4px 18px 10px;
+    font-size: 16px; font-weight: 800;
+  }
+
+  .map-preview {
+    margin: 0 18px 14px;
+    border-radius: 14px;
+    overflow: hidden;
+    height: 120px;
+    position: relative;
+    background: var(--surface3);
+    border: 1px solid var(--border);
+  }
+  .map-preview img { width: 100%; height: 100%; object-fit: cover; opacity: 0.6; }
+  .map-dot {
+    position: absolute;
+    width: 14px; height: 14px;
+    background: var(--gold);
+    border-radius: 50%;
+    border: 2.5px solid #fff;
+    box-shadow: 0 0 0 4px rgba(245,158,11,0.3);
+    animation: pulseDot 2s infinite;
+  }
+  @keyframes pulseDot { 0%,100% { box-shadow: 0 0 0 4px rgba(245,158,11,0.3); } 50% { box-shadow: 0 0 0 10px rgba(245,158,11,0); } }
+  .map-dot-1 { top: 35%; left: 42%; }
+  .map-dot-2 { top: 55%; left: 60%; width:10px;height:10px; background:var(--gold-dark); animation-delay:.7s; }
+  .map-dot-3 { top: 25%; left: 70%; width:10px;height:10px; background:var(--gold-dark); animation-delay:1.4s; }
+  .map-label {
+    position: absolute; bottom: 8px; right: 10px;
+    font-size: 11px; font-weight: 700; color: var(--gold);
+    background: rgba(10,15,30,0.8);
+    padding: 3px 8px; border-radius: 999px;
+    border: 1px solid rgba(245,158,11,0.3);
+  }
+
+  .walker-card {
+    display: flex; align-items: center; gap: 12px;
+    margin: 0 18px 10px;
+    padding: 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.25s var(--ease-spring);
+    position: relative;
+  }
+  .walker-card:hover, .walker-card:active { transform: scale(1.02); border-color: rgba(245,158,11,0.4); }
+  .walker-avatar {
+    width: 54px; height: 54px;
+    border-radius: 14px;
+    overflow: hidden;
+    flex-shrink: 0;
+    border: 2px solid var(--border);
+    position: relative;
+  }
+  .walker-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .walker-online {
+    position: absolute; bottom: 2px; right: 2px;
+    width: 10px; height: 10px;
+    background: #22c55e;
+    border-radius: 50%;
+    border: 1.5px solid var(--surface);
+  }
+  .walker-info { flex: 1; min-width: 0; }
+  .walker-name { font-size: 15px; font-weight: 800; margin-bottom: 2px; }
+  .walker-meta { font-size: 12px; color: var(--text-muted); font-weight: 600; }
+  .walker-tags { display: flex; gap: 5px; margin-top: 5px; flex-wrap: wrap; }
+  .tag {
+    font-size: 10px; font-weight: 700;
+    padding: 2px 8px; border-radius: 999px;
+    background: var(--gold-faint);
+    color: var(--gold);
+    border: 1px solid rgba(245,158,11,0.2);
+  }
+  .walker-price {
+    text-align: right; flex-shrink: 0;
+  }
+  .price-amount { font-size: 18px; font-weight: 900; color: var(--gold); }
+  .price-label { font-size: 10px; color: var(--text-dim); font-weight: 600; }
+  .walker-stars { color: var(--gold); font-size: 11px; }
+
+  .book-btn {
+    display: block;
+    margin: 4px 18px 4px;
+    padding: 15px;
+    background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+    color: #000;
+    border: none;
+    border-radius: 14px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 15px; font-weight: 800;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.25s var(--ease-spring);
+    letter-spacing: 0.3px;
+  }
+  .book-btn:active { transform: scale(0.97); }
+  .book-btn i { margin-right: 8px; }
+
+  /* ============================
+     SCREEN 2 - BOOKING
+     ============================ */
+  .booking-header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 16px 18px;
+  }
+  .back-btn {
+    width: 36px; height: 36px;
+    background: var(--surface2);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; border: 1px solid var(--border);
+    color: var(--text); font-size: 15px;
+    transition: all 0.2s;
+  }
+  .back-btn:active { transform: scale(0.92); }
+  .booking-title { font-size: 18px; font-weight: 900; }
+
+  .step-bar {
+    display: flex; align-items: center; gap: 6px;
+    padding: 0 18px 16px;
+  }
+  .step-dot {
+    flex: 1; height: 4px; border-radius: 99px;
+    background: var(--surface3);
+    transition: background 0.4s;
+  }
+  .step-dot.done { background: var(--gold); }
+  .step-dot.current { background: linear-gradient(90deg, var(--gold), var(--gold-light)); }
+
+  .booking-walker-mini {
+    display: flex; align-items: center; gap: 12px;
+    margin: 0 18px 18px;
+    padding: 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+  }
+  .mini-avatar { width: 44px; height: 44px; border-radius: 12px; overflow: hidden; border: 2px solid var(--border); }
+  .mini-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .mini-info .name { font-size: 14px; font-weight: 800; }
+  .mini-info .meta { font-size: 12px; color: var(--text-muted); font-weight: 600; }
+
+  .booking-section { padding: 0 18px 16px; }
+  .booking-label { font-size: 13px; font-weight: 800; color: var(--text-muted); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.8px; }
+
+  .date-row { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
+  .date-chip {
+    flex-shrink: 0;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 10px 14px;
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    cursor: pointer; transition: all 0.2s;
+    font-family: 'Nunito', sans-serif;
+  }
+  .date-chip .day { font-size: 11px; font-weight: 700; color: var(--text-muted); }
+  .date-chip .date-num { font-size: 18px; font-weight: 900; }
+  .date-chip.active { background: var(--gold-faint); border-color: var(--gold); }
+  .date-chip.active .day, .date-chip.active .date-num { color: var(--gold); }
+
+  .time-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .time-chip {
+    padding: 9px 16px;
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-size: 13px; font-weight: 700;
+    cursor: pointer; transition: all 0.2s;
+    font-family: 'Nunito', sans-serif;
+    color: var(--text);
+  }
+  .time-chip.active { background: var(--gold-faint); border-color: var(--gold); color: var(--gold); }
+  .time-chip.taken { opacity: 0.35; cursor: not-allowed; text-decoration: line-through; }
+
+  .dog-row { display: flex; gap: 10px; }
+  .dog-card {
+    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px;
+    padding: 14px 10px;
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    cursor: pointer; transition: all 0.2s;
+    text-align: center;
+  }
+  .dog-card.active { background: var(--gold-faint); border-color: var(--gold); }
+  .dog-card img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border); }
+  .dog-card .dog-name { font-size: 13px; font-weight: 800; }
+  .dog-card .dog-breed { font-size: 11px; color: var(--text-muted); font-weight: 600; }
+
+  .duration-row { display: flex; gap: 8px; }
+  .dur-chip {
+    flex: 1; padding: 12px 8px; text-align: center;
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    cursor: pointer; transition: all 0.2s;
+    font-family: 'Nunito', sans-serif;
+  }
+  .dur-chip .mins { font-size: 18px; font-weight: 900; }
+  .dur-chip .label { font-size: 10px; color: var(--text-muted); font-weight: 700; }
+  .dur-chip.active { background: var(--gold-faint); border-color: var(--gold); }
+  .dur-chip.active .mins { color: var(--gold); }
+
+  /* ============================
+     SCREEN 3 - PAYMENT
+     ============================ */
+  .pay-summary {
+    margin: 0 18px 18px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .pay-img { width: 100%; height: 100px; object-fit: cover; opacity: 0.6; }
+  .pay-summary-body { padding: 16px; }
+  .pay-summary-title { font-size: 16px; font-weight: 900; margin-bottom: 12px; }
+  .pay-line {
+    display: flex; justify-content: space-between;
+    font-size: 13px; font-weight: 600; padding: 5px 0;
+    color: var(--text-muted);
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .pay-line span:last-child { color: var(--text); font-weight: 700; }
+  .pay-line.total { border: none; margin-top: 8px; }
+  .pay-line.total span { font-size: 17px; font-weight: 900; }
+  .pay-line.total span:last-child { color: var(--gold); }
+
+  .card-section { padding: 0 18px 16px; }
+  .card-input {
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 10px;
+    transition: border-color 0.2s;
+  }
+  .card-input:focus-within { border-color: var(--gold); }
+  .card-input i { color: var(--text-dim); font-size: 16px; }
+  .card-input input {
+    background: transparent; border: none; outline: none;
+    color: var(--text); font-family: 'Nunito', sans-serif;
+    font-size: 14px; font-weight: 600; flex: 1;
+  }
+  .card-input input::placeholder { color: var(--text-dim); }
+  .card-row { display: flex; gap: 10px; }
+  .card-row .card-input { flex: 1; }
+
+  /* ============================
+     SCREEN 4 - ACTIVE WALK
+     ============================ */
+  .walk-map {
+    height: 220px; position: relative;
+    background: var(--surface3);
+    overflow: hidden;
+  }
+  .walk-map img { width: 100%; height: 100%; object-fit: cover; opacity: 0.5; }
+  .walk-map-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(to bottom, transparent 50%, var(--bg));
+  }
+  .walk-tracker-pin {
+    position: absolute; top: 45%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 48px; height: 48px;
+    background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+    border-radius: 50% 50% 50% 0;
+    transform: translate(-50%, -50%) rotate(-45deg);
+    border: 3px solid #fff;
+    box-shadow: 0 0 0 6px rgba(245,158,11,0.3), 0 8px 24px rgba(0,0,0,0.4);
+    animation: pinBounce 2s ease-in-out infinite;
+  }
+  .walk-tracker-pin::after {
+    content: '\f6d7';
+    font-family: 'Font Awesome 6 Free'; font-weight: 900;
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    transform: rotate(45deg);
+    font-size: 18px; color: #000;
+  }
+  @keyframes pinBounce { 0%,100% { transform: translate(-50%, -50%) rotate(-45deg) scale(1); } 50% { transform: translate(-50%, -60%) rotate(-45deg) scale(1.08); } }
+
+  .walk-route-line {
+    position: absolute;
+    top: 50%; left: 30%; right: 30%;
+    height: 3px;
+    background: linear-gradient(90deg, rgba(245,158,11,0.3), var(--gold), rgba(245,158,11,0.3));
+    border-radius: 99px;
+    animation: routePulse 2.5s ease-in-out infinite;
+  }
+  @keyframes routePulse { 0%,100% { opacity: 0.5; } 50% { opacity: 1; } }
+
+  .walk-stats {
+    display: flex; gap: 0;
+    margin: -1px 18px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .walk-stat {
+    flex: 1; padding: 14px 10px; text-align: center;
+    border-right: 1px solid var(--border);
+  }
+  .walk-stat:last-child { border: none; }
+  .walk-stat .stat-val { font-size: 20px; font-weight: 900; color: var(--gold); }
+  .walk-stat .stat-lbl { font-size: 10px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
+
+  .walk-walker-card {
+    display: flex; align-items: center; gap: 12px;
+    margin: 0 18px 14px;
+    padding: 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+  }
+  .walk-walker-avatar { width: 52px; height: 52px; border-radius: 50%; overflow: hidden; border: 2.5px solid var(--gold); flex-shrink: 0; }
+  .walk-walker-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .walk-walker-info { flex: 1; }
+  .walk-walker-name { font-size: 15px; font-weight: 800; }
+  .walk-walker-status { font-size: 12px; color: #22c55e; font-weight: 700; }
+  .walk-actions { display: flex; gap: 8px; }
+  .walk-action {
+    width: 36px; height: 36px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.2s;
+    color: var(--text); font-size: 14px;
+  }
+  .walk-action:active { transform: scale(0.9); }
+
+  .walk-updates { padding: 0 18px 16px; }
+  .update-item {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .update-icon { width: 32px; height: 32px; border-radius: 8px; background: var(--gold-faint); display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--gold); font-size: 13px; }
+  .update-text { font-size: 13px; line-height: 1.4; font-weight: 600; }
+  .update-time { font-size: 11px; color: var(--text-dim); font-weight: 600; margin-top: 2px; }
+
+  .sos-btn {
+    margin: 4px 18px 4px;
+    padding: 14px;
+    background: rgba(239,68,68,0.1);
+    border: 1.5px solid rgba(239,68,68,0.3);
+    border-radius: 14px;
+    color: #ef4444;
+    font-family: 'Nunito', sans-serif;
+    font-size: 14px; font-weight: 800;
+    cursor: pointer; text-align: center;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: all 0.2s;
+  }
+  .sos-btn:active { background: rgba(239,68,68,0.2); }
+
+  /* ============================
+     SCREEN 5 - WALKER DASHBOARD
+     ============================ */
+  .walker-dash-header {
+    padding: 16px 18px;
+  }
+  .walker-greeting { font-size: 13px; color: var(--text-muted); font-weight: 600; }
+  .walker-name-big { font-size: 22px; font-weight: 900; }
+  .walker-status-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(34,197,94,0.12);
+    border: 1px solid rgba(34,197,94,0.3);
+    border-radius: 999px;
+    padding: 4px 12px;
+    font-size: 12px; font-weight: 700;
+    color: #22c55e;
+    margin-top: 6px;
+  }
+  .status-dot { width: 7px; height: 7px; background: #22c55e; border-radius: 50%; animation: blink 1.5s ease-in-out infinite; }
+  @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  .earnings-card {
+    margin: 4px 18px 16px;
+    padding: 18px;
+    background: linear-gradient(135deg, rgba(245,158,11,0.15), rgba(180,83,9,0.08));
+    border: 1px solid rgba(245,158,11,0.25);
+    border-radius: 16px;
+    position: relative; overflow: hidden;
+  }
+  .earnings-card::before {
+    content: '';
+    position: absolute; top: -40px; right: -40px;
+    width: 120px; height: 120px;
+    background: radial-gradient(circle, rgba(245,158,11,0.15) 0%, transparent 70%);
+  }
+  .earnings-label { font-size: 12px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+  .earnings-amount { font-size: 36px; font-weight: 900; color: var(--gold); margin: 4px 0; }
+  .earnings-sub { font-size: 12px; color: var(--text-muted); font-weight: 600; }
+  .earnings-row { display: flex; gap: 12px; margin-top: 12px; }
+  .earn-stat { flex: 1; background: rgba(0,0,0,0.2); border-radius: 10px; padding: 10px; text-align: center; }
+  .earn-stat .val { font-size: 18px; font-weight: 900; color: var(--gold-light); }
+  .earn-stat .lbl { font-size: 10px; color: var(--text-dim); font-weight: 700; }
+
+  .request-card {
+    margin: 0 18px 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: all 0.25s;
+  }
+  .request-card.new { border-color: rgba(245,158,11,0.4); }
+  .request-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .req-avatar { width: 42px; height: 42px; border-radius: 12px; overflow: hidden; flex-shrink: 0; }
+  .req-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .req-info { flex: 1; }
+  .req-name { font-size: 14px; font-weight: 800; }
+  .req-detail { font-size: 12px; color: var(--text-muted); font-weight: 600; }
+  .req-price { font-size: 18px; font-weight: 900; color: var(--gold); }
+  .request-body { padding: 12px 14px; display: flex; gap: 10px; flex-wrap: wrap; }
+  .req-chip {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 12px; font-weight: 700; color: var(--text-muted);
+    background: var(--surface2);
+    padding: 5px 10px; border-radius: 8px;
+  }
+  .req-chip i { color: var(--gold); font-size: 11px; }
+  .request-actions { display: flex; gap: 0; border-top: 1px solid var(--border); }
+  .req-btn {
+    flex: 1; padding: 12px; text-align: center;
+    font-family: 'Nunito', sans-serif;
+    font-size: 13px; font-weight: 800;
+    cursor: pointer; border: none; background: transparent;
+    transition: all 0.2s;
+  }
+  .req-btn.decline { color: var(--text-dim); border-right: 1px solid var(--border); }
+  .req-btn.accept { color: #000; background: linear-gradient(135deg, var(--gold), var(--gold-dark)); }
+  .req-btn:active { opacity: 0.8; }
+
+  .new-badge {
+    font-size: 10px; font-weight: 800;
+    background: var(--gold); color: #000;
+    padding: 2px 7px; border-radius: 999px;
+    margin-left: 6px;
+  }
+
+  /* ---- TOAST ---- */
+  .toast {
+    position: absolute; bottom: 72px; left: 18px; right: 18px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 12px 16px;
+    display: flex; align-items: center; gap: 10px;
+    z-index: 100;
+    transform: translateY(20px);
+    opacity: 0;
+    transition: all 0.4s var(--ease-spring);
+    pointer-events: none;
+  }
+  .toast.show { transform: none; opacity: 1; }
+  .toast i { color: var(--gold); font-size: 18px; }
+  .toast-text { font-size: 13px; font-weight: 700; }
+
+  /* ---- FEATURE SECTION ---- */
+  .features-section {
+    position: relative; z-index: 10;
+    padding: clamp(40px, 8vw, 80px) 24px;
+    max-width: 900px;
+    margin: 0 auto;
+    width: 100%;
+  }
+  .section-title {
+    font-size: clamp(1.5rem, 3vw, 2.2rem);
+    font-weight: 900;
+    text-align: center;
+    margin-bottom: 10px;
+  }
+  .section-title span { color: var(--gold); }
+  .section-desc {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 16px; font-weight: 600;
+    margin-bottom: 40px;
+  }
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+  }
+  .feature-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 24px;
+    transition: all 0.3s var(--ease-spring);
+    opacity: 0; transform: translateY(30px);
+  }
+  .feature-card.revealed { opacity: 1; transform: none; }
+  .feature-card:hover {
+    border-color: rgba(245,158,11,0.35);
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+  }
+  .feature-icon {
+    width: 48px; height: 48px;
+    background: var(--gold-faint);
+    border: 1px solid rgba(245,158,11,0.25);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; color: var(--gold);
+    margin-bottom: 16px;
+  }
+  .feature-title { font-size: 16px; font-weight: 800; margin-bottom: 6px; }
+  .feature-desc { font-size: 13px; color: var(--text-muted); line-height: 1.6; font-weight: 600; }
+
+  /* ---- STACK SECTION ---- */
+  .stack-section {
+    position: relative; z-index: 10;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: clamp(40px, 6vw, 60px) 24px;
+    width: 100%;
+    text-align: center;
+  }
+  .stack-grid {
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 12px;
+    max-width: 700px; margin: 30px auto 0;
+  }
+  .stack-pill {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 8px 16px;
+    font-size: 13px; font-weight: 700;
+    color: var(--text-muted);
+    transition: all 0.2s;
+  }
+  .stack-pill i { color: var(--gold); font-size: 14px; }
+  .stack-pill:hover { border-color: rgba(245,158,11,0.35); color: var(--text); }
+
+  /* ---- CTA FOOTER ---- */
+  .cta-section {
+    position: relative; z-index: 10;
+    text-align: center;
+    padding: clamp(60px, 8vw, 100px) 24px;
+  }
+  .cta-title { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 900; margin-bottom: 14px; }
+  .cta-sub { font-size: 17px; color: var(--text-muted); font-weight: 600; margin-bottom: 32px; }
+  .cta-btn {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+    color: #000;
+    padding: 16px 36px;
+    border-radius: 14px;
+    font-size: 16px; font-weight: 800;
+    cursor: pointer; border: none;
+    font-family: 'Nunito', sans-serif;
+    transition: all 0.25s var(--ease-spring);
+    box-shadow: 0 8px 32px rgba(245,158,11,0.35);
+    text-decoration: none;
+  }
+  .cta-btn:hover { transform: translateY(-3px); box-shadow: 0 14px 44px rgba(245,158,11,0.45); }
+
+  /* ---- RESTART ---- */
+  .restart-btn {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 10px 18px;
+    display: flex; align-items: center; gap: 8px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 13px; font-weight: 700;
+    color: var(--text-muted);
+    cursor: pointer; z-index: 999;
+    transition: all 0.2s;
+  }
+  .restart-btn:hover { border-color: rgba(245,158,11,0.4); color: var(--gold); }
+
+  /* ---- RESPONSIVE ---- */
+  @media (max-width: 480px) {
+    .phone-wrapper { width: 100%; max-width: 375px; }
+    .phone-shell { border-radius: 0; border-left: none; border-right: none; }
+    .features-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="hero-bg"></div>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <div class="badge"><i class="fa-solid fa-paw"></i> Interactive Demo</div>
+  <h1 class="page-title">PawWalk<br><span>Dog Walking App</span></h1>
+  <p class="page-subtitle">Full two-sided marketplace: owners book walks, walkers manage their schedule. Real booking, payment and tracking flows.</p>
+</div>
+
+<!-- VIEW TOGGLE -->
+<div class="view-toggle">
+  <button class="toggle-btn active" id="ownerToggle" onclick="switchView('owner')"><i class="fa-solid fa-user" style="margin-right:6px"></i> Owner View</button>
+  <button class="toggle-btn" id="walkerToggle" onclick="switchView('walker')"><i class="fa-solid fa-person-walking" style="margin-right:6px"></i> Walker View</button>
+</div>
+
+<!-- DEMO AREA -->
+<div class="demo-area">
+  <div class="phone-wrapper">
+    <div class="phone-shell">
+      <div class="phone-notch"></div>
+      <div class="phone-screen">
+
+        <!-- STATUS BAR -->
+        <div class="status-bar">
+          <span class="status-time">9:41</span>
+          <div class="status-icons">
+            <i class="fa-solid fa-signal"></i>
+            <i class="fa-solid fa-wifi"></i>
+            <i class="fa-solid fa-battery-three-quarters"></i>
+          </div>
+        </div>
+
+        <!-- ======= SCREEN: HOME ======= -->
+        <div class="screen active" id="screen-home">
+          <div class="home-header">
+            <div class="home-greeting">Good morning,</div>
+            <div class="home-name">Emma <i class="fa-solid fa-hand-wave" style="color:var(--gold);font-size:18px"></i></div>
+          </div>
+          <div class="home-search">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <span>Find a walker near you...</span>
+          </div>
+          <div class="filter-row">
+            <button class="filter-chip active">All Walkers</button>
+            <button class="filter-chip">Certified</button>
+            <button class="filter-chip">Insured</button>
+            <button class="filter-chip">Same Day</button>
+            <button class="filter-chip">Top Rated</button>
+          </div>
+          <div class="map-preview">
+            <img src="https://source.unsplash.com/600x200/?park,aerial,map" alt="map">
+            <div class="map-dot map-dot-1"></div>
+            <div class="map-dot map-dot-2"></div>
+            <div class="map-dot map-dot-3"></div>
+            <div class="map-label"><i class="fa-solid fa-location-dot"></i> 3 walkers nearby</div>
+          </div>
+
+          <div class="section-label">Available Walkers</div>
+
+          <div class="walker-card" onclick="goBook()">
+            <div class="walker-avatar">
+              <img src="https://source.unsplash.com/100x100/?woman,smiling,young" alt="Sarah">
+              <div class="walker-online"></div>
+            </div>
+            <div class="walker-info">
+              <div class="walker-name">Sarah M.</div>
+              <div class="walker-stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i> <span style="color:var(--text-muted);font-size:11px">5.0 (142 walks)</span></div>
+              <div class="walker-tags">
+                <span class="tag"><i class="fa-solid fa-shield-check"></i> Certified</span>
+                <span class="tag"><i class="fa-solid fa-umbrella"></i> Insured</span>
+              </div>
+            </div>
+            <div class="walker-price">
+              <div class="price-amount">$22</div>
+              <div class="price-label">/ 30 min</div>
+            </div>
+          </div>
+
+          <div class="walker-card">
+            <div class="walker-avatar">
+              <img src="https://source.unsplash.com/100x100/?man,outdoors,sport" alt="Jake">
+              <div class="walker-online"></div>
+            </div>
+            <div class="walker-info">
+              <div class="walker-name">Jake R.</div>
+              <div class="walker-stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-regular fa-star"></i> <span style="color:var(--text-muted);font-size:11px">4.7 (89 walks)</span></div>
+              <div class="walker-tags">
+                <span class="tag"><i class="fa-solid fa-dumbbell"></i> Large dogs</span>
+              </div>
+            </div>
+            <div class="walker-price">
+              <div class="price-amount">$18</div>
+              <div class="price-label">/ 30 min</div>
+            </div>
+          </div>
+
+          <div class="walker-card">
+            <div class="walker-avatar">
+              <img src="https://source.unsplash.com/100x100/?woman,curly-hair" alt="Mia">
+            </div>
+            <div class="walker-info">
+              <div class="walker-name">Mia T.</div>
+              <div class="walker-stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star-half-stroke"></i> <span style="color:var(--text-muted);font-size:11px">4.8 (203 walks)</span></div>
+              <div class="walker-tags">
+                <span class="tag"><i class="fa-solid fa-shield-check"></i> Certified</span>
+                <span class="tag"><i class="fa-solid fa-syringe"></i> Vet trained</span>
+              </div>
+            </div>
+            <div class="walker-price">
+              <div class="price-amount">$25</div>
+              <div class="price-label">/ 30 min</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ======= SCREEN: BOOKING ======= -->
+        <div class="screen" id="screen-booking">
+          <div class="booking-header">
+            <div class="back-btn" onclick="showScreen('home')"><i class="fa-solid fa-chevron-left"></i></div>
+            <div class="booking-title">Book a Walk</div>
+          </div>
+          <div class="step-bar">
+            <div class="step-dot done"></div>
+            <div class="step-dot current"></div>
+            <div class="step-dot"></div>
+            <div class="step-dot"></div>
+          </div>
+          <div class="booking-walker-mini">
+            <div class="mini-avatar"><img src="https://source.unsplash.com/100x100/?woman,smiling,young" alt="Sarah"></div>
+            <div class="mini-info">
+              <div class="name">Sarah M.</div>
+              <div class="meta"><i class="fa-solid fa-star" style="color:var(--gold)"></i> 5.0 &nbsp;|&nbsp; $22 / 30 min &nbsp;|&nbsp; 0.4 km away</div>
+            </div>
+          </div>
+
+          <div class="booking-section">
+            <div class="booking-label">Select Date</div>
+            <div class="date-row">
+              <div class="date-chip"><div class="day">Mon</div><div class="date-num">23</div></div>
+              <div class="date-chip active"><div class="day">Tue</div><div class="date-num">24</div></div>
+              <div class="date-chip"><div class="day">Wed</div><div class="date-num">25</div></div>
+              <div class="date-chip"><div class="day">Thu</div><div class="date-num">26</div></div>
+              <div class="date-chip"><div class="day">Fri</div><div class="date-num">27</div></div>
+            </div>
+          </div>
+
+          <div class="booking-section">
+            <div class="booking-label">Pick a Time</div>
+            <div class="time-row">
+              <div class="time-chip taken">7:00 AM</div>
+              <div class="time-chip active">8:30 AM</div>
+              <div class="time-chip">10:00 AM</div>
+              <div class="time-chip taken">11:30 AM</div>
+              <div class="time-chip">2:00 PM</div>
+              <div class="time-chip">4:30 PM</div>
+            </div>
+          </div>
+
+          <div class="booking-section">
+            <div class="booking-label">Your Dog</div>
+            <div class="dog-row">
+              <div class="dog-card active">
+                <img src="https://source.unsplash.com/100x100/?golden-retriever" alt="Buddy">
+                <div class="dog-name">Buddy</div>
+                <div class="dog-breed">Golden Retriever</div>
+              </div>
+              <div class="dog-card">
+                <img src="https://source.unsplash.com/100x100/?poodle,dog" alt="Luna">
+                <div class="dog-name">Luna</div>
+                <div class="dog-breed">Toy Poodle</div>
+              </div>
+              <div class="dog-card" style="border-style:dashed;align-items:center;justify-content:center;">
+                <i class="fa-solid fa-plus" style="color:var(--gold);font-size:20px"></i>
+                <div class="dog-name" style="color:var(--gold)">Add Dog</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="booking-section">
+            <div class="booking-label">Walk Duration</div>
+            <div class="duration-row">
+              <div class="dur-chip"><div class="mins">30</div><div class="label">MIN</div></div>
+              <div class="dur-chip active"><div class="mins">60</div><div class="label">MIN</div></div>
+              <div class="dur-chip"><div class="mins">90</div><div class="label">MIN</div></div>
+            </div>
+          </div>
+
+          <button class="book-btn" onclick="showScreen('payment')"><i class="fa-solid fa-arrow-right"></i> Review & Pay — $44.00</button>
+          <div style="height:8px"></div>
+        </div>
+
+        <!-- ======= SCREEN: PAYMENT ======= -->
+        <div class="screen" id="screen-payment">
+          <div class="booking-header">
+            <div class="back-btn" onclick="showScreen('booking')"><i class="fa-solid fa-chevron-left"></i></div>
+            <div class="booking-title">Secure Checkout</div>
+          </div>
+          <div class="step-bar">
+            <div class="step-dot done"></div>
+            <div class="step-dot done"></div>
+            <div class="step-dot current"></div>
+            <div class="step-dot"></div>
+          </div>
+          <div class="pay-summary">
+            <img src="https://source.unsplash.com/400x100/?dog,park,walking" alt="walk" class="pay-img">
+            <div class="pay-summary-body">
+              <div class="pay-summary-title">Walk Booking Summary</div>
+              <div class="pay-line"><span><i class="fa-solid fa-person-walking" style="color:var(--gold)"></i> Sarah M. - 60 min</span><span>$44.00</span></div>
+              <div class="pay-line"><span><i class="fa-solid fa-shield-check" style="color:var(--gold)"></i> Booking fee</span><span>$2.50</span></div>
+              <div class="pay-line"><span><i class="fa-solid fa-umbrella" style="color:var(--gold)"></i> Insurance cover</span><span>Included</span></div>
+              <div class="pay-line total"><span>Total</span><span>$46.50</span></div>
+            </div>
+          </div>
+
+          <div class="card-section">
+            <div class="booking-label" style="margin-bottom:12px">Payment Details</div>
+            <div class="card-input">
+              <i class="fa-solid fa-credit-card"></i>
+              <input type="text" placeholder="Card number" value="4242 4242 4242 4242" readonly>
+              <i class="fa-brands fa-cc-visa" style="color:#1a1f71;font-size:22px"></i>
+            </div>
+            <div class="card-row">
+              <div class="card-input">
+                <i class="fa-regular fa-calendar"></i>
+                <input type="text" placeholder="MM / YY" value="09 / 27" readonly>
+              </div>
+              <div class="card-input">
+                <i class="fa-solid fa-lock"></i>
+                <input type="text" placeholder="CVC" value="•••" readonly>
+              </div>
+            </div>
+            <div class="card-input" style="margin-bottom:16px">
+              <i class="fa-solid fa-user"></i>
+              <input type="text" placeholder="Cardholder name" value="Emma Clarke" readonly>
+            </div>
+            <button class="book-btn" onclick="confirmPayment()"><i class="fa-solid fa-lock"></i> Pay $46.50 Securely</button>
+          </div>
+          <div style="text-align:center;padding:8px 18px 16px;font-size:11px;color:var(--text-dim);font-weight:600">
+            <i class="fa-solid fa-shield-check" style="color:var(--gold)"></i> Secured by Stripe. Held until walk is completed.
+          </div>
+        </div>
+
+        <!-- ======= SCREEN: ACTIVE WALK ======= -->
+        <div class="screen" id="screen-track">
+          <div class="walk-map">
+            <img src="https://source.unsplash.com/400x220/?park,aerial,green" alt="map">
+            <div class="walk-map-overlay"></div>
+            <div class="walk-tracker-pin"></div>
+            <div class="walk-route-line"></div>
+          </div>
+          <div class="walk-stats">
+            <div class="walk-stat">
+              <div class="stat-val" id="walkTimer">14:32</div>
+              <div class="stat-lbl">Elapsed</div>
+            </div>
+            <div class="walk-stat">
+              <div class="stat-val">1.2 km</div>
+              <div class="stat-lbl">Distance</div>
+            </div>
+            <div class="walk-stat">
+              <div class="stat-val">4.5</div>
+              <div class="stat-lbl">Avg km/h</div>
+            </div>
+          </div>
+          <div class="walk-walker-card">
+            <div class="walk-walker-avatar"><img src="https://source.unsplash.com/100x100/?woman,smiling,young" alt="Sarah"></div>
+            <div class="walk-walker-info">
+              <div class="walk-walker-name">Sarah M. is walking Buddy</div>
+              <div class="walk-walker-status"><i class="fa-solid fa-circle" style="font-size:8px"></i> Walk in progress</div>
+            </div>
+            <div class="walk-actions">
+              <div class="walk-action"><i class="fa-solid fa-phone"></i></div>
+              <div class="walk-action"><i class="fa-regular fa-comment"></i></div>
+            </div>
+          </div>
+          <div class="walk-updates">
+            <div class="section-label" style="padding:0 0 10px">Live Updates</div>
+            <div class="update-item">
+              <div class="update-icon"><i class="fa-solid fa-camera"></i></div>
+              <div>
+                <div class="update-text">Sarah sent a photo of Buddy at Centennial Park</div>
+                <div class="update-time">2 min ago</div>
+              </div>
+            </div>
+            <div class="update-item">
+              <div class="update-icon"><i class="fa-solid fa-flag-checkered"></i></div>
+              <div>
+                <div class="update-text">Walk started at Cavendish St</div>
+                <div class="update-time">14 min ago</div>
+              </div>
+            </div>
+            <div class="update-item">
+              <div class="update-icon"><i class="fa-solid fa-handshake"></i></div>
+              <div>
+                <div class="update-text">Sarah picked up Buddy</div>
+                <div class="update-time">16 min ago</div>
+              </div>
+            </div>
+          </div>
+          <button class="sos-btn"><i class="fa-solid fa-triangle-exclamation"></i> Emergency Contact</button>
+          <div style="height:8px"></div>
+        </div>
+
+        <!-- ======= SCREEN: WALKER DASHBOARD ======= -->
+        <div class="screen" id="screen-walker">
+          <div class="walker-dash-header">
+            <div class="walker-greeting">Welcome back,</div>
+            <div class="walker-name-big">Sarah M. <i class="fa-solid fa-person-walking" style="color:var(--gold);font-size:18px"></i></div>
+            <div class="walker-status-badge"><div class="status-dot"></div> Available for bookings</div>
+          </div>
+
+          <div class="earnings-card">
+            <div class="earnings-label">This Week</div>
+            <div class="earnings-amount">$312.00</div>
+            <div class="earnings-sub">+$44.00 pending from today's booking</div>
+            <div class="earnings-row">
+              <div class="earn-stat"><div class="val">12</div><div class="lbl">WALKS</div></div>
+              <div class="earn-stat"><div class="val">4.9</div><div class="lbl">RATING</div></div>
+              <div class="earn-stat"><div class="val">18h</div><div class="lbl">ACTIVE</div></div>
+            </div>
+          </div>
+
+          <div class="section-label" style="padding-left:18px">
+            Booking Requests <span class="new-badge">2 new</span>
+          </div>
+
+          <div class="request-card new">
+            <div class="request-header">
+              <div class="req-avatar"><img src="https://source.unsplash.com/100x100/?woman,portrait" alt="Emma"></div>
+              <div class="req-info">
+                <div class="req-name">Emma C. — Buddy</div>
+                <div class="req-detail">Golden Retriever &nbsp;|&nbsp; 0.4 km away</div>
+              </div>
+              <div class="req-price">$44</div>
+            </div>
+            <div class="request-body">
+              <div class="req-chip"><i class="fa-solid fa-calendar"></i> Tue 24 Jun</div>
+              <div class="req-chip"><i class="fa-solid fa-clock"></i> 8:30 AM</div>
+              <div class="req-chip"><i class="fa-solid fa-stopwatch"></i> 60 min</div>
+              <div class="req-chip"><i class="fa-solid fa-location-dot"></i> 0.4 km</div>
+            </div>
+            <div class="request-actions">
+              <button class="req-btn decline" onclick="declineRequest(this)">Decline</button>
+              <button class="req-btn accept" onclick="acceptRequest(this)">Accept Walk</button>
+            </div>
+          </div>
+
+          <div class="request-card new">
+            <div class="request-header">
+              <div class="req-avatar"><img src="https://source.unsplash.com/100x100/?man,casual" alt="Tom"></div>
+              <div class="req-info">
+                <div class="req-name">Tom K. — Max</div>
+                <div class="req-detail">Border Collie &nbsp;|&nbsp; 1.1 km away</div>
+              </div>
+              <div class="req-price">$22</div>
+            </div>
+            <div class="request-body">
+              <div class="req-chip"><i class="fa-solid fa-calendar"></i> Wed 25 Jun</div>
+              <div class="req-chip"><i class="fa-solid fa-clock"></i> 10:00 AM</div>
+              <div class="req-chip"><i class="fa-solid fa-stopwatch"></i> 30 min</div>
+              <div class="req-chip"><i class="fa-solid fa-location-dot"></i> 1.1 km</div>
+            </div>
+            <div class="request-actions">
+              <button class="req-btn decline" onclick="declineRequest(this)">Decline</button>
+              <button class="req-btn accept" onclick="acceptRequest(this)">Accept Walk</button>
+            </div>
+          </div>
+          <div style="height:8px"></div>
+        </div>
+
+        <!-- TOAST -->
+        <div class="toast" id="toast">
+          <i class="fa-solid fa-circle-check"></i>
+          <div class="toast-text" id="toastText">Booking confirmed!</div>
+        </div>
+
+        <!-- BOTTOM NAV (OWNER) -->
+        <div class="bottom-nav" id="ownerNav">
+          <div class="nav-item active" onclick="showScreen('home'); setNavActive(this)">
+            <i class="fa-solid fa-house"></i>Find
+          </div>
+          <div class="nav-item" onclick="showScreen('booking'); setNavActive(this)">
+            <i class="fa-solid fa-calendar-check"></i>Book
+          </div>
+          <div class="nav-item" onclick="showScreen('track'); setNavActive(this)">
+            <i class="fa-solid fa-location-arrow"></i>Track
+          </div>
+          <div class="nav-item" onclick="showScreen('profile'); setNavActive(this)">
+            <i class="fa-solid fa-user"></i>Profile
+          </div>
+        </div>
+
+        <!-- BOTTOM NAV (WALKER) -->
+        <div class="bottom-nav" id="walkerNav" style="display:none">
+          <div class="nav-item active" onclick="showScreen('walker'); setNavActive(this)">
+            <i class="fa-solid fa-house"></i>Dashboard
+          </div>
+          <div class="nav-item" onclick="showScreen('track'); setNavActive(this)">
+            <i class="fa-solid fa-location-arrow"></i>Active
+          </div>
+          <div class="nav-item" onclick="setNavActive(this)">
+            <i class="fa-solid fa-calendar"></i>Schedule
+          </div>
+          <div class="nav-item" onclick="setNavActive(this)">
+            <i class="fa-solid fa-wallet"></i>Earnings
+          </div>
+        </div>
+
+      </div><!-- end phone-screen -->
+    </div><!-- end phone-shell -->
+  </div><!-- end phone-wrapper -->
+</div><!-- end demo-area -->
+
+<!-- FEATURES -->
+<section class="features-section">
+  <h2 class="section-title">Everything in <span>one app</span></h2>
+  <p class="section-desc">Two complete experiences - dog owners and walkers - built into a single production-grade platform.</p>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon"><i class="fa-solid fa-calendar-check"></i></div>
+      <div class="feature-title">Smart Booking System</div>
+      <div class="feature-desc">Real-time availability, multi-dog support, duration picker and instant confirmation with automated reminders.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon"><i class="fa-solid fa-location-dot"></i></div>
+      <div class="feature-title">Live Walk Tracking</div>
+      <div class="feature-desc">GPS route tracking, live photo updates, and walk duration visible to the owner in real time.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon"><i class="fa-solid fa-lock"></i></div>
+      <div class="feature-title">Secure Payments</div>
+      <div class="feature-desc">Stripe Connect holds funds at booking and releases to the walker only after the walk completes.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon"><i class="fa-solid fa-star"></i></div>
+      <div class="feature-title">Ratings and Reviews</div>
+      <div class="feature-desc">Two-way review system after each walk builds trust and surfaces the best walkers organically.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon"><i class="fa-solid fa-bell"></i></div>
+      <div class="feature-title">Push Notifications</div>
+      <div class="feature-desc">Booking requests, walk start, live updates and payment confirmation - all delivered instantly.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon"><i class="fa-solid fa-wallet"></i></div>
+      <div class="feature-title">Walker Earnings Dashboard</div>
+      <div class="feature-desc">Weekly earnings summary, completed walks, rating history and payout schedule for every walker.</div>
+    </div>
+  </div>
+</section>
+
+<!-- STACK -->
+<section class="stack-section">
+  <h2 class="section-title" style="font-size:clamp(1.3rem,2.5vw,1.9rem)">Built on a <span style="color:var(--gold)">production stack</span></h2>
+  <div class="stack-grid">
+    <div class="stack-pill"><i class="fa-brands fa-flutter" style="color:#54c5f8"></i> Wait - <i class="fa-solid fa-mobile" style="color:var(--gold)"></i> Flutter (iOS + Android)</div>
+    <div class="stack-pill"><i class="fa-solid fa-fire"></i> Firebase Auth + Firestore</div>
+    <div class="stack-pill"><i class="fa-brands fa-stripe-s" style="color:#635bff"></i> Stripe Connect</div>
+    <div class="stack-pill"><i class="fa-solid fa-location-dot"></i> Google Maps SDK</div>
+    <div class="stack-pill"><i class="fa-solid fa-bell"></i> Firebase Push Notifications</div>
+    <div class="stack-pill"><i class="fa-solid fa-cloud"></i> Cloud Functions (Node.js)</div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <h2 class="cta-title">Ready to build<br><span style="color:var(--gold)">PawWalk?</span></h2>
+  <p class="cta-sub">This prototype shows the complete flow. The production app ships in 4 weeks.</p>
+</section>
+
+<!-- RESTART -->
+<button class="restart-btn" onclick="restart()"><i class="fa-solid fa-rotate-right"></i> Restart Demo</button>
+
+<script>
+  let currentView = 'owner';
+  let walkSeconds = 872;
+  let walkInterval;
+
+  function showScreen(name) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    const el = document.getElementById('screen-' + name);
+    if (el) el.classList.add('active');
+  }
+
+  function setNavActive(el) {
+    el.closest('.bottom-nav').querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  function switchView(view) {
+    currentView = view;
+    document.getElementById('ownerToggle').classList.toggle('active', view === 'owner');
+    document.getElementById('walkerToggle').classList.toggle('active', view === 'walker');
+    document.getElementById('ownerNav').style.display = view === 'owner' ? 'flex' : 'none';
+    document.getElementById('walkerNav').style.display = view === 'walker' ? 'flex' : 'none';
+    if (view === 'walker') {
+      showScreen('walker');
+    } else {
+      showScreen('home');
+    }
+  }
+
+  function goBook() {
+    showScreen('booking');
+    const ownerNavItems = document.querySelectorAll('#ownerNav .nav-item');
+    ownerNavItems.forEach(n => n.classList.remove('active'));
+    ownerNavItems[1].classList.add('active');
+  }
+
+  function confirmPayment() {
+    showToast('Booking confirmed! Payment secured by Stripe.', 3000);
+    setTimeout(() => {
+      showScreen('track');
+      const ownerNavItems = document.querySelectorAll('#ownerNav .nav-item');
+      ownerNavItems.forEach(n => n.classList.remove('active'));
+      ownerNavItems[2].classList.add('active');
+    }, 1200);
+    startWalkTimer();
+  }
+
+  function startWalkTimer() {
+    clearInterval(walkInterval);
+    walkInterval = setInterval(() => {
+      walkSeconds++;
+      const m = Math.floor(walkSeconds / 60).toString().padStart(2, '0');
+      const s = (walkSeconds % 60).toString().padStart(2, '0');
+      const el = document.getElementById('walkTimer');
+      if (el) el.textContent = m + ':' + s;
+    }, 1000);
+  }
+
+  function acceptRequest(btn) {
+    const card = btn.closest('.request-card');
+    card.style.borderColor = 'rgba(34,197,94,0.4)';
+    card.querySelector('.request-actions').innerHTML = '<div style="padding:12px 14px;text-align:center;font-size:13px;font-weight:800;color:#22c55e;width:100%"><i class="fa-solid fa-circle-check"></i> Walk Accepted - Earns $44</div>';
+    showToast('Walk accepted! Emma will be notified.', 2500);
+  }
+
+  function declineRequest(btn) {
+    const card = btn.closest('.request-card');
+    card.style.opacity = '0';
+    card.style.transform = 'translateX(-20px)';
+    card.style.transition = 'all 0.3s ease';
+    setTimeout(() => card.remove(), 350);
+  }
+
+  function showToast(msg, dur) {
+    const toast = document.getElementById('toast');
+    document.getElementById('toastText').textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), dur || 2500);
+  }
+
+  function restart() {
+    clearInterval(walkInterval);
+    walkSeconds = 872;
+    switchView('owner');
+    showScreen('home');
+    document.querySelectorAll('#ownerNav .nav-item').forEach((n, i) => n.classList.toggle('active', i === 0));
+  }
+
+  // Chip interactions
+  document.querySelectorAll('.filter-chip').forEach(c => {
+    c.addEventListener('click', () => {
+      document.querySelectorAll('.filter-chip').forEach(x => x.classList.remove('active'));
+      c.classList.add('active');
+    });
+  });
+  document.querySelectorAll('.date-chip').forEach(c => {
+    c.addEventListener('click', () => {
+      document.querySelectorAll('.date-chip').forEach(x => x.classList.remove('active'));
+      c.classList.add('active');
+    });
+  });
+  document.querySelectorAll('.time-chip:not(.taken)').forEach(c => {
+    c.addEventListener('click', () => {
+      document.querySelectorAll('.time-chip:not(.taken)').forEach(x => x.classList.remove('active'));
+      c.classList.add('active');
+    });
+  });
+  document.querySelectorAll('.dog-card:not(:last-child)').forEach(c => {
+    c.addEventListener('click', () => {
+      document.querySelectorAll('.dog-card').forEach(x => x.classList.remove('active'));
+      c.classList.add('active');
+    });
+  });
+  document.querySelectorAll('.dur-chip').forEach(c => {
+    c.addEventListener('click', () => {
+      document.querySelectorAll('.dur-chip').forEach(x => x.classList.remove('active'));
+      c.classList.add('active');
+    });
+  });
+
+  // Scroll reveal
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry, i) => {
+      if (entry.isIntersecting) {
+        setTimeout(() => entry.target.classList.add('revealed'), i * 80);
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15 });
+  document.querySelectorAll('.feature-card').forEach(el => observer.observe(el));
+
+  // Start walk timer
+  startWalkTimer();
+</script>
+</body>
+</html>
