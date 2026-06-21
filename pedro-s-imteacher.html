@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IMTeacher — Protótipo Navegável</title>
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --gold: #C9A227;
+      --gold-light: #E8D5A3;
+      --gold-dark: #8B6914;
+      --bg-dark: #0D1117;
+      --bg-card: #161B22;
+      --bg-card2: #1F2937;
+      --text: #E6EDF3;
+      --text-muted: #8B949E;
+      --border: #30363D;
+      --teal: #39D0C4;
+      --red: #F85149;
+      --green: #56D364;
+    }
+
+    body {
+      background: linear-gradient(135deg, #0a0e1a 0%, #0f1924 50%, #0a1428 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      font-family: 'Lexend', sans-serif;
+      color: var(--text);
+      padding: 32px 16px 48px;
+    }
+
+    /* Header */
+    .page-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .page-header h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--gold);
+      letter-spacing: -0.5px;
+    }
+    .page-header p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    /* Phone Shell */
+    .phone-wrap {
+      position: relative;
+      width: 375px;
+      flex-shrink: 0;
+    }
+
+    .phone-shell {
+      width: 375px;
+      height: 780px;
+      background: #111;
+      border-radius: 48px;
+      border: 3px solid #2a2a2a;
+      box-shadow:
+        0 0 0 1px #3a3a3a,
+        0 40px 100px rgba(0,0,0,0.7),
+        inset 0 0 0 1px #1a1a1a;
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Status bar */
+    .status-bar {
+      height: 44px;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      flex-shrink: 0;
+      position: relative;
+      z-index: 10;
+    }
+    .status-bar .time { font-size: 0.8rem; font-weight: 600; color: var(--text); }
+    .status-bar .icons { display: flex; gap: 6px; align-items: center; }
+    .status-bar .icons i { font-size: 0.7rem; color: var(--text); }
+    .notch {
+      width: 120px; height: 28px;
+      background: #111;
+      border-radius: 0 0 20px 20px;
+      position: absolute;
+      top: 0; left: 50%; transform: translateX(-50%);
+    }
+
+    /* Screen area */
+    .screen-area {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+      background: var(--bg-dark);
+    }
+
+    /* Screens */
+    .screen {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateX(30px);
+      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+    .screen.active {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateX(0);
+    }
+    .screen.exit-left {
+      opacity: 0;
+      transform: translateX(-30px);
+    }
+
+    /* Bottom nav */
+    .bottom-nav {
+      height: 68px;
+      background: var(--bg-card);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      flex-shrink: 0;
+      padding-bottom: 8px;
+    }
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      padding: 8px 20px;
+      border-radius: 12px;
+      transition: all 0.2s;
+    }
+    .nav-item i { font-size: 1.1rem; color: var(--text-muted); transition: color 0.2s; }
+    .nav-item span { font-size: 0.6rem; color: var(--text-muted); transition: color 0.2s; }
+    .nav-item.active i, .nav-item.active span { color: var(--gold); }
+
+    /* ===== LOGIN SCREEN ===== */
+    #screen-login {
+      background: linear-gradient(160deg, #0D1117 0%, #111B2B 100%);
+      align-items: center;
+      justify-content: center;
+      padding: 32px 24px;
+      gap: 0;
+    }
+    .login-logo {
+      margin-bottom: 12px;
+    }
+    .login-logo .logo-icon {
+      width: 72px; height: 72px;
+      background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+      border-radius: 22px;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto;
+      box-shadow: 0 8px 32px rgba(201,162,39,0.35);
+    }
+    .login-logo .logo-icon i { font-size: 2rem; color: #fff; }
+    .login-logo h2 { font-size: 1.5rem; font-weight: 700; color: var(--text); text-align: center; margin-top: 14px; }
+    .login-logo p { font-size: 0.75rem; color: var(--text-muted); text-align: center; margin-top: 4px; }
+    .login-form { width: 100%; margin-top: 32px; display: flex; flex-direction: column; gap: 14px; }
+    .input-group { display: flex; flex-direction: column; gap: 6px; }
+    .input-group label { font-size: 0.7rem; color: var(--text-muted); letter-spacing: 0.5px; text-transform: uppercase; }
+    .input-field {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      color: var(--text);
+      font-size: 0.9rem;
+      font-family: 'Lexend', sans-serif;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .input-field i { color: var(--text-muted); font-size: 0.85rem; }
+    .input-field span { color: var(--text-muted); font-size: 0.85rem; }
+    .input-field .val { color: var(--text); font-family: monospace; letter-spacing: 2px; }
+    .device-badge {
+      background: rgba(201,162,39,0.12);
+      border: 1px solid rgba(201,162,39,0.25);
+      border-radius: 10px;
+      padding: 10px 14px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .device-badge i { color: var(--gold); font-size: 0.85rem; }
+    .device-badge .db-text { display: flex; flex-direction: column; gap: 1px; }
+    .device-badge .db-text span:first-child { font-size: 0.7rem; color: var(--text-muted); }
+    .device-badge .db-text span:last-child { font-size: 0.75rem; color: var(--gold); font-weight: 600; }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+      color: #fff;
+      border: none;
+      border-radius: 14px;
+      padding: 16px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      font-family: 'Lexend', sans-serif;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: all 0.2s;
+      box-shadow: 0 4px 20px rgba(201,162,39,0.3);
+      margin-top: 8px;
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(201,162,39,0.4); }
+
+    /* ===== HOME SCREEN ===== */
+    #screen-home { background: var(--bg-dark); padding: 0; }
+    .home-header {
+      padding: 20px 20px 16px;
+      background: linear-gradient(160deg, #111B2B 0%, var(--bg-dark) 100%);
+    }
+    .home-header .greeting { font-size: 0.75rem; color: var(--text-muted); }
+    .home-header .name { font-size: 1.3rem; font-weight: 700; color: var(--text); margin-top: 2px; }
+    .offline-pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(86,211,100,0.12);
+      border: 1px solid rgba(86,211,100,0.25);
+      border-radius: 20px; padding: 4px 10px;
+      font-size: 0.65rem; color: var(--green);
+      margin-top: 10px;
+    }
+    .offline-pill i { font-size: 0.6rem; }
+    .home-stats {
+      display: grid; grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px; padding: 16px 20px;
+    }
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px; padding: 14px 12px;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .stat-card .stat-icon { font-size: 1.1rem; color: var(--gold); }
+    .stat-card .stat-num { font-size: 1.2rem; font-weight: 700; color: var(--text); }
+    .stat-card .stat-label { font-size: 0.6rem; color: var(--text-muted); }
+    .section-title { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; padding: 0 20px 10px; }
+    .recent-list { padding: 0 20px; display: flex; flex-direction: column; gap: 10px; }
+    .recent-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px; padding: 14px;
+      display: flex; align-items: center; gap: 12px;
+      cursor: pointer; transition: border-color 0.2s;
+    }
+    .recent-item:hover { border-color: var(--gold-dark); }
+    .recent-thumb {
+      width: 48px; height: 48px;
+      border-radius: 10px; overflow: hidden; flex-shrink: 0;
+      background: var(--bg-card2);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .recent-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .recent-thumb.audio-thumb { background: linear-gradient(135deg, #1a2a3a, #2a1a3a); }
+    .recent-thumb.audio-thumb i { font-size: 1.3rem; color: var(--gold); }
+    .recent-info { flex: 1; min-width: 0; }
+    .recent-info .ri-title { font-size: 0.85rem; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .recent-info .ri-sub { font-size: 0.7rem; color: var(--text-muted); margin-top: 2px; }
+    .recent-info .ri-progress { margin-top: 6px; }
+    .progress-bar { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+    .progress-fill { height: 100%; background: var(--gold); border-radius: 2px; }
+    .offline-badge { font-size: 0.6rem; color: var(--green); display: flex; align-items: center; gap: 3px; flex-shrink: 0; }
+    .offline-badge i { font-size: 0.55rem; }
+
+    /* ===== LIBRARY SCREEN ===== */
+    #screen-library { background: var(--bg-dark); padding: 0; }
+    .lib-header { padding: 20px 20px 12px; display: flex; align-items: center; justify-content: space-between; }
+    .lib-header h2 { font-size: 1.2rem; font-weight: 700; color: var(--text); }
+    .search-bar {
+      margin: 0 20px 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 11px 14px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .search-bar i { color: var(--text-muted); font-size: 0.85rem; }
+    .search-bar span { color: var(--text-muted); font-size: 0.85rem; }
+    .tree-list { padding: 0 20px; display: flex; flex-direction: column; gap: 8px; }
+    .tree-l1 {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .tree-l1-header {
+      padding: 14px 16px;
+      display: flex; align-items: center; gap: 12px;
+      cursor: pointer; transition: background 0.15s;
+    }
+    .tree-l1-header:hover { background: rgba(255,255,255,0.03); }
+    .tree-l1-icon {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .tree-l1-icon i { font-size: 1rem; color: #fff; }
+    .tree-l1-info { flex: 1; }
+    .tree-l1-info .l1-name { font-size: 0.9rem; font-weight: 600; color: var(--text); }
+    .tree-l1-info .l1-count { font-size: 0.65rem; color: var(--text-muted); margin-top: 1px; }
+    .tree-l1-header .chevron { color: var(--text-muted); font-size: 0.75rem; transition: transform 0.25s; }
+    .tree-l1.open .chevron { transform: rotate(90deg); }
+    .tree-l2 { display: none; padding: 0 12px 12px; }
+    .tree-l1.open .tree-l2 { display: flex; flex-direction: column; gap: 6px; }
+    .tree-l2-item {
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .tree-l2-header {
+      padding: 10px 14px;
+      display: flex; align-items: center; gap: 10px;
+      cursor: pointer;
+    }
+    .tree-l2-header i { font-size: 0.8rem; color: var(--gold); flex-shrink: 0; }
+    .tree-l2-header .l2-name { font-size: 0.82rem; font-weight: 500; color: var(--text); flex: 1; }
+    .tree-l2-header .l2-count { font-size: 0.65rem; color: var(--text-muted); }
+    .tree-l2-header .chevron { color: var(--text-muted); font-size: 0.65rem; transition: transform 0.2s; }
+    .tree-l2-item.open .chevron { transform: rotate(90deg); }
+    .tree-l3 { display: none; padding: 4px 12px 10px; }
+    .tree-l2-item.open .tree-l3 { display: flex; flex-direction: column; gap: 4px; }
+    .tree-l3-item {
+      padding: 8px 12px;
+      display: flex; align-items: center; gap: 8px;
+      cursor: pointer; border-radius: 8px;
+      transition: background 0.15s;
+    }
+    .tree-l3-item:hover { background: rgba(255,255,255,0.04); }
+    .tree-l3-item i { font-size: 0.75rem; color: var(--text-muted); flex-shrink: 0; }
+    .tree-l3-item.video i { color: #E06C75; }
+    .tree-l3-item.audio i { color: var(--teal); }
+    .tree-l3-item .l3-name { font-size: 0.78rem; color: var(--text); flex: 1; }
+    .tree-l3-item .l3-meta { font-size: 0.6rem; color: var(--text-muted); }
+    .offline-lock { font-size: 0.65rem; color: var(--green); }
+    .tree-l3-item.playable:hover .l3-name { color: var(--gold); }
+
+    /* ===== VIDEO SCREEN ===== */
+    #screen-video { background: #000; }
+    .video-top-bar {
+      padding: 12px 16px;
+      display: flex; align-items: center; gap: 12px;
+      background: rgba(0,0,0,0.6);
+      position: absolute; top: 0; left: 0; right: 0; z-index: 10;
+    }
+    .btn-back { background: none; border: none; color: var(--text); font-size: 1rem; cursor: pointer; padding: 4px; }
+    .video-top-bar h3 { font-size: 0.85rem; font-weight: 600; color: var(--text); flex: 1; font-family: 'Lexend', sans-serif; }
+    .video-player-area {
+      position: relative;
+      background: #000;
+      height: 220px;
+      margin-top: 44px;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+    }
+    .video-player-area img { width: 100%; height: 100%; object-fit: cover; opacity: 0.6; }
+    .video-overlay {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center; gap: 20px;
+    }
+    .vid-ctrl-btn {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+    }
+    .vid-ctrl-btn.play-btn {
+      background: var(--gold);
+      width: 52px; height: 52px;
+      box-shadow: 0 4px 20px rgba(201,162,39,0.5);
+    }
+    .vid-ctrl-btn.play-btn i { font-size: 1.1rem; color: #fff; }
+    .vid-ctrl-btn.skip-btn { background: rgba(255,255,255,0.15); }
+    .vid-ctrl-btn.skip-btn i { font-size: 0.9rem; color: var(--text); }
+    .rotation-badge {
+      position: absolute; top: 10px; right: 10px;
+      background: rgba(201,162,39,0.2);
+      border: 1px solid rgba(201,162,39,0.4);
+      border-radius: 8px; padding: 4px 8px;
+      display: flex; align-items: center; gap: 5px;
+      font-size: 0.6rem; color: var(--gold);
+    }
+    .video-seek {
+      padding: 14px 20px 0;
+    }
+    .seek-bar { width: 100%; height: 4px; background: var(--border); border-radius: 2px; position: relative; cursor: pointer; }
+    .seek-fill { height: 100%; background: var(--gold); border-radius: 2px; width: 35%; position: relative; }
+    .seek-thumb {
+      width: 14px; height: 14px;
+      background: var(--gold); border-radius: 50%;
+      position: absolute; right: -7px; top: 50%; transform: translateY(-50%);
+      box-shadow: 0 2px 8px rgba(201,162,39,0.5);
+    }
+    .seek-times { display: flex; justify-content: space-between; margin-top: 6px; }
+    .seek-times span { font-size: 0.65rem; color: var(--text-muted); }
+    .video-info { padding: 16px 20px; flex: 1; overflow-y: auto; }
+    .video-title { font-size: 1rem; font-weight: 700; color: var(--text); }
+    .video-meta { font-size: 0.7rem; color: var(--text-muted); margin-top: 4px; }
+    .video-actions { display: flex; gap: 10px; margin-top: 14px; }
+    .vid-action-btn {
+      flex: 1; padding: 10px;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 10px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      font-size: 0.72rem; color: var(--text-muted); font-family: 'Lexend', sans-serif;
+      transition: all 0.2s;
+    }
+    .vid-action-btn.active { border-color: var(--gold-dark); color: var(--gold); background: rgba(201,162,39,0.08); }
+    .vid-action-btn i { font-size: 0.8rem; }
+
+    /* ===== DOWNLOADS SCREEN ===== */
+    #screen-downloads { background: var(--bg-dark); padding: 0; }
+    .dl-header { padding: 20px 20px 16px; }
+    .dl-header h2 { font-size: 1.2rem; font-weight: 700; color: var(--text); }
+    .dl-storage {
+      margin: 0 20px 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px; padding: 16px;
+    }
+    .dl-storage-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .dl-storage-top span:first-child { font-size: 0.75rem; color: var(--text-muted); }
+    .dl-storage-top span:last-child { font-size: 0.75rem; color: var(--text); font-weight: 600; }
+    .storage-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+    .storage-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--gold-dark), var(--gold)); width: 38%; }
+    .storage-meta { display: flex; gap: 16px; margin-top: 8px; }
+    .storage-meta span { font-size: 0.65rem; color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
+    .storage-meta i { font-size: 0.6rem; }
+    .enc-notice {
+      margin: 0 20px 16px;
+      background: rgba(86,211,100,0.06);
+      border: 1px solid rgba(86,211,100,0.2);
+      border-radius: 12px; padding: 12px 14px;
+      display: flex; align-items: flex-start; gap: 10px;
+    }
+    .enc-notice i { font-size: 0.85rem; color: var(--green); margin-top: 1px; flex-shrink: 0; }
+    .enc-notice p { font-size: 0.7rem; color: var(--text-muted); line-height: 1.5; }
+    .enc-notice strong { color: var(--green); }
+    .dl-list { padding: 0 20px; display: flex; flex-direction: column; gap: 8px; }
+    .dl-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px; padding: 14px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .dl-thumb {
+      width: 44px; height: 44px; border-radius: 10px; flex-shrink: 0;
+      overflow: hidden; background: var(--bg-card2);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .dl-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .dl-thumb i { font-size: 1.2rem; }
+    .dl-info { flex: 1; min-width: 0; }
+    .dl-info .dl-name { font-size: 0.82rem; font-weight: 600; color: var(--text); }
+    .dl-info .dl-sub { font-size: 0.65rem; color: var(--text-muted); margin-top: 2px; }
+    .dl-info .dl-bar { margin-top: 6px; }
+    .dl-status { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+    .dl-status .enc-tag {
+      font-size: 0.58rem; color: var(--green);
+      background: rgba(86,211,100,0.1); border: 1px solid rgba(86,211,100,0.2);
+      border-radius: 6px; padding: 2px 6px;
+      display: flex; align-items: center; gap: 3px;
+    }
+    .dl-status .size-tag { font-size: 0.65rem; color: var(--text-muted); }
+
+    /* ===== SETTINGS SCREEN ===== */
+    #screen-settings { background: var(--bg-dark); padding: 0; }
+    .set-header { padding: 20px 20px 16px; }
+    .set-header h2 { font-size: 1.2rem; font-weight: 700; color: var(--text); }
+    .profile-card {
+      margin: 0 20px 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px; padding: 16px;
+      display: flex; align-items: center; gap: 14px;
+    }
+    .profile-avatar {
+      width: 52px; height: 52px; border-radius: 16px;
+      background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .profile-avatar i { font-size: 1.4rem; color: #fff; }
+    .profile-info .p-name { font-size: 0.95rem; font-weight: 700; color: var(--text); }
+    .profile-info .p-email { font-size: 0.7rem; color: var(--text-muted); margin-top: 2px; }
+    .profile-info .p-device {
+      font-size: 0.65rem; color: var(--green);
+      display: flex; align-items: center; gap: 4px; margin-top: 6px;
+    }
+    .set-section { padding: 0 20px 12px; }
+    .set-section-title { font-size: 0.65rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; }
+    .set-row {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 12px; overflow: hidden; margin-bottom: 6px;
+    }
+    .set-item {
+      padding: 14px 16px;
+      display: flex; align-items: center; gap: 12px;
+      cursor: pointer; transition: background 0.15s;
+      border-bottom: 1px solid var(--border);
+    }
+    .set-item:last-child { border-bottom: none; }
+    .set-item:hover { background: rgba(255,255,255,0.03); }
+    .set-item .set-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .set-item .set-icon i { font-size: 0.85rem; color: #fff; }
+    .set-item .set-label { flex: 1; font-size: 0.85rem; color: var(--text); }
+    .set-item .set-right { font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
+    .toggle {
+      width: 44px; height: 26px;
+      background: var(--border);
+      border-radius: 13px; position: relative;
+      cursor: pointer; transition: background 0.2s;
+      flex-shrink: 0;
+    }
+    .toggle.on { background: var(--gold); }
+    .toggle::after {
+      content: '';
+      width: 20px; height: 20px;
+      background: #fff; border-radius: 50%;
+      position: absolute; top: 3px; left: 3px;
+      transition: transform 0.2s;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    }
+    .toggle.on::after { transform: translateX(18px); }
+    .danger-item .set-label { color: var(--red); }
+    .danger-item .set-icon { background: rgba(248,81,73,0.15); }
+    .danger-item .set-icon i { color: var(--red); }
+
+    /* Scrollbar */
+    .screen::-webkit-scrollbar { width: 3px; }
+    .screen::-webkit-scrollbar-track { background: transparent; }
+    .screen::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    /* Side label */
+    .demo-label {
+      margin-top: 20px;
+      background: rgba(201,162,39,0.08);
+      border: 1px solid rgba(201,162,39,0.2);
+      border-radius: 12px;
+      padding: 12px 20px;
+      text-align: center;
+      width: 375px;
+    }
+    .demo-label p { font-size: 0.75rem; color: var(--text-muted); }
+    .demo-label strong { color: var(--gold); }
+
+    /* Audio mini player */
+    .mini-player {
+      background: var(--bg-card);
+      border-top: 1px solid var(--border);
+      padding: 10px 20px;
+      display: flex; align-items: center; gap: 12px;
+      flex-shrink: 0;
+    }
+    .mini-thumb { width: 36px; height: 36px; border-radius: 8px; background: linear-gradient(135deg,#1a2a3a,#2a1a3a); display:flex;align-items:center;justify-content:center;flex-shrink:0; }
+    .mini-thumb i { font-size: 0.9rem; color: var(--gold); }
+    .mini-info { flex:1;min-width:0; }
+    .mini-info .mi-title { font-size:0.75rem;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+    .mini-info .mi-sub { font-size:0.62rem;color:var(--text-muted); }
+    .mini-controls { display:flex;gap:8px;align-items:center; }
+    .mini-controls button { background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:0.9rem;transition:color 0.2s; }
+    .mini-controls button.play { color:var(--gold);font-size:1.1rem; }
+  </style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1><i class="fa-solid fa-music" style="color:var(--gold);margin-right:8px;"></i>IMTeacher</h1>
+  <p>Protótipo navegável — Invento Musical</p>
+</div>
+
+<div class="phone-wrap">
+  <div class="phone-shell">
+    <!-- Status bar -->
+    <div class="status-bar">
+      <span class="time">09:41</span>
+      <div class="notch"></div>
+      <div class="icons">
+        <i class="fa-solid fa-signal"></i>
+        <i class="fa-solid fa-wifi"></i>
+        <i class="fa-solid fa-battery-full"></i>
+      </div>
+    </div>
+
+    <!-- Screens -->
+    <div class="screen-area">
+
+      <!-- LOGIN -->
+      <div class="screen active" id="screen-login">
+        <div class="login-logo">
+          <div class="logo-icon"><i class="fa-solid fa-music"></i></div>
+          <h2>IMTeacher</h2>
+          <p>Invento Musical — Plataforma Educativa</p>
+        </div>
+        <div class="login-form">
+          <div class="input-group">
+            <label>Token de Acesso</label>
+            <div class="input-field">
+              <i class="fa-solid fa-key"></i>
+              <span class="val">IMT-2024-PRF-7A3K</span>
+            </div>
+          </div>
+          <div class="input-group">
+            <label>Dispositivo Registado</label>
+            <div class="device-badge">
+              <i class="fa-solid fa-mobile-screen"></i>
+              <div class="db-text">
+                <span>iPhone 15 Pro — iOS 17.4</span>
+                <span><i class="fa-solid fa-circle-check" style="margin-right:3px;font-size:0.55rem;"></i>Dispositivo autorizado</span>
+              </div>
+            </div>
+          </div>
+          <button class="btn-primary" onclick="goTo('home')">
+            <i class="fa-solid fa-arrow-right-to-bracket"></i> Entrar na Plataforma
+          </button>
+        </div>
+      </div>
+
+      <!-- HOME -->
+      <div class="screen" id="screen-home">
+        <div class="home-header">
+          <div class="greeting">Bom dia</div>
+          <div class="name">Prof. Ana Ferreira</div>
+          <div class="offline-pill">
+            <i class="fa-solid fa-circle-check"></i>
+            14 conteúdos disponíveis offline
+          </div>
+        </div>
+        <div class="home-stats">
+          <div class="stat-card">
+            <i class="fa-solid fa-play-circle stat-icon"></i>
+            <div class="stat-num">47</div>
+            <div class="stat-label">Vídeos</div>
+          </div>
+          <div class="stat-card">
+            <i class="fa-solid fa-headphones stat-icon"></i>
+            <div class="stat-num">128</div>
+            <div class="stat-label">Áudios</div>
+          </div>
+          <div class="stat-card">
+            <i class="fa-solid fa-arrow-down-to-line stat-icon" style="color:var(--green);"></i>
+            <div class="stat-num">14</div>
+            <div class="stat-label">Offline</div>
+          </div>
+        </div>
+        <div class="section-title">Recentes</div>
+        <div class="recent-list">
+          <div class="recent-item" onclick="goTo('video')">
+            <div class="recent-thumb">
+              <img src="https://images.unsplash.com/photo-1507838153414-b4b713384a76?w=96&h=96&fit=crop" alt="video">
+            </div>
+            <div class="recent-info">
+              <div class="ri-title">Técnica de Guitarra — Nível 2</div>
+              <div class="ri-sub"><i class="fa-solid fa-play" style="font-size:0.55rem;margin-right:3px;"></i>Cordofones &rsaquo; Guitarra</div>
+              <div class="ri-progress">
+                <div class="progress-bar"><div class="progress-fill" style="width:35%"></div></div>
+              </div>
+            </div>
+            <div class="offline-badge"><i class="fa-solid fa-lock"></i> Cifrado</div>
+          </div>
+          <div class="recent-item" onclick="goTo('library')">
+            <div class="recent-thumb audio-thumb"><i class="fa-solid fa-music"></i></div>
+            <div class="recent-info">
+              <div class="ri-title">Escalas Maiores — Exercícios</div>
+              <div class="ri-sub"><i class="fa-solid fa-headphones" style="font-size:0.55rem;margin-right:3px;"></i>Teoria Musical &rsaquo; Escalas</div>
+              <div class="ri-progress">
+                <div class="progress-bar"><div class="progress-fill" style="width:68%"></div></div>
+              </div>
+            </div>
+            <div class="offline-badge"><i class="fa-solid fa-lock"></i> Cifrado</div>
+          </div>
+          <div class="recent-item" onclick="goTo('library')">
+            <div class="recent-thumb">
+              <img src="https://images.unsplash.com/photo-1519892300165-cb5542fb47c7?w=96&h=96&fit=crop" alt="piano">
+            </div>
+            <div class="recent-info">
+              <div class="ri-title">Introdução ao Piano — Módulo 1</div>
+              <div class="ri-sub"><i class="fa-solid fa-play" style="font-size:0.55rem;margin-right:3px;"></i>Teclas &rsaquo; Piano</div>
+              <div class="ri-progress">
+                <div class="progress-bar"><div class="progress-fill" style="width:12%"></div></div>
+              </div>
+            </div>
+            <div class="offline-badge" style="color:var(--text-muted);"><i class="fa-solid fa-cloud"></i> Online</div>
+          </div>
+        </div>
+        <div style="height:16px;"></div>
+      </div>
+
+      <!-- LIBRARY -->
+      <div class="screen" id="screen-library">
+        <div class="lib-header">
+          <h2>Biblioteca</h2>
+          <div style="display:flex;gap:8px;">
+            <i class="fa-solid fa-magnifying-glass" style="color:var(--text-muted);font-size:0.95rem;cursor:pointer;"></i>
+          </div>
+        </div>
+        <div class="search-bar">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <span>Pesquisar conteúdos...</span>
+        </div>
+        <div class="tree-list">
+          <!-- L1 Cordofones -->
+          <div class="tree-l1" id="tl1-1">
+            <div class="tree-l1-header" onclick="toggleL1('tl1-1')">
+              <div class="tree-l1-icon" style="background:linear-gradient(135deg,#8B4513,#D2691E);">
+                <i class="fa-solid fa-guitar"></i>
+              </div>
+              <div class="tree-l1-info">
+                <div class="l1-name">Cordofones</div>
+                <div class="l1-count">3 instrumentos &middot; 42 conteúdos</div>
+              </div>
+              <i class="fa-solid fa-chevron-right chevron"></i>
+            </div>
+            <div class="tree-l2">
+              <!-- L2 Guitarra -->
+              <div class="tree-l2-item" id="tl2-1">
+                <div class="tree-l2-header" onclick="toggleL2('tl2-1')">
+                  <i class="fa-solid fa-guitar"></i>
+                  <span class="l2-name">Guitarra Clássica</span>
+                  <span class="l2-count">18 conteúdos</span>
+                  <i class="fa-solid fa-chevron-right chevron"></i>
+                </div>
+                <div class="tree-l3">
+                  <div class="tree-l3-item video playable" onclick="goTo('video')">
+                    <i class="fa-solid fa-circle-play"></i>
+                    <span class="l3-name">Postura e Técnica Básica</span>
+                    <span class="l3-meta">12:30</span>
+                    <i class="fa-solid fa-lock offline-lock"></i>
+                  </div>
+                  <div class="tree-l3-item video playable" onclick="goTo('video')">
+                    <i class="fa-solid fa-circle-play"></i>
+                    <span class="l3-name">Acordes Fundamentais</span>
+                    <span class="l3-meta">18:45</span>
+                    <i class="fa-solid fa-lock offline-lock"></i>
+                  </div>
+                  <div class="tree-l3-item audio">
+                    <i class="fa-solid fa-headphones"></i>
+                    <span class="l3-name">Exercícios de Arpejo</span>
+                    <span class="l3-meta">8:20</span>
+                    <i class="fa-solid fa-cloud" style="font-size:0.6rem;color:var(--text-muted);"></i>
+                  </div>
+                  <div class="tree-l3-item video">
+                    <i class="fa-solid fa-circle-play"></i>
+                    <span class="l3-name">Nível 2 — Melodia</span>
+                    <span class="l3-meta">24:10</span>
+                    <i class="fa-solid fa-arrow-down" style="font-size:0.6rem;color:var(--text-muted);cursor:pointer;"></i>
+                  </div>
+                </div>
+              </div>
+              <!-- L2 Violino -->
+              <div class="tree-l2-item" id="tl2-2">
+                <div class="tree-l2-header" onclick="toggleL2('tl2-2')">
+                  <i class="fa-solid fa-music"></i>
+                  <span class="l2-name">Violino</span>
+                  <span class="l2-count">14 conteúdos</span>
+                  <i class="fa-solid fa-chevron-right chevron"></i>
+                </div>
+                <div class="tree-l3">
+                  <div class="tree-l3-item video playable" onclick="goTo('video')">
+                    <i class="fa-solid fa-circle-play"></i>
+                    <span class="l3-name">Introdução ao Arco</span>
+                    <span class="l3-meta">15:00</span>
+                    <i class="fa-solid fa-cloud" style="font-size:0.6rem;color:var(--text-muted);"></i>
+                  </div>
+                  <div class="tree-l3-item audio">
+                    <i class="fa-solid fa-headphones"></i>
+                    <span class="l3-name">Escala de Ré Maior</span>
+                    <span class="l3-meta">5:30</span>
+                    <i class="fa-solid fa-lock offline-lock"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- L1 Teclas -->
+          <div class="tree-l1" id="tl1-2">
+            <div class="tree-l1-header" onclick="toggleL1('tl1-2')">
+              <div class="tree-l1-icon" style="background:linear-gradient(135deg,#1a237e,#3949ab);">
+                <i class="fa-solid fa-piano-keyboard" style="font-size:0.9rem;"></i>
+              </div>
+              <div class="tree-l1-info">
+                <div class="l1-name">Teclas</div>
+                <div class="l1-count">2 instrumentos &middot; 36 conteúdos</div>
+              </div>
+              <i class="fa-solid fa-chevron-right chevron"></i>
+            </div>
+            <div class="tree-l2">
+              <div class="tree-l2-item" id="tl2-3">
+                <div class="tree-l2-header" onclick="toggleL2('tl2-3')">
+                  <i class="fa-solid fa-music"></i>
+                  <span class="l2-name">Piano</span>
+                  <span class="l2-count">22 conteúdos</span>
+                  <i class="fa-solid fa-chevron-right chevron"></i>
+                </div>
+                <div class="tree-l3">
+                  <div class="tree-l3-item video playable" onclick="goTo('video')">
+                    <i class="fa-solid fa-circle-play"></i>
+                    <span class="l3-name">Posição das Mãos</span>
+                    <span class="l3-meta">10:15</span>
+                    <i class="fa-solid fa-lock offline-lock"></i>
+                  </div>
+                  <div class="tree-l3-item audio">
+                    <i class="fa-solid fa-headphones"></i>
+                    <span class="l3-name">Dó Maior — Escalas</span>
+                    <span class="l3-meta">6:40</span>
+                    <i class="fa-solid fa-cloud" style="font-size:0.6rem;color:var(--text-muted);"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- L1 Teoria -->
+          <div class="tree-l1" id="tl1-3">
+            <div class="tree-l1-header" onclick="toggleL1('tl1-3')">
+              <div class="tree-l1-icon" style="background:linear-gradient(135deg,#1b5e20,#2e7d32);">
+                <i class="fa-solid fa-book-open"></i>
+              </div>
+              <div class="tree-l1-info">
+                <div class="l1-name">Teoria Musical</div>
+                <div class="l1-count">4 módulos &middot; 58 conteúdos</div>
+              </div>
+              <i class="fa-solid fa-chevron-right chevron"></i>
+            </div>
+            <div class="tree-l2"></div>
+          </div>
+          <!-- L1 Sopros -->
+          <div class="tree-l1" id="tl1-4">
+            <div class="tree-l1-header" onclick="toggleL1('tl1-4')">
+              <div class="tree-l1-icon" style="background:linear-gradient(135deg,#4a148c,#7b1fa2);">
+                <i class="fa-solid fa-wind"></i>
+              </div>
+              <div class="tree-l1-info">
+                <div class="l1-name">Sopros</div>
+                <div class="l1-count">3 instrumentos &middot; 27 conteúdos</div>
+              </div>
+              <i class="fa-solid fa-chevron-right chevron"></i>
+            </div>
+            <div class="tree-l2"></div>
+          </div>
+        </div>
+        <div style="height:16px;"></div>
+      </div>
+
+      <!-- VIDEO -->
+      <div class="screen" id="screen-video">
+        <div class="video-top-bar">
+          <button class="btn-back" onclick="goTo('library')"><i class="fa-solid fa-chevron-left"></i></button>
+          <h3>Técnica de Guitarra — Nível 2</h3>
+        </div>
+        <div class="video-player-area">
+          <img src="https://images.unsplash.com/photo-1510915361894-db8b60106cb1?w=375&h=220&fit=crop" alt="guitar lesson">
+          <div class="video-overlay">
+            <button class="vid-ctrl-btn skip-btn"><i class="fa-solid fa-backward-step"></i></button>
+            <button class="vid-ctrl-btn play-btn" id="play-btn" onclick="togglePlay()"><i class="fa-solid fa-play" id="play-icon"></i></button>
+            <button class="vid-ctrl-btn skip-btn"><i class="fa-solid fa-forward-step"></i></button>
+          </div>
+          <div class="rotation-badge"><i class="fa-solid fa-rotate"></i> Roda para paisagem</div>
+        </div>
+        <div class="video-seek">
+          <div class="seek-bar">
+            <div class="seek-fill"><div class="seek-thumb"></div></div>
+          </div>
+          <div class="seek-times">
+            <span>04:22</span>
+            <span>12:30</span>
+          </div>
+        </div>
+        <div class="video-info">
+          <div class="video-title">Técnica de Guitarra — Nível 2</div>
+          <div class="video-meta">Cordofones &rsaquo; Guitarra Clássica &middot; 12:30 &middot; Gravação 2024</div>
+          <div class="video-actions">
+            <div class="vid-action-btn active" onclick="this.classList.toggle('active')">
+              <i class="fa-solid fa-arrow-down-to-line"></i> Guardar offline
+            </div>
+            <div class="vid-action-btn" onclick="this.classList.toggle('active')">
+              <i class="fa-solid fa-bookmark"></i> Marcar
+            </div>
+            <div class="vid-action-btn" onclick="this.classList.toggle('active')">
+              <i class="fa-solid fa-share-nodes"></i> Partilhar
+            </div>
+          </div>
+          <div style="margin-top:14px;background:rgba(86,211,100,0.06);border:1px solid rgba(86,211,100,0.2);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:8px;">
+            <i class="fa-solid fa-lock" style="color:var(--green);font-size:0.8rem;flex-shrink:0;"></i>
+            <p style="font-size:0.68rem;color:var(--text-muted);line-height:1.4;">Ficheiro cifrado com AES-256 &mdash; disponível offline</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- DOWNLOADS -->
+      <div class="screen" id="screen-downloads">
+        <div class="dl-header"><h2>Transferências</h2></div>
+        <div class="dl-storage">
+          <div class="dl-storage-top">
+            <span>Armazenamento utilizado</span>
+            <span>2.3 GB / 6.0 GB</span>
+          </div>
+          <div class="storage-bar"><div class="storage-fill"></div></div>
+          <div class="storage-meta">
+            <span><i class="fa-solid fa-circle-play" style="color:#E06C75;"></i> 14 vídeos</span>
+            <span><i class="fa-solid fa-headphones" style="color:var(--teal);"></i> 22 áudios</span>
+            <span><i class="fa-solid fa-lock" style="color:var(--green);"></i> Todos cifrados</span>
+          </div>
+        </div>
+        <div class="enc-notice">
+          <i class="fa-solid fa-shield-halved"></i>
+          <p><strong>Proteção AES-256 activa.</strong> Todos os ficheiros são cifrados antes de serem gravados no dispositivo. As chaves são geridas pelo iOS Secure Enclave e Android Keystore.</p>
+        </div>
+        <div class="dl-list">
+          <div class="dl-item">
+            <div class="dl-thumb"><img src="https://images.unsplash.com/photo-1510915361894-db8b60106cb1?w=88&h=88&fit=crop" alt="guitar"></div>
+            <div class="dl-info">
+              <div class="dl-name">Técnica de Guitarra — Nível 2</div>
+              <div class="dl-sub">Cordofones &rsaquo; Guitarra &middot; 12:30</div>
+              <div class="dl-bar"><div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div></div>
+            </div>
+            <div class="dl-status">
+              <div class="enc-tag"><i class="fa-solid fa-lock"></i> AES-256</div>
+              <div class="size-tag">148 MB</div>
+            </div>
+          </div>
+          <div class="dl-item">
+            <div class="dl-thumb" style="background:linear-gradient(135deg,#1a2a3a,#2a1a3a);"><i class="fa-solid fa-headphones" style="color:var(--teal);font-size:1rem;"></i></div>
+            <div class="dl-info">
+              <div class="dl-name">Escalas Maiores — Exercícios</div>
+              <div class="dl-sub">Teoria Musical &rsaquo; Escalas &middot; 8:20</div>
+              <div class="dl-bar"><div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div></div>
+            </div>
+            <div class="dl-status">
+              <div class="enc-tag"><i class="fa-solid fa-lock"></i> AES-256</div>
+              <div class="size-tag">22 MB</div>
+            </div>
+          </div>
+          <div class="dl-item">
+            <div class="dl-thumb"><img src="https://images.unsplash.com/photo-1519892300165-cb5542fb47c7?w=88&h=88&fit=crop" alt="piano"></div>
+            <div class="dl-info">
+              <div class="dl-name">Introdução ao Piano — Módulo 1</div>
+              <div class="dl-sub">Teclas &rsaquo; Piano &middot; 10:15</div>
+              <div class="dl-bar"><div class="progress-bar"><div class="progress-fill" style="width:62%"></div></div></div>
+            </div>
+            <div class="dl-status">
+              <div class="enc-tag" style="color:var(--gold);border-color:rgba(201,162,39,0.3);background:rgba(201,162,39,0.08);"><i class="fa-solid fa-arrow-down"></i> 62%</div>
+              <div class="size-tag">312 MB</div>
+            </div>
+          </div>
+          <div class="dl-item">
+            <div class="dl-thumb" style="background:linear-gradient(135deg,#1a2a3a,#2a1a3a);"><i class="fa-solid fa-headphones" style="color:var(--teal);font-size:1rem;"></i></div>
+            <div class="dl-info">
+              <div class="dl-name">Posição das Mãos — Piano</div>
+              <div class="dl-sub">Teclas &rsaquo; Piano &middot; 6:40</div>
+              <div class="dl-bar"><div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div></div>
+            </div>
+            <div class="dl-status">
+              <div class="enc-tag"><i class="fa-solid fa-lock"></i> AES-256</div>
+              <div class="size-tag">18 MB</div>
+            </div>
+          </div>
+        </div>
+        <div style="height:16px;"></div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div class="screen" id="screen-settings">
+        <div class="set-header"><h2>Definições</h2></div>
+        <div class="profile-card">
+          <div class="profile-avatar"><i class="fa-solid fa-user"></i></div>
+          <div class="profile-info">
+            <div class="p-name">Prof. Ana Ferreira</div>
+            <div class="p-email">ana.ferreira@escola.pt</div>
+            <div class="p-device"><i class="fa-solid fa-mobile-screen" style="font-size:0.6rem;"></i> iPhone 15 Pro — Autorizado</div>
+          </div>
+        </div>
+        <div class="set-section">
+          <div class="set-section-title">Aparência</div>
+          <div class="set-row">
+            <div class="set-item">
+              <div class="set-icon" style="background:#2a1a4a;"><i class="fa-solid fa-moon"></i></div>
+              <span class="set-label">Modo Escuro</span>
+              <div class="toggle on" id="dark-toggle" onclick="this.classList.toggle('on')"></div>
+            </div>
+            <div class="set-item">
+              <div class="set-icon" style="background:rgba(201,162,39,0.15);"><i class="fa-solid fa-font" style="color:var(--gold);"></i></div>
+              <span class="set-label">Tamanho do Texto</span>
+              <span class="set-right">Normal <i class="fa-solid fa-chevron-right" style="font-size:0.6rem;"></i></span>
+            </div>
+          </div>
+        </div>
+        <div class="set-section">
+          <div class="set-section-title">Armazenamento e Segurança</div>
+          <div class="set-row">
+            <div class="set-item">
+              <div class="set-icon" style="background:rgba(86,211,100,0.12);"><i class="fa-solid fa-lock" style="color:var(--green);"></i></div>
+              <span class="set-label">Cifra AES-256</span>
+              <span class="set-right" style="color:var(--green);">Activa</span>
+            </div>
+            <div class="set-item">
+              <div class="set-icon" style="background:#1a2a3a;"><i class="fa-solid fa-hard-drive" style="color:var(--teal);"></i></div>
+              <span class="set-label">Armazenamento Offline</span>
+              <span class="set-right">2.3 GB <i class="fa-solid fa-chevron-right" style="font-size:0.6rem;"></i></span>
+            </div>
+            <div class="set-item">
+              <div class="set-icon" style="background:#1a1a3a;"><i class="fa-solid fa-mobile-screen" style="color:#7b9ef0;"></i></div>
+              <span class="set-label">Dispositivos Autorizados</span>
+              <span class="set-right">1/2 <i class="fa-solid fa-chevron-right" style="font-size:0.6rem;"></i></span>
+            </div>
+          </div>
+        </div>
+        <div class="set-section">
+          <div class="set-section-title">Conta</div>
+          <div class="set-row">
+            <div class="set-item">
+              <div class="set-icon" style="background:#2a1a1a;"><i class="fa-solid fa-right-from-bracket" style="color:#E06C75;"></i></div>
+              <span class="set-label">Terminar Sessão</span>
+              <i class="fa-solid fa-chevron-right" style="color:var(--text-muted);font-size:0.75rem;"></i>
+            </div>
+            <div class="set-item danger-item" onclick="showDeleteDialog()">
+              <div class="set-icon"><i class="fa-solid fa-trash"></i></div>
+              <span class="set-label">Eliminar Conta</span>
+              <i class="fa-solid fa-chevron-right" style="color:var(--red);font-size:0.75rem;"></i>
+            </div>
+          </div>
+        </div>
+        <div style="padding:0 20px 16px;text-align:center;">
+          <p style="font-size:0.65rem;color:var(--text-muted);">IMTeacher v1.0.0 &middot; Invento Musical</p>
+          <p style="font-size:0.6rem;color:var(--text-muted);margin-top:3px;">Conforme diretrizes App Store &amp; Play Store</p>
+        </div>
+      </div>
+
+    </div><!-- end screen-area -->
+
+    <!-- Mini player (hidden by default) -->
+    <div class="mini-player" id="mini-player" style="display:none;">
+      <div class="mini-thumb"><i class="fa-solid fa-music"></i></div>
+      <div class="mini-info">
+        <div class="mi-title">Escalas Maiores — Exercícios</div>
+        <div class="mi-sub">Teoria Musical &rsaquo; Escalas</div>
+      </div>
+      <div class="mini-controls">
+        <button><i class="fa-solid fa-backward-step"></i></button>
+        <button class="play"><i class="fa-solid fa-pause"></i></button>
+        <button><i class="fa-solid fa-forward-step"></i></button>
+      </div>
+    </div>
+
+    <!-- Bottom nav -->
+    <div class="bottom-nav" id="bottom-nav">
+      <div class="nav-item active" id="nav-home" onclick="goTo('home')">
+        <i class="fa-solid fa-house"></i>
+        <span>Início</span>
+      </div>
+      <div class="nav-item" id="nav-library" onclick="goTo('library')">
+        <i class="fa-solid fa-layer-group"></i>
+        <span>Biblioteca</span>
+      </div>
+      <div class="nav-item" id="nav-downloads" onclick="goTo('downloads')">
+        <i class="fa-solid fa-arrow-down-to-line"></i>
+        <span>Offline</span>
+      </div>
+      <div class="nav-item" id="nav-settings" onclick="goTo('settings')">
+        <i class="fa-solid fa-gear"></i>
+        <span>Definições</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="demo-label">
+  <p><strong>Navega entre os ecrãs</strong> pelo menu inferior</p>
+  <p style="margin-top:4px;">Expande as categorias na Biblioteca &middot; Toca nos conteúdos para abrir o leitor</p>
+</div>
+
+<!-- Delete dialog overlay -->
+<div id="delete-dialog" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;display:none;align-items:center;justify-content:center;">
+  <div style="background:#1F2937;border:1px solid #374151;border-radius:20px;padding:28px 24px;width:320px;text-align:center;">
+    <i class="fa-solid fa-triangle-exclamation" style="font-size:2rem;color:var(--red);margin-bottom:16px;display:block;"></i>
+    <h3 style="font-size:1.1rem;color:var(--text);margin-bottom:8px;">Eliminar conta</h3>
+    <p style="font-size:0.8rem;color:var(--text-muted);line-height:1.5;margin-bottom:20px;">Esta ação é permanente e irá remover todos os seus dados e conteúdos offline. Conforme as diretrizes da Apple.</p>
+    <div style="display:flex;gap:10px;">
+      <button onclick="hideDeleteDialog()" style="flex:1;padding:12px;background:#374151;border:none;border-radius:12px;color:var(--text);font-family:'Lexend',sans-serif;font-size:0.85rem;cursor:pointer;">Cancelar</button>
+      <button onclick="hideDeleteDialog()" style="flex:1;padding:12px;background:var(--red);border:none;border-radius:12px;color:#fff;font-family:'Lexend',sans-serif;font-size:0.85rem;cursor:pointer;font-weight:600;">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let currentScreen = 'login';
+  let isPlaying = false;
+
+  function goTo(screen) {
+    const prev = document.getElementById('screen-' + currentScreen);
+    const next = document.getElementById('screen-' + screen);
+    if (!next || screen === currentScreen) return;
+
+    prev.classList.add('exit-left');
+    setTimeout(() => { prev.classList.remove('active', 'exit-left'); }, 350);
+    next.classList.add('active');
+    currentScreen = screen;
+
+    // Update bottom nav
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    const navItem = document.getElementById('nav-' + screen);
+    if (navItem) navItem.classList.add('active');
+
+    // Show/hide bottom nav on login
+    const nav = document.getElementById('bottom-nav');
+    nav.style.display = screen === 'login' ? 'none' : 'flex';
+
+    // Show mini player when on home
+    const mini = document.getElementById('mini-player');
+    mini.style.display = (screen === 'home' || screen === 'library' || screen === 'downloads' || screen === 'settings') ? 'flex' : 'none';
+
+    // Hide mini player on specific screens
+    if (screen === 'login' || screen === 'video') {
+      mini.style.display = 'none';
+    }
+  }
+
+  function toggleL1(id) {
+    const el = document.getElementById(id);
+    el.classList.toggle('open');
+  }
+  function toggleL2(id) {
+    const el = document.getElementById(id);
+    el.classList.toggle('open');
+  }
+
+  function togglePlay() {
+    isPlaying = !isPlaying;
+    const icon = document.getElementById('play-icon');
+    icon.className = isPlaying ? 'fa-solid fa-pause' : 'fa-solid fa-play';
+  }
+
+  function showDeleteDialog() {
+    const d = document.getElementById('delete-dialog');
+    d.style.display = 'flex';
+  }
+  function hideDeleteDialog() {
+    const d = document.getElementById('delete-dialog');
+    d.style.display = 'none';
+  }
+
+  // Hide bottom nav on login
+  document.getElementById('bottom-nav').style.display = 'none';
+  document.getElementById('mini-player').style.display = 'none';
+</script>
+</body>
+</html>
