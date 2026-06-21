@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FraudShield AI — Sistema de Detección de Estafadores</title>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --gold: #D4A017;
+    --gold-light: #F0C040;
+    --gold-pale: #FDF3D0;
+    --gold-dark: #A07810;
+    --bg: #0D0F14;
+    --surface: #161A22;
+    --surface2: #1E2330;
+    --surface3: #252C3A;
+    --border: #2A3245;
+    --text: #E8EAF0;
+    --text-muted: #7A8299;
+    --red: #E05555;
+    --red-pale: rgba(224,85,85,0.12);
+    --orange: #E0913A;
+    --orange-pale: rgba(224,145,58,0.12);
+    --green: #3ABF7A;
+    --green-pale: rgba(58,191,122,0.12);
+    --blue: #4A8FE0;
+    --blue-pale: rgba(74,143,224,0.12);
+  }
+
+  body {
+    font-family: 'Lexend', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    overflow-x: hidden;
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 240px;
+    min-height: 100vh;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 100;
+  }
+
+  .sidebar-logo {
+    padding: 24px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo-badge {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo-icon {
+    width: 38px; height: 38px;
+    background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(212,160,23,0.35);
+  }
+
+  .logo-text { font-size: 15px; font-weight: 700; color: var(--text); line-height: 1.2; }
+  .logo-sub { font-size: 10px; color: var(--gold); font-weight: 500; letter-spacing: 0.5px; }
+
+  .sidebar-nav { padding: 16px 12px; flex: 1; }
+
+  .nav-label { font-size: 10px; color: var(--text-muted); font-weight: 600; letter-spacing: 1px; text-transform: uppercase; padding: 8px 8px 6px; }
+
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; border-radius: 9px;
+    font-size: 13.5px; font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    margin-bottom: 2px;
+    transition: all 0.18s;
+    position: relative;
+  }
+
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: rgba(212,160,23,0.12); color: var(--gold); }
+  .nav-item.active i { color: var(--gold); }
+  .nav-item i { width: 18px; text-align: center; font-size: 15px; }
+
+  .nav-badge {
+    margin-left: auto;
+    background: var(--red);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 7px;
+    border-radius: 99px;
+  }
+
+  .sidebar-footer {
+    padding: 16px 20px;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+  }
+
+  .user-av {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; color: #fff; font-weight: 700;
+  }
+
+  .user-info .uname { font-size: 13px; font-weight: 600; }
+  .user-info .urole { font-size: 11px; color: var(--text-muted); }
+
+  /* MAIN */
+  .main {
+    margin-left: 240px;
+    flex: 1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 28px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 50;
+  }
+
+  .topbar-left h1 { font-size: 18px; font-weight: 700; }
+  .topbar-left p { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+
+  .live-badge {
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(58,191,122,0.12);
+    border: 1px solid rgba(58,191,122,0.25);
+    color: var(--green);
+    font-size: 11.5px; font-weight: 600;
+    padding: 5px 12px; border-radius: 99px;
+  }
+
+  .live-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--green);
+    animation: pulse-dot 1.6s ease-in-out infinite;
+  }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.75); }
+  }
+
+  .topbar-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 13px;
+    padding: 7px 14px; border-radius: 8px;
+    cursor: pointer;
+    display: flex; align-items: center; gap: 6px;
+    transition: all 0.15s;
+    font-family: 'Lexend', sans-serif;
+  }
+
+  .topbar-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+  .content { padding: 24px 28px; flex: 1; }
+
+  /* STATS */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 20px;
+    position: relative;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(18px);
+    transition: opacity 0.45s ease, transform 0.45s ease;
+  }
+
+  .stat-card.revealed { opacity: 1; transform: translateY(0); }
+  .stat-card:hover { border-color: var(--gold-dark); }
+
+  .stat-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  }
+
+  .stat-card.s-red::before { background: var(--red); }
+  .stat-card.s-orange::before { background: var(--orange); }
+  .stat-card.s-gold::before { background: var(--gold); }
+  .stat-card.s-green::before { background: var(--green); }
+
+  .stat-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+  .stat-label { font-size: 11.5px; color: var(--text-muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.4px; }
+
+  .stat-icon {
+    width: 36px; height: 36px; border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+  }
+
+  .s-red .stat-icon { background: var(--red-pale); color: var(--red); }
+  .s-orange .stat-icon { background: var(--orange-pale); color: var(--orange); }
+  .s-gold .stat-icon { background: rgba(212,160,23,0.12); color: var(--gold); }
+  .s-green .stat-icon { background: var(--green-pale); color: var(--green); }
+
+  .stat-val { font-size: 30px; font-weight: 700; line-height: 1; }
+  .stat-sub { font-size: 11px; color: var(--text-muted); margin-top: 6px; }
+  .stat-sub span { color: var(--green); font-weight: 600; }
+  .stat-sub span.down { color: var(--red); }
+
+  /* ALERTS SECTION */
+  .section-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .section-title { font-size: 15px; font-weight: 700; }
+  .section-sub { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+
+  /* FILTER TABS */
+  .filter-tabs {
+    display: flex; gap: 6px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+
+  .tab {
+    padding: 6px 14px; border-radius: 99px;
+    font-size: 12.5px; font-weight: 500;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .tab:hover { border-color: var(--gold-dark); color: var(--text); }
+  .tab.active { background: rgba(212,160,23,0.14); border-color: var(--gold); color: var(--gold); }
+
+  /* ALERT CARDS */
+  .alerts-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .alert-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 13px;
+    padding: 16px 18px;
+    display: flex; align-items: center; gap: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+
+  .alert-card.revealed { opacity: 1; transform: translateX(0); }
+  .alert-card:hover { border-color: var(--gold-dark); background: var(--surface2); }
+  .alert-card.selected { border-color: var(--gold); background: rgba(212,160,23,0.06); }
+
+  /* NEW ALERT ANIMATION */
+  .alert-card.new-entry {
+    animation: slideInNew 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    border-color: var(--gold);
+    background: rgba(212,160,23,0.07);
+  }
+
+  @keyframes slideInNew {
+    from { opacity: 0; transform: translateX(-24px) scale(0.97); }
+    to { opacity: 1; transform: translateX(0) scale(1); }
+  }
+
+  .alert-avatar {
+    width: 44px; height: 44px; border-radius: 50%;
+    object-fit: cover; flex-shrink: 0;
+    border: 2px solid var(--border);
+  }
+
+  .alert-body { flex: 1; min-width: 0; }
+  .alert-name { font-size: 14px; font-weight: 600; }
+  .alert-meta { font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
+  .alert-signals { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }
+
+  .signal-tag {
+    font-size: 10.5px; font-weight: 600;
+    padding: 2px 9px; border-radius: 99px;
+    display: flex; align-items: center; gap: 4px;
+  }
+
+  .sig-red { background: var(--red-pale); color: var(--red); }
+  .sig-orange { background: var(--orange-pale); color: var(--orange); }
+  .sig-blue { background: var(--blue-pale); color: var(--blue); }
+
+  .alert-risk { flex-shrink: 0; text-align: center; }
+
+  .risk-ring {
+    width: 54px; height: 54px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column;
+    font-size: 16px; font-weight: 800;
+    position: relative;
+  }
+
+  .risk-ring svg {
+    position: absolute; top: 0; left: 0;
+    width: 100%; height: 100%;
+    transform: rotate(-90deg);
+  }
+
+  .risk-ring .risk-num {
+    position: relative; z-index: 1;
+    font-size: 14px; font-weight: 800;
+    line-height: 1;
+  }
+
+  .risk-ring .risk-unit { font-size: 9px; font-weight: 500; color: var(--text-muted); position: relative; z-index: 1; }
+
+  .r-high .risk-num { color: var(--red); }
+  .r-med .risk-num { color: var(--orange); }
+  .r-low .risk-num { color: var(--green); }
+
+  .alert-status { flex-shrink: 0; }
+
+  .status-pill {
+    font-size: 11px; font-weight: 600;
+    padding: 4px 10px; border-radius: 99px;
+    display: flex; align-items: center; gap: 5px;
+  }
+
+  .st-review { background: var(--orange-pale); color: var(--orange); }
+  .st-blocked { background: var(--red-pale); color: var(--red); }
+  .st-clear { background: var(--green-pale); color: var(--green); }
+  .st-new { background: rgba(212,160,23,0.15); color: var(--gold); }
+
+  .alert-actions { flex-shrink: 0; display: flex; gap: 6px; }
+
+  .act-btn {
+    width: 34px; height: 34px; border-radius: 9px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text-muted);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 13px;
+  }
+
+  .act-btn:hover.block { border-color: var(--red); color: var(--red); background: var(--red-pale); }
+  .act-btn:hover.flag { border-color: var(--orange); color: var(--orange); background: var(--orange-pale); }
+  .act-btn:hover.clear { border-color: var(--green); color: var(--green); background: var(--green-pale); }
+
+  /* DETAIL PANEL */
+  .detail-panel {
+    position: fixed;
+    top: 0; right: 0; bottom: 0;
+    width: 400px;
+    background: var(--surface);
+    border-left: 1px solid var(--border);
+    z-index: 200;
+    display: flex; flex-direction: column;
+    transform: translateX(100%);
+    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    overflow-y: auto;
+  }
+
+  .detail-panel.open { transform: translateX(0); }
+
+  .detail-header {
+    padding: 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 12px;
+    position: sticky; top: 0;
+    background: var(--surface);
+    z-index: 10;
+  }
+
+  .detail-close {
+    margin-left: auto;
+    width: 32px; height: 32px; border-radius: 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 13px;
+    transition: all 0.15s;
+  }
+
+  .detail-close:hover { border-color: var(--red); color: var(--red); }
+
+  .detail-body { padding: 20px; flex: 1; }
+
+  .detail-section { margin-bottom: 22px; }
+  .detail-section-title {
+    font-size: 11px; font-weight: 700; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.8px;
+    margin-bottom: 10px;
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  .detail-section-title::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .info-cell {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 10px 12px;
+  }
+
+  .info-cell .lbl { font-size: 10.5px; color: var(--text-muted); font-weight: 500; margin-bottom: 3px; }
+  .info-cell .val { font-size: 13px; font-weight: 600; }
+
+  /* ANOMALY CHART */
+  .anomaly-chart {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    padding: 14px;
+  }
+
+  .chart-bars {
+    display: flex; align-items: flex-end; gap: 4px;
+    height: 70px;
+    margin-top: 8px;
+  }
+
+  .chart-bar {
+    flex: 1; border-radius: 4px 4px 0 0;
+    transition: all 0.4s ease;
+    position: relative;
+  }
+
+  .chart-bar.normal { background: var(--surface3); }
+  .chart-bar.anomaly { background: var(--red); opacity: 0.85; }
+  .chart-bar.warn { background: var(--orange); opacity: 0.85; }
+  .chart-bar.gold { background: var(--gold); opacity: 0.85; }
+
+  .chart-labels {
+    display: flex; gap: 4px; margin-top: 4px;
+  }
+
+  .chart-label { flex: 1; text-align: center; font-size: 8.5px; color: var(--text-muted); }
+
+  /* SIGNALS TABLE */
+  .signals-list { display: flex; flex-direction: column; gap: 8px; }
+
+  .signal-row {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 10px 12px;
+    display: flex; align-items: center; gap: 10px;
+  }
+
+  .signal-row i { font-size: 14px; width: 20px; text-align: center; }
+  .signal-row.sig-danger { border-left: 3px solid var(--red); }
+  .signal-row.sig-warn { border-left: 3px solid var(--orange); }
+
+  .signal-text { flex: 1; font-size: 12.5px; }
+  .signal-conf { font-size: 11px; color: var(--text-muted); }
+
+  /* DECISION BUTTONS */
+  .decision-row { display: flex; gap: 10px; }
+
+  .dec-btn {
+    flex: 1; padding: 11px; border-radius: 10px;
+    font-family: 'Lexend', sans-serif;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer; display: flex;
+    align-items: center; justify-content: center; gap: 7px;
+    border: 1px solid; transition: all 0.18s;
+  }
+
+  .dec-block { background: var(--red-pale); border-color: var(--red); color: var(--red); }
+  .dec-block:hover { background: var(--red); color: #fff; }
+  .dec-flag { background: var(--orange-pale); border-color: var(--orange); color: var(--orange); }
+  .dec-flag:hover { background: var(--orange); color: #fff; }
+  .dec-clear { background: var(--green-pale); border-color: var(--green); color: var(--green); }
+  .dec-clear:hover { background: var(--green); color: #fff; }
+
+  /* NEW ALERT NOTIFICATION */
+  .toast {
+    position: fixed; top: 76px; right: 24px;
+    background: var(--surface);
+    border: 1px solid var(--gold);
+    border-radius: 12px;
+    padding: 12px 16px;
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px; font-weight: 500;
+    z-index: 999;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+    transform: translateY(-20px); opacity: 0;
+    transition: all 0.35s cubic-bezier(0.22,1,0.36,1);
+    pointer-events: none;
+  }
+
+  .toast.show { transform: translateY(0); opacity: 1; pointer-events: all; }
+  .toast i { color: var(--gold); font-size: 15px; }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    .sidebar { display: none; }
+    .main { margin-left: 0; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .detail-panel { width: 100%; }
+  }
+
+  @media (max-width: 600px) {
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .topbar { padding: 12px 16px; }
+    .content { padding: 16px; }
+    .alert-actions { display: none; }
+  }
+
+  /* SCROLL REVEAL */
+  .reveal-up {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+
+  .reveal-up.visible { opacity: 1; transform: translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-badge">
+      <div class="logo-icon"><i class="fa-solid fa-shield-halved"></i></div>
+      <div>
+        <div class="logo-text">FraudShield</div>
+        <div class="logo-sub">AI DETECTION</div>
+      </div>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-label">Principal</div>
+    <div class="nav-item active"><i class="fa-solid fa-bell"></i> Alertas <span class="nav-badge">12</span></div>
+    <div class="nav-item"><i class="fa-solid fa-chart-line"></i> Analítica</div>
+    <div class="nav-item"><i class="fa-solid fa-users"></i> Usuarios</div>
+    <div class="nav-item"><i class="fa-solid fa-ban"></i> Bloqueados</div>
+    <div class="nav-label" style="margin-top:12px;">Sistema</div>
+    <div class="nav-item"><i class="fa-solid fa-brain"></i> Modelo IA</div>
+    <div class="nav-item"><i class="fa-solid fa-plug"></i> Integraciones</div>
+    <div class="nav-item"><i class="fa-solid fa-sliders"></i> Configuración</div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-av">MR</div>
+    <div class="user-info">
+      <div class="uname">Manager Riesgo</div>
+      <div class="urole">Supervisor</div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <h1>Centro de Alertas</h1>
+      <p>Detección activa en tiempo real</p>
+    </div>
+    <div class="topbar-right">
+      <div class="live-badge">
+        <div class="live-dot"></div>
+        Motor activo
+      </div>
+      <button class="topbar-btn"><i class="fa-solid fa-filter"></i> Filtrar</button>
+      <button class="topbar-btn"><i class="fa-solid fa-file-export"></i> Exportar</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- STATS -->
+    <div class="stats-grid">
+      <div class="stat-card s-red" id="sc1">
+        <div class="stat-top">
+          <div class="stat-label">Alertas Hoy</div>
+          <div class="stat-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        </div>
+        <div class="stat-val" id="cnt-alerts">0</div>
+        <div class="stat-sub"><span>+18%</span> respecto a ayer</div>
+      </div>
+      <div class="stat-card s-orange" id="sc2">
+        <div class="stat-top">
+          <div class="stat-label">Riesgo Alto</div>
+          <div class="stat-icon"><i class="fa-solid fa-skull-crossbones"></i></div>
+        </div>
+        <div class="stat-val" id="cnt-high">0</div>
+        <div class="stat-sub"><span class="down">Requieren acción inmediata</span></div>
+      </div>
+      <div class="stat-card s-red" id="sc3">
+        <div class="stat-top">
+          <div class="stat-label">Bloqueados</div>
+          <div class="stat-icon"><i class="fa-solid fa-ban"></i></div>
+        </div>
+        <div class="stat-val" id="cnt-blocked">0</div>
+        <div class="stat-sub"><span>Hoy</span></div>
+      </div>
+      <div class="stat-card s-green" id="sc4">
+        <div class="stat-top">
+          <div class="stat-label">Precisión IA</div>
+          <div class="stat-icon"><i class="fa-solid fa-microchip"></i></div>
+        </div>
+        <div class="stat-val">94<span style="font-size:16px;font-weight:500;color:var(--text-muted)">%</span></div>
+        <div class="stat-sub"><span>+2.3%</span> este mes</div>
+      </div>
+    </div>
+
+    <!-- FILTERS -->
+    <div class="reveal-up" id="filters-row">
+      <div class="section-header">
+        <div>
+          <div class="section-title">Usuarios bajo sospecha</div>
+          <div class="section-sub">Ordenados por score de riesgo descendente</div>
+        </div>
+        <div style="font-size:12px;color:var(--text-muted);">Actualizado hace 2 min</div>
+      </div>
+      <div class="filter-tabs">
+        <div class="tab active" onclick="filterAlerts('all',this)">Todos <span style="color:var(--text-muted)">12</span></div>
+        <div class="tab" onclick="filterAlerts('high',this)"><i class="fa-solid fa-fire" style="color:var(--red)"></i> Riesgo Alto</div>
+        <div class="tab" onclick="filterAlerts('med',this)">Riesgo Medio</div>
+        <div class="tab" onclick="filterAlerts('low',this)">Riesgo Bajo</div>
+        <div class="tab" onclick="filterAlerts('blocked',this)"><i class="fa-solid fa-ban" style="color:var(--red)"></i> Bloqueados</div>
+      </div>
+    </div>
+
+    <!-- ALERT LIST -->
+    <div class="alerts-list" id="alerts-list"></div>
+
+  </div>
+</main>
+
+<!-- DETAIL PANEL -->
+<div class="detail-panel" id="detail-panel">
+  <div class="detail-header">
+    <img id="dp-avatar" src="" class="alert-avatar" style="width:46px;height:46px;" alt="" />
+    <div>
+      <div id="dp-name" style="font-size:15px;font-weight:700;"></div>
+      <div id="dp-meta" style="font-size:11.5px;color:var(--text-muted);margin-top:2px;"></div>
+    </div>
+    <div class="detail-close" onclick="closePanel()"><i class="fa-solid fa-xmark"></i></div>
+  </div>
+
+  <div class="detail-body">
+    <!-- Risk score -->
+    <div class="detail-section">
+      <div class="detail-section-title"><i class="fa-solid fa-gauge-high"></i> Score de Riesgo</div>
+      <div style="display:flex;align-items:center;gap:16px;">
+        <div class="risk-ring" id="dp-risk-ring" style="width:72px;height:72px;">
+          <svg viewBox="0 0 72 72">
+            <circle cx="36" cy="36" r="30" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="6"/>
+            <circle id="dp-ring-circle" cx="36" cy="36" r="30" fill="none" stroke="#E05555" stroke-width="6"
+              stroke-dasharray="188.5" stroke-dashoffset="188.5" stroke-linecap="round"
+              style="transition:stroke-dashoffset 0.8s ease, stroke 0.3s;"/>
+          </svg>
+          <div class="risk-num" id="dp-score">0</div>
+          <div class="risk-unit">/ 100</div>
+        </div>
+        <div style="flex:1;">
+          <div id="dp-risk-label" style="font-size:15px;font-weight:700;margin-bottom:6px;"></div>
+          <div id="dp-risk-desc" style="font-size:12px;color:var(--text-muted);line-height:1.5;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Info -->
+    <div class="detail-section">
+      <div class="detail-section-title"><i class="fa-solid fa-id-card"></i> Información</div>
+      <div class="info-grid" id="dp-info-grid"></div>
+    </div>
+
+    <!-- Anomaly chart -->
+    <div class="detail-section">
+      <div class="detail-section-title"><i class="fa-solid fa-chart-bar"></i> Actividad Reciente (7 días)</div>
+      <div class="anomaly-chart">
+        <div style="font-size:11px;color:var(--text-muted);">Transacciones / mensajes por día</div>
+        <div class="chart-bars" id="dp-chart"></div>
+        <div class="chart-labels" id="dp-chart-labels"></div>
+      </div>
+    </div>
+
+    <!-- Signals -->
+    <div class="detail-section">
+      <div class="detail-section-title"><i class="fa-solid fa-magnifying-glass"></i> Señales Detectadas</div>
+      <div class="signals-list" id="dp-signals"></div>
+    </div>
+
+    <!-- NLP excerpt -->
+    <div class="detail-section" id="dp-nlp-section" style="display:none;">
+      <div class="detail-section-title"><i class="fa-solid fa-comment-dots"></i> Análisis NLP</div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:12px;font-size:12.5px;line-height:1.6;color:var(--text-muted);" id="dp-nlp"></div>
+    </div>
+
+    <!-- Decision -->
+    <div class="detail-section">
+      <div class="detail-section-title"><i class="fa-solid fa-gavel"></i> Decisión</div>
+      <div class="decision-row">
+        <button class="dec-btn dec-block" onclick="takeAction('block')"><i class="fa-solid fa-ban"></i> Bloquear</button>
+        <button class="dec-btn dec-flag" onclick="takeAction('flag')"><i class="fa-solid fa-flag"></i> Marcar</button>
+        <button class="dec-btn dec-clear" onclick="takeAction('clear')"><i class="fa-solid fa-check"></i> Limpiar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <i class="fa-solid fa-bell"></i>
+  <span id="toast-text">Nueva alerta detectada</span>
+</div>
+
+<script>
+const USERS = [
+  {
+    id: 1,
+    name: "Andrés Morales",
+    email: "a.morales92@mailr.io",
+    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&crop=face",
+    risk: 94,
+    level: "high",
+    status: "review",
+    joined: "Hace 3 días",
+    location: "Madrid, ES",
+    activity: "2.847 mensajes en 12h",
+    reports: "7 denuncias recibidas",
+    signals: [
+      { cls: "sig-danger", icon: "fa-triangle-exclamation", text: "Volumen de mensajes anómalo: 3.2x sobre la media", conf: "97%" },
+      { cls: "sig-danger", icon: "fa-clock", text: "Actividad concentrada en horario 02:00-05:00 (patrón bot)", conf: "91%" },
+      { cls: "sig-danger", icon: "fa-comment-dots", text: "NLP: 84% similitud con plantillas de phishing conocidas", conf: "89%" },
+      { cls: "sig-warn", icon: "fa-user-group", text: "Contactó 312 usuarios distintos en 24h", conf: "78%" }
+    ],
+    chart: [12,15,18,22,87,142,210],
+    chartColors: ["normal","normal","normal","normal","warn","anomaly","anomaly"],
+    nlp: "Fragmentos detectados: \"Haz clic aquí para verificar tu cuenta\", \"Oferta exclusiva solo por hoy\", \"Tu pago ha sido retenido\". Similitud con patrones de ingeniería social: alta.",
+    days: ["L","M","X","J","V","S","D"]
+  },
+  {
+    id: 2,
+    name: "Priya Subramanian",
+    email: "priya.sub.88@webmailer.net",
+    avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop&crop=face",
+    risk: 87,
+    level: "high",
+    status: "blocked",
+    joined: "Hace 6 días",
+    location: "Barcelona, ES",
+    activity: "41 transacciones en 1h",
+    reports: "3 denuncias",
+    signals: [
+      { cls: "sig-danger", icon: "fa-credit-card", text: "41 transacciones en 58 minutos (threshold: 5/h)", conf: "99%" },
+      { cls: "sig-danger", icon: "fa-location-dot", text: "IP desde 6 países distintos en 24h (VPN rotativo)", conf: "95%" },
+      { cls: "sig-warn", icon: "fa-fingerprint", text: "Fingerprint de dispositivo cambia cada sesión", conf: "82%" }
+    ],
+    chart: [3,2,4,3,38,41,5],
+    chartColors: ["normal","normal","normal","normal","anomaly","anomaly","warn"],
+    nlp: null,
+    days: ["L","M","X","J","V","S","D"]
+  },
+  {
+    id: 3,
+    name: "Karim El-Aawar",
+    email: "karim.elaawar@tempbox.org",
+    avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&crop=face",
+    risk: 71,
+    level: "med",
+    status: "review",
+    joined: "Hace 11 días",
+    location: "Valencia, ES",
+    activity: "Perfil incompleto",
+    reports: "1 denuncia",
+    signals: [
+      { cls: "sig-warn", icon: "fa-envelope", text: "Dominio de email temporal (tempbox.org), vida útil: 48h", conf: "88%" },
+      { cls: "sig-warn", icon: "fa-user", text: "Perfil sin foto y campos obligatorios vacíos", conf: "75%" },
+      { cls: "sig-warn", icon: "fa-arrow-right-arrow-left", text: "Patrón de navegación: 0 sesiones orgánicas, todo directo", conf: "68%" }
+    ],
+    chart: [0,1,0,2,4,8,12],
+    chartColors: ["normal","normal","normal","normal","normal","warn","gold"],
+    nlp: null,
+    days: ["L","M","X","J","V","S","D"]
+  },
+  {
+    id: 4,
+    name: "Sofía Rengel",
+    email: "sofia.rengel.2019@correo.com",
+    avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&h=80&fit=crop&crop=face",
+    risk: 58,
+    level: "med",
+    status: "review",
+    joined: "Hace 22 días",
+    location: "Sevilla, ES",
+    activity: "Actividad moderada",
+    reports: "0 denuncias",
+    signals: [
+      { cls: "sig-warn", icon: "fa-money-bill-transfer", text: "5 solicitudes de pago fuera de plataforma en 3 días", conf: "79%" },
+      { cls: "sig-warn", icon: "fa-clock-rotate-left", text: "Reversal de 3 transacciones en 48h", conf: "71%" }
+    ],
+    chart: [5,6,5,8,7,9,6],
+    chartColors: ["normal","normal","normal","normal","normal","warn","normal"],
+    nlp: null,
+    days: ["L","M","X","J","V","S","D"]
+  },
+  {
+    id: 5,
+    name: "Dmitri Volkov",
+    email: "dvolkov.trade@securemail.biz",
+    avatar: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=80&h=80&fit=crop&crop=face",
+    risk: 33,
+    level: "low",
+    status: "clear",
+    joined: "Hace 4 meses",
+    location: "Bilbao, ES",
+    activity: "Normal",
+    reports: "0 denuncias",
+    signals: [
+      { cls: "sig-warn", icon: "fa-link", text: "URL compartida con dominio recién registrado (14 días)", conf: "54%" }
+    ],
+    chart: [4,3,5,4,6,3,5],
+    chartColors: ["normal","normal","normal","normal","normal","normal","normal"],
+    nlp: null,
+    days: ["L","M","X","J","V","S","D"]
+  }
+];
+
+const NEW_ALERT = {
+  id: 99,
+  name: "Lucas Fernández",
+  email: "l.fdz.nuevo@mailtemp.cc",
+  avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&fit=crop&crop=face",
+  risk: 89,
+  level: "high",
+  status: "new",
+  joined: "Hace 1 hora",
+  location: "Madrid, ES",
+  activity: "Primera sesión activa",
+  reports: "0 denuncias",
+  signals: [
+    { cls: "sig-danger", icon: "fa-triangle-exclamation", text: "IP incluida en lista negra compartida (GlobalFraudDB)", conf: "98%" },
+    { cls: "sig-danger", icon: "fa-envelope", text: "Email en dominio desechable activo (mailtemp.cc)", conf: "95%" }
+  ],
+  chart: [0,0,0,0,0,0,18],
+  chartColors: ["normal","normal","normal","normal","normal","normal","anomaly"],
+  nlp: null,
+  days: ["L","M","X","J","V","S","D"]
+};
+
+let allAlerts = [...USERS];
+let selectedId = null;
+let currentFilter = 'all';
+
+function getRiskColor(level) {
+  if (level === 'high') return 'var(--red)';
+  if (level === 'med') return 'var(--orange)';
+  return 'var(--green)';
+}
+
+function getStatusHtml(status) {
+  if (status === 'blocked') return `<div class="status-pill st-blocked"><i class="fa-solid fa-ban"></i> Bloqueado</div>`;
+  if (status === 'clear') return `<div class="status-pill st-clear"><i class="fa-solid fa-check"></i> Limpio</div>`;
+  if (status === 'new') return `<div class="status-pill st-new"><i class="fa-solid fa-star"></i> Nuevo</div>`;
+  return `<div class="status-pill st-review"><i class="fa-solid fa-clock"></i> En revisión</div>`;
+}
+
+function getRingOffset(score) {
+  const circ = 188.5;
+  return circ - (score / 100) * circ;
+}
+
+function renderAlert(u, extraClass='') {
+  const color = getRiskColor(u.level);
+  const offset = getRingOffset(u.risk);
+  const topSignals = u.signals.slice(0,2);
+
+  return `
+  <div class="alert-card ${extraClass}" id="ac-${u.id}" onclick="openPanel(${u.id})">
+    <img class="alert-avatar" src="${u.avatar}" alt="${u.name}" />
+    <div class="alert-body">
+      <div class="alert-name">${u.name}</div>
+      <div class="alert-meta"><i class="fa-solid fa-envelope" style="font-size:10px;"></i> ${u.email} &nbsp;|&nbsp; ${u.joined}</div>
+      <div class="alert-signals">
+        ${topSignals.map(s=>`<span class="signal-tag ${s.cls}"><i class="fa-solid ${s.icon}"></i>${s.text.split(':')[0]}</span>`).join('')}
+      </div>
+    </div>
+    <div class="alert-risk">
+      <div class="risk-ring ${u.level === 'high' ? 'r-high' : u.level === 'med' ? 'r-med' : 'r-low'}">
+        <svg viewBox="0 0 54 54">
+          <circle cx="27" cy="27" r="22" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="5"/>
+          <circle cx="27" cy="27" r="22" fill="none" stroke="${color}" stroke-width="5"
+            stroke-dasharray="138.2" stroke-dashoffset="${138.2 - (u.risk/100)*138.2}" stroke-linecap="round"
+            style="transform:rotate(-90deg);transform-origin:27px 27px;"/>
+        </svg>
+        <div class="risk-num">${u.risk}</div>
+        <div class="risk-unit">riesgo</div>
+      </div>
+    </div>
+    <div class="alert-status">${getStatusHtml(u.status)}</div>
+    <div class="alert-actions">
+      <div class="act-btn block" title="Bloquear" onclick="event.stopPropagation();quickAction(${u.id},'block')"><i class="fa-solid fa-ban"></i></div>
+      <div class="act-btn flag" title="Marcar" onclick="event.stopPropagation();quickAction(${u.id},'flag')"><i class="fa-solid fa-flag"></i></div>
+      <div class="act-btn clear" title="Limpiar" onclick="event.stopPropagation();quickAction(${u.id},'clear')"><i class="fa-solid fa-check"></i></div>
+    </div>
+  </div>`;
+}
+
+function renderAlerts() {
+  const list = document.getElementById('alerts-list');
+  const filtered = allAlerts.filter(u => {
+    if (currentFilter === 'all') return true;
+    if (currentFilter === 'high') return u.level === 'high';
+    if (currentFilter === 'med') return u.level === 'med';
+    if (currentFilter === 'low') return u.level === 'low';
+    if (currentFilter === 'blocked') return u.status === 'blocked';
+    return true;
+  });
+  list.innerHTML = filtered.map((u,i) => renderAlert(u,'')).join('');
+  // Stagger reveal
+  setTimeout(()=>{
+    filtered.forEach((_,i)=>{
+      setTimeout(()=>{
+        const el = document.getElementById('ac-'+filtered[i].id);
+        if (el) el.classList.add('revealed');
+      }, i*80);
+    });
+  },50);
+}
+
+function filterAlerts(f, el) {
+  currentFilter = f;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  renderAlerts();
+}
+
+function openPanel(id) {
+  const u = allAlerts.find(x=>x.id===id);
+  if (!u) return;
+  selectedId = id;
+
+  document.querySelectorAll('.alert-card').forEach(c=>c.classList.remove('selected'));
+  const card = document.getElementById('ac-'+id);
+  if (card) card.classList.add('selected');
+
+  document.getElementById('dp-avatar').src = u.avatar;
+  document.getElementById('dp-name').textContent = u.name;
+  document.getElementById('dp-meta').textContent = u.email + ' · ' + u.location;
+
+  const score = u.risk;
+  const color = getRiskColor(u.level);
+  const circle = document.getElementById('dp-ring-circle');
+  document.getElementById('dp-score').textContent = score;
+  circle.style.stroke = color;
+  setTimeout(()=>{ circle.style.strokeDashoffset = getRingOffset(score); },100);
+
+  const label = u.level==='high'?'Riesgo Alto':u.level==='med'?'Riesgo Medio':'Riesgo Bajo';
+  const desc = u.level==='high'?'Acción inmediata recomendada. Múltiples señales críticas detectadas.'
+    :u.level==='med'?'Requiere revisión manual. Señales de comportamiento sospechoso.'
+    :'Bajo riesgo. Monitorear en las próximas 48h.';
+  document.getElementById('dp-risk-label').style.color = color;
+  document.getElementById('dp-risk-label').textContent = label;
+  document.getElementById('dp-risk-desc').textContent = desc;
+
+  const info = [
+    {lbl:'Registro',val:u.joined},
+    {lbl:'Ubicación',val:u.location},
+    {lbl:'Actividad',val:u.activity},
+    {lbl:'Denuncias',val:u.reports}
+  ];
+  document.getElementById('dp-info-grid').innerHTML = info.map(i=>`<div class="info-cell"><div class="lbl">${i.lbl}</div><div class="val">${i.val}</div></div>`).join('');
+
+  // Chart
+  const maxVal = Math.max(...u.chart, 1);
+  document.getElementById('dp-chart').innerHTML = u.chart.map((v,i)=>`
+    <div class="chart-bar ${u.chartColors[i]}" style="height:${Math.max(4,Math.round((v/maxVal)*65))}px;" title="${v}"></div>
+  `).join('');
+  document.getElementById('dp-chart-labels').innerHTML = u.days.map(d=>`<div class="chart-label">${d}</div>`).join('');
+
+  // Signals
+  document.getElementById('dp-signals').innerHTML = u.signals.map(s=>`
+    <div class="signal-row ${s.cls}">
+      <i class="fa-solid ${s.icon}" style="color:${s.cls==='sig-danger'?'var(--red)':'var(--orange)'}"></i>
+      <div class="signal-text">${s.text}</div>
+      <div class="signal-conf">${s.conf}</div>
+    </div>
+  `).join('');
+
+  // NLP
+  const nlpSec = document.getElementById('dp-nlp-section');
+  if (u.nlp) {
+    nlpSec.style.display='block';
+    document.getElementById('dp-nlp').textContent = u.nlp;
+  } else {
+    nlpSec.style.display='none';
+  }
+
+  document.getElementById('detail-panel').classList.add('open');
+}
+
+function closePanel() {
+  document.getElementById('detail-panel').classList.remove('open');
+  document.querySelectorAll('.alert-card').forEach(c=>c.classList.remove('selected'));
+  selectedId = null;
+}
+
+function takeAction(action) {
+  if (!selectedId) return;
+  const u = allAlerts.find(x=>x.id===selectedId);
+  if (!u) return;
+  if (action==='block') u.status='blocked';
+  else if (action==='clear') u.status='clear';
+  else u.status='review';
+  closePanel();
+  renderAlerts();
+  updateStats();
+  showToast(action==='block'?`${u.name} bloqueado correctamente`:action==='clear'?`${u.name} marcado como seguro`:`${u.name} marcado para revisión`);
+}
+
+function quickAction(id,action) {
+  const u = allAlerts.find(x=>x.id===id);
+  if (!u) return;
+  if (action==='block') u.status='blocked';
+  else if (action==='clear') u.status='clear';
+  else u.status='review';
+  renderAlerts();
+  updateStats();
+  showToast(action==='block'?`${u.name} bloqueado`:action==='clear'?`${u.name} limpiado`:`${u.name} marcado`);
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-text').textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 3200);
+}
+
+function updateStats() {
+  animateCount('cnt-alerts', allAlerts.length);
+  animateCount('cnt-high', allAlerts.filter(u=>u.level==='high').length);
+  animateCount('cnt-blocked', allAlerts.filter(u=>u.status==='blocked').length);
+}
+
+function animateCount(id, target) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const start = parseInt(el.textContent)||0;
+  const duration = 800;
+  const startTime = performance.now();
+  const step = (now) => {
+    const p = Math.min((now-startTime)/duration,1);
+    el.textContent = Math.round(start + (target-start)*p);
+    if (p<1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+// INIT
+window.addEventListener('DOMContentLoaded',()=>{
+  renderAlerts();
+
+  // Stat card reveal
+  ['sc1','sc2','sc3','sc4'].forEach((id,i)=>{
+    setTimeout(()=>{
+      const el = document.getElementById(id);
+      if (el) el.classList.add('revealed');
+    }, i*100+100);
+  });
+
+  // Filters reveal
+  setTimeout(()=>{
+    const f = document.getElementById('filters-row');
+    if (f) f.classList.add('visible');
+  },500);
+
+  // Animate stats
+  setTimeout(()=>{
+    animateCount('cnt-alerts', allAlerts.length);
+    animateCount('cnt-high', allAlerts.filter(u=>u.level==='high').length);
+    animateCount('cnt-blocked', allAlerts.filter(u=>u.status==='blocked').length);
+  }, 300);
+
+  // Simulate new alert after 5 seconds
+  setTimeout(()=>{
+    showToast('Nueva alerta de alta prioridad: Lucas Fernandez');
+    allAlerts.unshift(NEW_ALERT);
+    updateStats();
+
+    const list = document.getElementById('alerts-list');
+    const tmp = document.createElement('div');
+    tmp.innerHTML = renderAlert(NEW_ALERT, 'new-entry');
+    const card = tmp.firstElementChild;
+    list.insertBefore(card, list.firstChild);
+  }, 5000);
+});
+</script>
+</body>
+</html>
