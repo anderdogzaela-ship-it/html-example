@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard de Indicadores | Power BI</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@phosphor-icons/web@2.1.1/src/index.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --gold:#D4891A;--gold-light:#F5A623;--gold-pale:#FEF3DC;--gold-border:#F0C06A;
+  --dark:#1C1C1E;--dark2:#2C2C2E;--dark3:#3A3A3C;
+  --text:#1C1C1E;--text2:#48484A;--text3:#8E8E93;
+  --bg:#F5F5F7;--card:#FFFFFF;
+  --green:#30A46C;--red:#E54D2E;--blue:#0070F3;
+  --radius:14px;--radius-sm:8px;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 4px 16px rgba(0,0,0,.06);
+  --shadow-hover:0 4px 12px rgba(0,0,0,.12),0 8px 32px rgba(0,0,0,.1);
+}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;overflow-x:hidden}
+
+/* SIDEBAR */
+.sidebar{
+  width:260px;min-width:260px;background:var(--dark);
+  display:flex;flex-direction:column;padding:0;
+  position:sticky;top:0;height:100vh;overflow-y:auto;
+  transition:width .3s;z-index:100;
+}
+.sidebar-brand{
+  padding:24px 20px 20px;border-bottom:1px solid var(--dark3);
+  display:flex;align-items:center;gap:12px;
+}
+.brand-icon{
+  width:38px;height:38px;border-radius:10px;
+  background:linear-gradient(135deg,var(--gold),var(--gold-light));
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.brand-icon i{font-size:18px;color:#fff}
+.brand-text .name{font-weight:800;font-size:15px;color:#fff;line-height:1.2}
+.brand-text .sub{font-size:11px;color:var(--text3);font-weight:500;margin-top:2px}
+
+.sidebar-section{padding:20px 16px 8px;font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.08em;text-transform:uppercase}
+
+.filter-group{padding:0 12px 16px}
+.filter-label{font-size:11px;font-weight:700;color:var(--text3);margin-bottom:8px;padding:0 4px;display:flex;align-items:center;gap:6px}
+.filter-label i{font-size:13px;color:var(--gold)}
+.filter-pills{display:flex;flex-direction:column;gap:4px}
+.pill{
+  padding:8px 12px;border-radius:var(--radius-sm);
+  font-size:12px;font-weight:600;color:rgba(255,255,255,.6);
+  cursor:pointer;transition:all .2s;border:1px solid transparent;
+  display:flex;align-items:center;gap:8px;
+}
+.pill:hover{background:var(--dark3);color:#fff}
+.pill.active{
+  background:rgba(212,137,26,.15);color:var(--gold-light);
+  border-color:rgba(212,137,26,.3);
+}
+.pill .pill-count{
+  margin-left:auto;font-size:10px;
+  background:var(--dark3);padding:2px 7px;border-radius:20px;
+  color:rgba(255,255,255,.4);font-weight:700;
+}
+.pill.active .pill-count{background:rgba(212,137,26,.25);color:var(--gold-light)}
+
+.sidebar-footer{
+  margin-top:auto;padding:16px;border-top:1px solid var(--dark3);
+  display:flex;align-items:center;gap:10px;
+}
+.avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--gold),#e8a020);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.avatar span{font-size:13px;font-weight:800;color:#fff}
+.user-info .uname{font-size:12px;font-weight:700;color:#fff}
+.user-info .urole{font-size:10px;color:var(--text3)}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+
+.topbar{
+  background:var(--card);border-bottom:1px solid #E5E5EA;
+  padding:14px 28px;display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:50;
+}
+.topbar-left{display:flex;align-items:center;gap:8px}
+.breadcrumb{font-size:12px;color:var(--text3);font-weight:600}
+.breadcrumb .sep{margin:0 6px;color:#C7C7CC}
+.page-title{font-size:18px;font-weight:800;color:var(--text)}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.topbar-badge{
+  padding:6px 14px;border-radius:20px;font-size:11px;font-weight:700;
+  background:var(--gold-pale);color:var(--gold);border:1px solid var(--gold-border);
+  display:flex;align-items:center;gap:6px;
+}
+.btn-export{
+  padding:8px 16px;border-radius:var(--radius-sm);
+  background:var(--gold);color:#fff;border:none;cursor:pointer;
+  font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;
+  display:flex;align-items:center;gap:6px;transition:all .2s;
+}
+.btn-export:hover{background:#c07a10;transform:translateY(-1px);box-shadow:0 4px 12px rgba(212,137,26,.4)}
+
+.content{padding:24px 28px;flex:1;overflow-y:auto}
+
+/* KPI CARDS */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.kpi-card{
+  background:var(--card);border-radius:var(--radius);padding:20px;
+  box-shadow:var(--shadow);border:1px solid #F2F2F7;
+  position:relative;overflow:hidden;transition:all .3s;
+  opacity:0;transform:translateY(20px);
+}
+.kpi-card.visible{opacity:1;transform:translateY(0)}
+.kpi-card:hover{box-shadow:var(--shadow-hover);transform:translateY(-2px)}
+.kpi-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px}
+.kpi-icon{
+  width:44px;height:44px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.kpi-icon i{font-size:20px}
+.kpi-badge{
+  padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;
+  display:flex;align-items:center;gap:4px;
+}
+.kpi-badge.up{background:#E8F8F0;color:var(--green)}
+.kpi-badge.down{background:#FEF0EE;color:var(--red)}
+.kpi-value{font-size:28px;font-weight:900;color:var(--text);line-height:1;margin-bottom:6px;transition:all .4s}
+.kpi-label{font-size:12px;font-weight:600;color:var(--text3)}
+.kpi-bar{height:3px;border-radius:2px;margin-top:16px;overflow:hidden;background:#F2F2F7}
+.kpi-bar-fill{height:100%;border-radius:2px;transition:width .8s cubic-bezier(.4,0,.2,1)}
+.kpi-card::after{
+  content:'';position:absolute;top:0;right:0;
+  width:80px;height:80px;border-radius:0 var(--radius) 0 80px;
+  opacity:.06;
+}
+
+/* CHARTS GRID */
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.charts-grid-3{display:grid;grid-template-columns:2fr 1fr;gap:16px}
+.chart-card{
+  background:var(--card);border-radius:var(--radius);padding:20px;
+  box-shadow:var(--shadow);border:1px solid #F2F2F7;
+  opacity:0;transform:translateY(20px);transition:all .4s;
+}
+.chart-card.visible{opacity:1;transform:translateY(0)}
+.chart-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.chart-title{font-size:14px;font-weight:800;color:var(--text)}
+.chart-sub{font-size:11px;color:var(--text3);font-weight:600;margin-top:2px}
+.chart-actions{display:flex;gap:6px}
+.chart-tag{
+  padding:4px 10px;border-radius:6px;font-size:10px;font-weight:700;
+  background:var(--gold-pale);color:var(--gold);border:1px solid var(--gold-border);
+}
+
+/* BAR CHART */
+.bar-chart-wrap{padding:8px 0}
+.bar-chart{display:flex;align-items:flex-end;gap:10px;height:160px}
+.bar-col{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1}
+.bar-wrap{width:100%;display:flex;flex-direction:column;justify-content:flex-end;flex:1;position:relative}
+.bar{
+  width:100%;border-radius:6px 6px 0 0;
+  background:linear-gradient(180deg,var(--gold-light),var(--gold));
+  transition:height .7s cubic-bezier(.4,0,.2,1);min-height:4px;
+  cursor:pointer;position:relative;
+}
+.bar.target-bar{background:linear-gradient(180deg,rgba(212,137,26,.3),rgba(212,137,26,.15));border:2px dashed var(--gold-border)}
+.bar:hover::after{
+  content:attr(data-value);position:absolute;
+  top:-28px;left:50%;transform:translateX(-50%);
+  background:var(--dark);color:#fff;font-size:10px;font-weight:700;
+  padding:3px 8px;border-radius:4px;white-space:nowrap;pointer-events:none;
+  font-family:'Nunito',sans-serif;
+}
+.bar-month{font-size:10px;font-weight:700;color:var(--text3)}
+.chart-legend{display:flex;gap:16px;margin-top:14px}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--text2)}
+.legend-dot{width:10px;height:10px;border-radius:3px}
+
+/* LINE CHART */
+.line-chart-wrap{position:relative;height:160px;margin:8px 0}
+canvas.line-canvas{width:100%;height:100%}
+
+/* DONUT */
+.donut-wrap{display:flex;flex-direction:column;align-items:center;gap:16px}
+.donut-svg-wrap{position:relative;width:140px;height:140px;flex-shrink:0}
+.donut-center{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  text-align:center;
+}
+.donut-center .dc-val{font-size:22px;font-weight:900;color:var(--text);line-height:1}
+.donut-center .dc-label{font-size:10px;font-weight:700;color:var(--text3);margin-top:2px}
+.donut-legend{width:100%}
+.donut-row{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 0;border-bottom:1px solid #F2F2F7;
+  cursor:pointer;transition:background .2s;border-radius:6px;padding:6px 8px;
+}
+.donut-row:hover{background:var(--bg)}
+.donut-row:last-child{border-bottom:none}
+.d-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.d-name{font-size:12px;font-weight:600;color:var(--text2);flex:1}
+.d-pct{font-size:12px;font-weight:800;color:var(--text)}
+.d-bar-wrap{width:50px;height:4px;background:#F2F2F7;border-radius:2px;overflow:hidden}
+.d-bar-fill{height:100%;border-radius:2px;transition:width .8s .3s cubic-bezier(.4,0,.2,1)}
+
+/* TABLE */
+.data-table{width:100%;border-collapse:collapse}
+.data-table th{
+  font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;
+  letter-spacing:.06em;padding:0 12px 10px;border-bottom:1px solid #F2F2F7;text-align:left;
+}
+.data-table td{
+  font-size:13px;font-weight:600;color:var(--text);padding:11px 12px;
+  border-bottom:1px solid #F8F8FA;
+}
+.data-table tr:hover td{background:#FAFAFA}
+.data-table tr:last-child td{border-bottom:none}
+.td-rank{width:32px;height:32px;border-radius:8px;background:var(--gold-pale);color:var(--gold);font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.td-progress{display:flex;align-items:center;gap:8px}
+.td-prog-bar{flex:1;height:5px;background:#F2F2F7;border-radius:3px;overflow:hidden}
+.td-prog-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--gold),var(--gold-light));transition:width .8s .5s}
+.td-pct{font-size:11px;font-weight:700;color:var(--text3);width:35px;text-align:right}
+.status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px}
+
+/* LOADING PULSE */
+@keyframes pulse{0%,100%{opacity:.6}50%{opacity:1}}
+.updating{animation:pulse .6s ease-in-out 3}
+
+/* RESPONSIVE */
+@media(max-width:1100px){.kpi-grid{grid-template-columns:repeat(2,1fr)}.charts-grid{grid-template-columns:1fr}.charts-grid-3{grid-template-columns:1fr}}
+@media(max-width:768px){
+  .sidebar{width:0;min-width:0;overflow:hidden;position:fixed;left:0;top:0;height:100vh}
+  .sidebar.open{width:260px;min-width:260px}
+  .page-title{font-size:15px}.content{padding:16px}
+  .topbar{padding:12px 16px}
+}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon"><i class="ph-fill ph-chart-pie-slice"></i></div>
+    <div class="brand-text">
+      <div class="name">Indicadores</div>
+      <div class="sub">Power BI · 2026</div>
+    </div>
+  </div>
+
+  <div class="sidebar-section">Período</div>
+  <div class="filter-group">
+    <div class="filter-pills" id="period-pills">
+      <div class="pill active" data-filter="period" data-value="all"><i class="ph-fill ph-calendar-blank"></i> Todos os Períodos <span class="pill-count">12</span></div>
+      <div class="pill" data-filter="period" data-value="h1"><i class="ph-fill ph-calendar"></i> 1º Semestre 2026 <span class="pill-count">6</span></div>
+      <div class="pill" data-filter="period" data-value="q1"><i class="ph-fill ph-calendar-check"></i> Q1 2026 <span class="pill-count">3</span></div>
+      <div class="pill" data-filter="period" data-value="q2"><i class="ph-fill ph-calendar-check"></i> Q2 2026 <span class="pill-count">3</span></div>
+    </div>
+  </div>
+
+  <div class="sidebar-section">Região</div>
+  <div class="filter-group">
+    <div class="filter-pills" id="region-pills">
+      <div class="pill active" data-filter="region" data-value="all"><i class="ph-fill ph-globe-hemisphere-west"></i> Todas as Regiões <span class="pill-count">847</span></div>
+      <div class="pill" data-filter="region" data-value="sudeste"><i class="ph-fill ph-map-pin"></i> Sudeste <span class="pill-count">312</span></div>
+      <div class="pill" data-filter="region" data-value="sul"><i class="ph-fill ph-map-pin"></i> Sul <span class="pill-count">201</span></div>
+      <div class="pill" data-filter="region" data-value="norte"><i class="ph-fill ph-map-pin"></i> Norte <span class="pill-count">334</span></div>
+    </div>
+  </div>
+
+  <div class="sidebar-section">Categoria</div>
+  <div class="filter-group">
+    <div class="filter-pills" id="category-pills">
+      <div class="pill active" data-filter="category" data-value="all"><i class="ph-fill ph-tag"></i> Todas as Categorias</div>
+      <div class="pill" data-filter="category" data-value="a"><i class="ph-fill ph-circle"></i> Produto A</div>
+      <div class="pill" data-filter="category" data-value="b"><i class="ph-fill ph-circle"></i> Produto B</div>
+      <div class="pill" data-filter="category" data-value="c"><i class="ph-fill ph-circle"></i> Produto C</div>
+    </div>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="avatar"><span>AG</span></div>
+    <div class="user-info">
+      <div class="uname">Aguinaldo A.F.</div>
+      <div class="urole">Gerente de Análise</div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="breadcrumb">Painéis <span class="sep">/</span></span>
+      <span class="page-title">Dashboard de Indicadores</span>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-badge">
+        <i class="ph-fill ph-clock"></i>
+        Atualizado: Jun 2026
+      </div>
+      <button class="btn-export" onclick="exportDemo()">
+        <i class="ph-fill ph-download-simple"></i>
+        Exportar
+      </button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- KPI CARDS -->
+    <div class="kpi-grid" id="kpi-grid">
+
+      <div class="kpi-card" style="transition-delay:.05s">
+        <div class="kpi-top">
+          <div class="kpi-icon" style="background:#FEF3DC"><i class="ph-fill ph-currency-circle-dollar" style="color:var(--gold)"></i></div>
+          <div class="kpi-badge up"><i class="ph-fill ph-trend-up"></i><span id="kpi-receita-delta">+12,3%</span></div>
+        </div>
+        <div class="kpi-value" id="kpi-receita">R$ 1,24M</div>
+        <div class="kpi-label">Receita Total</div>
+        <div class="kpi-bar"><div class="kpi-bar-fill" id="bar-receita" style="width:0%;background:linear-gradient(90deg,var(--gold),var(--gold-light))"></div></div>
+      </div>
+
+      <div class="kpi-card" style="transition-delay:.1s">
+        <div class="kpi-top">
+          <div class="kpi-icon" style="background:#E8F8F0"><i class="ph-fill ph-target" style="color:var(--green)"></i></div>
+          <div class="kpi-badge up"><i class="ph-fill ph-trend-up"></i><span id="kpi-meta-delta">+4,2 pp</span></div>
+        </div>
+        <div class="kpi-value" id="kpi-meta">87,4%</div>
+        <div class="kpi-label">Meta Atingida</div>
+        <div class="kpi-bar"><div class="kpi-bar-fill" id="bar-meta" style="width:0%;background:linear-gradient(90deg,#30A46C,#4CC38A)"></div></div>
+      </div>
+
+      <div class="kpi-card" style="transition-delay:.15s">
+        <div class="kpi-top">
+          <div class="kpi-icon" style="background:#EFF6FF"><i class="ph-fill ph-users-three" style="color:var(--blue)"></i></div>
+          <div class="kpi-badge up"><i class="ph-fill ph-trend-up"></i><span id="kpi-clientes-delta">+8,7%</span></div>
+        </div>
+        <div class="kpi-value" id="kpi-clientes">2.847</div>
+        <div class="kpi-label">Clientes Ativos</div>
+        <div class="kpi-bar"><div class="kpi-bar-fill" id="bar-clientes" style="width:0%;background:linear-gradient(90deg,#0070F3,#3B9EFF)"></div></div>
+      </div>
+
+      <div class="kpi-card" style="transition-delay:.2s">
+        <div class="kpi-top">
+          <div class="kpi-icon" style="background:#FEF0EE"><i class="ph-fill ph-smiley" style="color:#E54D2E"></i></div>
+          <div class="kpi-badge down"><i class="ph-fill ph-trend-down"></i><span id="kpi-nps-delta">-3 pts</span></div>
+        </div>
+        <div class="kpi-value" id="kpi-nps">72</div>
+        <div class="kpi-label">NPS Score</div>
+        <div class="kpi-bar"><div class="kpi-bar-fill" id="bar-nps" style="width:0%;background:linear-gradient(90deg,#E54D2E,#FF6B6B)"></div></div>
+      </div>
+
+    </div>
+
+    <!-- CHARTS ROW 1 -->
+    <div class="charts-grid" style="margin-bottom:16px">
+
+      <!-- BAR CHART -->
+      <div class="chart-card" style="transition-delay:.25s">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Vendas Mensais vs Meta</div>
+            <div class="chart-sub">Acumulado 2026 · Real e projetado</div>
+          </div>
+          <span class="chart-tag">Mensal</span>
+        </div>
+        <div class="bar-chart-wrap">
+          <div class="bar-chart" id="bar-chart"></div>
+          <div class="chart-legend">
+            <div class="legend-item"><div class="legend-dot" style="background:linear-gradient(135deg,var(--gold-light),var(--gold))"></div>Realizado</div>
+            <div class="legend-item"><div class="legend-dot" style="background:rgba(212,137,26,.25);border:1px dashed var(--gold-border)"></div>Meta</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LINE CHART -->
+      <div class="chart-card" style="transition-delay:.3s">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Evolução Real vs Meta</div>
+            <div class="chart-sub">Variação percentual mensal</div>
+          </div>
+          <span class="chart-tag">Acumulado</span>
+        </div>
+        <div class="line-chart-wrap">
+          <canvas id="lineCanvas"></canvas>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- CHARTS ROW 2 -->
+    <div class="charts-grid-3">
+
+      <!-- TABLE -->
+      <div class="chart-card" style="transition-delay:.35s">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Top Indicadores</div>
+            <div class="chart-sub">Performance vs meta por categoria</div>
+          </div>
+          <span class="chart-tag">Detalhado</span>
+        </div>
+        <table class="data-table" id="kpi-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th>Indicador</th>
+              <th>Valor</th>
+              <th>vs Meta</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="table-body"></tbody>
+        </table>
+      </div>
+
+      <!-- DONUT CHART -->
+      <div class="chart-card" style="transition-delay:.4s">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Distribuição</div>
+            <div class="chart-sub">Receita por categoria</div>
+          </div>
+        </div>
+        <div class="donut-wrap">
+          <div class="donut-svg-wrap">
+            <svg id="donutSvg" viewBox="0 0 140 140" width="140" height="140"></svg>
+            <div class="donut-center">
+              <div class="dc-val" id="donut-center-val">100%</div>
+              <div class="dc-label">Total</div>
+            </div>
+          </div>
+          <div class="donut-legend" id="donut-legend"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// ── DATA ────────────────────────────────────────────────
+const MONTHS = ['Jan','Fev','Mar','Abr','Mai','Jun'];
+const COLORS = ['#D4891A','#3B9EFF','#30A46C','#8B5CF6'];
+
+const DATA = {
+  all: {
+    receita:'R$ 1,24M', receitaDelta:'+12,3%', receitaDeltaDir:'up', receitaPct:82,
+    meta:'87,4%', metaDelta:'+4,2 pp', metaDeltaDir:'up', metaPct:87,
+    clientes:'2.847', clientesDelta:'+8,7%', clientesDeltaDir:'up', clientesPct:71,
+    nps:'72', npsDelta:'-3 pts', npsDeltaDir:'down', npsPct:72,
+    bars:[620,740,880,820,1010,1240],
+    targets:[700,800,900,950,1050,1200],
+    line:[72,80,88,87,93,103],
+    lineMeta:[80,83,86,89,92,95],
+    donut:[{l:'Produto A',p:38},{l:'Produto B',p:27},{l:'Produto C',p:20},{l:'Outros',p:15}],
+    table:[
+      {n:'Receita Bruta',v:'R$ 1,24M',pct:82,ok:true},
+      {n:'Ticket Médio',v:'R$ 436',pct:91,ok:true},
+      {n:'Taxa de Conversão',v:'18,4%',pct:74,ok:true},
+      {n:'Custo de Aquisição',v:'R$ 82',pct:68,ok:false},
+      {n:'Churn Rate',v:'2,1%',pct:79,ok:true},
+    ]
+  },
+  sudeste: {
+    receita:'R$ 487K', receitaDelta:'+18,1%', receitaDeltaDir:'up', receitaPct:91,
+    meta:'92,1%', metaDelta:'+7,3 pp', metaDeltaDir:'up', metaPct:92,
+    clientes:'1.023', clientesDelta:'+14,2%', clientesDeltaDir:'up', clientesPct:85,
+    nps:'78', npsDelta:'+2 pts', npsDeltaDir:'up', npsPct:78,
+    bars:[240,290,340,310,400,487],
+    targets:[260,290,320,350,410,480],
+    line:[88,90,94,91,97,102],
+    lineMeta:[85,87,90,92,95,97],
+    donut:[{l:'Produto A',p:44},{l:'Produto B',p:29},{l:'Produto C',p:16},{l:'Outros',p:11}],
+    table:[
+      {n:'Receita Bruta',v:'R$ 487K',pct:91,ok:true},
+      {n:'Ticket Médio',v:'R$ 476',pct:96,ok:true},
+      {n:'Taxa de Conversão',v:'21,7%',pct:87,ok:true},
+      {n:'Custo de Aquisição',v:'R$ 74',pct:81,ok:true},
+      {n:'Churn Rate',v:'1,6%',pct:88,ok:true},
+    ]
+  },
+  sul: {
+    receita:'R$ 312K', receitaDelta:'+6,4%', receitaDeltaDir:'up', receitaPct:68,
+    meta:'79,8%', metaDelta:'-1,2 pp', metaDeltaDir:'down', metaPct:80,
+    clientes:'742', clientesDelta:'+3,1%', clientesDeltaDir:'up', clientesPct:62,
+    nps:'65', npsDelta:'-7 pts', npsDeltaDir:'down', npsPct:65,
+    bars:[180,210,240,230,280,312],
+    targets:[220,240,260,280,300,320],
+    line:[75,80,85,82,90,98],
+    lineMeta:[88,89,91,93,95,97],
+    donut:[{l:'Produto A',p:31},{l:'Produto B',p:34},{l:'Produto C',p:22},{l:'Outros',p:13}],
+    table:[
+      {n:'Receita Bruta',v:'R$ 312K',pct:68,ok:false},
+      {n:'Ticket Médio',v:'R$ 420',pct:82,ok:true},
+      {n:'Taxa de Conversão',v:'15,2%',pct:61,ok:false},
+      {n:'Custo de Aquisição',v:'R$ 95',pct:57,ok:false},
+      {n:'Churn Rate',v:'3,4%',pct:64,ok:false},
+    ]
+  },
+  norte: {
+    receita:'R$ 441K', receitaDelta:'+9,7%', receitaDeltaDir:'up', receitaPct:78,
+    meta:'84,3%', metaDelta:'+2,1 pp', metaDeltaDir:'up', metaPct:84,
+    clientes:'1.082', clientesDelta:'+7,4%', clientesDeltaDir:'up', clientesPct:74,
+    nps:'74', npsDelta:'+1 pt', npsDeltaDir:'up', npsPct:74,
+    bars:[200,240,300,280,380,441],
+    targets:[240,270,300,320,370,420],
+    line:[78,84,91,88,95,105],
+    lineMeta:[82,85,88,91,94,96],
+    donut:[{l:'Produto A',p:36},{l:'Produto B',p:24},{l:'Produto C',p:24},{l:'Outros',p:16}],
+    table:[
+      {n:'Receita Bruta',v:'R$ 441K',pct:78,ok:true},
+      {n:'Ticket Médio',v:'R$ 408',pct:84,ok:true},
+      {n:'Taxa de Conversão',v:'17,9%',pct:72,ok:true},
+      {n:'Custo de Aquisição',v:'R$ 87',pct:71,ok:true},
+      {n:'Churn Rate',v:'2,4%',pct:73,ok:true},
+    ]
+  }
+};
+
+const PERIOD_MULT = {all:1, h1:.82, q1:.42, q2:.58};
+
+let activeRegion = 'all';
+let activePeriod = 'all';
+let activeCategory = 'all';
+
+// ── ACTIVE DATA ──────────────────────────────────────────
+function getActive(){
+  const base = DATA[activeRegion] || DATA.all;
+  const mult = PERIOD_MULT[activePeriod] || 1;
+  return {base, mult};
+}
+
+// ── RENDER KPIs ──────────────────────────────────────────
+function renderKPIs(){
+  const {base} = getActive();
+  const cards = document.querySelectorAll('.kpi-card');
+  cards.forEach(c => c.classList.add('updating'));
+  setTimeout(() => cards.forEach(c => c.classList.remove('updating')), 700);
+
+  setText('kpi-receita', base.receita);
+  setText('kpi-receita-delta', base.receitaDelta);
+  setClass('kpi-receita-delta', base.receitaDeltaDir);
+  animBar('bar-receita', base.receitaPct);
+
+  setText('kpi-meta', base.meta);
+  setText('kpi-meta-delta', base.metaDelta);
+  setClass('kpi-meta-delta', base.metaDeltaDir);
+  animBar('bar-meta', base.metaPct);
+
+  setText('kpi-clientes', base.clientes);
+  setText('kpi-clientes-delta', base.clientesDelta);
+  setClass('kpi-clientes-delta', base.clientesDeltaDir);
+  animBar('bar-clientes', base.clientesPct);
+
+  setText('kpi-nps', base.nps);
+  setText('kpi-nps-delta', base.npsDelta);
+  setClass('kpi-nps-delta', base.npsDeltaDir);
+  animBar('bar-nps', base.npsPct);
+}
+
+function setText(id, val){ const el = document.getElementById(id); if(el) el.textContent = val; }
+function animBar(id, pct){ const el = document.getElementById(id); if(el) setTimeout(() => el.style.width = pct+'%', 100); }
+function setClass(id, dir){
+  const el = document.getElementById(id);
+  if(!el) return;
+  const badge = el.closest('.kpi-badge');
+  if(!badge) return;
+  badge.className = 'kpi-badge ' + (dir === 'up' ? 'up' : 'down');
+  const icon = badge.querySelector('i');
+  if(icon) icon.className = dir === 'up' ? 'ph-fill ph-trend-up' : 'ph-fill ph-trend-down';
+}
+
+// ── BAR CHART ─────────────────────────────────────────────
+function renderBarChart(){
+  const {base, mult} = getActive();
+  const container = document.getElementById('bar-chart');
+  const maxVal = Math.max(...base.bars, ...base.targets);
+
+  container.innerHTML = MONTHS.map((m,i) => {
+    const realH = Math.round((base.bars[i] * mult) / maxVal * 100);
+    const targH = Math.round((base.targets[i] * mult) / maxVal * 100);
+    const val = (base.bars[i] * mult / 1000).toFixed(0);
+    return `<div class="bar-col">
+      <div class="bar-wrap" style="position:relative">
+        <div class="bar target-bar" data-value="Meta: R$${Math.round(base.targets[i]*mult)}K" style="height:${targH}%;position:absolute;bottom:0;left:0;right:0;z-index:1"></div>
+        <div class="bar" data-value="R$${val}K" style="height:0%;position:relative;z-index:2" data-target="${realH}"></div>
+      </div>
+      <div class="bar-month">${m}</div>
+    </div>`;
+  }).join('');
+
+  setTimeout(() => {
+    container.querySelectorAll('.bar:not(.target-bar)').forEach(b => {
+      b.style.transition = 'height .7s cubic-bezier(.4,0,.2,1)';
+      b.style.height = b.dataset.target + '%';
+    });
+  }, 50);
+}
+
+// ── LINE CHART (Canvas) ───────────────────────────────────
+function renderLineChart(){
+  const {base, mult} = getActive();
+  const canvas = document.getElementById('lineCanvas');
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  canvas.style.width = rect.width + 'px';
+  canvas.style.height = rect.height + 'px';
+
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  const W = rect.width, H = rect.height;
+  const pad = {t:10, r:20, b:28, l:36};
+
+  const realData = base.line.map(v => v * (mult < 1 ? .9 + mult*.1 : 1));
+  const metaData = base.lineMeta;
+  const allVals = [...realData, ...metaData];
+  const minV = Math.min(...allVals) - 5;
+  const maxV = Math.max(...allVals) + 5;
+
+  function xOf(i){ return pad.l + i * (W - pad.l - pad.r) / (MONTHS.length - 1); }
+  function yOf(v){ return pad.t + (1 - (v - minV) / (maxV - minV)) * (H - pad.t - pad.b); }
+
+  // Grid
+  ctx.strokeStyle = '#F2F2F7'; ctx.lineWidth = 1;
+  for(let i=0; i<=4; i++){
+    const y = pad.t + i * (H - pad.t - pad.b) / 4;
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(W - pad.r, y); ctx.stroke();
+    const val = Math.round(maxV - i * (maxV - minV) / 4);
+    ctx.fillStyle = '#8E8E93'; ctx.font = '500 9px Nunito,sans-serif';
+    ctx.fillText(val + '%', 2, y + 3);
+  }
+
+  // Meta area
+  ctx.beginPath();
+  metaData.forEach((v,i) => i === 0 ? ctx.moveTo(xOf(i), yOf(v)) : ctx.lineTo(xOf(i), yOf(v)));
+  ctx.lineTo(xOf(metaData.length-1), yOf(minV));
+  ctx.lineTo(xOf(0), yOf(minV));
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(212,137,26,.07)'; ctx.fill();
+
+  // Meta line
+  ctx.beginPath();
+  metaData.forEach((v,i) => i === 0 ? ctx.moveTo(xOf(i), yOf(v)) : ctx.lineTo(xOf(i), yOf(v)));
+  ctx.strokeStyle = 'rgba(212,137,26,.4)'; ctx.lineWidth = 1.5;
+  ctx.setLineDash([4,3]); ctx.stroke(); ctx.setLineDash([]);
+
+  // Real area
+  ctx.beginPath();
+  realData.forEach((v,i) => i === 0 ? ctx.moveTo(xOf(i), yOf(v)) : ctx.lineTo(xOf(i), yOf(v)));
+  ctx.lineTo(xOf(realData.length-1), yOf(minV));
+  ctx.lineTo(xOf(0), yOf(minV));
+  ctx.closePath();
+  const grad = ctx.createLinearGradient(0, pad.t, 0, H);
+  grad.addColorStop(0, 'rgba(212,137,26,.25)');
+  grad.addColorStop(1, 'rgba(212,137,26,.02)');
+  ctx.fillStyle = grad; ctx.fill();
+
+  // Real line
+  ctx.beginPath();
+  realData.forEach((v,i) => i === 0 ? ctx.moveTo(xOf(i), yOf(v)) : ctx.lineTo(xOf(i), yOf(v)));
+  ctx.strokeStyle = '#D4891A'; ctx.lineWidth = 2.5; ctx.stroke();
+
+  // Dots
+  realData.forEach((v,i) => {
+    ctx.beginPath();
+    ctx.arc(xOf(i), yOf(v), 4, 0, Math.PI*2);
+    ctx.fillStyle = '#fff'; ctx.fill();
+    ctx.strokeStyle = '#D4891A'; ctx.lineWidth = 2; ctx.stroke();
+  });
+
+  // Month labels
+  ctx.fillStyle = '#8E8E93'; ctx.font = '600 9px Nunito,sans-serif'; ctx.textAlign = 'center';
+  MONTHS.forEach((m,i) => ctx.fillText(m, xOf(i), H - 6));
+}
+
+// ── DONUT CHART ───────────────────────────────────────────
+function renderDonut(){
+  const {base} = getActive();
+  const data = base.donut;
+  const svg = document.getElementById('donutSvg');
+  const legend = document.getElementById('donut-legend');
+  const cx = 70, cy = 70, r = 52, ir = 36;
+  const gap = 0.03;
+
+  let path = '', angle = -Math.PI/2;
+  const arcs = data.map(d => {
+    const sweep = (d.p / 100) * (Math.PI * 2) - gap;
+    const start = angle + gap/2;
+    const end = start + sweep;
+    const x1 = cx + r * Math.cos(start), y1 = cy + r * Math.sin(start);
+    const x2 = cx + r * Math.cos(end), y2 = cy + r * Math.sin(end);
+    const ix1 = cx + ir * Math.cos(start), iy1 = cy + ir * Math.sin(start);
+    const ix2 = cx + ir * Math.cos(end), iy2 = cy + ir * Math.sin(end);
+    const large = sweep > Math.PI ? 1 : 0;
+    const p = `M${x1},${y1} A${r},${r},0,${large},1,${x2},${y2} L${ix2},${iy2} A${ir},${ir},0,${large},0,${ix1},${iy1} Z`;
+    angle += sweep + gap;
+    return {p, color: COLORS[data.indexOf(d) % COLORS.length]};
+  });
+
+  svg.innerHTML = arcs.map((a,i) =>
+    `<path d="${a.p}" fill="${a.color}" opacity=".9" style="transform-origin:70px 70px;transition:transform .2s" onmouseenter="this.style.transform='scale(1.05)'" onmouseleave="this.style.transform='scale(1)'" />`
+  ).join('');
+
+  legend.innerHTML = data.map((d,i) => `
+    <div class="donut-row">
+      <div class="d-dot" style="background:${COLORS[i % COLORS.length]}"></div>
+      <div class="d-name">${d.l}</div>
+      <div class="d-bar-wrap"><div class="d-bar-fill" style="width:0%;background:${COLORS[i % COLORS.length]}" data-w="${d.p}"></div></div>
+      <div class="d-pct">${d.p}%</div>
+    </div>
+  `).join('');
+
+  setTimeout(() => {
+    legend.querySelectorAll('.d-bar-fill').forEach(el => {
+      el.style.width = el.dataset.w + '%';
+    });
+  }, 200);
+}
+
+// ── TABLE ─────────────────────────────────────────────────
+function renderTable(){
+  const {base} = getActive();
+  const tbody = document.getElementById('table-body');
+  tbody.innerHTML = base.table.map((row,i) => `
+    <tr>
+      <td><div class="td-rank">${i+1}</div></td>
+      <td>${row.n}</td>
+      <td style="font-weight:800">${row.v}</td>
+      <td>
+        <div class="td-progress">
+          <div class="td-prog-bar"><div class="td-prog-fill" data-w="${row.pct}" style="width:0%"></div></div>
+          <span class="td-pct">${row.pct}%</span>
+        </div>
+      </td>
+      <td>
+        <span class="status-dot" style="background:${row.ok ? '#30A46C' : '#E54D2E'}"></span>
+        <span style="font-size:11px;font-weight:700;color:${row.ok ? '#30A46C' : '#E54D2E'}">${row.ok ? 'OK' : 'Atenção'}</span>
+      </td>
+    </tr>
+  `).join('');
+  setTimeout(() => {
+    tbody.querySelectorAll('.td-prog-fill').forEach(el => {
+      el.style.width = el.dataset.w + '%';
+    });
+  }, 300);
+}
+
+// ── FILTERS ───────────────────────────────────────────────
+document.querySelectorAll('.pill').forEach(pill => {
+  pill.addEventListener('click', () => {
+    const filter = pill.dataset.filter;
+    const value = pill.dataset.value;
+
+    document.querySelectorAll(`.pill[data-filter="${filter}"]`).forEach(p => p.classList.remove('active'));
+    pill.classList.add('active');
+
+    if(filter === 'region') activeRegion = value;
+    if(filter === 'period') activePeriod = value;
+    if(filter === 'category') activeCategory = value;
+
+    renderAll();
+  });
+});
+
+function renderAll(){
+  renderKPIs();
+  renderBarChart();
+  renderLineChart();
+  renderDonut();
+  renderTable();
+}
+
+// ── SCROLL REVEAL ─────────────────────────────────────────
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if(e.isIntersecting){ e.target.classList.add('visible'); observer.unobserve(e.target); }
+  });
+}, {threshold:.1});
+
+document.querySelectorAll('.kpi-card, .chart-card').forEach(el => observer.observe(el));
+
+// ── EXPORT DEMO ───────────────────────────────────────────
+function exportDemo(){
+  const btn = document.querySelector('.btn-export');
+  btn.innerHTML = '<i class="ph-fill ph-check-circle"></i> Exportado!';
+  btn.style.background = '#30A46C';
+  setTimeout(() => {
+    btn.innerHTML = '<i class="ph-fill ph-download-simple"></i> Exportar';
+    btn.style.background = '';
+  }, 2000);
+}
+
+// ── RESIZE ────────────────────────────────────────────────
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(renderLineChart, 150);
+});
+
+// ── INIT ──────────────────────────────────────────────────
+window.addEventListener('load', () => {
+  setTimeout(renderAll, 100);
+});
+</script>
+</body>
+</html>
