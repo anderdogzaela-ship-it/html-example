@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diário da Enxaqueca — Protótipo Navegável</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --gold: #E8B84B;
+      --gold-dim: #C99A30;
+      --gold-glow: rgba(232,184,75,0.15);
+      --bg: #080811;
+      --surface: #10101A;
+      --surface2: #181828;
+      --surface3: #20203A;
+      --text: #E4E4F0;
+      --muted: #6060A0;
+      --dimmed: #404060;
+      --red: #E85555;
+      --green: #50E890;
+      --border: rgba(255,255,255,0.06);
+    }
+
+    body {
+      background: radial-gradient(ellipse at top, #12112a 0%, #080811 60%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Lexend', sans-serif;
+      padding: 32px 16px;
+      gap: 0;
+    }
+
+    .outer-label {
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+
+    /* ====== PHONE SHELL ====== */
+    .phone {
+      width: 375px;
+      height: 812px;
+      background: var(--bg);
+      border-radius: 52px;
+      border: 2px solid rgba(255,255,255,0.08);
+      box-shadow:
+        0 0 0 6px rgba(0,0,0,0.6),
+        0 48px 96px rgba(0,0,0,0.7),
+        inset 0 0 0 1px rgba(255,255,255,0.03);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .phone-notch {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 128px;
+      height: 30px;
+      background: var(--bg);
+      border-radius: 0 0 20px 20px;
+      border: 2px solid rgba(255,255,255,0.08);
+      border-top: none;
+      z-index: 99;
+    }
+
+    /* ====== SCREENS ====== */
+    .screen {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.32s ease;
+      overflow: hidden;
+    }
+
+    .screen.active {
+      opacity: 1;
+      pointer-events: all;
+      z-index: 10;
+    }
+
+    .scroll-body {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    .scroll-body::-webkit-scrollbar { width: 0; }
+
+    /* ====== STATUS BAR ====== */
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 28px 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+
+    .status-icons { display: flex; align-items: center; gap: 6px; }
+
+    /* ====== SCREEN HEADER ====== */
+    .screen-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 24px 14px;
+      flex-shrink: 0;
+    }
+
+    .back-btn {
+      width: 36px;
+      height: 36px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--text);
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .screen-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    /* ====== BUTTONS ====== */
+    .btn-primary {
+      background: linear-gradient(135deg, var(--gold), var(--gold-dim));
+      color: #08080E;
+      border: none;
+      border-radius: 18px;
+      padding: 17px 28px;
+      font-size: 15px;
+      font-weight: 700;
+      font-family: 'Lexend', sans-serif;
+      cursor: pointer;
+      width: 100%;
+      transition: opacity 0.2s, transform 0.15s;
+      letter-spacing: 0.01em;
+    }
+
+    .btn-primary:active { transform: scale(0.97); }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--gold);
+      border: 1px solid rgba(232,184,75,0.25);
+      border-radius: 18px;
+      padding: 15px 28px;
+      font-size: 14px;
+      font-weight: 500;
+      font-family: 'Lexend', sans-serif;
+      cursor: pointer;
+      width: 100%;
+      transition: background 0.2s;
+    }
+
+    .btn-ghost:hover { background: var(--gold-glow); }
+
+    /* ====== BOTTOM NAV ====== */
+    .nav-bar {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-around;
+      padding: 10px 0 24px;
+      flex-shrink: 0;
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      padding: 6px 20px;
+      border-radius: 10px;
+      transition: background 0.2s;
+    }
+
+    .nav-icon { font-size: 20px; color: var(--dimmed); transition: color 0.2s; }
+    .nav-label { font-size: 10px; color: var(--dimmed); font-weight: 500; transition: color 0.2s; }
+
+    .nav-item.active .nav-icon,
+    .nav-item.active .nav-label { color: var(--gold); }
+
+    /* ====== TAGS ====== */
+    .tags-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
+
+    .tag {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 12px;
+      padding: 9px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: 'Lexend', sans-serif;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .tag.on {
+      background: rgba(232,184,75,0.1);
+      border-color: rgba(232,184,75,0.4);
+      color: var(--gold);
+    }
+
+    /* ====== FORM SECTION ====== */
+    .form-block { padding: 0 24px 22px; }
+
+    .form-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      display: block;
+    }
+
+    /* ====== PAIN SLIDER ====== */
+    .pain-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 22px 20px 18px;
+    }
+
+    .pain-display {
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      gap: 4px;
+      margin-bottom: 18px;
+    }
+
+    .pain-num {
+      font-size: 60px;
+      font-weight: 700;
+      line-height: 1;
+      color: var(--red);
+      transition: color 0.25s;
+    }
+
+    .pain-denom { font-size: 22px; color: var(--dimmed); }
+
+    input[type=range] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 5px;
+      border-radius: 3px;
+      background: linear-gradient(to right, #50E890 0%, #E8B84B 50%, #E85555 100%);
+      outline: none;
+      cursor: pointer;
+      margin-bottom: 8px;
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #fff;
+      border: 3px solid var(--gold);
+      box-shadow: 0 0 10px rgba(232,184,75,0.5);
+      cursor: pointer;
+    }
+
+    .pain-scale-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      color: var(--dimmed);
+    }
+
+    /* ====== LOCATION GRID ====== */
+    .loc-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .loc-btn {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 10px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      cursor: pointer;
+      font-family: 'Lexend', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      transition: all 0.2s;
+    }
+
+    .loc-btn.on {
+      background: rgba(232,184,75,0.1);
+      border-color: rgba(232,184,75,0.4);
+      color: var(--gold);
+    }
+
+    /* ====== STAT CARDS ====== */
+    .stats-row {
+      display: flex;
+      gap: 10px;
+      padding: 0 24px 16px;
+    }
+
+    .stat-card {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 16px 14px;
+    }
+
+    .stat-val {
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--gold);
+      line-height: 1;
+    }
+
+    .stat-val.red { color: var(--red); }
+
+    .stat-lbl {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 4px;
+      line-height: 1.3;
+    }
+
+    /* ====== CRISIS ITEM ====== */
+    .crisis-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px 16px;
+    }
+
+    .crisis-badge {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 700;
+      flex-shrink: 0;
+      font-family: 'Lexend', sans-serif;
+    }
+
+    .badge-h { background: rgba(232,85,85,0.15); color: var(--red); }
+    .badge-m { background: rgba(232,184,75,0.15); color: var(--gold); }
+    .badge-l { background: rgba(80,232,144,0.12); color: var(--green); }
+
+    .crisis-info { flex: 1; min-width: 0; }
+    .crisis-date { font-size: 11px; color: var(--muted); }
+    .crisis-trigger { font-size: 13px; color: var(--text); font-weight: 500; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .crisis-dur { font-size: 12px; color: var(--dimmed); flex-shrink: 0; }
+
+    /* ====== CTA BIG BUTTON ====== */
+    .cta-log {
+      margin: 6px 24px 18px;
+      background: linear-gradient(135deg, var(--gold), var(--gold-dim));
+      border: none;
+      border-radius: 22px;
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      cursor: pointer;
+      width: calc(100% - 48px);
+      transition: opacity 0.2s, transform 0.15s;
+    }
+
+    .cta-log:active { transform: scale(0.97); }
+
+    .cta-icon {
+      width: 46px;
+      height: 46px;
+      background: rgba(0,0,0,0.18);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    .cta-text { text-align: left; }
+    .cta-title { font-size: 16px; font-weight: 700; color: #08080E; font-family: 'Lexend', sans-serif; }
+    .cta-sub { font-size: 12px; color: rgba(8,8,14,0.55); font-family: 'Lexend', sans-serif; margin-top: 2px; }
+
+    /* Pulsing ring on CTA */
+    @keyframes pulse-ring {
+      0% { box-shadow: 0 0 0 0 rgba(232,184,75,0.35); }
+      70% { box-shadow: 0 0 0 10px rgba(232,184,75,0); }
+      100% { box-shadow: 0 0 0 0 rgba(232,184,75,0); }
+    }
+
+    .pulse-anim { animation: pulse-ring 2s ease-out infinite; }
+
+    /* ====== SECTION TITLE ====== */
+    .section-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      padding: 0 24px 10px;
+    }
+
+    /* ====== CALENDAR ====== */
+    .cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      padding: 0 24px 14px;
+    }
+
+    .cal-dn {
+      text-align: center;
+      font-size: 10px;
+      color: var(--dimmed);
+      padding: 4px 0;
+      font-weight: 600;
+    }
+
+    .cal-d {
+      aspect-ratio: 1;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: var(--muted);
+      position: relative;
+      cursor: default;
+    }
+
+    .cal-d.crisis-day {
+      background: rgba(232,85,85,0.12);
+      color: var(--red);
+      font-weight: 600;
+    }
+
+    .cal-d.today {
+      background: var(--gold);
+      color: #08080E;
+      font-weight: 700;
+    }
+
+    /* ====== CHART BARS ====== */
+    .bar-chart {
+      display: flex;
+      align-items: flex-end;
+      gap: 6px;
+      height: 64px;
+      padding: 0 4px;
+    }
+
+    .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+
+    .bar-fill {
+      width: 100%;
+      border-radius: 5px 5px 0 0;
+      transition: height 0.4s ease;
+    }
+
+    .bar-red { background: linear-gradient(to top, rgba(232,85,85,0.3), rgba(232,85,85,0.7)); }
+    .bar-gold { background: linear-gradient(to top, rgba(232,184,75,0.3), rgba(232,184,75,0.7)); }
+    .bar-label { font-size: 9px; color: var(--dimmed); }
+
+    /* ====== PDF PREVIEW ====== */
+    .pdf-card {
+      margin: 0 24px 16px;
+      background: #f0f0f8;
+      border-radius: 18px;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .pdf-inner { opacity: 0.4; }
+
+    .pdf-title { font-size: 14px; font-weight: 700; color: #1a1a30; margin-bottom: 4px; }
+    .pdf-sub { font-size: 10px; color: #555580; margin-bottom: 14px; }
+
+    .pdf-bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 5px;
+      height: 70px;
+      margin-bottom: 12px;
+    }
+
+    .pdf-b { flex: 1; border-radius: 4px 4px 0 0; background: linear-gradient(to top, #c8a030, #e8c055); }
+
+    .pdf-line { height: 4px; border-radius: 2px; background: #ddddf0; margin-bottom: 5px; }
+
+    .pdf-lock-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(8,8,17,0.75);
+      backdrop-filter: blur(5px);
+      border-radius: 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .lock-icon {
+      width: 52px;
+      height: 52px;
+      background: rgba(232,184,75,0.15);
+      border: 1px solid rgba(232,184,75,0.3);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      color: var(--gold);
+    }
+
+    .lock-title { font-size: 15px; font-weight: 700; color: var(--text); }
+    .lock-sub { font-size: 12px; color: var(--muted); text-align: center; padding: 0 20px; line-height: 1.5; }
+
+    .lock-cta {
+      background: linear-gradient(135deg, var(--gold), var(--gold-dim));
+      color: #08080E;
+      border: none;
+      border-radius: 12px;
+      padding: 11px 24px;
+      font-size: 13px;
+      font-weight: 700;
+      font-family: 'Lexend', sans-serif;
+      cursor: pointer;
+      margin-top: 4px;
+    }
+
+    /* ====== PREMIUM BADGE ====== */
+    .badge-premium {
+      background: linear-gradient(135deg, var(--gold), var(--gold-dim));
+      color: #08080E;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-left: auto;
+    }
+
+    /* ====== FEATURE ROW ====== */
+    .feature-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      font-size: 13px;
+      color: var(--text);
+    }
+
+    .fcheck {
+      width: 24px;
+      height: 24px;
+      background: rgba(232,184,75,0.12);
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--gold);
+      font-size: 11px;
+      flex-shrink: 0;
+    }
+
+    /* ====== PLAN CARD ====== */
+    .plan-card {
+      margin: 0 24px 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 18px 20px;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+    }
+
+    .plan-card.on {
+      border-color: rgba(232,184,75,0.5);
+      background: rgba(232,184,75,0.05);
+    }
+
+    .plan-popular {
+      position: absolute;
+      top: -9px;
+      right: 18px;
+      background: linear-gradient(135deg, var(--gold), var(--gold-dim));
+      color: #08080E;
+      font-size: 9px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .plan-name { font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 4px; }
+
+    .plan-price {
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .plan-period { font-size: 14px; color: var(--muted); font-weight: 400; }
+    .plan-save { font-size: 12px; color: var(--green); margin-top: 4px; font-weight: 500; }
+
+    /* ====== SPLASH SCREEN ====== */
+    #splash {
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+    }
+
+    .splash-logo {
+      width: 88px;
+      height: 88px;
+      background: rgba(232,184,75,0.1);
+      border: 1px solid rgba(232,184,75,0.25);
+      border-radius: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 38px;
+      margin-bottom: 28px;
+    }
+
+    .splash-headline {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text);
+      text-align: center;
+      line-height: 1.2;
+      margin-bottom: 12px;
+    }
+
+    .splash-sub {
+      font-size: 14px;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.6;
+      padding: 0 32px;
+      margin-bottom: 48px;
+    }
+
+    .splash-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
+      padding: 0 28px;
+    }
+
+    .splash-footer {
+      position: absolute;
+      bottom: 40px;
+      font-size: 11px;
+      color: var(--dimmed);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* ====== OUTER UI ====== */
+    .dots-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 22px;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--surface3);
+      cursor: pointer;
+      transition: background 0.2s, transform 0.2s;
+    }
+
+    .dot.on { background: var(--gold); transform: scale(1.2); }
+
+    .restart-btn {
+      margin-top: 10px;
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.08);
+      color: var(--dimmed);
+      border-radius: 10px;
+      padding: 8px 20px;
+      font-size: 12px;
+      font-family: 'Lexend', sans-serif;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .restart-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+    /* Fade-in animation for screen entry elements */
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .screen.active > * {
+      animation: rise 0.35s ease forwards;
+    }
+  </style>
+</head>
+<body>
+
+  <p class="outer-label"><i class="fa-solid fa-mobile-screen-button"></i> &nbsp;Diário da Enxaqueca — Protótipo Navegável</p>
+
+  <div class="phone">
+    <div class="phone-notch"></div>
+
+    <!-- =========================================================
+         SCREEN 1: SPLASH
+    ========================================================= -->
+    <div class="screen active" id="s-splash">
+      <div class="status-bar">
+        <span>9:41</span>
+        <span class="status-icons">
+          <i class="fa-solid fa-signal"></i>
+          <i class="fa-solid fa-wifi"></i>
+          <i class="fa-solid fa-battery-full"></i>
+        </span>
+      </div>
+
+      <div class="splash-logo">
+        <i class="fa-solid fa-head-side-cough" style="color:var(--gold);"></i>
+      </div>
+
+      <div class="splash-headline">Diário da<br>Enxaqueca</div>
+      <div class="splash-sub">Regista as tuas crises em segundos.<br>Mostra ao médico o que importa.</div>
+
+      <div class="splash-actions">
+        <button class="btn-primary" onclick="go('s-home')">Entrar na conta</button>
+        <button class="btn-ghost" onclick="go('s-home')">Criar conta gratuita</button>
+      </div>
+
+      <div class="splash-footer">
+        <i class="fa-solid fa-shield-halved" style="color:var(--gold);"></i>
+        Sem publicidade. Dados protegidos por RGPD.
+      </div>
+    </div>
+
+    <!-- =========================================================
+         SCREEN 2: HOME DASHBOARD
+    ========================================================= -->
+    <div class="screen" id="s-home">
+      <div class="status-bar">
+        <span>9:41</span>
+        <span class="status-icons">
+          <i class="fa-solid fa-signal"></i>
+          <i class="fa-solid fa-wifi"></i>
+          <i class="fa-solid fa-battery-full"></i>
+        </span>
+      </div>
+
+      <div style="padding:8px 24px 14px;">
+        <div style="font-size:13px;color:var(--muted);margin-bottom:3px;">Bom dia</div>
+        <div style="font-size:22px;font-weight:700;color:var(--text);">Marcelo</div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-val">7</div>
+          <div class="stat-lbl">Crises este mês</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val">3.2h</div>
+          <div class="stat-lbl">Duração média</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val red">8</div>
+          <div class="stat-lbl">Intensidade média</div>
+        </div>
+      </div>
+
+      <button class="cta-log pulse-anim" onclick="go('s-log')">
+        <div class="cta-icon"><i class="fa-solid fa-bolt"></i></div>
+        <div class="cta-text">
+          <div class="cta-title">Registar crise agora</div>
+          <div class="cta-sub">Em menos de 20 segundos</div>
+        </div>
+      </button>
+
+      <div class="section-title">Últimas crises</div>
+
+      <div style="padding:0 24px;display:flex;flex-direction:column;gap:10px;">
+        <div class="crisis-item">
+          <div class="crisis-badge badge-h">8</div>
+          <div class="crisis-info">
+            <div class="crisis-date">Hoje · 07:30</div>
+            <div class="crisis-trigger">Sono · Stress · Lado esquerdo</div>
+          </div>
+          <div class="crisis-dur">4h</div>
+        </div>
+        <div class="crisis-item">
+          <div class="crisis-badge badge-m">6</div>
+          <div class="crisis-info">
+            <div class="crisis-date">18 Jun · 14:00</div>
+            <div class="crisis-trigger">Ecrã · Meteorologia</div>
+          </div>
+          <div class="crisis-dur">2h</div>
+        </div>
+        <div class="crisis-item">
+          <div class="crisis-badge badge-l">4</div>
+          <div class="crisis-info">
+            <div class="crisis-date">15 Jun · 19:15</div>
+            <div class="crisis-trigger">Alimentação</div>
+          </div>
+          <div class="crisis-dur">1.5h</div>
+        </div>
+      </div>
+
+      <div style="flex:1;"></div>
+
+      <div class="nav-bar">
+        <div class="nav-item active">
+          <i class="fa-solid fa-house nav-icon"></i>
+          <span class="nav-label">Início</span>
+        </div>
+        <div class="nav-item" onclick="go('s-history')">
+          <i class="fa-solid fa-calendar-days nav-icon"></i>
+          <span class="nav-label">Histórico</span>
+        </div>
+        <div class="nav-item" onclick="go('s-pdf')">
+          <i class="fa-solid fa-file-medical nav-icon"></i>
+          <span class="nav-label">Relatório</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================================================
+         SCREEN 3: LOG CRISIS
+    ========================================================= -->
+    <div class="screen" id="s-log">
+      <div class="status-bar">
+        <span>9:41</span>
+        <span class="status-icons"><i class="fa-solid fa-signal"></i></span>
+      </div>
+
+      <div class="screen-header">
+        <button class="back-btn" onclick="go('s-home')">
+          <i class="fa-solid fa-chevron-left"></i>
+        </button>
+        <div class="screen-title">Registar crise</div>
+      </div>
+
+      <div class="scroll-body" style="padding-bottom:24px;">
+        <div class="form-block">
+          <span class="form-label">Intensidade da dor</span>
+          <div class="pain-card">
+            <div class="pain-display">
+              <span class="pain-num" id="painNum">7</span>
+              <span class="pain-denom">&thinsp;/10</span>
+            </div>
+            <input type="range" min="1" max="10" value="7" id="painSlider"
+                   oninput="onPain(this.value)">
+            <div class="pain-scale-labels">
+              <span>Leve</span>
+              <span>Moderada</span>
+              <span>Intensa</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-block">
+          <span class="form-label">Localização</span>
+          <div class="loc-grid">
+            <button class="loc-btn on" onclick="pickLoc(this)">
+              <i class="fa-solid fa-circle-half-stroke"></i> Esquerdo
+            </button>
+            <button class="loc-btn" onclick="pickLoc(this)">
+              <i class="fa-solid fa-circle-half-stroke fa-flip-horizontal"></i> Direito
+            </button>
+            <button class="loc-btn" onclick="pickLoc(this)">
+              <i class="fa-solid fa-circle-dot"></i> Frontal
+            </button>
+            <button class="loc-btn" onclick="pickLoc(this)">
+              <i class="fa-solid fa-arrow-down"></i> Nuca
+            </button>
+          </div>
+        </div>
+
+        <div class="form-block">
+          <span class="form-label">Gatilhos</span>
+          <div class="tags-wrap">
+            <button class="tag on" onclick="tog(this)"><i class="fa-solid fa-moon"></i> Sono</button>
+            <button class="tag" onclick="tog(this)"><i class="fa-solid fa-brain"></i> Stress</button>
+            <button class="tag on" onclick="tog(this)"><i class="fa-solid fa-cloud-rain"></i> Meteorologia</button>
+            <button class="tag" onclick="tog(this)"><i class="fa-solid fa-utensils"></i> Alimentação</button>
+            <button class="tag" onclick="tog(this)"><i class="fa-solid fa-display"></i> Ecrã</button>
+            <button class="tag" onclick="tog(this)"><i class="fa-solid fa-wine-glass"></i> Álcool</button>
+          </div>
+        </div>
+
+        <div class="form-block">
+          <span class="form-label">Sintomas</span>
+          <div class="tags-wrap">
+            <button class="tag" onclick="tog(this)"><i class="fa-solid fa-eye"></i> Aura visual</button>
+            <button class="tag on" onclick="tog(this)"><i class="fa-solid fa-face-nauseated"></i> Náusea</button>
+            <button class="tag on" onclick="tog(this)"><i class="fa-solid fa-sun"></i> Fotofobia</button>
+            <button class="tag" onclick="tog(this)"><i class="fa-solid fa-volume-high"></i> Fonofobia</button>
+          </div>
+        </div>
+
+        <div class="form-block">
+          <span class="form-label">Medicação</span>
+          <div class="tags-wrap">
+            <button class="tag on" onclick="tog(this)"><i class="fa-solid fa-pills"></i> Ibuprofeno</button>
+            <button class="tag" onclick="tog(this)"><i class="fa-solid fa-capsules"></i> Triptano</button>
+            <button class="tag" onclick="tog(this)"><i class="fa-solid fa-tablets"></i> Paracetamol</button>
+            <button class="tag" onclick="tog(this)"><i class="fa-solid fa-plus"></i> Outro</button>
+          </div>
+        </div>
+
+        <div style="padding:0 24px;">
+          <button class="btn-primary" onclick="go('s-home')">
+            <i class="fa-solid fa-floppy-disk"></i> &nbsp;Guardar registo
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================================================
+         SCREEN 4: HISTORY
+    ========================================================= -->
+    <div class="screen" id="s-history">
+      <div class="status-bar">
+        <span>9:41</span>
+        <span class="status-icons"><i class="fa-solid fa-signal"></i></span>
+      </div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 24px 16px;">
+        <div class="screen-title" style="padding:0;">Junho 2026</div>
+        <div style="display:flex;gap:8px;">
+          <div style="width:32px;height:32px;background:var(--surface2);border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;cursor:pointer;">
+            <i class="fa-solid fa-chevron-left"></i>
+          </div>
+          <div style="width:32px;height:32px;background:var(--surface2);border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;cursor:pointer;">
+            <i class="fa-solid fa-chevron-right"></i>
+          </div>
+        </div>
+      </div>
+
+      <div class="cal-grid">
+        <div class="cal-dn">Dom</div>
+        <div class="cal-dn">Seg</div>
+        <div class="cal-dn">Ter</div>
+        <div class="cal-dn">Qua</div>
+        <div class="cal-dn">Qui</div>
+        <div class="cal-dn">Sex</div>
+        <div class="cal-dn">Sáb</div>
+
+        <div class="cal-d"></div>
+        <div class="cal-d">2</div>
+        <div class="cal-d crisis-day">3</div>
+        <div class="cal-d">4</div>
+        <div class="cal-d crisis-day">5</div>
+        <div class="cal-d">6</div>
+        <div class="cal-d">7</div>
+
+        <div class="cal-d">8</div>
+        <div class="cal-d">9</div>
+        <div class="cal-d crisis-day">10</div>
+        <div class="cal-d">11</div>
+        <div class="cal-d">12</div>
+        <div class="cal-d crisis-day">13</div>
+        <div class="cal-d">14</div>
+
+        <div class="cal-d crisis-day">15</div>
+        <div class="cal-d">16</div>
+        <div class="cal-d">17</div>
+        <div class="cal-d crisis-day">18</div>
+        <div class="cal-d">19</div>
+        <div class="cal-d">20</div>
+        <div class="cal-d today">21</div>
+      </div>
+
+      <div style="padding:0 24px;display:flex;gap:16px;margin-bottom:14px;">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <div style="width:10px;height:10px;border-radius:50%;background:var(--red);opacity:0.7;"></div>
+          <span style="font-size:11px;color:var(--muted);">Crise registada</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <div style="width:10px;height:10px;border-radius:50%;background:var(--gold);"></div>
+          <span style="font-size:11px;color:var(--muted);">Hoje</span>
+        </div>
+      </div>
+
+      <div class="section-title">Padrões do mês</div>
+
+      <div style="padding:0 24px;display:flex;flex-direction:column;gap:10px;padding-bottom:16px;">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:18px;">
+          <div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:14px;text-transform:uppercase;letter-spacing:0.08em;">Frequência semanal</div>
+          <div class="bar-chart">
+            <div class="bar-col">
+              <div class="bar-fill bar-red" style="height:38px;"></div>
+              <span class="bar-label">S1</span>
+            </div>
+            <div class="bar-col">
+              <div class="bar-fill bar-red" style="height:46px;"></div>
+              <span class="bar-label">S2</span>
+            </div>
+            <div class="bar-col">
+              <div class="bar-fill bar-gold" style="height:54px;"></div>
+              <span class="bar-label">S3</span>
+            </div>
+            <div class="bar-col">
+              <div class="bar-fill bar-red" style="height:24px;"></div>
+              <span class="bar-label">S4</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:16px;display:flex;align-items:center;gap:14px;">
+          <div style="width:40px;height:40px;background:rgba(232,184,75,0.1);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <i class="fa-solid fa-moon" style="color:var(--gold);font-size:18px;"></i>
+          </div>
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--text);">Gatilho mais frequente</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:3px;">Sono — presente em 5 das 7 crises</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="flex:1;"></div>
+
+      <div class="nav-bar">
+        <div class="nav-item" onclick="go('s-home')">
+          <i class="fa-solid fa-house nav-icon"></i>
+          <span class="nav-label">Início</span>
+        </div>
+        <div class="nav-item active">
+          <i class="fa-solid fa-calendar-days nav-icon"></i>
+          <span class="nav-label">Histórico</span>
+        </div>
+        <div class="nav-item" onclick="go('s-pdf')">
+          <i class="fa-solid fa-file-medical nav-icon"></i>
+          <span class="nav-label">Relatório</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================================================
+         SCREEN 5: PDF PREVIEW (PREMIUM GATE)
+    ========================================================= -->
+    <div class="screen" id="s-pdf">
+      <div class="status-bar">
+        <span>9:41</span>
+        <span class="status-icons"><i class="fa-solid fa-signal"></i></span>
+      </div>
+
+      <div class="screen-header">
+        <div class="screen-title">Relatório médico</div>
+        <div class="badge-premium">Premium</div>
+      </div>
+
+      <div class="pdf-card">
+        <div class="pdf-inner">
+          <div class="pdf-title">Relatório de Enxaqueca — Junho 2026</div>
+          <div class="pdf-sub">Marcelo S. · Neurologista: Dr. Costa · 7 crises registadas</div>
+          <div class="pdf-bars">
+            <div class="pdf-b" style="height:40%;"></div>
+            <div class="pdf-b" style="height:60%;"></div>
+            <div class="pdf-b" style="height:85%;"></div>
+            <div class="pdf-b" style="height:35%;"></div>
+            <div class="pdf-b" style="height:70%;"></div>
+            <div class="pdf-b" style="height:50%;"></div>
+          </div>
+          <div class="pdf-line" style="width:100%;"></div>
+          <div class="pdf-line" style="width:70%;"></div>
+          <div class="pdf-line" style="width:88%;"></div>
+          <div class="pdf-line" style="width:55%;"></div>
+        </div>
+
+        <div class="pdf-lock-overlay">
+          <div class="lock-icon"><i class="fa-solid fa-lock"></i></div>
+          <div class="lock-title">Funcionalidade Premium</div>
+          <div class="lock-sub">Exporta o teu histórico em PDF profissional para partilhar com o neurologista.</div>
+          <button class="lock-cta" onclick="go('s-sub')">Ver planos</button>
+        </div>
+      </div>
+
+      <div style="padding:0 24px;margin-bottom:16px;">
+        <div style="background:var(--surface);border:1px solid rgba(232,184,75,0.15);border-radius:18px;padding:16px;">
+          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px;display:flex;align-items:center;gap:8px;">
+            <i class="fa-solid fa-star" style="color:var(--gold);"></i> O relatório inclui
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div class="feature-row">
+              <div class="fcheck"><i class="fa-solid fa-chart-bar"></i></div>
+              Gráficos de frequência e intensidade
+            </div>
+            <div class="feature-row">
+              <div class="fcheck"><i class="fa-solid fa-pills"></i></div>
+              Eficácia da medicação ao longo do tempo
+            </div>
+            <div class="feature-row">
+              <div class="fcheck"><i class="fa-solid fa-list-check"></i></div>
+              Histórico detalhado de crises e gatilhos
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="flex:1;"></div>
+
+      <div class="nav-bar">
+        <div class="nav-item" onclick="go('s-home')">
+          <i class="fa-solid fa-house nav-icon"></i>
+          <span class="nav-label">Início</span>
+        </div>
+        <div class="nav-item" onclick="go('s-history')">
+          <i class="fa-solid fa-calendar-days nav-icon"></i>
+          <span class="nav-label">Histórico</span>
+        </div>
+        <div class="nav-item active">
+          <i class="fa-solid fa-file-medical nav-icon"></i>
+          <span class="nav-label">Relatório</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================================================
+         SCREEN 6: SUBSCRIPTION
+    ========================================================= -->
+    <div class="screen" id="s-sub">
+      <div class="status-bar">
+        <span>9:41</span>
+        <span class="status-icons"><i class="fa-solid fa-signal"></i></span>
+      </div>
+
+      <div class="screen-header">
+        <button class="back-btn" onclick="go('s-pdf')">
+          <i class="fa-solid fa-chevron-left"></i>
+        </button>
+        <div class="screen-title">Plano Premium</div>
+      </div>
+
+      <div style="padding:0 24px 18px;font-size:13px;color:var(--muted);line-height:1.5;">
+        Desbloqueia relatórios PDF e estatísticas avançadas. Cancela quando quiseres.
+      </div>
+
+      <div class="plan-card" onclick="pickPlan(this)">
+        <div class="plan-name">Mensal</div>
+        <div class="plan-price">€2.99 <span class="plan-period">/ mês</span></div>
+      </div>
+
+      <div class="plan-card on" onclick="pickPlan(this)">
+        <div class="plan-popular">Mais popular</div>
+        <div class="plan-name">Anual</div>
+        <div class="plan-price">€19.99 <span class="plan-period">/ ano</span></div>
+        <div class="plan-save"><i class="fa-solid fa-tag"></i> Equivale a €1.67/mês — poupes 44%</div>
+      </div>
+
+      <div style="padding:6px 24px 20px;display:flex;flex-direction:column;gap:11px;">
+        <div class="feature-row">
+          <div class="fcheck"><i class="fa-solid fa-check"></i></div>
+          Exportação de PDF para o médico
+        </div>
+        <div class="feature-row">
+          <div class="fcheck"><i class="fa-solid fa-check"></i></div>
+          Estatísticas e gráficos avançados
+        </div>
+        <div class="feature-row">
+          <div class="fcheck"><i class="fa-solid fa-check"></i></div>
+          Backup automático na nuvem
+        </div>
+        <div class="feature-row">
+          <div class="fcheck"><i class="fa-solid fa-check"></i></div>
+          Sem publicidade — para sempre
+        </div>
+      </div>
+
+      <div style="flex:1;"></div>
+
+      <div style="padding:0 24px 32px;display:flex;flex-direction:column;gap:10px;">
+        <button class="btn-primary" onclick="go('s-home')">Subscrever agora</button>
+        <button class="btn-ghost" onclick="go('s-home')">
+          <i class="fa-solid fa-rotate-right"></i> &nbsp;Restaurar compra
+        </button>
+        <div style="text-align:center;font-size:10px;color:var(--dimmed);margin-top:4px;">
+          Gerido via RevenueCat · Privacidade RGPD protegida
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /phone -->
+
+  <div class="dots-row" id="dotsRow">
+    <div class="dot on"  onclick="go('s-splash')"></div>
+    <div class="dot"     onclick="go('s-home')"></div>
+    <div class="dot"     onclick="go('s-log')"></div>
+    <div class="dot"     onclick="go('s-history')"></div>
+    <div class="dot"     onclick="go('s-pdf')"></div>
+    <div class="dot"     onclick="go('s-sub')"></div>
+  </div>
+
+  <button class="restart-btn" onclick="go('s-splash')">
+    <i class="fa-solid fa-rotate-right"></i> Reiniciar demo
+  </button>
+
+  <script>
+    const SCREENS = ['s-splash','s-home','s-log','s-history','s-pdf','s-sub'];
+    let current = 's-splash';
+
+    function go(id) {
+      if (id === current) return;
+      document.getElementById(current).classList.remove('active');
+      document.getElementById(id).classList.add('active');
+      current = id;
+
+      const dots = document.querySelectorAll('.dot');
+      const idx = SCREENS.indexOf(id);
+      dots.forEach((d, i) => d.classList.toggle('on', i === idx));
+    }
+
+    const PAIN_COLORS = {
+      1:'#50E890',2:'#7BE870',3:'#A8E850',4:'#D0E840',
+      5:'#E8D840',6:'#E8B84B',7:'#E8904B',8:'#E8704B',
+      9:'#E85A4B',10:'#E84B4B'
+    };
+
+    function onPain(v) {
+      const n = document.getElementById('painNum');
+      n.textContent = v;
+      n.style.color = PAIN_COLORS[v] || '#E84B4B';
+    }
+
+    function tog(el) { el.classList.toggle('on'); }
+
+    function pickLoc(el) {
+      document.querySelectorAll('.loc-btn').forEach(b => b.classList.remove('on'));
+      el.classList.add('on');
+    }
+
+    function pickPlan(el) {
+      document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('on'));
+      el.classList.add('on');
+    }
+  </script>
+</body>
+</html>
