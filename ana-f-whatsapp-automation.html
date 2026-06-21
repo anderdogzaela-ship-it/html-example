@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistema de Automacao WhatsApp</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --gold: #C9A227;
+  --gold-light: #E8C547;
+  --gold-dim: rgba(201,162,39,0.18);
+  --gold-border: rgba(201,162,39,0.25);
+  --bg: #0D0D0D;
+  --bg-card: #161616;
+  --bg-lift: #202020;
+  --text: #F0F0F0;
+  --muted: #888;
+  --wa-header: #075E54;
+  --wa-green: #128C7E;
+  --wa-light: #25D366;
+  --wa-bg: #ECE5DD;
+  --wa-sent: #DCF8C6;
+  --wa-recv: #FFFFFF;
+}
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* ── HEADER ── */
+.header {
+  background: linear-gradient(90deg, #0D0D0D 0%, #161616 100%);
+  border-bottom: 1px solid var(--gold-border);
+  padding: 18px 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.brand-icon {
+  width: 46px;
+  height: 46px;
+  background: linear-gradient(135deg, var(--gold) 0%, #9B7A0F 100%);
+  border-radius: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #000;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.brand-name {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.brand-sub {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 600;
+  margin-top: 1px;
+}
+
+.api-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(37,211,102,0.08);
+  border: 1px solid rgba(37,211,102,0.25);
+  border-radius: 100px;
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--wa-light);
+}
+
+.pulse {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--wa-light);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+/* ── LAYOUT ── */
+.layout {
+  display: grid;
+  grid-template-columns: 260px 400px 1fr;
+  gap: 32px;
+  padding: 36px 40px;
+  max-width: 1320px;
+  margin: 0 auto;
+  align-items: start;
+}
+
+/* ── LEFT PANEL ── */
+.left-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.panel-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 2px;
+}
+
+.metric-card {
+  background: var(--bg-card);
+  border: 1px solid var(--gold-border);
+  border-radius: 16px;
+  padding: 18px 20px;
+  transition: border-color .25s;
+}
+
+.metric-card:hover { border-color: rgba(201,162,39,.5); }
+
+.metric-val {
+  font-size: 34px;
+  font-weight: 900;
+  color: var(--gold-light);
+  line-height: 1;
+}
+
+.metric-unit {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.metric-lbl {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 600;
+  margin-top: 5px;
+}
+
+.metric-trend {
+  font-size: 11px;
+  color: var(--wa-light);
+  font-weight: 700;
+  margin-top: 3px;
+}
+
+/* Flow tracker */
+.flow-tracker {
+  background: var(--bg-card);
+  border: 1px solid var(--gold-border);
+  border-radius: 16px;
+  padding: 18px 20px;
+  margin-top: 4px;
+}
+
+.tracker-title {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+
+.flow-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  margin-bottom: 6px;
+  transition: all .25s;
+}
+
+.flow-row.active {
+  background: var(--gold-dim);
+  border: 1px solid var(--gold-border);
+}
+
+.flow-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #444;
+  flex-shrink: 0;
+  transition: background .25s;
+}
+
+.flow-row.active .flow-dot { background: var(--gold); }
+
+.flow-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: #555;
+  transition: color .25s;
+}
+
+.flow-row.active .flow-name { color: var(--gold-light); }
+
+/* ── PHONE CENTER ── */
+.phone-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
+.phone {
+  width: 370px;
+  height: 720px;
+  background: #111;
+  border-radius: 46px;
+  border: 3px solid #2a2a2a;
+  box-shadow:
+    0 0 0 1px #444,
+    0 40px 80px rgba(0,0,0,.7),
+    0 0 80px rgba(201,162,39,.07);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* WhatsApp header */
+.wa-top {
+  background: var(--wa-header);
+  padding: 10px 14px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.wa-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 900;
+  color: #000;
+  flex-shrink: 0;
+}
+
+.wa-info { flex: 1; }
+
+.wa-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.wa-status {
+  font-size: 11px;
+  color: rgba(255,255,255,.7);
+}
+
+.wa-actions {
+  display: flex;
+  gap: 16px;
+  color: rgba(255,255,255,.8);
+  font-size: 17px;
+}
+
+/* Messages area */
+.wa-msgs {
+  flex: 1;
+  background: var(--wa-bg);
+  background-image: url("data:image/svg+xml,%3Csvg width='52' height='52' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23b8b0a8' fill-opacity='.12'%3E%3Cpath d='M26 0l4 8H22l4-8zm0 52l4-8H22l4 8zM0 26l8-4v8l-8-4zm52 0l-8-4v8l8-4z'/%3E%3C/g%3E%3C/svg%3E");
+  overflow-y: auto;
+  padding: 12px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.wa-msgs::-webkit-scrollbar { width: 3px; }
+.wa-msgs::-webkit-scrollbar-thumb { background: rgba(0,0,0,.15); border-radius: 2px; }
+
+.date-chip {
+  align-self: center;
+  background: rgba(0,0,0,.14);
+  color: #666;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 12px;
+  border-radius: 100px;
+  margin: 4px 0 6px;
+}
+
+.msg {
+  max-width: 82%;
+  padding: 7px 11px 4px;
+  border-radius: 10px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  animation: msgIn .28s ease;
+  white-space: pre-wrap;
+}
+
+@keyframes msgIn {
+  from { opacity:0; transform:translateY(7px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+.msg-bot {
+  background: var(--wa-recv);
+  color: #222;
+  align-self: flex-start;
+  border-top-left-radius: 2px;
+  box-shadow: 0 1px 2px rgba(0,0,0,.12);
+}
+
+.msg-user {
+  background: var(--wa-sent);
+  color: #222;
+  align-self: flex-end;
+  border-top-right-radius: 2px;
+  box-shadow: 0 1px 2px rgba(0,0,0,.12);
+}
+
+.msg-time {
+  font-size: 10px;
+  color: #999;
+  text-align: right;
+  margin-top: 2px;
+}
+
+.msg-user .msg-time { color: #6aad6a; }
+
+.typing {
+  background: var(--wa-recv);
+  border-radius: 10px;
+  border-top-left-radius: 2px;
+  padding: 10px 14px;
+  align-self: flex-start;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  box-shadow: 0 1px 2px rgba(0,0,0,.12);
+  animation: msgIn .28s ease;
+}
+
+.tdot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #aaa;
+  animation: bounce 1.3s infinite;
+}
+
+.tdot:nth-child(2) { animation-delay: .18s; }
+.tdot:nth-child(3) { animation-delay: .36s; }
+
+@keyframes bounce {
+  0%,60%,100% { transform:translateY(0); opacity:.5; }
+  30%          { transform:translateY(-6px); opacity:1; }
+}
+
+/* Quick replies */
+.wa-qr {
+  background: var(--wa-bg);
+  padding: 8px 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  border-top: 1px solid rgba(0,0,0,.1);
+  flex-shrink: 0;
+  min-height: 54px;
+  align-items: center;
+}
+
+.qr {
+  background: #fff;
+  border: 1.5px solid var(--wa-green);
+  color: var(--wa-green);
+  border-radius: 100px;
+  padding: 5px 12px;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .18s;
+  font-family: 'Nunito', sans-serif;
+  white-space: nowrap;
+}
+
+.qr:hover { background: var(--wa-green); color: #fff; }
+
+/* Restart */
+.restart-btn {
+  background: transparent;
+  border: 1.5px solid var(--gold-border);
+  color: var(--gold);
+  border-radius: 100px;
+  padding: 10px 24px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .25s;
+  font-family: 'Nunito', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.restart-btn:hover {
+  background: var(--gold-dim);
+  border-color: var(--gold);
+}
+
+/* ── RIGHT PANEL ── */
+.right-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.kw-card {
+  background: var(--bg-card);
+  border: 1px solid var(--gold-border);
+  border-radius: 14px;
+  padding: 15px 18px;
+  transition: all .25s;
+}
+
+.kw-card:hover { border-color: rgba(201,162,39,.45); }
+.kw-card.lit { border-color: var(--gold); background: rgba(201,162,39,.04); }
+
+.kw-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.kw-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.kw-badge {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 100px;
+}
+
+.kw-badge.on {
+  background: rgba(37,211,102,.12);
+  color: var(--wa-light);
+}
+
+.kw-badge.lit-badge {
+  background: var(--gold-dim);
+  color: var(--gold-light);
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.tag {
+  font-size: 10.5px;
+  font-weight: 700;
+  background: var(--bg-lift);
+  color: var(--muted);
+  border-radius: 6px;
+  padding: 3px 8px;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 1100px) {
+  .layout { grid-template-columns: 1fr; padding: 20px; }
+  .left-panel, .right-panel { display: none; }
+  .phone-wrap { margin: 0 auto; }
+}
+
+@media (max-width: 480px) {
+  .phone { width: 330px; height: 640px; }
+  .header { padding: 14px 20px; }
+}
+
+/* reveal */
+.fade { opacity:0; transform:translateY(18px); transition:opacity .5s ease,transform .5s ease; }
+.fade.in { opacity:1; transform:translateY(0); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="brand">
+    <div class="brand-icon"><i class="fa-solid fa-comments"></i></div>
+    <div>
+      <div class="brand-name">Sistema de Automacao WhatsApp</div>
+      <div class="brand-sub">Demo interativo com maquina de estados e contexto persistente</div>
+    </div>
+  </div>
+  <div class="api-badge">
+    <span class="pulse"></span>
+    API Oficial Meta
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- LEFT -->
+  <div class="left-panel fade" id="leftPanel">
+    <div class="panel-label">Metricas de hoje</div>
+
+    <div class="metric-card">
+      <div class="metric-val">847</div>
+      <div class="metric-lbl">Mensagens respondidas</div>
+      <div class="metric-trend"><i class="fa-solid fa-arrow-trend-up"></i> +23% vs ontem</div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-val">8<span class="metric-unit"> min</span></div>
+      <div class="metric-lbl">Tempo medio de resolucao</div>
+      <div class="metric-trend"><i class="fa-solid fa-clock"></i> Era 4 horas no atendimento manual</div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-val">94<span class="metric-unit">%</span></div>
+      <div class="metric-lbl">Resolvido sem intervencao humana</div>
+      <div class="metric-trend"><i class="fa-solid fa-robot"></i> 6% transferidos para atendente</div>
+    </div>
+
+    <div class="flow-tracker">
+      <div class="tracker-title">Estado da conversa ativa</div>
+      <div class="flow-row" id="f-inicio">
+        <div class="flow-dot"></div>
+        <div class="flow-name">Inicio</div>
+      </div>
+      <div class="flow-row" id="f-menu">
+        <div class="flow-dot"></div>
+        <div class="flow-name">Menu principal</div>
+      </div>
+      <div class="flow-row" id="f-precos">
+        <div class="flow-dot"></div>
+        <div class="flow-name">Consulta de precos</div>
+      </div>
+      <div class="flow-row" id="f-suporte">
+        <div class="flow-dot"></div>
+        <div class="flow-name">Fluxo de suporte</div>
+      </div>
+      <div class="flow-row" id="f-horario">
+        <div class="flow-dot"></div>
+        <div class="flow-name">Horario de atendimento</div>
+      </div>
+      <div class="flow-row" id="f-transfer">
+        <div class="flow-dot"></div>
+        <div class="flow-name">Transferencia humana</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CENTER -->
+  <div class="phone-wrap">
+    <div class="phone">
+      <div class="wa-top">
+        <div class="wa-avatar">L</div>
+        <div class="wa-info">
+          <div class="wa-name">Loja Ana</div>
+          <div class="wa-status" id="botStatus">Online</div>
+        </div>
+        <div class="wa-actions">
+          <i class="fa-solid fa-video"></i>
+          <i class="fa-solid fa-phone"></i>
+          <i class="fa-solid fa-ellipsis-vertical"></i>
+        </div>
+      </div>
+
+      <div class="wa-msgs" id="msgs">
+        <div class="date-chip">Hoje</div>
+      </div>
+
+      <div class="wa-qr" id="qr"></div>
+    </div>
+
+    <button class="restart-btn" onclick="restart()">
+      <i class="fa-solid fa-rotate-left"></i>
+      Reiniciar demo
+    </button>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="right-panel fade" id="rightPanel">
+    <div class="panel-label">Configuracao de fluxos</div>
+
+    <div class="kw-card" id="kw-boasvindas">
+      <div class="kw-head">
+        <div class="kw-title"><i class="fa-solid fa-hand-wave" style="color:var(--gold);margin-right:6px;font-size:12px;"></i>Boas-vindas</div>
+        <span class="kw-badge on">Ativo</span>
+      </div>
+      <div class="tags">
+        <span class="tag">oi</span>
+        <span class="tag">ola</span>
+        <span class="tag">bom dia</span>
+        <span class="tag">boa tarde</span>
+        <span class="tag">inicio</span>
+      </div>
+    </div>
+
+    <div class="kw-card" id="kw-precos">
+      <div class="kw-head">
+        <div class="kw-title"><i class="fa-solid fa-tag" style="color:var(--gold);margin-right:6px;font-size:12px;"></i>Precos e produtos</div>
+        <span class="kw-badge on">Ativo</span>
+      </div>
+      <div class="tags">
+        <span class="tag">preco</span>
+        <span class="tag">valor</span>
+        <span class="tag">quanto custa</span>
+        <span class="tag">tabela</span>
+        <span class="tag">plano</span>
+      </div>
+    </div>
+
+    <div class="kw-card" id="kw-suporte">
+      <div class="kw-head">
+        <div class="kw-title"><i class="fa-solid fa-headset" style="color:var(--gold);margin-right:6px;font-size:12px;"></i>Suporte tecnico</div>
+        <span class="kw-badge on">Ativo</span>
+      </div>
+      <div class="tags">
+        <span class="tag">suporte</span>
+        <span class="tag">problema</span>
+        <span class="tag">ajuda</span>
+        <span class="tag">nao funciona</span>
+      </div>
+    </div>
+
+    <div class="kw-card" id="kw-horario">
+      <div class="kw-head">
+        <div class="kw-title"><i class="fa-solid fa-clock" style="color:var(--gold);margin-right:6px;font-size:12px;"></i>Horario de funcionamento</div>
+        <span class="kw-badge on">Ativo</span>
+      </div>
+      <div class="tags">
+        <span class="tag">horario</span>
+        <span class="tag">quando</span>
+        <span class="tag">abre</span>
+        <span class="tag">fecha</span>
+        <span class="tag">funciona</span>
+      </div>
+    </div>
+
+    <div class="kw-card" id="kw-humano">
+      <div class="kw-head">
+        <div class="kw-title"><i class="fa-solid fa-user" style="color:var(--gold);margin-right:6px;font-size:12px;"></i>Transferencia humana</div>
+        <span class="kw-badge on">Ativo</span>
+      </div>
+      <div class="tags">
+        <span class="tag">atendente</span>
+        <span class="tag">humano</span>
+        <span class="tag">pessoa</span>
+        <span class="tag">falar com</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const msgsEl  = document.getElementById('msgs');
+const qrEl    = document.getElementById('qr');
+const statusEl = document.getElementById('botStatus');
+
+function now() {
+  const d = new Date();
+  return d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+}
+
+function addMsg(text, who) {
+  const m = document.createElement('div');
+  m.className = 'msg msg-' + who;
+  const check = who === 'user' ? ' <i class="fa-solid fa-check-double" style="color:#53bdeb;font-size:9px;"></i>' : '';
+  m.innerHTML = text.replace(/\n/g,'<br>') + '<div class="msg-time">' + now() + check + '</div>';
+  msgsEl.appendChild(m);
+  msgsEl.scrollTop = msgsEl.scrollHeight;
+}
+
+function showTyping(ms) {
+  return new Promise(res => {
+    const el = document.createElement('div');
+    el.className = 'typing';
+    el.id = 'typing';
+    el.innerHTML = '<div class="tdot"></div><div class="tdot"></div><div class="tdot"></div>';
+    msgsEl.appendChild(el);
+    msgsEl.scrollTop = msgsEl.scrollHeight;
+    statusEl.textContent = 'digitando...';
+    setTimeout(() => {
+      const t = document.getElementById('typing');
+      if (t) t.remove();
+      statusEl.textContent = 'Online';
+      res();
+    }, ms);
+  });
+}
+
+function setFlow(id) {
+  document.querySelectorAll('.flow-row').forEach(r => r.classList.remove('active'));
+  const el = document.getElementById('f-' + id);
+  if (el) el.classList.add('active');
+}
+
+function litKw(id) {
+  document.querySelectorAll('.kw-card').forEach(c => {
+    c.classList.remove('lit');
+    const b = c.querySelector('.kw-badge');
+    if (b) { b.classList.remove('lit-badge'); b.classList.add('on'); b.textContent = 'Ativo'; }
+  });
+  if (!id) return;
+  const el = document.getElementById('kw-' + id);
+  if (el) {
+    el.classList.add('lit');
+    const b = el.querySelector('.kw-badge');
+    if (b) { b.classList.remove('on'); b.classList.add('lit-badge'); b.textContent = 'Em uso'; }
+  }
+}
+
+function setQR(options) {
+  qrEl.innerHTML = '';
+  options.forEach(o => {
+    const btn = document.createElement('button');
+    btn.className = 'qr';
+    btn.textContent = o.label;
+    btn.onclick = () => act(o.action);
+    qrEl.appendChild(btn);
+  });
+}
+
+async function act(a) {
+  setQR([]);
+
+  if (a === 'start') {
+    addMsg('Ola', 'user');
+    setFlow('inicio');
+    litKw('boasvindas');
+    await showTyping(900);
+    addMsg('Ola! Bem-vindo a Loja Ana. Sou o assistente virtual e estou aqui para te ajudar.', 'bot');
+    await showTyping(1400);
+    addMsg('O que voce gostaria de saber?\n\n1. Precos e produtos\n2. Suporte tecnico\n3. Horario de atendimento\n4. Falar com atendente', 'bot');
+    setFlow('menu');
+    setQR([
+      {label:'Precos',action:'precos'},
+      {label:'Suporte',action:'suporte'},
+      {label:'Horario',action:'horario'},
+      {label:'Falar com atendente',action:'transfer'}
+    ]);
+  }
+
+  else if (a === 'precos') {
+    addMsg('Precos', 'user');
+    setFlow('precos');
+    litKw('precos');
+    await showTyping(1300);
+    addMsg('Nossa tabela de servicos:\n\nPlano Basico: R$ 297/mes\nAte 5 fluxos e 500 mensagens por dia\n\nPlano Pro: R$ 597/mes\nFluxos ilimitados e 5.000 mensagens por dia\n\nPlano Enterprise: consulte\nVolume ilimitado com integracao CRM', 'bot');
+    await showTyping(900);
+    addMsg('Posso esclarecer alguma duvida sobre os planos?', 'bot');
+    setQR([
+      {label:'Quero saber mais do Pro',action:'intpro'},
+      {label:'Comparar planos',action:'comparar'},
+      {label:'Voltar ao menu',action:'menu'}
+    ]);
+  }
+
+  else if (a === 'intpro') {
+    addMsg('Quero saber mais do Plano Pro', 'user');
+    await showTyping(1100);
+    addMsg('O Plano Pro inclui configuracao de fluxos ilimitados e suporte prioritario nos primeiros 30 dias. Vou registrar seu interesse e um atendente entra em contato em ate 2 horas com uma proposta detalhada.', 'bot');
+    await showTyping(700);
+    addMsg('Posso confirmar seu contato para o retorno?', 'bot');
+    setQR([
+      {label:'Sim confirmar',action:'confirmar'},
+      {label:'Prefiro ligar',action:'ligar'},
+      {label:'Voltar ao menu',action:'menu'}
+    ]);
+  }
+
+  else if (a === 'comparar') {
+    addMsg('Comparar planos', 'user');
+    await showTyping(1200);
+    addMsg('Diferenca principal: o Basico tem limite de 500 mensagens por dia. Para lojas com volume maior ou picos de promocao o Pro e mais indicado. Todos incluem painel de gerenciamento de fluxos sem necessidade de programador.', 'bot');
+    setQR([
+      {label:'Contratar o Pro',action:'intpro'},
+      {label:'Voltar ao menu',action:'menu'}
+    ]);
+  }
+
+  else if (a === 'suporte') {
+    addMsg('Suporte', 'user');
+    setFlow('suporte');
+    litKw('suporte');
+    await showTyping(900);
+    addMsg('Entendido. Qual tipo de problema voce esta enfrentando?', 'bot');
+    setQR([
+      {label:'Problema com pedido',action:'sup-pedido'},
+      {label:'Duvida tecnica',action:'sup-tecnico'},
+      {label:'Reclamacao',action:'sup-reclama'},
+      {label:'Voltar ao menu',action:'menu'}
+    ]);
+  }
+
+  else if (a === 'sup-pedido') {
+    addMsg('Problema com pedido', 'user');
+    await showTyping(1100);
+    addMsg('Preciso do numero do seu pedido para verificar o status. Voce pode encontrar esse numero no e-mail de confirmacao.', 'bot');
+    setQR([
+      {label:'#PED-2847',action:'pedido-num'},
+      {label:'Nao tenho o numero',action:'sem-num'}
+    ]);
+  }
+
+  else if (a === 'pedido-num') {
+    addMsg('#PED-2847', 'user');
+    await showTyping(1800);
+    addMsg('Encontrei seu pedido #PED-2847.\n\nStatus: em transporte\nPrevisao: amanha ate as 18h\nRastreio: BR123456789BR', 'bot');
+    await showTyping(700);
+    addMsg('Isso resolve sua duvida?', 'bot');
+    setQR([
+      {label:'Sim resolveu',action:'resolvido'},
+      {label:'Tenho outra duvida',action:'menu'},
+      {label:'Falar com atendente',action:'transfer'}
+    ]);
+  }
+
+  else if (a === 'sem-num') {
+    addMsg('Nao tenho o numero do pedido', 'user');
+    await showTyping(1000);
+    addMsg('Sem problema. Posso localizar pelo CPF ou pelo e-mail cadastrado. Qual voce prefere informar?', 'bot');
+    setQR([
+      {label:'Usar e-mail',action:'usar-email'},
+      {label:'Falar com atendente',action:'transfer'}
+    ]);
+  }
+
+  else if (a === 'usar-email') {
+    addMsg('Prefiro usar o e-mail', 'user');
+    await showTyping(1300);
+    addMsg('Encontrei 1 pedido associado ao seu contato.\n\nPedido #PED-2731\nData: 18/06\nStatus: entregue em 20/06\n\nEra esse pedido?', 'bot');
+    setQR([
+      {label:'Sim era esse',action:'resolvido'},
+      {label:'Nao era outro',action:'transfer'}
+    ]);
+  }
+
+  else if (a === 'sup-tecnico') {
+    addMsg('Duvida tecnica', 'user');
+    await showTyping(1000);
+    addMsg('Vou transferir para nosso especialista tecnico. O tempo medio de resposta e 15 minutos em horario comercial. Ticket aberto com prioridade normal.', 'bot');
+    setQR([
+      {label:'Obrigado',action:'obrigado'},
+      {label:'Voltar ao menu',action:'menu'}
+    ]);
+  }
+
+  else if (a === 'sup-reclama') {
+    addMsg('Tenho uma reclamacao', 'user');
+    await showTyping(800);
+    addMsg('Lamento pela experiencia. Sua reclamacao e importante para nos. Estou transferindo agora para um atendente para garantir a resolucao com a atencao que merece.', 'bot');
+    setFlow('transfer');
+    litKw('humano');
+    setQR([{label:'Obrigado',action:'obrigado'}]);
+  }
+
+  else if (a === 'horario') {
+    addMsg('Horario', 'user');
+    setFlow('horario');
+    litKw('horario');
+    await showTyping(800);
+    addMsg('Nosso horario de atendimento humano:\n\nSeg a Sex: 8h as 18h\nSabado: 9h as 13h\nDomingos e feriados: fechado\n\nFora desses horarios o assistente virtual atende normalmente 24 horas por dia.', 'bot');
+    setQR([
+      {label:'Obrigado',action:'obrigado'},
+      {label:'Voltar ao menu',action:'menu'}
+    ]);
+  }
+
+  else if (a === 'transfer') {
+    addMsg('Falar com atendente', 'user');
+    setFlow('transfer');
+    litKw('humano');
+    await showTyping(1000);
+    addMsg('Entendido. Estou te colocando na fila de atendimento humano. Tempo estimado: 3 minutos.', 'bot');
+    await showTyping(600);
+    addMsg('Protocolo gerado: ATD-2026-8419. Guarde esse numero para acompanhar seu atendimento.', 'bot');
+    setQR([{label:'Obrigado',action:'obrigado'}]);
+  }
+
+  else if (a === 'confirmar') {
+    addMsg('Sim pode confirmar', 'user');
+    await showTyping(900);
+    addMsg('Perfeito. Contato registrado. Um especialista vai entrar em contato por este numero em ate 2 horas uteis. Protocolo: VND-2026-0341.', 'bot');
+    setQR([
+      {label:'Obrigado',action:'obrigado'},
+      {label:'Voltar ao menu',action:'menu'}
+    ]);
+  }
+
+  else if (a === 'ligar') {
+    addMsg('Prefiro ligar para voces', 'user');
+    await showTyping(700);
+    addMsg('Sem problema. Nosso numero direto e (11) 4000-0000. Disponivel seg a sex das 8h as 18h.', 'bot');
+    setQR([
+      {label:'Obrigado',action:'obrigado'},
+      {label:'Voltar ao menu',action:'menu'}
+    ]);
+  }
+
+  else if (a === 'menu') {
+    addMsg('Voltar ao menu', 'user');
+    setFlow('menu');
+    litKw(null);
+    await showTyping(500);
+    addMsg('Menu principal. O que posso ajudar?', 'bot');
+    setQR([
+      {label:'Precos',action:'precos'},
+      {label:'Suporte',action:'suporte'},
+      {label:'Horario',action:'horario'},
+      {label:'Falar com atendente',action:'transfer'}
+    ]);
+  }
+
+  else if (a === 'resolvido') {
+    addMsg('Sim resolveu obrigado', 'user');
+    await showTyping(600);
+    addMsg('Otimo. Fico feliz em ter ajudado. Ha mais alguma coisa que posso fazer por voce?', 'bot');
+    setQR([
+      {label:'Nao obrigado',action:'obrigado'},
+      {label:'Tenho outra duvida',action:'menu'}
+    ]);
+  }
+
+  else if (a === 'obrigado') {
+    addMsg('Obrigado', 'user');
+    await showTyping(500);
+    addMsg('Por nada. Fico a disposicao. Tenha um otimo dia e volte sempre que precisar.', 'bot');
+    setQR([{label:'Reiniciar demo',action:'reiniciar'}]);
+  }
+
+  else if (a === 'reiniciar') {
+    restart();
+  }
+}
+
+function restart() {
+  msgsEl.innerHTML = '<div class="date-chip">Hoje</div>';
+  qrEl.innerHTML = '';
+  document.querySelectorAll('.flow-row').forEach(r => r.classList.remove('active'));
+  litKw(null);
+  statusEl.textContent = 'Online';
+  setTimeout(() => setQR([{label:'Iniciar conversa',action:'start'}]), 300);
+}
+
+// reveal
+function reveal() {
+  document.querySelectorAll('.fade').forEach(el => {
+    if (el.getBoundingClientRect().top < window.innerHeight - 40) el.classList.add('in');
+  });
+}
+window.addEventListener('scroll', reveal);
+
+window.onload = () => { reveal(); restart(); };
+</script>
+</body>
+</html>
