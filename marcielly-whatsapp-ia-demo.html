@@ -1,0 +1,1616 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema IA + WhatsApp com Revisao Humana — Demo Interativa</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    :root {
+      --gold: #D97706;
+      --gold-dark: #92400E;
+      --gold-light: #FEF3C7;
+      --gold-mid: #FCD34D;
+      --gold-border: #FDE68A;
+      --wa-green: #075E54;
+      --wa-green-mid: #128C7E;
+      --wa-green-light: #25D366;
+      --wa-bg: #E5DDD5;
+      --wa-header: #075E54;
+      --wa-sent: #DCF8C6;
+      --wa-received: #FFFFFF;
+      --wa-pending: #FFF9C4;
+      --op-bg: #1C1917;
+      --op-surface: #292524;
+      --op-surface2: #312F2D;
+      --op-border: #44403C;
+      --bg: #FFFBEB;
+      --surface: #FFFFFF;
+      --text: #1C1917;
+      --text-muted: #78716C;
+      --border: #E7E5E4;
+      --danger: #DC2626;
+      --danger-light: #FEE2E2;
+      --success: #16A34A;
+      --success-light: #DCFCE7;
+      --warning: #D97706;
+      --warning-light: #FEF3C7;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* NAV */
+    nav {
+      background: #1C1917;
+      padding: 0.85rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.4);
+    }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      color: white;
+      font-weight: 800;
+      font-size: 1.1rem;
+    }
+    .nav-logo-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1rem;
+    }
+    .nav-badge {
+      background: var(--gold);
+      color: white;
+      font-size: 0.7rem;
+      font-weight: 800;
+      padding: 0.2rem 0.6rem;
+      border-radius: 20px;
+    }
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .nav-status {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      color: #A8A29E;
+      font-size: 0.8rem;
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--wa-green-light);
+      border-radius: 50%;
+      animation: pulse-dot 2s infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+    .btn-restart {
+      background: #44403C;
+      color: #D6D3D1;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: background 0.2s;
+    }
+    .btn-restart:hover { background: #57534E; }
+
+    /* HERO */
+    .hero {
+      background: linear-gradient(135deg, #1C1917 0%, #292524 60%, #3B2A0F 100%);
+      padding: 3rem 2rem;
+      text-align: center;
+      border-bottom: 1px solid #44403C;
+    }
+    .hero-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(217,119,6,0.15);
+      border: 1px solid rgba(217,119,6,0.35);
+      color: var(--gold);
+      font-size: 0.75rem;
+      font-weight: 800;
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 1rem;
+    }
+    .hero h1 {
+      color: white;
+      font-size: clamp(1.4rem, 3vw, 2.2rem);
+      font-weight: 900;
+      line-height: 1.25;
+      margin-bottom: 0.75rem;
+    }
+    .hero h1 span { color: var(--gold); }
+    .hero p {
+      color: #A8A29E;
+      font-size: 1rem;
+      max-width: 560px;
+      margin: 0 auto 2rem;
+      line-height: 1.6;
+    }
+    .hero-stats {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      flex-wrap: wrap;
+    }
+    .hero-stat {
+      text-align: center;
+    }
+    .hero-stat-value {
+      color: var(--gold);
+      font-size: 1.6rem;
+      font-weight: 900;
+    }
+    .hero-stat-label {
+      color: #78716C;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    /* MAIN LAYOUT */
+    .demo-wrapper {
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1.5rem 3rem;
+    }
+    .demo-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      align-items: start;
+    }
+    @media (max-width: 768px) {
+      .demo-grid { grid-template-columns: 1fr; }
+    }
+
+    /* SECTION HEADERS */
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 0.75rem;
+    }
+    .section-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      flex-shrink: 0;
+    }
+    .icon-wa { background: #075E54; color: white; }
+    .icon-op { background: var(--gold); color: white; }
+    .section-label {
+      font-size: 0.75rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--text-muted);
+    }
+
+    /* WHATSAPP PHONE */
+    .phone-shell {
+      background: #2A2A2A;
+      border-radius: 36px;
+      padding: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.35), 0 0 0 1px #3A3A3A;
+      max-width: 340px;
+      margin: 0 auto;
+    }
+    .phone-screen {
+      background: var(--wa-bg);
+      border-radius: 24px;
+      overflow: hidden;
+      height: 600px;
+      display: flex;
+      flex-direction: column;
+    }
+    .wa-header {
+      background: var(--wa-header);
+      padding: 0.75rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-shrink: 0;
+    }
+    .wa-back {
+      color: rgba(255,255,255,0.7);
+      font-size: 1rem;
+    }
+    .wa-avatar {
+      width: 36px;
+      height: 36px;
+      background: var(--wa-green-light);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      color: white;
+      flex-shrink: 0;
+    }
+    .wa-contact-info { flex: 1; }
+    .wa-contact-name {
+      color: white;
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+    .wa-contact-status {
+      color: rgba(255,255,255,0.65);
+      font-size: 0.7rem;
+    }
+    .wa-header-icons {
+      display: flex;
+      gap: 0.85rem;
+      color: rgba(255,255,255,0.7);
+      font-size: 1rem;
+    }
+
+    .wa-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      scroll-behavior: smooth;
+    }
+    .wa-messages::-webkit-scrollbar { width: 4px; }
+    .wa-messages::-webkit-scrollbar-track { background: transparent; }
+    .wa-messages::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 2px; }
+
+    .wa-date-divider {
+      text-align: center;
+      margin: 0.5rem 0;
+    }
+    .wa-date-divider span {
+      background: rgba(0,0,0,0.15);
+      color: rgba(0,0,0,0.6);
+      font-size: 0.65rem;
+      font-weight: 600;
+      padding: 0.25rem 0.6rem;
+      border-radius: 10px;
+    }
+
+    .wa-msg {
+      max-width: 82%;
+      padding: 0.5rem 0.65rem;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      line-height: 1.4;
+      position: relative;
+      animation: fadeInUp 0.3s ease;
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .wa-msg.received {
+      background: var(--wa-received);
+      align-self: flex-start;
+      border-top-left-radius: 2px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.12);
+    }
+    .wa-msg.sent {
+      background: var(--wa-sent);
+      align-self: flex-end;
+      border-top-right-radius: 2px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.12);
+    }
+    .wa-msg.pending {
+      background: var(--wa-pending);
+      align-self: flex-end;
+      border-top-right-radius: 2px;
+      border: 1px dashed #C8A400;
+      box-shadow: none;
+    }
+    .wa-msg-time {
+      font-size: 0.6rem;
+      color: #A0998E;
+      text-align: right;
+      margin-top: 0.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0.3rem;
+    }
+    .wa-msg-time .check {
+      color: #4FC3F7;
+      font-size: 0.65rem;
+    }
+    .wa-msg-time .pending-icon {
+      color: #C8A400;
+      font-size: 0.65rem;
+      animation: spin 1.5s linear infinite;
+    }
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .wa-typing {
+      align-self: flex-start;
+      background: var(--wa-received);
+      border-radius: 8px;
+      border-top-left-radius: 2px;
+      padding: 0.5rem 0.75rem;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.12);
+      display: none;
+    }
+    .wa-typing.show { display: flex; align-items: center; gap: 0.3rem; }
+    .typing-dot {
+      width: 6px;
+      height: 6px;
+      background: #A0998E;
+      border-radius: 50%;
+      animation: typing-bounce 1.2s infinite;
+    }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typing-bounce {
+      0%, 80%, 100% { transform: translateY(0); }
+      40% { transform: translateY(-4px); }
+    }
+
+    .wa-input-bar {
+      background: #F0F0F0;
+      padding: 0.5rem 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-shrink: 0;
+    }
+    .wa-input {
+      flex: 1;
+      background: white;
+      border-radius: 20px;
+      padding: 0.45rem 0.75rem;
+      font-size: 0.75rem;
+      font-family: 'Nunito', sans-serif;
+      border: none;
+      outline: none;
+      color: #333;
+    }
+    .wa-send-btn {
+      width: 32px;
+      height: 32px;
+      background: var(--wa-green-light);
+      border-radius: 50%;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: white;
+      font-size: 0.8rem;
+      transition: background 0.2s;
+    }
+    .wa-send-btn:hover { background: #1DA851; }
+
+    /* SIMULATE BUTTONS */
+    .simulate-section {
+      margin-top: 0.75rem;
+    }
+    .simulate-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 0.5rem;
+    }
+    .simulate-btns {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+    .sim-btn {
+      background: white;
+      border: 1.5px solid var(--border);
+      padding: 0.4rem 0.7rem;
+      border-radius: 20px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 700;
+      cursor: pointer;
+      color: var(--text);
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .sim-btn:hover {
+      border-color: var(--gold);
+      background: var(--gold-light);
+      color: var(--gold-dark);
+    }
+    .sim-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* OPERATOR PANEL */
+    .op-panel {
+      background: var(--op-bg);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+      min-height: 600px;
+      display: flex;
+      flex-direction: column;
+    }
+    .op-topbar {
+      background: var(--op-surface);
+      padding: 0.85rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--op-border);
+    }
+    .op-topbar-title {
+      color: white;
+      font-size: 0.85rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .op-topbar-title i { color: var(--gold); }
+    .op-counters {
+      display: flex;
+      gap: 0.75rem;
+    }
+    .op-counter {
+      text-align: center;
+    }
+    .op-counter-val {
+      color: white;
+      font-size: 1rem;
+      font-weight: 900;
+    }
+    .op-counter-val.gold { color: var(--gold); }
+    .op-counter-val.green { color: #4ADE80; }
+    .op-counter-label {
+      color: #78716C;
+      font-size: 0.6rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    /* ALERTS */
+    .alert-banner {
+      background: rgba(220,38,38,0.12);
+      border-top: 2px solid #DC2626;
+      border-bottom: 1px solid rgba(220,38,38,0.2);
+      padding: 0.6rem 1.25rem;
+      display: none;
+      align-items: center;
+      gap: 0.5rem;
+      color: #FCA5A5;
+      font-size: 0.8rem;
+      font-weight: 700;
+      animation: alert-pulse 1.5s ease infinite;
+    }
+    .alert-banner.show { display: flex; }
+    @keyframes alert-pulse {
+      0%, 100% { background: rgba(220,38,38,0.12); }
+      50% { background: rgba(220,38,38,0.2); }
+    }
+    .alert-banner i { font-size: 0.9rem; color: #DC2626; }
+
+    /* QUEUE */
+    .op-queue {
+      flex: 1;
+      padding: 1rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .op-queue::-webkit-scrollbar { width: 4px; }
+    .op-queue::-webkit-scrollbar-track { background: transparent; }
+    .op-queue::-webkit-scrollbar-thumb { background: #44403C; border-radius: 2px; }
+
+    .queue-empty {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #57534E;
+      text-align: center;
+      padding: 2rem;
+      gap: 0.75rem;
+    }
+    .queue-empty i { font-size: 2rem; color: #44403C; }
+    .queue-empty p { font-size: 0.85rem; line-height: 1.5; }
+    .queue-empty strong { color: #78716C; }
+
+    .queue-card {
+      background: var(--op-surface);
+      border-radius: 12px;
+      border: 1px solid var(--op-border);
+      overflow: hidden;
+      animation: slideInCard 0.35s cubic-bezier(0.34,1.56,0.64,1);
+      transition: border-color 0.2s;
+    }
+    @keyframes slideInCard {
+      from { opacity: 0; transform: translateX(20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    .queue-card.urgent { border-color: #DC2626; }
+    .queue-card.approved { opacity: 0; transform: scale(0.95); transition: all 0.3s ease; }
+    .queue-card.rejected { opacity: 0; transform: scale(0.95); transition: all 0.3s ease; }
+
+    .card-top {
+      padding: 0.7rem 0.85rem 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--op-border);
+    }
+    .card-contact {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .card-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #4ADE80, #16A34A);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      color: white;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+    .card-name {
+      color: white;
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+    .card-phone {
+      color: #78716C;
+      font-size: 0.65rem;
+    }
+    .card-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .countdown-badge {
+      background: rgba(217,119,6,0.15);
+      border: 1px solid rgba(217,119,6,0.4);
+      color: var(--gold);
+      font-size: 0.7rem;
+      font-weight: 800;
+      padding: 0.25rem 0.5rem;
+      border-radius: 6px;
+      min-width: 48px;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+      transition: all 0.3s;
+    }
+    .countdown-badge.urgent {
+      background: rgba(220,38,38,0.15);
+      border-color: rgba(220,38,38,0.5);
+      color: #F87171;
+      animation: badge-pulse 1s infinite;
+    }
+    @keyframes badge-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .ai-badge {
+      background: rgba(99,102,241,0.15);
+      border: 1px solid rgba(99,102,241,0.3);
+      color: #A5B4FC;
+      font-size: 0.6rem;
+      font-weight: 800;
+      padding: 0.2rem 0.45rem;
+      border-radius: 5px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .card-body {
+      padding: 0.75rem 0.85rem;
+    }
+    .card-question {
+      margin-bottom: 0.6rem;
+    }
+    .card-question-label {
+      font-size: 0.6rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: #57534E;
+      letter-spacing: 0.06em;
+      margin-bottom: 0.25rem;
+    }
+    .card-question-text {
+      background: var(--op-surface2);
+      padding: 0.4rem 0.6rem;
+      border-radius: 6px;
+      color: #D6D3D1;
+      font-size: 0.75rem;
+      font-style: italic;
+      border-left: 2px solid #57534E;
+    }
+    .card-draft-label {
+      font-size: 0.6rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: var(--gold);
+      letter-spacing: 0.06em;
+      margin-bottom: 0.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .card-draft-label i { font-size: 0.65rem; }
+    .card-draft-text {
+      background: rgba(217,119,6,0.06);
+      border: 1px solid rgba(217,119,6,0.2);
+      padding: 0.5rem 0.65rem;
+      border-radius: 6px;
+      color: #E7E5E4;
+      font-size: 0.76rem;
+      line-height: 1.5;
+    }
+    .card-draft-input {
+      background: rgba(217,119,6,0.06);
+      border: 1.5px solid rgba(217,119,6,0.4);
+      padding: 0.5rem 0.65rem;
+      border-radius: 6px;
+      color: #E7E5E4;
+      font-size: 0.76rem;
+      line-height: 1.5;
+      font-family: 'Nunito', sans-serif;
+      width: 100%;
+      resize: none;
+      display: none;
+      outline: none;
+    }
+    .card-draft-input:focus {
+      border-color: var(--gold);
+    }
+    .card-confidence {
+      margin-top: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .confidence-label {
+      font-size: 0.6rem;
+      color: #57534E;
+      font-weight: 600;
+    }
+    .confidence-bar {
+      flex: 1;
+      height: 4px;
+      background: var(--op-surface2);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .confidence-fill {
+      height: 100%;
+      border-radius: 2px;
+      background: linear-gradient(90deg, #4ADE80, #16A34A);
+      transition: width 0.6s ease;
+    }
+    .confidence-pct {
+      font-size: 0.65rem;
+      font-weight: 800;
+      color: #4ADE80;
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 0.5rem;
+      padding: 0.6rem 0.85rem;
+      border-top: 1px solid var(--op-border);
+      background: rgba(0,0,0,0.1);
+    }
+    .btn-approve {
+      flex: 1;
+      background: linear-gradient(135deg, #16A34A, #15803D);
+      color: white;
+      border: none;
+      padding: 0.5rem;
+      border-radius: 8px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+      transition: all 0.2s;
+    }
+    .btn-approve:hover { background: linear-gradient(135deg, #15803D, #166534); transform: translateY(-1px); }
+    .btn-edit {
+      background: rgba(217,119,6,0.15);
+      border: 1px solid rgba(217,119,6,0.35);
+      color: var(--gold);
+      padding: 0.5rem 0.75rem;
+      border-radius: 8px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      transition: all 0.2s;
+    }
+    .btn-edit:hover { background: rgba(217,119,6,0.25); }
+    .btn-reject {
+      background: rgba(220,38,38,0.1);
+      border: 1px solid rgba(220,38,38,0.25);
+      color: #F87171;
+      padding: 0.5rem 0.75rem;
+      border-radius: 8px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      transition: all 0.2s;
+    }
+    .btn-reject:hover { background: rgba(220,38,38,0.2); }
+
+    /* KB PANEL */
+    .kb-panel {
+      background: white;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      margin-top: 1.5rem;
+    }
+    .kb-header {
+      background: linear-gradient(135deg, #1C1917, #292524);
+      padding: 1rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .kb-header-title {
+      color: white;
+      font-size: 0.9rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .kb-header-title i { color: var(--gold); }
+    .kb-count {
+      background: rgba(217,119,6,0.2);
+      border: 1px solid rgba(217,119,6,0.4);
+      color: var(--gold);
+      font-size: 0.7rem;
+      font-weight: 800;
+      padding: 0.2rem 0.55rem;
+      border-radius: 20px;
+    }
+    .kb-search-bar {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .kb-search-bar i { color: var(--text-muted); font-size: 0.85rem; }
+    .kb-search-input {
+      flex: 1;
+      border: none;
+      outline: none;
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.8rem;
+      color: var(--text);
+    }
+    .kb-list {
+      max-height: 280px;
+      overflow-y: auto;
+    }
+    .kb-item {
+      padding: 0.6rem 1rem;
+      border-bottom: 1px solid #F5F5F4;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      transition: background 0.15s;
+    }
+    .kb-item:hover { background: #FAFAF9; }
+    .kb-item-icon {
+      width: 28px;
+      height: 28px;
+      background: var(--gold-light);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      color: var(--gold-dark);
+      flex-shrink: 0;
+      margin-top: 0.1rem;
+    }
+    .kb-item-q {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.2rem;
+    }
+    .kb-item-a {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+    .kb-item-actions {
+      margin-left: auto;
+      display: flex;
+      gap: 0.3rem;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .kb-item:hover .kb-item-actions { opacity: 1; }
+    .kb-action-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      padding: 0.2rem;
+      transition: color 0.2s;
+    }
+    .kb-action-btn:hover { color: var(--gold); }
+    .kb-add-bar {
+      padding: 0.75rem 1rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 0.5rem;
+    }
+    .btn-add-kb {
+      background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      transition: all 0.2s;
+    }
+    .btn-add-kb:hover { opacity: 0.9; transform: translateY(-1px); }
+
+    /* METRICS ROW */
+    .metrics-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+    .metric-card {
+      background: white;
+      border-radius: 12px;
+      padding: 1rem;
+      border: 1px solid var(--border);
+      text-align: center;
+    }
+    .metric-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 0.5rem;
+      font-size: 0.9rem;
+    }
+    .metric-icon.gold { background: var(--gold-light); color: var(--gold-dark); }
+    .metric-icon.green { background: var(--success-light); color: var(--success); }
+    .metric-icon.blue { background: #DBEAFE; color: #1D4ED8; }
+    .metric-value {
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: var(--text);
+      margin-bottom: 0.2rem;
+    }
+    .metric-label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    .metric-trend {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.2rem;
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: var(--success);
+      background: var(--success-light);
+      padding: 0.15rem 0.4rem;
+      border-radius: 10px;
+      margin-top: 0.3rem;
+    }
+
+    /* TOAST */
+    .toast-container {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      z-index: 1000;
+    }
+    .toast {
+      background: #1C1917;
+      color: white;
+      padding: 0.7rem 1rem;
+      border-radius: 10px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+      animation: toastIn 0.3s ease;
+      min-width: 220px;
+    }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateX(20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    .toast.success { border-left: 3px solid #4ADE80; }
+    .toast.success i { color: #4ADE80; }
+    .toast.warning { border-left: 3px solid var(--gold); }
+    .toast.warning i { color: var(--gold); }
+    .toast.danger { border-left: 3px solid #F87171; }
+    .toast.danger i { color: #F87171; }
+
+    /* FOOTER */
+    footer {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      border-top: 1px solid var(--border);
+    }
+    footer strong { color: var(--gold-dark); }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">
+    <div class="nav-logo-icon"><i class="fa-brands fa-whatsapp"></i></div>
+    IA + WhatsApp
+    <span class="nav-badge">DEMO</span>
+  </div>
+  <div class="nav-right">
+    <div class="nav-status">
+      <div class="status-dot"></div>
+      Sistema ativo
+    </div>
+    <button class="btn-restart" onclick="restartDemo()">
+      <i class="fa-solid fa-rotate-right"></i> Reiniciar
+    </button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-tag">
+    <i class="fa-solid fa-robot"></i>
+    Demonstracao interativa
+  </div>
+  <h1>IA que sugere. <span>Voce aprova.</span><br>Cliente recebe na hora.</h1>
+  <p>Veja como funciona o fluxo completo: mensagem do cliente, rascunho da IA, revisao do operador e envio aprovado.</p>
+  <div class="hero-stats">
+    <div class="hero-stat">
+      <div class="hero-stat-value" id="stat-avg">2h 10m</div>
+      <div class="hero-stat-label">Tempo medio antes</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-value" id="stat-after" style="color:#4ADE80">7m 40s</div>
+      <div class="hero-stat-label">Tempo medio depois</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-value" id="stat-approved">0</div>
+      <div class="hero-stat-label">Aprovadas hoje</div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="demo-wrapper">
+  <div class="demo-grid">
+
+    <!-- LEFT: PHONE -->
+    <div>
+      <div class="section-header">
+        <div class="section-icon icon-wa"><i class="fa-brands fa-whatsapp"></i></div>
+        <div>
+          <div class="section-label">Visao do cliente</div>
+        </div>
+      </div>
+      <div class="phone-shell">
+        <div class="phone-screen">
+          <!-- WA HEADER -->
+          <div class="wa-header">
+            <div class="wa-back"><i class="fa-solid fa-arrow-left"></i></div>
+            <div class="wa-avatar"><i class="fa-solid fa-store"></i></div>
+            <div class="wa-contact-info">
+              <div class="wa-contact-name">Suporte</div>
+              <div class="wa-contact-status" id="wa-status">online</div>
+            </div>
+            <div class="wa-header-icons">
+              <i class="fa-solid fa-video"></i>
+              <i class="fa-solid fa-phone"></i>
+              <i class="fa-solid fa-ellipsis-vertical"></i>
+            </div>
+          </div>
+          <!-- MESSAGES -->
+          <div class="wa-messages" id="wa-messages">
+            <div class="wa-date-divider"><span>Hoje</span></div>
+            <div class="wa-msg received">
+              Ola! Como posso te ajudar hoje?
+              <div class="wa-msg-time">09:00 <i class="fa-solid fa-check-double check"></i></div>
+            </div>
+            <div class="wa-typing" id="wa-typing">
+              <div class="typing-dot"></div>
+              <div class="typing-dot"></div>
+              <div class="typing-dot"></div>
+            </div>
+          </div>
+          <!-- INPUT -->
+          <div class="wa-input-bar">
+            <input class="wa-input" id="wa-custom-input" placeholder="Mensagem..." type="text" readonly>
+            <button class="wa-send-btn" onclick="sendCustom()"><i class="fa-solid fa-paper-plane"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SIMULATE BUTTONS -->
+      <div class="simulate-section">
+        <div class="simulate-label"><i class="fa-solid fa-bolt" style="color:var(--gold)"></i> Simular mensagem do cliente</div>
+        <div class="simulate-btns">
+          <button class="sim-btn" onclick="sendMessage('preco')">
+            <i class="fa-solid fa-tag"></i> Qual o preco?
+          </button>
+          <button class="sim-btn" onclick="sendMessage('entrega')">
+            <i class="fa-solid fa-truck"></i> Prazo de entrega?
+          </button>
+          <button class="sim-btn" onclick="sendMessage('horario')">
+            <i class="fa-solid fa-clock"></i> Horario de atendimento?
+          </button>
+          <button class="sim-btn" onclick="sendMessage('troca')">
+            <i class="fa-solid fa-arrow-right-arrow-left"></i> Como fazer troca?
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: OPERATOR PANEL -->
+    <div>
+      <div class="section-header">
+        <div class="section-icon icon-op"><i class="fa-solid fa-headset"></i></div>
+        <div>
+          <div class="section-label">Painel do operador</div>
+        </div>
+      </div>
+      <div class="op-panel">
+        <div class="op-topbar">
+          <div class="op-topbar-title">
+            <i class="fa-solid fa-list-check"></i>
+            Fila de Aprovacao
+          </div>
+          <div class="op-counters">
+            <div class="op-counter">
+              <div class="op-counter-val gold" id="counter-pending">0</div>
+              <div class="op-counter-label">Aguardando</div>
+            </div>
+            <div class="op-counter">
+              <div class="op-counter-val green" id="counter-approved">0</div>
+              <div class="op-counter-label">Aprovadas</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ALERT BANNER -->
+        <div class="alert-banner" id="alert-banner">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          <span id="alert-text">Mensagem aguardando aprovacao ha mais de 3 minutos!</span>
+        </div>
+
+        <!-- QUEUE -->
+        <div class="op-queue" id="op-queue">
+          <div class="queue-empty" id="queue-empty">
+            <i class="fa-solid fa-inbox"></i>
+            <p><strong>Fila vazia</strong><br>Simule uma mensagem do cliente<br>para ver o rascunho aparecer aqui.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- METRICS -->
+  <div class="metrics-row">
+    <div class="metric-card">
+      <div class="metric-icon gold"><i class="fa-solid fa-stopwatch"></i></div>
+      <div class="metric-value" id="m-response">7m 40s</div>
+      <div class="metric-label">Tempo medio de resposta</div>
+      <div class="metric-trend"><i class="fa-solid fa-arrow-down"></i> 94% menor</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-icon green"><i class="fa-solid fa-circle-check"></i></div>
+      <div class="metric-value" id="m-approved">0</div>
+      <div class="metric-label">Mensagens aprovadas hoje</div>
+      <div class="metric-trend"><i class="fa-solid fa-arrow-up"></i> ao vivo</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-icon blue"><i class="fa-solid fa-brain"></i></div>
+      <div class="metric-value">87%</div>
+      <div class="metric-label">Precisao da IA</div>
+      <div class="metric-trend"><i class="fa-solid fa-arrow-up"></i> aprende com aprovacoes</div>
+    </div>
+  </div>
+
+  <!-- KB PANEL -->
+  <div class="kb-panel" style="margin-top:1.5rem">
+    <div class="kb-header">
+      <div class="kb-header-title">
+        <i class="fa-solid fa-book-open"></i>
+        Base de Conhecimento
+      </div>
+      <span class="kb-count">4 respostas</span>
+    </div>
+    <div class="kb-search-bar">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input class="kb-search-input" placeholder="Buscar pergunta ou resposta..." type="text">
+    </div>
+    <div class="kb-list">
+      <div class="kb-item">
+        <div class="kb-item-icon"><i class="fa-solid fa-tag"></i></div>
+        <div style="flex:1">
+          <div class="kb-item-q">Qual e o preco do produto?</div>
+          <div class="kb-item-a">Nossos produtos variam de R$49 a R$299. Acesse nosso catalogo em loja.com.br/catalogo para ver todos os valores.</div>
+        </div>
+        <div class="kb-item-actions">
+          <button class="kb-action-btn"><i class="fa-solid fa-pen"></i></button>
+          <button class="kb-action-btn" style="color:#F87171"><i class="fa-solid fa-trash"></i></button>
+        </div>
+      </div>
+      <div class="kb-item">
+        <div class="kb-item-icon"><i class="fa-solid fa-truck"></i></div>
+        <div style="flex:1">
+          <div class="kb-item-q">Qual o prazo de entrega?</div>
+          <div class="kb-item-a">Entregamos em 3 a 7 dias uteis para todo o Brasil. Retirada na loja disponivel no mesmo dia.</div>
+        </div>
+        <div class="kb-item-actions">
+          <button class="kb-action-btn"><i class="fa-solid fa-pen"></i></button>
+          <button class="kb-action-btn" style="color:#F87171"><i class="fa-solid fa-trash"></i></button>
+        </div>
+      </div>
+      <div class="kb-item">
+        <div class="kb-item-icon"><i class="fa-solid fa-clock"></i></div>
+        <div style="flex:1">
+          <div class="kb-item-q">Qual o horario de atendimento?</div>
+          <div class="kb-item-a">Atendemos de segunda a sexta das 8h as 18h e aos sabados das 9h as 13h.</div>
+        </div>
+        <div class="kb-item-actions">
+          <button class="kb-action-btn"><i class="fa-solid fa-pen"></i></button>
+          <button class="kb-action-btn" style="color:#F87171"><i class="fa-solid fa-trash"></i></button>
+        </div>
+      </div>
+      <div class="kb-item">
+        <div class="kb-item-icon"><i class="fa-solid fa-arrow-right-arrow-left"></i></div>
+        <div style="flex:1">
+          <div class="kb-item-q">Como funciona a politica de trocas?</div>
+          <div class="kb-item-a">Aceitamos trocas em ate 30 dias com produto em perfeito estado e nota fiscal. Basta trazer na loja ou enviar pelos Correios.</div>
+        </div>
+        <div class="kb-item-actions">
+          <button class="kb-action-btn"><i class="fa-solid fa-pen"></i></button>
+          <button class="kb-action-btn" style="color:#F87171"><i class="fa-solid fa-trash"></i></button>
+        </div>
+      </div>
+    </div>
+    <div class="kb-add-bar">
+      <button class="btn-add-kb"><i class="fa-solid fa-plus"></i> Adicionar resposta</button>
+      <span style="font-size:0.72rem;color:var(--text-muted);align-self:center">Qualquer membro da equipe pode atualizar sem programador</span>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toast-container"></div>
+
+<!-- FOOTER -->
+<footer>
+  <strong>David Jin</strong> — Technical Partner | From Vision to Production
+</footer>
+
+<script>
+  const MESSAGES = {
+    preco: {
+      text: 'Oi! Qual e o preco do produto?',
+      draft: 'Ola! Nossos produtos variam de R$49 a R$299. Voce pode ver o catalogo completo em loja.com.br/catalogo. Posso te ajudar com mais alguma coisa?',
+      confidence: 91
+    },
+    entrega: {
+      text: 'Quanto tempo demora a entrega?',
+      draft: 'Ola! Entregamos em 3 a 7 dias uteis para todo o Brasil. Se preferir, temos retirada na loja disponivel no mesmo dia. Deseja mais informacoes?',
+      confidence: 88
+    },
+    horario: {
+      text: 'Voces atendem aos sabados?',
+      draft: 'Sim! Atendemos de segunda a sexta das 8h as 18h e aos sabados das 9h as 13h. Estamos disponiveis para te ajudar!',
+      confidence: 95
+    },
+    troca: {
+      text: 'Quero trocar um produto. Como faco?',
+      draft: 'Claro! Aceitamos trocas em ate 30 dias com produto em perfeito estado e nota fiscal. Pode trazer na loja ou enviar pelos Correios. Precisa de mais detalhes?',
+      confidence: 84
+    }
+  };
+
+  const CONTACTS = {
+    preco: { name: 'Ana S.', phone: '+55 11 9 8765-4321', initials: 'AS' },
+    entrega: { name: 'Carlos M.', phone: '+55 21 9 9876-5432', initials: 'CM' },
+    horario: { name: 'Julia R.', phone: '+55 31 9 7654-3210', initials: 'JR' },
+    troca: { name: 'Marcos L.', phone: '+55 41 9 8901-2345', initials: 'ML' }
+  };
+
+  let pendingCount = 0;
+  let approvedCount = 0;
+  let alertTimers = {};
+  let countdownIntervals = {};
+  let cardSecondsLeft = {};
+  let cardId = 0;
+
+  function now() {
+    const d = new Date();
+    return d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+  }
+
+  function showToast(msg, type) {
+    const icons = { success: 'fa-circle-check', warning: 'fa-triangle-exclamation', danger: 'fa-circle-xmark' };
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.innerHTML = `<i class="fa-solid ${icons[type] || 'fa-info-circle'}"></i> ${msg}`;
+    document.getElementById('toast-container').appendChild(t);
+    setTimeout(() => t.remove(), 3500);
+  }
+
+  function updateCounters() {
+    document.getElementById('counter-pending').textContent = pendingCount;
+    document.getElementById('counter-approved').textContent = approvedCount;
+    document.getElementById('m-approved').textContent = approvedCount;
+    document.getElementById('stat-approved').textContent = approvedCount;
+  }
+
+  function checkAlerts() {
+    const hasUrgent = Object.values(cardSecondsLeft).some(s => s <= 0);
+    const alertEl = document.getElementById('alert-banner');
+    if (hasUrgent && pendingCount > 0) {
+      alertEl.classList.add('show');
+    } else {
+      alertEl.classList.remove('show');
+    }
+  }
+
+  function sendMessage(type) {
+    const msg = MESSAGES[type];
+    const contact = CONTACTS[type];
+    if (!msg) return;
+
+    // Disable sim buttons briefly
+    document.querySelectorAll('.sim-btn').forEach(b => b.disabled = true);
+    setTimeout(() => document.querySelectorAll('.sim-btn').forEach(b => b.disabled = false), 2000);
+
+    // Add client message to WA chat
+    addWaMessage(msg.text, 'received', false);
+    document.getElementById('wa-status').textContent = 'digitando...';
+
+    // Show AI thinking indicator on operator side
+    setTimeout(() => {
+      document.getElementById('wa-status').textContent = 'online';
+      addQueueCard(type, contact, msg, ++cardId);
+    }, 1200);
+  }
+
+  function addWaMessage(text, type, showCheck) {
+    const msgs = document.getElementById('wa-messages');
+    const typing = document.getElementById('wa-typing');
+    const div = document.createElement('div');
+    div.className = `wa-msg ${type}`;
+    const checkHtml = type === 'sent' ? '<i class="fa-solid fa-check-double check"></i>' :
+                      type === 'pending' ? '<i class="fa-solid fa-clock pending-icon"></i>' : '';
+    div.innerHTML = `${text}<div class="wa-msg-time">${now()} ${checkHtml}</div>`;
+    msgs.insertBefore(div, typing);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+
+  function addQueueCard(type, contact, msg, id) {
+    const empty = document.getElementById('queue-empty');
+    if (empty) empty.style.display = 'none';
+
+    cardSecondsLeft[id] = 180; // 3 minutes
+    pendingCount++;
+    updateCounters();
+
+    const queue = document.getElementById('op-queue');
+    const card = document.createElement('div');
+    card.className = 'queue-card';
+    card.id = `card-${id}`;
+
+    const confidenceColor = msg.confidence >= 90 ? '#4ADE80' : msg.confidence >= 75 ? var_gold() : '#F87171';
+
+    card.innerHTML = `
+      <div class="card-top">
+        <div class="card-contact">
+          <div class="card-avatar">${contact.initials}</div>
+          <div>
+            <div class="card-name">${contact.name}</div>
+            <div class="card-phone">${contact.phone}</div>
+          </div>
+        </div>
+        <div class="card-meta">
+          <span class="ai-badge"><i class="fa-solid fa-robot"></i> IA</span>
+          <span class="countdown-badge" id="cd-${id}">3:00</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="card-question">
+          <div class="card-question-label"><i class="fa-solid fa-comment-dots"></i> Mensagem recebida</div>
+          <div class="card-question-text">${msg.text}</div>
+        </div>
+        <div class="card-question-label card-draft-label" style="margin-top:0.5rem">
+          <i class="fa-solid fa-wand-magic-sparkles" style="color:var(--gold)"></i>
+          <span style="color:var(--gold)">RASCUNHO DA IA</span>
+        </div>
+        <div class="card-draft-text" id="draft-text-${id}">${msg.draft}</div>
+        <textarea class="card-draft-input" id="draft-input-${id}" rows="3">${msg.draft}</textarea>
+        <div class="card-confidence">
+          <span class="confidence-label">Confianca:</span>
+          <div class="confidence-bar"><div class="confidence-fill" style="width:0%" id="conf-fill-${id}"></div></div>
+          <span class="confidence-pct" id="conf-pct-${id}">${msg.confidence}%</span>
+        </div>
+      </div>
+      <div class="card-actions">
+        <button class="btn-approve" onclick="approveCard(${id}, '${type}')">
+          <i class="fa-solid fa-circle-check"></i> Aprovar e Enviar
+        </button>
+        <button class="btn-edit" onclick="editCard(${id})">
+          <i class="fa-solid fa-pen"></i> Editar
+        </button>
+        <button class="btn-reject" onclick="rejectCard(${id})">
+          <i class="fa-solid fa-ban"></i> Rejeitar
+        </button>
+      </div>
+    `;
+    queue.appendChild(card);
+
+    // Animate confidence bar
+    setTimeout(() => {
+      const fill = document.getElementById(`conf-fill-${id}`);
+      if (fill) fill.style.width = msg.confidence + '%';
+    }, 100);
+
+    // Start countdown
+    const interval = setInterval(() => {
+      if (!cardSecondsLeft[id] && cardSecondsLeft[id] !== 0) { clearInterval(interval); return; }
+      cardSecondsLeft[id]--;
+      const s = cardSecondsLeft[id];
+      const el = document.getElementById(`cd-${id}`);
+      const cardEl = document.getElementById(`card-${id}`);
+      if (!el) { clearInterval(interval); return; }
+      const mins = Math.floor(s / 60);
+      const secs = (s % 60).toString().padStart(2,'0');
+      el.textContent = `${mins}:${secs}`;
+      if (s <= 60) {
+        el.classList.add('urgent');
+        if (cardEl) cardEl.classList.add('urgent');
+        checkAlerts();
+      }
+      if (s <= 0) {
+        clearInterval(interval);
+        el.textContent = '0:00';
+        showToast(`Alerta: mensagem de ${contact.name} aguarda aprovacao!`, 'danger');
+        checkAlerts();
+      }
+    }, 1000);
+    countdownIntervals[id] = interval;
+
+    showToast('Novo rascunho gerado pela IA', 'warning');
+  }
+
+  function var_gold() { return '#D97706'; }
+
+  function editCard(id) {
+    const draftText = document.getElementById(`draft-text-${id}`);
+    const draftInput = document.getElementById(`draft-input-${id}`);
+    if (!draftText || !draftInput) return;
+    if (draftInput.style.display === 'block') {
+      // Save edits
+      draftText.textContent = draftInput.value;
+      draftText.style.display = 'block';
+      draftInput.style.display = 'none';
+      showToast('Rascunho editado. Pronto para aprovar.', 'warning');
+    } else {
+      draftText.style.display = 'none';
+      draftInput.style.display = 'block';
+      draftInput.focus();
+    }
+  }
+
+  function approveCard(id, type) {
+    const card = document.getElementById(`card-${id}`);
+    const draftText = document.getElementById(`draft-text-${id}`);
+    if (!card || !draftText) return;
+
+    const finalText = document.getElementById(`draft-input-${id}`).style.display === 'block'
+      ? document.getElementById(`draft-input-${id}`).value
+      : draftText.textContent;
+
+    // Send to WA
+    addWaMessage(finalText, 'sent', true);
+
+    // Animate card out
+    card.style.transition = 'all 0.3s ease';
+    card.style.opacity = '0';
+    card.style.transform = 'translateX(20px)';
+    setTimeout(() => card.remove(), 300);
+
+    // Cleanup
+    clearInterval(countdownIntervals[id]);
+    delete cardSecondsLeft[id];
+    delete countdownIntervals[id];
+
+    pendingCount = Math.max(0, pendingCount - 1);
+    approvedCount++;
+    updateCounters();
+    checkAlerts();
+    checkEmpty();
+    showToast('Mensagem aprovada e enviada ao cliente!', 'success');
+  }
+
+  function rejectCard(id) {
+    const card = document.getElementById(`card-${id}`);
+    if (!card) return;
+
+    card.style.transition = 'all 0.3s ease';
+    card.style.opacity = '0';
+    card.style.transform = 'translateX(-20px)';
+    setTimeout(() => card.remove(), 300);
+
+    clearInterval(countdownIntervals[id]);
+    delete cardSecondsLeft[id];
+    delete countdownIntervals[id];
+
+    pendingCount = Math.max(0, pendingCount - 1);
+    updateCounters();
+    checkAlerts();
+    checkEmpty();
+    showToast('Rascunho rejeitado. IA aprende com essa decisao.', 'danger');
+  }
+
+  function checkEmpty() {
+    const queue = document.getElementById('op-queue');
+    const cards = queue.querySelectorAll('.queue-card');
+    if (cards.length === 0) {
+      const empty = document.getElementById('queue-empty');
+      if (empty) empty.style.display = 'flex';
+    }
+  }
+
+  function restartDemo() {
+    // Clear queue
+    const queue = document.getElementById('op-queue');
+    queue.querySelectorAll('.queue-card').forEach(c => c.remove());
+
+    // Clear timers
+    Object.values(countdownIntervals).forEach(i => clearInterval(i));
+    countdownIntervals = {};
+    cardSecondsLeft = {};
+    alertTimers = {};
+
+    // Reset counters
+    pendingCount = 0;
+    approvedCount = 0;
+    cardId = 0;
+    updateCounters();
+
+    // Reset WA messages
+    const msgs = document.getElementById('wa-messages');
+    const typing = document.getElementById('wa-typing');
+    msgs.innerHTML = '';
+    msgs.appendChild(createDateDivider());
+    const welcomeMsg = document.createElement('div');
+    welcomeMsg.className = 'wa-msg received';
+    welcomeMsg.innerHTML = `Ola! Como posso te ajudar hoje?<div class="wa-msg-time">09:00 <i class="fa-solid fa-check-double check"></i></div>`;
+    msgs.appendChild(welcomeMsg);
+    msgs.appendChild(typing);
+
+    // Reset alert
+    document.getElementById('alert-banner').classList.remove('show');
+    document.getElementById('queue-empty').style.display = 'flex';
+    document.getElementById('wa-status').textContent = 'online';
+
+    showToast('Demo reiniciada', 'success');
+  }
+
+  function createDateDivider() {
+    const d = document.createElement('div');
+    d.className = 'wa-date-divider';
+    d.innerHTML = '<span>Hoje</span>';
+    return d;
+  }
+
+  function sendCustom() {
+    const input = document.getElementById('wa-custom-input');
+    const text = input.value.trim();
+    if (!text) return;
+    // Treat as custom message
+    addWaMessage(text, 'received', false);
+    input.value = '';
+    // Add a generic draft
+    const contact = { name: 'Cliente', phone: '+55 11 9 0000-0000', initials: 'CL' };
+    const msg = {
+      text: text,
+      draft: 'Obrigado pelo contato! Nossa equipe vai responder em breve. Ha mais alguma coisa em que posso te ajudar?',
+      confidence: 72
+    };
+    setTimeout(() => addQueueCard('custom', contact, msg, ++cardId), 1000);
+  }
+</script>
+</body>
+</html>
