@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chatbot WhatsApp AI — Demo Interativa</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --gold: #D4A017;
+      --gold-light: #F0C040;
+      --gold-dim: rgba(212,160,23,0.12);
+      --gold-glow: rgba(212,160,23,0.25);
+      --bg: #0B0F17;
+      --card: #131820;
+      --card-border: rgba(212,160,23,0.18);
+      --text: #E8EDF5;
+      --muted: #7A8799;
+      --wa-dark: #075E54;
+      --wa-green: #25D366;
+      --wa-bg: #E5DDD5;
+      --bubble-out: #DCF8C6;
+      --bubble-in: #FFFFFF;
+      --radius: 14px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Background layers */
+    .bg-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+    .bg-layer::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: url('https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=1920&q=20&auto=format&fit=crop');
+      background-size: cover;
+      background-position: center;
+      opacity: 0.04;
+    }
+    .bg-layer::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 70% 50% at 15% 40%, rgba(212,160,23,0.07) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 85% 65%, rgba(37,211,102,0.06) 0%, transparent 55%),
+        radial-gradient(ellipse 50% 60% at 50% 10%, rgba(37,99,235,0.05) 0%, transparent 50%);
+    }
+
+    /* ─── LAYOUT ─── */
+    .wrap { max-width: 1280px; margin: 0 auto; padding: 0 1.5rem; position: relative; z-index: 1; }
+
+    /* ─── HEADER ─── */
+    header { text-align: center; padding: 3.5rem 0 2rem; }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--gold-dim);
+      border: 1px solid var(--card-border);
+      border-radius: 50px;
+      padding: 0.35rem 1.1rem;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--gold-light);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 1.4rem;
+    }
+
+    h1 {
+      font-size: clamp(1.9rem, 4.5vw, 3.2rem);
+      font-weight: 900;
+      line-height: 1.15;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #fff 0%, var(--gold-light) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 1.05rem;
+      line-height: 1.65;
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    /* ─── MAIN GRID ─── */
+    .grid {
+      display: grid;
+      grid-template-columns: 260px 1fr 260px;
+      gap: 2rem;
+      align-items: start;
+      padding: 2rem 0 1rem;
+    }
+
+    @media (max-width: 1024px) {
+      .grid { grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; }
+      .phone-col { grid-column: 1 / -1; display: flex; justify-content: center; order: -1; }
+    }
+    @media (max-width: 640px) {
+      .grid { grid-template-columns: 1fr; }
+      .phone-col { grid-column: 1; }
+    }
+
+    /* ─── FEATURE CARDS ─── */
+    .feature-col { display: flex; flex-direction: column; gap: 1rem; padding-top: 2rem; }
+
+    @media (max-width: 1024px) {
+      .feature-col { flex-direction: row; flex-wrap: wrap; padding-top: 0; }
+      .feature-col .card { flex: 1; min-width: 160px; }
+    }
+
+    /* ─── STAT COL ─── */
+    .stat-col { display: flex; flex-direction: column; gap: 1rem; padding-top: 2rem; }
+
+    @media (max-width: 1024px) {
+      .stat-col { flex-direction: row; flex-wrap: wrap; padding-top: 0; }
+      .stat-col .card { flex: 1; min-width: 110px; text-align: center; }
+    }
+
+    /* ─── CARD BASE ─── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 1.2rem;
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.5s ease, transform 0.5s ease, box-shadow 0.3s ease;
+    }
+    .card.show { opacity: 1; transform: translateY(0); }
+    .card:hover { box-shadow: 0 0 0 1px var(--gold-glow), 0 8px 24px rgba(0,0,0,0.3); }
+
+    .card-icon {
+      width: 42px;
+      height: 42px;
+      background: var(--gold-dim);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--gold);
+      font-size: 1.1rem;
+      margin-bottom: 0.8rem;
+    }
+    .card h3 { font-size: 0.88rem; font-weight: 800; margin-bottom: 0.35rem; color: var(--text); }
+    .card p { font-size: 0.79rem; color: var(--muted); line-height: 1.55; }
+
+    /* Stat card specifics */
+    .stat-val {
+      font-size: 2.1rem;
+      font-weight: 900;
+      color: var(--gold);
+      line-height: 1;
+      margin-bottom: 0.3rem;
+    }
+    .stat-label { font-size: 0.78rem; color: var(--muted); line-height: 1.4; }
+
+    /* ─── PHONE ─── */
+    .phone-col { position: relative; }
+
+    .phone-glow {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 440px;
+      height: 760px;
+      background: radial-gradient(ellipse, rgba(37,211,102,0.12) 0%, transparent 68%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .phone {
+      width: 340px;
+      height: 700px;
+      background: #1A1A1F;
+      border-radius: 50px;
+      border: 2px solid rgba(255,255,255,0.08);
+      box-shadow:
+        0 0 0 8px #121217,
+        0 0 0 10px rgba(255,255,255,0.06),
+        0 40px 80px rgba(0,0,0,0.7),
+        inset 0 0 0 1px rgba(255,255,255,0.05);
+      position: relative;
+      overflow: hidden;
+      z-index: 1;
+      margin: 0 auto;
+    }
+
+    .notch {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 28px;
+      background: #1A1A1F;
+      border-radius: 0 0 18px 18px;
+      z-index: 10;
+    }
+
+    .screen {
+      width: 100%;
+      height: 100%;
+      border-radius: 48px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      background: var(--wa-bg);
+    }
+
+    /* Status bar */
+    .status-bar {
+      background: var(--wa-dark);
+      padding: 32px 16px 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .status-icons { display: flex; gap: 5px; align-items: center; font-size: 11px; }
+
+    /* WA header */
+    .wa-header {
+      background: var(--wa-dark);
+      padding: 6px 10px 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .wa-back { color: #fff; font-size: 17px; margin-right: 2px; }
+
+    .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 13px;
+      color: #1A1A1A;
+      flex-shrink: 0;
+    }
+
+    .wa-info { flex: 1; }
+    .wa-name { color: #fff; font-size: 14px; font-weight: 700; }
+    .wa-status { color: rgba(255,255,255,0.65); font-size: 10px; }
+
+    .wa-actions { display: flex; gap: 14px; color: #fff; font-size: 15px; }
+
+    /* Chat area */
+    .chat-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      background-color: #E5DDD5;
+      background-image: radial-gradient(circle, rgba(0,0,0,0.06) 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+    .chat-area::-webkit-scrollbar { width: 3px; }
+    .chat-area::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 3px; }
+
+    /* Date stamp */
+    .date-stamp {
+      align-self: center;
+      background: rgba(255,255,255,0.82);
+      color: #667781;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 8px;
+      margin: 4px 0 6px;
+      box-shadow: 0 1px 1px rgba(0,0,0,0.08);
+    }
+
+    /* Bubbles */
+    .msg { display: flex; flex-direction: column; }
+    .msg.out { align-items: flex-end; }
+    .msg.in { align-items: flex-start; }
+
+    @keyframes popIn {
+      from { opacity: 0; transform: translateY(6px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0)   scale(1);    }
+    }
+
+    .bubble {
+      max-width: 80%;
+      padding: 6px 9px 18px;
+      border-radius: 8px;
+      font-size: 12.5px;
+      line-height: 1.45;
+      position: relative;
+      word-wrap: break-word;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.12);
+      animation: popIn 0.22s ease-out;
+    }
+    .bubble.out { background: var(--bubble-out); border-radius: 8px 2px 8px 8px; }
+    .bubble.in  { background: var(--bubble-in);  border-radius: 2px 8px 8px 8px; }
+
+    .bubble-time {
+      position: absolute;
+      bottom: 3px;
+      right: 7px;
+      font-size: 9.5px;
+      color: #9BB0BF;
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+
+    /* System / transfer message */
+    .sys-msg {
+      align-self: center;
+      background: rgba(255,255,255,0.82);
+      color: #555;
+      font-size: 10.5px;
+      padding: 4px 12px;
+      border-radius: 8px;
+      text-align: center;
+      max-width: 85%;
+      box-shadow: 0 1px 1px rgba(0,0,0,0.08);
+      margin: 4px 0;
+      animation: popIn 0.22s ease-out;
+    }
+    .sys-msg.transfer {
+      background: rgba(37,211,102,0.14);
+      border: 1px solid rgba(37,211,102,0.35);
+      color: #1a6035;
+    }
+
+    /* Typing indicator */
+    .typing-row { display: flex; align-items: flex-start; }
+    .typing-bubble {
+      background: #fff;
+      border-radius: 2px 8px 8px 8px;
+      padding: 9px 12px;
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    .dot {
+      width: 5px; height: 5px;
+      background: #A0ADB8;
+      border-radius: 50%;
+      animation: dotBounce 1.1s infinite ease-in-out;
+    }
+    .dot:nth-child(2) { animation-delay: 0.14s; }
+    .dot:nth-child(3) { animation-delay: 0.28s; }
+    @keyframes dotBounce {
+      0%, 60%, 100% { transform: translateY(0); }
+      30%            { transform: translateY(-4px); }
+    }
+
+    /* WA input bar */
+    .wa-input {
+      background: #F0F0F0;
+      padding: 6px 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .wa-emoji { color: #8E9EA8; font-size: 19px; }
+    .wa-field {
+      flex: 1;
+      background: #fff;
+      border-radius: 18px;
+      padding: 7px 13px;
+      font-size: 12px;
+      color: #8E9EA8;
+      font-family: 'Nunito', sans-serif;
+    }
+    .wa-attach { color: #8E9EA8; font-size: 17px; }
+    .wa-mic {
+      width: 36px; height: 36px;
+      background: var(--wa-green);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    /* ─── BOTTOM AREA ─── */
+    .bottom { padding: 1.5rem 0 3rem; }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.7rem;
+      justify-content: center;
+      margin-bottom: 1.8rem;
+    }
+    .chip {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 50px;
+      padding: 0.45rem 1rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--muted);
+      transition: all 0.25s;
+    }
+    .chip:hover { border-color: var(--gold-glow); color: var(--text); }
+    .chip i { color: var(--gold); font-size: 0.85rem; }
+
+    .restart-wrap { display: flex; justify-content: center; }
+
+    .restart-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
+      color: #1A1200;
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 800;
+      border: none;
+      border-radius: 50px;
+      padding: 0.8rem 2.2rem;
+      cursor: pointer;
+      box-shadow: 0 4px 24px var(--gold-glow);
+      transition: all 0.3s ease;
+    }
+    .restart-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(212,160,23,0.35); }
+    .restart-btn:active { transform: translateY(0); }
+
+    /* ─── PROGRESS BAR ─── */
+    .progress-bar {
+      height: 2px;
+      background: var(--gold-dim);
+      border-radius: 2px;
+      overflow: hidden;
+      margin: 0.5rem auto 1.5rem;
+      max-width: 280px;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--gold), var(--gold-light));
+      border-radius: 2px;
+      transition: width 0.5s linear;
+    }
+
+    /* ─── FOOTER ─── */
+    footer {
+      text-align: center;
+      padding: 1.5rem 0 2.5rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+      border-top: 1px solid rgba(255,255,255,0.05);
+      position: relative;
+      z-index: 1;
+    }
+    footer strong { color: var(--gold); }
+
+    /* ─── RESPONSIVE PHONE SIZE ─── */
+    @media (max-width: 400px) {
+      .phone { width: 300px; height: 620px; }
+      .phone-glow { width: 360px; height: 680px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="bg-layer"></div>
+
+<div class="wrap">
+
+  <!-- ── HEADER ── -->
+  <header>
+    <div class="badge">
+      <i class="fas fa-robot"></i>
+      DEMO INTERATIVA AO VIVO
+    </div>
+    <h1>Chatbot WhatsApp AI<br>para Atendimento ao Cliente</h1>
+    <p class="subtitle">Veja como sua empresa pode responder clientes instantaneamente com inteligência artificial integrada ao WhatsApp Business.</p>
+  </header>
+
+  <!-- ── MAIN GRID ── -->
+  <div class="grid">
+
+    <!-- Left: features -->
+    <div class="feature-col">
+      <div class="card" data-delay="0">
+        <div class="card-icon"><i class="fas fa-bolt"></i></div>
+        <h3>Resposta em Segundos</h3>
+        <p>O bot responde instantaneamente, 24 horas por dia, sem filas de espera.</p>
+      </div>
+      <div class="card" data-delay="100">
+        <div class="card-icon"><i class="fas fa-brain"></i></div>
+        <h3>Contexto Inteligente</h3>
+        <p>Lembra de toda a conversa e responde com coerência desde a primeira mensagem.</p>
+      </div>
+      <div class="card" data-delay="200">
+        <div class="card-icon"><i class="fas fa-shield-halved"></i></div>
+        <h3>Janela de 24 Horas</h3>
+        <p>Gerencia os templates Meta automaticamente para reengajar clientes após silêncio prolongado.</p>
+      </div>
+    </div>
+
+    <!-- Center: phone -->
+    <div class="phone-col">
+      <div class="phone-glow"></div>
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="screen">
+
+          <!-- Status bar -->
+          <div class="status-bar">
+            <span>9:41</span>
+            <div class="status-icons">
+              <i class="fas fa-signal"></i>
+              <i class="fas fa-wifi"></i>
+              <i class="fas fa-battery-full"></i>
+            </div>
+          </div>
+
+          <!-- WA Header -->
+          <div class="wa-header">
+            <i class="fas fa-chevron-left wa-back"></i>
+            <div class="avatar">SN</div>
+            <div class="wa-info">
+              <div class="wa-name">ShopNova Suporte</div>
+              <div class="wa-status">online agora</div>
+            </div>
+            <div class="wa-actions">
+              <i class="fas fa-video"></i>
+              <i class="fas fa-phone"></i>
+              <i class="fas fa-ellipsis-vertical"></i>
+            </div>
+          </div>
+
+          <!-- Chat area -->
+          <div class="chat-area" id="chatArea">
+            <div class="date-stamp">Hoje, 21 de junho</div>
+          </div>
+
+          <!-- Input bar -->
+          <div class="wa-input">
+            <i class="fas fa-face-smile wa-emoji"></i>
+            <div class="wa-field">Mensagem</div>
+            <i class="fas fa-paperclip wa-attach"></i>
+            <div class="wa-mic"><i class="fas fa-microphone"></i></div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Progress bar under phone -->
+      <div class="progress-bar" style="margin-top:1rem;">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+    </div>
+
+    <!-- Right: stats -->
+    <div class="stat-col">
+      <div class="card" data-delay="50">
+        <div class="stat-val">87%</div>
+        <div class="stat-label">das perguntas resolvidas sem intervenção humana</div>
+      </div>
+      <div class="card" data-delay="150">
+        <div class="stat-val">&lt;8s</div>
+        <div class="stat-label">tempo médio de primeira resposta</div>
+      </div>
+      <div class="card" data-delay="250">
+        <div class="stat-val">24/7</div>
+        <div class="stat-label">disponibilidade contínua sem custo adicional</div>
+      </div>
+      <div class="card" data-delay="350">
+        <div class="stat-val">-65%</div>
+        <div class="stat-label">redução no volume de atendimento manual</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── BOTTOM ── -->
+  <div class="bottom">
+    <div class="chips">
+      <div class="chip"><i class="fas fa-circle-check"></i> WhatsApp Business API</div>
+      <div class="chip"><i class="fas fa-robot"></i> IA com NLP avançado</div>
+      <div class="chip"><i class="fas fa-headset"></i> Handoff para humano</div>
+      <div class="chip"><i class="fas fa-rotate"></i> Gestão de sessão 24h</div>
+      <div class="chip"><i class="fas fa-chart-line"></i> Painel de histórico</div>
+    </div>
+    <div class="restart-wrap">
+      <button class="restart-btn" id="restartBtn" onclick="startDemo()">
+        <i class="fas fa-rotate-right"></i>
+        Reiniciar Demo
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── FOOTER ── -->
+<footer>
+  Demo desenvolvida por <strong>Mark Griffith</strong> — Technical Partner | From Vision to Production
+</footer>
+
+<script>
+  const chat = document.getElementById('chatArea');
+  const fill = document.getElementById('progressFill');
+  let timers = [];
+  const TOTAL_MS = 32000;
+
+  function t(fn, ms) {
+    timers.push(setTimeout(fn, ms));
+    timers.push(setTimeout(() => {
+      fill.style.width = Math.min(100, (ms / TOTAL_MS) * 100) + '%';
+    }, ms));
+  }
+
+  function clearAll() {
+    timers.forEach(clearTimeout);
+    timers = [];
+    fill.style.width = '0%';
+  }
+
+  function now() {
+    return '9:41';
+  }
+
+  function showTyping() {
+    removeTyping();
+    const row = document.createElement('div');
+    row.className = 'typing-row';
+    row.id = 'typing';
+    row.innerHTML = '<div class="typing-bubble"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
+    chat.appendChild(row);
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+  function removeTyping() {
+    const el = document.getElementById('typing');
+    if (el) el.remove();
+  }
+
+  function addIn(html) {
+    removeTyping();
+    const msg = document.createElement('div');
+    msg.className = 'msg in';
+    msg.innerHTML = '<div class="bubble in">' + html + '<span class="bubble-time">' + now() + '</span></div>';
+    chat.appendChild(msg);
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+  function addOut(html) {
+    const msg = document.createElement('div');
+    msg.className = 'msg out';
+    msg.innerHTML = '<div class="bubble out">' + html + '<span class="bubble-time">' + now() + ' <i class="fas fa-check-double" style="font-size:8px;color:#53BDEB;"></i></span></div>';
+    chat.appendChild(msg);
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+  function addSys(html, transfer) {
+    removeTyping();
+    const msg = document.createElement('div');
+    msg.className = 'sys-msg' + (transfer ? ' transfer' : '');
+    msg.innerHTML = html;
+    chat.appendChild(msg);
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+  function startDemo() {
+    clearAll();
+    const datestamp = chat.querySelector('.date-stamp');
+    chat.innerHTML = '';
+    if (datestamp) chat.appendChild(datestamp);
+    else {
+      const ds = document.createElement('div');
+      ds.className = 'date-stamp';
+      ds.textContent = 'Hoje, 21 de junho';
+      chat.appendChild(ds);
+    }
+
+    // 0.8s: typing
+    t(() => showTyping(), 800);
+    // 2.3s: bot greeting
+    t(() => addIn('Ola! Sou a assistente virtual da <strong>ShopNova</strong>. Como posso te ajudar hoje?'), 2300);
+
+    // 4.5s: customer question
+    t(() => addOut('Oi, quero saber o status do meu pedido'), 4500);
+
+    // 5.2s: typing
+    t(() => showTyping(), 5200);
+    // 6.8s: bot asks for info
+    t(() => addIn('Claro! Me informa o numero do pedido ou o e-mail do cadastro.'), 6800);
+
+    // 9.2s: customer provides email
+    t(() => addOut('email: maria.compras@gmail.com'), 9200);
+
+    // 10.0s: typing
+    t(() => showTyping(), 10000);
+    // 12.2s: bot found order
+    t(() => addIn('Encontrei! Pedido <strong>#7834</strong> esta em transito. Previsao de entrega: <strong>24 de junho de 2026</strong>. Posso ajudar com mais alguma coisa?'), 12200);
+
+    // 15.0s: customer wants exchange
+    t(() => addOut('Quero fazer uma troca de produto'), 15000);
+
+    // 15.8s: typing
+    t(() => showTyping(), 15800);
+    // 17.8s: bot exchange info
+    t(() => addIn('Para trocas, o prazo e de <strong>30 dias</strong> apos o recebimento. Voce tem a nota fiscal disponivel? Se preferir, posso transferir para um atendente agora.'), 17800);
+
+    // 21.0s: customer wants agent
+    t(() => addOut('Prefiro falar com um atendente por favor'), 21000);
+
+    // 21.8s: typing
+    t(() => showTyping(), 21800);
+    // 23.5s: bot transfers
+    t(() => addIn('Sem problema! Transferindo voce agora. Nossa equipe ja recebeu o historico completo desta conversa. Tempo de espera: <strong>aproximadamente 2 minutos</strong>.'), 23500);
+
+    // 25.2s: system message
+    t(() => addSys('<i class="fas fa-circle-check" style="color:#25D366;margin-right:5px;"></i> Conversa transferida para atendente humano', true), 25200);
+
+    // 27.5s: customer thanks
+    t(() => addOut('Obrigada!'), 27500);
+
+    // 28.3s: typing
+    t(() => showTyping(), 28300);
+    // 29.8s: bot farewell
+    t(() => addIn('Disponha! Qualquer duvida futura pode me chamar aqui mesmo. Ate mais!'), 29800);
+
+    // 32s: complete
+    t(() => { fill.style.width = '100%'; }, 31500);
+  }
+
+  // Scroll-reveal for cards
+  function revealCards() {
+    const cards = document.querySelectorAll('.card');
+    cards.forEach((card, i) => {
+      const delay = parseInt(card.dataset.delay || 0);
+      setTimeout(() => card.classList.add('show'), 300 + i * 120 + delay);
+    });
+  }
+
+  // Auto-start on load
+  window.addEventListener('load', () => {
+    revealCards();
+    setTimeout(startDemo, 600);
+  });
+</script>
+
+</body>
+</html>
