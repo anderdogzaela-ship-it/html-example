@@ -1,0 +1,1384 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ML Automacao — Painel de Listagens</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --gold: #D4A017;
+      --gold-light: #F0C040;
+      --gold-dim: #9A7512;
+      --gold-glow: rgba(212,160,23,0.18);
+      --bg: #090914;
+      --sidebar: #0f0f20;
+      --card: #13132a;
+      --card2: #1a1a35;
+      --border: rgba(212,160,23,0.15);
+      --text: #e8e8f4;
+      --muted: #7070a0;
+      --green: #22c55e;
+      --red: #ef4444;
+      --amber: #f59e0b;
+      --blue: #60a5fa;
+      --sidebar-w: 240px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+    }
+
+    /* ---- Sidebar ---- */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--sidebar);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      z-index: 100;
+      transition: transform 0.3s ease;
+    }
+
+    .sidebar-logo {
+      padding: 24px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-icon {
+      width: 40px; height: 40px;
+      background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      color: #000;
+      font-weight: 900;
+      flex-shrink: 0;
+    }
+
+    .logo-text {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--text);
+      line-height: 1.2;
+    }
+
+    .logo-text span {
+      color: var(--gold);
+    }
+
+    .sidebar-nav {
+      padding: 16px 12px;
+      flex: 1;
+    }
+
+    .nav-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      padding: 0 8px;
+      margin-bottom: 8px;
+      margin-top: 16px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 2px;
+    }
+
+    .nav-item:hover { background: var(--gold-glow); color: var(--text); }
+
+    .nav-item.active {
+      background: linear-gradient(90deg, var(--gold-glow), transparent);
+      color: var(--gold);
+      border-left: 3px solid var(--gold);
+    }
+
+    .nav-item i { width: 18px; text-align: center; font-size: 15px; }
+
+    .badge {
+      margin-left: auto;
+      background: var(--red);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 20px;
+    }
+
+    .sidebar-footer {
+      padding: 16px 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .avatar {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--gold), var(--gold-dim));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px;
+      font-weight: 800;
+      color: #000;
+      flex-shrink: 0;
+    }
+
+    .user-name { font-size: 13px; font-weight: 700; }
+    .user-role { font-size: 11px; color: var(--muted); }
+
+    /* ---- Main ---- */
+    .main {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* ---- Topbar ---- */
+    .topbar {
+      background: var(--sidebar);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .hamburger {
+      display: none;
+      background: none;
+      border: none;
+      color: var(--text);
+      font-size: 20px;
+      cursor: pointer;
+      padding: 4px;
+    }
+
+    .page-title { font-size: 17px; font-weight: 800; }
+    .page-sub { font-size: 12px; color: var(--muted); margin-top: 1px; }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      color: #000;
+      border: none;
+      padding: 9px 18px;
+      border-radius: 10px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 16px rgba(212,160,23,0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 24px rgba(212,160,23,0.45);
+    }
+
+    .btn-secondary {
+      background: var(--card2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 9px 16px;
+      border-radius: 10px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-secondary:hover { background: var(--gold-glow); border-color: var(--gold-dim); }
+
+    /* ---- Content ---- */
+    .content {
+      padding: 28px;
+      flex: 1;
+    }
+
+    /* ---- KPI Cards ---- */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .kpi-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    .kpi-card.visible {
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity 0.5s ease, transform 0.5s ease, box-shadow 0.25s ease;
+    }
+
+    .kpi-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 32px rgba(212,160,23,0.12);
+    }
+
+    .kpi-card::before {
+      content: '';
+      position: absolute;
+      top: 0; right: 0;
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      opacity: 0.06;
+    }
+
+    .kpi-card.gold::before { background: var(--gold); }
+    .kpi-card.green::before { background: var(--green); }
+    .kpi-card.amber::before { background: var(--amber); }
+    .kpi-card.red::before { background: var(--red); }
+
+    .kpi-icon {
+      width: 42px; height: 42px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      margin-bottom: 14px;
+    }
+
+    .kpi-icon.gold { background: rgba(212,160,23,0.15); color: var(--gold); }
+    .kpi-icon.green { background: rgba(34,197,94,0.15); color: var(--green); }
+    .kpi-icon.amber { background: rgba(245,158,11,0.15); color: var(--amber); }
+    .kpi-icon.red { background: rgba(239,68,68,0.15); color: var(--red); }
+
+    .kpi-value {
+      font-size: 32px;
+      font-weight: 900;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .kpi-label {
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .kpi-delta {
+      margin-top: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .kpi-delta.up { color: var(--green); }
+    .kpi-delta.warn { color: var(--amber); }
+    .kpi-delta.down { color: var(--red); }
+
+    /* ---- Import Section ---- */
+    .section-title {
+      font-size: 16px;
+      font-weight: 800;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-title i { color: var(--gold); font-size: 15px; }
+
+    .section-sub {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 18px;
+    }
+
+    .import-area {
+      background: var(--card);
+      border: 2px dashed var(--border);
+      border-radius: 16px;
+      padding: 40px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      margin-bottom: 20px;
+      position: relative;
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    .import-area.visible {
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity 0.5s 0.1s ease, transform 0.5s 0.1s ease;
+    }
+
+    .import-area:hover {
+      border-color: var(--gold-dim);
+      background: var(--card2);
+    }
+
+    .import-icon {
+      width: 64px; height: 64px;
+      background: linear-gradient(135deg, var(--gold-glow), transparent);
+      border: 2px solid var(--border);
+      border-radius: 20px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px;
+      color: var(--gold);
+      margin: 0 auto 16px;
+    }
+
+    .import-title { font-size: 16px; font-weight: 800; margin-bottom: 6px; }
+    .import-sub { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
+
+    .import-tags {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .tag {
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    /* ---- Progress Bar ---- */
+    .progress-bar-wrap {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 28px;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    .progress-bar-wrap.visible {
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity 0.5s 0.15s ease, transform 0.5s 0.15s ease;
+    }
+
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .progress-info { font-size: 14px; font-weight: 700; }
+    .progress-pct { font-size: 14px; font-weight: 800; color: var(--gold); }
+
+    .progress-track {
+      background: var(--card2);
+      border-radius: 100px;
+      height: 8px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 100px;
+      background: linear-gradient(90deg, var(--gold-dim), var(--gold-light));
+      width: 0;
+      transition: width 1.5s ease 0.6s;
+    }
+
+    .progress-steps {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .step-item {
+      flex: 1;
+      background: var(--card2);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .step-item.done { border-color: rgba(34,197,94,0.3); color: var(--green); }
+    .step-item.active { border-color: rgba(212,160,23,0.4); color: var(--gold); }
+    .step-item.pending { color: var(--muted); }
+
+    .step-dot {
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px;
+      flex-shrink: 0;
+    }
+
+    .step-dot.done { background: rgba(34,197,94,0.2); color: var(--green); }
+    .step-dot.active { background: rgba(212,160,23,0.2); color: var(--gold); }
+    .step-dot.pending { background: var(--card); color: var(--muted); }
+
+    /* ---- Table ---- */
+    .table-section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 28px;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    .table-section.visible {
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity 0.5s 0.2s ease, transform 0.5s 0.2s ease;
+    }
+
+    .table-header {
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .table-filters {
+      display: flex;
+      gap: 8px;
+    }
+
+    .filter-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .filter-btn.active { background: var(--gold-glow); border-color: var(--gold-dim); color: var(--gold); }
+    .filter-btn:hover { border-color: var(--gold-dim); color: var(--text); }
+
+    .search-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 7px 12px;
+    }
+
+    .search-box i { color: var(--muted); font-size: 12px; }
+    .search-box input {
+      background: none;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-family: 'Nunito', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      width: 160px;
+    }
+
+    .search-box input::placeholder { color: var(--muted); }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead th {
+      background: var(--card2);
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    tbody tr {
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      transition: background 0.2s;
+    }
+
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: rgba(255,255,255,0.02); }
+
+    td {
+      padding: 14px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      vertical-align: middle;
+    }
+
+    .product-cell {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .product-thumb {
+      width: 42px; height: 42px;
+      border-radius: 8px;
+      object-fit: cover;
+      border: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .product-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.3;
+    }
+
+    .product-sku {
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .status-badge.published { background: rgba(34,197,94,0.12); color: var(--green); }
+    .status-badge.processing { background: rgba(96,165,250,0.12); color: var(--blue); }
+    .status-badge.error { background: rgba(239,68,68,0.12); color: var(--red); }
+    .status-badge.pending { background: rgba(245,158,11,0.12); color: var(--amber); }
+
+    .status-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .status-dot.pulse {
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .price-cell { font-weight: 800; color: var(--gold); }
+    .muted-cell { color: var(--muted); }
+
+    .action-btns {
+      display: flex;
+      gap: 6px;
+    }
+
+    .icon-btn {
+      width: 30px; height: 30px;
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      font-size: 12px;
+      color: var(--muted);
+      transition: all 0.2s;
+    }
+
+    .icon-btn:hover { background: var(--gold-glow); color: var(--gold); border-color: var(--gold-dim); }
+    .icon-btn.red:hover { background: rgba(239,68,68,0.1); color: var(--red); border-color: rgba(239,68,68,0.3); }
+
+    /* ---- Bottom Grid ---- */
+    .bottom-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .panel-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    .panel-card.visible {
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity 0.5s 0.25s ease, transform 0.5s 0.25s ease;
+    }
+
+    .panel-top {
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .panel-top-title { font-size: 14px; font-weight: 800; }
+    .panel-top-sub { font-size: 12px; color: var(--muted); font-weight: 600; }
+
+    .panel-body { padding: 16px 18px; }
+
+    /* ---- Category Map ---- */
+    .cat-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+
+    .cat-item:last-child { border-bottom: none; }
+
+    .cat-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .cat-icon {
+      width: 32px; height: 32px;
+      background: var(--card2);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+    }
+
+    .cat-name { font-size: 13px; font-weight: 700; }
+    .cat-attrs { font-size: 11px; color: var(--muted); }
+
+    .cat-bar-wrap { flex: 1; margin: 0 12px; }
+    .cat-bar-track { background: var(--card2); border-radius: 100px; height: 5px; }
+    .cat-bar-fill { height: 100%; border-radius: 100px; background: linear-gradient(90deg, var(--gold-dim), var(--gold)); transition: width 1.2s ease; width: 0; }
+
+    .cat-count { font-size: 12px; font-weight: 800; color: var(--gold); white-space: nowrap; }
+
+    /* ---- Activity Log ---- */
+    .log-item {
+      display: flex;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+
+    .log-item:last-child { border-bottom: none; }
+
+    .log-dot-col { padding-top: 3px; display: flex; flex-direction: column; align-items: center; }
+
+    .log-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .log-dot.green { background: var(--green); }
+    .log-dot.red { background: var(--red); }
+    .log-dot.amber { background: var(--amber); }
+    .log-dot.blue { background: var(--blue); }
+
+    .log-msg { font-size: 13px; font-weight: 600; line-height: 1.4; }
+    .log-time { font-size: 11px; color: var(--muted); margin-top: 2px; font-weight: 600; }
+
+    /* ---- Mobile Overlay ---- */
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 90;
+    }
+
+    /* ---- Responsive ---- */
+    @media (max-width: 1100px) {
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+      .bottom-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 800px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+
+      .sidebar.open { transform: translateX(0); }
+
+      .main { margin-left: 0; }
+
+      .hamburger { display: block; }
+
+      .overlay.open { display: block; }
+
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+
+      .content { padding: 16px; }
+
+      .topbar { padding: 12px 16px; }
+
+      .progress-steps { flex-direction: column; gap: 6px; }
+
+      table { font-size: 12px; }
+
+      .table-filters { display: none; }
+
+      td:nth-child(3), td:nth-child(4), th:nth-child(3), th:nth-child(4) { display: none; }
+
+      .search-box { display: none; }
+    }
+
+    @media (max-width: 480px) {
+      .kpi-grid { grid-template-columns: 1fr 1fr; }
+      .kpi-value { font-size: 26px; }
+      .btn-primary span { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="overlay" id="overlay"></div>
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon"><i class="fa-solid fa-robot"></i></div>
+    <div>
+      <div class="logo-text">ML <span>Auto</span></div>
+      <div style="font-size:10px;color:var(--muted);font-weight:600;">Mercado Livre Automation</div>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-label">Principal</div>
+    <div class="nav-item active">
+      <i class="fa-solid fa-gauge-high"></i>
+      Dashboard
+    </div>
+    <div class="nav-item">
+      <i class="fa-solid fa-file-arrow-up"></i>
+      Importar Produtos
+    </div>
+    <div class="nav-item">
+      <i class="fa-solid fa-boxes-stacked"></i>
+      Catalogo
+    </div>
+    <div class="nav-item">
+      <i class="fa-solid fa-circle-check"></i>
+      Publicados
+    </div>
+
+    <div class="nav-label">Ferramentas</div>
+    <div class="nav-item">
+      <i class="fa-solid fa-sitemap"></i>
+      Categorias ML
+    </div>
+    <div class="nav-item">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+      Log de Erros
+      <span class="badge">3</span>
+    </div>
+    <div class="nav-item">
+      <i class="fa-solid fa-plug"></i>
+      API / Conexao
+    </div>
+
+    <div class="nav-label">Conta</div>
+    <div class="nav-item">
+      <i class="fa-solid fa-gear"></i>
+      Configuracoes
+    </div>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="user-info">
+      <div class="avatar">LM</div>
+      <div>
+        <div class="user-name">Lucas D.M.C.</div>
+        <div class="user-role">Administrador</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- Main -->
+<div class="main">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="hamburger" id="hamburger"><i class="fa-solid fa-bars"></i></button>
+      <div>
+        <div class="page-title">Dashboard</div>
+        <div class="page-sub">21 de junho de 2026</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <button class="btn-secondary">
+        <i class="fa-solid fa-rotate"></i>
+        Sincronizar
+      </button>
+      <button class="btn-primary">
+        <i class="fa-solid fa-upload"></i>
+        <span>Importar Catalogo</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="content">
+
+    <!-- KPI Cards -->
+    <div class="kpi-grid">
+      <div class="kpi-card gold" data-reveal>
+        <div class="kpi-icon gold"><i class="fa-solid fa-boxes-stacked"></i></div>
+        <div class="kpi-value">1.247</div>
+        <div class="kpi-label">Total no Catalogo</div>
+        <div class="kpi-delta up"><i class="fa-solid fa-arrow-trend-up"></i> +38 esta semana</div>
+      </div>
+      <div class="kpi-card green" data-reveal style="transition-delay:0.08s">
+        <div class="kpi-icon green"><i class="fa-solid fa-circle-check"></i></div>
+        <div class="kpi-value">1.189</div>
+        <div class="kpi-label">Publicados no ML</div>
+        <div class="kpi-delta up"><i class="fa-solid fa-arrow-trend-up"></i> +24 hoje</div>
+      </div>
+      <div class="kpi-card amber" data-reveal style="transition-delay:0.16s">
+        <div class="kpi-icon amber"><i class="fa-solid fa-clock"></i></div>
+        <div class="kpi-value">55</div>
+        <div class="kpi-label">Em Processamento</div>
+        <div class="kpi-delta warn"><i class="fa-solid fa-rotate fa-spin"></i> Publicando agora</div>
+      </div>
+      <div class="kpi-card red" data-reveal style="transition-delay:0.24s">
+        <div class="kpi-icon red"><i class="fa-solid fa-circle-xmark"></i></div>
+        <div class="kpi-value">3</div>
+        <div class="kpi-label">Com Erro</div>
+        <div class="kpi-delta down"><i class="fa-solid fa-arrow-trend-down"></i> Ver log de erros</div>
+      </div>
+    </div>
+
+    <!-- Import Area -->
+    <div class="section-title"><i class="fa-solid fa-file-arrow-up"></i> Importar Produtos</div>
+    <div class="section-sub">Arraste um arquivo CSV ou Excel com os dados do seu catalogo</div>
+
+    <div class="import-area" data-reveal>
+      <div class="import-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+      <div class="import-title">Arraste o arquivo aqui ou clique para selecionar</div>
+      <div class="import-sub">Suporte para CSV e XLSX com ate 10.000 produtos por importacao</div>
+      <div class="import-tags">
+        <span class="tag"><i class="fa-solid fa-file-csv"></i> CSV</span>
+        <span class="tag"><i class="fa-solid fa-file-excel"></i> XLSX</span>
+        <span class="tag"><i class="fa-solid fa-shield-check"></i> Validacao automatica</span>
+        <span class="tag"><i class="fa-solid fa-sitemap"></i> Mapeamento por categoria</span>
+      </div>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress-bar-wrap" data-reveal id="progressWrap">
+      <div class="progress-header">
+        <div>
+          <div class="progress-info"><i class="fa-solid fa-rotate fa-spin" style="color:var(--gold);margin-right:8px;"></i>Publicando lote atual — 55 de 80 produtos</div>
+        </div>
+        <div class="progress-pct" id="pctLabel">69%</div>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <div class="progress-steps">
+        <div class="step-item done">
+          <div class="step-dot done"><i class="fa-solid fa-check" style="font-size:9px;"></i></div>
+          Validacao de campos
+        </div>
+        <div class="step-item done">
+          <div class="step-dot done"><i class="fa-solid fa-check" style="font-size:9px;"></i></div>
+          Mapeamento de categoria
+        </div>
+        <div class="step-item active">
+          <div class="step-dot active"><i class="fa-solid fa-rotate fa-spin" style="font-size:9px;"></i></div>
+          Publicacao via API ML
+        </div>
+        <div class="step-item pending">
+          <div class="step-dot pending"><i class="fa-solid fa-circle" style="font-size:9px;"></i></div>
+          Confirmacao de status
+        </div>
+      </div>
+    </div>
+
+    <!-- Products Table -->
+    <div class="table-section" data-reveal>
+      <div class="table-header">
+        <div>
+          <div class="section-title" style="margin-bottom:0;"><i class="fa-solid fa-list-check"></i> Produtos Recentes</div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" placeholder="Buscar produto..." />
+          </div>
+          <div class="table-filters">
+            <button class="filter-btn active">Todos</button>
+            <button class="filter-btn">Publicados</button>
+            <button class="filter-btn">Erros</button>
+          </div>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Produto</th>
+            <th>Status</th>
+            <th>Categoria</th>
+            <th>Preco</th>
+            <th>ID ML</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div class="product-cell">
+                <img class="product-thumb" src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=80&h=80&fit=crop&crop=center" alt="Fone" />
+                <div>
+                  <div class="product-name">Fone Bluetooth Sony WH-1000XM5</div>
+                  <div class="product-sku">SKU-2047</div>
+                </div>
+              </div>
+            </td>
+            <td><span class="status-badge published"><span class="status-dot"></span>Publicado</span></td>
+            <td class="muted-cell">Eletronicos / Audio</td>
+            <td class="price-cell">R$ 2.199</td>
+            <td class="muted-cell">MLB#8823401</td>
+            <td>
+              <div class="action-btns">
+                <div class="icon-btn"><i class="fa-solid fa-arrow-up-right-from-square"></i></div>
+                <div class="icon-btn red"><i class="fa-solid fa-trash"></i></div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="product-cell">
+                <img class="product-thumb" src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=80&h=80&fit=crop&crop=center" alt="Tenis" />
+                <div>
+                  <div class="product-name">Tenis Nike Air Max 270 Preto</div>
+                  <div class="product-sku">SKU-1834</div>
+                </div>
+              </div>
+            </td>
+            <td><span class="status-badge published"><span class="status-dot"></span>Publicado</span></td>
+            <td class="muted-cell">Moda / Calcados</td>
+            <td class="price-cell">R$ 649</td>
+            <td class="muted-cell">MLB#8819756</td>
+            <td>
+              <div class="action-btns">
+                <div class="icon-btn"><i class="fa-solid fa-arrow-up-right-from-square"></i></div>
+                <div class="icon-btn red"><i class="fa-solid fa-trash"></i></div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="product-cell">
+                <img class="product-thumb" src="https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=80&h=80&fit=crop&crop=center" alt="Notebook" />
+                <div>
+                  <div class="product-name">Notebook Dell Inspiron 15 i7 16GB</div>
+                  <div class="product-sku">SKU-3012</div>
+                </div>
+              </div>
+            </td>
+            <td><span class="status-badge processing"><span class="status-dot pulse"></span>Publicando</span></td>
+            <td class="muted-cell">Informatica / Notebooks</td>
+            <td class="price-cell">R$ 4.799</td>
+            <td class="muted-cell">—</td>
+            <td>
+              <div class="action-btns">
+                <div class="icon-btn"><i class="fa-solid fa-pause"></i></div>
+                <div class="icon-btn red"><i class="fa-solid fa-trash"></i></div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="product-cell">
+                <img class="product-thumb" src="https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=80&h=80&fit=crop&crop=center" alt="Camera" />
+                <div>
+                  <div class="product-name">Camera Canon EOS Rebel SL3 Kit</div>
+                  <div class="product-sku">SKU-2765</div>
+                </div>
+              </div>
+            </td>
+            <td><span class="status-badge error"><span class="status-dot"></span>Erro</span></td>
+            <td class="muted-cell">Cameras / DSLR</td>
+            <td class="price-cell">R$ 3.299</td>
+            <td class="muted-cell">—</td>
+            <td>
+              <div class="action-btns">
+                <div class="icon-btn" title="Ver erro"><i class="fa-solid fa-circle-exclamation" style="color:var(--red)"></i></div>
+                <div class="icon-btn"><i class="fa-solid fa-rotate-right"></i></div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="product-cell">
+                <img class="product-thumb" src="https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=80&h=80&fit=crop&crop=center" alt="Monitor" />
+                <div>
+                  <div class="product-name">Monitor Samsung 27" Curvo 144Hz</div>
+                  <div class="product-sku">SKU-1920</div>
+                </div>
+              </div>
+            </td>
+            <td><span class="status-badge pending"><span class="status-dot"></span>Na Fila</span></td>
+            <td class="muted-cell">Informatica / Monitores</td>
+            <td class="price-cell">R$ 1.849</td>
+            <td class="muted-cell">—</td>
+            <td>
+              <div class="action-btns">
+                <div class="icon-btn"><i class="fa-solid fa-arrow-up-right-from-square"></i></div>
+                <div class="icon-btn red"><i class="fa-solid fa-trash"></i></div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="product-cell">
+                <img class="product-thumb" src="https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=80&h=80&fit=crop&crop=center" alt="Teclado" />
+                <div>
+                  <div class="product-name">Teclado Mecanico Logitech G915</div>
+                  <div class="product-sku">SKU-0988</div>
+                </div>
+              </div>
+            </td>
+            <td><span class="status-badge published"><span class="status-dot"></span>Publicado</span></td>
+            <td class="muted-cell">Informatica / Perifericos</td>
+            <td class="price-cell">R$ 1.299</td>
+            <td class="muted-cell">MLB#8817003</td>
+            <td>
+              <div class="action-btns">
+                <div class="icon-btn"><i class="fa-solid fa-arrow-up-right-from-square"></i></div>
+                <div class="icon-btn red"><i class="fa-solid fa-trash"></i></div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Bottom Grid -->
+    <div class="bottom-grid">
+
+      <!-- Category Map -->
+      <div class="panel-card" data-reveal>
+        <div class="panel-top">
+          <div>
+            <div class="panel-top-title"><i class="fa-solid fa-sitemap" style="color:var(--gold);margin-right:6px;"></i>Mapeamento de Categorias</div>
+            <div class="panel-top-sub">Distribuicao do catalogo por categoria ML</div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="cat-item">
+            <div class="cat-left">
+              <div class="cat-icon">💻</div>
+              <div>
+                <div class="cat-name">Informatica</div>
+                <div class="cat-attrs">12 atributos obrigatorios</div>
+              </div>
+            </div>
+            <div class="cat-bar-wrap">
+              <div class="cat-bar-track"><div class="cat-bar-fill" data-w="72"></div></div>
+            </div>
+            <div class="cat-count">398</div>
+          </div>
+          <div class="cat-item">
+            <div class="cat-left">
+              <div class="cat-icon">👟</div>
+              <div>
+                <div class="cat-name">Moda e Calcados</div>
+                <div class="cat-attrs">8 atributos obrigatorios</div>
+              </div>
+            </div>
+            <div class="cat-bar-wrap">
+              <div class="cat-bar-track"><div class="cat-bar-fill" data-w="55"></div></div>
+            </div>
+            <div class="cat-count">302</div>
+          </div>
+          <div class="cat-item">
+            <div class="cat-left">
+              <div class="cat-icon">🎧</div>
+              <div>
+                <div class="cat-name">Eletronicos e Audio</div>
+                <div class="cat-attrs">10 atributos obrigatorios</div>
+              </div>
+            </div>
+            <div class="cat-bar-wrap">
+              <div class="cat-bar-track"><div class="cat-bar-fill" data-w="43"></div></div>
+            </div>
+            <div class="cat-count">237</div>
+          </div>
+          <div class="cat-item">
+            <div class="cat-left">
+              <div class="cat-icon">📷</div>
+              <div>
+                <div class="cat-name">Cameras e Acessorios</div>
+                <div class="cat-attrs">9 atributos obrigatorios</div>
+              </div>
+            </div>
+            <div class="cat-bar-wrap">
+              <div class="cat-bar-track"><div class="cat-bar-fill" data-w="28"></div></div>
+            </div>
+            <div class="cat-count">154</div>
+          </div>
+          <div class="cat-item">
+            <div class="cat-left">
+              <div class="cat-icon">🏠</div>
+              <div>
+                <div class="cat-name">Casa e Jardim</div>
+                <div class="cat-attrs">6 atributos obrigatorios</div>
+              </div>
+            </div>
+            <div class="cat-bar-wrap">
+              <div class="cat-bar-track"><div class="cat-bar-fill" data-w="18"></div></div>
+            </div>
+            <div class="cat-count">156</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Activity Log -->
+      <div class="panel-card" data-reveal style="transition-delay:0.1s">
+        <div class="panel-top">
+          <div>
+            <div class="panel-top-title"><i class="fa-solid fa-scroll" style="color:var(--gold);margin-right:6px;"></i>Log de Atividade</div>
+            <div class="panel-top-sub">Ultimas acoes do sistema</div>
+          </div>
+          <button class="btn-secondary" style="font-size:11px;padding:5px 10px;">
+            <i class="fa-solid fa-download"></i> Exportar
+          </button>
+        </div>
+        <div class="panel-body">
+          <div class="log-item">
+            <div class="log-dot-col"><div class="log-dot green"></div></div>
+            <div>
+              <div class="log-msg">24 produtos publicados com sucesso via API ML</div>
+              <div class="log-time">Ha 3 minutos</div>
+            </div>
+          </div>
+          <div class="log-item">
+            <div class="log-dot-col"><div class="log-dot red"></div></div>
+            <div>
+              <div class="log-msg">Erro: Canon EOS — atributo "sensor_size" obrigatorio ausente</div>
+              <div class="log-time">Ha 8 minutos</div>
+            </div>
+          </div>
+          <div class="log-item">
+            <div class="log-dot-col"><div class="log-dot amber"></div></div>
+            <div>
+              <div class="log-msg">Rate limit atingido — aguardando 60s para continuar lote</div>
+              <div class="log-time">Ha 12 minutos</div>
+            </div>
+          </div>
+          <div class="log-item">
+            <div class="log-dot-col"><div class="log-dot blue"></div></div>
+            <div>
+              <div class="log-msg">Importacao CSV concluida — 80 produtos validados e na fila</div>
+              <div class="log-time">Ha 18 minutos</div>
+            </div>
+          </div>
+          <div class="log-item">
+            <div class="log-dot-col"><div class="log-dot green"></div></div>
+            <div>
+              <div class="log-msg">Token ML renovado automaticamente (OAuth 2.0)</div>
+              <div class="log-time">Ha 1 hora</div>
+            </div>
+          </div>
+          <div class="log-item">
+            <div class="log-dot-col"><div class="log-dot green"></div></div>
+            <div>
+              <div class="log-msg">156 produtos publicados — lote matutino concluido</div>
+              <div class="log-time">Ha 3 horas</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // Hamburger
+  const hamburger = document.getElementById('hamburger');
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('overlay');
+
+  hamburger.addEventListener('click', () => {
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('open');
+  });
+
+  overlay.addEventListener('click', () => {
+    sidebar.classList.remove('open');
+    overlay.classList.remove('open');
+  });
+
+  // Scroll reveal
+  const reveals = document.querySelectorAll('[data-reveal]');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1 });
+
+  reveals.forEach(el => observer.observe(el));
+
+  // Progress bar animation
+  const progressWrap = document.getElementById('progressWrap');
+  const fill = document.getElementById('progressFill');
+  const pctLabel = document.getElementById('pctLabel');
+
+  const progObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        setTimeout(() => {
+          fill.style.width = '69%';
+        }, 300);
+        progObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.2 });
+
+  progObserver.observe(progressWrap);
+
+  // Category bars
+  const catBars = document.querySelectorAll('.cat-bar-fill');
+  const catObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        catBars.forEach(bar => {
+          const w = bar.getAttribute('data-w');
+          setTimeout(() => { bar.style.width = w + '%'; }, 200);
+        });
+        catObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.2 });
+
+  const bottomSection = document.querySelector('.bottom-grid');
+  if (bottomSection) catObserver.observe(bottomSection);
+
+  // Nav item active toggle
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', () => {
+      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+      item.classList.add('active');
+    });
+  });
+
+  // Filter buttons
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
+  // Trigger reveal for elements in view on load
+  setTimeout(() => {
+    reveals.forEach(el => {
+      const rect = el.getBoundingClientRect();
+      if (rect.top < window.innerHeight) {
+        el.classList.add('visible');
+      }
+    });
+    fill.style.width = '69%';
+    setTimeout(() => {
+      catBars.forEach(bar => {
+        bar.style.width = bar.getAttribute('data-w') + '%';
+      });
+    }, 400);
+  }, 200);
+</script>
+
+</body>
+</html>
