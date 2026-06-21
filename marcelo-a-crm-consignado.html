@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ConsigPro — CRM Whitelabel</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+:root {
+  --gold: #D4A017;
+  --gold-light: #F0C840;
+  --gold-dim: rgba(212,160,23,0.12);
+  --gold-border: rgba(212,160,23,0.22);
+  --bg: #0B0B14;
+  --bg-card: #161622;
+  --bg-card2: #1E1E30;
+  --bg-sidebar: #0E0E1C;
+  --text: #F0F0F8;
+  --muted: #7878A0;
+  --green: #27AE60;
+  --red: #E74C3C;
+  --blue: #3498DB;
+  --purple: #9B59B6;
+  --orange: #E67E22;
+  --r: 12px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Nunito',sans-serif; background:var(--bg); color:var(--text); height:100vh; overflow:hidden; }
+.app { display:flex; height:100vh; overflow:hidden; }
+
+/* Sidebar */
+.sidebar {
+  width:230px; min-width:230px;
+  background:var(--bg-sidebar);
+  border-right:1px solid var(--gold-border);
+  display:flex; flex-direction:column;
+}
+.sb-logo {
+  padding:22px 18px 18px;
+  border-bottom:1px solid var(--gold-border);
+  display:flex; align-items:center; gap:10px;
+}
+.logo-box {
+  width:36px; height:36px; border-radius:9px;
+  background:linear-gradient(135deg,var(--gold),var(--gold-light));
+  display:flex; align-items:center; justify-content:center;
+  font-size:14px; font-weight:900; color:#0B0B14;
+  flex-shrink:0;
+}
+.logo-name { font-size:15px; font-weight:800; }
+.logo-tag { font-size:9px; color:var(--gold); font-weight:700; text-transform:uppercase; letter-spacing:.06em; }
+.nav { flex:1; padding:14px 10px; overflow-y:auto; }
+.nav-label {
+  font-size:10px; color:var(--muted); font-weight:700;
+  text-transform:uppercase; letter-spacing:.07em;
+  padding:10px 10px 4px;
+}
+.nav-item {
+  display:flex; align-items:center; gap:9px;
+  padding:9px 12px; border-radius:9px; cursor:pointer;
+  font-size:13px; font-weight:600; color:var(--muted);
+  transition:all .18s; margin-bottom:2px;
+  border:1px solid transparent;
+}
+.nav-item:hover { background:var(--bg-card2); color:var(--text); }
+.nav-item.active { background:var(--gold-dim); color:var(--gold); border-color:var(--gold-border); }
+.nav-item i { width:16px; text-align:center; font-size:14px; }
+.nav-badge {
+  margin-left:auto; background:var(--gold); color:#0B0B14;
+  font-size:10px; font-weight:800; padding:1px 7px; border-radius:99px;
+}
+.sb-footer {
+  padding:14px 18px; border-top:1px solid var(--gold-border);
+  display:flex; align-items:center; gap:9px;
+}
+.user-av {
+  width:32px; height:32px; border-radius:50%;
+  background:linear-gradient(135deg,var(--gold),var(--gold-light));
+  display:flex; align-items:center; justify-content:center;
+  font-size:12px; font-weight:800; color:#0B0B14; flex-shrink:0;
+}
+.user-nm { font-size:12px; font-weight:700; }
+.user-rl { font-size:10px; color:var(--muted); }
+
+/* Main */
+.main { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+.topbar {
+  background:var(--bg-card); border-bottom:1px solid var(--gold-border);
+  padding:14px 24px; display:flex; align-items:center; justify-content:space-between;
+  flex-shrink:0;
+}
+.topbar h1 { font-size:19px; font-weight:800; }
+.topbar p { font-size:12px; color:var(--muted); margin-top:2px; }
+.topbar-r { display:flex; gap:10px; align-items:center; }
+.btn {
+  padding:8px 16px; border-radius:8px; font-size:12px; font-weight:700;
+  cursor:pointer; border:none; font-family:'Nunito',sans-serif; transition:all .18s;
+}
+.btn-gold { background:linear-gradient(135deg,var(--gold),var(--gold-light)); color:#0B0B14; }
+.btn-gold:hover { opacity:.9; transform:translateY(-1px); }
+.btn-ghost { background:var(--bg-card2); color:var(--text); border:1px solid var(--gold-border); }
+.icon-btn {
+  width:34px; height:34px; border-radius:8px;
+  background:var(--bg-card2); border:1px solid var(--gold-border);
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; color:var(--muted); font-size:13px; transition:all .18s;
+}
+.icon-btn:hover { color:var(--gold); border-color:var(--gold); }
+
+/* Content */
+.content { flex:1; overflow-y:auto; padding:22px 24px; }
+.content::-webkit-scrollbar { width:4px; }
+.content::-webkit-scrollbar-thumb { background:var(--gold-border); border-radius:99px; }
+.view { display:none; animation:fadeIn .28s ease; }
+.view.active { display:block; }
+@keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+
+/* KPI Grid */
+.kpi-grid { display:grid; gap:14px; margin-bottom:20px; }
+.g4 { grid-template-columns:repeat(4,1fr); }
+.g3 { grid-template-columns:repeat(3,1fr); }
+.kpi-card {
+  background:var(--bg-card); border:1px solid var(--gold-border);
+  border-radius:var(--r); padding:18px; position:relative; overflow:hidden;
+  transition:all .22s; cursor:default;
+}
+.kpi-card:hover { transform:translateY(-2px); border-color:var(--gold); }
+.kpi-card::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  background:linear-gradient(90deg,var(--gold),transparent);
+}
+.kpi-lbl { font-size:11px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:.05em; }
+.kpi-val { font-size:26px; font-weight:900; margin:6px 0 3px; }
+.kpi-val.g { color:var(--gold); }
+.kpi-delta { font-size:11px; font-weight:700; }
+.kpi-delta.up { color:var(--green); }
+.kpi-delta.dn { color:var(--red); }
+.kpi-ico { position:absolute; right:14px; top:50%; transform:translateY(-50%); font-size:32px; opacity:.07; color:var(--gold); }
+
+/* Section header */
+.sh { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+.sh-title { font-size:15px; font-weight:800; }
+
+/* Pipeline */
+.pipeline { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-bottom:20px; }
+.p-col {
+  background:var(--bg-card); border:1px solid var(--gold-border);
+  border-radius:var(--r); padding:14px;
+}
+.p-col-hd { display:flex; align-items:center; gap:7px; margin-bottom:12px; }
+.p-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+.p-col-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; }
+.p-col-cnt { margin-left:auto; font-size:11px; color:var(--muted); font-weight:700; }
+.p-card {
+  background:var(--bg-card2); border-radius:8px; padding:10px; margin-bottom:7px;
+  cursor:pointer; border:1px solid transparent; transition:all .18s;
+}
+.p-card:hover { border-color:var(--gold); }
+.p-name { font-size:12px; font-weight:700; margin-bottom:3px; }
+.p-detail { font-size:11px; color:var(--muted); }
+.p-amount { font-size:12px; font-weight:800; color:var(--gold); margin-top:5px; }
+
+/* Two col */
+.two-col { display:grid; grid-template-columns:1fr 300px; gap:14px; }
+.card { background:var(--bg-card); border:1px solid var(--gold-border); border-radius:var(--r); padding:18px; }
+.act-item { display:flex; gap:10px; padding:10px 0; border-bottom:1px solid rgba(255,255,255,.04); }
+.act-item:last-child { border-bottom:none; padding-bottom:0; }
+.act-ico { width:30px; height:30px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:12px; flex-shrink:0; }
+.act-title { font-size:12px; font-weight:600; }
+.act-sub { font-size:11px; color:var(--muted); margin-top:2px; }
+.act-time { font-size:10px; color:var(--muted); margin-left:auto; white-space:nowrap; }
+.metric-item { padding:10px 0; border-bottom:1px solid rgba(255,255,255,.04); }
+.metric-item:last-child { border-bottom:none; }
+.metric-lbl { font-size:11px; color:var(--muted); font-weight:700; margin-bottom:5px; }
+.bar-bg { height:5px; background:var(--bg-card2); border-radius:99px; overflow:hidden; margin-bottom:3px; }
+.bar-fill { height:100%; border-radius:99px; background:linear-gradient(90deg,var(--gold),var(--gold-light)); }
+.metric-vals { display:flex; justify-content:space-between; font-size:11px; font-weight:700; }
+
+/* Table */
+.tbl-ctrl { display:flex; gap:9px; margin-bottom:14px; align-items:center; flex-wrap:wrap; }
+.search-box {
+  flex:1; min-width:180px;
+  background:var(--bg-card); border:1px solid var(--gold-border);
+  border-radius:8px; padding:8px 12px; color:var(--text);
+  font-family:'Nunito',sans-serif; font-size:13px; outline:none;
+}
+.search-box::placeholder { color:var(--muted); }
+.chip {
+  background:var(--bg-card); border:1px solid var(--gold-border);
+  border-radius:99px; padding:5px 13px; font-size:11px; font-weight:700;
+  color:var(--muted); cursor:pointer; white-space:nowrap;
+  transition:all .18s; font-family:'Nunito',sans-serif;
+}
+.chip.active { background:var(--gold-dim); color:var(--gold); border-color:var(--gold); }
+.tbl-wrap { background:var(--bg-card); border:1px solid var(--gold-border); border-radius:var(--r); overflow:hidden; }
+table { width:100%; border-collapse:collapse; }
+th {
+  padding:11px 14px; text-align:left; font-size:10px; font-weight:700;
+  text-transform:uppercase; letter-spacing:.05em; color:var(--muted);
+  background:var(--bg-card2); border-bottom:1px solid var(--gold-border);
+}
+td { padding:11px 14px; font-size:12px; border-bottom:1px solid rgba(255,255,255,.04); }
+tr:last-child td { border-bottom:none; }
+tr:hover td { background:rgba(212,160,23,.03); }
+.cl-cell { display:flex; align-items:center; gap:9px; }
+.cl-av {
+  width:30px; height:30px; border-radius:7px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:10px; font-weight:800; flex-shrink:0;
+}
+.badge {
+  display:inline-flex; align-items:center; gap:4px;
+  padding:3px 9px; border-radius:99px; font-size:10px; font-weight:700;
+}
+.badge.gr { background:rgba(39,174,96,.14); color:var(--green); }
+.badge.bl { background:rgba(52,152,219,.14); color:var(--blue); }
+.badge.or { background:rgba(230,126,34,.14); color:var(--orange); }
+.badge.pu { background:rgba(155,89,182,.14); color:var(--purple); }
+.badge.go { background:var(--gold-dim); color:var(--gold); }
+.badge.rd { background:rgba(231,76,60,.14); color:var(--red); }
+.act-btns { display:flex; gap:5px; }
+.act-btn {
+  width:26px; height:26px; border-radius:6px;
+  border:1px solid var(--gold-border); background:var(--bg-card2);
+  color:var(--muted); display:flex; align-items:center; justify-content:center;
+  font-size:11px; cursor:pointer; transition:all .18s;
+}
+.act-btn:hover { color:var(--gold); border-color:var(--gold); }
+
+/* Loan flow */
+.info-bar {
+  background:var(--gold-dim); border:1px solid var(--gold-border);
+  border-radius:9px; padding:12px 16px; display:flex; align-items:center;
+  gap:9px; margin-bottom:20px; font-size:12px; font-weight:600; color:var(--gold);
+}
+.stepper { display:flex; align-items:center; margin-bottom:28px; }
+.step { display:flex; flex-direction:column; align-items:center; flex:1; position:relative; }
+.step:not(:last-child)::after {
+  content:''; position:absolute; top:15px; left:50%; width:100%; height:2px;
+  background:var(--gold-border); z-index:0;
+}
+.step.done:not(:last-child)::after { background:var(--gold); }
+.step-circ {
+  width:30px; height:30px; border-radius:50%;
+  background:var(--bg-card2); border:2px solid var(--gold-border);
+  display:flex; align-items:center; justify-content:center;
+  font-size:11px; font-weight:800; color:var(--muted); z-index:1; transition:all .3s;
+}
+.step.done .step-circ { background:var(--gold); border-color:var(--gold); color:#0B0B14; }
+.step.active .step-circ { background:var(--bg-card); border-color:var(--gold); color:var(--gold); box-shadow:0 0 0 4px var(--gold-dim); }
+.step-lbl { font-size:10px; font-weight:700; color:var(--muted); margin-top:7px; text-align:center; }
+.step.active .step-lbl { color:var(--gold); }
+.step.done .step-lbl { color:var(--text); }
+.loan-form {
+  background:var(--bg-card); border:1px solid var(--gold-border);
+  border-radius:var(--r); padding:24px; max-width:660px;
+}
+.form-title { font-size:17px; font-weight:800; margin-bottom:5px; }
+.form-sub { font-size:12px; color:var(--muted); margin-bottom:20px; }
+.form-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.fg { display:flex; flex-direction:column; gap:5px; }
+.fg.full { grid-column:1/-1; }
+label { font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
+input, select {
+  background:var(--bg-card2); border:1px solid var(--gold-border);
+  border-radius:8px; padding:9px 12px; color:var(--text);
+  font-family:'Nunito',sans-serif; font-size:13px; font-weight:600; outline:none;
+  transition:border-color .18s;
+}
+input:focus, select:focus { border-color:var(--gold); }
+select { appearance:none; }
+.form-actions { display:flex; justify-content:flex-end; gap:9px; margin-top:20px; }
+
+/* Reports */
+.chart-box { background:var(--bg-card); border:1px solid var(--gold-border); border-radius:var(--r); padding:20px; }
+.bar-chart { display:flex; align-items:flex-end; gap:9px; height:130px; padding-bottom:8px; margin-top:20px; }
+.bw { display:flex; flex-direction:column; align-items:center; flex:1; gap:4px; height:100%; justify-content:flex-end; }
+.bar {
+  width:100%; border-radius:5px 5px 0 0;
+  background:linear-gradient(180deg,var(--gold-light),var(--gold));
+  position:relative; transition:height 1.4s ease;
+}
+.bar::before {
+  content:attr(data-v); position:absolute; top:-17px; left:50%;
+  transform:translateX(-50%); font-size:10px; font-weight:800;
+  color:var(--gold-light); white-space:nowrap;
+}
+.bar-lbl { font-size:10px; color:var(--muted); font-weight:700; }
+.funnel-row { display:flex; align-items:center; gap:10px; margin-bottom:7px; }
+.funnel-lbl { width:130px; font-size:11px; font-weight:700; color:var(--muted); text-align:right; flex-shrink:0; }
+.funnel-bg { flex:1; height:28px; background:var(--bg-card2); border-radius:6px; overflow:hidden; }
+.funnel-fill { height:100%; border-radius:6px; display:flex; align-items:center; padding-left:10px; font-size:11px; font-weight:700; }
+.funnel-n { width:34px; font-size:12px; font-weight:800; text-align:right; flex-shrink:0; }
+.two-col-rep { display:grid; grid-template-columns:1.5fr 1fr; gap:14px; }
+
+/* Config */
+.cfg-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+.cfg-panel { background:var(--bg-card); border:1px solid var(--gold-border); border-radius:var(--r); padding:22px; }
+.cfg-title { font-size:14px; font-weight:800; margin-bottom:18px; }
+.cfg-item { margin-bottom:16px; }
+.cfg-item label { display:block; margin-bottom:7px; }
+.color-row { display:flex; gap:8px; }
+.swatch {
+  width:30px; height:30px; border-radius:7px; cursor:pointer;
+  border:2px solid transparent; transition:all .18s;
+}
+.swatch.sel { border-color:#fff; transform:scale(1.1); }
+.upload-zone {
+  background:var(--bg-card2); border:2px dashed var(--gold-border);
+  border-radius:8px; padding:18px; text-align:center; cursor:pointer;
+}
+.upload-zone i { font-size:22px; color:var(--gold); display:block; margin-bottom:6px; }
+.upload-zone span { font-size:11px; color:var(--muted); font-weight:600; }
+.prev-card { background:#161228; border-radius:10px; overflow:hidden; }
+.prev-hd { height:42px; display:flex; align-items:center; padding:0 14px; gap:9px; }
+.prev-logo { width:22px; height:22px; border-radius:5px; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:800; }
+.prev-nm { font-size:12px; font-weight:800; }
+.prev-body { padding:14px; }
+.prev-kpi { display:grid; grid-template-columns:1fr 1fr; gap:7px; margin-bottom:10px; }
+.prev-k { background:rgba(255,255,255,.06); border-radius:7px; padding:10px; }
+.prev-k-lbl { font-size:8px; color:rgba(255,255,255,.45); font-weight:600; }
+.prev-k-val { font-size:16px; font-weight:900; margin-top:3px; }
+.prev-bar { height:5px; border-radius:99px; margin-top:6px; }
+.partner-list { background:var(--bg-card2); border-radius:8px; padding:12px; margin-top:14px; }
+.partner-row { display:flex; align-items:center; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(255,255,255,.05); }
+.partner-row:last-child { border-bottom:none; }
+.partner-nm { font-size:12px; font-weight:700; }
+
+@media(max-width:1100px) {
+  .kpi-grid.g4 { grid-template-columns:repeat(2,1fr); }
+  .pipeline { grid-template-columns:repeat(3,1fr); }
+  .two-col { grid-template-columns:1fr; }
+  .two-col-rep { grid-template-columns:1fr; }
+  .cfg-grid { grid-template-columns:1fr; }
+}
+@media(max-width:768px) {
+  .sidebar { display:none; }
+  .pipeline { grid-template-columns:repeat(2,1fr); }
+  .form-grid { grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sb-logo">
+    <div class="logo-box" id="sb-logo-box">CP</div>
+    <div>
+      <div class="logo-name" id="sb-logo-name">ConsigPro</div>
+      <div class="logo-tag">Plataforma Whitelabel</div>
+    </div>
+  </div>
+  <nav class="nav">
+    <div class="nav-label">Principal</div>
+    <div class="nav-item active" onclick="go('dashboard',this)">
+      <i class="fa-solid fa-gauge-high"></i> Dashboard
+    </div>
+    <div class="nav-item" onclick="go('crm',this)">
+      <i class="fa-solid fa-users"></i> CRM
+      <span class="nav-badge">23</span>
+    </div>
+    <div class="nav-item" onclick="go('emprestimos',this)">
+      <i class="fa-solid fa-file-invoice-dollar"></i> Empréstimos
+    </div>
+    <div class="nav-label" style="margin-top:10px">Análise</div>
+    <div class="nav-item" onclick="go('relatorios',this)">
+      <i class="fa-solid fa-chart-column"></i> Relatórios
+    </div>
+    <div class="nav-label" style="margin-top:10px">Sistema</div>
+    <div class="nav-item" onclick="go('configuracoes',this)">
+      <i class="fa-solid fa-sliders"></i> Configurações
+    </div>
+  </nav>
+  <div class="sb-footer">
+    <div class="user-av">MR</div>
+    <div>
+      <div class="user-nm">Maria Rodrigues</div>
+      <div class="user-rl">Gerente Comercial</div>
+    </div>
+  </div>
+</aside>
+
+<!-- Main -->
+<div class="main">
+  <div class="topbar">
+    <div>
+      <h1 id="view-title">Dashboard</h1>
+      <p id="view-sub">Visão geral de hoje — 21 de junho de 2026</p>
+    </div>
+    <div class="topbar-r">
+      <div class="icon-btn"><i class="fa-solid fa-bell"></i></div>
+      <div class="icon-btn"><i class="fa-solid fa-magnifying-glass"></i></div>
+      <button class="btn btn-gold" onclick="go('emprestimos',null)">
+        <i class="fa-solid fa-plus"></i> Nova Solicitação
+      </button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="view active" id="v-dashboard">
+      <div class="kpi-grid g4">
+        <div class="kpi-card">
+          <div class="kpi-lbl">Leads hoje</div>
+          <div class="kpi-val" id="k1">0</div>
+          <div class="kpi-delta up"><i class="fa-solid fa-arrow-up"></i> +12% vs ontem</div>
+          <i class="fa-solid fa-user-plus kpi-ico"></i>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-lbl">Propostas ativas</div>
+          <div class="kpi-val" id="k2">0</div>
+          <div class="kpi-delta up"><i class="fa-solid fa-arrow-up"></i> +5 esta semana</div>
+          <i class="fa-solid fa-file-lines kpi-ico"></i>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-lbl">Aprovados este mês</div>
+          <div class="kpi-val" id="k3">0</div>
+          <div class="kpi-delta up"><i class="fa-solid fa-arrow-up"></i> Meta: 20</div>
+          <i class="fa-solid fa-circle-check kpi-ico"></i>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-lbl">Receita do mês</div>
+          <div class="kpi-val g" id="k4">R$ 0</div>
+          <div class="kpi-delta up"><i class="fa-solid fa-arrow-up"></i> +18% vs mai</div>
+          <i class="fa-solid fa-coins kpi-ico"></i>
+        </div>
+      </div>
+
+      <div class="sh">
+        <div class="sh-title">Pipeline de Vendas</div>
+        <button class="btn btn-ghost" style="font-size:11px;padding:5px 12px">Ver tudo</button>
+      </div>
+
+      <div class="pipeline">
+        <div class="p-col">
+          <div class="p-col-hd">
+            <div class="p-dot" style="background:#3498DB"></div>
+            <div class="p-col-title">Novo Lead</div>
+            <div class="p-col-cnt">8</div>
+          </div>
+          <div class="p-card">
+            <div class="p-name">Carlos Mendes</div>
+            <div class="p-detail">Servidor Federal</div>
+            <div class="p-amount">R$ 18.000</div>
+          </div>
+          <div class="p-card">
+            <div class="p-name">Ana Lima</div>
+            <div class="p-detail">CLT — Conv. privada</div>
+            <div class="p-amount">R$ 12.500</div>
+          </div>
+        </div>
+        <div class="p-col">
+          <div class="p-col-hd">
+            <div class="p-dot" style="background:#9B59B6"></div>
+            <div class="p-col-title">Em Análise</div>
+            <div class="p-col-cnt">12</div>
+          </div>
+          <div class="p-card">
+            <div class="p-name">Roberto Farias</div>
+            <div class="p-detail">Aposentado INSS</div>
+            <div class="p-amount">R$ 8.200</div>
+          </div>
+          <div class="p-card">
+            <div class="p-name">Juliana Costa</div>
+            <div class="p-detail">Servidor Estadual</div>
+            <div class="p-amount">R$ 22.000</div>
+          </div>
+        </div>
+        <div class="p-col">
+          <div class="p-col-hd">
+            <div class="p-dot" style="background:#E67E22"></div>
+            <div class="p-col-title">Prop. Enviada</div>
+            <div class="p-col-cnt">9</div>
+          </div>
+          <div class="p-card">
+            <div class="p-name">Marcos Alves</div>
+            <div class="p-detail">CLT — Conv. privada</div>
+            <div class="p-amount">R$ 15.000</div>
+          </div>
+        </div>
+        <div class="p-col">
+          <div class="p-col-hd">
+            <div class="p-dot" style="background:#F1C40F"></div>
+            <div class="p-col-title">Aguard. Assint.</div>
+            <div class="p-col-cnt">7</div>
+          </div>
+          <div class="p-card">
+            <div class="p-name">Patricia Souza</div>
+            <div class="p-detail">Servidor Federal</div>
+            <div class="p-amount">R$ 30.000</div>
+          </div>
+          <div class="p-card">
+            <div class="p-name">Fernando Silva</div>
+            <div class="p-detail">Aposentado INSS</div>
+            <div class="p-amount">R$ 9.800</div>
+          </div>
+        </div>
+        <div class="p-col">
+          <div class="p-col-hd">
+            <div class="p-dot" style="background:#27AE60"></div>
+            <div class="p-col-title">Aprovado</div>
+            <div class="p-col-cnt">12</div>
+          </div>
+          <div class="p-card">
+            <div class="p-name">Lucia Ferreira</div>
+            <div class="p-detail">Servidor Municipal</div>
+            <div class="p-amount">R$ 27.000</div>
+          </div>
+          <div class="p-card">
+            <div class="p-name">Thiago Melo</div>
+            <div class="p-detail">Aposentado INSS</div>
+            <div class="p-amount">R$ 11.500</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="card">
+          <div class="sh" style="margin-bottom:6px"><div class="sh-title">Atividade recente</div></div>
+          <div class="act-item">
+            <div class="act-ico" style="background:rgba(39,174,96,.14);color:var(--green)"><i class="fa-solid fa-circle-check"></i></div>
+            <div>
+              <div class="act-title">Empréstimo aprovado — Patricia Souza</div>
+              <div class="act-sub">R$ 30.000 — 48 meses — Taxa 1,39%</div>
+            </div>
+            <div class="act-time">5 min</div>
+          </div>
+          <div class="act-item">
+            <div class="act-ico" style="background:rgba(52,152,219,.14);color:var(--blue)"><i class="fa-solid fa-user-plus"></i></div>
+            <div>
+              <div class="act-title">Novo lead — Carlos Mendes</div>
+              <div class="act-sub">Indicação — Servidor Federal</div>
+            </div>
+            <div class="act-time">18 min</div>
+          </div>
+          <div class="act-item">
+            <div class="act-ico" style="background:var(--gold-dim);color:var(--gold)"><i class="fa-solid fa-file-signature"></i></div>
+            <div>
+              <div class="act-title">Contrato assinado — Fernando Silva</div>
+              <div class="act-sub">Assinatura digital concluída</div>
+            </div>
+            <div class="act-time">42 min</div>
+          </div>
+          <div class="act-item">
+            <div class="act-ico" style="background:rgba(155,89,182,.14);color:var(--purple)"><i class="fa-solid fa-magnifying-glass-dollar"></i></div>
+            <div>
+              <div class="act-title">Análise de margem — Juliana Costa</div>
+              <div class="act-sub">Margem disponível: R$ 1.840/mês</div>
+            </div>
+            <div class="act-time">1h</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="sh-title" style="margin-bottom:14px">Conversão do funil</div>
+          <div class="metric-item">
+            <div class="metric-lbl">Lead para Proposta</div>
+            <div class="bar-bg"><div class="bar-fill" style="width:68%"></div></div>
+            <div class="metric-vals"><span>68%</span><span style="color:var(--muted)">47/69</span></div>
+          </div>
+          <div class="metric-item">
+            <div class="metric-lbl">Proposta para Análise</div>
+            <div class="bar-bg"><div class="bar-fill" style="width:83%"></div></div>
+            <div class="metric-vals"><span>83%</span><span style="color:var(--muted)">39/47</span></div>
+          </div>
+          <div class="metric-item">
+            <div class="metric-lbl">Análise para Aprovado</div>
+            <div class="bar-bg"><div class="bar-fill" style="width:52%"></div></div>
+            <div class="metric-vals"><span>52%</span><span style="color:var(--muted)">20/39</span></div>
+          </div>
+          <div class="metric-item">
+            <div class="metric-lbl">Taxa de desembolso</div>
+            <div class="bar-bg"><div class="bar-fill" style="width:91%"></div></div>
+            <div class="metric-vals"><span>91%</span><span style="color:var(--muted)">18/20</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CRM -->
+    <div class="view" id="v-crm">
+      <div class="tbl-ctrl">
+        <input class="search-box" placeholder="Buscar cliente ou CPF..." type="text">
+        <button class="chip active" onclick="chipSel(this)">Todos</button>
+        <button class="chip" onclick="chipSel(this)">Novo Lead</button>
+        <button class="chip" onclick="chipSel(this)">Em análise</button>
+        <button class="chip" onclick="chipSel(this)">Aprovado</button>
+        <button class="btn btn-gold" style="margin-left:auto"><i class="fa-solid fa-plus"></i> Novo cliente</button>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Cliente</th><th>CPF</th><th>Vínculo</th>
+              <th>Margem disponível</th><th>Valor solicitado</th>
+              <th>Status</th><th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><div class="cl-cell"><div class="cl-av" style="background:rgba(52,152,219,.18);color:var(--blue)">CM</div>Carlos Mendes</div></td>
+              <td style="color:var(--muted)">***.456.789-**</td>
+              <td>Servidor Federal</td>
+              <td style="color:var(--green);font-weight:700">R$ 2.340</td>
+              <td style="font-weight:700">R$ 18.000</td>
+              <td><span class="badge bl"><i class="fa-solid fa-circle" style="font-size:7px"></i> Novo Lead</span></td>
+              <td><div class="act-btns"><div class="act-btn"><i class="fa-solid fa-eye"></i></div><div class="act-btn"><i class="fa-solid fa-pen"></i></div><div class="act-btn"><i class="fa-solid fa-phone"></i></div></div></td>
+            </tr>
+            <tr>
+              <td><div class="cl-cell"><div class="cl-av" style="background:rgba(155,89,182,.18);color:var(--purple)">AL</div>Ana Lima</div></td>
+              <td style="color:var(--muted)">***.123.456-**</td>
+              <td>CLT — Conv. privada</td>
+              <td style="color:var(--green);font-weight:700">R$ 1.120</td>
+              <td style="font-weight:700">R$ 12.500</td>
+              <td><span class="badge pu"><i class="fa-solid fa-circle" style="font-size:7px"></i> Em análise</span></td>
+              <td><div class="act-btns"><div class="act-btn"><i class="fa-solid fa-eye"></i></div><div class="act-btn"><i class="fa-solid fa-pen"></i></div><div class="act-btn"><i class="fa-solid fa-phone"></i></div></div></td>
+            </tr>
+            <tr>
+              <td><div class="cl-cell"><div class="cl-av" style="background:rgba(39,174,96,.18);color:var(--green)">PS</div>Patricia Souza</div></td>
+              <td style="color:var(--muted)">***.789.012-**</td>
+              <td>Servidor Federal</td>
+              <td style="color:var(--green);font-weight:700">R$ 3.800</td>
+              <td style="font-weight:700">R$ 30.000</td>
+              <td><span class="badge gr"><i class="fa-solid fa-circle" style="font-size:7px"></i> Aprovado</span></td>
+              <td><div class="act-btns"><div class="act-btn"><i class="fa-solid fa-eye"></i></div><div class="act-btn"><i class="fa-solid fa-pen"></i></div><div class="act-btn"><i class="fa-solid fa-phone"></i></div></div></td>
+            </tr>
+            <tr>
+              <td><div class="cl-cell"><div class="cl-av" style="background:rgba(230,126,34,.18);color:var(--orange)">RF</div>Roberto Farias</div></td>
+              <td style="color:var(--muted)">***.345.678-**</td>
+              <td>Aposentado INSS</td>
+              <td style="color:var(--gold);font-weight:700">R$ 680</td>
+              <td style="font-weight:700">R$ 8.200</td>
+              <td><span class="badge or"><i class="fa-solid fa-circle" style="font-size:7px"></i> Prop. enviada</span></td>
+              <td><div class="act-btns"><div class="act-btn"><i class="fa-solid fa-eye"></i></div><div class="act-btn"><i class="fa-solid fa-pen"></i></div><div class="act-btn"><i class="fa-solid fa-phone"></i></div></div></td>
+            </tr>
+            <tr>
+              <td><div class="cl-cell"><div class="cl-av" style="background:var(--gold-dim);color:var(--gold)">JC</div>Juliana Costa</div></td>
+              <td style="color:var(--muted)">***.567.890-**</td>
+              <td>Servidor Estadual</td>
+              <td style="color:var(--green);font-weight:700">R$ 2.100</td>
+              <td style="font-weight:700">R$ 22.000</td>
+              <td><span class="badge go"><i class="fa-solid fa-circle" style="font-size:7px"></i> Aguard. assint.</span></td>
+              <td><div class="act-btns"><div class="act-btn"><i class="fa-solid fa-eye"></i></div><div class="act-btn"><i class="fa-solid fa-pen"></i></div><div class="act-btn"><i class="fa-solid fa-phone"></i></div></div></td>
+            </tr>
+            <tr>
+              <td><div class="cl-cell"><div class="cl-av" style="background:rgba(231,76,60,.18);color:var(--red)">MA</div>Marcos Alves</div></td>
+              <td style="color:var(--muted)">***.234.567-**</td>
+              <td>CLT — Conv. privada</td>
+              <td style="color:var(--red);font-weight:700">R$ 450</td>
+              <td style="font-weight:700">R$ 15.000</td>
+              <td><span class="badge rd"><i class="fa-solid fa-circle" style="font-size:7px"></i> Recusado</span></td>
+              <td><div class="act-btns"><div class="act-btn"><i class="fa-solid fa-eye"></i></div><div class="act-btn"><i class="fa-solid fa-pen"></i></div><div class="act-btn"><i class="fa-solid fa-phone"></i></div></div></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- EMPRESTIMOS -->
+    <div class="view" id="v-emprestimos">
+      <div class="info-bar">
+        <i class="fa-solid fa-shield-halved"></i>
+        Dados protegidos por criptografia AES-256. Conformidade com LGPD e Resolução CMN 4.557.
+      </div>
+      <div class="stepper">
+        <div class="step done">
+          <div class="step-circ"><i class="fa-solid fa-check"></i></div>
+          <div class="step-lbl">Identificação</div>
+        </div>
+        <div class="step active">
+          <div class="step-circ">2</div>
+          <div class="step-lbl">Dados pessoais</div>
+        </div>
+        <div class="step">
+          <div class="step-circ">3</div>
+          <div class="step-lbl">Vínculo empregatício</div>
+        </div>
+        <div class="step">
+          <div class="step-circ">4</div>
+          <div class="step-lbl">Documentos</div>
+        </div>
+        <div class="step">
+          <div class="step-circ">5</div>
+          <div class="step-lbl">Assinatura digital</div>
+        </div>
+      </div>
+      <div class="loan-form">
+        <div class="form-title">Dados pessoais</div>
+        <div class="form-sub">Preencha os dados do solicitante. Todos os campos são obrigatórios.</div>
+        <div class="form-grid">
+          <div class="fg full">
+            <label>Nome completo</label>
+            <input type="text" value="Carlos Eduardo Mendes" readonly>
+          </div>
+          <div class="fg">
+            <label>CPF</label>
+            <input type="text" value="***.456.789-**" readonly>
+          </div>
+          <div class="fg">
+            <label>Data de nascimento</label>
+            <input type="text" value="14/03/1978">
+          </div>
+          <div class="fg">
+            <label>Telefone</label>
+            <input type="text" value="(11) 98765-4321">
+          </div>
+          <div class="fg">
+            <label>E-mail</label>
+            <input type="email" value="carlos.mendes@email.com">
+          </div>
+          <div class="fg full">
+            <label>Tipo de vínculo</label>
+            <select>
+              <option selected>Servidor público federal</option>
+              <option>Servidor público estadual</option>
+              <option>Servidor público municipal</option>
+              <option>Aposentado / Pensionista INSS</option>
+              <option>CLT — Empresa conveniada</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label>Valor solicitado</label>
+            <input type="text" value="R$ 18.000,00">
+          </div>
+          <div class="fg">
+            <label>Prazo desejado</label>
+            <select>
+              <option>24 meses</option>
+              <option>36 meses</option>
+              <option selected>48 meses</option>
+              <option>60 meses</option>
+              <option>72 meses</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-ghost">Voltar</button>
+          <button class="btn btn-gold">Continuar <i class="fa-solid fa-arrow-right"></i></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RELATORIOS -->
+    <div class="view" id="v-relatorios">
+      <div class="kpi-grid g3" style="margin-bottom:18px">
+        <div class="kpi-card">
+          <div class="kpi-lbl">Volume aprovado (mês)</div>
+          <div class="kpi-val g">R$ 284k</div>
+          <div class="kpi-delta up"><i class="fa-solid fa-arrow-up"></i> +18% vs mai</div>
+          <i class="fa-solid fa-money-bill-wave kpi-ico"></i>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-lbl">Taxa média de conversão</div>
+          <div class="kpi-val">28,9%</div>
+          <div class="kpi-delta up"><i class="fa-solid fa-arrow-up"></i> +3.2pp</div>
+          <i class="fa-solid fa-percent kpi-ico"></i>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-lbl">Ticket médio</div>
+          <div class="kpi-val">R$ 15,8k</div>
+          <div class="kpi-delta dn"><i class="fa-solid fa-arrow-down"></i> -4% vs mai</div>
+          <i class="fa-solid fa-receipt kpi-ico"></i>
+        </div>
+      </div>
+      <div class="two-col-rep">
+        <div class="chart-box">
+          <div class="sh-title">Empréstimos aprovados por mês</div>
+          <div class="bar-chart">
+            <div class="bw"><div class="bar" data-v="8" style="height:40%"></div><div class="bar-lbl">Jan</div></div>
+            <div class="bw"><div class="bar" data-v="11" style="height:55%"></div><div class="bar-lbl">Fev</div></div>
+            <div class="bw"><div class="bar" data-v="9" style="height:45%"></div><div class="bar-lbl">Mar</div></div>
+            <div class="bw"><div class="bar" data-v="14" style="height:70%"></div><div class="bar-lbl">Abr</div></div>
+            <div class="bw"><div class="bar" data-v="16" style="height:80%"></div><div class="bar-lbl">Mai</div></div>
+            <div class="bw"><div class="bar" data-v="18" style="height:90%"></div><div class="bar-lbl">Jun</div></div>
+          </div>
+        </div>
+        <div class="chart-box">
+          <div class="sh-title" style="margin-bottom:16px">Funil de conversão</div>
+          <div class="funnel-row">
+            <div class="funnel-lbl">Leads captados</div>
+            <div class="funnel-bg"><div class="funnel-fill" style="width:100%;background:rgba(52,152,219,.35)"><span style="color:#3498DB">100%</span></div></div>
+            <div class="funnel-n">69</div>
+          </div>
+          <div class="funnel-row">
+            <div class="funnel-lbl">Propostas enviadas</div>
+            <div class="funnel-bg"><div class="funnel-fill" style="width:68%;background:rgba(155,89,182,.35)"><span style="color:#9B59B6">68%</span></div></div>
+            <div class="funnel-n">47</div>
+          </div>
+          <div class="funnel-row">
+            <div class="funnel-lbl">Em análise</div>
+            <div class="funnel-bg"><div class="funnel-fill" style="width:56%;background:rgba(230,126,34,.35)"><span style="color:#E67E22">56%</span></div></div>
+            <div class="funnel-n">39</div>
+          </div>
+          <div class="funnel-row">
+            <div class="funnel-lbl">Aprovados</div>
+            <div class="funnel-bg"><div class="funnel-fill" style="width:29%;background:rgba(212,160,23,.35)"><span style="color:#D4A017">29%</span></div></div>
+            <div class="funnel-n">20</div>
+          </div>
+          <div class="funnel-row">
+            <div class="funnel-lbl">Desembolsados</div>
+            <div class="funnel-bg"><div class="funnel-fill" style="width:26%;background:rgba(39,174,96,.35)"><span style="color:#27AE60">26%</span></div></div>
+            <div class="funnel-n">18</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONFIGURACOES -->
+    <div class="view" id="v-configuracoes">
+      <div class="cfg-grid">
+        <div class="cfg-panel">
+          <div class="cfg-title"><i class="fa-solid fa-palette" style="color:var(--gold);margin-right:8px"></i>Identidade visual do parceiro</div>
+          <div class="cfg-item">
+            <label>Nome da empresa</label>
+            <input type="text" value="ConsigPro" id="inp-name" oninput="updatePrev()">
+          </div>
+          <div class="cfg-item">
+            <label>Cor primária</label>
+            <div class="color-row">
+              <div class="swatch sel" style="background:#D4A017" onclick="pickColor(this,'#D4A017')"></div>
+              <div class="swatch" style="background:#27AE60" onclick="pickColor(this,'#27AE60')"></div>
+              <div class="swatch" style="background:#3498DB" onclick="pickColor(this,'#3498DB')"></div>
+              <div class="swatch" style="background:#9B59B6" onclick="pickColor(this,'#9B59B6')"></div>
+              <div class="swatch" style="background:#E74C3C" onclick="pickColor(this,'#E74C3C')"></div>
+              <div class="swatch" style="background:#1ABC9C" onclick="pickColor(this,'#1ABC9C')"></div>
+            </div>
+          </div>
+          <div class="cfg-item">
+            <label>Domínio personalizado</label>
+            <input type="text" value="consigpro.seudominio.com.br">
+          </div>
+          <div class="cfg-item">
+            <label>Logo (PNG / SVG)</label>
+            <div class="upload-zone">
+              <i class="fa-solid fa-cloud-arrow-up"></i>
+              <span>Clique para fazer upload</span>
+            </div>
+          </div>
+          <button class="btn btn-gold" style="width:100%;margin-top:4px">
+            <i class="fa-solid fa-floppy-disk"></i> Salvar configurações
+          </button>
+        </div>
+        <div class="cfg-panel">
+          <div class="cfg-title"><i class="fa-solid fa-eye" style="color:var(--gold);margin-right:8px"></i>Preview em tempo real</div>
+          <div class="prev-card">
+            <div class="prev-hd" id="prev-hd" style="background:rgba(212,160,23,.12)">
+              <div class="prev-logo" id="prev-logo" style="background:#D4A017;color:#0B0B14">CP</div>
+              <div class="prev-nm" id="prev-nm">ConsigPro</div>
+            </div>
+            <div class="prev-body">
+              <div class="prev-kpi">
+                <div class="prev-k">
+                  <div class="prev-k-lbl">Leads hoje</div>
+                  <div class="prev-k-val" id="prev-kval" style="color:#D4A017">23</div>
+                </div>
+                <div class="prev-k">
+                  <div class="prev-k-lbl">Aprovados</div>
+                  <div class="prev-k-val">12</div>
+                </div>
+              </div>
+              <div style="font-size:9px;color:rgba(255,255,255,.4);font-weight:700;margin-bottom:5px">PIPELINE</div>
+              <div class="prev-bar" id="prev-bar" style="background:#D4A017;width:85%"></div>
+              <div class="prev-bar" style="background:rgba(255,255,255,.1);width:60%;margin-top:4px"></div>
+              <div class="prev-bar" style="background:rgba(255,255,255,.06);width:38%;margin-top:4px"></div>
+            </div>
+          </div>
+          <div class="partner-list">
+            <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:8px">PARCEIROS ATIVOS</div>
+            <div class="partner-row">
+              <span class="partner-nm">ConsigPro</span>
+              <span class="badge gr"><i class="fa-solid fa-circle" style="font-size:7px"></i> Ativo</span>
+            </div>
+            <div class="partner-row">
+              <span class="partner-nm">CreditoFácil SP</span>
+              <span class="badge gr"><i class="fa-solid fa-circle" style="font-size:7px"></i> Ativo</span>
+            </div>
+            <div class="partner-row">
+              <span class="partner-nm">BemConsig RJ</span>
+              <span class="badge bl"><i class="fa-solid fa-circle" style="font-size:7px"></i> Configurando</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<script>
+const titles = {
+  dashboard: ['Dashboard','Visão geral de hoje — 21 de junho de 2026'],
+  crm: ['CRM — Clientes','Gerencie leads e clientes do funil de vendas'],
+  emprestimos: ['Nova Solicitação','Autocontratação de empréstimo consignado'],
+  relatorios: ['Relatórios','Desempenho do período — Junho 2026'],
+  configuracoes: ['Configurações Whitelabel','Personalize a identidade visual por parceiro']
+};
+
+function go(id, el) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('v-' + id).classList.add('active');
+  if (el) el.classList.add('active');
+  else document.querySelectorAll('.nav-item')[2].classList.add('active');
+  const [t,s] = titles[id];
+  document.getElementById('view-title').textContent = t;
+  document.getElementById('view-sub').textContent = s;
+}
+
+function count(id, target, fmt) {
+  let v = 0; const step = target / 40;
+  const el = document.getElementById(id);
+  const t = setInterval(() => {
+    v += step; if (v >= target) { v = target; clearInterval(t); }
+    el.textContent = fmt ? fmt(Math.round(v)) : Math.round(v);
+  }, 28);
+}
+
+window.addEventListener('load', () => {
+  count('k1', 23);
+  count('k2', 47);
+  count('k3', 12);
+  count('k4', 284, v => 'R$ ' + (v / 1000).toFixed(0) + 'k');
+});
+
+function chipSel(el) {
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+}
+
+let activeColor = '#D4A017';
+function pickColor(el, c) {
+  document.querySelectorAll('.swatch').forEach(s => s.classList.remove('sel'));
+  el.classList.add('sel');
+  activeColor = c;
+  document.getElementById('prev-logo').style.background = c;
+  document.getElementById('prev-kval').style.color = c;
+  document.getElementById('prev-bar').style.background = c;
+  document.getElementById('prev-hd').style.background = c + '20';
+  document.getElementById('sb-logo-box').style.background = 'linear-gradient(135deg,' + c + ',' + c + 'cc)';
+}
+
+function updatePrev() {
+  const n = document.getElementById('inp-name').value || 'Empresa';
+  const init = n.split(' ').slice(0,2).map(w => w[0] || '').join('').toUpperCase();
+  document.getElementById('prev-nm').textContent = n;
+  document.getElementById('prev-logo').textContent = init;
+  document.getElementById('sb-logo-name').textContent = n;
+  document.getElementById('sb-logo-box').textContent = init;
+}
+</script>
+</body>
+</html>
