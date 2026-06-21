@@ -1,0 +1,1870 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NOCTA SaaS — Panel de Control</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg-0: #040812;
+  --bg-1: #080e20;
+  --bg-2: #0d1530;
+  --bg-3: #111c3a;
+  --bg-card: rgba(13,21,48,0.85);
+  --gold-300: #fcd34d;
+  --gold-400: #fbbf24;
+  --gold-500: #f59e0b;
+  --gold-600: #d97706;
+  --gold-700: #b45309;
+  --gold-glow: rgba(245,158,11,0.18);
+  --gold-border: rgba(251,191,36,0.15);
+  --text-100: #f1f5f9;
+  --text-200: #cbd5e1;
+  --text-400: #64748b;
+  --text-500: #475569;
+  --green: #10b981;
+  --green-dim: rgba(16,185,129,0.15);
+  --red: #f43f5e;
+  --red-dim: rgba(244,63,94,0.15);
+  --purple: #8b5cf6;
+  --purple-dim: rgba(139,92,246,0.12);
+  --blue: #38bdf8;
+  --blue-dim: rgba(56,189,248,0.12);
+  --radius: 14px;
+  --radius-sm: 8px;
+  --shadow: 0 4px 24px rgba(0,0,0,0.45);
+  --shadow-gold: 0 0 32px rgba(245,158,11,0.12);
+  --easing: cubic-bezier(.34,1.56,.64,1);
+  --sidebar-w: 240px;
+  --topbar-h: 64px;
+  -webkit-font-smoothing: antialiased;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Nunito', sans-serif;
+  background: var(--bg-0);
+  color: var(--text-100);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ─── Sidebar ──────────────────────────────────── */
+.sidebar {
+  position: fixed; left: 0; top: 0; bottom: 0;
+  width: var(--sidebar-w);
+  background: var(--bg-1);
+  border-right: 1px solid var(--gold-border);
+  display: flex; flex-direction: column;
+  z-index: 100;
+  transition: transform .3s ease;
+}
+.sidebar-logo {
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid var(--gold-border);
+}
+.logo-mark {
+  display: flex; align-items: center; gap: 10px;
+}
+.logo-icon {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--gold-500), var(--gold-700));
+  border-radius: 10px;
+  display: grid; place-items: center;
+  font-size: 16px; color: #000;
+  box-shadow: 0 0 16px var(--gold-glow);
+  animation: pulseLogo 3s ease-in-out infinite;
+}
+@keyframes pulseLogo {
+  0%,100% { box-shadow: 0 0 16px rgba(245,158,11,0.25); }
+  50%      { box-shadow: 0 0 28px rgba(245,158,11,0.55); }
+}
+.logo-text { font-size: 20px; font-weight: 900; color: var(--text-100); letter-spacing: -0.5px; }
+.logo-badge {
+  font-size: 9px; font-weight: 700; color: var(--gold-500);
+  border: 1px solid var(--gold-border); border-radius: 4px;
+  padding: 1px 5px; letter-spacing: 1px;
+}
+
+/* Venue selector */
+.venue-selector {
+  margin: 14px 14px 0;
+  background: var(--bg-2);
+  border: 1px solid var(--gold-border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.venue-selector-label {
+  font-size: 9px; font-weight: 700; color: var(--text-400);
+  letter-spacing: 1.2px; text-transform: uppercase;
+  padding: 8px 12px 4px;
+}
+.venue-btn {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px 10px;
+  cursor: pointer;
+  transition: background .2s;
+}
+.venue-btn:hover { background: rgba(245,158,11,0.06); }
+.venue-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
+.venue-dot.offline { background: var(--text-400); }
+.venue-name { font-size: 13px; font-weight: 700; color: var(--text-100); flex: 1; }
+.venue-city { font-size: 11px; color: var(--text-400); }
+.venue-chevron { color: var(--text-400); font-size: 11px; transition: transform .2s; }
+.venue-dropdown {
+  display: none;
+  border-top: 1px solid var(--gold-border);
+}
+.venue-dropdown.open { display: block; }
+.venue-option {
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 12px; cursor: pointer;
+  transition: background .15s;
+  font-size: 13px; color: var(--text-200);
+}
+.venue-option:hover { background: rgba(245,158,11,0.08); }
+.venue-option.active { color: var(--gold-400); background: rgba(245,158,11,0.06); }
+.venue-option .v-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
+.venue-option .v-dot.off { background: var(--text-400); }
+
+/* Nav */
+.nav-section { margin-top: 20px; padding: 0 8px; flex: 1; overflow-y: auto; }
+.nav-label {
+  font-size: 9px; font-weight: 700; color: var(--text-500);
+  letter-spacing: 1.2px; text-transform: uppercase;
+  padding: 0 8px; margin-bottom: 6px;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 10px; border-radius: var(--radius-sm);
+  cursor: pointer; transition: all .2s;
+  color: var(--text-400); font-size: 13px; font-weight: 600;
+  margin-bottom: 2px;
+}
+.nav-item i { width: 18px; text-align: center; font-size: 14px; }
+.nav-item:hover { background: rgba(245,158,11,0.07); color: var(--text-200); }
+.nav-item.active {
+  background: linear-gradient(90deg, rgba(245,158,11,0.15), rgba(245,158,11,0.05));
+  color: var(--gold-400);
+  border-left: 2px solid var(--gold-500);
+  padding-left: 8px;
+}
+.nav-badge {
+  margin-left: auto; background: var(--red); color: #fff;
+  font-size: 10px; font-weight: 700; border-radius: 10px;
+  padding: 1px 6px; min-width: 18px; text-align: center;
+}
+.sidebar-footer {
+  padding: 14px; border-top: 1px solid var(--gold-border);
+  font-size: 11px; color: var(--text-400);
+}
+.sidebar-tenant {
+  display: flex; align-items: center; gap: 6px; margin-bottom: 4px;
+}
+.tenant-id { color: var(--gold-600); font-weight: 700; font-size: 10px; }
+
+/* ─── Main ──────────────────────────────────────── */
+.main {
+  margin-left: var(--sidebar-w);
+  min-height: 100vh;
+  display: flex; flex-direction: column;
+}
+
+/* Topbar */
+.topbar {
+  position: sticky; top: 0; z-index: 50;
+  height: var(--topbar-h);
+  background: rgba(4,8,18,0.9);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--gold-border);
+  display: flex; align-items: center;
+  padding: 0 28px; gap: 16px;
+}
+.breadcrumb {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 13px; color: var(--text-400);
+  flex: 1;
+}
+.breadcrumb span:last-child { color: var(--text-100); font-weight: 700; }
+.breadcrumb i { font-size: 11px; }
+.topbar-time {
+  font-size: 12px; color: var(--text-400); font-weight: 600;
+}
+.topbar-actions { display: flex; align-items: center; gap: 10px; }
+.icon-btn {
+  width: 36px; height: 36px; border-radius: 10px;
+  border: 1px solid var(--gold-border); background: var(--bg-2);
+  color: var(--text-400); cursor: pointer;
+  display: grid; place-items: center; font-size: 14px;
+  transition: all .2s; position: relative;
+}
+.icon-btn:hover { border-color: var(--gold-500); color: var(--gold-400); }
+.icon-btn .notif-dot {
+  position: absolute; top: 6px; right: 6px;
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--red); border: 1.5px solid var(--bg-0);
+}
+.avatar {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: linear-gradient(135deg, var(--gold-600), var(--gold-800, #92400e));
+  display: grid; place-items: center;
+  font-size: 14px; font-weight: 900; color: #fff;
+  cursor: pointer; border: 1.5px solid var(--gold-border);
+}
+
+/* ─── Page ──────────────────────────────────────── */
+.page { display: none; padding: 28px 28px 48px; animation: pageIn .3s ease; }
+.page.active { display: block; }
+@keyframes pageIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.page-title {
+  font-size: 22px; font-weight: 900; color: var(--text-100);
+  margin-bottom: 4px;
+}
+.page-sub { font-size: 13px; color: var(--text-400); margin-bottom: 24px; }
+
+/* ─── Cards ─────────────────────────────────────── */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--gold-border);
+  border-radius: var(--radius);
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--gold-border);
+}
+.card-title { font-size: 13px; font-weight: 700; color: var(--text-200); }
+.card-badge {
+  font-size: 10px; font-weight: 700; padding: 3px 8px;
+  border-radius: 20px; letter-spacing: .5px;
+}
+.badge-gold { background: rgba(245,158,11,0.15); color: var(--gold-400); border: 1px solid rgba(245,158,11,0.25); }
+.badge-green { background: var(--green-dim); color: var(--green); border: 1px solid rgba(16,185,129,0.25); }
+.badge-red { background: var(--red-dim); color: var(--red); border: 1px solid rgba(244,63,94,0.25); }
+.badge-purple { background: var(--purple-dim); color: var(--purple); border: 1px solid rgba(139,92,246,0.25); }
+
+/* KPI Cards */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.kpi-card {
+  background: var(--bg-card);
+  border: 1px solid var(--gold-border);
+  border-radius: var(--radius);
+  padding: 20px;
+  backdrop-filter: blur(12px);
+  position: relative; overflow: hidden;
+  transition: transform .25s var(--easing), box-shadow .25s;
+  cursor: default;
+}
+.kpi-card::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(circle at top right, rgba(245,158,11,0.06), transparent 60%);
+  pointer-events: none;
+}
+.kpi-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow), 0 0 24px rgba(245,158,11,0.1);
+}
+.kpi-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.kpi-icon {
+  width: 38px; height: 38px; border-radius: 10px;
+  display: grid; place-items: center; font-size: 16px;
+}
+.kpi-icon.gold { background: rgba(245,158,11,0.15); color: var(--gold-400); }
+.kpi-icon.green { background: var(--green-dim); color: var(--green); }
+.kpi-icon.red { background: var(--red-dim); color: var(--red); }
+.kpi-icon.purple { background: var(--purple-dim); color: var(--purple); }
+.kpi-trend {
+  font-size: 11px; font-weight: 700;
+  display: flex; align-items: center; gap: 3px;
+}
+.kpi-trend.up { color: var(--green); }
+.kpi-trend.down { color: var(--red); }
+.kpi-value { font-size: 28px; font-weight: 900; color: var(--text-100); line-height: 1; margin-bottom: 4px; }
+.kpi-label { font-size: 12px; font-weight: 600; color: var(--text-400); }
+.kpi-sub { font-size: 11px; color: var(--text-500); margin-top: 6px; }
+
+/* Charts row */
+.charts-row {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+/* AI Insight card */
+.ai-card {
+  background: linear-gradient(135deg, rgba(13,21,48,0.95), rgba(17,28,57,0.95));
+  border: 1px solid rgba(245,158,11,0.2);
+  border-radius: var(--radius);
+  padding: 20px;
+  position: relative; overflow: hidden;
+}
+.ai-card::before {
+  content: '';
+  position: absolute; top: -40px; right: -40px;
+  width: 140px; height: 140px;
+  background: radial-gradient(circle, rgba(245,158,11,0.15), transparent 70%);
+  pointer-events: none;
+}
+.ai-header { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+.ai-chip {
+  display: flex; align-items: center; gap: 6px;
+  background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.25);
+  border-radius: 20px; padding: 4px 10px;
+  font-size: 11px; font-weight: 700; color: var(--gold-400); letter-spacing: .5px;
+}
+.ai-chip::before {
+  content: '';
+  width: 6px; height: 6px; border-radius: 50%; background: var(--gold-400);
+  animation: blink 1.5s ease-in-out infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+.ai-event-name { font-size: 15px; font-weight: 800; color: var(--text-100); margin-bottom: 4px; }
+.ai-event-date { font-size: 12px; color: var(--text-400); margin-bottom: 16px; }
+.ai-prediction {
+  text-align: center; margin-bottom: 16px;
+  background: rgba(245,158,11,0.06); border-radius: 10px; padding: 14px;
+}
+.ai-prediction-number { font-size: 44px; font-weight: 900; color: var(--gold-400); line-height: 1; }
+.ai-prediction-label { font-size: 11px; color: var(--text-400); margin-top: 4px; }
+.ai-confidence {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px;
+}
+.ai-conf-bar-wrap {
+  flex: 1; height: 6px; background: var(--bg-3);
+  border-radius: 10px; margin: 0 10px; overflow: hidden;
+}
+.ai-conf-bar {
+  height: 100%; border-radius: 10px;
+  background: linear-gradient(90deg, var(--gold-600), var(--gold-400));
+  width: 0;
+  transition: width 1.2s cubic-bezier(.4,0,.2,1);
+}
+.conf-label { font-size: 11px; color: var(--text-400); white-space: nowrap; }
+.conf-pct { font-size: 11px; font-weight: 700; color: var(--gold-400); white-space: nowrap; }
+.ai-factors { display: flex; flex-direction: column; gap: 6px; }
+.ai-factor {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; color: var(--text-200);
+}
+.factor-icon { width: 22px; height: 22px; border-radius: 6px; display: grid; place-items: center; font-size: 11px; flex-shrink: 0; }
+.factor-icon.pos { background: var(--green-dim); color: var(--green); }
+.factor-icon.neg { background: var(--red-dim); color: var(--red); }
+.factor-impact { margin-left: auto; font-weight: 700; font-size: 11px; }
+.factor-impact.pos { color: var(--green); }
+.factor-impact.neg { color: var(--red); }
+
+/* Events list */
+.events-list { display: flex; flex-direction: column; gap: 10px; padding: 16px 20px; }
+.event-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px; border-radius: 10px;
+  background: rgba(13,21,48,0.5); border: 1px solid var(--gold-border);
+  transition: background .2s;
+}
+.event-item:hover { background: rgba(245,158,11,0.05); }
+.event-date-box {
+  width: 44px; text-align: center; flex-shrink: 0;
+}
+.event-day { font-size: 20px; font-weight: 900; color: var(--gold-400); line-height: 1; }
+.event-month { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-400); }
+.event-info { flex: 1; }
+.event-name { font-size: 13px; font-weight: 700; color: var(--text-100); margin-bottom: 2px; }
+.event-meta { font-size: 11px; color: var(--text-400); }
+.event-status { flex-shrink: 0; }
+
+/* Capacity bar */
+.cap-wrap { margin-top: 6px; }
+.cap-bar {
+  height: 4px; border-radius: 4px; background: var(--bg-3);
+  overflow: hidden; margin-bottom: 4px;
+}
+.cap-fill {
+  height: 100%; border-radius: 4px;
+  background: linear-gradient(90deg, var(--gold-600), var(--gold-400));
+  transition: width 1.5s cubic-bezier(.4,0,.2,1);
+}
+.cap-text { font-size: 10px; color: var(--text-400); }
+
+/* ─── Ticketing page ───────────────────────────── */
+.ticket-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+.active-event-hero {
+  background: linear-gradient(135deg, rgba(13,21,48,0.98), rgba(17,28,57,0.95));
+  border: 1px solid rgba(245,158,11,0.25);
+  border-radius: var(--radius);
+  padding: 24px;
+  position: relative; overflow: hidden;
+  grid-column: 1 / -1;
+}
+.ae-bg {
+  position: absolute; inset: 0;
+  background-image: url('https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&q=60');
+  background-size: cover; background-position: center;
+  opacity: 0.07;
+}
+.ae-content { position: relative; z-index: 1; }
+.ae-live {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(244,63,94,0.2); border: 1px solid rgba(244,63,94,0.4);
+  border-radius: 20px; padding: 4px 10px;
+  font-size: 11px; font-weight: 700; color: var(--red);
+  margin-bottom: 12px;
+}
+.ae-live::before {
+  content: ''; width: 7px; height: 7px; border-radius: 50%;
+  background: var(--red); animation: blink 1s ease infinite;
+}
+.ae-title { font-size: 22px; font-weight: 900; color: var(--text-100); margin-bottom: 6px; }
+.ae-sub { font-size: 13px; color: var(--text-400); margin-bottom: 20px; }
+.ae-stats { display: flex; gap: 28px; }
+.ae-stat-value { font-size: 26px; font-weight: 900; color: var(--gold-400); }
+.ae-stat-label { font-size: 11px; color: var(--text-400); }
+
+.ticket-tiers { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+.tier-row {
+  display: flex; align-items: center; gap: 14px;
+}
+.tier-label { font-size: 13px; font-weight: 700; color: var(--text-100); width: 80px; flex-shrink: 0; }
+.tier-bar-wrap { flex: 1; height: 8px; background: var(--bg-3); border-radius: 8px; overflow: hidden; }
+.tier-bar {
+  height: 100%; border-radius: 8px;
+  transition: width 1.4s cubic-bezier(.4,0,.2,1);
+}
+.tier-bar.vip { background: linear-gradient(90deg, var(--gold-700), var(--gold-400)); }
+.tier-bar.general { background: linear-gradient(90deg, #1d4ed8, var(--blue)); }
+.tier-bar.lista { background: linear-gradient(90deg, #6d28d9, var(--purple)); }
+.tier-count { font-size: 12px; font-weight: 700; color: var(--text-200); width: 70px; text-align: right; flex-shrink: 0; }
+
+/* Scan feed */
+.scan-feed { padding: 14px 20px; display: flex; flex-direction: column; gap: 10px; }
+.scan-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: 8px;
+  background: rgba(13,21,48,0.5); border: 1px solid var(--gold-border);
+  font-size: 12px; animation: scanIn .4s var(--easing);
+}
+@keyframes scanIn {
+  from { opacity: 0; transform: translateX(-10px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.scan-icon { width: 28px; height: 28px; border-radius: 7px; display: grid; place-items: center; font-size: 13px; flex-shrink: 0; }
+.scan-icon.ok { background: var(--green-dim); color: var(--green); }
+.scan-icon.vip-in { background: rgba(245,158,11,0.15); color: var(--gold-400); }
+.scan-icon.denied { background: var(--red-dim); color: var(--red); }
+.scan-name { font-weight: 700; color: var(--text-100); flex: 1; }
+.scan-type { color: var(--text-400); }
+.scan-time { color: var(--text-500); white-space: nowrap; }
+
+/* Capacity gauge */
+.gauge-wrap {
+  padding: 20px; display: flex; flex-direction: column; align-items: center;
+}
+.gauge-svg { width: 160px; height: 90px; }
+.gauge-track {
+  fill: none; stroke: var(--bg-3); stroke-width: 14;
+  stroke-linecap: round;
+}
+.gauge-fill {
+  fill: none; stroke: var(--gold-500); stroke-width: 14;
+  stroke-linecap: round;
+  stroke-dasharray: 220; stroke-dashoffset: 220;
+  transition: stroke-dashoffset 1.5s cubic-bezier(.4,0,.2,1);
+}
+.gauge-label {
+  font-size: 28px; font-weight: 900; color: var(--gold-400); text-align: center;
+  margin-top: 8px; margin-bottom: 4px;
+}
+.gauge-sub { font-size: 12px; color: var(--text-400); text-align: center; }
+
+/* QR mock */
+.qr-mock {
+  display: inline-grid;
+  grid-template-columns: repeat(10, 12px);
+  gap: 2px; padding: 12px;
+  background: #fff; border-radius: 8px;
+}
+.qr-cell { width: 12px; height: 12px; border-radius: 2px; }
+
+/* ─── IA Previsiones page ───────────────────────── */
+.ia-header-card {
+  background: linear-gradient(135deg, rgba(13,21,48,0.98), rgba(8,14,32,0.98));
+  border: 1px solid rgba(245,158,11,0.25);
+  border-radius: var(--radius);
+  padding: 28px;
+  position: relative; overflow: hidden;
+  margin-bottom: 20px;
+}
+.ia-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  pointer-events: none;
+  animation: orbFloat 6s ease-in-out infinite;
+}
+.ia-orb-1 { width: 300px; height: 300px; background: rgba(245,158,11,0.07); top: -100px; right: -60px; }
+.ia-orb-2 { width: 200px; height: 200px; background: rgba(139,92,246,0.06); bottom: -80px; left: 100px; animation-delay: -3s; }
+@keyframes orbFloat {
+  0%,100% { transform: translateY(0) scale(1); }
+  50%      { transform: translateY(-20px) scale(1.05); }
+}
+.ia-hero-grid {
+  display: grid; grid-template-columns: 1fr auto;
+  align-items: start; gap: 40px; position: relative; z-index: 1;
+}
+.ia-hero-left {}
+.ia-next-label { font-size: 11px; font-weight: 700; color: var(--text-400); letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 8px; }
+.ia-next-event { font-size: 20px; font-weight: 900; color: var(--text-100); margin-bottom: 4px; }
+.ia-next-date { font-size: 13px; color: var(--text-400); margin-bottom: 24px; }
+.ia-metrics-row { display: flex; gap: 28px; }
+.ia-metric-value { font-size: 36px; font-weight: 900; color: var(--gold-400); line-height: 1; }
+.ia-metric-unit { font-size: 14px; font-weight: 600; color: var(--gold-600); }
+.ia-metric-label { font-size: 11px; color: var(--text-400); margin-top: 4px; }
+.ia-metric-ci { font-size: 11px; color: var(--text-500); margin-top: 2px; }
+.ia-accuracy-badge {
+  background: var(--green-dim); border: 1px solid rgba(16,185,129,0.3);
+  border-radius: var(--radius-sm); padding: 12px 16px; text-align: center;
+  min-width: 160px;
+}
+.ia-acc-value { font-size: 28px; font-weight: 900; color: var(--green); }
+.ia-acc-label { font-size: 11px; color: var(--text-400); margin-top: 2px; }
+.ia-acc-sub { font-size: 10px; color: var(--text-500); margin-top: 2px; }
+
+.ia-chart-grid {
+  display: grid; grid-template-columns: 1fr 320px;
+  gap: 20px; margin-bottom: 20px;
+}
+.ia-factors-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.ia-factor-card {
+  background: var(--bg-card); border: 1px solid var(--gold-border);
+  border-radius: var(--radius-sm); padding: 14px;
+  display: flex; align-items: center; gap: 12px;
+  transition: transform .2s var(--easing);
+}
+.ia-factor-card:hover { transform: translateY(-2px); }
+.ia-factor-icon {
+  width: 40px; height: 40px; border-radius: 10px;
+  display: grid; place-items: center; font-size: 16px; flex-shrink: 0;
+}
+.ia-factor-icon.weather { background: rgba(56,189,248,0.1); color: var(--blue); }
+.ia-factor-icon.music { background: rgba(245,158,11,0.12); color: var(--gold-400); }
+.ia-factor-icon.calendar { background: var(--purple-dim); color: var(--purple); }
+.ia-factor-icon.promo { background: var(--green-dim); color: var(--green); }
+.ia-factor-icon.alert { background: var(--red-dim); color: var(--red); }
+.ia-factor-name { font-size: 12px; font-weight: 700; color: var(--text-200); margin-bottom: 2px; }
+.ia-factor-desc { font-size: 11px; color: var(--text-400); }
+.ia-factor-impact {
+  margin-left: auto; font-size: 14px; font-weight: 900;
+  flex-shrink: 0;
+}
+.impact-pos { color: var(--green); }
+.impact-neg { color: var(--red); }
+
+/* Revenue forecast */
+.rev-forecast-row { display: flex; flex-direction: column; gap: 12px; padding: 20px; }
+.rev-item {}
+.rev-label { font-size: 12px; font-weight: 600; color: var(--text-400); margin-bottom: 6px; display: flex; justify-content: space-between; }
+.rev-range { color: var(--text-200); font-weight: 700; }
+.rev-bar-bg { height: 8px; background: var(--bg-3); border-radius: 8px; overflow: hidden; }
+.rev-bar-fill {
+  height: 100%; border-radius: 8px;
+  background: linear-gradient(90deg, var(--gold-700), var(--gold-400));
+  transition: width 1.4s cubic-bezier(.4,0,.2,1);
+}
+
+/* Recommendations */
+.rec-list { padding: 16px 20px; display: flex; flex-direction: column; gap: 10px; }
+.rec-item {
+  display: flex; gap: 10px; align-items: flex-start;
+  padding: 10px 12px; border-radius: 8px;
+  background: rgba(13,21,48,0.5); border-left: 3px solid var(--gold-600);
+  font-size: 12px; color: var(--text-200);
+}
+.rec-item i { color: var(--gold-500); margin-top: 1px; flex-shrink: 0; }
+
+/* ─── Hero orbs (Dashboard) ─────────────────────── */
+.orb-container {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden;
+}
+.orb {
+  position: absolute; border-radius: 50%; filter: blur(80px);
+  animation: orbFloat 8s ease-in-out infinite;
+}
+.orb-1 {
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(245,158,11,0.06), transparent 70%);
+  top: -150px; right: -100px; animation-delay: 0s;
+}
+.orb-2 {
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(139,92,246,0.04), transparent 70%);
+  bottom: -100px; left: -100px; animation-delay: -4s;
+}
+
+/* ─── Scrollbar ──────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--bg-0); }
+::-webkit-scrollbar-thumb { background: var(--bg-3); border-radius: 10px; }
+
+/* ─── Responsive ─────────────────────────────────── */
+@media (max-width: 1100px) {
+  .kpi-grid { grid-template-columns: repeat(2,1fr); }
+  .charts-row { grid-template-columns: 1fr; }
+  .ia-chart-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 768px) {
+  :root { --sidebar-w: 0px; }
+  .sidebar { transform: translateX(-240px); }
+  .sidebar.open { transform: translateX(0); --sidebar-w: 240px; }
+  .main { margin-left: 0; }
+  .kpi-grid { grid-template-columns: 1fr 1fr; }
+  .ticket-grid { grid-template-columns: 1fr; }
+  .ia-hero-grid { grid-template-columns: 1fr; }
+  .ia-factors-grid { grid-template-columns: 1fr; }
+  .page { padding: 16px 16px 48px; }
+  .topbar { padding: 0 16px; }
+  .ae-stats { flex-wrap: wrap; gap: 16px; }
+  .ia-metrics-row { flex-wrap: wrap; gap: 16px; }
+}
+.mobile-menu-btn {
+  display: none;
+  width: 36px; height: 36px; border-radius: 10px;
+  background: var(--bg-2); border: 1px solid var(--gold-border);
+  color: var(--text-200); cursor: pointer;
+  align-items: center; justify-content: center; font-size: 16px;
+  margin-right: 8px;
+}
+@media (max-width: 768px) { .mobile-menu-btn { display: flex; } }
+</style>
+</head>
+<body>
+
+<div class="orb-container">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+</div>
+
+<!-- Sidebar -->
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">
+      <div class="logo-icon"><i class="fa-solid fa-moon"></i></div>
+      <div>
+        <div class="logo-text">NOCTA</div>
+        <div class="logo-badge">MULTI-TENANT</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="venue-selector">
+    <div class="venue-selector-label">Venue activo</div>
+    <div class="venue-btn" onclick="toggleVenueDropdown()">
+      <div class="venue-dot" id="venue-dot"></div>
+      <div>
+        <div class="venue-name" id="venue-name-display">Sala Aurora</div>
+        <div class="venue-city" id="venue-city-display">Madrid</div>
+      </div>
+      <i class="fa-solid fa-chevron-down venue-chevron" id="venue-chevron"></i>
+    </div>
+    <div class="venue-dropdown" id="venue-dropdown">
+      <div class="venue-option active" onclick="switchVenue('aurora')">
+        <div class="v-dot"></div>Sala Aurora — Madrid
+      </div>
+      <div class="venue-option" onclick="switchVenue('eclipse')">
+        <div class="v-dot"></div>Club Eclipse — Barcelona
+      </div>
+      <div class="venue-option" onclick="switchVenue('nova')">
+        <div class="v-dot off"></div>Disco Nova — Valencia
+      </div>
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label" style="margin-top:8px">Operaciones</div>
+    <div class="nav-item active" onclick="switchPage('dashboard', this)">
+      <i class="fa-solid fa-house"></i> Dashboard
+    </div>
+    <div class="nav-item" onclick="switchPage('ticketing', this)">
+      <i class="fa-solid fa-ticket"></i> Ticketing
+      <span class="nav-badge">3</span>
+    </div>
+    <div class="nav-item" onclick="switchPage('ia', this)">
+      <i class="fa-solid fa-brain"></i> Previsiones IA
+    </div>
+    <div class="nav-item" onclick="switchPage('bar', this)">
+      <i class="fa-solid fa-wine-bottle"></i> Barra y Stock
+    </div>
+    <div class="nav-label" style="margin-top:16px">Gestion</div>
+    <div class="nav-item" onclick="switchPage('staff', this)">
+      <i class="fa-solid fa-users"></i> Personal
+    </div>
+    <div class="nav-item" onclick="showToast('Modulo en Fase 2')">
+      <i class="fa-solid fa-cash-register"></i> Caja y Gastos
+    </div>
+    <div class="nav-item" onclick="showToast('Modulo en Fase 2')">
+      <i class="fa-solid fa-chart-bar"></i> Reportes
+    </div>
+    <div class="nav-label" style="margin-top:16px">Admin</div>
+    <div class="nav-item" onclick="showToast('Panel de administracion multi-tenant')">
+      <i class="fa-solid fa-gear"></i> Configuracion
+    </div>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="sidebar-tenant">
+      <i class="fa-solid fa-lock" style="font-size:10px;color:var(--text-500)"></i>
+      <span>Tenant: </span><span class="tenant-id" id="tenant-id">SA-001</span>
+    </div>
+    <div style="font-size:10px;color:var(--text-500)">RLS activo — PostgreSQL</div>
+  </div>
+</nav>
+
+<!-- Main -->
+<main class="main">
+  <!-- Topbar -->
+  <header class="topbar">
+    <button class="mobile-menu-btn" onclick="toggleSidebar()">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+    <div class="breadcrumb">
+      <i class="fa-solid fa-house" style="font-size:11px;color:var(--gold-600)"></i>
+      <i class="fa-solid fa-chevron-right"></i>
+      <span id="breadcrumb-text">Dashboard</span>
+    </div>
+    <div class="topbar-time" id="topbar-time"></div>
+    <div class="topbar-actions">
+      <div class="icon-btn" title="Alertas" onclick="showToast('3 alertas de stock pendientes')">
+        <i class="fa-solid fa-bell"></i>
+        <div class="notif-dot"></div>
+      </div>
+      <div class="icon-btn" title="Buscar">
+        <i class="fa-solid fa-magnifying-glass"></i>
+      </div>
+      <div class="avatar" title="David Jin">DJ</div>
+    </div>
+  </header>
+
+  <!-- ═══ DASHBOARD PAGE ═══════════════════════════════ -->
+  <div class="page active" id="page-dashboard">
+    <div style="position:relative;z-index:1">
+      <div class="page-title" id="dash-venue-title">Sala Aurora</div>
+      <div class="page-sub" id="dash-venue-sub">Madrid — Proximo evento: Summer Beats ft. DJ Harlow — Sab 28 Jun</div>
+
+      <!-- KPI Cards -->
+      <div class="kpi-grid">
+        <div class="kpi-card" style="animation-delay:.05s">
+          <div class="kpi-top">
+            <div class="kpi-icon gold"><i class="fa-solid fa-ticket"></i></div>
+            <div class="kpi-trend up"><i class="fa-solid fa-arrow-trend-up"></i> +6.4%</div>
+          </div>
+          <div class="kpi-value" data-countup data-target="978" data-suffix="">0</div>
+          <div class="kpi-label">Entradas vendidas</div>
+          <div class="kpi-sub" id="kpi-cap-text">1200 capacidad — 81.5% aforo</div>
+          <div class="cap-wrap">
+            <div class="cap-bar"><div class="cap-fill" id="kpi-cap-bar" style="width:0%"></div></div>
+          </div>
+        </div>
+        <div class="kpi-card" style="animation-delay:.1s">
+          <div class="kpi-top">
+            <div class="kpi-icon green"><i class="fa-solid fa-euro-sign"></i></div>
+            <div class="kpi-trend up"><i class="fa-solid fa-arrow-trend-up"></i> +11.2%</div>
+          </div>
+          <div class="kpi-value" data-countup data-target="12450" data-prefix="€" data-format="k">€0</div>
+          <div class="kpi-label">Ingresos barra</div>
+          <div class="kpi-sub">vs €11,190 evento anterior</div>
+        </div>
+        <div class="kpi-card" style="animation-delay:.15s">
+          <div class="kpi-top">
+            <div class="kpi-icon red"><i class="fa-solid fa-users"></i></div>
+            <div class="kpi-trend down"><i class="fa-solid fa-arrow-trend-up"></i> +3.1%</div>
+          </div>
+          <div class="kpi-value" data-countup data-target="2890" data-prefix="€">€0</div>
+          <div class="kpi-label">Coste personal</div>
+          <div class="kpi-sub">14 empleados activos</div>
+        </div>
+        <div class="kpi-card" style="animation-delay:.2s">
+          <div class="kpi-top">
+            <div class="kpi-icon purple"><i class="fa-solid fa-chart-line"></i></div>
+            <div class="kpi-trend up"><i class="fa-solid fa-arrow-trend-up"></i> +8.7%</div>
+          </div>
+          <div class="kpi-value" data-countup data-target="9560" data-prefix="€">€0</div>
+          <div class="kpi-label">Margen neto evento</div>
+          <div class="kpi-sub">Despues de costes variables</div>
+        </div>
+      </div>
+
+      <!-- Charts row -->
+      <div class="charts-row">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title"><i class="fa-solid fa-chart-area" style="color:var(--gold-600);margin-right:6px"></i>Asistencia historica — ultimos 10 eventos</div>
+            <span class="card-badge badge-gold">Sala Aurora</span>
+          </div>
+          <div style="padding:16px 20px 20px">
+            <canvas id="attendanceChart" height="220"></canvas>
+          </div>
+        </div>
+
+        <div class="ai-card">
+          <div class="ai-header">
+            <div class="ai-chip"><i class="fa-solid fa-brain" style="font-size:10px"></i> IA PREDICTIVA</div>
+          </div>
+          <div class="ai-event-name" id="ai-next-event">Summer Beats ft. DJ Harlow</div>
+          <div class="ai-event-date" id="ai-next-date"><i class="fa-solid fa-calendar-day" style="color:var(--gold-600);margin-right:4px"></i>Sabado 28 Jun 2026</div>
+
+          <div class="ai-prediction">
+            <div class="ai-prediction-number" id="ai-pred-number">0</div>
+            <div class="ai-prediction-label">personas previstas</div>
+          </div>
+
+          <div class="ai-confidence">
+            <span class="conf-label">Confianza</span>
+            <div class="ai-conf-bar-wrap"><div class="ai-conf-bar" id="ai-conf-bar"></div></div>
+            <span class="conf-pct" id="ai-conf-pct">0%</span>
+          </div>
+
+          <div class="ai-factors">
+            <div class="ai-factor">
+              <div class="factor-icon pos"><i class="fa-solid fa-sun"></i></div>
+              <span>Clima soleado — Madrid</span>
+              <span class="factor-impact pos">+15%</span>
+            </div>
+            <div class="ai-factor">
+              <div class="factor-icon pos"><i class="fa-solid fa-music"></i></div>
+              <span>DJ Harlow (score 8.2/10)</span>
+              <span class="factor-impact pos">+22%</span>
+            </div>
+            <div class="ai-factor">
+              <div class="factor-icon pos"><i class="fa-solid fa-calendar-check"></i></div>
+              <span>Festivo anterior</span>
+              <span class="factor-impact pos">+8%</span>
+            </div>
+            <div class="ai-factor">
+              <div class="factor-icon neg"><i class="fa-solid fa-futbol"></i></div>
+              <span>Partido Madrid misma noche</span>
+              <span class="factor-impact neg">-12%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Upcoming events -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><i class="fa-solid fa-calendar-days" style="color:var(--gold-600);margin-right:6px"></i>Proximos eventos</div>
+          <span class="card-badge badge-gold">3 programados</span>
+        </div>
+        <div class="events-list">
+          <div class="event-item">
+            <div class="event-date-box">
+              <div class="event-day">28</div>
+              <div class="event-month">Jun</div>
+            </div>
+            <div class="event-info">
+              <div class="event-name">Summer Beats ft. DJ Harlow</div>
+              <div class="event-meta"><i class="fa-solid fa-location-dot" style="color:var(--gold-700);margin-right:4px"></i>Sala Principal — 23:00 - 06:00</div>
+              <div class="cap-wrap" style="margin-top:6px">
+                <div class="cap-bar"><div class="cap-fill" style="width:82%"></div></div>
+                <div class="cap-text">982 / 1200 vendidas (81.8%)</div>
+              </div>
+            </div>
+            <div class="event-status"><span class="card-badge badge-gold">PROXIMO</span></div>
+          </div>
+          <div class="event-item">
+            <div class="event-date-box">
+              <div class="event-day">05</div>
+              <div class="event-month">Jul</div>
+            </div>
+            <div class="event-info">
+              <div class="event-name">Noche de Techno — DJ ZARA</div>
+              <div class="event-meta"><i class="fa-solid fa-location-dot" style="color:var(--gold-700);margin-right:4px"></i>Sala Principal — 23:00 - 06:00</div>
+              <div class="cap-wrap" style="margin-top:6px">
+                <div class="cap-bar"><div class="cap-fill" style="width:34%"></div></div>
+                <div class="cap-text">408 / 1200 vendidas (34%)</div>
+              </div>
+            </div>
+            <div class="event-status"><span class="card-badge badge-purple">VENTA ABIERTA</span></div>
+          </div>
+          <div class="event-item">
+            <div class="event-date-box">
+              <div class="event-day">12</div>
+              <div class="event-month">Jul</div>
+            </div>
+            <div class="event-info">
+              <div class="event-name">Fiesta de Aniversario — 5 Anos</div>
+              <div class="event-meta"><i class="fa-solid fa-location-dot" style="color:var(--gold-700);margin-right:4px"></i>Sala Principal + Terraza — 22:00 - 07:00</div>
+              <div class="cap-wrap" style="margin-top:6px">
+                <div class="cap-bar"><div class="cap-fill" style="width:12%"></div></div>
+                <div class="cap-text">144 / 1200 vendidas (12%)</div>
+              </div>
+            </div>
+            <div class="event-status"><span class="card-badge" style="background:rgba(100,116,139,0.15);color:var(--text-400);border:1px solid rgba(100,116,139,0.2)">BORRADOR</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TICKETING PAGE ═══════════════════════════════ -->
+  <div class="page" id="page-ticketing">
+    <div class="page-title">Ticketing</div>
+    <div class="page-sub">Control de acceso en puerta — Sala Aurora</div>
+
+    <div class="ticket-grid">
+      <!-- Active event hero -->
+      <div class="active-event-hero">
+        <div class="ae-bg"></div>
+        <div class="ae-content">
+          <div class="ae-live">EN VIVO AHORA</div>
+          <div class="ae-title">Summer Beats ft. DJ Harlow</div>
+          <div class="ae-sub"><i class="fa-solid fa-calendar" style="color:var(--gold-600);margin-right:6px"></i>Sabado 28 Jun 2026 — 23:00 - 06:00 &nbsp;&nbsp;<i class="fa-solid fa-location-dot" style="color:var(--gold-600);margin-right:4px"></i>Sala Aurora, Madrid</div>
+          <div class="ae-stats">
+            <div>
+              <div class="ae-stat-value" data-countup data-target="847" data-suffix="">0</div>
+              <div class="ae-stat-label">accesos realizados</div>
+            </div>
+            <div>
+              <div class="ae-stat-value" style="color:var(--text-200)">1.200</div>
+              <div class="ae-stat-label">capacidad total</div>
+            </div>
+            <div>
+              <div class="ae-stat-value" style="color:var(--green)" data-countup data-target="135" data-suffix="/h">0</div>
+              <div class="ae-stat-label">ritmo de entrada</div>
+            </div>
+            <div>
+              <div class="ae-stat-value" style="color:var(--gold-400)" data-countup data-target="41200" data-prefix="€">€0</div>
+              <div class="ae-stat-label">ingresos acumulados</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Capacity gauge -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><i class="fa-solid fa-circle-half-stroke" style="color:var(--gold-600);margin-right:6px"></i>Aforo en tiempo real</div>
+          <span class="card-badge badge-green">ACTIVO</span>
+        </div>
+        <div class="gauge-wrap">
+          <svg class="gauge-svg" viewBox="0 0 180 100">
+            <path class="gauge-track" d="M20,90 A70,70 0 0,1 160,90" />
+            <path class="gauge-fill" id="gauge-path" d="M20,90 A70,70 0 0,1 160,90" />
+          </svg>
+          <div class="gauge-label" id="gauge-pct">0%</div>
+          <div class="gauge-sub">847 de 1.200 personas</div>
+        </div>
+        <div style="padding:0 20px 16px">
+          <div class="tier-row">
+            <div class="tier-label" style="font-size:11px;color:var(--text-400)">VIP</div>
+            <div class="tier-bar-wrap"><div class="tier-bar vip" style="width:0%" data-w="94"></div></div>
+            <div class="tier-count">188/200</div>
+          </div>
+          <div style="height:8px"></div>
+          <div class="tier-row">
+            <div class="tier-label" style="font-size:11px;color:var(--text-400)">General</div>
+            <div class="tier-bar-wrap"><div class="tier-bar general" style="width:0%" data-w="74"></div></div>
+            <div class="tier-count">592/800</div>
+          </div>
+          <div style="height:8px"></div>
+          <div class="tier-row">
+            <div class="tier-label" style="font-size:11px;color:var(--text-400)">Lista</div>
+            <div class="tier-bar-wrap"><div class="tier-bar lista" style="width:0%" data-w="67"></div></div>
+            <div class="tier-count">67/200</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scan feed -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><i class="fa-solid fa-qrcode" style="color:var(--gold-600);margin-right:6px"></i>Ultimos escaneos</div>
+          <span class="card-badge badge-green">EN VIVO</span>
+        </div>
+        <div class="scan-feed" id="scan-feed">
+          <div class="scan-item">
+            <div class="scan-icon vip-in"><i class="fa-solid fa-star"></i></div>
+            <div class="scan-name">Carlos M.</div>
+            <div class="scan-type">VIP</div>
+            <div class="scan-time">23:47</div>
+          </div>
+          <div class="scan-item">
+            <div class="scan-icon ok"><i class="fa-solid fa-check"></i></div>
+            <div class="scan-name">Laura S.</div>
+            <div class="scan-type">General</div>
+            <div class="scan-time">23:46</div>
+          </div>
+          <div class="scan-item">
+            <div class="scan-icon denied"><i class="fa-solid fa-xmark"></i></div>
+            <div class="scan-name">Ticket invalido</div>
+            <div class="scan-type">—</div>
+            <div class="scan-time">23:45</div>
+          </div>
+          <div class="scan-item">
+            <div class="scan-icon ok"><i class="fa-solid fa-check"></i></div>
+            <div class="scan-name">Miguel A.</div>
+            <div class="scan-type">Lista</div>
+            <div class="scan-time">23:45</div>
+          </div>
+          <div class="scan-item">
+            <div class="scan-icon ok"><i class="fa-solid fa-check"></i></div>
+            <div class="scan-name">Sofia R.</div>
+            <div class="scan-type">General</div>
+            <div class="scan-time">23:44</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- QR mock -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><i class="fa-solid fa-mobile-screen" style="color:var(--gold-600);margin-right:6px"></i>Scanner de puerta</div>
+          <span class="card-badge badge-gold">LISTO</span>
+        </div>
+        <div style="padding:24px;display:flex;flex-direction:column;align-items:center;gap:16px">
+          <div id="qr-container"></div>
+          <div style="font-size:13px;font-weight:700;color:var(--text-200);text-align:center">
+            Apunta la camara al codigo QR<br>
+            <span style="font-size:11px;color:var(--text-400);font-weight:400">Lectura automatica activada</span>
+          </div>
+          <button onclick="simulateScan()" style="
+            background:linear-gradient(135deg,var(--gold-600),var(--gold-400));
+            border:none;border-radius:10px;padding:10px 24px;
+            color:#000;font-family:Nunito,sans-serif;font-size:13px;font-weight:800;
+            cursor:pointer;transition:transform .2s var(--easing);
+          " onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
+            <i class="fa-solid fa-qrcode"></i> Simular escaneo
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ IA PAGE ══════════════════════════════════════ -->
+  <div class="page" id="page-ia">
+    <div class="page-title">Previsiones IA</div>
+    <div class="page-sub">Forecasting predictivo basado en datos historicos del venue</div>
+
+    <div class="ia-header-card">
+      <div class="ia-orb ia-orb-1"></div>
+      <div class="ia-orb ia-orb-2"></div>
+      <div class="ia-hero-grid">
+        <div class="ia-hero-left">
+          <div class="ia-next-label"><i class="fa-solid fa-brain" style="color:var(--gold-600);margin-right:6px"></i>Prediccion — Proximo Evento</div>
+          <div class="ia-next-event">Summer Beats ft. DJ Harlow</div>
+          <div class="ia-next-date">Sabado 28 de junio de 2026 — 23:00</div>
+          <div class="ia-metrics-row">
+            <div>
+              <div class="ia-metric-value">1.047 <span class="ia-metric-unit">pers.</span></div>
+              <div class="ia-metric-label">Asistencia prevista</div>
+              <div class="ia-metric-ci">Intervalo: 980 — 1.115</div>
+            </div>
+            <div>
+              <div class="ia-metric-value">87.3<span class="ia-metric-unit">%</span></div>
+              <div class="ia-metric-label">% de aforo</div>
+              <div class="ia-metric-ci">Capacidad: 1.200</div>
+            </div>
+            <div>
+              <div class="ia-metric-value">€16.2<span class="ia-metric-unit">k</span></div>
+              <div class="ia-metric-label">Ingresos barra estimados</div>
+              <div class="ia-metric-ci">Rango: €14.2k — €17.8k</div>
+            </div>
+          </div>
+        </div>
+        <div class="ia-accuracy-badge">
+          <div class="ia-acc-value">94.5%</div>
+          <div class="ia-acc-label">Precision del modelo</div>
+          <div class="ia-acc-sub">MAE: 47 personas</div>
+          <div class="ia-acc-sub">24 eventos calibrados</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ia-chart-grid">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><i class="fa-solid fa-chart-line" style="color:var(--gold-600);margin-right:6px"></i>Historico de predicciones vs real</div>
+          <span class="card-badge badge-gold">Sala Aurora</span>
+        </div>
+        <div style="padding:16px 20px 20px">
+          <canvas id="forecastChart" height="260"></canvas>
+        </div>
+      </div>
+
+      <div>
+        <!-- Revenue forecast -->
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-header">
+            <div class="card-title"><i class="fa-solid fa-sack-dollar" style="color:var(--gold-600);margin-right:6px"></i>Prevision de ingresos</div>
+          </div>
+          <div class="rev-forecast-row">
+            <div class="rev-item">
+              <div class="rev-label">Tickets <span class="rev-range">€18.5k — €22k</span></div>
+              <div class="rev-bar-bg"><div class="rev-bar-fill" data-w="78" style="width:0%"></div></div>
+            </div>
+            <div class="rev-item">
+              <div class="rev-label">Barra <span class="rev-range">€14.2k — €17.8k</span></div>
+              <div class="rev-bar-bg"><div class="rev-bar-fill" data-w="62" style="width:0%"></div></div>
+            </div>
+            <div class="rev-item">
+              <div class="rev-label">Total evento <span class="rev-range">€32.7k — €39.8k</span></div>
+              <div class="rev-bar-bg"><div class="rev-bar-fill" data-w="88" style="width:0%"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI Recs -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title"><i class="fa-solid fa-lightbulb" style="color:var(--gold-600);margin-right:6px"></i>Recomendaciones IA</div>
+            <span class="card-badge badge-gold">3 activas</span>
+          </div>
+          <div class="rec-list">
+            <div class="rec-item">
+              <i class="fa-solid fa-users-gear"></i>
+              Contratar 2 barman adicionales para aforo previsto mayor a 900 personas.
+            </div>
+            <div class="rec-item">
+              <i class="fa-solid fa-wine-bottle"></i>
+              Aumentar pedido de cerveza craft en 30% respecto a evento anterior. Stock minimo 18 cajas.
+            </div>
+            <div class="rec-item">
+              <i class="fa-solid fa-money-bill-trend-up"></i>
+              Activar descuento de preventa 10% en tier General — quedan 218 entradas disponibles.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Factor analysis -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><i class="fa-solid fa-sliders" style="color:var(--gold-600);margin-right:6px"></i>Factores del modelo — impacto en asistencia</div>
+        <span class="card-badge badge-gold">Ajuste neto +38%</span>
+      </div>
+      <div style="padding:16px 20px">
+        <div class="ia-factors-grid">
+          <div class="ia-factor-card">
+            <div class="ia-factor-icon weather"><i class="fa-solid fa-sun"></i></div>
+            <div>
+              <div class="ia-factor-name">Condiciones climaticas</div>
+              <div class="ia-factor-desc">Pronostico soleado — Madrid</div>
+            </div>
+            <div class="ia-factor-impact impact-pos">+15%</div>
+          </div>
+          <div class="ia-factor-card">
+            <div class="ia-factor-icon music"><i class="fa-solid fa-headphones"></i></div>
+            <div>
+              <div class="ia-factor-name">Popularidad del DJ</div>
+              <div class="ia-factor-desc">DJ Harlow — score social 8.2/10</div>
+            </div>
+            <div class="ia-factor-impact impact-pos">+22%</div>
+          </div>
+          <div class="ia-factor-card">
+            <div class="ia-factor-icon calendar"><i class="fa-solid fa-calendar-check"></i></div>
+            <div>
+              <div class="ia-factor-name">Festivo anterior</div>
+              <div class="ia-factor-desc">Viernes festivo — puente largo</div>
+            </div>
+            <div class="ia-factor-impact impact-pos">+8%</div>
+          </div>
+          <div class="ia-factor-card">
+            <div class="ia-factor-icon promo"><i class="fa-solid fa-tag"></i></div>
+            <div>
+              <div class="ia-factor-name">Promociones activas</div>
+              <div class="ia-factor-desc">2x1 en preventa hasta jue 26</div>
+            </div>
+            <div class="ia-factor-impact impact-pos">+5%</div>
+          </div>
+          <div class="ia-factor-card" style="border-color:rgba(244,63,94,0.2)">
+            <div class="ia-factor-icon alert"><i class="fa-solid fa-futbol"></i></div>
+            <div>
+              <div class="ia-factor-name">Partido Real Madrid</div>
+              <div class="ia-factor-desc">Champions — misma noche 21:00</div>
+            </div>
+            <div class="ia-factor-impact impact-neg">-12%</div>
+          </div>
+          <div class="ia-factor-card">
+            <div class="ia-factor-icon calendar" style="background:rgba(245,158,11,0.1);color:var(--gold-400)"><i class="fa-solid fa-star"></i></div>
+            <div>
+              <div class="ia-factor-name">Historico DJ en venue</div>
+              <div class="ia-factor-desc">2 actuaciones previas — media 1.080 asistentes</div>
+            </div>
+            <div class="ia-factor-impact impact-pos">+18%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ BAR PAGE ══════════════════════════════════ -->
+  <div class="page" id="page-bar">
+    <div class="page-title">Barra y Stock</div>
+    <div class="page-sub">Control de inventario y mermas — Sala Aurora</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><i class="fa-solid fa-boxes-stacked" style="color:var(--gold-600);margin-right:6px"></i>Stock actual</div>
+          <span class="card-badge badge-red">2 alertas</span>
+        </div>
+        <div style="padding:16px 20px;display:flex;flex-direction:column;gap:14px">
+          <!-- Stock items -->
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:var(--text-200);margin-bottom:6px">
+              <span><i class="fa-solid fa-beer-mug-empty" style="color:var(--gold-600);margin-right:6px"></i>Cerveza craft (cajas)</span>
+              <span style="color:var(--red)">8 / 30</span>
+            </div>
+            <div class="cap-bar"><div class="cap-fill" style="width:26%;background:linear-gradient(90deg,var(--red),#ff6b6b)"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:var(--text-200);margin-bottom:6px">
+              <span><i class="fa-solid fa-wine-bottle" style="color:var(--gold-600);margin-right:6px"></i>Vodka premium (botellas)</span>
+              <span style="color:var(--gold-400)">12 / 24</span>
+            </div>
+            <div class="cap-bar"><div class="cap-fill" style="width:50%"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:var(--text-200);margin-bottom:6px">
+              <span><i class="fa-solid fa-droplet" style="color:var(--gold-600);margin-right:6px"></i>Agua mineral (packs)</span>
+              <span style="color:var(--green)">45 / 60</span>
+            </div>
+            <div class="cap-bar"><div class="cap-fill" style="width:75%;background:linear-gradient(90deg,#059669,var(--green))"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:var(--text-200);margin-bottom:6px">
+              <span><i class="fa-solid fa-martini-glass" style="color:var(--gold-600);margin-right:6px"></i>Ron blanco (botellas)</span>
+              <span style="color:var(--red)">3 / 18</span>
+            </div>
+            <div class="cap-bar"><div class="cap-fill" style="width:16%;background:linear-gradient(90deg,var(--red),#ff6b6b)"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:var(--text-200);margin-bottom:6px">
+              <span><i class="fa-solid fa-bottle-water" style="color:var(--gold-600);margin-right:6px"></i>Gin premium (botellas)</span>
+              <span style="color:var(--green)">19 / 20</span>
+            </div>
+            <div class="cap-bar"><div class="cap-fill" style="width:95%;background:linear-gradient(90deg,#059669,var(--green))"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><i class="fa-solid fa-triangle-exclamation" style="color:var(--gold-600);margin-right:6px"></i>Alertas de reposicion</div>
+          <span class="card-badge badge-red">URGENTE</span>
+        </div>
+        <div style="padding:16px 20px;display:flex;flex-direction:column;gap:12px">
+          <div style="
+            background:rgba(244,63,94,0.08);border:1px solid rgba(244,63,94,0.25);
+            border-radius:10px;padding:14px;
+          ">
+            <div style="font-size:13px;font-weight:800;color:var(--red);margin-bottom:4px">
+              <i class="fa-solid fa-beer-mug-empty" style="margin-right:6px"></i>Cerveza craft — CRITICO
+            </div>
+            <div style="font-size:12px;color:var(--text-300,var(--text-200))">
+              Stock actual: 8 cajas. Consumo esperado evento sabado: 22 cajas.<br>
+              <strong style="color:var(--gold-400)">Pedido recomendado: 25 cajas para jueves.</strong>
+            </div>
+          </div>
+          <div style="
+            background:rgba(244,63,94,0.08);border:1px solid rgba(244,63,94,0.25);
+            border-radius:10px;padding:14px;
+          ">
+            <div style="font-size:13px;font-weight:800;color:var(--red);margin-bottom:4px">
+              <i class="fa-solid fa-martini-glass" style="margin-right:6px"></i>Ron blanco — CRITICO
+            </div>
+            <div style="font-size:12px;color:var(--text-200)">
+              Stock actual: 3 botellas. Consumo esperado evento sabado: 12 botellas.<br>
+              <strong style="color:var(--gold-400)">Pedido recomendado: 18 botellas para jueves.</strong>
+            </div>
+          </div>
+          <button onclick="showToast('Pedido generado al proveedor')" style="
+            background:linear-gradient(135deg,var(--gold-600),var(--gold-400));
+            border:none;border-radius:10px;padding:12px;width:100%;
+            color:#000;font-family:Nunito,sans-serif;font-size:13px;font-weight:800;
+            cursor:pointer;transition:transform .2s var(--easing);margin-top:4px;
+          " onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'">
+            <i class="fa-solid fa-truck"></i> Generar pedido automatico al proveedor
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ STAFF PAGE ══════════════════════════════════ -->
+  <div class="page" id="page-staff">
+    <div class="page-title">Personal</div>
+    <div class="page-sub">Turnos y fichajes — Evento Summer Beats — Sab 28 Jun</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <div class="kpi-icon green"><i class="fa-solid fa-user-check"></i></div>
+          <div class="kpi-trend up">En turno</div>
+        </div>
+        <div class="kpi-value">14</div>
+        <div class="kpi-label">Empleados activos</div>
+        <div class="kpi-sub">De 16 programados</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <div class="kpi-icon gold"><i class="fa-solid fa-clock"></i></div>
+        </div>
+        <div class="kpi-value">7.2h</div>
+        <div class="kpi-label">Horas medias turno</div>
+        <div class="kpi-sub">Target: 8h</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <div class="kpi-icon red"><i class="fa-solid fa-euro-sign"></i></div>
+        </div>
+        <div class="kpi-value">€2.890</div>
+        <div class="kpi-label">Coste personal estimado</div>
+        <div class="kpi-sub">Para este evento</div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <div class="card-header">
+        <div class="card-title"><i class="fa-solid fa-table-list" style="color:var(--gold-600);margin-right:6px"></i>Fichajes del evento</div>
+      </div>
+      <div style="padding:16px 20px;display:flex;flex-direction:column;gap:10px">
+        <div style="display:grid;grid-template-columns:1fr 100px 100px 80px;gap:12px;font-size:11px;font-weight:700;color:var(--text-500);text-transform:uppercase;letter-spacing:.8px;padding:0 12px;margin-bottom:4px">
+          <span>Empleado</span><span>Entrada</span><span>Salida</span><span>Horas</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="display:grid;grid-template-columns:1fr 100px 100px 80px;gap:12px;padding:10px 12px;background:rgba(13,21,48,0.5);border:1px solid var(--gold-border);border-radius:8px;font-size:13px;align-items:center">
+            <div style="display:flex;align-items:center;gap:8px"><div style="width:28px;height:28px;border-radius:7px;background:var(--green-dim);display:grid;place-items:center;font-size:10px;font-weight:900;color:var(--green)">MA</div><div><div style="font-weight:700;color:var(--text-100)">Maria A.</div><div style="font-size:11px;color:var(--text-400)">Barra principal</div></div></div>
+            <span style="color:var(--text-200)">22:45</span><span style="color:var(--text-400)">—</span><span style="color:var(--gold-400);font-weight:700">0h aprox.</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 100px 100px 80px;gap:12px;padding:10px 12px;background:rgba(13,21,48,0.5);border:1px solid var(--gold-border);border-radius:8px;font-size:13px;align-items:center">
+            <div style="display:flex;align-items:center;gap:8px"><div style="width:28px;height:28px;border-radius:7px;background:rgba(245,158,11,0.1);display:grid;place-items:center;font-size:10px;font-weight:900;color:var(--gold-400)">JL</div><div><div style="font-weight:700;color:var(--text-100)">Jose L.</div><div style="font-size:11px;color:var(--text-400)">Control de acceso</div></div></div>
+            <span style="color:var(--text-200)">22:30</span><span style="color:var(--text-400)">—</span><span style="color:var(--gold-400);font-weight:700">1.2h</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 100px 100px 80px;gap:12px;padding:10px 12px;background:rgba(13,21,48,0.5);border:1px solid var(--gold-border);border-radius:8px;font-size:13px;align-items:center">
+            <div style="display:flex;align-items:center;gap:8px"><div style="width:28px;height:28px;border-radius:7px;background:var(--purple-dim);display:grid;place-items:center;font-size:10px;font-weight:900;color:var(--purple)">SR</div><div><div style="font-weight:700;color:var(--text-100)">Sara R.</div><div style="font-size:11px;color:var(--text-400)">Jefa de barra</div></div></div>
+            <span style="color:var(--text-200)">22:00</span><span style="color:var(--text-400)">—</span><span style="color:var(--gold-400);font-weight:700">1.8h</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- Toast -->
+<div id="toast" style="
+  position:fixed;bottom:28px;right:28px;z-index:9999;
+  background:var(--bg-2);border:1px solid var(--gold-border);
+  border-radius:12px;padding:14px 20px;
+  font-size:13px;font-weight:600;color:var(--text-100);
+  box-shadow:var(--shadow);display:flex;align-items:center;gap:10px;
+  transform:translateY(100px);opacity:0;
+  transition:all .4s cubic-bezier(.34,1.56,.64,1);
+  max-width:320px;
+">
+  <i class="fa-solid fa-circle-check" style="color:var(--gold-500);font-size:16px"></i>
+  <span id="toast-text"></span>
+</div>
+
+<script>
+// ─── Data ──────────────────────────────────────────────────────
+const venueData = {
+  aurora: {
+    name: 'Sala Aurora', city: 'Madrid', tenantId: 'SA-001',
+    nextEvent: 'Summer Beats ft. DJ Harlow', nextDate: 'Sabado 28 Jun 2026',
+    historical: {
+      labels: ['Ene 18','Feb 01','Feb 15','Mar 01','Mar 22','Abr 05','Abr 26','May 10','May 31','Jun 14','Jun 21','Jun 28*'],
+      actual:    [720, 850, 680, 920, 1100, 780, 960, 1050, 978, 890, 1020, null],
+      predicted: [700, 830, 710, 900, 1080, 800, 940, 1020, 950, 870, 985,  1047],
+      upper:     [null,null,null,null,null,null,null,null,null,null,null,1115],
+      lower:     [null,null,null,null,null,null,null,null,null,null,null,980],
+    },
+    kpi: { tickets:978, bar:12450, staff:2890, margin:9560, cap:1200, capPct:81.5 },
+    prediction: { value: 1047, conf: 82, range: '980 — 1.115' }
+  },
+  eclipse: {
+    name: 'Club Eclipse', city: 'Barcelona', tenantId: 'CE-007',
+    nextEvent: 'Techno Rave Edition III', nextDate: 'Sabado 28 Jun 2026',
+    historical: {
+      labels: ['Ene 20','Feb 03','Feb 17','Mar 03','Mar 24','Abr 07','Abr 28','May 12','Jun 02','Jun 16','Jun 20','Jun 28*'],
+      actual:    [480, 560, 410, 620, 740, 510, 660, 710, 645, 590, 680, null],
+      predicted: [460, 540, 430, 600, 720, 530, 640, 690, 620, 570, 660, 712],
+      upper:     [null,null,null,null,null,null,null,null,null,null,null,760],
+      lower:     [null,null,null,null,null,null,null,null,null,null,null,665],
+    },
+    kpi: { tickets:645, bar:8900, staff:1980, margin:6240, cap:800, capPct:80.6 },
+    prediction: { value: 712, conf: 78, range: '665 — 760' }
+  },
+  nova: {
+    name: 'Disco Nova', city: 'Valencia', tenantId: 'DN-012',
+    nextEvent: 'Reggaeton Saturdays Vol.8', nextDate: 'Sabado 28 Jun 2026',
+    historical: {
+      labels: ['Feb 07','Feb 21','Mar 07','Mar 28','Abr 11','Abr 25','May 09','May 30','Jun 13','Jun 20','Jun 21','Jun 28*'],
+      actual:    [310, 380, 290, 430, 510, 340, 480, 520, 495, 450, 512, null],
+      predicted: [295, 360, 310, 415, 490, 360, 460, 500, 470, 430, 490, 545],
+      upper:     [null,null,null,null,null,null,null,null,null,null,null,580],
+      lower:     [null,null,null,null,null,null,null,null,null,null,null,510],
+    },
+    kpi: { tickets:512, bar:7200, staff:1450, margin:5120, cap:600, capPct:85.3 },
+    prediction: { value: 545, conf: 74, range: '510 — 580' }
+  }
+};
+
+let activeVenue = 'aurora';
+let attendanceChartInstance = null;
+let forecastChartInstance = null;
+
+// ─── Clock ─────────────────────────────────────────────────────
+function updateClock() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2,'0');
+  const m = String(now.getMinutes()).padStart(2,'0');
+  const s = String(now.getSeconds()).padStart(2,'0');
+  const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const days = ['Dom','Lun','Mar','Mie','Jue','Vie','Sab'];
+  document.getElementById('topbar-time').textContent =
+    `${days[now.getDay()]} ${now.getDate()} ${months[now.getMonth()]} ${h}:${m}:${s}`;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ─── Navigation ────────────────────────────────────────────────
+const pageMap = {
+  'dashboard': 'Dashboard',
+  'ticketing': 'Ticketing',
+  'ia': 'Previsiones IA',
+  'bar': 'Barra y Stock',
+  'staff': 'Personal'
+};
+function switchPage(name, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+  if (el) el.classList.add('active');
+  document.getElementById('breadcrumb-text').textContent = pageMap[name] || name;
+  // init charts on first visit
+  if (name === 'dashboard' && !attendanceChartInstance) initAttendanceChart();
+  if (name === 'ia' && !forecastChartInstance) {
+    setTimeout(initForecastChart, 50);
+    setTimeout(animateRevBars, 300);
+  }
+  if (name === 'ticketing') animateGauge();
+  closeSidebar();
+}
+
+// ─── Venue switch ──────────────────────────────────────────────
+function toggleVenueDropdown() {
+  const dd = document.getElementById('venue-dropdown');
+  const ch = document.getElementById('venue-chevron');
+  dd.classList.toggle('open');
+  ch.style.transform = dd.classList.contains('open') ? 'rotate(180deg)' : '';
+}
+function switchVenue(key) {
+  activeVenue = key;
+  const v = venueData[key];
+  // Sidebar header
+  document.getElementById('venue-name-display').textContent = v.name;
+  document.getElementById('venue-city-display').textContent = v.city;
+  document.getElementById('tenant-id').textContent = v.tenantId;
+  document.getElementById('venue-dot').className = 'venue-dot' + (key === 'nova' ? ' offline' : '');
+  // Mark active
+  document.querySelectorAll('.venue-option').forEach((o,i) => {
+    const keys = ['aurora','eclipse','nova'];
+    o.classList.toggle('active', keys[i] === key);
+  });
+  // Dashboard
+  document.getElementById('dash-venue-title').textContent = v.name;
+  document.getElementById('dash-venue-sub').textContent = `${v.city} — Proximo evento: ${v.nextEvent}`;
+  document.getElementById('ai-next-event').textContent = v.nextEvent;
+  document.getElementById('ai-next-date').innerHTML = `<i class="fa-solid fa-calendar-day" style="color:var(--gold-600);margin-right:4px"></i>${v.nextDate}`;
+  // KPIs
+  updateKPIs(v);
+  // AI panel
+  updateAIPanel(v);
+  // Rebuild charts if visible
+  if (document.getElementById('page-dashboard').classList.contains('active')) {
+    if (attendanceChartInstance) { attendanceChartInstance.destroy(); attendanceChartInstance = null; }
+    initAttendanceChart();
+  }
+  if (document.getElementById('page-ia').classList.contains('active')) {
+    if (forecastChartInstance) { forecastChartInstance.destroy(); forecastChartInstance = null; }
+    setTimeout(initForecastChart, 50);
+  }
+  toggleVenueDropdown();
+  showToast(`Cambiado a ${v.name} (${v.tenantId})`);
+}
+
+function updateKPIs(v) {
+  const kpi = v.kpi;
+  const counterEls = document.querySelectorAll('#page-dashboard [data-countup]');
+  const targets = [kpi.tickets, kpi.bar, kpi.staff, kpi.margin];
+  counterEls.forEach((el, i) => {
+    if (targets[i] !== undefined) {
+      el.setAttribute('data-target', targets[i]);
+      animateCountUp(el);
+    }
+  });
+  document.getElementById('kpi-cap-text').textContent = `${kpi.cap} capacidad — ${kpi.capPct}% aforo`;
+  document.getElementById('kpi-cap-bar').style.width = kpi.capPct + '%';
+}
+
+function updateAIPanel(v) {
+  const pred = v.prediction;
+  const numEl = document.getElementById('ai-pred-number');
+  animateNumber(numEl, 0, pred.value, 1000);
+  document.getElementById('ai-conf-bar').style.width = pred.conf + '%';
+  document.getElementById('ai-conf-pct').textContent = pred.conf + '%';
+}
+
+// ─── Charts ─────────────────────────────────────────────────────
+function initAttendanceChart() {
+  const v = venueData[activeVenue];
+  const d = v.historical;
+  const ctx = document.getElementById('attendanceChart').getContext('2d');
+  const gradient = ctx.createLinearGradient(0, 0, 0, 220);
+  gradient.addColorStop(0, 'rgba(245,158,11,0.35)');
+  gradient.addColorStop(1, 'rgba(245,158,11,0)');
+  attendanceChartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: d.labels,
+      datasets: [
+        {
+          type: 'bar',
+          label: 'Real',
+          data: d.actual,
+          backgroundColor: 'rgba(245,158,11,0.45)',
+          borderColor: 'rgba(245,158,11,0.8)',
+          borderWidth: 1,
+          borderRadius: 5,
+        },
+        {
+          type: 'line',
+          label: 'Prediccion IA',
+          data: d.predicted,
+          borderColor: '#a78bfa',
+          backgroundColor: 'rgba(167,139,250,0.0)',
+          borderWidth: 2,
+          pointBackgroundColor: '#a78bfa',
+          pointRadius: 3,
+          tension: 0.4,
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          labels: { color: '#94a3b8', font: { family: 'Nunito', size: 12 }, padding: 16 }
+        },
+        tooltip: {
+          backgroundColor: '#0d1530', borderColor: 'rgba(245,158,11,0.3)', borderWidth: 1,
+          titleColor: '#f1f5f9', bodyColor: '#94a3b8',
+          callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.raw} personas` }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: { color: '#64748b', font: { family: 'Nunito', size: 11 } }
+        },
+        y: {
+          grid: { color: 'rgba(255,255,255,0.05)' },
+          ticks: {
+            color: '#64748b', font: { family: 'Nunito', size: 11 },
+            callback: v => v.toLocaleString()
+          },
+          min: 0
+        }
+      }
+    }
+  });
+}
+
+function initForecastChart() {
+  const v = venueData[activeVenue];
+  const d = v.historical;
+  const ctx = document.getElementById('forecastChart').getContext('2d');
+  forecastChartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: d.labels,
+      datasets: [
+        {
+          type: 'bar',
+          label: 'Asistencia real',
+          data: d.actual,
+          backgroundColor: 'rgba(245,158,11,0.4)',
+          borderColor: 'rgba(245,158,11,0.7)',
+          borderWidth: 1,
+          borderRadius: 5,
+          order: 2
+        },
+        {
+          type: 'line',
+          label: 'Prediccion IA',
+          data: d.predicted,
+          borderColor: '#34d399',
+          backgroundColor: 'rgba(52,211,153,0.0)',
+          borderWidth: 2,
+          pointBackgroundColor: d.predicted.map((v,i) => i === d.predicted.length-1 ? '#f59e0b' : '#34d399'),
+          pointRadius: d.predicted.map((v,i) => i === d.predicted.length-1 ? 6 : 3),
+          tension: 0.4,
+          order: 1
+        },
+        {
+          type: 'line',
+          label: 'Limite superior',
+          data: d.upper,
+          borderColor: 'rgba(245,158,11,0.3)',
+          backgroundColor: 'rgba(245,158,11,0.07)',
+          borderWidth: 1,
+          borderDash: [4,4],
+          pointRadius: 0,
+          fill: '+1',
+          tension: 0.4,
+          order: 0
+        },
+        {
+          type: 'line',
+          label: 'Limite inferior',
+          data: d.lower,
+          borderColor: 'rgba(245,158,11,0.3)',
+          backgroundColor: 'transparent',
+          borderWidth: 1,
+          borderDash: [4,4],
+          pointRadius: 0,
+          fill: false,
+          tension: 0.4,
+          order: 0
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          labels: {
+            color: '#94a3b8', font: { family: 'Nunito', size: 11 }, padding: 12,
+            filter: item => item.text !== 'Limite inferior'
+          }
+        },
+        tooltip: {
+          backgroundColor: '#0d1530', borderColor: 'rgba(245,158,11,0.3)', borderWidth: 1,
+          titleColor: '#f1f5f9', bodyColor: '#94a3b8',
+          callbacks: { label: ctx => ctx.raw !== null ? `${ctx.dataset.label}: ${ctx.raw} personas` : '' }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: { color: '#64748b', font: { family: 'Nunito', size: 11 } }
+        },
+        y: {
+          grid: { color: 'rgba(255,255,255,0.05)' },
+          ticks: { color: '#64748b', font: { family: 'Nunito', size: 11 } },
+          min: 0
+        }
+      }
+    }
+  });
+}
+
+// ─── Animations ─────────────────────────────────────────────────
+function animateNumber(el, from, to, duration) {
+  const start = performance.now();
+  const prefix = el.dataset.prefix || '';
+  const suffix = el.dataset.suffix !== undefined ? el.dataset.suffix : '';
+  function step(now) {
+    const progress = Math.min((now - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    const val = Math.floor(from + (to - from) * eased);
+    el.textContent = prefix + val.toLocaleString('es-ES') + suffix;
+    if (progress < 1) requestAnimationFrame(step);
+    else el.textContent = prefix + to.toLocaleString('es-ES') + suffix;
+  }
+  requestAnimationFrame(step);
+}
+
+function animateCountUp(el) {
+  const target = parseInt(el.dataset.target);
+  const prefix = el.dataset.prefix || '';
+  const suffix = el.dataset.suffix !== undefined ? el.dataset.suffix : '';
+  animateNumber({
+    dataset: { prefix, suffix },
+    textContent: '0',
+    set textContent(v) { el.textContent = v; }
+  }, 0, target, 1200);
+}
+
+function runCountUps() {
+  document.querySelectorAll('.page.active [data-countup]').forEach(el => {
+    animateNumber(
+      { dataset: el.dataset, set textContent(v){ el.textContent = v; } },
+      0, parseInt(el.dataset.target), 1200
+    );
+  });
+  // KPI cap bar
+  const capBar = document.getElementById('kpi-cap-bar');
+  if (capBar) capBar.style.width = venueData[activeVenue].kpi.capPct + '%';
+  // AI confidence bar
+  setTimeout(() => {
+    const bar = document.getElementById('ai-conf-bar');
+    if (bar) bar.style.width = venueData[activeVenue].prediction.conf + '%';
+    document.getElementById('ai-conf-pct').textContent = venueData[activeVenue].prediction.conf + '%';
+    animateNumber(
+      { dataset: {prefix:'',suffix:''}, set textContent(v){ document.getElementById('ai-pred-number').textContent = v; } },
+      0, venueData[activeVenue].prediction.value, 1200
+    );
+  }, 400);
+}
+
+function animateGauge() {
+  setTimeout(() => {
+    const pct = 70.6;
+    const strokeDasharray = 220;
+    const offset = strokeDasharray - (strokeDasharray * pct / 100);
+    const path = document.getElementById('gauge-path');
+    if (path) path.style.strokeDashoffset = offset;
+    const numEl = document.getElementById('gauge-pct');
+    if (numEl) {
+      let v = 0;
+      const interval = setInterval(() => {
+        v = Math.min(v + 1.4, pct);
+        numEl.textContent = v.toFixed(1) + '%';
+        if (v >= pct) clearInterval(interval);
+      }, 20);
+    }
+    // Tier bars
+    document.querySelectorAll('.tier-bar[data-w]').forEach(bar => {
+      setTimeout(() => { bar.style.width = bar.dataset.w + '%'; }, 100);
+    });
+  }, 100);
+}
+
+function animateRevBars() {
+  document.querySelectorAll('.rev-bar-fill[data-w]').forEach(bar => {
+    setTimeout(() => { bar.style.width = bar.dataset.w + '%'; }, 100);
+  });
+}
+
+// ─── QR Mock ────────────────────────────────────────────────────
+function buildQR() {
+  const qr = document.getElementById('qr-container');
+  if (!qr) return;
+  const pattern = '1101001001110101001101010110010110100100111010100110101011001011010010011101010011010101100101101001001110101001101010110';
+  const cells = Array.from(pattern).map((c, i) => {
+    const cell = document.createElement('div');
+    cell.className = 'qr-cell';
+    cell.style.background = c === '1' ? '#000' : '#fff';
+    return cell;
+  });
+  qr.classList.add('qr-mock');
+  cells.forEach(c => qr.appendChild(c));
+}
+
+// ─── Scan simulation ─────────────────────────────────────────────
+const scanNames = ['Ana G.','Carlos P.','David M.','Elena S.','Ferran T.','Gloria R.','Ivan K.','Julia F.'];
+let scanIdx = 0;
+function simulateScan() {
+  const feed = document.getElementById('scan-feed');
+  if (!feed) return;
+  const types = ['ok','vip-in','ok','ok','ok','denied'];
+  const typeIcons = {'ok':'check','vip-in':'star','denied':'xmark'};
+  const typeLabels = {'ok':'General','vip-in':'VIP','denied':'—'};
+  const rtype = types[Math.floor(Math.random() * types.length)];
+  const name = rtype === 'denied' ? 'Ticket invalido' : scanNames[scanIdx % scanNames.length];
+  scanIdx++;
+  const now = new Date();
+  const time = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  const item = document.createElement('div');
+  item.className = 'scan-item';
+  item.innerHTML = `
+    <div class="scan-icon ${rtype}"><i class="fa-solid fa-${typeIcons[rtype]}"></i></div>
+    <div class="scan-name">${name}</div>
+    <div class="scan-type">${typeLabels[rtype]}</div>
+    <div class="scan-time">${time}</div>
+  `;
+  feed.insertBefore(item, feed.firstChild);
+  if (feed.children.length > 6) feed.removeChild(feed.lastChild);
+  showToast(rtype === 'denied' ? 'Acceso denegado — ticket invalido' : `Acceso OK — ${name} (${typeLabels[rtype]})`);
+}
+
+// ─── Toast ───────────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-text').textContent = msg;
+  t.style.transform = 'translateY(0)';
+  t.style.opacity = '1';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    t.style.transform = 'translateY(100px)';
+    t.style.opacity = '0';
+  }, 2800);
+}
+
+// ─── Mobile sidebar ─────────────────────────────────────────────
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+}
+function closeSidebar() {
+  if (window.innerWidth <= 768) {
+    document.getElementById('sidebar').classList.remove('open');
+  }
+}
+
+// ─── IntersectionObserver scroll reveal ─────────────────────────
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.style.opacity = '1';
+      entry.target.style.transform = 'translateY(0)';
+    }
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.kpi-card,.card').forEach(el => {
+  el.style.opacity = '0';
+  el.style.transform = 'translateY(16px)';
+  el.style.transition = 'opacity .5s ease, transform .5s ease';
+  observer.observe(el);
+});
+
+// ─── Init ────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  buildQR();
+  updateKPIs(venueData[activeVenue]);
+  setTimeout(() => {
+    runCountUps();
+    initAttendanceChart();
+  }, 300);
+});
+</script>
+</body>
+</html>
