@@ -1,0 +1,1458 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PesquisaAI — Plataforma de Pesquisas Eleitorais via WhatsApp</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --gold: #C9A84C;
+      --gold-light: #F5D98B;
+      --gold-dark: #9B7B2A;
+      --gold-dim: rgba(201,168,76,0.12);
+      --gold-glow: rgba(201,168,76,0.28);
+      --navy: #080F1E;
+      --navy-mid: #0E1B31;
+      --navy-light: #152440;
+      --card: #111C30;
+      --card-border: rgba(201,168,76,0.18);
+      --text: #E8EDF5;
+      --muted: #7A8A9E;
+      --green: #22C55E;
+      --red: #EF4444;
+      --blue: #3B82F6;
+      --wa-green: #25D366;
+      --wa-bg: #E5DDD5;
+      --radius: 14px;
+      --sidebar-w: 240px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--navy);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ─── SIDEBAR ─── */
+    .sidebar {
+      position: fixed;
+      left: 0; top: 0; bottom: 0;
+      width: var(--sidebar-w);
+      background: var(--navy-mid);
+      border-right: 1px solid var(--card-border);
+      display: flex;
+      flex-direction: column;
+      z-index: 100;
+      transition: transform 0.3s ease;
+    }
+
+    .sidebar-logo {
+      padding: 1.6rem 1.5rem 1.2rem;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .sidebar-logo .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .brand-icon {
+      width: 38px; height: 38px;
+      background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    .brand-name { font-size: 1.1rem; font-weight: 800; color: var(--text); line-height: 1.2; }
+    .brand-sub { font-size: 0.62rem; color: var(--gold); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+
+    .sidebar-nav {
+      flex: 1;
+      padding: 1.2rem 0;
+      overflow-y: auto;
+    }
+
+    .nav-section {
+      padding: 0 1rem 0.5rem;
+      font-size: 0.6rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-top: 0.8rem;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      padding: 0.6rem 1.2rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+      border-radius: 8px;
+      margin: 0.1rem 0.6rem;
+      transition: all 0.2s;
+      position: relative;
+    }
+
+    .nav-item:hover { background: var(--gold-dim); color: var(--text); }
+
+    .nav-item.active {
+      background: var(--gold-dim);
+      color: var(--gold);
+      border: 1px solid var(--card-border);
+    }
+
+    .nav-item.active::before {
+      content: '';
+      position: absolute;
+      left: -0.6rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 3px;
+      height: 60%;
+      background: var(--gold);
+      border-radius: 2px;
+    }
+
+    .nav-item i { width: 16px; text-align: center; font-size: 0.9rem; }
+
+    .nav-badge {
+      margin-left: auto;
+      background: var(--gold);
+      color: #000;
+      font-size: 0.6rem;
+      font-weight: 800;
+      padding: 0.1rem 0.45rem;
+      border-radius: 20px;
+    }
+
+    .sidebar-footer {
+      padding: 1rem 1.2rem;
+      border-top: 1px solid var(--card-border);
+    }
+
+    .user-card {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+    }
+
+    .user-avatar {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 0.75rem;
+      color: #000;
+      flex-shrink: 0;
+    }
+
+    .user-name { font-size: 0.8rem; font-weight: 700; }
+    .user-role { font-size: 0.65rem; color: var(--muted); }
+
+    /* ─── MAIN ─── */
+    .main {
+      margin-left: var(--sidebar-w);
+      min-height: 100vh;
+      padding: 1.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    /* ─── TOP BAR ─── */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .topbar-left h1 {
+      font-size: 1.25rem;
+      font-weight: 800;
+    }
+
+    .topbar-left p {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 0.15rem;
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .live-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(34,197,94,0.12);
+      border: 1px solid rgba(34,197,94,0.3);
+      border-radius: 50px;
+      padding: 0.35rem 0.9rem;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--green);
+    }
+
+    .live-dot {
+      width: 7px; height: 7px;
+      background: var(--green);
+      border-radius: 50%;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(34,197,94,0.5); }
+      70% { box-shadow: 0 0 0 6px rgba(34,197,94,0); }
+      100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.5rem 1.1rem;
+      border-radius: 8px;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      font-size: 0.8rem;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-gold {
+      background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+      color: #000;
+    }
+
+    .btn-gold:hover { opacity: 0.9; transform: translateY(-1px); }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--card-border);
+      color: var(--text);
+    }
+
+    .btn-outline:hover { background: var(--gold-dim); border-color: var(--gold); }
+
+    /* ─── SURVEY SELECTOR ─── */
+    .survey-selector {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 0.9rem 1.2rem;
+    }
+
+    .survey-icon {
+      width: 40px; height: 40px;
+      background: var(--gold-dim);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--gold);
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    .survey-info { flex: 1; }
+    .survey-title { font-size: 0.95rem; font-weight: 800; }
+    .survey-meta { font-size: 0.72rem; color: var(--muted); margin-top: 0.15rem; }
+
+    .survey-progress {
+      width: 180px;
+    }
+
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.7rem;
+      color: var(--muted);
+      margin-bottom: 0.35rem;
+    }
+
+    .progress-bar {
+      height: 6px;
+      background: var(--navy-light);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 10px;
+      background: linear-gradient(90deg, var(--gold), var(--gold-light));
+      animation: fillBar 1.5s ease-out forwards;
+    }
+
+    @keyframes fillBar {
+      from { width: 0%; }
+    }
+
+    .survey-status {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 0.3rem;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.25rem 0.7rem;
+      border-radius: 20px;
+      font-size: 0.65rem;
+      font-weight: 700;
+    }
+
+    .status-active { background: rgba(34,197,94,0.12); color: var(--green); border: 1px solid rgba(34,197,94,0.25); }
+
+    /* ─── KPI CARDS ─── */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+    }
+
+    .kpi-card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 1.2rem;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .kpi-card:hover { transform: translateY(-3px); box-shadow: 0 8px 32px var(--gold-glow); }
+
+    .kpi-card::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      opacity: 0.4;
+    }
+
+    .kpi-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.8rem; }
+
+    .kpi-icon {
+      width: 36px; height: 36px;
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+    }
+
+    .kpi-trend {
+      font-size: 0.68rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 20px;
+    }
+
+    .trend-up { color: var(--green); background: rgba(34,197,94,0.1); }
+    .trend-down { color: var(--red); background: rgba(239,68,68,0.1); }
+
+    .kpi-value { font-size: 2rem; font-weight: 900; line-height: 1; }
+    .kpi-label { font-size: 0.72rem; color: var(--muted); margin-top: 0.3rem; font-weight: 600; }
+
+    .kpi-icon-blue { background: rgba(59,130,246,0.12); color: var(--blue); }
+    .kpi-icon-gold { background: var(--gold-dim); color: var(--gold); }
+    .kpi-icon-green { background: rgba(34,197,94,0.12); color: var(--green); }
+    .kpi-icon-red { background: rgba(239,68,68,0.12); color: var(--red); }
+
+    /* ─── CHARTS GRID ─── */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.6fr;
+      gap: 1rem;
+    }
+
+    .chart-card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 1.4rem;
+    }
+
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1.2rem;
+    }
+
+    .chart-title { font-size: 0.9rem; font-weight: 800; }
+    .chart-sub { font-size: 0.7rem; color: var(--muted); margin-top: 0.15rem; }
+
+    .chart-filter {
+      display: flex;
+      gap: 0.3rem;
+    }
+
+    .filter-btn {
+      padding: 0.25rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      border: 1px solid var(--card-border);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      font-family: 'Nunito', sans-serif;
+      transition: all 0.2s;
+    }
+
+    .filter-btn.active { background: var(--gold-dim); border-color: var(--gold); color: var(--gold); }
+
+    .donut-wrap { position: relative; max-width: 200px; margin: 0 auto 1rem; }
+
+    .donut-center {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    .donut-pct { font-size: 1.8rem; font-weight: 900; color: var(--gold); }
+    .donut-lbl { font-size: 0.62rem; color: var(--muted); font-weight: 600; }
+
+    .legend-list { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem; }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.75rem;
+    }
+
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .legend-label { flex: 1; color: var(--muted); }
+    .legend-pct { font-weight: 800; }
+
+    /* ─── BOTTOM GRID ─── */
+    .bottom-grid {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 1rem;
+    }
+
+    /* ─── NEIGHBORHOOD TABLE ─── */
+    .table-wrap { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.78rem;
+    }
+
+    thead th {
+      text-align: left;
+      padding: 0.5rem 0.8rem;
+      color: var(--muted);
+      font-weight: 700;
+      font-size: 0.65rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    tbody tr {
+      border-bottom: 1px solid rgba(201,168,76,0.06);
+      transition: background 0.15s;
+    }
+
+    tbody tr:hover { background: var(--gold-dim); }
+
+    tbody td { padding: 0.6rem 0.8rem; }
+
+    .bar-inline {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .bar-track {
+      flex: 1;
+      height: 5px;
+      background: var(--navy-light);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .bar-fill-green { height: 100%; background: var(--green); border-radius: 10px; }
+    .bar-fill-red { height: 100%; background: var(--red); border-radius: 10px; }
+    .bar-fill-gold { height: 100%; background: var(--gold); border-radius: 10px; }
+
+    .rank-pill {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: var(--gold-dim);
+      border: 1px solid var(--card-border);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.62rem;
+      font-weight: 800;
+      color: var(--gold);
+    }
+
+    /* ─── WHATSAPP CHAT ─── */
+    .wa-phone {
+      background: #1A1A1A;
+      border-radius: 30px;
+      border: 6px solid #333;
+      overflow: hidden;
+      max-width: 300px;
+      margin: 0 auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+
+    .wa-header {
+      background: #075E54;
+      padding: 0.75rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .wa-avatar {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      background: var(--gold);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      color: #000;
+      font-weight: 800;
+    }
+
+    .wa-contact-name { font-size: 0.85rem; font-weight: 700; color: #fff; }
+    .wa-online { font-size: 0.6rem; color: rgba(255,255,255,0.65); }
+
+    .wa-body {
+      background: var(--wa-bg);
+      padding: 0.8rem;
+      min-height: 360px;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      background-image: url('https://images.unsplash.com/photo-1617854818583-09e7f077a156?w=400&q=10&auto=format&fit=crop');
+      background-size: cover;
+      background-blend-mode: overlay;
+    }
+
+    .bubble {
+      max-width: 80%;
+      padding: 0.5rem 0.8rem;
+      border-radius: 10px;
+      font-size: 0.75rem;
+      line-height: 1.4;
+      position: relative;
+      animation: fadeInUp 0.4s ease-out both;
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .bubble-in {
+      background: #fff;
+      color: #111;
+      align-self: flex-start;
+      border-bottom-left-radius: 3px;
+    }
+
+    .bubble-out {
+      background: #DCF8C6;
+      color: #111;
+      align-self: flex-end;
+      border-bottom-right-radius: 3px;
+    }
+
+    .bubble-time { font-size: 0.55rem; color: #999; text-align: right; margin-top: 0.2rem; }
+
+    .wa-options {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+    }
+
+    .wa-option {
+      background: #fff;
+      color: #075E54;
+      border: 1px solid rgba(7,94,84,0.2);
+      border-radius: 8px;
+      padding: 0.4rem 0.7rem;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .wa-option:hover { background: #075E54; color: #fff; }
+
+    .wa-input {
+      background: #fff;
+      display: flex;
+      align-items: center;
+      padding: 0.5rem 0.7rem;
+      gap: 0.5rem;
+    }
+
+    .wa-input-field {
+      flex: 1;
+      font-size: 0.75rem;
+      color: #333;
+      border: none;
+      outline: none;
+      font-family: 'Nunito', sans-serif;
+    }
+
+    .wa-send {
+      width: 30px; height: 30px;
+      background: #25D366;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 0.7rem;
+    }
+
+    /* ─── ACTIVITY FEED ─── */
+    .feed-list { display: flex; flex-direction: column; gap: 0.8rem; max-height: 320px; overflow-y: auto; }
+
+    .feed-item {
+      display: flex;
+      gap: 0.7rem;
+      align-items: flex-start;
+    }
+
+    .feed-icon {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      flex-shrink: 0;
+    }
+
+    .feed-content { flex: 1; }
+    .feed-text { font-size: 0.78rem; font-weight: 600; line-height: 1.3; }
+    .feed-time { font-size: 0.62rem; color: var(--muted); margin-top: 0.15rem; }
+
+    /* ─── SOCIOECONOMIC SECTION ─── */
+    .socio-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+    }
+
+    .socio-card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 1.2rem;
+    }
+
+    .socio-title { font-size: 0.82rem; font-weight: 800; margin-bottom: 0.9rem; display: flex; align-items: center; gap: 0.5rem; }
+    .socio-title i { color: var(--gold); }
+
+    .socio-bar-item { margin-bottom: 0.7rem; }
+    .socio-bar-label { display: flex; justify-content: space-between; font-size: 0.72rem; margin-bottom: 0.25rem; }
+    .socio-bar-label span:last-child { font-weight: 700; }
+    .socio-bar-track { height: 6px; background: var(--navy-light); border-radius: 10px; overflow: hidden; }
+    .socio-bar-fill { height: 100%; border-radius: 10px; background: linear-gradient(90deg, var(--gold), var(--gold-light)); }
+
+    /* ─── TABS ─── */
+    .section-tabs {
+      display: flex;
+      gap: 0.3rem;
+      background: var(--navy-mid);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 0.3rem;
+      width: fit-content;
+    }
+
+    .tab-btn {
+      padding: 0.45rem 1rem;
+      border-radius: 7px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      font-family: 'Nunito', sans-serif;
+      transition: all 0.2s;
+    }
+
+    .tab-btn.active { background: var(--gold); color: #000; }
+
+    /* ─── SCROLL REVEAL ─── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.55s ease, transform 0.55s ease;
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ─── MOBILE TOGGLE ─── */
+    .mobile-toggle {
+      display: none;
+      position: fixed;
+      top: 1rem;
+      left: 1rem;
+      z-index: 200;
+      width: 40px; height: 40px;
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--gold);
+      font-size: 1.1rem;
+    }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 1100px) {
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+      .socio-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 860px) {
+      :root { --sidebar-w: 0px; }
+      .sidebar { transform: translateX(-240px); }
+      .sidebar.open { transform: translateX(0); width: 240px; }
+      .main { margin-left: 0; padding: 1rem; padding-top: 4rem; }
+      .mobile-toggle { display: flex; }
+      .charts-grid { grid-template-columns: 1fr; }
+      .bottom-grid { grid-template-columns: 1fr; }
+      .socio-grid { grid-template-columns: 1fr; }
+      .survey-progress { display: none; }
+    }
+
+    @media (max-width: 540px) {
+      .kpi-grid { grid-template-columns: 1fr 1fr; }
+      .topbar { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Mobile toggle -->
+  <div class="mobile-toggle" id="mobileToggle" onclick="toggleSidebar()">
+    <i class="fa-solid fa-bars"></i>
+  </div>
+
+  <!-- ─── SIDEBAR ─── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="brand">
+        <div class="brand-icon"><i class="fa-solid fa-chart-pie"></i></div>
+        <div>
+          <div class="brand-name">PesquisaAI</div>
+          <div class="brand-sub">Plataforma Eleitoral</div>
+        </div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section">Principal</div>
+      <div class="nav-item active"><i class="fa-solid fa-chart-line"></i> Dashboard</div>
+      <div class="nav-item"><i class="fa-solid fa-clipboard-list"></i> Pesquisas <span class="nav-badge">3</span></div>
+      <div class="nav-item"><i class="fa-brands fa-whatsapp"></i> WhatsApp Bot</div>
+      <div class="nav-item"><i class="fa-solid fa-users"></i> Entrevistados</div>
+
+      <div class="nav-section">Relatórios</div>
+      <div class="nav-item"><i class="fa-solid fa-file-pdf"></i> Exportar PDF</div>
+      <div class="nav-item"><i class="fa-solid fa-file-excel"></i> Exportar Excel</div>
+      <div class="nav-item"><i class="fa-solid fa-robot"></i> Análise IA</div>
+
+      <div class="nav-section">Sistema</div>
+      <div class="nav-item"><i class="fa-solid fa-gear"></i> Configurações</div>
+      <div class="nav-item"><i class="fa-solid fa-plug"></i> Integrações</div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar">RC</div>
+        <div>
+          <div class="user-name">Rogerio C.</div>
+          <div class="user-role">Administrador</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ─── MAIN ─── -->
+  <main class="main">
+
+    <!-- Top bar -->
+    <div class="topbar reveal">
+      <div class="topbar-left">
+        <h1>Dashboard Eleitoral</h1>
+        <p>Conceição do Jacuípe — BA <span style="color:var(--gold); margin:0 0.3rem">|</span> Atualizado agora mesmo</p>
+      </div>
+      <div class="topbar-right">
+        <div class="live-badge"><div class="live-dot"></div> Ao Vivo</div>
+        <button class="btn btn-outline"><i class="fa-solid fa-file-pdf"></i> Relatório</button>
+        <button class="btn btn-gold"><i class="fa-solid fa-plus"></i> Nova Pesquisa</button>
+      </div>
+    </div>
+
+    <!-- Survey selector -->
+    <div class="survey-selector reveal">
+      <div class="survey-icon"><i class="fa-solid fa-poll"></i></div>
+      <div class="survey-info">
+        <div class="survey-title">Pesquisa Eleitoral Municipal 2026 — Conceição do Jacuípe</div>
+        <div class="survey-meta"><i class="fa-solid fa-calendar-check" style="color:var(--gold)"></i> Iniciada em 15/06/2026 <span style="margin:0 0.4rem">|</span> <i class="fa-brands fa-whatsapp" style="color:var(--wa-green)"></i> 1.247 participantes via WhatsApp</div>
+      </div>
+      <div class="survey-progress">
+        <div class="progress-label"><span>Meta de respostas</span><span style="color:var(--gold); font-weight:800">83%</span></div>
+        <div class="progress-bar"><div class="progress-fill" style="width:83%"></div></div>
+      </div>
+      <div class="survey-status">
+        <div class="status-pill status-active"><i class="fa-solid fa-circle" style="font-size:0.5rem"></i> Ativa</div>
+        <div style="font-size:0.65rem; color:var(--muted)">3 dias restantes</div>
+      </div>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="kpi-grid">
+      <div class="kpi-card reveal">
+        <div class="kpi-top">
+          <div class="kpi-icon kpi-icon-blue"><i class="fa-solid fa-users"></i></div>
+          <div class="kpi-trend trend-up"><i class="fa-solid fa-arrow-trend-up"></i> +8.4%</div>
+        </div>
+        <div class="kpi-value">1.247</div>
+        <div class="kpi-label">Total de Entrevistados</div>
+      </div>
+
+      <div class="kpi-card reveal">
+        <div class="kpi-top">
+          <div class="kpi-icon kpi-icon-green"><i class="fa-solid fa-thumbs-up"></i></div>
+          <div class="kpi-trend trend-up"><i class="fa-solid fa-arrow-trend-up"></i> +2.1%</div>
+        </div>
+        <div class="kpi-value" style="color:var(--green)">45.2%</div>
+        <div class="kpi-label">Aprovação da Gestão</div>
+      </div>
+
+      <div class="kpi-card reveal">
+        <div class="kpi-top">
+          <div class="kpi-icon kpi-icon-red"><i class="fa-solid fa-thumbs-down"></i></div>
+          <div class="kpi-trend trend-down"><i class="fa-solid fa-arrow-trend-down"></i> -1.3%</div>
+        </div>
+        <div class="kpi-value" style="color:var(--red)">28.6%</div>
+        <div class="kpi-label">Rejeição da Gestão</div>
+      </div>
+
+      <div class="kpi-card reveal">
+        <div class="kpi-top">
+          <div class="kpi-icon kpi-icon-gold"><i class="fa-solid fa-check-circle"></i></div>
+          <div class="kpi-trend trend-up"><i class="fa-solid fa-arrow-trend-up"></i> +5.2%</div>
+        </div>
+        <div class="kpi-value" style="color:var(--gold)">67.3%</div>
+        <div class="kpi-label">Taxa de Conclusão do Chatbot</div>
+      </div>
+    </div>
+
+    <!-- Charts row 1 -->
+    <div class="charts-grid reveal">
+
+      <!-- Donut: Approval -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Aprovação Geral</div>
+            <div class="chart-sub">Avaliação da gestão municipal</div>
+          </div>
+        </div>
+
+        <div class="donut-wrap">
+          <canvas id="approvalDonut" height="200"></canvas>
+          <div class="donut-center">
+            <div class="donut-pct">45%</div>
+            <div class="donut-lbl">Aprovação</div>
+          </div>
+        </div>
+
+        <div class="legend-list">
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#22C55E"></div>
+            <span class="legend-label">Aprova</span>
+            <span class="legend-pct" style="color:var(--green)">45.2%</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#EF4444"></div>
+            <span class="legend-label">Reprova</span>
+            <span class="legend-pct" style="color:var(--red)">28.6%</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#7A8A9E"></div>
+            <span class="legend-label">Não sabe</span>
+            <span class="legend-pct">26.2%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bar: Vote intention -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Intenção de Voto</div>
+            <div class="chart-sub">Candidatos ao cargo de prefeito</div>
+          </div>
+          <div class="chart-filter">
+            <button class="filter-btn active">Total</button>
+            <button class="filter-btn">Bairro</button>
+            <button class="filter-btn">Faixa</button>
+          </div>
+        </div>
+        <canvas id="voteBar" height="200"></canvas>
+      </div>
+    </div>
+
+    <!-- Charts row 2 -->
+    <div class="chart-card reveal" style="padding:1.4rem;">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">Tendência ao Longo do Tempo</div>
+          <div class="chart-sub">Evolução diária de aprovação e intenção de voto</div>
+        </div>
+        <div class="chart-filter">
+          <button class="filter-btn active">7 dias</button>
+          <button class="filter-btn">30 dias</button>
+        </div>
+      </div>
+      <canvas id="trendLine" height="90"></canvas>
+    </div>
+
+    <!-- Bottom grid -->
+    <div class="bottom-grid">
+
+      <!-- Neighborhood table -->
+      <div class="chart-card reveal">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Resultados por Bairro</div>
+            <div class="chart-sub">Aprovação e intenção de voto por região</div>
+          </div>
+          <button class="btn btn-outline" style="font-size:0.7rem; padding:0.35rem 0.7rem">
+            <i class="fa-solid fa-download"></i> Excel
+          </button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Bairro</th>
+                <th>Respostas</th>
+                <th>Aprovação</th>
+                <th>Candidato Líder</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="rank-pill">1</span></td>
+                <td style="font-weight:700">Centro</td>
+                <td>312</td>
+                <td>
+                  <div class="bar-inline">
+                    <div class="bar-track"><div class="bar-fill-green" style="width:58%"></div></div>
+                    <span style="font-weight:800; color:var(--green); font-size:0.72rem">58%</span>
+                  </div>
+                </td>
+                <td><span style="color:var(--gold); font-weight:700">Carlos A.</span></td>
+              </tr>
+              <tr>
+                <td><span class="rank-pill">2</span></td>
+                <td style="font-weight:700">Novo Horizonte</td>
+                <td>247</td>
+                <td>
+                  <div class="bar-inline">
+                    <div class="bar-track"><div class="bar-fill-green" style="width:51%"></div></div>
+                    <span style="font-weight:800; color:var(--green); font-size:0.72rem">51%</span>
+                  </div>
+                </td>
+                <td><span style="color:var(--gold); font-weight:700">Carlos A.</span></td>
+              </tr>
+              <tr>
+                <td><span class="rank-pill">3</span></td>
+                <td style="font-weight:700">Loteamento Sul</td>
+                <td>198</td>
+                <td>
+                  <div class="bar-inline">
+                    <div class="bar-track"><div class="bar-fill-red" style="width:42%"></div></div>
+                    <span style="font-weight:800; color:var(--red); font-size:0.72rem">42%</span>
+                  </div>
+                </td>
+                <td><span style="color:var(--blue); font-weight:700">Maria T.</span></td>
+              </tr>
+              <tr>
+                <td><span class="rank-pill">4</span></td>
+                <td style="font-weight:700">São João</td>
+                <td>187</td>
+                <td>
+                  <div class="bar-inline">
+                    <div class="bar-track"><div class="bar-fill-green" style="width:47%"></div></div>
+                    <span style="font-weight:800; color:var(--green); font-size:0.72rem">47%</span>
+                  </div>
+                </td>
+                <td><span style="color:var(--gold); font-weight:700">Carlos A.</span></td>
+              </tr>
+              <tr>
+                <td><span class="rank-pill">5</span></td>
+                <td style="font-weight:700">Vila Nova</td>
+                <td>164</td>
+                <td>
+                  <div class="bar-inline">
+                    <div class="bar-track"><div class="bar-fill-red" style="width:35%"></div></div>
+                    <span style="font-weight:800; color:var(--red); font-size:0.72rem">35%</span>
+                  </div>
+                </td>
+                <td><span style="color:var(--blue); font-weight:700">Maria T.</span></td>
+              </tr>
+              <tr>
+                <td><span class="rank-pill">6</span></td>
+                <td style="font-weight:700">Boa Vista</td>
+                <td>139</td>
+                <td>
+                  <div class="bar-inline">
+                    <div class="bar-track"><div class="bar-fill-green" style="width:44%"></div></div>
+                    <span style="font-weight:800; color:var(--green); font-size:0.72rem">44%</span>
+                  </div>
+                </td>
+                <td><span style="color:var(--gold); font-weight:700">Carlos A.</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- WhatsApp chatbot preview -->
+      <div class="chart-card reveal">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Chatbot WhatsApp</div>
+            <div class="chart-sub">Fluxo conversacional ao vivo</div>
+          </div>
+          <div class="status-pill status-active"><i class="fa-solid fa-circle" style="font-size:0.5rem"></i> Online</div>
+        </div>
+
+        <div class="wa-phone">
+          <div class="wa-header">
+            <div class="wa-avatar"><i class="fa-solid fa-chart-pie"></i></div>
+            <div>
+              <div class="wa-contact-name">PesquisaAI Bot</div>
+              <div class="wa-online">Online agora</div>
+            </div>
+          </div>
+          <div class="wa-body" id="chatBody">
+            <div class="bubble bubble-in" style="animation-delay:0.1s">
+              Olá! Esta é uma pesquisa de opinião pública de Conceição do Jacuípe. Você aceita participar?
+              <div class="bubble-time">09:14</div>
+            </div>
+            <div class="wa-options">
+              <div class="wa-option">Sim, aceito participar</div>
+              <div class="wa-option">Não, obrigado</div>
+            </div>
+            <div class="bubble bubble-out" style="animation-delay:0.4s">
+              Sim, aceito participar
+              <div class="bubble-time">09:14</div>
+            </div>
+            <div class="bubble bubble-in" style="animation-delay:0.7s">
+              Ótimo! Qual é o seu bairro de residência?
+              <div class="bubble-time">09:14</div>
+            </div>
+            <div class="bubble bubble-out" style="animation-delay:1s">
+              Centro
+              <div class="bubble-time">09:15</div>
+            </div>
+            <div class="bubble bubble-in" style="animation-delay:1.3s">
+              Como você avalia a gestão atual da prefeitura?
+              <div class="bubble-time">09:15</div>
+            </div>
+            <div class="wa-options" style="animation-delay:1.5s">
+              <div class="wa-option">Ótima</div>
+              <div class="wa-option">Boa</div>
+              <div class="wa-option">Regular</div>
+              <div class="wa-option">Ruim</div>
+            </div>
+          </div>
+          <div class="wa-input">
+            <input class="wa-input-field" placeholder="Digite sua resposta..." readonly>
+            <div class="wa-send"><i class="fa-solid fa-paper-plane"></i></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Socioeconomic profile -->
+    <div style="margin-top:0.5rem">
+      <div style="font-size:1rem; font-weight:800; margin-bottom:1rem;" class="reveal">
+        <i class="fa-solid fa-users-viewfinder" style="color:var(--gold); margin-right:0.5rem"></i>
+        Perfil Socioeconômico dos Entrevistados
+      </div>
+      <div class="socio-grid">
+        <div class="socio-card reveal">
+          <div class="socio-title"><i class="fa-solid fa-cake-candles"></i> Faixa Etária</div>
+          <div class="socio-bar-item">
+            <div class="socio-bar-label"><span>18 a 24 anos</span><span>14%</span></div>
+            <div class="socio-bar-track"><div class="socio-bar-fill" style="width:14%"></div></div>
+          </div>
+          <div class="socio-bar-item">
+            <div class="socio-bar-label"><span>25 a 34 anos</span><span>28%</span></div>
+            <div class="socio-bar-track"><div class="socio-bar-fill" style="width:28%"></div></div>
+          </div>
+          <div class="socio-bar-item">
+            <div class="socio-bar-label"><span>35 a 44 anos</span><span>31%</span></div>
+            <div class="socio-bar-track"><div class="socio-bar-fill" style="width:31%"></div></div>
+          </div>
+          <div class="socio-bar-item">
+            <div class="socio-bar-label"><span>45 a 59 anos</span><span>19%</span></div>
+            <div class="socio-bar-track"><div class="socio-bar-fill" style="width:19%"></div></div>
+          </div>
+          <div class="socio-bar-item">
+            <div class="socio-bar-label"><span>60 anos ou mais</span><span>8%</span></div>
+            <div class="socio-bar-track"><div class="socio-bar-fill" style="width:8%"></div></div>
+          </div>
+        </div>
+
+        <div class="socio-card reveal">
+          <div class="socio-title"><i class="fa-solid fa-graduation-cap"></i> Escolaridade</div>
+          <div class="socio-bar-item">
+            <div class="socio-bar-label"><span>Fundamental incompleto</span><span>12%</span></div>
+            <div class="socio-bar-track"><div class="socio-bar-fill" style="width:12%"></div></div>
+          </div>
+          <div class="socio-bar-item">
+            <div class="socio-bar-label"><span>Fundamental completo</span><span>18%</span></div>
+            <div class="socio-bar-track"><div class="socio-bar-fill" style="width:18%"></div></div>
+          </div>
+          <div class="socio-bar-item">
+            <div class="socio-bar-label"><span>Médio completo</span><span>42%</span></div>
+            <div class="socio-bar-track"><div class="socio-bar-fill" style="width:42%"></div></div>
+          </div>
+          <div class="socio-bar-item">
+            <div class="socio-bar-label"><span>Superior incompleto</span><span>14%</span></div>
+            <div class="socio-bar-track"><div class="socio-bar-fill" style="width:14%"></div></div>
+          </div>
+          <div class="socio-bar-item">
+            <div class="socio-bar-label"><span>Superior completo</span><span>14%</span></div>
+            <div class="socio-bar-track"><div class="socio-bar-fill" style="width:14%"></div></div>
+          </div>
+        </div>
+
+        <div class="socio-card reveal">
+          <div class="socio-title"><i class="fa-solid fa-money-bill-wave"></i> Renda Familiar</div>
+          <div class="socio-bar-item">
+            <div class="socio-bar-label"><span>Até 1 salário mínimo</span><span>22%</span></div>
+            <div class="socio-bar-track"><div class="socio-bar-fill" style="width:22%"></div></div>
+          </div>
+          <div class="socio-bar-item">
+            <div class="socio-bar-label"><span>1 a 2 salários</span><span>38%</span></div>
+            <div class="socio-bar-track"><div class="socio-bar-fill" style="width:38%"></div></div>
+          </div>
+          <div class="socio-bar-item">
+            <div class="socio-bar-label"><span>2 a 3 salários</span><span>24%</span></div>
+            <div class="socio-bar-track"><div class="socio-bar-fill" style="width:24%"></div></div>
+          </div>
+          <div class="socio-bar-item">
+            <div class="socio-bar-label"><span>3 a 5 salários</span><span>11%</span></div>
+            <div class="socio-bar-track"><div class="socio-bar-fill" style="width:11%"></div></div>
+          </div>
+          <div class="socio-bar-item">
+            <div class="socio-bar-label"><span>Acima de 5 salários</span><span>5%</span></div>
+            <div class="socio-bar-track"><div class="socio-bar-fill" style="width:5%"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main problem ranking -->
+    <div class="chart-card reveal">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">Principal Problema da Cidade</div>
+          <div class="chart-sub">Classificação por IA — respostas abertas categorizadas automaticamente</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:0.4rem; font-size:0.72rem; color:var(--gold);">
+          <i class="fa-solid fa-robot"></i> Classificação OpenAI
+        </div>
+      </div>
+      <canvas id="problemBar" height="80"></canvas>
+    </div>
+
+    <!-- Footer -->
+    <div style="text-align:center; padding:1rem 0; color:var(--muted); font-size:0.7rem;" class="reveal">
+      PesquisaAI &mdash; Plataforma de Pesquisas Eleitorais e Socioeconômicas via WhatsApp com IA
+      <span style="margin:0 0.5rem; color:var(--card-border)">|</span>
+      Protótipo navegável desenvolvido por David Jin
+    </div>
+
+  </main>
+
+  <script>
+    // ─── SIDEBAR TOGGLE ───
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('open');
+    }
+
+    // ─── SCROLL REVEAL ───
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) { e.target.classList.add('visible'); }
+      });
+    }, { threshold: 0.08 });
+
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+    // ─── FILTER BUTTONS ───
+    document.querySelectorAll('.chart-filter, .section-tabs').forEach(group => {
+      group.querySelectorAll('.filter-btn, .tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          group.querySelectorAll('.filter-btn, .tab-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+        });
+      });
+    });
+
+    // ─── CHART COLORS ───
+    const gold = '#C9A84C';
+    const goldLight = '#F5D98B';
+    const green = '#22C55E';
+    const red = '#EF4444';
+    const blue = '#3B82F6';
+    const muted = '#7A8A9E';
+    const gridColor = 'rgba(201,168,76,0.08)';
+    const textColor = '#E8EDF5';
+
+    Chart.defaults.color = muted;
+    Chart.defaults.font.family = 'Nunito';
+    Chart.defaults.font.size = 12;
+
+    // ─── APPROVAL DONUT ───
+    new Chart(document.getElementById('approvalDonut'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Aprova', 'Reprova', 'Não sabe'],
+        datasets: [{
+          data: [45.2, 28.6, 26.2],
+          backgroundColor: [green, red, '#2A3A4A'],
+          borderColor: '#111C30',
+          borderWidth: 3,
+          hoverOffset: 6
+        }]
+      },
+      options: {
+        cutout: '68%',
+        plugins: { legend: { display: false }, tooltip: {
+          backgroundColor: '#111C30',
+          borderColor: 'rgba(201,168,76,0.3)',
+          borderWidth: 1,
+          callbacks: {
+            label: ctx => ` ${ctx.label}: ${ctx.raw}%`
+          }
+        }}
+      }
+    });
+
+    // ─── VOTE BAR ───
+    new Chart(document.getElementById('voteBar'), {
+      type: 'bar',
+      data: {
+        labels: ['Carlos A.', 'Maria T.', 'João P.', 'Lucia M.', 'Branco/Nulo', 'Não Sabe'],
+        datasets: [{
+          label: 'Intenção de Voto',
+          data: [38, 27, 14, 9, 7, 5],
+          backgroundColor: [
+            'rgba(201,168,76,0.85)',
+            'rgba(59,130,246,0.75)',
+            'rgba(168,85,247,0.65)',
+            'rgba(239,68,68,0.65)',
+            'rgba(122,138,158,0.45)',
+            'rgba(122,138,158,0.3)'
+          ],
+          borderColor: [
+            gold, blue, '#A855F7', red, muted, muted
+          ],
+          borderWidth: 1,
+          borderRadius: 6
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        scales: {
+          x: {
+            grid: { color: gridColor },
+            ticks: { callback: v => v + '%' }
+          },
+          y: { grid: { display: false } }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#111C30',
+            borderColor: 'rgba(201,168,76,0.3)',
+            borderWidth: 1,
+            callbacks: { label: ctx => ` ${ctx.raw}% das intenções` }
+          }
+        }
+      }
+    });
+
+    // ─── TREND LINE ───
+    const days = ['15/06', '16/06', '17/06', '18/06', '19/06', '20/06', '21/06'];
+    new Chart(document.getElementById('trendLine'), {
+      type: 'line',
+      data: {
+        labels: days,
+        datasets: [
+          {
+            label: 'Aprovação',
+            data: [40, 41, 42, 43, 44, 45, 45.2],
+            borderColor: green,
+            backgroundColor: 'rgba(34,197,94,0.08)',
+            fill: true,
+            tension: 0.4,
+            pointBackgroundColor: green,
+            pointRadius: 4
+          },
+          {
+            label: 'Carlos A.',
+            data: [34, 35, 36, 36, 37, 38, 38],
+            borderColor: gold,
+            backgroundColor: 'rgba(201,168,76,0.06)',
+            fill: true,
+            tension: 0.4,
+            pointBackgroundColor: gold,
+            pointRadius: 4
+          },
+          {
+            label: 'Maria T.',
+            data: [29, 28, 28, 27, 27, 27, 27],
+            borderColor: blue,
+            backgroundColor: 'transparent',
+            tension: 0.4,
+            borderDash: [5, 4],
+            pointBackgroundColor: blue,
+            pointRadius: 3
+          }
+        ]
+      },
+      options: {
+        scales: {
+          x: { grid: { color: gridColor } },
+          y: {
+            grid: { color: gridColor },
+            ticks: { callback: v => v + '%' }
+          }
+        },
+        plugins: {
+          legend: {
+            labels: { usePointStyle: true, pointStyle: 'circle', padding: 16, font: { size: 11 } }
+          },
+          tooltip: {
+            backgroundColor: '#111C30',
+            borderColor: 'rgba(201,168,76,0.3)',
+            borderWidth: 1,
+            callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.raw}%` }
+          }
+        }
+      }
+    });
+
+    // ─── PROBLEMS BAR ───
+    new Chart(document.getElementById('problemBar'), {
+      type: 'bar',
+      data: {
+        labels: ['Saúde Pública', 'Saneamento', 'Segurança', 'Emprego e Renda', 'Transporte', 'Educação', 'Habitação'],
+        datasets: [{
+          label: 'Citações',
+          data: [34, 28, 22, 17, 12, 9, 6],
+          backgroundColor: [
+            'rgba(239,68,68,0.8)',
+            'rgba(59,130,246,0.75)',
+            'rgba(201,168,76,0.8)',
+            'rgba(168,85,247,0.7)',
+            'rgba(34,197,94,0.7)',
+            'rgba(251,146,60,0.7)',
+            'rgba(122,138,158,0.6)'
+          ],
+          borderRadius: 6
+        }]
+      },
+      options: {
+        scales: {
+          x: { grid: { display: false } },
+          y: {
+            grid: { color: gridColor },
+            ticks: { callback: v => v + '%' }
+          }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#111C30',
+            borderColor: 'rgba(201,168,76,0.3)',
+            borderWidth: 1,
+            callbacks: { label: ctx => ` ${ctx.raw}% dos entrevistados` }
+          }
+        }
+      }
+    });
+
+  </script>
+</body>
+</html>
