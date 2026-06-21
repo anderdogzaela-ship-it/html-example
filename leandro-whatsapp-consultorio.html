@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bot de Agendamiento - Consultorio Médico</title>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --gold: #C9A84C;
+    --gold-light: #F0D080;
+    --gold-dark: #9E7C2E;
+    --teal: #0F7B6C;
+    --teal-light: #14A88F;
+    --teal-dark: #095C51;
+    --wa-green: #25D366;
+    --wa-dark: #075E54;
+    --wa-bubble-out: #DCF8C6;
+    --wa-bubble-in: #FFFFFF;
+    --bg: #F7F5F0;
+    --surface: #FFFFFF;
+    --text: #1A1A2E;
+    --muted: #6B7280;
+    --border: #E5E0D5;
+  }
+
+  body {
+    font-family: 'Lexend', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* HERO */
+  .hero {
+    background: linear-gradient(135deg, var(--teal-dark) 0%, var(--teal) 50%, #1A9E87 100%);
+    color: white;
+    padding: 60px 24px 80px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 300px; height: 300px;
+    background: rgba(201, 168, 76, 0.15);
+    border-radius: 50%;
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    bottom: -80px; left: -40px;
+    width: 250px; height: 250px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 50%;
+  }
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(201, 168, 76, 0.2);
+    border: 1px solid rgba(201, 168, 76, 0.5);
+    color: var(--gold-light);
+    padding: 6px 16px;
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+  .hero h1 {
+    font-size: clamp(28px, 5vw, 52px);
+    font-weight: 700;
+    line-height: 1.15;
+    margin-bottom: 16px;
+  }
+  .hero h1 span { color: var(--gold-light); }
+  .hero p {
+    font-size: 16px;
+    opacity: 0.85;
+    max-width: 560px;
+    margin: 0 auto 32px;
+    font-weight: 300;
+    line-height: 1.6;
+  }
+  .hero-tabs {
+    display: inline-flex;
+    background: rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 4px;
+    gap: 4px;
+  }
+  .hero-tab {
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.25s;
+    color: rgba(255,255,255,0.7);
+    border: none;
+    background: none;
+    font-family: 'Lexend', sans-serif;
+  }
+  .hero-tab.active {
+    background: var(--gold);
+    color: #1A1A2E;
+    font-weight: 600;
+  }
+
+  /* MAIN LAYOUT */
+  .main-content {
+    max-width: 1100px;
+    margin: -32px auto 0;
+    padding: 0 20px 60px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+
+  /* PHONE MOCKUP */
+  .phone-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+  .phone-mockup {
+    width: 100%;
+    max-width: 360px;
+    background: #111;
+    border-radius: 48px;
+    padding: 16px;
+    box-shadow:
+      0 32px 80px rgba(0,0,0,0.3),
+      0 0 0 1px rgba(255,255,255,0.1) inset;
+    position: relative;
+  }
+  .phone-screen {
+    background: var(--wa-dark);
+    border-radius: 36px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 640px;
+  }
+  .wa-header {
+    background: var(--wa-dark);
+    padding: 14px 16px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .wa-avatar {
+    width: 40px; height: 40px;
+    background: linear-gradient(135deg, var(--teal-light), var(--teal-dark));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .wa-name { color: white; font-size: 15px; font-weight: 600; }
+  .wa-status { color: rgba(255,255,255,0.6); font-size: 12px; }
+  .wa-actions { margin-left: auto; display: flex; gap: 16px; color: rgba(255,255,255,0.7); font-size: 18px; }
+
+  .wa-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    background: #E5DDD5 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Cg fill='none' stroke='%23c9c0b0' stroke-width='0.3' opacity='0.4'%3E%3Cpath d='M50 10 L90 90 L10 90 Z'/%3E%3C/g%3E%3C/svg%3E");
+  }
+  .wa-body::-webkit-scrollbar { display: none; }
+
+  .msg {
+    max-width: 80%;
+    padding: 8px 12px;
+    border-radius: 12px;
+    font-size: 13.5px;
+    line-height: 1.45;
+    position: relative;
+    display: none;
+    animation: msgIn 0.25s ease-out forwards;
+    word-break: break-word;
+  }
+  .msg.visible { display: inline-block; }
+  .msg .time {
+    font-size: 10px;
+    opacity: 0.55;
+    margin-top: 4px;
+    text-align: right;
+    display: block;
+  }
+  .msg-out {
+    background: var(--wa-bubble-out);
+    color: #111;
+    align-self: flex-end;
+    border-bottom-right-radius: 4px;
+    margin-left: auto;
+  }
+  .msg-in {
+    background: var(--wa-bubble-in);
+    color: #111;
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+  }
+  .msg-row {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .msg-row.out { align-items: flex-end; }
+  .msg-row.in { align-items: flex-start; }
+
+  .typing-indicator {
+    background: white;
+    padding: 12px 16px;
+    border-radius: 12px;
+    border-bottom-left-radius: 4px;
+    display: none;
+    align-items: center;
+    gap: 4px;
+    width: fit-content;
+  }
+  .typing-indicator.show { display: flex; }
+  .dot {
+    width: 7px; height: 7px;
+    background: #888;
+    border-radius: 50%;
+    animation: bounce 1.2s infinite;
+  }
+  .dot:nth-child(2) { animation-delay: 0.2s; }
+  .dot:nth-child(3) { animation-delay: 0.4s; }
+
+  .confirmed-card {
+    background: white;
+    border-radius: 12px;
+    border-bottom-left-radius: 4px;
+    overflow: hidden;
+    width: 80%;
+    display: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  .confirmed-card.visible { display: block; animation: msgIn 0.3s ease-out forwards; }
+  .card-header {
+    background: linear-gradient(135deg, var(--teal) 0%, var(--teal-dark) 100%);
+    color: white;
+    padding: 10px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-body {
+    padding: 12px 14px;
+  }
+  .card-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: #333;
+    padding: 4px 0;
+  }
+  .card-row i {
+    color: var(--teal);
+    width: 14px;
+    font-size: 12px;
+  }
+  .card-highlight {
+    background: #F0FDF9;
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--teal-dark);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .wa-footer {
+    background: #F0F0F0;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .wa-input {
+    flex: 1;
+    background: white;
+    border-radius: 24px;
+    padding: 10px 16px;
+    font-size: 13px;
+    color: #999;
+    font-family: 'Lexend', sans-serif;
+  }
+  .wa-send {
+    width: 40px; height: 40px;
+    background: var(--wa-green);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+  }
+
+  .play-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--gold);
+    color: #1A1A2E;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 100px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Lexend', sans-serif;
+    transition: all 0.2s;
+    box-shadow: 0 4px 16px rgba(201, 168, 76, 0.35);
+  }
+  .play-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(201, 168, 76, 0.45); }
+
+  /* RIGHT PANEL */
+  .right-panel { display: flex; flex-direction: column; gap: 20px; }
+
+  .info-card {
+    background: var(--surface);
+    border-radius: 20px;
+    padding: 28px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+    border: 1px solid var(--border);
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.5s ease;
+  }
+  .info-card.revealed { opacity: 1; transform: translateY(0); }
+
+  .card-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .card-icon {
+    width: 40px; height: 40px;
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 16px;
+  }
+  .card-title h3 { font-size: 16px; font-weight: 600; }
+  .card-title p { font-size: 12px; color: var(--muted); }
+
+  /* STATS ROW */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .stat-box {
+    background: var(--bg);
+    border-radius: 12px;
+    padding: 14px;
+    text-align: center;
+  }
+  .stat-num {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--teal);
+    line-height: 1;
+  }
+  .stat-num.gold { color: var(--gold-dark); }
+  .stat-label { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  /* AGENDA VIEW */
+  .agenda-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 12px;
+    background: var(--bg);
+    margin-bottom: 8px;
+    transition: all 0.2s;
+  }
+  .agenda-item:hover { background: #EEE9DF; }
+  .agenda-time {
+    min-width: 52px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--teal-dark);
+    background: rgba(15, 123, 108, 0.1);
+    padding: 6px 8px;
+    border-radius: 8px;
+    line-height: 1.3;
+  }
+  .agenda-info { flex: 1; }
+  .agenda-name { font-size: 13px; font-weight: 500; color: var(--text); }
+  .agenda-detail { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .agenda-status {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+  }
+  .status-confirmed { background: #DCFCE7; color: #166534; }
+  .status-pending { background: #FEF3C7; color: #92400E; }
+  .status-auto { background: #EDE9FE; color: #5B21B6; }
+
+  /* CONSTRUCTION SUMMARY */
+  .obra-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .obra-badge {
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+    color: #1A1A2E;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 100px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .obra-item {
+    margin-bottom: 14px;
+  }
+  .obra-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .obra-label { font-size: 13px; font-weight: 500; color: var(--text); display: flex; align-items: center; gap: 8px; }
+  .obra-pct { font-size: 13px; font-weight: 700; color: var(--teal-dark); }
+  .progress-bar {
+    height: 8px;
+    background: var(--bg);
+    border-radius: 100px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 100px;
+    background: linear-gradient(90deg, var(--teal-light), var(--teal-dark));
+    width: 0%;
+    transition: width 1.2s ease;
+  }
+  .progress-fill.gold-bar {
+    background: linear-gradient(90deg, var(--gold-light), var(--gold-dark));
+  }
+
+  .pendientes-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 16px 0 10px;
+  }
+  .pendiente-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--text);
+    line-height: 1.4;
+  }
+  .pendiente-row:last-child { border: none; }
+  .pendiente-row i { color: var(--gold-dark); margin-top: 2px; font-size: 11px; }
+
+  .generated-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #EDE9FE, #DDD6FE);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: #5B21B6;
+    font-weight: 500;
+    margin-top: 16px;
+  }
+  .generated-badge i { font-size: 14px; }
+
+  /* FLOW DIAGRAM */
+  .flow-card {
+    background: var(--surface);
+    border-radius: 20px;
+    padding: 28px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+    border: 1px solid var(--border);
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.5s ease 0.3s;
+  }
+  .flow-card.revealed { opacity: 1; transform: translateY(0); }
+  .flow-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+  .flow-title i { color: var(--gold-dark); }
+  .flow-steps {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    flex-wrap: wrap;
+    justify-content: center;
+    row-gap: 12px;
+  }
+  .flow-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    min-width: 70px;
+  }
+  .step-icon {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: white;
+  }
+  .step-wa { background: linear-gradient(135deg, #25D366, #128C7E); }
+  .step-n8n { background: linear-gradient(135deg, #EF6C00, #C65000); }
+  .step-claude { background: linear-gradient(135deg, #6C47FF, #4B2EE6); }
+  .step-cal { background: linear-gradient(135deg, #1A73E8, #0D5DB3); }
+  .step-ok { background: linear-gradient(135deg, var(--teal-light), var(--teal-dark)); }
+  .step-label { font-size: 10px; font-weight: 500; color: var(--muted); text-align: center; line-height: 1.3; }
+  .flow-arrow {
+    color: var(--gold);
+    font-size: 18px;
+    flex-shrink: 0;
+    margin: 0 4px;
+    padding-bottom: 20px;
+  }
+
+  /* SECTION LABELS */
+  .section-panel {
+    display: none;
+  }
+  .section-panel.active { display: block; }
+
+  /* ANIMATION */
+  @keyframes msgIn {
+    from { opacity: 0; transform: translateY(8px) scale(0.97); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes bounce {
+    0%, 60%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-5px); }
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .fade-up { animation: fadeUp 0.6s ease forwards; }
+
+  /* RESPONSIVE */
+  @media (max-width: 768px) {
+    .main-content { grid-template-columns: 1fr; }
+    .phone-mockup { max-width: 300px; }
+    .phone-screen { height: 520px; }
+    .stats-row { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  /* TAB CONTENT */
+  .tab-content { display: none; }
+  .tab-content.active { display: flex; flex-direction: column; gap: 20px; }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge">
+    <i class="fas fa-robot"></i>
+    Automatización Inteligente con n8n + Claude
+  </div>
+  <h1>Tu consultorio responde <span>solo</span>.<br>Tu obra se reporta <span>sola</span>.</h1>
+  <p>Bot de WhatsApp con agenda en Google Calendar y seguimiento semanal de construcción. Sin intervención manual.</p>
+  <div class="hero-tabs">
+    <button class="hero-tab active" onclick="switchTab('whatsapp')">
+      <i class="fab fa-whatsapp"></i> Bot de Citas
+    </button>
+    <button class="hero-tab" onclick="switchTab('obra')">
+      <i class="fas fa-hard-hat"></i> Seguimiento de Obra
+    </button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main-content">
+
+  <!-- LEFT: PHONE MOCKUP -->
+  <div class="phone-wrapper">
+    <div class="phone-mockup">
+      <div class="phone-screen">
+        <!-- WA Header -->
+        <div class="wa-header">
+          <div class="wa-avatar"><i class="fas fa-stethoscope"></i></div>
+          <div>
+            <div class="wa-name">Consultorio Dr. García</div>
+            <div class="wa-status" id="wa-status">en línea</div>
+          </div>
+          <div class="wa-actions">
+            <i class="fas fa-video"></i>
+            <i class="fas fa-phone"></i>
+          </div>
+        </div>
+
+        <!-- WA Body -->
+        <div class="wa-body" id="wa-body">
+
+          <div class="msg-row in" id="m0" style="display:none">
+            <div class="msg msg-in visible">
+              Hola! Soy el asistente virtual del consultorio. Escríbeme si quieres agendar, confirmar o cancelar una cita.
+              <span class="time">Hoy</span>
+            </div>
+          </div>
+
+          <div class="msg-row out" id="m1" style="display:none">
+            <div class="msg msg-out visible">
+              Buenas tardes. Quiero hacer una cita para el martes que viene
+              <span class="time">3:12 PM</span>
+            </div>
+          </div>
+
+          <div class="typing-indicator" id="typing1">
+            <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+          </div>
+
+          <div class="msg-row in" id="m2" style="display:none">
+            <div class="msg msg-in visible">
+              Con gusto. Para el <strong>martes 24 de junio</strong> tenemos disponibilidad a las <strong>10:00 AM</strong> o <strong>3:00 PM</strong>. ¿Cuál le queda mejor?
+              <span class="time">3:12 PM</span>
+            </div>
+          </div>
+
+          <div class="msg-row out" id="m3" style="display:none">
+            <div class="msg msg-out visible">
+              A las 3 de la tarde por favor
+              <span class="time">3:13 PM</span>
+            </div>
+          </div>
+
+          <div class="typing-indicator" id="typing2">
+            <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+          </div>
+
+          <div class="msg-row in" id="m4" style="display:none">
+            <div class="msg msg-in visible">
+              Perfecto. ¿Me confirma su nombre completo para el registro?
+              <span class="time">3:13 PM</span>
+            </div>
+          </div>
+
+          <div class="msg-row out" id="m5" style="display:none">
+            <div class="msg msg-out visible">
+              Claro, soy María Pérez
+              <span class="time">3:13 PM</span>
+            </div>
+          </div>
+
+          <div class="typing-indicator" id="typing3">
+            <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+          </div>
+
+          <!-- CONFIRMATION CARD -->
+          <div class="confirmed-card" id="conf-card">
+            <div class="card-header">
+              <i class="fas fa-calendar-check"></i>
+              Cita Confirmada en Google Calendar
+            </div>
+            <div class="card-body">
+              <div class="card-row"><i class="fas fa-user"></i> María Pérez</div>
+              <div class="card-row"><i class="fas fa-calendar"></i> Martes 24 de junio · 3:00 PM</div>
+              <div class="card-row"><i class="fas fa-clock"></i> Duración: 30 minutos</div>
+              <div class="card-row"><i class="fas fa-map-marker-alt"></i> Consultorio Dr. García · Popayán</div>
+              <div class="card-highlight">
+                <i class="fas fa-bell"></i>
+                Recordatorio automático enviado el lunes 23 a las 9 AM
+              </div>
+            </div>
+          </div>
+
+          <div class="msg-row in" id="m6" style="display:none">
+            <div class="msg msg-in visible">
+              ¡Listo María! Su cita queda agendada. Si necesita cambiarla o cancelarla escríbanos acá mismo.
+              <span class="time">3:14 PM</span>
+            </div>
+          </div>
+
+        </div><!-- wa-body -->
+
+        <!-- WA Footer -->
+        <div class="wa-footer">
+          <div class="wa-input">Escribe un mensaje...</div>
+          <div class="wa-send"><i class="fas fa-paper-plane"></i></div>
+        </div>
+      </div>
+    </div>
+
+    <button class="play-btn" id="play-btn" onclick="playConversation()">
+      <i class="fas fa-play"></i> Ver conversación en vivo
+    </button>
+  </div><!-- phone-wrapper -->
+
+  <!-- RIGHT PANEL -->
+  <div class="right-panel">
+
+    <!-- Tab: Whatsapp -->
+    <div id="tab-whatsapp" class="tab-content active">
+
+      <!-- Stats -->
+      <div class="info-card revealed">
+        <div class="card-title">
+          <div class="card-icon"><i class="fas fa-chart-line"></i></div>
+          <div>
+            <h3>Panel del Consultorio</h3>
+            <p>Citas del día en tiempo real</p>
+          </div>
+        </div>
+        <div class="stats-row">
+          <div class="stat-box">
+            <div class="stat-num">12</div>
+            <div class="stat-label">Citas hoy</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-num gold">9</div>
+            <div class="stat-label">Confirmadas</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-num" style="color:#6B7280">0</div>
+            <div class="stat-label">Intervención manual</div>
+          </div>
+        </div>
+
+        <!-- Agenda -->
+        <div class="agenda-item">
+          <div class="agenda-time">9:00<br>AM</div>
+          <div class="agenda-info">
+            <div class="agenda-name">Carlos Muñoz</div>
+            <div class="agenda-detail">Seguimiento post-operatorio</div>
+          </div>
+          <span class="agenda-status status-confirmed">Confirmado</span>
+        </div>
+        <div class="agenda-item">
+          <div class="agenda-time">10:30<br>AM</div>
+          <div class="agenda-info">
+            <div class="agenda-name">Lucía Ríos</div>
+            <div class="agenda-detail">Consulta general</div>
+          </div>
+          <span class="agenda-status status-auto">Bot confirmó</span>
+        </div>
+        <div class="agenda-item">
+          <div class="agenda-time">3:00<br>PM</div>
+          <div class="agenda-info">
+            <div class="agenda-name">María Pérez</div>
+            <div class="agenda-detail">Consulta general</div>
+          </div>
+          <span class="agenda-status status-auto">Bot confirmó</span>
+        </div>
+        <div class="agenda-item">
+          <div class="agenda-time">4:30<br>PM</div>
+          <div class="agenda-info">
+            <div class="agenda-name">Roberto Castillo</div>
+            <div class="agenda-detail">Revisión de exámenes</div>
+          </div>
+          <span class="agenda-status status-pending">Pendiente</span>
+        </div>
+      </div>
+
+      <!-- Flow -->
+      <div class="flow-card revealed" style="transition-delay: 0.15s">
+        <div class="flow-title">
+          <i class="fas fa-diagram-project"></i>
+          Flujo automático de agendamiento
+        </div>
+        <div class="flow-steps">
+          <div class="flow-step">
+            <div class="step-icon step-wa"><i class="fab fa-whatsapp"></i></div>
+            <div class="step-label">Mensaje WhatsApp</div>
+          </div>
+          <div class="flow-arrow"><i class="fas fa-chevron-right"></i></div>
+          <div class="flow-step">
+            <div class="step-icon step-n8n"><i class="fas fa-bolt"></i></div>
+            <div class="step-label">n8n recibe</div>
+          </div>
+          <div class="flow-arrow"><i class="fas fa-chevron-right"></i></div>
+          <div class="flow-step">
+            <div class="step-icon step-claude"><i class="fas fa-brain"></i></div>
+            <div class="step-label">Claude extrae fecha</div>
+          </div>
+          <div class="flow-arrow"><i class="fas fa-chevron-right"></i></div>
+          <div class="flow-step">
+            <div class="step-icon step-cal"><i class="fas fa-calendar-alt"></i></div>
+            <div class="step-label">Google Calendar verifica</div>
+          </div>
+          <div class="flow-arrow"><i class="fas fa-chevron-right"></i></div>
+          <div class="flow-step">
+            <div class="step-icon step-ok"><i class="fas fa-check"></i></div>
+            <div class="step-label">Cita confirmada</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- tab-whatsapp -->
+
+    <!-- Tab: Obra -->
+    <div id="tab-obra" class="tab-content">
+      <div class="info-card revealed">
+        <div class="obra-header">
+          <div class="card-title" style="margin-bottom:0">
+            <div class="card-icon" style="background: linear-gradient(135deg,#C65000,#EF6C00)">
+              <i class="fas fa-hard-hat"></i>
+            </div>
+            <div>
+              <h3>Resumen Semanal de Obra</h3>
+              <p>Generado automáticamente cada lunes</p>
+            </div>
+          </div>
+          <div class="obra-badge">
+            <i class="fas fa-robot"></i>
+            IA generó
+          </div>
+        </div>
+
+        <div style="font-size:12px;color:var(--muted);margin-bottom:20px;display:flex;align-items:center;gap:6px">
+          <i class="fas fa-calendar-week" style="color:var(--gold-dark)"></i>
+          Semana del 16 al 20 de junio de 2025 · Generado el lunes 23 a las 7:00 AM
+        </div>
+
+        <div class="obra-item">
+          <div class="obra-item-header">
+            <div class="obra-label">
+              <i class="fas fa-layer-group" style="color:var(--teal)"></i>
+              Estructura y cimentación
+            </div>
+            <div class="obra-pct">85%</div>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" id="p1"></div></div>
+        </div>
+
+        <div class="obra-item">
+          <div class="obra-item-header">
+            <div class="obra-label">
+              <i class="fas fa-bolt" style="color:#EF6C00"></i>
+              Instalación eléctrica
+            </div>
+            <div class="obra-pct">60%</div>
+          </div>
+          <div class="progress-bar"><div class="progress-fill gold-bar" id="p2"></div></div>
+        </div>
+
+        <div class="obra-item">
+          <div class="obra-item-header">
+            <div class="obra-label">
+              <i class="fas fa-faucet" style="color:#1A73E8"></i>
+              Plomería y sanitarios
+            </div>
+            <div class="obra-pct">45%</div>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" id="p3" style="background:linear-gradient(90deg,#60A5FA,#1A73E8)"></div></div>
+        </div>
+
+        <div class="obra-item">
+          <div class="obra-item-header">
+            <div class="obra-label">
+              <i class="fas fa-paint-roller" style="color:#9333EA"></i>
+              Acabados y pintura
+            </div>
+            <div class="obra-pct">20%</div>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" id="p4" style="background:linear-gradient(90deg,#C084FC,#7E22CE)"></div></div>
+        </div>
+
+        <div class="pendientes-title">Pendientes esta semana</div>
+
+        <div class="pendiente-row">
+          <i class="fas fa-circle-dot"></i>
+          Inspección técnica de vigas en el segundo piso · Responsable: Ing. Ramírez · Fecha límite: 25 jun
+        </div>
+        <div class="pendiente-row">
+          <i class="fas fa-circle-dot"></i>
+          Entrega de materiales para instalación eléctrica planta alta · Proveedor pendiente de confirmar
+        </div>
+        <div class="pendiente-row">
+          <i class="fas fa-circle-dot"></i>
+          Revisión de presupuesto de acabados con arquitecto · Cita programada para el miércoles 25
+        </div>
+
+        <div class="generated-badge">
+          <i class="fas fa-robot"></i>
+          Resumen generado por n8n + Claude. Sin redacción manual. Se envía al grupo de WhatsApp de la obra cada lunes a las 7 AM.
+        </div>
+      </div>
+
+      <!-- Second card: flow -->
+      <div class="flow-card revealed" style="transition-delay:0.15s">
+        <div class="flow-title">
+          <i class="fas fa-diagram-project"></i>
+          Flujo de seguimiento de construcción
+        </div>
+        <div class="flow-steps">
+          <div class="flow-step">
+            <div class="step-icon step-wa"><i class="fab fa-whatsapp"></i></div>
+            <div class="step-label">Equipo reporta en WhatsApp</div>
+          </div>
+          <div class="flow-arrow"><i class="fas fa-chevron-right"></i></div>
+          <div class="flow-step">
+            <div class="step-icon step-n8n"><i class="fas fa-bolt"></i></div>
+            <div class="step-label">n8n consolida</div>
+          </div>
+          <div class="flow-arrow"><i class="fas fa-chevron-right"></i></div>
+          <div class="flow-step">
+            <div class="step-icon step-claude"><i class="fas fa-brain"></i></div>
+            <div class="step-label">Claude redacta resumen</div>
+          </div>
+          <div class="flow-arrow"><i class="fas fa-chevron-right"></i></div>
+          <div class="flow-step">
+            <div class="step-icon step-ok"><i class="fas fa-paper-plane"></i></div>
+            <div class="step-label">Envío automático cada lunes</div>
+          </div>
+        </div>
+      </div>
+    </div><!-- tab-obra -->
+
+  </div><!-- right-panel -->
+</div><!-- main-content -->
+
+<script>
+  // TAB SWITCHING
+  function switchTab(tab) {
+    document.querySelectorAll('.hero-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelector(`[onclick="switchTab('${tab}')"]`).classList.add('active');
+    document.getElementById(`tab-${tab}`).classList.add('active');
+
+    if (tab === 'obra') {
+      setTimeout(() => {
+        document.getElementById('p1').style.width = '85%';
+        document.getElementById('p2').style.width = '60%';
+        document.getElementById('p3').style.width = '45%';
+        document.getElementById('p4').style.width = '20%';
+      }, 200);
+    }
+  }
+
+  // CONVERSATION PLAYBACK
+  let playing = false;
+
+  function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  async function showTyping(id, ms) {
+    const el = document.getElementById(id);
+    el.classList.add('show');
+    document.getElementById('wa-status').textContent = 'escribiendo...';
+    scrollChat();
+    await delay(ms);
+    el.classList.remove('show');
+    document.getElementById('wa-status').textContent = 'en línea';
+  }
+
+  function showMsg(id) {
+    const row = document.getElementById(id);
+    row.style.display = 'flex';
+    scrollChat();
+  }
+
+  function showCard(id) {
+    const el = document.getElementById(id);
+    el.classList.add('visible');
+    scrollChat();
+  }
+
+  function scrollChat() {
+    const body = document.getElementById('wa-body');
+    body.scrollTop = body.scrollHeight;
+  }
+
+  async function playConversation() {
+    if (playing) return;
+    playing = true;
+    const btn = document.getElementById('play-btn');
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Reproduciendo...';
+    btn.disabled = true;
+
+    // Reset
+    ['m0','m1','m2','m3','m4','m5','m6'].forEach(id => {
+      document.getElementById(id).style.display = 'none';
+    });
+    document.getElementById('conf-card').classList.remove('visible');
+    document.getElementById('wa-body').scrollTop = 0;
+
+    await delay(600);
+    showMsg('m0'); await delay(1200);
+    showMsg('m1'); await delay(800);
+    await showTyping('typing1', 1800);
+    showMsg('m2'); await delay(1400);
+    showMsg('m3'); await delay(700);
+    await showTyping('typing2', 1500);
+    showMsg('m4'); await delay(1200);
+    showMsg('m5'); await delay(700);
+    await showTyping('typing3', 2200);
+    showCard('conf-card'); await delay(600);
+    showMsg('m6');
+
+    await delay(800);
+    btn.innerHTML = '<i class="fas fa-rotate-right"></i> Repetir demo';
+    btn.disabled = false;
+    playing = false;
+  }
+
+  // SCROLL REVEAL
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) e.target.classList.add('revealed');
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.info-card, .flow-card').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>
