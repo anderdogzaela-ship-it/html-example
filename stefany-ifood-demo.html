@@ -1,0 +1,1448 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QuickFood - Demo App de Entregas</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background: linear-gradient(140deg, #1a0a00 0%, #3d1c00 40%, #7c3800 100%);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 20px;
+  gap: 16px;
+}
+
+.page-label {
+  color: rgba(255,255,255,0.7);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.page-title {
+  color: white;
+  font-size: 22px;
+  font-weight: 900;
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.page-sub {
+  color: rgba(255,220,160,0.8);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.phone {
+  width: 375px;
+  height: 760px;
+  background: #f2f2f2;
+  border-radius: 44px;
+  border: 9px solid #111;
+  box-shadow:
+    0 0 0 1px #333,
+    inset 0 0 0 2px #222,
+    0 50px 100px rgba(0,0,0,0.6),
+    0 20px 40px rgba(0,0,0,0.4);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Notch */
+.phone::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 28px;
+  background: #111;
+  border-radius: 0 0 18px 18px;
+  z-index: 999;
+}
+
+.status-bar {
+  height: 44px;
+  background: #FF3500;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 0 20px 8px;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.status-time {
+  color: white;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.status-icons {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  color: white;
+  font-size: 11px;
+}
+
+.screens {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.screen {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  transition: transform 0.38s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.38s ease;
+  scrollbar-width: none;
+  background: #f2f2f2;
+}
+
+.screen::-webkit-scrollbar { display: none; }
+.screen.active { transform: translateX(0); opacity: 1; z-index: 2; }
+.screen.left { transform: translateX(-100%); opacity: 0; z-index: 1; }
+.screen.right { transform: translateX(100%); opacity: 0; z-index: 1; }
+
+.bottom-nav {
+  height: 62px;
+  background: white;
+  border-top: 1px solid #eee;
+  display: flex;
+  flex-shrink: 0;
+  z-index: 20;
+}
+
+.nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  cursor: pointer;
+  color: #b0b0b0;
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  transition: color 0.2s;
+  position: relative;
+}
+
+.nav-item i { font-size: 19px; }
+.nav-item.active { color: #FF3500; }
+
+.nav-dot {
+  position: absolute;
+  top: 8px;
+  right: 24px;
+  width: 8px;
+  height: 8px;
+  background: #FF3500;
+  border-radius: 50%;
+  display: none;
+}
+
+.nav-dot.show { display: block; }
+
+/* ========== HOME ========== */
+#screen-home { background: #f2f2f2; }
+
+.home-header {
+  background: linear-gradient(160deg, #FF3500 0%, #FF6B1A 100%);
+  padding: 14px 20px 22px;
+  color: white;
+}
+
+.header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.loc-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 700;
+  background: rgba(255,255,255,0.2);
+  padding: 5px 12px;
+  border-radius: 20px;
+}
+
+.greeting { font-size: 21px; font-weight: 900; line-height: 1.2; }
+.greeting span { font-size: 18px; }
+.subgreet { font-size: 12px; opacity: 0.8; font-weight: 600; margin-top: 3px; }
+
+.search-wrap {
+  background: white;
+  border-radius: 14px;
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  padding: 11px 14px;
+  gap: 10px;
+  color: #bbb;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+
+.search-wrap i { color: #FF3500; font-size: 15px; }
+
+/* promo banner */
+.promo-banner {
+  margin: 14px 16px 0;
+  background: linear-gradient(120deg, #FF3500, #FF6B1A);
+  border-radius: 16px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(255,53,0,0.3);
+}
+
+.promo-emoji { font-size: 28px; }
+.promo-text .promo-tag { font-size: 10px; font-weight: 800; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.5px; }
+.promo-text .promo-title { font-size: 15px; font-weight: 900; }
+.promo-text .promo-sub { font-size: 11px; opacity: 0.85; font-weight: 600; }
+
+/* categories */
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 16px 8px;
+}
+
+.section-title { font-size: 15px; font-weight: 900; color: #1a1a1a; }
+.section-link { font-size: 12px; font-weight: 800; color: #FF3500; }
+
+.cats-scroll {
+  overflow-x: auto;
+  white-space: nowrap;
+  padding: 4px 16px 12px;
+  scrollbar-width: none;
+  gap: 12px;
+  display: flex;
+}
+
+.cats-scroll::-webkit-scrollbar { display: none; }
+
+.cat-item {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.cat-circle {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  transition: transform 0.15s;
+}
+
+.cat-circle:active { transform: scale(0.9); }
+.cat-label { font-size: 10px; font-weight: 800; color: #555; }
+
+/* restaurant cards */
+.rest-list { padding: 4px 16px 16px; }
+
+.rest-card {
+  background: white;
+  border-radius: 16px;
+  margin-bottom: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+
+.rest-card:active { transform: scale(0.98); }
+
+.rest-card-img {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  display: block;
+}
+
+.rest-card-body { padding: 12px 14px; }
+.rest-card-name { font-size: 15px; font-weight: 900; color: #1a1a1a; margin-bottom: 5px; }
+
+.rest-card-meta {
+  display: flex;
+  gap: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #888;
+  flex-wrap: wrap;
+}
+
+.rest-card-meta .stars { color: #FF9500; }
+.badge-free { background: #E8F5E9; color: #2E7D32; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 20px; display: inline-block; margin-top: 6px; }
+.badge-promo { background: #FFF3E0; color: #E65100; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 20px; display: inline-block; margin-top: 6px; }
+
+/* ========== RESTAURANT ========== */
+#screen-restaurant { background: white; }
+
+.rest-hero-wrap { position: relative; }
+
+.rest-hero {
+  width: 100%;
+  height: 190px;
+  object-fit: cover;
+  display: block;
+}
+
+.back-btn {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: 36px;
+  height: 36px;
+  background: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  color: #333;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  z-index: 5;
+}
+
+.rest-info-block { padding: 14px 16px 10px; border-bottom: 1px solid #f0f0f0; }
+.rest-info-name { font-size: 20px; font-weight: 900; color: #1a1a1a; margin-bottom: 8px; }
+
+.rest-info-meta {
+  display: flex;
+  gap: 14px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #777;
+}
+
+.rest-info-meta .stars { color: #FF9500; }
+.rest-info-meta .free { color: #2E7D32; }
+
+.menu-tabs-wrap {
+  overflow-x: auto;
+  white-space: nowrap;
+  padding: 10px 16px;
+  scrollbar-width: none;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.menu-tabs-wrap::-webkit-scrollbar { display: none; }
+
+.menu-tab {
+  display: inline-block;
+  padding: 6px 16px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #999;
+  border-radius: 20px;
+  margin-right: 6px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.menu-tab.active { background: #FF3500; color: white; border-color: #FF3500; }
+
+.menu-section-label {
+  font-size: 11px;
+  font-weight: 800;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  padding: 14px 16px 6px;
+}
+
+.menu-item {
+  display: flex;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f8f8f8;
+  align-items: center;
+  cursor: pointer;
+}
+
+.menu-item-info { flex: 1; }
+.menu-item-name { font-size: 14px; font-weight: 800; color: #1a1a1a; margin-bottom: 3px; }
+.menu-item-desc { font-size: 11px; color: #999; font-weight: 600; line-height: 1.45; margin-bottom: 6px; }
+.menu-item-price { font-size: 15px; font-weight: 900; color: #FF3500; }
+
+.menu-item img {
+  width: 78px;
+  height: 78px;
+  border-radius: 12px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.add-btn {
+  width: 32px;
+  height: 32px;
+  background: #FF3500;
+  color: white;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: transform 0.12s;
+  box-shadow: 0 3px 8px rgba(255,53,0,0.35);
+}
+
+.add-btn:active { transform: scale(0.85); }
+
+.cart-float {
+  position: absolute;
+  bottom: 12px;
+  left: 16px;
+  right: 16px;
+  background: #FF3500;
+  color: white;
+  border-radius: 14px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(255,53,0,0.4);
+  font-size: 14px;
+  font-weight: 800;
+  z-index: 10;
+  display: none;
+}
+
+.cart-float.show { display: flex; }
+.cart-float-badge { background: rgba(255,255,255,0.25); border-radius: 8px; padding: 2px 8px; font-size: 12px; }
+
+/* ========== CART ========== */
+#screen-cart { background: #f2f2f2; }
+
+.cart-hdr {
+  background: white;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.back-btn-inline {
+  width: 34px;
+  height: 34px;
+  background: #f5f5f5;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: #333;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.cart-hdr-title { font-size: 17px; font-weight: 900; color: #1a1a1a; }
+.cart-hdr-sub { font-size: 11px; color: #999; font-weight: 600; }
+
+.cart-section { background: white; margin: 10px 0; }
+
+.cart-item {
+  display: flex;
+  align-items: center;
+  padding: 13px 16px;
+  gap: 12px;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.cart-item:last-child { border-bottom: none; }
+.cart-item-name { font-size: 13px; font-weight: 800; color: #1a1a1a; margin-bottom: 2px; }
+.cart-item-price { font-size: 13px; font-weight: 800; color: #FF3500; }
+.cart-item-info { flex: 1; }
+
+.qty-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.qty-b {
+  width: 27px;
+  height: 27px;
+  border: 2px solid #FF3500;
+  background: none;
+  color: #FF3500;
+  border-radius: 50%;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Nunito', sans-serif;
+}
+
+.qty-num { font-size: 14px; font-weight: 900; color: #1a1a1a; width: 18px; text-align: center; }
+
+.obs-row {
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #FF3500;
+  font-size: 12px;
+  font-weight: 700;
+  border-top: 1px solid #f5f5f5;
+  cursor: pointer;
+}
+
+/* payment */
+.pay-section { background: white; margin: 10px 0; padding: 14px 16px; }
+.pay-title { font-size: 13px; font-weight: 900; color: #1a1a1a; margin-bottom: 12px; display: flex; align-items: center; gap: 7px; }
+.pay-title i { color: #FF3500; }
+
+.pay-opt {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f5f5f5;
+  cursor: pointer;
+}
+
+.pay-opt:last-child { border-bottom: none; }
+
+.pay-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.pi-pix { background: #E0F7F4; color: #00897B; }
+.pi-card { background: #EDE7F6; color: #5E35B1; }
+.pi-cash { background: #E8F5E9; color: #2E7D32; }
+
+.pay-label { flex: 1; }
+.pay-name { font-size: 13px; font-weight: 800; color: #1a1a1a; }
+.pay-sub { font-size: 10px; color: #aaa; font-weight: 600; }
+
+.pay-radio {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid #ddd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.pay-opt.selected .pay-radio {
+  border-color: #FF3500;
+  background: #FF3500;
+}
+
+.pay-opt.selected .pay-radio::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: white;
+}
+
+/* summary */
+.summary-section { background: white; margin: 10px 0; padding: 14px 16px; }
+
+.sum-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #888;
+  font-weight: 700;
+  margin-bottom: 9px;
+}
+
+.sum-row.total {
+  font-size: 16px;
+  font-weight: 900;
+  color: #1a1a1a;
+  border-top: 1px solid #f0f0f0;
+  padding-top: 10px;
+  margin-top: 4px;
+  margin-bottom: 0;
+}
+
+.sum-row.total .val { color: #FF3500; }
+.sum-free { color: #2E7D32; font-weight: 800; }
+
+.confirm-btn {
+  margin: 10px 16px 20px;
+  background: #FF3500;
+  color: white;
+  border: none;
+  border-radius: 14px;
+  padding: 15px;
+  font-size: 15px;
+  font-weight: 900;
+  font-family: 'Nunito', sans-serif;
+  width: calc(100% - 32px);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 6px 20px rgba(255,53,0,0.35);
+  transition: transform 0.12s;
+}
+
+.confirm-btn:active { transform: scale(0.97); }
+
+/* ========== TRACKING ========== */
+#screen-tracking { background: #f2f2f2; }
+
+.track-header {
+  background: linear-gradient(160deg, #FF3500 0%, #FF6B1A 100%);
+  padding: 22px 20px 36px;
+  color: white;
+  text-align: center;
+}
+
+.track-check {
+  width: 60px;
+  height: 60px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  margin: 0 auto 10px;
+}
+
+.track-title { font-size: 19px; font-weight: 900; margin-bottom: 4px; }
+.track-eta-label { font-size: 12px; opacity: 0.8; font-weight: 600; margin-bottom: 2px; }
+.track-eta-time { font-size: 34px; font-weight: 900; }
+.track-eta-clock { font-size: 12px; opacity: 0.7; font-weight: 600; margin-top: 2px; }
+
+.track-card {
+  background: white;
+  border-radius: 16px;
+  margin: -16px 14px 12px;
+  padding: 18px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+  position: relative;
+  z-index: 2;
+}
+
+.track-card-title { font-size: 13px; font-weight: 900; color: #1a1a1a; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+.track-card-title i { color: #FF3500; }
+
+.timeline { position: relative; }
+
+.tl-item {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.tl-item:last-child { margin-bottom: 0; }
+
+.tl-left { display: flex; flex-direction: column; align-items: center; }
+
+.tl-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #e0e0e0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: white;
+  flex-shrink: 0;
+}
+
+.tl-dot.done { background: #4CAF50; }
+.tl-dot.active {
+  background: #FF3500;
+  box-shadow: 0 0 0 5px rgba(255,53,0,0.15);
+  animation: tl-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes tl-pulse {
+  0%, 100% { box-shadow: 0 0 0 5px rgba(255,53,0,0.15); }
+  50% { box-shadow: 0 0 0 9px rgba(255,53,0,0.07); }
+}
+
+.tl-line {
+  width: 2px;
+  flex: 1;
+  background: #e0e0e0;
+  margin: 3px 0;
+  min-height: 14px;
+}
+
+.tl-line.done { background: #4CAF50; }
+
+.tl-label { font-size: 13px; font-weight: 800; color: #1a1a1a; padding-top: 5px; }
+.tl-label.pending { color: #ccc; }
+.tl-label.active { color: #FF3500; }
+.tl-time { font-size: 10px; color: #aaa; font-weight: 600; margin-top: 2px; }
+
+/* map */
+.map-card {
+  background: white;
+  border-radius: 16px;
+  margin: 0 14px 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+}
+
+.map-area {
+  height: 130px;
+  background: #EFF5EA;
+  position: relative;
+  overflow: hidden;
+}
+
+.map-road {
+  position: absolute;
+  background: white;
+  opacity: 0.7;
+}
+
+.map-road.h { height: 7px; left: 0; right: 0; }
+.map-road.v { width: 7px; top: 0; bottom: 0; }
+
+.map-blk {
+  position: absolute;
+  background: #D4E8CC;
+  border-radius: 4px;
+}
+
+.map-pin-moto {
+  position: absolute;
+  font-size: 20px;
+  z-index: 5;
+  animation: moto-drive 5s linear infinite;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+}
+
+@keyframes moto-drive {
+  0%   { left: 8%;  top: 58%; }
+  20%  { left: 22%; top: 58%; }
+  40%  { left: 22%; top: 32%; }
+  65%  { left: 55%; top: 32%; }
+  80%  { left: 55%; top: 55%; }
+  100% { left: 74%; top: 55%; }
+}
+
+.map-pin-dest {
+  position: absolute;
+  right: 18%;
+  top: 42%;
+  font-size: 22px;
+  z-index: 5;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+}
+
+.map-footer {
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #555;
+}
+
+.map-footer i { color: #FF3500; }
+
+/* driver card */
+.driver-card {
+  background: white;
+  border-radius: 16px;
+  margin: 0 14px 14px;
+  padding: 14px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.driver-avatar {
+  width: 46px;
+  height: 46px;
+  background: linear-gradient(135deg, #FF3500, #FF6B1A);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: white;
+  font-weight: 900;
+  flex-shrink: 0;
+}
+
+.driver-name { font-size: 14px; font-weight: 900; color: #1a1a1a; }
+.driver-rating { font-size: 11px; color: #FF9500; font-weight: 800; }
+.driver-vehicle { font-size: 10px; color: #aaa; font-weight: 600; margin-top: 2px; }
+.driver-info { flex: 1; }
+
+.chat-btn {
+  background: #f5f5f5;
+  border: none;
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 800;
+  font-family: 'Nunito', sans-serif;
+  color: #FF3500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* scroll reveal */
+.reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.reveal.in { opacity: 1; transform: none; }
+
+/* restart */
+.restart-wrap {
+  text-align: center;
+  padding: 6px 14px 20px;
+}
+
+.restart-btn {
+  background: none;
+  border: 2px solid #ddd;
+  border-radius: 50px;
+  padding: 9px 20px;
+  font-size: 12px;
+  font-weight: 800;
+  font-family: 'Nunito', sans-serif;
+  color: #888;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+</style>
+</head>
+<body>
+
+<div class="page-label">Demo Interativo</div>
+<div class="page-title">App de Entregas - QuickFood</div>
+<div class="page-sub">Toque nos cards de restaurante para navegar</div>
+
+<div class="phone">
+
+  <!-- Status bar -->
+  <div class="status-bar">
+    <span class="status-time">9:41</span>
+    <div class="status-icons">
+      <i class="fa-solid fa-signal"></i>
+      <i class="fa-solid fa-wifi"></i>
+      <i class="fa-solid fa-battery-full"></i>
+    </div>
+  </div>
+
+  <!-- Screens container -->
+  <div class="screens">
+
+    <!-- ======= HOME ======= -->
+    <div class="screen active" id="screen-home">
+      <div class="home-header">
+        <div class="header-top">
+          <div class="loc-btn">
+            <i class="fa-solid fa-location-dot"></i>
+            Pinheiros, SP
+            <i class="fa-solid fa-chevron-down" style="font-size:9px"></i>
+          </div>
+          <div style="position:relative;cursor:pointer">
+            <i class="fa-solid fa-bell" style="font-size:19px;color:white"></i>
+            <span style="position:absolute;top:-3px;right:-3px;width:8px;height:8px;background:#FFD166;border-radius:50%"></span>
+          </div>
+        </div>
+        <div class="greeting">Boa tarde, Ana! <span>👋</span></div>
+        <div class="subgreet">O que você quer comer agora?</div>
+        <div class="search-wrap">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          Buscar restaurante ou prato...
+        </div>
+      </div>
+
+      <div class="promo-banner reveal" onclick="goTo(1)">
+        <div class="promo-emoji">⚡</div>
+        <div class="promo-text">
+          <div class="promo-tag">Oferta relâmpago</div>
+          <div class="promo-title">Entrega grátis hoje</div>
+          <div class="promo-sub">Nos 3 restaurantes selecionados</div>
+        </div>
+        <i class="fa-solid fa-chevron-right" style="opacity:0.7"></i>
+      </div>
+
+      <div class="section-head">
+        <span class="section-title">Categorias</span>
+      </div>
+
+      <div class="cats-scroll">
+        <div class="cat-item">
+          <div class="cat-circle">🍔</div>
+          <span class="cat-label">Burger</span>
+        </div>
+        <div class="cat-item">
+          <div class="cat-circle">🍕</div>
+          <span class="cat-label">Pizza</span>
+        </div>
+        <div class="cat-item">
+          <div class="cat-circle">🍣</div>
+          <span class="cat-label">Sushi</span>
+        </div>
+        <div class="cat-item">
+          <div class="cat-circle">🥤</div>
+          <span class="cat-label">Açaí</span>
+        </div>
+        <div class="cat-item">
+          <div class="cat-circle">🌮</div>
+          <span class="cat-label">Tacos</span>
+        </div>
+        <div class="cat-item">
+          <div class="cat-circle">🍗</div>
+          <span class="cat-label">Frango</span>
+        </div>
+        <div class="cat-item">
+          <div class="cat-circle">🥗</div>
+          <span class="cat-label">Saladas</span>
+        </div>
+      </div>
+
+      <div class="section-head">
+        <span class="section-title">Perto de você</span>
+        <span class="section-link">Ver todos</span>
+      </div>
+
+      <div class="rest-list">
+
+        <div class="rest-card reveal" onclick="goTo(1)">
+          <img class="rest-card-img" src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&h=280&fit=crop" alt="Burger">
+          <div class="rest-card-body">
+            <div class="rest-card-name">Burger Artesanal da Vila</div>
+            <div class="rest-card-meta">
+              <span class="stars"><i class="fa-solid fa-star"></i> 4.8 (2.1k)</span>
+              <span><i class="fa-solid fa-clock"></i> 25-35 min</span>
+              <span><i class="fa-solid fa-motorcycle"></i> Grátis</span>
+            </div>
+            <span class="badge-free">Entrega grátis</span>
+          </div>
+        </div>
+
+        <div class="rest-card reveal" onclick="goTo(1)">
+          <img class="rest-card-img" src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600&h=280&fit=crop" alt="Pizza">
+          <div class="rest-card-body">
+            <div class="rest-card-name">Pizzaria Bella Napoli</div>
+            <div class="rest-card-meta">
+              <span class="stars"><i class="fa-solid fa-star"></i> 4.7 (1.3k)</span>
+              <span><i class="fa-solid fa-clock"></i> 30-45 min</span>
+              <span><i class="fa-solid fa-motorcycle"></i> R$ 4,99</span>
+            </div>
+            <span class="badge-promo">30% OFF no combo</span>
+          </div>
+        </div>
+
+        <div class="rest-card reveal" onclick="goTo(1)">
+          <img class="rest-card-img" src="https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=600&h=280&fit=crop" alt="Sushi">
+          <div class="rest-card-body">
+            <div class="rest-card-name">Sushi Yoshi Premium</div>
+            <div class="rest-card-meta">
+              <span class="stars"><i class="fa-solid fa-star"></i> 4.9 (3.4k)</span>
+              <span><i class="fa-solid fa-clock"></i> 40-55 min</span>
+              <span><i class="fa-solid fa-motorcycle"></i> R$ 7,99</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ======= RESTAURANT ======= -->
+    <div class="screen right" id="screen-restaurant">
+      <div class="rest-hero-wrap">
+        <img class="rest-hero" src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=700&h=380&fit=crop" alt="Burger">
+        <div class="back-btn" onclick="goTo(0)"><i class="fa-solid fa-chevron-left"></i></div>
+      </div>
+
+      <div class="rest-info-block">
+        <div class="rest-info-name">Burger Artesanal da Vila</div>
+        <div class="rest-info-meta">
+          <span class="stars"><i class="fa-solid fa-star"></i> 4.8 (2.1k)</span>
+          <span><i class="fa-solid fa-clock"></i> 25-35 min</span>
+          <span class="free"><i class="fa-solid fa-motorcycle"></i> Entrega grátis</span>
+        </div>
+      </div>
+
+      <div class="menu-tabs-wrap">
+        <span class="menu-tab active">Mais Pedidos</span>
+        <span class="menu-tab">Combos</span>
+        <span class="menu-tab">Burgers</span>
+        <span class="menu-tab">Porções</span>
+        <span class="menu-tab">Bebidas</span>
+      </div>
+
+      <div class="menu-section-label">Mais pedidos</div>
+
+      <div class="menu-item" onclick="addCart('Smash Burger Duplo',32.90,this)">
+        <div class="menu-item-info">
+          <div class="menu-item-name">Smash Burger Duplo</div>
+          <div class="menu-item-desc">2x hambúrguer 120g smash cheddar americano molho especial e picles artesanal no brioche</div>
+          <div class="menu-item-price">R$ 32,90</div>
+        </div>
+        <img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=200&h=200&fit=crop" alt="Burger">
+        <button class="add-btn" onclick="event.stopPropagation();addCart('Smash Burger Duplo',32.90,this)"><i class="fa-solid fa-plus"></i></button>
+      </div>
+
+      <div class="menu-item" onclick="addCart('Chicken Crispy',27.90,this)">
+        <div class="menu-item-info">
+          <div class="menu-item-name">Chicken Crispy</div>
+          <div class="menu-item-desc">Frango empanado crocante alface americana tomate e maionese de chipotle no brioche</div>
+          <div class="menu-item-price">R$ 27,90</div>
+        </div>
+        <img src="https://images.unsplash.com/photo-1606755962773-d324e0a13086?w=200&h=200&fit=crop" alt="Chicken">
+        <button class="add-btn" onclick="event.stopPropagation();addCart('Chicken Crispy',27.90,this)"><i class="fa-solid fa-plus"></i></button>
+      </div>
+
+      <div class="menu-item" onclick="addCart('Batata Rústica com Cheddar',16.90,this)">
+        <div class="menu-item-info">
+          <div class="menu-item-name">Batata Rústica com Cheddar</div>
+          <div class="menu-item-desc">Batata rústica frita com cheddar derretido e cebolinha fresca</div>
+          <div class="menu-item-price">R$ 16,90</div>
+        </div>
+        <img src="https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=200&h=200&fit=crop" alt="Fries">
+        <button class="add-btn" onclick="event.stopPropagation();addCart('Batata Rústica com Cheddar',16.90,this)"><i class="fa-solid fa-plus"></i></button>
+      </div>
+
+      <div class="menu-item" onclick="addCart('Coca-Cola 350ml',6.90,this)">
+        <div class="menu-item-info">
+          <div class="menu-item-name">Coca-Cola 350ml</div>
+          <div class="menu-item-desc">Lata gelada. Também disponível Guaraná e Sprite</div>
+          <div class="menu-item-price">R$ 6,90</div>
+        </div>
+        <img src="https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=200&h=200&fit=crop" alt="Soda">
+        <button class="add-btn" onclick="event.stopPropagation();addCart('Coca-Cola 350ml',6.90,this)"><i class="fa-solid fa-plus"></i></button>
+      </div>
+
+      <div style="height:80px"></div>
+
+      <!-- Floating cart -->
+      <div class="cart-float" id="cart-float" onclick="goTo(2)">
+        <span><i class="fa-solid fa-bag-shopping"></i> Ver carrinho</span>
+        <span id="cart-float-info" class="cart-float-badge"></span>
+      </div>
+    </div>
+
+    <!-- ======= CART ======= -->
+    <div class="screen right" id="screen-cart">
+      <div class="cart-hdr">
+        <div class="back-btn-inline" onclick="goTo(1)"><i class="fa-solid fa-chevron-left"></i></div>
+        <div>
+          <div class="cart-hdr-title">Meu Pedido</div>
+          <div class="cart-hdr-sub">Burger Artesanal da Vila</div>
+        </div>
+      </div>
+
+      <div class="cart-section" id="cart-items-wrap">
+        <!-- populated by JS -->
+      </div>
+
+      <div class="pay-section">
+        <div class="pay-title"><i class="fa-solid fa-credit-card"></i> Forma de pagamento</div>
+
+        <div class="pay-opt selected" onclick="selectPay(this)">
+          <div class="pay-icon pi-pix"><i class="fa-solid fa-bolt"></i></div>
+          <div class="pay-label">
+            <div class="pay-name">PIX</div>
+            <div class="pay-sub">Pagamento instantâneo</div>
+          </div>
+          <div class="pay-radio"></div>
+        </div>
+
+        <div class="pay-opt" onclick="selectPay(this)">
+          <div class="pay-icon pi-card"><i class="fa-solid fa-credit-card"></i></div>
+          <div class="pay-label">
+            <div class="pay-name">Cartão de crédito</div>
+            <div class="pay-sub">Visa, Mastercard, Elo</div>
+          </div>
+          <div class="pay-radio"></div>
+        </div>
+
+        <div class="pay-opt" onclick="selectPay(this)">
+          <div class="pay-icon pi-cash"><i class="fa-solid fa-money-bill-wave"></i></div>
+          <div class="pay-label">
+            <div class="pay-name">Dinheiro</div>
+            <div class="pay-sub">Troco para R$ 60,00</div>
+          </div>
+          <div class="pay-radio"></div>
+        </div>
+      </div>
+
+      <div class="summary-section">
+        <div class="sum-row">
+          <span>Subtotal</span>
+          <span id="sub-val">R$ 0,00</span>
+        </div>
+        <div class="sum-row">
+          <span>Taxa de entrega</span>
+          <span class="sum-free"><i class="fa-solid fa-tag"></i> Grátis</span>
+        </div>
+        <div class="sum-row">
+          <span>Tempo estimado</span>
+          <span>25-35 min</span>
+        </div>
+        <div class="sum-row total">
+          <span>Total</span>
+          <span class="val" id="total-val">R$ 0,00</span>
+        </div>
+      </div>
+
+      <button class="confirm-btn" onclick="confirmOrder()">
+        <i class="fa-solid fa-circle-check"></i>
+        Confirmar pedido
+      </button>
+    </div>
+
+    <!-- ======= TRACKING ======= -->
+    <div class="screen right" id="screen-tracking">
+      <div class="track-header">
+        <div class="track-check"><i class="fa-solid fa-check"></i></div>
+        <div class="track-title">Pedido confirmado!</div>
+        <div class="track-eta-label">Chegando em</div>
+        <div class="track-eta-time">18 min</div>
+        <div class="track-eta-clock">Previsão: 10h42</div>
+      </div>
+
+      <div class="track-card">
+        <div class="track-card-title"><i class="fa-solid fa-list-check"></i> Status do pedido</div>
+
+        <div class="timeline">
+          <div class="tl-item">
+            <div class="tl-left">
+              <div class="tl-dot done"><i class="fa-solid fa-check" style="font-size:10px"></i></div>
+              <div class="tl-line done"></div>
+            </div>
+            <div>
+              <div class="tl-label">Pedido confirmado</div>
+              <div class="tl-time">10h18 - Restaurante aceitou</div>
+            </div>
+          </div>
+
+          <div class="tl-item">
+            <div class="tl-left">
+              <div class="tl-dot done"><i class="fa-solid fa-check" style="font-size:10px"></i></div>
+              <div class="tl-line done"></div>
+            </div>
+            <div>
+              <div class="tl-label">Em preparo</div>
+              <div class="tl-time">10h21 - Cozinha iniciou</div>
+            </div>
+          </div>
+
+          <div class="tl-item">
+            <div class="tl-left">
+              <div class="tl-dot active"><i class="fa-solid fa-motorcycle" style="font-size:10px"></i></div>
+              <div class="tl-line"></div>
+            </div>
+            <div>
+              <div class="tl-label active">A caminho</div>
+              <div class="tl-time">10h24 - Carlos coletou</div>
+            </div>
+          </div>
+
+          <div class="tl-item">
+            <div class="tl-left">
+              <div class="tl-dot"><i class="fa-solid fa-house" style="font-size:10px"></i></div>
+            </div>
+            <div>
+              <div class="tl-label pending">Entregue</div>
+              <div class="tl-time" style="color:#ddd">Previsão 10h42</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="map-card">
+        <div class="map-area">
+          <!-- Roads -->
+          <div class="map-road h" style="top:38%"></div>
+          <div class="map-road h" style="top:62%"></div>
+          <div class="map-road v" style="left:28%"></div>
+          <div class="map-road v" style="left:58%"></div>
+          <!-- Buildings -->
+          <div class="map-blk" style="top:8%;left:4%;width:18%;height:24%"></div>
+          <div class="map-blk" style="top:8%;left:32%;width:20%;height:24%"></div>
+          <div class="map-blk" style="top:8%;left:62%;width:14%;height:24%"></div>
+          <div class="map-blk" style="top:68%;left:4%;width:16%;height:22%"></div>
+          <div class="map-blk" style="top:68%;left:32%;width:20%;height:22%"></div>
+          <div class="map-blk" style="top:68%;left:65%;width:18%;height:22%"></div>
+          <!-- Pins -->
+          <div class="map-pin-moto">🛵</div>
+          <div class="map-pin-dest">📍</div>
+        </div>
+        <div class="map-footer">
+          <i class="fa-solid fa-route"></i>
+          Carlos está a 1.2 km de você
+        </div>
+      </div>
+
+      <div class="driver-card">
+        <div class="driver-avatar">C</div>
+        <div class="driver-info">
+          <div class="driver-name">Carlos Mendonça</div>
+          <div class="driver-rating"><i class="fa-solid fa-star"></i> 4.9 (847 entregas)</div>
+          <div class="driver-vehicle"><i class="fa-solid fa-motorcycle" style="font-size:10px"></i> Honda CG 160 • ABC-1D23</div>
+        </div>
+        <button class="chat-btn"><i class="fa-solid fa-comment"></i> Chat</button>
+      </div>
+
+      <div class="restart-wrap">
+        <button class="restart-btn" onclick="restart()">
+          <i class="fa-solid fa-rotate-left"></i> Recomeçar demo
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Bottom Nav -->
+  <div class="bottom-nav">
+    <div class="nav-item active" id="nav0" onclick="navTap(0)">
+      <i class="fa-solid fa-house"></i>
+      Início
+    </div>
+    <div class="nav-item" id="nav1" onclick="navTap(1)">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      Buscar
+    </div>
+    <div class="nav-item" id="nav2" onclick="navTap(2)">
+      <i class="fa-solid fa-bag-shopping"></i>
+      Pedidos
+      <span class="nav-dot" id="cart-dot"></span>
+    </div>
+    <div class="nav-item" id="nav3">
+      <i class="fa-solid fa-user"></i>
+      Perfil
+    </div>
+  </div>
+
+</div>
+
+<script>
+const SCREENS = ['screen-home','screen-restaurant','screen-cart','screen-tracking'];
+let cur = 0;
+let cartData = {};
+
+function goTo(idx) {
+  if (idx === cur) return;
+  const dir = idx > cur ? 'forward' : 'back';
+  const oldEl = document.getElementById(SCREENS[cur]);
+  const newEl = document.getElementById(SCREENS[idx]);
+
+  if (dir === 'forward') {
+    newEl.className = 'screen right';
+    requestAnimationFrame(() => {
+      oldEl.className = 'screen left';
+      newEl.className = 'screen active';
+    });
+  } else {
+    newEl.className = 'screen left';
+    requestAnimationFrame(() => {
+      oldEl.className = 'screen right';
+      newEl.className = 'screen active';
+    });
+  }
+
+  cur = idx;
+  updateNav(idx);
+
+  if (idx === 2) buildCartUI();
+  setTimeout(triggerReveal, 250);
+}
+
+function navTap(idx) {
+  if (idx === 0) { goTo(0); return; }
+  if (idx === 2 && cur !== 2 && cur !== 3) { goTo(2); return; }
+  updateNav(idx);
+}
+
+function updateNav(idx) {
+  for (let i = 0; i < 4; i++) {
+    const n = document.getElementById('nav' + i);
+    if (n) n.classList.toggle('active', i === idx);
+  }
+}
+
+function addCart(name, price, btn) {
+  if (!cartData[name]) cartData[name] = { price, qty: 0 };
+  cartData[name].qty++;
+  updateCartFloat();
+
+  const el = btn.classList.contains('add-btn') ? btn : btn.querySelector('.add-btn');
+  if (el) {
+    el.style.transform = 'scale(0.75)';
+    setTimeout(() => { el.style.transform = ''; }, 130);
+  }
+
+  document.getElementById('cart-dot').classList.add('show');
+}
+
+function updateCartFloat() {
+  const total = Object.values(cartData).reduce((s, i) => s + i.qty, 0);
+  const price = Object.values(cartData).reduce((s, i) => s + i.qty * i.price, 0);
+  const cf = document.getElementById('cart-float');
+  const ci = document.getElementById('cart-float-info');
+  if (total > 0) {
+    cf.classList.add('show');
+    ci.textContent = total + ' item' + (total > 1 ? 's' : '') + '  R$ ' + price.toFixed(2).replace('.', ',');
+  } else {
+    cf.classList.remove('show');
+  }
+}
+
+function buildCartUI() {
+  if (Object.keys(cartData).length === 0) {
+    cartData = {
+      'Smash Burger Duplo': { price: 32.90, qty: 1 },
+      'Batata Rústica com Cheddar': { price: 16.90, qty: 1 }
+    };
+  }
+
+  let html = '';
+  let sub = 0;
+
+  Object.entries(cartData).forEach(([name, item]) => {
+    const t = item.price * item.qty;
+    sub += t;
+    html += `<div class="cart-item">
+      <div class="cart-item-info">
+        <div class="cart-item-name">${name}</div>
+        <div class="cart-item-price">R$ ${t.toFixed(2).replace('.', ',')}</div>
+      </div>
+      <div class="qty-row">
+        <button class="qty-b" onclick="chgQty('${name}',-1)">-</button>
+        <span class="qty-num">${item.qty}</span>
+        <button class="qty-b" onclick="chgQty('${name}',1)">+</button>
+      </div>
+    </div>`;
+  });
+
+  html += `<div class="obs-row"><i class="fa-solid fa-pencil"></i> Adicionar observação</div>`;
+  document.getElementById('cart-items-wrap').innerHTML = html;
+
+  const fmt = v => 'R$ ' + v.toFixed(2).replace('.', ',');
+  document.getElementById('sub-val').textContent = fmt(sub);
+  document.getElementById('total-val').textContent = fmt(sub);
+}
+
+function chgQty(name, d) {
+  cartData[name].qty += d;
+  if (cartData[name].qty <= 0) delete cartData[name];
+  buildCartUI();
+}
+
+function selectPay(el) {
+  document.querySelectorAll('.pay-opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function confirmOrder() { goTo(3); }
+
+function restart() {
+  cartData = {};
+  cur = 0;
+  SCREENS.forEach((s, i) => {
+    document.getElementById(s).className = i === 0 ? 'screen active' : 'screen right';
+  });
+  updateNav(0);
+  document.getElementById('cart-float').classList.remove('show');
+  document.getElementById('cart-dot').classList.remove('show');
+  setTimeout(triggerReveal, 100);
+}
+
+function triggerReveal() {
+  const activeEl = document.querySelector('.screen.active');
+  if (!activeEl) return;
+  activeEl.querySelectorAll('.reveal').forEach((el, i) => {
+    setTimeout(() => el.classList.add('in'), i * 90);
+  });
+}
+
+window.onload = () => {
+  document.querySelectorAll('.menu-tab').forEach(t => {
+    t.addEventListener('click', function() {
+      document.querySelectorAll('.menu-tab').forEach(x => x.classList.remove('active'));
+      this.classList.add('active');
+    });
+  });
+  triggerReveal();
+};
+</script>
+</body>
+</html>
