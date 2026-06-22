@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CobranzaAI — Plataforma Agéntica</title>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --gold:#C9921A;--gold-light:#F0B429;--gold-faint:#FFF8E7;
+    --dark:#0F1923;--dark2:#1A2635;--dark3:#243447;
+    --slate:#4A6080;--slate-light:#7A96B4;
+    --white:#FFFFFF;--off:#F4F7FB;--border:#DDE4EE;
+    --green:#1DB954;--red:#E53E3E;--blue:#2B6CB0;
+  }
+  body{font-family:'Lexend',sans-serif;background:var(--dark);color:var(--white);min-height:100vh;overflow-x:hidden}
+
+  /* TOP NAV */
+  .topnav{display:flex;align-items:center;justify-content:space-between;padding:16px 32px;background:var(--dark2);border-bottom:1px solid rgba(201,146,26,0.2)}
+  .logo{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:700;color:var(--white)}
+  .logo-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--gold),var(--gold-light));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px}
+  .logo span{color:var(--gold-light)}
+  .tab-group{display:flex;gap:4px;background:var(--dark3);border-radius:10px;padding:4px}
+  .tab-btn{padding:8px 20px;border-radius:7px;border:none;cursor:pointer;font-family:'Lexend',sans-serif;font-size:13px;font-weight:500;transition:.2s;color:var(--slate-light);background:transparent}
+  .tab-btn.active{background:var(--gold);color:var(--dark);font-weight:600}
+  .badge{background:var(--gold-faint);color:var(--gold);font-size:11px;padding:2px 8px;border-radius:20px;margin-left:6px;font-weight:600}
+
+  /* VIEWS */
+  .view{display:none;animation:fadeIn .3s ease}
+  .view.active{display:block}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+  /* ─── DASHBOARD VIEW ─── */
+  .dash-wrap{padding:28px 32px;max-width:1200px;margin:0 auto}
+  .dash-header{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:24px}
+  .dash-title{font-size:22px;font-weight:700}
+  .dash-title small{display:block;font-size:13px;font-weight:400;color:var(--slate-light);margin-top:2px}
+  .btn-primary{background:var(--gold);color:var(--dark);border:none;padding:10px 20px;border-radius:8px;font-family:'Lexend',sans-serif;font-weight:600;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px}
+
+  .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
+  .kpi{background:var(--dark2);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:20px 22px}
+  .kpi-label{font-size:11px;font-weight:500;color:var(--slate-light);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+  .kpi-value{font-size:28px;font-weight:700;color:var(--white);line-height:1}
+  .kpi-sub{font-size:12px;color:var(--slate-light);margin-top:6px}
+  .kpi-sub.up{color:var(--green)}
+  .kpi-sub.gold{color:var(--gold-light)}
+
+  .table-card{background:var(--dark2);border:1px solid rgba(255,255,255,0.06);border-radius:14px;overflow:hidden}
+  .table-head{display:flex;align-items:center;justify-content:space-between;padding:18px 24px;border-bottom:1px solid rgba(255,255,255,0.06)}
+  .table-head h3{font-size:15px;font-weight:600}
+  .search-box{display:flex;align-items:center;gap:8px;background:var(--dark3);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:8px 14px;font-size:13px;color:var(--slate-light)}
+  .search-box input{background:transparent;border:none;outline:none;font-family:'Lexend',sans-serif;font-size:13px;color:var(--white);width:180px}
+  table{width:100%;border-collapse:collapse}
+  thead tr{background:rgba(255,255,255,0.03)}
+  th{padding:12px 20px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--slate-light)}
+  td{padding:14px 20px;border-top:1px solid rgba(255,255,255,0.05);font-size:13px;vertical-align:middle}
+  tr:hover td{background:rgba(255,255,255,0.02)}
+  .avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--dark3),var(--slate));display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--gold-light);margin-right:10px}
+  .debtor-name{display:flex;align-items:center}
+  .amount{font-weight:600;color:var(--white)}
+  .status-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600}
+  .s-neg{background:rgba(240,180,41,0.15);color:var(--gold-light)}
+  .s-pend{background:rgba(74,96,128,0.25);color:var(--slate-light)}
+  .s-ok{background:rgba(29,185,84,0.15);color:var(--green)}
+  .s-esc{background:rgba(229,62,62,0.15);color:#FC8181}
+  .dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+  .action-btns{display:flex;gap:6px}
+  .btn-icon{width:30px;height:30px;border-radius:6px;border:1px solid rgba(255,255,255,0.1);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--slate-light);font-size:12px;transition:.15s}
+  .btn-icon:hover{background:rgba(201,146,26,0.15);color:var(--gold-light);border-color:rgba(201,146,26,0.3)}
+  .last-contact{color:var(--slate-light);font-size:12px}
+
+  /* AGENT PANEL */
+  .agent-panel{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:24px}
+  .agent-stat{background:var(--dark2);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:18px 20px;display:flex;align-items:center;gap:14px}
+  .agent-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px}
+  .agent-icon.gold{background:rgba(201,146,26,0.15);color:var(--gold-light)}
+  .agent-icon.green{background:rgba(29,185,84,0.12);color:var(--green)}
+  .agent-stat-label{font-size:12px;color:var(--slate-light);margin-bottom:4px}
+  .agent-stat-value{font-size:20px;font-weight:700}
+
+  /* ─── WHATSAPP VIEW ─── */
+  .wa-wrap{display:flex;height:calc(100vh - 65px)}
+  .wa-sidebar{width:320px;background:var(--dark2);border-right:1px solid rgba(255,255,255,0.06);display:flex;flex-direction:column}
+  .wa-sidebar-head{padding:16px;border-bottom:1px solid rgba(255,255,255,0.06)}
+  .wa-sidebar-head h3{font-size:14px;font-weight:600;margin-bottom:10px}
+  .wa-search{display:flex;align-items:center;gap:8px;background:var(--dark3);border-radius:8px;padding:8px 12px}
+  .wa-search input{background:transparent;border:none;outline:none;font-family:'Lexend',sans-serif;font-size:12px;color:var(--white);width:100%}
+  .wa-list{overflow-y:auto;flex:1}
+  .wa-item{display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.04);transition:.15s}
+  .wa-item:hover,.wa-item.active{background:rgba(201,146,26,0.08)}
+  .wa-item.active{border-left:3px solid var(--gold-light)}
+  .wa-avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--dark3),var(--slate));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--gold-light);flex-shrink:0}
+  .wa-item-info{flex:1;min-width:0}
+  .wa-item-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px}
+  .wa-item-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .wa-item-time{font-size:11px;color:var(--slate-light)}
+  .wa-item-preview{font-size:11px;color:var(--slate-light);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .unread-dot{width:18px;height:18px;background:var(--gold);border-radius:50%;font-size:10px;font-weight:700;color:var(--dark);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+  .wa-main{flex:1;display:flex;flex-direction:column;background:var(--dark)}
+  .wa-chat-header{display:flex;align-items:center;gap:12px;padding:14px 20px;background:var(--dark2);border-bottom:1px solid rgba(255,255,255,0.06)}
+  .wa-chat-avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#1A3A5C,#2B6CB0);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--white)}
+  .wa-chat-info h4{font-size:14px;font-weight:600}
+  .wa-chat-info p{font-size:11px;color:var(--slate-light)}
+  .wa-chat-actions{margin-left:auto;display:flex;gap:8px}
+  .wa-chat-btn{width:32px;height:32px;border-radius:8px;background:var(--dark3);border:1px solid rgba(255,255,255,0.08);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--slate-light);font-size:13px}
+
+  .wa-messages{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:8px}
+  .msg-row{display:flex;align-items:flex-end;gap:8px;max-width:75%;animation:msgIn .25s ease}
+  @keyframes msgIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+  .msg-row.agent{align-self:flex-start}
+  .msg-row.user{align-self:flex-end;flex-direction:row-reverse}
+  .msg-bubble{padding:10px 14px;border-radius:14px;font-size:13px;line-height:1.5}
+  .msg-row.agent .msg-bubble{background:var(--dark2);border-bottom-left-radius:4px;color:var(--white)}
+  .msg-row.user .msg-bubble{background:linear-gradient(135deg,#1A4A2E,#1DB954);border-bottom-right-radius:4px;color:var(--white)}
+  .msg-time{font-size:10px;color:var(--slate-light);margin-top:4px;text-align:right}
+  .msg-row.agent .msg-time{text-align:left}
+  .msg-icon{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+  .msg-icon.bot{background:linear-gradient(135deg,var(--gold),var(--gold-light));color:var(--dark)}
+  .msg-icon.human{background:var(--dark3);color:var(--slate-light)}
+
+  .tool-call{display:flex;align-items:center;gap:8px;background:rgba(201,146,26,0.08);border:1px solid rgba(201,146,26,0.2);border-radius:8px;padding:8px 12px;font-size:11px;color:var(--gold-light);align-self:flex-start;margin:4px 0;animation:msgIn .25s ease}
+  .tool-call i{color:var(--gold)}
+
+  .typing-indicator{display:flex;align-items:center;gap:8px;align-self:flex-start;padding:6px 0}
+  .typing-dots{display:flex;gap:4px}
+  .typing-dots span{width:6px;height:6px;border-radius:50%;background:var(--slate-light);animation:dot 1.2s infinite}
+  .typing-dots span:nth-child(2){animation-delay:.2s}
+  .typing-dots span:nth-child(3){animation-delay:.4s}
+  @keyframes dot{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-6px);opacity:1}}
+
+  .wa-input-bar{display:flex;align-items:center;gap:10px;padding:14px 20px;background:var(--dark2);border-top:1px solid rgba(255,255,255,0.06)}
+  .wa-input{flex:1;background:var(--dark3);border:1px solid rgba(255,255,255,0.08);border-radius:24px;padding:10px 18px;font-family:'Lexend',sans-serif;font-size:13px;color:var(--white);outline:none}
+  .wa-input::placeholder{color:var(--slate-light)}
+  .wa-send{width:40px;height:40px;border-radius:50%;background:var(--gold);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--dark);font-size:15px}
+
+  /* INFO PANEL */
+  .wa-info{width:280px;background:var(--dark2);border-left:1px solid rgba(255,255,255,0.06);padding:20px;overflow-y:auto}
+  .info-section{margin-bottom:24px}
+  .info-section h4{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--slate-light);font-weight:600;margin-bottom:12px}
+  .info-row{display:flex;justify-content:space-between;margin-bottom:8px}
+  .info-label{font-size:12px;color:var(--slate-light)}
+  .info-value{font-size:12px;font-weight:600;color:var(--white)}
+  .info-value.gold{color:var(--gold-light)}
+  .info-value.red{color:#FC8181}
+  .timeline-item{display:flex;gap:10px;margin-bottom:12px}
+  .t-dot{width:8px;height:8px;border-radius:50%;background:var(--gold);flex-shrink:0;margin-top:4px}
+  .t-text{font-size:12px;color:var(--slate-light)}
+  .t-text strong{color:var(--white);display:block;font-size:12px}
+
+  /* RESTART */
+  .restart-btn{position:fixed;bottom:20px;right:20px;background:var(--dark3);border:1px solid rgba(255,255,255,0.1);color:var(--slate-light);padding:8px 16px;border-radius:20px;cursor:pointer;font-family:'Lexend',sans-serif;font-size:12px;display:flex;align-items:center;gap:6px;z-index:99;transition:.2s}
+  .restart-btn:hover{background:rgba(201,146,26,0.15);color:var(--gold-light);border-color:rgba(201,146,26,0.3)}
+
+  @media(max-width:900px){
+    .kpi-row{grid-template-columns:repeat(2,1fr)}
+    .wa-info{display:none}
+    .wa-sidebar{width:260px}
+  }
+</style>
+</head>
+<body>
+
+<!-- TOP NAV -->
+<nav class="topnav">
+  <div class="logo">
+    <div class="logo-icon"><i class="fa-solid fa-robot"></i></div>
+    Cobranza<span>AI</span>
+  </div>
+  <div class="tab-group">
+    <button class="tab-btn active" onclick="switchView('dashboard')"><i class="fa-solid fa-grid-2"></i> Panel Admin</button>
+    <button class="tab-btn" onclick="switchView('whatsapp')"><i class="fa-brands fa-whatsapp"></i> Conversaciones <span class="badge">3</span></button>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <div style="text-align:right">
+      <div style="font-size:13px;font-weight:600">Administrador</div>
+      <div style="font-size:11px;color:var(--slate-light)">Cobranza Corp. S.A.</div>
+    </div>
+    <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-light));display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--dark)">A</div>
+  </div>
+</nav>
+
+<!-- DASHBOARD VIEW -->
+<div id="view-dashboard" class="view active">
+  <div class="dash-wrap">
+    <div class="dash-header">
+      <div class="dash-title">Panel de Cobranza <small>Resumen en tiempo real — actualizado hace 2 min</small></div>
+      <button class="btn-primary"><i class="fa-solid fa-plus"></i> Nueva Campaña</button>
+    </div>
+
+    <div class="kpi-row">
+      <div class="kpi">
+        <div class="kpi-label"><i class="fa-solid fa-users"></i> Deudores Activos</div>
+        <div class="kpi-value">247</div>
+        <div class="kpi-sub up"><i class="fa-solid fa-arrow-up"></i> 18 nuevos esta semana</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label"><i class="fa-solid fa-comment-dots"></i> En Negociación</div>
+        <div class="kpi-value">89</div>
+        <div class="kpi-sub gold">36% en acuerdo inminente</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label"><i class="fa-solid fa-circle-check"></i> Acuerdos Cerrados</div>
+        <div class="kpi-value">134</div>
+        <div class="kpi-sub up">S/ 412,800 recuperados</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label"><i class="fa-solid fa-clock"></i> Tiempo Resp. Promedio</div>
+        <div class="kpi-value">1.8m</div>
+        <div class="kpi-sub up"><i class="fa-solid fa-arrow-down"></i> antes: 4.2 horas</div>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <div class="table-head">
+        <h3>Deudores Activos</h3>
+        <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input placeholder="Buscar deudor..." /></div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Deudor</th>
+            <th>Monto</th>
+            <th>Estado</th>
+            <th>Últ. Contacto</th>
+            <th>Mensajes</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="debtor-table">
+        </tbody>
+      </table>
+    </div>
+
+    <div class="agent-panel">
+      <div class="agent-stat">
+        <div class="agent-icon gold"><i class="fa-solid fa-brain-circuit"></i></div>
+        <div>
+          <div class="agent-stat-label">Decisiones del Agente Hoy</div>
+          <div class="agent-stat-value">1,284 <span style="font-size:14px;color:var(--slate-light)">acciones</span></div>
+        </div>
+      </div>
+      <div class="agent-stat">
+        <div class="agent-icon green"><i class="fa-solid fa-handshake"></i></div>
+        <div>
+          <div class="agent-stat-label">Tasa de Acuerdo</div>
+          <div class="agent-stat-value" style="color:var(--green)">54.2%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- WHATSAPP VIEW -->
+<div id="view-whatsapp" class="view">
+  <div class="wa-wrap">
+    <!-- Sidebar -->
+    <div class="wa-sidebar">
+      <div class="wa-sidebar-head">
+        <h3>Conversaciones</h3>
+        <div class="wa-search"><i class="fa-solid fa-magnifying-glass" style="color:var(--slate-light);font-size:12px"></i><input placeholder="Buscar..." /></div>
+      </div>
+      <div class="wa-list" id="wa-list"></div>
+    </div>
+
+    <!-- Chat -->
+    <div class="wa-main">
+      <div class="wa-chat-header">
+        <div class="wa-chat-avatar" id="chat-avatar">RV</div>
+        <div class="wa-chat-info">
+          <h4 id="chat-name">Ricardo Villanueva</h4>
+          <p id="chat-status"><span style="color:var(--gold-light)">●</span> Agente activo — negociando</p>
+        </div>
+        <div class="wa-chat-actions">
+          <div class="wa-chat-btn"><i class="fa-solid fa-circle-info"></i></div>
+          <div class="wa-chat-btn"><i class="fa-solid fa-ellipsis-vertical"></i></div>
+        </div>
+      </div>
+
+      <div class="wa-messages" id="wa-messages"></div>
+
+      <div class="wa-input-bar">
+        <input class="wa-input" placeholder="Supervisión manual desactivada — el agente gestiona la conversación" disabled />
+        <button class="wa-send"><i class="fa-solid fa-paper-plane"></i></button>
+      </div>
+    </div>
+
+    <!-- Info panel -->
+    <div class="wa-info">
+      <div class="info-section">
+        <h4>Perfil del Deudor</h4>
+        <div class="info-row"><span class="info-label">Nombre</span><span class="info-value">Ricardo Villanueva</span></div>
+        <div class="info-row"><span class="info-label">DNI</span><span class="info-value">42781930</span></div>
+        <div class="info-row"><span class="info-label">Deuda original</span><span class="info-value gold">S/ 8,400</span></div>
+        <div class="info-row"><span class="info-label">Intereses</span><span class="info-value red">S/ 1,260</span></div>
+        <div class="info-row"><span class="info-label">Total adeudado</span><span class="info-value red">S/ 9,660</span></div>
+        <div class="info-row"><span class="info-label">Mora</span><span class="info-value">187 días</span></div>
+      </div>
+      <div class="info-section">
+        <h4>Memoria del Agente</h4>
+        <div class="timeline-item">
+          <div class="t-dot"></div>
+          <div class="t-text"><strong>Oferta activa</strong>S/ 7,200 en 3 cuotas — pendiente confirmación</div>
+        </div>
+        <div class="timeline-item">
+          <div class="t-dot" style="background:var(--slate-light)"></div>
+          <div class="t-text"><strong>15 mayo</strong>Cliente prometió llamar. No contactó.</div>
+        </div>
+        <div class="timeline-item">
+          <div class="t-dot" style="background:var(--slate-light)"></div>
+          <div class="t-text"><strong>02 mayo</strong>Rechazó pago único. Prefiere cuotas.</div>
+        </div>
+      </div>
+      <div class="info-section">
+        <h4>Política Aplicada</h4>
+        <div class="info-row"><span class="info-label">Descuento máx.</span><span class="info-value">25%</span></div>
+        <div class="info-row"><span class="info-label">Cuotas máx.</span><span class="info-value">6 meses</span></div>
+        <div class="info-row"><span class="info-label">Escalación</span><span class="info-value">Si rechaza 3 veces</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<button class="restart-btn" onclick="restartDemo()"><i class="fa-solid fa-rotate-right"></i> Reiniciar demo</button>
+
+<script>
+function switchView(v){
+  document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'))
+  document.getElementById('view-'+v).classList.add('active')
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>{
+    b.classList.toggle('active',(i==0&&v=='dashboard')||(i==1&&v=='whatsapp'))
+  })
+}
+
+// DEBTORS TABLE
+const debtors=[
+  {name:'Ricardo Villanueva',init:'RV',amount:'S/ 9,660',status:'s-neg',label:'En negociación',last:'hace 2 min',msgs:18},
+  {name:'María Condori',init:'MC',amount:'S/ 4,200',status:'s-ok',label:'Acuerdo cerrado',last:'hace 1h',msgs:11},
+  {name:'Jorge Palomino',init:'JP',amount:'S/ 15,800',status:'s-esc',label:'Escalado',last:'hace 3h',msgs:24},
+  {name:'Ana Torres',init:'AT',amount:'S/ 2,900',status:'s-pend',label:'Pendiente',last:'ayer',msgs:3},
+  {name:'Luis Quispe',init:'LQ',amount:'S/ 7,450',status:'s-neg',label:'En negociación',last:'hace 30 min',msgs:9},
+  {name:'Carmen Flores',init:'CF',amount:'S/ 1,200',status:'s-ok',label:'Acuerdo cerrado',last:'hace 2h',msgs:7},
+  {name:'David Mamani',init:'DM',amount:'S/ 22,100',status:'s-pend',label:'Pendiente',last:'hace 4h',msgs:1},
+]
+const tbody=document.getElementById('debtor-table')
+debtors.forEach(d=>{
+  tbody.innerHTML+=`<tr>
+    <td><div class="debtor-name"><div class="avatar">${d.init}</div>${d.name}</div></td>
+    <td><span class="amount">${d.amount}</span></td>
+    <td><span class="status-pill ${d.status}"><span class="dot"></span>${d.label}</span></td>
+    <td><span class="last-contact">${d.last}</span></td>
+    <td><span style="font-size:13px;color:var(--slate-light)">${d.msgs} msgs</span></td>
+    <td><div class="action-btns">
+      <button class="btn-icon" title="Ver chat" onclick="switchView('whatsapp')"><i class="fa-brands fa-whatsapp"></i></button>
+      <button class="btn-icon" title="Ver perfil"><i class="fa-solid fa-user"></i></button>
+      <button class="btn-icon" title="Historial"><i class="fa-solid fa-clock-rotate-left"></i></button>
+    </div></td>
+  </tr>`
+})
+
+// WA CONTACTS
+const contacts=[
+  {name:'Ricardo Villanueva',init:'RV',preview:'Agente: Le propongo S/ 7,200 en 3 cuotas...',time:'02:14',unread:1,active:true},
+  {name:'Luis Quispe',init:'LQ',preview:'Agente: Buenos días Luis, soy el asistente...',time:'01:48',unread:0,active:false},
+  {name:'Jorge Palomino',init:'JP',preview:'Escalado a asesor humano',time:'Ayer',unread:2,active:false},
+  {name:'Ana Torres',init:'AT',preview:'Pendiente de primer contacto',time:'Ayer',unread:0,active:false},
+  {name:'David Mamani',init:'DM',preview:'Agente: Hola David, lo contactamos por...',time:'Lun',unread:0,active:false},
+]
+const waList=document.getElementById('wa-list')
+contacts.forEach(c=>{
+  waList.innerHTML+=`<div class="wa-item ${c.active?'active':''}" onclick="selectContact(this,'${c.name}','${c.init}')">
+    <div class="wa-avatar">${c.init}</div>
+    <div class="wa-item-info">
+      <div class="wa-item-top"><span class="wa-item-name">${c.name}</span><span class="wa-item-time">${c.time}</span></div>
+      <div class="wa-item-preview">${c.preview}</div>
+    </div>
+    ${c.unread?`<div class="unread-dot">${c.unread}</div>`:''}
+  </div>`
+})
+
+function selectContact(el,name,init){
+  document.querySelectorAll('.wa-item').forEach(i=>i.classList.remove('active'))
+  el.classList.add('active')
+}
+
+// CONVERSATION SCRIPT
+const conversation=[
+  {type:'tool',text:'Consultando historial de pagos: RV-42781930...'},
+  {type:'agent',text:'Hola Ricardo, buenos días. Le contactamos de Cobranza Corp. Tenemos pendiente su cuenta por S/ 9,660 que lleva 187 días en mora. Queremos ayudarle a regularizar esta situación hoy.'},
+  {type:'user',text:'Hola. Sí, sé que debo eso. Pero ahora no tengo para pagar todo.'},
+  {type:'tool',text:'Consultando política de negociación: mora_187d, segmento_B...'},
+  {type:'agent',text:'Lo entiendo completamente. Por eso quiero ofrecerle una alternativa real. Podemos reestructurar su deuda a S/ 7,200 en 3 cuotas de S/ 2,400 cada una. Eso es un ahorro de S/ 2,460 frente al total actual.'},
+  {type:'user',text:'Mmm eso sigue siendo mucho. ¿No puede ser en 6 cuotas?'},
+  {type:'tool',text:'Verificando límite máximo de cuotas por política...'},
+  {type:'agent',text:'Sí, podemos extenderlo. En 6 cuotas serían S/ 1,250 mensuales sobre S/ 7,500 total. Es nuestra oferta máxima permitida. ¿Le parece viable comenzar el primer pago la próxima semana?'},
+  {type:'user',text:'Sí, la próxima semana podría. Pero necesito pensarlo un poco más.'},
+  {type:'tool',text:'Registrando compromiso: oferta 6 cuotas S/ 1,250 — respuesta pendiente...'},
+  {type:'agent',text:'Perfecto Ricardo. Le doy hasta mañana para confirmar. Si acepta hoy mismo le enviamos el convenio por WhatsApp para firmarlo digitalmente y queda activado de inmediato. ¿Prefiere confirmar ahora o mañana a las 10am?'},
+]
+
+let msgIdx=0,msgTimer=null
+const msgs=document.getElementById('wa-messages')
+
+function addMsg(m){
+  if(m.type==='tool'){
+    const el=document.createElement('div')
+    el.className='tool-call'
+    el.innerHTML=`<i class="fa-solid fa-wrench"></i><span>${m.text}</span>`
+    msgs.appendChild(el)
+  } else {
+    const row=document.createElement('div')
+    row.className=`msg-row ${m.type==='agent'?'agent':'user'}`
+    const now=new Date()
+    const t=`${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`
+    row.innerHTML=`
+      <div class="msg-icon ${m.type==='agent'?'bot':'human'}">
+        ${m.type==='agent'?'<i class="fa-solid fa-robot"></i>':'RV'}
+      </div>
+      <div>
+        <div class="msg-bubble">${m.text}</div>
+        <div class="msg-time">${t}</div>
+      </div>`
+    msgs.appendChild(row)
+  }
+  msgs.scrollTop=msgs.scrollHeight
+}
+
+function showTyping(){
+  const el=document.createElement('div')
+  el.className='typing-indicator'
+  el.id='typing'
+  el.innerHTML=`<div class="msg-icon bot"><i class="fa-solid fa-robot"></i></div><div class="typing-dots"><span></span><span></span><span></span></div>`
+  msgs.appendChild(el)
+  msgs.scrollTop=msgs.scrollHeight
+}
+function removeTyping(){document.getElementById('typing')?.remove()}
+
+function runNext(){
+  if(msgIdx>=conversation.length)return
+  const m=conversation[msgIdx++]
+  const delay=m.type==='tool'?400:m.type==='user'?600:900
+
+  if(m.type==='tool'){
+    setTimeout(()=>{addMsg(m);runNext()},delay)
+  } else if(m.type==='agent'){
+    showTyping()
+    setTimeout(()=>{removeTyping();addMsg(m);setTimeout(runNext,1200)},delay+800)
+  } else {
+    setTimeout(()=>{addMsg(m);setTimeout(runNext,800)},delay)
+  }
+}
+
+function restartDemo(){
+  msgs.innerHTML=''
+  msgIdx=0
+  clearTimeout(msgTimer)
+  setTimeout(runNext,600)
+}
+
+// Auto-start
+setTimeout(runNext,800)
+</script>
+</body>
+</html>
