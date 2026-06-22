@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bot IA WhatsApp com Roteamento por Confiança — Demo</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    :root {
+      --green: #075E54;
+      --green-mid: #128C7E;
+      --green-light: #25D366;
+      --green-pale: #DCF8C6;
+      --wa-bg: #E5DDD5;
+      --wa-sent: #DCF8C6;
+      --wa-recv: #FFFFFF;
+      --teal: #0D9488;
+      --teal-light: #CCFBF1;
+      --gold: #D97706;
+      --gold-light: #FEF3C7;
+      --danger: #DC2626;
+      --danger-light: #FEE2E2;
+      --warn: #F59E0B;
+      --warn-light: #FFFBEB;
+      --bg: #F0FDFA;
+      --surface: #FFFFFF;
+      --text: #134E4A;
+      --text-muted: #5EEAD4;
+      --muted: #6B7280;
+      --border: #99F6E4;
+      --dark: #0F172A;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--bg);
+      color: var(--dark);
+      min-height: 100vh;
+    }
+
+    /* HEADER */
+    .header {
+      background: var(--green);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+    }
+    .header-icon {
+      width: 40px; height: 40px;
+      background: var(--green-light);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; color: #fff;
+    }
+    .header h1 { font-size: 17px; font-weight: 800; color: #fff; }
+    .header p { font-size: 11px; color: rgba(255,255,255,0.7); margin-top: 1px; }
+    .header-badge {
+      margin-left: auto;
+      background: var(--green-light);
+      color: #fff;
+      font-size: 10px; font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* TABS */
+    .tabs {
+      background: var(--green);
+      display: flex;
+      padding: 0 20px;
+      gap: 4px;
+    }
+    .tab {
+      padding: 9px 18px;
+      font-size: 12px; font-weight: 700;
+      color: rgba(255,255,255,0.6);
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s;
+      letter-spacing: 0.3px;
+    }
+    .tab.active {
+      color: #fff;
+      border-bottom-color: var(--green-light);
+    }
+    .tab:hover { color: rgba(255,255,255,0.9); }
+
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    /* CHAT PANEL */
+    .chat-wrap {
+      max-width: 960px;
+      margin: 28px auto;
+      padding: 0 16px;
+      display: grid;
+      grid-template-columns: 1fr 300px;
+      gap: 20px;
+    }
+
+    /* PHONE SHELL */
+    .phone-shell {
+      background: #1F2937;
+      border-radius: 36px;
+      padding: 14px;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.35), 0 0 0 1px #374151;
+      max-width: 340px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    .phone-notch {
+      width: 100px; height: 20px;
+      background: #111827;
+      border-radius: 12px;
+      margin: 0 auto 10px;
+    }
+    .phone-screen {
+      border-radius: 24px;
+      overflow: hidden;
+      background: var(--wa-bg);
+    }
+
+    /* WA HEADER */
+    .wa-header {
+      background: var(--green);
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .wa-avatar {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, #25D366, #075E54);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; color: #fff;
+      flex-shrink: 0;
+    }
+    .wa-contact { flex: 1; }
+    .wa-contact .name { font-size: 13px; font-weight: 700; color: #fff; }
+    .wa-contact .status { font-size: 10px; color: rgba(255,255,255,0.7); margin-top: 1px; }
+    .wa-actions { display: flex; gap: 12px; color: rgba(255,255,255,0.8); font-size: 14px; }
+
+    /* MESSAGES */
+    .wa-messages {
+      height: 400px;
+      overflow-y: auto;
+      padding: 12px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      background: var(--wa-bg);
+      background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23128C7E' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    .wa-messages::-webkit-scrollbar { width: 3px; }
+    .wa-messages::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 4px; }
+
+    .msg {
+      max-width: 80%;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+    .msg.show { opacity: 1; transform: translateY(0); }
+
+    .msg.user { align-self: flex-end; }
+    .msg.bot { align-self: flex-start; }
+    .msg.system { align-self: center; max-width: 90%; }
+
+    .bubble {
+      padding: 7px 10px;
+      border-radius: 10px;
+      font-size: 12px;
+      line-height: 1.5;
+      position: relative;
+    }
+    .msg.user .bubble {
+      background: var(--wa-sent);
+      border-bottom-right-radius: 2px;
+      color: #1a1a1a;
+    }
+    .msg.bot .bubble {
+      background: var(--wa-recv);
+      border-bottom-left-radius: 2px;
+      color: #1a1a1a;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    .msg.system .bubble {
+      background: rgba(0,0,0,0.08);
+      border-radius: 8px;
+      font-size: 10px;
+      text-align: center;
+      color: #555;
+      padding: 5px 12px;
+    }
+
+    .msg-time {
+      font-size: 9px;
+      color: #aaa;
+      text-align: right;
+      margin-top: 2px;
+      padding-right: 2px;
+    }
+    .msg.bot .msg-time { text-align: left; }
+
+    /* CONFIDENCE BADGE */
+    .conf-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 9px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 20px;
+      margin-top: 5px;
+    }
+    .conf-high { background: #DCFCE7; color: #16A34A; }
+    .conf-mid  { background: #FEF9C3; color: #A16207; }
+    .conf-low  { background: #FEE2E2; color: #DC2626; }
+
+    /* ESCALATION CARD */
+    .escalation-card {
+      background: linear-gradient(135deg, #FEF3C7, #FFFBEB);
+      border: 1px solid #FDE68A;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 10px;
+      color: #92400E;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .escalation-card .esc-title {
+      font-weight: 800;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .escalation-card .esc-agent {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 4px;
+    }
+    .agent-dot {
+      width: 8px; height: 8px;
+      background: #25D366;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* TYPING INDICATOR */
+    .typing-indicator {
+      display: none;
+      align-self: flex-start;
+      padding: 8px 12px;
+      background: #fff;
+      border-radius: 10px;
+      border-bottom-left-radius: 2px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    .typing-indicator.show { display: flex; gap: 4px; align-items: center; }
+    .typing-dot {
+      width: 6px; height: 6px;
+      background: #aaa;
+      border-radius: 50%;
+      animation: bounce 1.2s infinite;
+    }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce {
+      0%, 60%, 100% { transform: translateY(0); }
+      30% { transform: translateY(-5px); }
+    }
+
+    /* WA INPUT */
+    .wa-input {
+      background: #F0F0F0;
+      padding: 8px 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .wa-input-box {
+      flex: 1;
+      background: #fff;
+      border-radius: 20px;
+      padding: 7px 12px;
+      font-size: 11px;
+      color: #aaa;
+      font-family: 'Nunito', sans-serif;
+    }
+    .wa-send-btn {
+      width: 34px; height: 34px;
+      background: var(--green);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff;
+      font-size: 13px;
+    }
+
+    /* SIDE PANEL */
+    .side-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border-radius: 14px;
+      padding: 14px 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      border: 1px solid var(--border);
+    }
+    .stat-card h3 {
+      font-size: 10px;
+      font-weight: 800;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 10px;
+    }
+
+    .stat-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .stat-item {
+      background: var(--bg);
+      border-radius: 10px;
+      padding: 10px;
+      text-align: center;
+    }
+    .stat-item .val {
+      font-size: 20px;
+      font-weight: 900;
+      color: var(--teal);
+      line-height: 1;
+    }
+    .stat-item .lbl {
+      font-size: 9px;
+      color: var(--muted);
+      margin-top: 3px;
+      font-weight: 600;
+    }
+
+    .conf-meter {
+      margin-top: 6px;
+    }
+    .conf-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .conf-row .conf-lbl { font-size: 10px; font-weight: 700; width: 80px; color: var(--dark); }
+    .conf-bar-track {
+      flex: 1;
+      height: 7px;
+      background: #E5E7EB;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .conf-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 1.5s ease;
+    }
+    .fill-green { background: #16A34A; }
+    .fill-yellow { background: #F59E0B; }
+    .fill-red { background: #DC2626; }
+    .conf-pct { font-size: 10px; font-weight: 800; width: 30px; text-align: right; }
+
+    /* THRESHOLD */
+    .threshold-wrap {
+      background: var(--teal-light);
+      border-radius: 10px;
+      padding: 10px 12px;
+    }
+    .threshold-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--teal);
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .threshold-bar {
+      height: 8px;
+      background: #99F6E4;
+      border-radius: 4px;
+      position: relative;
+    }
+    .threshold-fill {
+      width: 72%;
+      height: 100%;
+      background: var(--teal);
+      border-radius: 4px;
+    }
+    .threshold-handle {
+      position: absolute;
+      top: 50%;
+      left: 72%;
+      transform: translate(-50%, -50%);
+      width: 16px; height: 16px;
+      background: #fff;
+      border: 3px solid var(--teal);
+      border-radius: 50%;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    }
+    .threshold-note {
+      font-size: 9px;
+      color: var(--teal);
+      margin-top: 6px;
+      font-weight: 600;
+    }
+
+    /* RESTART BTN */
+    .restart-btn {
+      background: var(--green);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 10px 16px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-family: 'Nunito', sans-serif;
+      transition: background 0.2s;
+    }
+    .restart-btn:hover { background: var(--green-mid); }
+
+    /* ADMIN PANEL */
+    .admin-wrap {
+      max-width: 960px;
+      margin: 28px auto;
+      padding: 0 16px;
+    }
+
+    .admin-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .admin-card {
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 18px 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+      border: 1px solid var(--border);
+    }
+    .admin-card h2 {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--dark);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .admin-card h2 i { color: var(--teal); }
+
+    /* KB TABLE */
+    .kb-table { width: 100%; border-collapse: collapse; }
+    .kb-table th {
+      font-size: 9px;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: var(--muted);
+      letter-spacing: 0.5px;
+      padding: 0 8px 8px;
+      text-align: left;
+      border-bottom: 2px solid var(--border);
+    }
+    .kb-table td {
+      padding: 9px 8px;
+      font-size: 11px;
+      border-bottom: 1px solid #F3F4F6;
+      vertical-align: middle;
+    }
+    .kb-table tr:last-child td { border-bottom: none; }
+    .kb-tag {
+      background: var(--teal-light);
+      color: var(--teal);
+      font-size: 9px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 20px;
+    }
+    .kb-edit {
+      color: var(--teal);
+      font-size: 11px;
+      cursor: pointer;
+    }
+    .kb-active {
+      display: inline-block;
+      width: 8px; height: 8px;
+      background: #16A34A;
+      border-radius: 50%;
+    }
+
+    /* ESCALATION TABLE */
+    .esc-table { width: 100%; border-collapse: collapse; }
+    .esc-table th {
+      font-size: 9px;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: var(--muted);
+      letter-spacing: 0.5px;
+      padding: 0 8px 8px;
+      text-align: left;
+      border-bottom: 2px solid var(--border);
+    }
+    .esc-table td {
+      padding: 9px 8px;
+      font-size: 11px;
+      border-bottom: 1px solid #F3F4F6;
+    }
+    .esc-table tr:last-child td { border-bottom: none; }
+    .esc-conf-badge {
+      font-size: 9px;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 20px;
+    }
+    .badge-red { background: #FEE2E2; color: #DC2626; }
+    .badge-yellow { background: #FEF9C3; color: #A16207; }
+    .esc-resolved { color: #16A34A; font-size: 10px; font-weight: 700; }
+    .esc-open { color: #F59E0B; font-size: 10px; font-weight: 700; }
+
+    /* STATS ROW */
+    .stats-full {
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 18px 24px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+      border: 1px solid var(--border);
+      margin-bottom: 16px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0;
+    }
+    .big-stat {
+      text-align: center;
+      padding: 0 16px;
+      border-right: 1px solid var(--border);
+    }
+    .big-stat:last-child { border-right: none; }
+    .big-stat .num {
+      font-size: 30px;
+      font-weight: 900;
+      color: var(--teal);
+      line-height: 1;
+    }
+    .big-stat .label {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 4px;
+      font-weight: 600;
+    }
+
+    /* FOOTER */
+    .footer {
+      background: var(--green);
+      margin-top: 40px;
+      padding: 14px 24px;
+      text-align: center;
+      font-size: 11px;
+      color: rgba(255,255,255,0.6);
+    }
+
+    @media (max-width: 680px) {
+      .chat-wrap { grid-template-columns: 1fr; }
+      .admin-grid { grid-template-columns: 1fr; }
+      .stats-full { grid-template-columns: repeat(2, 1fr); }
+      .big-stat:nth-child(2) { border-right: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-icon"><i class="fa-brands fa-whatsapp"></i></div>
+  <div>
+    <h1>Bot IA WhatsApp com Roteamento por Confiança</h1>
+    <p>Atendimento 24/7 com escalada automática para agente humano quando necessário</p>
+  </div>
+  <div class="header-badge">Demo Interativa</div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('chat')"><i class="fa-solid fa-comments" style="margin-right:5px"></i>Chat ao Vivo</div>
+  <div class="tab" onclick="switchTab('admin')"><i class="fa-solid fa-sliders" style="margin-right:5px"></i>Painel de Gestão</div>
+</div>
+
+<!-- CHAT PANEL -->
+<div id="panel-chat" class="panel active">
+  <div class="chat-wrap">
+
+    <div class="phone-shell">
+      <div class="phone-notch"></div>
+      <div class="phone-screen">
+        <div class="wa-header">
+          <div class="wa-avatar"><i class="fa-solid fa-robot"></i></div>
+          <div class="wa-contact">
+            <div class="name">Suporte AtendIA</div>
+            <div class="status" id="bot-status">online</div>
+          </div>
+          <div class="wa-actions">
+            <i class="fa-solid fa-video"></i>
+            <i class="fa-solid fa-phone"></i>
+            <i class="fa-solid fa-ellipsis-vertical"></i>
+          </div>
+        </div>
+
+        <div class="wa-messages" id="messages">
+          <!-- messages injected by JS -->
+          <div class="typing-indicator" id="typing">
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+          </div>
+        </div>
+
+        <div class="wa-input">
+          <i class="fa-solid fa-face-smile" style="color:#aaa;font-size:16px"></i>
+          <div class="wa-input-box">Digite uma mensagem</div>
+          <i class="fa-solid fa-paperclip" style="color:#aaa;font-size:13px"></i>
+          <div class="wa-send-btn"><i class="fa-solid fa-microphone"></i></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-panel">
+      <div class="stat-card">
+        <h3><i class="fa-solid fa-chart-bar" style="margin-right:5px;color:var(--teal)"></i>Hoje em tempo real</h3>
+        <div class="stat-row">
+          <div class="stat-item">
+            <div class="val" id="cnt-total">0</div>
+            <div class="lbl">Mensagens</div>
+          </div>
+          <div class="stat-item">
+            <div class="val" style="color:#16A34A" id="cnt-auto">0%</div>
+            <div class="lbl">Automáticas</div>
+          </div>
+          <div class="stat-item">
+            <div class="val" style="color:var(--gold)" id="cnt-esc">0</div>
+            <div class="lbl">Escaladas</div>
+          </div>
+          <div class="stat-item">
+            <div class="val" style="color:#0EA5E9" id="cnt-avg">--</div>
+            <div class="lbl">Resp. média</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <h3><i class="fa-solid fa-brain" style="margin-right:5px;color:var(--teal)"></i>Confiança por intenção</h3>
+        <div class="conf-meter">
+          <div class="conf-row">
+            <span class="conf-lbl">Horários</span>
+            <div class="conf-bar-track"><div class="conf-bar-fill fill-green" id="bar1" style="width:0"></div></div>
+            <span class="conf-pct" style="color:#16A34A" id="pct1">96%</span>
+          </div>
+          <div class="conf-row">
+            <span class="conf-lbl">Entregas</span>
+            <div class="conf-bar-track"><div class="conf-bar-fill fill-green" id="bar2" style="width:0"></div></div>
+            <span class="conf-pct" style="color:#16A34A" id="pct2">91%</span>
+          </div>
+          <div class="conf-row">
+            <span class="conf-lbl">Pagamentos</span>
+            <div class="conf-bar-track"><div class="conf-bar-fill fill-yellow" id="bar3" style="width:0"></div></div>
+            <span class="conf-pct" style="color:#A16207" id="pct3">78%</span>
+          </div>
+          <div class="conf-row">
+            <span class="conf-lbl">Reclamações</span>
+            <div class="conf-bar-track"><div class="conf-bar-fill fill-red" id="bar4" style="width:0"></div></div>
+            <span class="conf-pct" style="color:#DC2626" id="pct4">34%</span>
+          </div>
+        </div>
+        <div class="threshold-wrap" style="margin-top:12px">
+          <div class="threshold-label">
+            <span>Limiar de escalada</span>
+            <span style="font-weight:900;color:var(--teal)">72%</span>
+          </div>
+          <div class="threshold-bar">
+            <div class="threshold-fill"></div>
+            <div class="threshold-handle"></div>
+          </div>
+          <div class="threshold-note"><i class="fa-solid fa-arrow-right" style="margin-right:3px"></i>Abaixo de 72% escala para humano automaticamente</div>
+        </div>
+      </div>
+
+      <button class="restart-btn" onclick="restartDemo()">
+        <i class="fa-solid fa-rotate-right"></i> Reiniciar demo
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div id="panel-admin" class="panel">
+  <div class="admin-wrap">
+
+    <div class="stats-full">
+      <div class="big-stat">
+        <div class="num">1,247</div>
+        <div class="label">Mensagens hoje</div>
+      </div>
+      <div class="big-stat">
+        <div class="num" style="color:#16A34A">89%</div>
+        <div class="label">Resolvidas pelo bot</div>
+      </div>
+      <div class="big-stat">
+        <div class="num" style="color:var(--gold)">138</div>
+        <div class="label">Escaladas a humano</div>
+      </div>
+      <div class="big-stat">
+        <div class="num" style="color:#0EA5E9">1.8s</div>
+        <div class="label">Tempo médio de resposta</div>
+      </div>
+    </div>
+
+    <div class="admin-grid">
+
+      <div class="admin-card">
+        <h2><i class="fa-solid fa-book-open"></i> Base de Conhecimento</h2>
+        <table class="kb-table">
+          <thead>
+            <tr>
+              <th>Pergunta</th>
+              <th>Categoria</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Quais os horários de atendimento?</td>
+              <td><span class="kb-tag">Geral</span></td>
+              <td><span class="kb-active"></span></td>
+              <td><i class="kb-edit fa-solid fa-pen"></i></td>
+            </tr>
+            <tr>
+              <td>Qual o prazo de entrega para minha cidade?</td>
+              <td><span class="kb-tag">Entrega</span></td>
+              <td><span class="kb-active"></span></td>
+              <td><i class="kb-edit fa-solid fa-pen"></i></td>
+            </tr>
+            <tr>
+              <td>Como faço para cancelar meu pedido?</td>
+              <td><span class="kb-tag">Pedidos</span></td>
+              <td><span class="kb-active"></span></td>
+              <td><i class="kb-edit fa-solid fa-pen"></i></td>
+            </tr>
+            <tr>
+              <td>Quais formas de pagamento aceitas?</td>
+              <td><span class="kb-tag">Pagamento</span></td>
+              <td><span class="kb-active"></span></td>
+              <td><i class="kb-edit fa-solid fa-pen"></i></td>
+            </tr>
+            <tr>
+              <td>Posso trocar um produto após 30 dias?</td>
+              <td><span class="kb-tag">Trocas</span></td>
+              <td><span class="kb-active"></span></td>
+              <td><i class="kb-edit fa-solid fa-pen"></i></td>
+            </tr>
+            <tr>
+              <td>Como acompanhar meu pedido em tempo real?</td>
+              <td><span class="kb-tag">Rastreio</span></td>
+              <td><span class="kb-active"></span></td>
+              <td><i class="kb-edit fa-solid fa-pen"></i></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="admin-card">
+        <h2><i class="fa-solid fa-arrow-up-right-dots"></i> Escaladas Recentes</h2>
+        <table class="esc-table">
+          <thead>
+            <tr>
+              <th>Usuário</th>
+              <th>Motivo</th>
+              <th>Confiança</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Maria S.</td>
+              <td>Pedido com problema</td>
+              <td><span class="esc-conf-badge badge-red">34%</span></td>
+              <td><span class="esc-resolved"><i class="fa-solid fa-circle-check"></i> Resolvido</span></td>
+            </tr>
+            <tr>
+              <td>João P.</td>
+              <td>Reembolso contestado</td>
+              <td><span class="esc-conf-badge badge-red">41%</span></td>
+              <td><span class="esc-resolved"><i class="fa-solid fa-circle-check"></i> Resolvido</span></td>
+            </tr>
+            <tr>
+              <td>Ana L.</td>
+              <td>Endereço de entrega</td>
+              <td><span class="esc-conf-badge badge-yellow">58%</span></td>
+              <td><span class="esc-open"><i class="fa-solid fa-clock"></i> Em andamento</span></td>
+            </tr>
+            <tr>
+              <td>Carlos M.</td>
+              <td>Produto danificado</td>
+              <td><span class="esc-conf-badge badge-red">29%</span></td>
+              <td><span class="esc-resolved"><i class="fa-solid fa-circle-check"></i> Resolvido</span></td>
+            </tr>
+            <tr>
+              <td>Fernanda R.</td>
+              <td>Pedido duplicado</td>
+              <td><span class="esc-conf-badge badge-yellow">63%</span></td>
+              <td><span class="esc-open"><i class="fa-solid fa-clock"></i> Em andamento</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  Demo ilustrativa — Bot IA WhatsApp com roteamento por limiar de confiança
+</div>
+
+<script>
+  // TAB SWITCH
+  function switchTab(name) {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('panel-' + name).classList.add('active');
+    const tabs = document.querySelectorAll('.tab');
+    tabs[name === 'chat' ? 0 : 1].classList.add('active');
+  }
+
+  // CONVERSATION SCRIPT
+  const SCRIPT = [
+    { delay: 600,  type: 'user', text: 'Olá boa tarde.' },
+    { delay: 1200, type: 'bot',  text: 'Olá. Bem-vindo ao suporte. Como posso te ajudar hoje?', conf: 98, confClass: 'conf-high', confLabel: 'Confiança 98%' },
+    { delay: 2400, type: 'user', text: 'Qual é o horário de atendimento de vocês?' },
+    { delay: 3400, type: 'bot',  text: 'Nosso atendimento funciona de segunda a sexta das 8h às 18h e sábados das 9h às 13h.', conf: 96, confClass: 'conf-high', confLabel: 'Confiança 96%' },
+    { delay: 5000, type: 'user', text: 'Vocês entregam para Belo Horizonte?' },
+    { delay: 6000, type: 'bot',  text: 'Sim. Para BH o prazo é de 3 a 5 dias úteis após confirmação do pagamento.', conf: 91, confClass: 'conf-high', confLabel: 'Confiança 91%' },
+    { delay: 7800, type: 'user', text: 'Quero resolver o problema com o meu pedido que chegou errado semana passada e não sei mais o que fazer' },
+    { delay: 9000, type: 'bot-low', text: 'Entendi que você teve um problema com um pedido. Para resolver da melhor forma vou te conectar com nossa equipe de suporte agora.', conf: 34, confClass: 'conf-low', confLabel: 'Confiança 34% — escalando' },
+    { delay: 10200, type: 'escalation' },
+    { delay: 11800, type: 'agent', text: 'Olá sou a Ana do suporte. Vi aqui que seu pedido chegou com problema. Pode me informar o número do pedido para eu verificar?' },
+  ];
+
+  let timer = null;
+  let totalCount = 0;
+  let escCount = 0;
+  let autoCount = 0;
+
+  function getTime() {
+    const d = new Date();
+    return d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+  }
+
+  function showTyping() {
+    const t = document.getElementById('typing');
+    t.classList.add('show');
+    scrollBottom();
+  }
+  function hideTyping() {
+    document.getElementById('typing').classList.remove('show');
+  }
+
+  function scrollBottom() {
+    const el = document.getElementById('messages');
+    el.scrollTop = el.scrollHeight;
+  }
+
+  function createMsg(type, content) {
+    const container = document.getElementById('messages');
+    const typing = document.getElementById('typing');
+
+    const div = document.createElement('div');
+    div.className = 'msg ' + (type === 'user' ? 'user' : type === 'escalation' ? 'system' : 'bot');
+
+    if (type === 'escalation') {
+      div.innerHTML = `<div class="bubble">
+        <div class="escalation-card">
+          <div class="esc-title"><i class="fa-solid fa-triangle-exclamation" style="color:var(--warn)"></i> Confiança abaixo do limiar (72%)</div>
+          <div>O bot detectou uma situação complexa e acionou o suporte humano automaticamente.</div>
+          <div class="esc-agent"><div class="agent-dot"></div><strong>Ana (Suporte)</strong> entrou na conversa</div>
+        </div>
+      </div>`;
+    } else if (type === 'agent') {
+      const agentDiv = document.createElement('div');
+      agentDiv.style.display = 'flex';
+      agentDiv.style.gap = '6px';
+      agentDiv.style.alignItems = 'flex-start';
+
+      const avatar = document.createElement('div');
+      avatar.style.cssText = 'width:26px;height:26px;background:linear-gradient(135deg,#0EA5E9,#0369A1);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;flex-shrink:0;margin-top:2px;';
+      avatar.innerHTML = '<i class="fa-solid fa-user"></i>';
+
+      const inner = document.createElement('div');
+      inner.innerHTML = `
+        <div style="font-size:9px;font-weight:700;color:#0369A1;margin-bottom:3px">Ana — Suporte humano</div>
+        <div class="bubble" style="background:#E0F2FE;color:#0F172A">${content}</div>
+        <div class="msg-time">${getTime()}</div>`;
+
+      agentDiv.appendChild(avatar);
+      agentDiv.appendChild(inner);
+      div.appendChild(agentDiv);
+    } else if (type === 'bot' || type === 'bot-low') {
+      // handled below, content is object
+    } else {
+      div.innerHTML = `<div class="bubble">${content}</div><div class="msg-time">${getTime()} <i class="fa-solid fa-check-double" style="color:#34B7F1;font-size:9px;margin-left:3px"></i></div>`;
+    }
+
+    container.insertBefore(div, typing);
+    setTimeout(() => div.classList.add('show'), 20);
+    scrollBottom();
+    return div;
+  }
+
+  function createBotMsg(item) {
+    const container = document.getElementById('messages');
+    const typing = document.getElementById('typing');
+
+    const div = document.createElement('div');
+    div.className = 'msg bot';
+    div.innerHTML = `
+      <div class="bubble">${item.text}<br>
+        <span class="conf-badge ${item.confClass}">
+          <i class="fa-solid ${item.conf >= 72 ? 'fa-shield-halved' : 'fa-triangle-exclamation'}"></i>
+          ${item.confLabel}
+        </span>
+      </div>
+      <div class="msg-time">${getTime()}</div>`;
+
+    container.insertBefore(div, typing);
+    setTimeout(() => div.classList.add('show'), 20);
+    scrollBottom();
+  }
+
+  function updateStats(type) {
+    totalCount++;
+    document.getElementById('cnt-total').textContent = totalCount;
+    if (type === 'esc') {
+      escCount++;
+      document.getElementById('cnt-esc').textContent = escCount;
+      const pct = Math.round((autoCount / Math.max(totalCount,1)) * 100);
+      document.getElementById('cnt-auto').textContent = pct + '%';
+    } else if (type === 'bot') {
+      autoCount++;
+      const pct = Math.round((autoCount / Math.max(totalCount,1)) * 100);
+      document.getElementById('cnt-auto').textContent = pct + '%';
+    }
+    document.getElementById('cnt-avg').textContent = '1.8s';
+  }
+
+  let step = 0;
+  let timers = [];
+
+  function runStep(i) {
+    if (i >= SCRIPT.length) return;
+    const item = SCRIPT[i];
+
+    const t = setTimeout(() => {
+      hideTyping();
+
+      if (item.type === 'user') {
+        createMsg('user', item.text);
+        updateStats('user');
+        // show typing for next bot msg
+        const next = SCRIPT[i+1];
+        if (next && (next.type === 'bot' || next.type === 'bot-low')) {
+          setTimeout(() => showTyping(), 200);
+        }
+      } else if (item.type === 'bot') {
+        createBotMsg(item);
+        updateStats('bot');
+        // animate bars after first bot message
+        if (i === 1) animateBars();
+      } else if (item.type === 'bot-low') {
+        createBotMsg(item);
+        updateStats('esc');
+        document.getElementById('bot-status').textContent = 'escalando para humano...';
+        document.getElementById('bot-status').style.color = '#FCD34D';
+      } else if (item.type === 'escalation') {
+        createMsg('escalation', null);
+      } else if (item.type === 'agent') {
+        createMsg('agent', item.text);
+        document.getElementById('bot-status').textContent = 'atendente humano ativo';
+        document.getElementById('bot-status').style.color = '#86EFAC';
+      }
+
+      runStep(i + 1);
+    }, item.delay);
+
+    timers.push(t);
+  }
+
+  function animateBars() {
+    const bars = [
+      { id: 'bar1', w: '96%' },
+      { id: 'bar2', w: '91%' },
+      { id: 'bar3', w: '78%' },
+      { id: 'bar4', w: '34%' },
+    ];
+    bars.forEach((b, idx) => {
+      setTimeout(() => {
+        document.getElementById(b.id).style.width = b.w;
+      }, idx * 200);
+    });
+  }
+
+  function restartDemo() {
+    timers.forEach(t => clearTimeout(t));
+    timers = [];
+    totalCount = 0; escCount = 0; autoCount = 0;
+    document.getElementById('cnt-total').textContent = '0';
+    document.getElementById('cnt-auto').textContent = '0%';
+    document.getElementById('cnt-esc').textContent = '0';
+    document.getElementById('cnt-avg').textContent = '--';
+    document.getElementById('bot-status').textContent = 'online';
+    document.getElementById('bot-status').style.color = '';
+    ['bar1','bar2','bar3','bar4'].forEach(id => document.getElementById(id).style.width = '0');
+
+    const msgs = document.getElementById('messages');
+    const typing = document.getElementById('typing');
+    while (msgs.firstChild) {
+      if (msgs.firstChild === typing) break;
+      msgs.removeChild(msgs.firstChild);
+    }
+    hideTyping();
+    runStep(0);
+  }
+
+  // Start on load
+  window.addEventListener('load', () => runStep(0));
+</script>
+</body>
+</html>
