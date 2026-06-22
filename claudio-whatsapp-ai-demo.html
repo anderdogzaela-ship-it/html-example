@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistema IA WhatsApp — Demo Interactivo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --gold: #C9A227;
+  --gold-light: #E8C547;
+  --gold-dim: rgba(201,162,39,0.13);
+  --gold-border: rgba(201,162,39,0.22);
+  --bg: #0D0D0D;
+  --bg-card: #161616;
+  --bg-lift: #1E1E1E;
+  --text: #F0F0F0;
+  --muted: #888;
+  --wa-header: #075E54;
+  --wa-green: #128C7E;
+  --wa-light: #25D366;
+  --wa-bg: #0D1B13;
+  --wa-chat-bg: #111F15;
+  --wa-sent: #005C4B;
+  --wa-recv: #202C33;
+  --wa-sent-text: #E9FFEF;
+  --wa-recv-text: #E9EBF0;
+  --intent-blue: #3B82F6;
+  --intent-green: #22C55E;
+  --intent-orange: #F97316;
+  --intent-red: #EF4444;
+}
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── HEADER ── */
+.header {
+  background: linear-gradient(90deg, #0D0D0D 0%, #161616 100%);
+  border-bottom: 1px solid var(--gold-border);
+  padding: 16px 36px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 99;
+}
+
+.brand { display: flex; align-items: center; gap: 14px; }
+
+.brand-icon {
+  width: 42px; height: 42px;
+  background: linear-gradient(135deg, var(--gold) 0%, #9B7A0F 100%);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  color: #000; font-size: 18px;
+}
+
+.brand-name { font-size: 17px; font-weight: 800; color: var(--text); }
+.brand-sub { font-size: 11px; color: var(--muted); font-weight: 600; margin-top: 1px; }
+
+.status-pill {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(37,211,102,0.08);
+  border: 1px solid rgba(37,211,102,0.28);
+  border-radius: 100px;
+  padding: 8px 16px;
+  font-size: 12px; font-weight: 700; color: var(--wa-light);
+}
+
+.dot-pulse {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--wa-light);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+/* ── MAIN LAYOUT ── */
+.layout {
+  display: grid;
+  grid-template-columns: 240px 390px 1fr;
+  gap: 28px;
+  padding: 32px 36px;
+  max-width: 1300px;
+  margin: 0 auto;
+  align-items: start;
+}
+
+/* ── LEFT PANEL ── */
+.left-panel { display: flex; flex-direction: column; gap: 14px; }
+
+.panel-label {
+  font-size: 10px; font-weight: 800;
+  letter-spacing: 1.8px; text-transform: uppercase;
+  color: var(--gold); margin-bottom: 2px;
+}
+
+.metric-card {
+  background: var(--bg-card);
+  border: 1px solid var(--gold-border);
+  border-radius: 14px;
+  padding: 16px 18px;
+  transition: border-color .25s;
+}
+.metric-card:hover { border-color: rgba(201,162,39,.45); }
+
+.metric-val {
+  font-size: 32px; font-weight: 900;
+  color: var(--gold-light); line-height: 1;
+}
+.metric-unit { font-size: 15px; font-weight: 700; }
+.metric-lbl { font-size: 12px; color: var(--muted); font-weight: 600; margin-top: 4px; }
+.metric-trend { font-size: 11px; color: var(--wa-light); font-weight: 700; margin-top: 3px; }
+
+.divider { height: 1px; background: var(--gold-border); margin: 4px 0; }
+
+.session-card {
+  background: var(--bg-card);
+  border: 1px solid var(--gold-border);
+  border-radius: 14px;
+  padding: 16px 18px;
+}
+
+.session-title {
+  font-size: 10px; font-weight: 800;
+  letter-spacing: 1.4px; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 12px;
+}
+
+.session-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px; border-radius: 10px;
+  margin-bottom: 5px;
+  transition: all .3s;
+  cursor: default;
+}
+.session-row.active {
+  background: var(--gold-dim);
+  border: 1px solid var(--gold-border);
+}
+.session-row.inactive { opacity: .45; }
+
+.session-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+}
+.dot-green { background: var(--wa-light); }
+.dot-gold { background: var(--gold); }
+.dot-blue { background: var(--intent-blue); }
+.dot-muted { background: var(--muted); }
+
+.session-name { font-size: 12px; font-weight: 700; color: var(--text); }
+.session-status { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+/* ── WHATSAPP PANEL ── */
+.wa-panel {
+  display: flex; flex-direction: column;
+  border-radius: 18px; overflow: hidden;
+  border: 1px solid rgba(37,211,102,0.2);
+  box-shadow: 0 0 40px rgba(37,211,102,0.06);
+  background: var(--wa-chat-bg);
+  height: 600px;
+}
+
+.wa-header {
+  background: var(--wa-header);
+  padding: 12px 16px;
+  display: flex; align-items: center; gap: 12px;
+  flex-shrink: 0;
+}
+
+.wa-avatar {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: linear-gradient(135deg, #25D366, #128C7E);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; color: #fff; font-weight: 800;
+}
+
+.wa-contact-name { font-size: 15px; font-weight: 700; color: #fff; }
+.wa-contact-sub { font-size: 11px; color: rgba(255,255,255,.7); margin-top: 1px; }
+.wa-icons { margin-left: auto; display: flex; gap: 18px; color: rgba(255,255,255,.8); font-size: 16px; }
+
+.wa-chat {
+  flex: 1; overflow-y: auto; padding: 16px 14px;
+  display: flex; flex-direction: column; gap: 6px;
+  scroll-behavior: smooth;
+}
+
+.wa-chat::-webkit-scrollbar { width: 4px; }
+.wa-chat::-webkit-scrollbar-track { background: transparent; }
+.wa-chat::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius: 2px; }
+
+.wa-date-sep {
+  text-align: center;
+  font-size: 11px; color: rgba(255,255,255,.4);
+  font-weight: 600; margin: 6px 0;
+  background: rgba(255,255,255,.06);
+  border-radius: 10px; padding: 3px 10px;
+  align-self: center;
+}
+
+.bubble {
+  max-width: 78%; padding: 9px 13px;
+  border-radius: 12px; font-size: 13.5px;
+  line-height: 1.5; position: relative;
+  animation: fadeUp .3s ease;
+}
+@keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+.bubble.sent {
+  background: var(--wa-sent); color: var(--wa-sent-text);
+  border-bottom-right-radius: 3px;
+  align-self: flex-end;
+}
+.bubble.recv {
+  background: var(--wa-recv); color: var(--wa-recv-text);
+  border-bottom-left-radius: 3px;
+  align-self: flex-start;
+}
+.bubble.system {
+  background: rgba(201,162,39,.15); color: var(--gold-light);
+  border: 1px solid var(--gold-border);
+  border-radius: 10px; font-size: 12px;
+  align-self: center; text-align: center;
+  max-width: 90%;
+}
+.bubble.human {
+  background: rgba(59,130,246,.15); color: #93C5FD;
+  border: 1px solid rgba(59,130,246,.3);
+  border-bottom-left-radius: 3px;
+  align-self: flex-start;
+}
+
+.bubble-meta {
+  font-size: 10.5px; color: rgba(255,255,255,.45);
+  text-align: right; margin-top: 3px;
+}
+.bubble.sent .bubble-meta { color: rgba(233,255,239,.55); }
+
+.wa-typing {
+  align-self: flex-start;
+  background: var(--wa-recv);
+  border-radius: 12px; border-bottom-left-radius: 3px;
+  padding: 10px 14px; display: none; gap: 4px; align-items: center;
+}
+.wa-typing.visible { display: flex; }
+
+.typing-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: rgba(255,255,255,.45);
+  animation: typingBounce 1.2s infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: .2s; }
+.typing-dot:nth-child(3) { animation-delay: .4s; }
+@keyframes typingBounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
+
+.wa-input-area {
+  background: #1A2B21; padding: 10px 14px;
+  display: flex; align-items: center; gap: 10px;
+  border-top: 1px solid rgba(255,255,255,.06);
+  flex-shrink: 0;
+}
+.wa-input {
+  flex: 1; background: #2A3B30; border: none;
+  border-radius: 24px; padding: 9px 16px;
+  color: var(--text); font-size: 13px;
+  font-family: 'Nunito', sans-serif; outline: none;
+}
+.wa-input::placeholder { color: rgba(255,255,255,.35); }
+.wa-send {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: var(--wa-light); border: none;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: #fff; font-size: 15px;
+  transition: background .2s;
+}
+.wa-send:hover { background: #22B859; }
+
+/* ── RIGHT PANEL ── */
+.right-panel { display: flex; flex-direction: column; gap: 16px; }
+
+.engine-card {
+  background: var(--bg-card);
+  border: 1px solid var(--gold-border);
+  border-radius: 14px;
+  padding: 20px;
+}
+
+.engine-title {
+  font-size: 11px; font-weight: 800;
+  letter-spacing: 1.6px; text-transform: uppercase;
+  color: var(--gold); margin-bottom: 16px;
+  display: flex; align-items: center; gap: 8px;
+}
+
+.intent-badges { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.intent-badge {
+  padding: 5px 12px; border-radius: 100px;
+  font-size: 11px; font-weight: 700;
+  border: 1.5px solid; transition: all .3s;
+  opacity: .4;
+}
+.intent-badge.active { opacity: 1; transform: scale(1.05); }
+
+.badge-product  { color: var(--intent-blue);  border-color: var(--intent-blue);  background: rgba(59,130,246,.1); }
+.badge-status   { color: var(--intent-green); border-color: var(--intent-green); background: rgba(34,197,94,.1); }
+.badge-price    { color: var(--gold-light);   border-color: var(--gold);         background: var(--gold-dim); }
+.badge-support  { color: var(--intent-orange);border-color: var(--intent-orange);background: rgba(249,115,22,.1); }
+.badge-complex  { color: var(--intent-red);   border-color: var(--intent-red);   background: rgba(239,68,68,.1); }
+
+.confidence-block { margin-bottom: 14px; }
+.conf-label { font-size: 11px; color: var(--muted); font-weight: 600; margin-bottom: 6px; display: flex; justify-content: space-between; }
+.conf-val { font-weight: 800; color: var(--text); }
+.conf-bar { height: 7px; background: rgba(255,255,255,.08); border-radius: 4px; overflow: hidden; }
+.conf-fill {
+  height: 100%; border-radius: 4px;
+  transition: width .6s ease, background .4s;
+}
+
+.context-block {
+  background: rgba(255,255,255,.04);
+  border-radius: 10px; padding: 12px 14px;
+  font-size: 11.5px; color: var(--muted);
+  line-height: 1.6;
+}
+.context-block code { color: var(--wa-light); font-family: monospace; font-size: 11px; }
+
+.action-box {
+  background: var(--bg-card);
+  border: 1px solid var(--gold-border);
+  border-radius: 14px;
+  padding: 18px 20px;
+}
+
+.action-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 12px; border-radius: 10px;
+  margin-bottom: 6px; transition: all .3s;
+  opacity: .35;
+}
+.action-row.active { opacity: 1; background: var(--gold-dim); border: 1px solid var(--gold-border); }
+.action-row.done { opacity: .55; }
+.action-row.escalate { background: rgba(59,130,246,.1); border: 1px solid rgba(59,130,246,.3); opacity: 1; }
+
+.action-icon {
+  width: 34px; height: 34px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; flex-shrink: 0;
+}
+.icon-webhook   { background: rgba(37,211,102,.15); color: var(--wa-light); }
+.icon-context   { background: rgba(201,162,39,.15); color: var(--gold-light); }
+.icon-llm       { background: rgba(139,92,246,.15); color: #A78BFA; }
+.icon-respond   { background: rgba(34,197,94,.15);  color: var(--intent-green); }
+.icon-escalate  { background: rgba(59,130,246,.15); color: var(--intent-blue); }
+
+.action-name { font-size: 13px; font-weight: 700; color: var(--text); }
+.action-detail { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+/* ── RESTART BTN ── */
+.restart-bar {
+  text-align: center; padding: 20px 0 10px;
+  max-width: 1300px; margin: 0 auto;
+}
+.restart-btn {
+  background: var(--gold-dim); border: 1px solid var(--gold-border);
+  color: var(--gold-light); padding: 10px 28px;
+  border-radius: 100px; font-size: 13px; font-weight: 700;
+  cursor: pointer; font-family: 'Nunito', sans-serif;
+  transition: all .25s;
+}
+.restart-btn:hover { background: rgba(201,162,39,.25); border-color: var(--gold); }
+
+/* ── FOOTER ── */
+.footer {
+  text-align: center; padding: 20px; color: var(--muted);
+  font-size: 12px; border-top: 1px solid var(--gold-border);
+}
+
+/* scrollbar */
+.wa-chat { scroll-behavior: smooth; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="brand">
+    <div class="brand-icon"><i class="fa-brands fa-whatsapp"></i></div>
+    <div>
+      <div class="brand-name">AI WhatsApp Engine</div>
+      <div class="brand-sub">Automação inteligente com integração API/BD</div>
+    </div>
+  </div>
+  <div class="status-pill">
+    <div class="dot-pulse"></div>
+    Sistema operativo
+  </div>
+</div>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- LEFT: METRICS + SESSION LIST -->
+  <div class="left-panel">
+    <div class="panel-label">Métricas em tempo real</div>
+
+    <div class="metric-card">
+      <div class="metric-val" id="metricAuto">0<span class="metric-unit">%</span></div>
+      <div class="metric-lbl">Conversas resolvidas pela IA</div>
+      <div class="metric-trend" id="metricAutoTrend">Calculando...</div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-val" id="metricTime">—</div>
+      <div class="metric-lbl">Tempo médio de resposta</div>
+      <div class="metric-trend" id="metricTimeTrend">Antes: 4h manual</div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-val" id="metricMsgs">0</div>
+      <div class="metric-lbl">Mensagens processadas</div>
+      <div class="metric-trend" id="metricMsgsTrend">Sessão atual</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="session-card">
+      <div class="session-title">Conversas ativas</div>
+
+      <div class="session-row active" id="sess0">
+        <div class="session-dot dot-green"></div>
+        <div>
+          <div class="session-name">Carlos M.</div>
+          <div class="session-status">Consulta produto</div>
+        </div>
+      </div>
+
+      <div class="session-row inactive" id="sess1">
+        <div class="session-dot dot-gold"></div>
+        <div>
+          <div class="session-name">Ana R.</div>
+          <div class="session-status">Aguardando</div>
+        </div>
+      </div>
+
+      <div class="session-row inactive" id="sess2">
+        <div class="session-dot dot-blue"></div>
+        <div>
+          <div class="session-name">Bruno F.</div>
+          <div class="session-status">Escalado — humano</div>
+        </div>
+      </div>
+
+      <div class="session-row inactive" id="sess3">
+        <div class="session-dot dot-muted"></div>
+        <div>
+          <div class="session-name">Juliana K.</div>
+          <div class="session-status">Resolvida</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CENTER: WHATSAPP CHAT -->
+  <div class="wa-panel">
+    <div class="wa-header">
+      <div class="wa-avatar">C</div>
+      <div>
+        <div class="wa-contact-name">Carlos M.</div>
+        <div class="wa-contact-sub">online</div>
+      </div>
+      <div class="wa-icons">
+        <i class="fa-solid fa-video"></i>
+        <i class="fa-solid fa-phone"></i>
+        <i class="fa-solid fa-ellipsis-vertical"></i>
+      </div>
+    </div>
+
+    <div class="wa-chat" id="waChat">
+      <div class="wa-date-sep">Hoje</div>
+    </div>
+
+    <div id="waTyping" class="wa-typing">
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
+    </div>
+
+    <div class="wa-input-area">
+      <input class="wa-input" placeholder="Mensagem" disabled>
+      <button class="wa-send"><i class="fa-solid fa-paper-plane"></i></button>
+    </div>
+  </div>
+
+  <!-- RIGHT: AI ENGINE -->
+  <div class="right-panel">
+
+    <!-- Intent classifier -->
+    <div class="engine-card">
+      <div class="engine-title"><i class="fa-solid fa-brain"></i> Motor de Classificação</div>
+      <div class="intent-badges">
+        <div class="intent-badge badge-product"  id="intentProduct">Produto</div>
+        <div class="intent-badge badge-status"   id="intentStatus">Status pedido</div>
+        <div class="intent-badge badge-price"    id="intentPrice">Preço</div>
+        <div class="intent-badge badge-support"  id="intentSupport">Suporte</div>
+        <div class="intent-badge badge-complex"  id="intentComplex">Complexo</div>
+      </div>
+
+      <div class="confidence-block">
+        <div class="conf-label">
+          Confiança da resposta
+          <span class="conf-val" id="confVal">—</span>
+        </div>
+        <div class="conf-bar">
+          <div class="conf-fill" id="confFill" style="width:0%;background:var(--wa-light)"></div>
+        </div>
+      </div>
+
+      <div class="context-block" id="contextBlock">
+        Aguardando mensagem do cliente para iniciar classificação...
+      </div>
+    </div>
+
+    <!-- Pipeline steps -->
+    <div class="action-box">
+      <div class="engine-title" style="margin-bottom:12px;"><i class="fa-solid fa-diagram-project"></i> Pipeline de processamento</div>
+
+      <div class="action-row" id="stepWebhook">
+        <div class="action-icon icon-webhook"><i class="fa-solid fa-webhook"></i></div>
+        <div>
+          <div class="action-name">Webhook recebido</div>
+          <div class="action-detail">Evento isolado do WhatsApp</div>
+        </div>
+      </div>
+
+      <div class="action-row" id="stepContext">
+        <div class="action-icon icon-context"><i class="fa-solid fa-layer-group"></i></div>
+        <div>
+          <div class="action-name">Contexto da sessão</div>
+          <div class="action-detail">Histórico carregado da BD</div>
+        </div>
+      </div>
+
+      <div class="action-row" id="stepLLM">
+        <div class="action-icon icon-llm"><i class="fa-solid fa-microchip"></i></div>
+        <div>
+          <div class="action-name">Chamada ao modelo IA</div>
+          <div class="action-detail">Histórico completo incluído</div>
+        </div>
+      </div>
+
+      <div class="action-row" id="stepRespond">
+        <div class="action-icon icon-respond"><i class="fa-solid fa-circle-check"></i></div>
+        <div>
+          <div class="action-name">Resposta enviada</div>
+          <div class="action-detail">Resolvido automaticamente</div>
+        </div>
+      </div>
+
+      <div class="action-row" id="stepEscalate" style="display:none;">
+        <div class="action-icon icon-escalate"><i class="fa-solid fa-user-headset"></i></div>
+        <div>
+          <div class="action-name">Escalado ao humano</div>
+          <div class="action-detail">Confiança abaixo do limite</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- RESTART -->
+<div class="restart-bar">
+  <button class="restart-btn" onclick="restartDemo()">
+    <i class="fa-solid fa-rotate-right"></i>&nbsp; Reiniciar demo
+  </button>
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  Demo interativo — Sistema de Automação WhatsApp com IA
+</div>
+
+<script>
+// ── UTILS ──
+const chat = document.getElementById('waChat');
+const typingEl = document.getElementById('waTyping');
+
+let msgCount = 0;
+let autoResolved = 0;
+let demoTimer = null;
+
+function now() {
+  const d = new Date();
+  return d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+}
+
+function addBubble(type, text, delay) {
+  return new Promise(res => setTimeout(() => {
+    const b = document.createElement('div');
+    b.className = 'bubble ' + type;
+    b.innerHTML = text + '<div class="bubble-meta">' + now() + (type==='sent'?' <i class="fa-solid fa-check-double" style="color:var(--wa-light)"></i>':'') + '</div>';
+    chat.appendChild(b);
+    chat.scrollTop = chat.scrollHeight;
+    msgCount++;
+    document.getElementById('metricMsgs').textContent = msgCount;
+    res();
+  }, delay));
+}
+
+function showTyping(show) {
+  if (show) {
+    typingEl.classList.add('visible');
+    chat.scrollTop = chat.scrollHeight;
+  } else {
+    typingEl.classList.remove('visible');
+  }
+}
+
+function setActiveIntent(id) {
+  ['intentProduct','intentStatus','intentPrice','intentSupport','intentComplex']
+    .forEach(i => document.getElementById(i).classList.remove('active'));
+  if (id) document.getElementById(id).classList.add('active');
+}
+
+function setConfidence(pct) {
+  const fill = document.getElementById('confFill');
+  const val = document.getElementById('confVal');
+  fill.style.width = pct + '%';
+  val.textContent = pct + '%';
+  if (pct >= 80) fill.style.background = 'var(--intent-green)';
+  else if (pct >= 55) fill.style.background = 'var(--gold-light)';
+  else fill.style.background = 'var(--intent-red)';
+}
+
+function setContext(html) {
+  document.getElementById('contextBlock').innerHTML = html;
+}
+
+function setStep(id, state) {
+  const el = document.getElementById(id);
+  el.className = 'action-row ' + state;
+}
+
+function resetSteps() {
+  ['stepWebhook','stepContext','stepLLM','stepRespond'].forEach(s => setStep(s,''));
+  document.getElementById('stepEscalate').style.display = 'none';
+}
+
+function updateMetrics(autoRate, respTime) {
+  document.getElementById('metricAuto').innerHTML = autoRate + '<span class="metric-unit">%</span>';
+  document.getElementById('metricAutoTrend').textContent = autoRate >= 75 ? '↑ Acima da meta (70%)' : 'Em progresso...';
+  document.getElementById('metricTime').textContent = respTime;
+  document.getElementById('metricTimeTrend').textContent = 'Antes: 4h manual → agora: ' + respTime;
+}
+
+// ── DEMO SEQUENCE ──
+async function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+async function runDemo() {
+  // --- TURN 1: Product query ---
+  await addBubble('sent', 'Oi, quero saber mais sobre o plano empresarial de vocês. Quais funcionalidades incluem?', 300);
+
+  await delay(600);
+  setStep('stepWebhook','active');
+  setContext('<code>webhook</code> recebido — evento isolado sem histórico');
+  await delay(700);
+  setStep('stepWebhook','done');
+  setStep('stepContext','active');
+  setContext('<code>session_id: CM_8821</code> — histórico: 0 mensagens anteriores<br>Dados do sistema: plano atual = nenhum');
+  await delay(800);
+  setStep('stepContext','done');
+  setStep('stepLLM','active');
+  setActiveIntent('intentProduct');
+  setContext('<code>intent: consulta_produto</code><br>Contexto enviado ao modelo com dados do BD');
+  setConfidence(94);
+  showTyping(true);
+  await delay(1400);
+  showTyping(false);
+  setStep('stepLLM','done');
+  setStep('stepRespond','active');
+  await addBubble('recv', 'Olá! O plano empresarial inclui: automação de até 500 conversas/mês, integração com seu sistema via API, painel de relatórios por equipe e suporte prioritário. Posso enviar uma proposta detalhada com preços?', 0);
+  setStep('stepRespond','done');
+  autoResolved++;
+  updateMetrics(Math.round(autoResolved/1 * 100), '2s');
+  await delay(400);
+  resetSteps();
+
+  // --- TURN 2: Follow-up (context test) ---
+  await delay(1800);
+  await addBubble('sent', 'Sim! E tem limite de usuários no painel?', 0);
+
+  await delay(500);
+  setStep('stepWebhook','active');
+  setContext('<code>webhook</code> recebido — novo evento isolado');
+  await delay(700);
+  setStep('stepWebhook','done');
+  setStep('stepContext','active');
+  setContext('<code>session_id: CM_8821</code> — histórico: 2 mensagens carregadas<br><i>Contexto mantido: pergunta anterior sobre plano empresarial</i>');
+  await delay(900);
+  setStep('stepContext','done');
+  setStep('stepLLM','active');
+  setActiveIntent('intentProduct');
+  setContext('<code>intent: follow_up_produto</code><br>Modelo recebe histórico completo — sabe o contexto da conversa');
+  setConfidence(91);
+  showTyping(true);
+  await delay(1300);
+  showTyping(false);
+  setStep('stepLLM','done');
+  setStep('stepRespond','active');
+  await addBubble('recv', 'Usuários ilimitados no plano empresarial. Cada pessoa da equipe tem login próprio com permissões configuráveis. Quer agendar uma demo para ver o painel em funcionamento?', 0);
+  setStep('stepRespond','done');
+  autoResolved++;
+  updateMetrics(Math.round(autoResolved/2 * 100), '1.8s');
+  await delay(400);
+  resetSteps();
+
+  // --- TURN 3: Order status ---
+  await delay(1800);
+  await addBubble('sent', 'Temos um contrato ativo desde março. Qual o status da nossa renovação?', 0);
+
+  await delay(500);
+  setStep('stepWebhook','active');
+  setContext('<code>webhook</code> recebido');
+  await delay(700);
+  setStep('stepWebhook','done');
+  setStep('stepContext','active');
+  setContext('<code>session_id: CM_8821</code> — histórico: 4 mensagens<br>Consultando BD: <code>cliente_id = CM_8821</code>...');
+  await delay(1000);
+  setStep('stepContext','done');
+  setStep('stepLLM','active');
+  setActiveIntent('intentStatus');
+  setContext('<code>intent: status_contrato</code><br>BD retornou: contrato ativo, vence 2026-09-15<br>Enviando ao modelo com dados do sistema');
+  setConfidence(97);
+  showTyping(true);
+  await delay(1200);
+  showTyping(false);
+  setStep('stepLLM','done');
+  setStep('stepRespond','active');
+  await addBubble('recv', 'Encontrei seu contrato. Ele está ativo e vence em 15 de setembro de 2026. Nossa equipe vai entrar em contato 30 dias antes para a renovação. Quer adiantar o processo agora?', 0);
+  setStep('stepRespond','done');
+  autoResolved++;
+  updateMetrics(Math.round(autoResolved/3 * 100), '1.5s');
+  await delay(400);
+  resetSteps();
+
+  // --- TURN 4: Complex / low confidence → escalate ---
+  await delay(2000);
+  await addBubble('sent', 'Precisamos de uma integração customizada com nosso ERP legado em COBOL. Tem como fazer isso no plano atual sem custo adicional?', 0);
+
+  await delay(500);
+  setStep('stepWebhook','active');
+  setContext('<code>webhook</code> recebido');
+  await delay(700);
+  setStep('stepWebhook','done');
+  setStep('stepContext','active');
+  setContext('<code>session_id: CM_8821</code> — histórico: 6 mensagens<br>Carregando perfil de contrato...');
+  await delay(900);
+  setStep('stepContext','done');
+  setStep('stepLLM','active');
+  setActiveIntent('intentComplex');
+  setContext('<code>intent: solicitacao_customizacao</code><br>Confiança baixa — escopo fora do padrão<br><code>threshold: 65%</code> | resultado: <code>42%</code>');
+  setConfidence(42);
+  showTyping(true);
+  await delay(1400);
+  showTyping(false);
+  setStep('stepLLM','done');
+
+  // Escalation
+  document.getElementById('stepEscalate').style.display = 'flex';
+  setStep('stepEscalate','escalate');
+
+  await addBubble('system', '<i class="fa-solid fa-circle-exclamation"></i>&nbsp; IA detectou confiança abaixo do limite — transferindo para especialista humano', 0);
+  await delay(600);
+  await addBubble('human', 'Oi Carlos! Aqui é a Mariana da equipe de soluções. Vi sua pergunta sobre integração com ERP em COBOL. Esse tipo de integração é customizada e depende da arquitetura do seu sistema — posso agendar 30 minutos com nosso time técnico essa semana para avaliar?', 0);
+  updateMetrics(75, '1.6s');
+  document.getElementById('metricAutoTrend').textContent = '75% resolvidos pela IA';
+
+  // Mark Bruno session as escalated
+  document.getElementById('sess2').classList.remove('inactive');
+  document.getElementById('sess2').classList.add('active');
+  document.getElementById('sess0').classList.remove('active');
+  document.getElementById('sess0').classList.add('inactive');
+
+  await delay(400);
+  addBubble('system', '<i class="fa-solid fa-shield-check"></i>&nbsp; Fallback automático ativado — histórico completo enviado ao atendente humano', 400);
+}
+
+function restartDemo() {
+  if (demoTimer) clearTimeout(demoTimer);
+  chat.innerHTML = '<div class="wa-date-sep">Hoje</div>';
+  showTyping(false);
+  resetSteps();
+  setActiveIntent(null);
+  setConfidence(0);
+  setContext('Aguardando mensagem do cliente para iniciar classificação...');
+  msgCount = 0;
+  autoResolved = 0;
+  document.getElementById('metricAuto').innerHTML = '0<span class="metric-unit">%</span>';
+  document.getElementById('metricAutoTrend').textContent = 'Calculando...';
+  document.getElementById('metricTime').textContent = '—';
+  document.getElementById('metricMsgs').textContent = '0';
+  ['sess1','sess2','sess3'].forEach(s => {
+    document.getElementById(s).classList.add('inactive');
+    document.getElementById(s).classList.remove('active');
+  });
+  document.getElementById('sess0').classList.remove('inactive');
+  document.getElementById('sess0').classList.add('active');
+
+  demoTimer = setTimeout(() => runDemo(), 600);
+}
+
+// Auto-start
+window.addEventListener('load', () => {
+  demoTimer = setTimeout(() => runDemo(), 800);
+});
+</script>
+</body>
+</html>
