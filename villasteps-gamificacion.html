@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VillaSteps</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --bg:#0f0520;--bg2:#1a0a35;--card:#231040;--card2:#2d1555;
+      --orange:#ff6b35;--orange2:#ff8c5a;
+      --purple:#7c3aed;--purple2:#9d5ff0;
+      --green:#22c55e;--text:#f0e6ff;--muted:#9d88b8;
+    }
+    body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;max-width:420px;margin:0 auto;position:relative;overflow-x:hidden}
+    .screen{display:none;min-height:100vh;padding-bottom:82px;animation:fadeIn .3s ease}
+    .screen.active{display:block}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+    /* LOGIN */
+    #login-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;min-height:100vh;background:radial-gradient(ellipse at top,#2d0060 0%,var(--bg) 70%)}
+    #login-screen.active{display:flex}
+    .logo-area{text-align:center;margin-bottom:36px}
+    .logo-icon{width:80px;height:80px;background:linear-gradient(135deg,var(--purple),var(--orange));border-radius:22px;display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 14px;box-shadow:0 8px 32px rgba(124,58,237,.5)}
+    .logo-title{font-size:34px;font-weight:900;letter-spacing:-1px}
+    .logo-title span{color:var(--orange)}
+    .logo-sub{color:var(--muted);font-size:13px;margin-top:4px}
+    .login-card{background:var(--card);border-radius:24px;padding:28px 24px;width:100%;border:1px solid rgba(124,58,237,.3)}
+    .login-card h2{font-size:20px;font-weight:800;margin-bottom:20px}
+    .form-group{margin-bottom:16px}
+    .form-group label{display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px}
+    .form-group input,.form-group select{width:100%;background:var(--bg2);border:1px solid rgba(124,58,237,.3);border-radius:12px;padding:12px 16px;color:var(--text);font-family:'Nunito',sans-serif;font-size:15px;outline:none;transition:border-color .2s}
+    .form-group input:focus,.form-group select:focus{border-color:var(--orange)}
+    .form-group select option{background:var(--card)}
+    .btn-primary{width:100%;background:linear-gradient(135deg,var(--orange),#e84e1a);border:none;border-radius:14px;padding:15px;color:#fff;font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;cursor:pointer;transition:transform .1s,box-shadow .2s;box-shadow:0 4px 20px rgba(255,107,53,.4)}
+    .btn-primary:active{transform:scale(.98)}
+
+    /* NAV */
+    .bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:420px;background:rgba(15,5,32,.96);backdrop-filter:blur(20px);border-top:1px solid rgba(124,58,237,.25);display:flex;align-items:center;justify-content:space-around;padding:8px 0 16px;z-index:100}
+    .nav-item{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:6px 16px;border-radius:12px;transition:all .2s;color:var(--muted)}
+    .nav-item.active{color:var(--orange)}
+    .nav-item i{font-size:18px}
+    .nav-item span{font-size:10px;font-weight:700}
+
+    /* HEADER */
+    .screen-header{padding:48px 20px 14px;background:linear-gradient(180deg,rgba(124,58,237,.12) 0%,transparent 100%)}
+    .screen-header h1{font-size:22px;font-weight:900}
+    .screen-header p{color:var(--muted);font-size:13px;margin-top:2px}
+    .coin-badge{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,rgba(255,107,53,.18),rgba(255,107,53,.08));border:1px solid rgba(255,107,53,.35);border-radius:20px;padding:5px 14px;font-size:14px;font-weight:800;color:var(--orange);margin-top:10px}
+
+    /* HOME */
+    .progress-section{padding:16px 20px;display:flex;align-items:center;gap:20px}
+    .ring-container{position:relative;flex-shrink:0}
+    .ring-svg{transform:rotate(-90deg)}
+    .ring-bg{fill:none;stroke:rgba(124,58,237,.2);stroke-width:10}
+    .ring-progress{fill:none;stroke:url(#ringGrad);stroke-width:10;stroke-linecap:round;stroke-dasharray:283;stroke-dashoffset:200;transition:stroke-dashoffset .9s ease}
+    .ring-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+    .ring-steps{font-size:22px;font-weight:900}
+    .ring-pct{font-size:11px;color:var(--orange);font-weight:700}
+    .ring-label{font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase}
+    .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;flex:1}
+    .stat-mini{background:var(--card);border-radius:12px;padding:10px 12px;border:1px solid rgba(124,58,237,.2)}
+    .stat-mini .val{font-size:17px;font-weight:800;color:var(--orange2)}
+    .stat-mini .lbl{font-size:10px;color:var(--muted);font-weight:600}
+
+    .step-input-section{margin:0 20px 14px;background:var(--card);border-radius:16px;padding:14px 16px;border:1px solid rgba(124,58,237,.2)}
+    .section-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+    .step-row{display:flex;gap:8px}
+    .step-row input{flex:1;background:var(--bg2);border:1px solid rgba(124,58,237,.3);border-radius:10px;padding:10px 14px;color:var(--text);font-family:'Nunito',sans-serif;font-size:15px;font-weight:700;outline:none;transition:border-color .2s}
+    .step-row input:focus{border-color:var(--orange)}
+    .btn-add{background:var(--orange);border:none;border-radius:10px;padding:10px 18px;color:#fff;font-family:'Nunito',sans-serif;font-weight:800;font-size:14px;cursor:pointer;transition:transform .1s;white-space:nowrap}
+    .btn-add:active{transform:scale(.95)}
+
+    .section-card{margin:0 20px 14px;background:var(--card);border-radius:16px;padding:14px 16px;border:1px solid rgba(124,58,237,.2)}
+    .weekly-bars{display:flex;align-items:flex-end;gap:6px;height:70px;margin-top:4px}
+    .bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end}
+    .bar{width:100%;background:rgba(124,58,237,.25);border-radius:4px 4px 0 0;transition:height .6s ease;min-height:4px}
+    .bar.today{background:linear-gradient(180deg,var(--orange),#e84e1a)}
+    .bar-day{font-size:9px;color:var(--muted);font-weight:700}
+
+    /* REWARDS */
+    .rewards-banner{margin:14px 20px;background:linear-gradient(135deg,#2d0060,var(--purple));border-radius:16px;padding:16px;display:flex;align-items:center;gap:14px;position:relative;overflow:hidden}
+    .rewards-banner::after{content:'';position:absolute;right:-20px;top:-20px;width:90px;height:90px;background:rgba(255,255,255,.05);border-radius:50%}
+    .rewards-banner i{font-size:28px;color:var(--orange)}
+    .rewards-banner h3{font-size:15px;font-weight:800}
+    .rewards-banner p{font-size:11px;color:rgba(255,255,255,.65);margin-top:2px}
+    .rewards-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 20px 14px}
+    .reward-card{background:var(--card);border-radius:16px;padding:14px 10px;border:1px solid rgba(124,58,237,.2);text-align:center;cursor:pointer;transition:all .2s}
+    .reward-card:hover{border-color:rgba(255,107,53,.5);transform:translateY(-2px)}
+    .reward-card.redeemed{opacity:.45;pointer-events:none}
+    .reward-icon{font-size:30px;margin-bottom:8px;display:block}
+    .reward-name{font-size:13px;font-weight:700;margin-bottom:6px}
+    .reward-cost{display:inline-flex;align-items:center;gap:4px;background:rgba(255,107,53,.13);border:1px solid rgba(255,107,53,.28);border-radius:20px;padding:3px 10px;font-size:12px;font-weight:800;color:var(--orange)}
+    .pro-banner{margin:0 20px 14px;background:linear-gradient(135deg,#ff6b35,#c93e15);border-radius:16px;padding:16px;display:flex;align-items:center;gap:12px}
+    .pro-banner i{font-size:24px;flex-shrink:0}
+    .pro-banner h3{font-size:14px;font-weight:900}
+    .pro-banner p{font-size:11px;opacity:.85;margin-top:2px}
+
+    /* RANKING */
+    .challenge-card{margin:14px 20px;background:linear-gradient(135deg,rgba(124,58,237,.28),rgba(124,58,237,.1));border:1px solid rgba(124,58,237,.4);border-radius:16px;padding:16px}
+    .challenge-tag{font-size:10px;font-weight:700;color:var(--purple2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+    .challenge-title{font-size:15px;font-weight:800;margin-bottom:10px}
+    .prog-bar{height:8px;background:rgba(255,255,255,.1);border-radius:4px;overflow:hidden}
+    .prog-fill{height:100%;background:linear-gradient(90deg,var(--purple),var(--orange));border-radius:4px;transition:width .8s ease}
+    .prog-stats{display:flex;justify-content:space-between;margin-top:7px;font-size:11px;color:var(--muted);font-weight:600}
+    .ranking-list{padding:0 20px 8px}
+    .rank-item{display:flex;align-items:center;gap:12px;padding:12px;background:var(--card);border-radius:14px;margin-bottom:8px;border:1px solid rgba(124,58,237,.15);transition:all .2s}
+    .rank-item.me{background:linear-gradient(135deg,rgba(255,107,53,.13),rgba(255,107,53,.05));border-color:rgba(255,107,53,.35)}
+    .rank-num{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;flex-shrink:0}
+    .gold-medal{background:linear-gradient(135deg,#f59e0b,#d97706)}
+    .silver-medal{background:linear-gradient(135deg,#9ca3af,#6b7280)}
+    .bronze-medal{background:linear-gradient(135deg,#d97706,#b45309)}
+    .other-rank{background:var(--card2);color:var(--muted)}
+    .rank-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--purple),var(--purple2));display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+    .rank-info{flex:1}
+    .rank-name{font-size:13px;font-weight:700}
+    .rank-sub{font-size:10px;color:var(--muted)}
+    .rank-steps{font-size:13px;font-weight:800;color:var(--orange)}
+
+    /* PROFILE */
+    .profile-header{padding:40px 20px 16px;text-align:center;background:linear-gradient(180deg,rgba(124,58,237,.15) 0%,transparent 100%)}
+    .villamon-wrap{width:110px;height:110px;margin:0 auto 14px;background:rgba(124,58,237,.15);border-radius:22px;display:flex;align-items:center;justify-content:center;border:2px solid rgba(124,58,237,.3)}
+    .profile-name{font-size:22px;font-weight:900}
+    .profile-sub{color:var(--muted);font-size:13px;margin-top:3px}
+    .evo-section{margin:0 20px 14px;background:var(--card);border-radius:16px;padding:16px;border:1px solid rgba(124,58,237,.2)}
+    .evo-header{display:flex;justify-content:space-between;margin-bottom:8px}
+    .evo-title{font-size:13px;font-weight:700}
+    .evo-lvl{font-size:13px;font-weight:800;color:var(--purple2)}
+    .evo-bar{height:10px;background:rgba(255,255,255,.1);border-radius:5px;overflow:hidden}
+    .evo-fill{height:100%;background:linear-gradient(90deg,var(--purple),var(--orange));border-radius:5px;transition:width .9s ease}
+    .evo-stages{display:flex;justify-content:space-between;margin-top:6px;font-size:10px;color:var(--muted);font-weight:600}
+    .stats-detail{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 20px 14px}
+    .stat-card{background:var(--card);border-radius:14px;padding:14px;border:1px solid rgba(124,58,237,.2)}
+    .stat-card i{font-size:18px;color:var(--orange);margin-bottom:6px;display:block}
+    .stat-card .val{font-size:20px;font-weight:900}
+    .stat-card .lbl{font-size:11px;color:var(--muted);font-weight:600}
+
+    /* TOAST + COIN */
+    .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-90px);background:linear-gradient(135deg,var(--orange),#e84e1a);color:#fff;padding:11px 22px;border-radius:50px;font-size:13px;font-weight:700;z-index:999;transition:transform .35s cubic-bezier(.34,1.56,.64,1);white-space:nowrap;box-shadow:0 6px 24px rgba(255,107,53,.45)}
+    .toast.show{transform:translateX(-50%) translateY(0)}
+    .coin-pop{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);font-size:52px;z-index:998;pointer-events:none;transition:all .55s cubic-bezier(.34,1.56,.64,1);opacity:0}
+    .coin-pop.show{transform:translate(-50%,-120px) scale(1);opacity:1}
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen" class="screen active">
+  <div class="logo-area">
+    <div class="logo-icon"><i class="fa-solid fa-person-walking" style="color:#fff"></i></div>
+    <div class="logo-title">Villa<span>Steps</span></div>
+    <div class="logo-sub">Salud activa para la comunidad médica</div>
+  </div>
+  <div class="login-card">
+    <h2>Crea tu perfil</h2>
+    <div class="form-group">
+      <label>Nombre completo</label>
+      <input type="text" id="inp-name" placeholder="Ej. Ana García" value="Ana García">
+    </div>
+    <div class="form-group">
+      <label>Carrera</label>
+      <select id="inp-career">
+        <option>Medicina</option>
+        <option>Enfermería</option>
+        <option>Odontología</option>
+        <option>Farmacia y Bioquímica</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Ciclo académico</label>
+      <select id="inp-cycle">
+        <option>1er ciclo</option>
+        <option>2do ciclo</option>
+        <option selected>3er ciclo</option>
+        <option>4to ciclo</option>
+        <option>5to ciclo</option>
+        <option>6to ciclo</option>
+      </select>
+    </div>
+    <button class="btn-primary" onclick="doLogin()">
+      <i class="fa-solid fa-bolt"></i>&nbsp; Empezar aventura
+    </button>
+  </div>
+</div>
+
+<!-- HOME -->
+<div id="home-screen" class="screen">
+  <div class="screen-header">
+    <h1 id="greeting">Buenos días, Ana 👋</h1>
+    <p>Meta del día: 10.000 pasos</p>
+    <div class="coin-badge"><i class="fa-solid fa-coins"></i>&nbsp;<span id="hm-coins">0</span> StepCoins</div>
+  </div>
+
+  <div class="progress-section">
+    <div class="ring-container">
+      <svg class="ring-svg" width="120" height="120" viewBox="0 0 100 100">
+        <defs>
+          <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style="stop-color:#7c3aed"/>
+            <stop offset="100%" style="stop-color:#ff6b35"/>
+          </linearGradient>
+        </defs>
+        <circle class="ring-bg" cx="50" cy="50" r="45"/>
+        <circle class="ring-progress" id="ring-arc" cx="50" cy="50" r="45"/>
+      </svg>
+      <div class="ring-center">
+        <div class="ring-steps" id="r-steps">3.240</div>
+        <div class="ring-pct" id="r-pct">32%</div>
+        <div class="ring-label">pasos</div>
+      </div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-mini"><div class="val" id="s-kcal">129.6</div><div class="lbl">kcal</div></div>
+      <div class="stat-mini"><div class="val" id="s-km">2.59</div><div class="lbl">km</div></div>
+      <div class="stat-mini"><div class="val" id="s-min">38</div><div class="lbl">min activo</div></div>
+      <div class="stat-mini"><div class="val" id="s-streak">5</div><div class="lbl">días racha</div></div>
+    </div>
+  </div>
+
+  <div class="step-input-section">
+    <div class="section-label">Registrar pasos manualmente</div>
+    <div class="step-row">
+      <input type="number" id="step-inp" placeholder="Ej. 500" min="1" max="50000">
+      <button class="btn-add" onclick="addSteps()"><i class="fa-solid fa-plus"></i> Agregar</button>
+    </div>
+  </div>
+
+  <div class="section-card">
+    <div class="section-label">Actividad semanal</div>
+    <div class="weekly-bars" id="weekly-bars"></div>
+  </div>
+</div>
+
+<!-- REWARDS -->
+<div id="rewards-screen" class="screen">
+  <div class="screen-header">
+    <h1>Recompensas</h1>
+    <p>Canjea StepCoins por premios reales</p>
+  </div>
+  <div class="rewards-banner">
+    <i class="fa-solid fa-gift"></i>
+    <div>
+      <h3>Tienes <span id="rw-coins">0</span> StepCoins</h3>
+      <p>Cada 100 pasos = 1 StepCoin</p>
+    </div>
+  </div>
+  <div class="rewards-grid" id="rewards-grid">
+    <!-- JS injected -->
+  </div>
+  <div class="pro-banner">
+    <i class="fa-solid fa-crown"></i>
+    <div>
+      <h3>Membresía PRO</h3>
+      <p>2x StepCoins · premios exclusivos · retos especiales</p>
+    </div>
+  </div>
+</div>
+
+<!-- RANKING -->
+<div id="ranking-screen" class="screen">
+  <div class="screen-header">
+    <h1>Competir</h1>
+    <p>Semana 16 – 22 de junio 2026</p>
+  </div>
+  <div class="challenge-card">
+    <div class="challenge-tag"><i class="fa-solid fa-fire-flame-curved"></i> Reto colectivo de la semana</div>
+    <div class="challenge-title">Meta grupal: 500.000 pasos universitarios</div>
+    <div class="prog-bar"><div class="prog-fill" style="width:68%"></div></div>
+    <div class="prog-stats"><span>340.200 / 500.000 pasos</span><span>68% completado</span></div>
+  </div>
+  <div class="ranking-list" id="ranking-list"></div>
+</div>
+
+<!-- PROFILE -->
+<div id="profile-screen" class="screen">
+  <div class="profile-header">
+    <div class="villamon-wrap" id="villamon-art"></div>
+    <div class="profile-name" id="pf-name">Ana García</div>
+    <div class="profile-sub" id="pf-sub">Medicina · 3er ciclo</div>
+  </div>
+  <div class="evo-section">
+    <div class="evo-header">
+      <div class="evo-title">Evolución de Villamon</div>
+      <div class="evo-lvl" id="evo-label">Nivel 2 · Caminante</div>
+    </div>
+    <div class="evo-bar"><div class="evo-fill" id="evo-fill" style="width:42%"></div></div>
+    <div class="evo-stages"><span>Bebé</span><span>Caminante</span><span>Corredor</span><span>Campeón</span></div>
+  </div>
+  <div class="stats-detail">
+    <div class="stat-card"><i class="fa-solid fa-shoe-prints"></i><div class="val" id="pf-steps">3.240</div><div class="lbl">Pasos hoy</div></div>
+    <div class="stat-card"><i class="fa-solid fa-coins"></i><div class="val" id="pf-coins">0</div><div class="lbl">StepCoins</div></div>
+    <div class="stat-card"><i class="fa-solid fa-fire"></i><div class="val" id="pf-streak">5</div><div class="lbl">Días de racha</div></div>
+    <div class="stat-card"><i class="fa-solid fa-trophy"></i><div class="val" id="pf-rank">#4</div><div class="lbl">Ranking</div></div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav class="bottom-nav" id="bottom-nav" style="display:none">
+  <div class="nav-item active" onclick="go('home',this)"><i class="fa-solid fa-house"></i><span>Inicio</span></div>
+  <div class="nav-item" onclick="go('rewards',this)"><i class="fa-solid fa-gift"></i><span>Premios</span></div>
+  <div class="nav-item" onclick="go('ranking',this)"><i class="fa-solid fa-ranking-star"></i><span>Competir</span></div>
+  <div class="nav-item" onclick="go('profile',this)"><i class="fa-solid fa-user"></i><span>Perfil</span></div>
+</nav>
+
+<div class="toast" id="toast"></div>
+<div class="coin-pop" id="coin-pop">🪙</div>
+
+<script>
+const GOAL = 10000;
+const DAYS = ['Lu','Ma','Mi','Ju','Vi','Sá','Do'];
+
+let S = {
+  name:'Ana',full:'Ana García',career:'Medicina',cycle:'3er ciclo',
+  steps:3240,coins:32,
+  weekly:[4200,7800,5100,9200,6300,3240,0]
+};
+
+const REWARDS = [
+  {icon:'🩺',name:'Kit Médico',cost:200},
+  {icon:'📚',name:'Papelería',cost:150},
+  {icon:'🥗',name:'Snack saludable',cost:100},
+  {icon:'💊',name:'Kit de Vida',cost:300},
+  {icon:'💧',name:'Botella Premium',cost:80},
+  {icon:'🎧',name:'Audífonos',cost:250},
+];
+
+const RIVALS = [
+  {name:'Carlos M.',career:'Medicina',steps:9840,emoji:'🦅'},
+  {name:'Ana P.',career:'Enfermería',steps:8720,emoji:'🌿'},
+  {name:'Luis R.',career:'Odontología',steps:7200,emoji:'⚡'},
+  {name:'Sofía G.',career:'Farmacia',steps:5100,emoji:'🌸'},
+  {name:'Diego T.',career:'Medicina',steps:3800,emoji:'🔥'},
+];
+
+function doLogin(){
+  const n = document.getElementById('inp-name').value.trim()||'Estudiante';
+  const c = document.getElementById('inp-career').value;
+  const cy = document.getElementById('inp-cycle').value;
+  S.full=n; S.name=n.split(' ')[0]; S.career=c; S.cycle=cy;
+  document.getElementById('login-screen').classList.remove('active');
+  document.getElementById('bottom-nav').style.display='flex';
+  buildRewards(); buildRanking();
+  go('home', document.querySelector('.nav-item'));
+  refresh();
+}
+
+function go(screen, el){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById(screen+'-screen').classList.add('active');
+  if(el) el.classList.add('active');
+  refresh();
+}
+
+function refresh(){
+  const pct = Math.min(S.steps/GOAL,1);
+  const C = 2*Math.PI*45;
+  const arc = document.getElementById('ring-arc');
+  arc.style.strokeDasharray = C;
+  arc.style.strokeDashoffset = C*(1-pct);
+
+  document.getElementById('greeting').textContent = 'Hola, '+S.name+' 👋';
+  document.getElementById('r-steps').textContent = S.steps.toLocaleString('es');
+  document.getElementById('r-pct').textContent = Math.round(pct*100)+'%';
+  document.getElementById('s-kcal').textContent = (S.steps*.04).toFixed(1);
+  document.getElementById('s-km').textContent = (S.steps*.0008).toFixed(2);
+  document.getElementById('s-min').textContent = Math.floor(S.steps/85);
+  document.getElementById('hm-coins').textContent = S.coins;
+  document.getElementById('rw-coins').textContent = S.coins;
+  document.getElementById('pf-name').textContent = S.full;
+  document.getElementById('pf-sub').textContent = S.career+' · '+S.cycle;
+  document.getElementById('pf-steps').textContent = S.steps.toLocaleString('es');
+  document.getElementById('pf-coins').textContent = S.coins;
+
+  buildWeekly(); buildEvo(); buildRanking(); buildVillamon();
+}
+
+function buildWeekly(){
+  const W = document.getElementById('weekly-bars');
+  S.weekly[5]=S.steps;
+  const mx = Math.max(...S.weekly,1);
+  W.innerHTML=S.weekly.map((v,i)=>{
+    const h=Math.max((v/mx)*60,4);
+    return `<div class="bar-wrap"><div class="bar ${i===5?'today':''}" style="height:${h}px"></div><div class="bar-day">${DAYS[i]}</div></div>`;
+  }).join('');
+}
+
+function buildEvo(){
+  const total = S.weekly.reduce((a,b)=>a+b,0);
+  const p = Math.min((total/50000)*100,100);
+  document.getElementById('evo-fill').style.width=p+'%';
+  let lbl='Nivel 1 · Bebé';
+  if(p>25) lbl='Nivel 2 · Caminante';
+  if(p>55) lbl='Nivel 3 · Corredor';
+  if(p>80) lbl='Nivel 4 · Campeón';
+  document.getElementById('evo-label').textContent=lbl;
+}
+
+function buildRewards(){
+  document.getElementById('rewards-grid').innerHTML=REWARDS.map((r,i)=>`
+    <div class="reward-card" id="rw${i}" onclick="redeem(${i},${r.cost},'${r.name}')">
+      <span class="reward-icon">${r.icon}</span>
+      <div class="reward-name">${r.name}</div>
+      <div class="reward-cost"><i class="fa-solid fa-coins"></i> ${r.cost}</div>
+    </div>`).join('');
+}
+
+function redeem(i,cost,name){
+  if(S.coins<cost){showToast('Necesitas '+cost+' StepCoins ·  tienes '+S.coins);return;}
+  S.coins-=cost;
+  document.getElementById('rw'+i).classList.add('redeemed');
+  refresh();
+  showToast('¡'+name+' canjeado con éxito!');
+}
+
+function buildRanking(){
+  const me = {name:S.name+' (tú)',career:S.career,steps:S.steps,emoji:'⭐',me:true};
+  const all = [...RIVALS,me].sort((a,b)=>b.steps-a.steps);
+  const medals=['gold-medal','silver-medal','bronze-medal','other-rank','other-rank','other-rank'];
+  const nums=['🥇','🥈','🥉','4','5','6'];
+  document.getElementById('ranking-list').innerHTML=all.map((u,i)=>`
+    <div class="rank-item ${u.me?'me':''}">
+      <div class="rank-num ${medals[i]}">${nums[i]}</div>
+      <div class="rank-avatar">${u.emoji||u.name[0]}</div>
+      <div class="rank-info">
+        <div class="rank-name">${u.name}</div>
+        <div class="rank-sub">${u.career}</div>
+      </div>
+      <div class="rank-steps">${u.steps.toLocaleString('es')}</div>
+    </div>`).join('');
+  const myRank=all.findIndex(u=>u.me)+1;
+  document.getElementById('pf-rank').textContent='#'+myRank;
+}
+
+function buildVillamon(){
+  // CSS pixel-art Villamon (morado + verde per spec)
+  const px=(c)=>`<div style="width:13px;height:13px;background:${c}"></div>`;
+  const _ = 'transparent'; const P='#7c3aed'; const G='#22c55e';
+  const D='#1a0a35'; const E='#f0e6ff'; const O='#ff6b35';
+  const rows=[
+    [_,_,G,P,P,G,_,_],
+    [_,P,P,P,P,P,P,_],
+    [P,P,E,P,P,E,P,P],
+    [P,P,D,P,P,D,P,P],
+    [_,P,P,O,O,P,P,_],
+    [_,_,P,P,P,P,_,_],
+    [_,G,G,G,G,G,G,_],
+    [G,G,G,O,O,G,G,G],
+    [_,P,P,_,_,P,P,_],
+    [_,P,G,_,_,G,P,_],
+  ];
+  const grid = rows.flat().map(c=>px(c)).join('');
+  document.getElementById('villamon-art').innerHTML=
+    `<div style="display:grid;grid-template-columns:repeat(8,13px);grid-template-rows:repeat(10,13px);image-rendering:pixelated">${grid}</div>`;
+}
+
+function addSteps(){
+  const v=parseInt(document.getElementById('step-inp').value);
+  if(!v||v<1)return;
+  S.steps+=v; S.weekly[5]=S.steps;
+  const earned=Math.floor(v/100);
+  S.coins+=earned;
+  document.getElementById('step-inp').value='';
+  refresh();
+  if(earned>0){showCoin();showToast('+'+earned+' StepCoins ganados!');}
+  else showToast('+'+v.toLocaleString('es')+' pasos registrados');
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2600);
+}
+function showCoin(){
+  const c=document.getElementById('coin-pop');
+  c.classList.add('show');
+  setTimeout(()=>c.classList.remove('show'),900);
+}
+</script>
+</body>
+</html>
