@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mapeamento Técnico e Funcional - Gestão de Obras</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #1E6B45;
+      --primary-light: #2A8D5C;
+      --accent: #F5A623;
+      --bg: #F4F7F4;
+      --card: #FFFFFF;
+      --text: #1A2E1A;
+      --text-muted: #6B8268;
+      --border: #D4E4D4;
+      --tag-green: #E8F5E9;
+      --tag-blue: #E3F2FD;
+      --tag-orange: #FFF3E0;
+      --tag-red: #FFEBEE;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    .header {
+      background: linear-gradient(135deg, #1A5C3A 0%, #2A8D5C 100%);
+      color: white;
+      padding: 22px 36px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+    }
+    .header-left { display: flex; align-items: center; gap: 14px; }
+    .header-icon {
+      width: 46px; height: 46px;
+      background: rgba(255,255,255,0.18);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+    }
+    .header-title { font-size: 18px; font-weight: 800; }
+    .header-sub { font-size: 13px; opacity: 0.75; margin-top: 2px; }
+    .badge {
+      background: var(--accent);
+      color: white;
+      padding: 5px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+    .tabs {
+      display: flex;
+      background: white;
+      border-bottom: 2px solid var(--border);
+      padding: 0 36px;
+      gap: 4px;
+    }
+    .tab {
+      padding: 15px 22px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      transition: all 0.2s;
+    }
+    .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+    .tab:hover:not(.active) { color: var(--text); background: var(--bg); }
+    .content {
+      padding: 28px 36px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    /* Stats row */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .stat-card {
+      background: white;
+      border-radius: 12px;
+      padding: 18px;
+      border: 1px solid var(--border);
+      text-align: center;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    }
+    .stat-number { font-size: 30px; font-weight: 800; color: var(--primary); }
+    .stat-label { font-size: 12px; color: var(--text-muted); font-weight: 600; margin-top: 3px; }
+
+    /* Section title */
+    .section-title {
+      font-size: 15px; font-weight: 700; color: var(--primary);
+      margin-bottom: 18px; display: flex; align-items: center; gap: 10px;
+    }
+    .section-title::before {
+      content: ''; display: block;
+      width: 4px; height: 18px;
+      background: var(--accent); border-radius: 2px;
+    }
+
+    /* Screen grid */
+    .screens-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+    .screen-card {
+      background: white;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 18px 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .screen-card:hover { border-color: var(--primary-light); box-shadow: 0 4px 14px rgba(30,107,69,0.12); transform: translateY(-1px); }
+    .screen-card.selected { border-color: var(--primary); background: #EEF7F2; box-shadow: 0 4px 14px rgba(30,107,69,0.18); }
+    .screen-icon {
+      width: 42px; height: 42px;
+      background: var(--tag-green);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; margin-bottom: 10px;
+    }
+    .screen-name { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+    .screen-tag {
+      font-size: 11px; font-weight: 700;
+      padding: 3px 9px; border-radius: 10px; display: inline-block;
+    }
+    .tag-core { background: var(--tag-green); color: #1B5E20; }
+    .tag-secondary { background: var(--tag-blue); color: #0D47A1; }
+    .tag-critical { background: var(--tag-red); color: #B71C1C; }
+
+    /* Detail panel */
+    .detail-panel {
+      background: white;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .detail-header {
+      background: linear-gradient(90deg, #1A5C3A, #2A8D5C);
+      color: white; padding: 16px 22px;
+      font-weight: 700; font-size: 15px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .detail-body { padding: 22px; }
+    .detail-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 18px; margin-bottom: 18px;
+    }
+    .detail-col h4 {
+      font-size: 11px; font-weight: 800;
+      text-transform: uppercase; letter-spacing: 0.8px;
+      color: var(--text-muted); margin-bottom: 10px;
+    }
+    .detail-items { display: flex; flex-direction: column; gap: 7px; }
+    .detail-item {
+      font-size: 13px; padding: 8px 12px;
+      background: var(--bg); border-radius: 7px;
+      display: flex; align-items: flex-start; gap: 8px;
+      border-left: 3px solid var(--primary);
+    }
+    .detail-item::before { content: ''; }
+    .exception-box {
+      background: #FFF8EC;
+      border-left: 4px solid var(--accent);
+      border-radius: 0 10px 10px 0;
+      padding: 14px 16px; margin-top: 4px;
+    }
+    .exception-box h4 {
+      font-size: 11px; font-weight: 800;
+      color: #CC6600; margin-bottom: 7px;
+      text-transform: uppercase; letter-spacing: 0.6px;
+    }
+    .exception-box p { font-size: 13px; color: #5D4037; line-height: 1.6; }
+
+    /* Permission matrix */
+    .matrix-wrap { overflow-x: auto; margin-bottom: 20px; }
+    .matrix-table {
+      width: 100%; border-collapse: collapse;
+      background: white; border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+    }
+    .matrix-table th {
+      background: linear-gradient(90deg, #1A5C3A, #2A8D5C);
+      color: white; padding: 13px 16px;
+      font-size: 13px; font-weight: 700; text-align: left;
+    }
+    .matrix-table td {
+      padding: 11px 16px; font-size: 13px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    .matrix-table tr:last-child td { border-bottom: none; }
+    .matrix-table tr:nth-child(even) td { background: #FAFAFA; }
+    .perm-cell { text-align: center; font-size: 15px; vertical-align: middle; }
+    .perm-full { color: #1B5E20; }
+    .perm-read { color: #0D47A1; }
+    .perm-none { color: #BDBDBD; }
+    .perm-limited { color: #E65100; }
+    .context-note {
+      background: #FFF3E0; border-radius: 4px;
+      padding: 2px 7px; font-size: 11px;
+      color: #E65100; margin-top: 3px; display: inline-block;
+    }
+    .legend-row {
+      display: flex; gap: 20px; flex-wrap: wrap;
+      font-size: 13px; margin-bottom: 16px; padding: 12px 16px;
+      background: white; border-radius: 10px; border: 1px solid var(--border);
+    }
+    .legend-row span { display: flex; align-items: center; gap: 6px; }
+    .gap-box {
+      background: #FFF8EC; border-left: 4px solid var(--accent);
+      border-radius: 0 10px 10px 0; padding: 16px;
+    }
+    .gap-box h4 {
+      font-size: 11px; font-weight: 800;
+      color: #CC6600; margin-bottom: 8px;
+      text-transform: uppercase; letter-spacing: 0.6px;
+    }
+    .gap-box p { font-size: 13px; color: #5D4037; line-height: 1.6; }
+
+    /* Workflow */
+    .workflow {
+      background: white; border-radius: 14px;
+      padding: 26px; border: 1px solid var(--border);
+      box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+    }
+    .flow-steps {
+      display: flex; align-items: flex-start;
+      gap: 0; overflow-x: auto; padding-bottom: 8px; margin-bottom: 24px;
+    }
+    .flow-step { display: flex; flex-direction: column; align-items: center; min-width: 130px; }
+    .flow-node {
+      width: 115px; min-height: 72px;
+      border-radius: 10px;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 10px; text-align: center;
+    }
+    .flow-node-label { font-size: 11px; font-weight: 700; line-height: 1.4; }
+    .flow-node-sub { font-size: 10px; margin-top: 4px; opacity: 0.75; }
+    .node-start { background: var(--tag-green); border: 2px solid #2E7D32; }
+    .node-action { background: var(--tag-blue); border: 2px solid #1565C0; }
+    .node-decision { background: var(--tag-orange); border: 2px solid #EF6C00; }
+    .node-end { background: #F3E5F5; border: 2px solid #6A1B9A; }
+    .flow-arrow {
+      display: flex; align-items: center; justify-content: center;
+      min-width: 36px; color: var(--text-muted);
+      font-size: 20px; margin-top: 24px; font-weight: 300;
+    }
+    .flow-label { font-size: 10px; color: var(--text-muted); margin-top: 6px; font-weight: 700; text-align: center; }
+    .exception-branch {
+      background: #FFF8EC; border-radius: 12px;
+      padding: 18px; border: 1px dashed #F5A623;
+      margin-bottom: 20px;
+    }
+    .exception-branch h4 {
+      font-size: 11px; font-weight: 800;
+      color: #CC6600; margin-bottom: 12px;
+      text-transform: uppercase; letter-spacing: 0.6px;
+    }
+    .exception-cases { display: flex; gap: 12px; flex-wrap: wrap; }
+    .exception-case {
+      background: white; border-radius: 10px;
+      padding: 12px 14px; border: 1px solid #FFCC80;
+      font-size: 12px; min-width: 200px; flex: 1;
+    }
+    .exception-case strong { display: block; color: #CC6600; margin-bottom: 4px; font-size: 12px; }
+
+    /* IO panel */
+    .io-panel {
+      background: white; border-radius: 14px;
+      overflow: hidden; border: 1px solid var(--border);
+    }
+    .io-header {
+      background: linear-gradient(90deg, #1A5C3A, #2A8D5C);
+      color: white; padding: 15px 22px;
+      font-weight: 700; font-size: 14px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .io-body { padding: 22px; }
+
+    /* Restart btn */
+    .restart-btn {
+      position: fixed; bottom: 24px; right: 24px;
+      background: var(--accent); color: white;
+      border: none; border-radius: 50px;
+      padding: 11px 22px;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800; font-size: 13px;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(245,166,35,0.45);
+      transition: all 0.2s; z-index: 100;
+    }
+    .restart-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(245,166,35,0.55); }
+
+    /* Scroll reveal */
+    .reveal { opacity: 0; transform: translateY(18px); transition: opacity 0.45s ease, transform 0.45s ease; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    @media (max-width: 680px) {
+      .stats-row { grid-template-columns: repeat(2, 1fr); }
+      .detail-grid { grid-template-columns: 1fr; }
+      .header { flex-direction: column; gap: 10px; align-items: flex-start; }
+      .tabs { padding: 0 16px; overflow-x: auto; }
+      .content { padding: 18px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="header-icon">🏗️</div>
+    <div>
+      <div class="header-title">Mapeamento Técnico e Funcional</div>
+      <div class="header-sub">App de Gestão Operacional de Obras · Exemplo de entrega</div>
+    </div>
+  </div>
+  <span class="badge">AMOSTRA</span>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab(0)">Mapa de Telas</div>
+  <div class="tab" onclick="switchTab(1)">Matrix de Permissões</div>
+  <div class="tab" onclick="switchTab(2)">Fluxo de Exceção</div>
+</div>
+
+<div class="content">
+
+  <!-- TAB 0: SCREEN MAP -->
+  <div class="panel active" id="panel-0">
+
+    <div class="stats-row reveal">
+      <div class="stat-card">
+        <div class="stat-number">12</div>
+        <div class="stat-label">Telas Mapeadas</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">4</div>
+        <div class="stat-label">Perfis de Usuário</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">23</div>
+        <div class="stat-label">Fluxos Documentados</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">8</div>
+        <div class="stat-label">Casos de Exceção</div>
+      </div>
+    </div>
+
+    <div class="section-title reveal">Clique em uma tela para ver entradas, saídas e regras de contexto</div>
+
+    <div class="screens-grid reveal">
+      <div class="screen-card" onclick="selectScreen(0)" id="screen-0">
+        <div class="screen-icon">📊</div>
+        <div class="screen-name">Dashboard</div>
+        <span class="screen-tag tag-core">Principal</span>
+      </div>
+      <div class="screen-card" onclick="selectScreen(1)" id="screen-1">
+        <div class="screen-icon">🧱</div>
+        <div class="screen-name">Controle de Materiais</div>
+        <span class="screen-tag tag-core">Principal</span>
+      </div>
+      <div class="screen-card" onclick="selectScreen(2)" id="screen-2">
+        <div class="screen-icon">⏱️</div>
+        <div class="screen-name">Registro de Horas</div>
+        <span class="screen-tag tag-core">Principal</span>
+      </div>
+      <div class="screen-card" onclick="selectScreen(3)" id="screen-3">
+        <div class="screen-icon">🔄</div>
+        <div class="screen-name">Transferência entre Obras</div>
+        <span class="screen-tag tag-critical">Exceção Crítica</span>
+      </div>
+      <div class="screen-card" onclick="selectScreen(4)" id="screen-4">
+        <div class="screen-icon">👥</div>
+        <div class="screen-name">Gestão de Equipe</div>
+        <span class="screen-tag tag-secondary">Secundária</span>
+      </div>
+      <div class="screen-card" onclick="selectScreen(5)" id="screen-5">
+        <div class="screen-icon">📋</div>
+        <div class="screen-name">Relatórios de Obra</div>
+        <span class="screen-tag tag-secondary">Secundária</span>
+      </div>
+    </div>
+
+    <div class="detail-panel reveal" id="detail-panel" style="display:none">
+      <div class="detail-header" id="detail-header">
+        <span id="detail-icon"></span>
+        <span id="detail-title"></span>
+      </div>
+      <div class="detail-body" id="detail-body"></div>
+    </div>
+
+  </div>
+
+  <!-- TAB 1: PERMISSION MATRIX -->
+  <div class="panel" id="panel-1">
+
+    <div class="section-title reveal">Matrix de Permissões por Perfil</div>
+
+    <div class="legend-row reveal">
+      <span><strong style="color:#1B5E20">✦</strong> Acesso total</span>
+      <span><strong style="color:#0D47A1">◎</strong> Somente leitura</span>
+      <span><strong style="color:#E65100">◑</strong> Acesso contextual</span>
+      <span><strong style="color:#BDBDBD">—</strong> Sem acesso</span>
+    </div>
+
+    <div class="matrix-wrap reveal">
+      <table class="matrix-table">
+        <tr>
+          <th style="min-width:210px">Funcionalidade</th>
+          <th style="text-align:center;min-width:110px">Administrador</th>
+          <th style="text-align:center;min-width:110px">Engenheiro</th>
+          <th style="text-align:center;min-width:110px">Encarregado</th>
+          <th style="text-align:center;min-width:110px">Operador</th>
+        </tr>
+        <tr>
+          <td>
+            Dashboard<br>
+            <span class="context-note">★ Escopo varia por perfil</span>
+          </td>
+          <td class="perm-cell perm-full">✦<br><small>Todas as obras</small></td>
+          <td class="perm-cell perm-read">◎<br><small>Obras designadas</small></td>
+          <td class="perm-cell perm-limited">◑<br><small>Obra própria</small></td>
+          <td class="perm-cell perm-none">—</td>
+        </tr>
+        <tr>
+          <td>Controle de Materiais — Visualizar</td>
+          <td class="perm-cell perm-full">✦</td>
+          <td class="perm-cell perm-read">◎</td>
+          <td class="perm-cell perm-limited">◑<br><small>Obra própria</small></td>
+          <td class="perm-cell perm-read">◎</td>
+        </tr>
+        <tr>
+          <td>
+            Controle de Materiais — Editar<br>
+            <span class="context-note">★ Encarregado: apenas obra atual</span>
+          </td>
+          <td class="perm-cell perm-full">✦</td>
+          <td class="perm-cell perm-none">—</td>
+          <td class="perm-cell perm-limited">◑</td>
+          <td class="perm-cell perm-none">—</td>
+        </tr>
+        <tr>
+          <td>Registro de Horas — Inserir</td>
+          <td class="perm-cell perm-full">✦</td>
+          <td class="perm-cell perm-none">—</td>
+          <td class="perm-cell perm-limited">◑<br><small>Equipe própria</small></td>
+          <td class="perm-cell perm-full">✦<br><small>Próprias horas</small></td>
+        </tr>
+        <tr>
+          <td>Registro de Horas — Aprovar</td>
+          <td class="perm-cell perm-full">✦</td>
+          <td class="perm-cell perm-read">◎<br><small>Obras designadas</small></td>
+          <td class="perm-cell perm-none">—</td>
+          <td class="perm-cell perm-none">—</td>
+        </tr>
+        <tr>
+          <td>
+            Transferência entre Obras<br>
+            <span class="context-note">★ Dupla aprovação obrigatória</span>
+          </td>
+          <td class="perm-cell perm-full">✦<br><small>Iniciar + Aprovar</small></td>
+          <td class="perm-cell perm-read">◎<br><small>Aprovar saída</small></td>
+          <td class="perm-cell perm-limited">◑<br><small>Solicitar</small></td>
+          <td class="perm-cell perm-none">—</td>
+        </tr>
+        <tr>
+          <td>Gestão de Usuários</td>
+          <td class="perm-cell perm-full">✦</td>
+          <td class="perm-cell perm-none">—</td>
+          <td class="perm-cell perm-none">—</td>
+          <td class="perm-cell perm-none">—</td>
+        </tr>
+        <tr>
+          <td>Relatórios Gerenciais</td>
+          <td class="perm-cell perm-full">✦<br><small>Todos</small></td>
+          <td class="perm-cell perm-read">◎<br><small>Por obra</small></td>
+          <td class="perm-cell perm-none">—</td>
+          <td class="perm-cell perm-none">—</td>
+        </tr>
+        <tr>
+          <td>Exportação CSV</td>
+          <td class="perm-cell perm-full">✦</td>
+          <td class="perm-cell perm-full">✦<br><small>Obras designadas</small></td>
+          <td class="perm-cell perm-none">—</td>
+          <td class="perm-cell perm-none">—</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="gap-box reveal">
+      <h4>Gap Identificado: Usuário com Papel Duplo</h4>
+      <p>Usuários vinculados a mais de uma obra com perfis diferentes (ex: Encarregado na Obra A e Operador na Obra B) herdam o perfil por obra_id no momento do acesso. A permissão contextual é avaliada por sessão ativa. Este caso não aparece nas telas principais e precisa de regra explícita no modelo de dados de permissão.</p>
+    </div>
+
+  </div>
+
+  <!-- TAB 2: EXCEPTION FLOW -->
+  <div class="panel" id="panel-2">
+
+    <div class="section-title reveal">Fluxo de Exceção: Transferência de Material entre Obras</div>
+
+    <div class="workflow reveal">
+      <div class="flow-steps">
+        <div class="flow-step">
+          <div class="flow-node node-start">
+            <div class="flow-node-label">Encarregado solicita transferência</div>
+          </div>
+          <div class="flow-label">PENDENTE</div>
+        </div>
+        <div class="flow-arrow">&#8594;</div>
+        <div class="flow-step">
+          <div class="flow-node node-action">
+            <div class="flow-node-label">Sistema reserva item na obra de origem</div>
+          </div>
+          <div class="flow-label">RESERVADO</div>
+        </div>
+        <div class="flow-arrow">&#8594;</div>
+        <div class="flow-step">
+          <div class="flow-node node-decision">
+            <div class="flow-node-label">Engenheiro da obra de origem aprova?</div>
+          </div>
+          <div class="flow-label">DECISÃO</div>
+        </div>
+        <div class="flow-arrow">&#8594;</div>
+        <div class="flow-step">
+          <div class="flow-node node-action">
+            <div class="flow-node-label">Admin confirma e executa transferência</div>
+          </div>
+          <div class="flow-label">DUPLA APROVAÇÃO</div>
+        </div>
+        <div class="flow-arrow">&#8594;</div>
+        <div class="flow-step">
+          <div class="flow-node node-end">
+            <div class="flow-node-label">Material disponível na obra de destino</div>
+          </div>
+          <div class="flow-label">CONCLUÍDO</div>
+        </div>
+      </div>
+
+      <div class="exception-branch">
+        <h4>Fluxos de Exceção Mapeados</h4>
+        <div class="exception-cases">
+          <div class="exception-case">
+            <strong>Engenheiro rejeita</strong>
+            Material volta ao status DISPONÍVEL na obra de origem. Notificação enviada ao Encarregado solicitante com motivo.
+          </div>
+          <div class="exception-case">
+            <strong>Obra de destino sem Encarregado ativo</strong>
+            Admin assume o recebimento. Log de responsabilidade registrado com timestamp.
+          </div>
+          <div class="exception-case">
+            <strong>Transferência parcial</strong>
+            Dois registros criados com IDs vinculados. Saldo dividido com rastreabilidade de origem.
+          </div>
+          <div class="exception-case">
+            <strong>Obra de origem encerrada</strong>
+            Fluxo bloqueado pelo sistema. Apenas Admin pode autorizar com justificativa de exceção manual.
+          </div>
+        </div>
+      </div>
+
+      <div class="io-panel">
+        <div class="io-header">
+          <span>📋</span>
+          <span>Tela de Transferência: Entradas e Saídas</span>
+        </div>
+        <div class="io-body">
+          <div class="detail-grid">
+            <div class="detail-col">
+              <h4>Entradas</h4>
+              <div class="detail-items">
+                <div class="detail-item">ID do material (obrigatório)</div>
+                <div class="detail-item">Quantidade a transferir (obrigatório)</div>
+                <div class="detail-item">Obra de destino (obrigatório)</div>
+                <div class="detail-item">Motivo da transferência (opcional)</div>
+                <div class="detail-item">Data prevista de uso (opcional)</div>
+              </div>
+            </div>
+            <div class="detail-col">
+              <h4>Saídas</h4>
+              <div class="detail-items">
+                <div class="detail-item">ID único da transferência</div>
+                <div class="detail-item">Estoque atualizado com status RESERVADO</div>
+                <div class="detail-item">Notificação ao Engenheiro da obra origem</div>
+                <div class="detail-item">Log de auditoria com autor e timestamp</div>
+                <div class="detail-item">Status da solicitação em tempo real</div>
+              </div>
+            </div>
+          </div>
+          <div class="exception-box">
+            <h4>Validação Crítica</h4>
+            <p>Quantidade solicitada não pode exceder o estoque disponível menos o estoque mínimo configurado para a obra de origem. O sistema valida disponibilidade antes de reservar e bloqueia a solicitação com mensagem de motivo se a regra for violada.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<button class="restart-btn" onclick="restartDemo()">&#8635; Reiniciar</button>
+
+<script>
+  const screenData = [
+    {
+      icon: '📊',
+      title: 'Dashboard',
+      inputs: [
+        'Token de sessão do usuário',
+        'Obra selecionada (filtro ativo)',
+        'Período de visualização',
+        'Filtros de status aplicados'
+      ],
+      outputs: [
+        'Resumo de materiais em uso por obra',
+        'Total de horas registradas no período',
+        'Alertas de estoque abaixo do mínimo',
+        'Transferências pendentes de aprovação'
+      ],
+      exception: 'Permissão contextual por perfil: Administrador vê todas as obras sem filtro. Engenheiro vê apenas as obras às quais foi designado. Encarregado vê somente a obra à qual está vinculado no período ativo. O escopo do dashboard é determinado no momento do login e não pode ser expandido manualmente pelo usuário.'
+    },
+    {
+      icon: '🧱',
+      title: 'Controle de Materiais',
+      inputs: [
+        'ID da obra (obrigatório)',
+        'Categoria do material',
+        'Quantidade de entrada ou saída',
+        'Responsável pelo registro',
+        'Fornecedor (apenas para entradas)'
+      ],
+      outputs: [
+        'Saldo atualizado em tempo real',
+        'Log de movimentação com autor e hora',
+        'Alerta automático se saldo abaixo do mínimo',
+        'Confirmação com timestamp de registro'
+      ],
+      exception: 'Encarregado só pode registrar movimentações na obra à qual está vinculado na data atual. Registros retroativos com mais de 3 dias exigem aprovação do Engenheiro. Material com status RESERVADO por transferência pendente não aparece no saldo disponível.'
+    },
+    {
+      icon: '⏱️',
+      title: 'Registro de Horas',
+      inputs: [
+        'ID do colaborador',
+        'Data e hora de início e fim',
+        'Obra e setor de trabalho',
+        'Tipo de hora (normal, extra, noturna)',
+        'Observação (opcional)'
+      ],
+      outputs: [
+        'Registro criado com status PENDENTE',
+        'Notificação ao Engenheiro para aprovação',
+        'Acumulado do colaborador atualizado',
+        'Relatório diário de horas por obra atualizado'
+      ],
+      exception: 'Horas não podem ser inseridas para datas futuras. Registros com mais de 3 dias de atraso exigem justificativa obrigatória. Se um colaborador trabalhou em duas obras no mesmo dia os registros são criados separados com vinculação ao mesmo colaborador_id para consolidação no relatório gerencial.'
+    },
+    {
+      icon: '🔄',
+      title: 'Transferência entre Obras',
+      inputs: [
+        'ID do material',
+        'Quantidade a transferir',
+        'Obra de destino',
+        'Motivo da transferência',
+        'Data prevista de uso no destino'
+      ],
+      outputs: [
+        'ID único da solicitação de transferência',
+        'Status RESERVADO aplicado no estoque origem',
+        'Notificação ao Engenheiro da obra origem',
+        'Log de auditoria com solicitante e timestamp'
+      ],
+      exception: 'Fluxo de dupla aprovação obrigatório: Engenheiro da obra de origem e Admin. Se obra de origem estiver encerrada apenas Admin pode autorizar com justificativa. Transferência parcial gera dois registros vinculados por transfer_id para rastreabilidade completa.'
+    },
+    {
+      icon: '👥',
+      title: 'Gestão de Equipe',
+      inputs: [
+        'Nome e dados do colaborador',
+        'Obra de vinculação',
+        'Perfil de acesso atribuído',
+        'Validade do vínculo (opcional)'
+      ],
+      outputs: [
+        'Cadastro ativo com credenciais geradas',
+        'Vinculação à obra selecionada registrada',
+        'Permissões aplicadas imediatamente',
+        'Notificação de acesso enviada ao colaborador'
+      ],
+      exception: 'Colaborador pode ser vinculado a múltiplas obras com perfis diferentes. O sistema aplica o perfil correto por obra_id no momento do acesso. Desvinculação de uma obra não apaga histórico de horas e materiais já registrados por esse colaborador naquela obra.'
+    },
+    {
+      icon: '📋',
+      title: 'Relatórios de Obra',
+      inputs: [
+        'Obra selecionada',
+        'Período: data início e data fim',
+        'Tipo de relatório',
+        'Formato de exportação solicitado'
+      ],
+      outputs: [
+        'Relatório gerado em PDF ou CSV',
+        'Resumo de consumo de materiais por categoria',
+        'Total de horas por colaborador no período',
+        'Histórico de transferências com status'
+      ],
+      exception: 'Engenheiro só acessa relatórios das obras às quais foi designado. Relatórios consolidados com múltiplas obras são exclusivos do Administrador. Exportação em CSV disponível apenas para Administrador e Engenheiro. Operador não tem acesso a esta tela.'
+    }
+  ];
+
+  let selectedScreen = -1;
+  let activeTab = 0;
+
+  function selectScreen(idx) {
+    document.querySelectorAll('.screen-card').forEach(function(c) { c.classList.remove('selected'); });
+    document.getElementById('screen-' + idx).classList.add('selected');
+    selectedScreen = idx;
+
+    var d = screenData[idx];
+    document.getElementById('detail-icon').textContent = d.icon;
+    document.getElementById('detail-title').textContent = d.title + ' — Entradas, Saídas e Regras de Contexto';
+
+    var body = document.getElementById('detail-body');
+    body.innerHTML =
+      '<div class="detail-grid">' +
+        '<div class="detail-col">' +
+          '<h4>Entradas</h4>' +
+          '<div class="detail-items">' +
+            d.inputs.map(function(i) { return '<div class="detail-item">' + i + '</div>'; }).join('') +
+          '</div>' +
+        '</div>' +
+        '<div class="detail-col">' +
+          '<h4>Saídas</h4>' +
+          '<div class="detail-items">' +
+            d.outputs.map(function(o) { return '<div class="detail-item">' + o + '</div>'; }).join('') +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="exception-box">' +
+        '<h4>Regras de Exceção e Contexto</h4>' +
+        '<p>' + d.exception + '</p>' +
+      '</div>';
+
+    var panel = document.getElementById('detail-panel');
+    panel.style.display = 'block';
+    setTimeout(function() { panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, 50);
+    triggerReveal();
+  }
+
+  function switchTab(idx) {
+    activeTab = idx;
+    document.querySelectorAll('.tab').forEach(function(t, i) { t.classList.toggle('active', i === idx); });
+    document.querySelectorAll('.panel').forEach(function(p, i) { p.classList.toggle('active', i === idx); });
+    setTimeout(triggerReveal, 60);
+  }
+
+  function restartDemo() {
+    switchTab(0);
+    document.querySelectorAll('.screen-card').forEach(function(c) { c.classList.remove('selected'); });
+    document.getElementById('detail-panel').style.display = 'none';
+    selectedScreen = -1;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function triggerReveal() {
+    document.querySelectorAll('.reveal').forEach(function(el) {
+      var rect = el.getBoundingClientRect();
+      if (rect.top < window.innerHeight + 40) el.classList.add('visible');
+    });
+  }
+
+  window.addEventListener('scroll', triggerReveal);
+  triggerReveal();
+</script>
+</body>
+</html>
