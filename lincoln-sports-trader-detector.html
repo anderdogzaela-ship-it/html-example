@@ -1,0 +1,1401 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TraderVision — Detector de Lances em Tempo Real</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg-primary: #0d1117;
+    --bg-secondary: #161b22;
+    --bg-card: #1c2230;
+    --bg-hover: #21283a;
+    --accent-green: #00e676;
+    --accent-yellow: #ffd740;
+    --accent-red: #ff5252;
+    --accent-blue: #448aff;
+    --accent-orange: #ff9100;
+    --text-primary: #e6edf3;
+    --text-secondary: #8b949e;
+    --text-muted: #484f58;
+    --border: #30363d;
+    --border-light: #21262d;
+    --glow-green: rgba(0, 230, 118, 0.15);
+    --glow-red: rgba(255, 82, 82, 0.15);
+    --glow-yellow: rgba(255, 215, 64, 0.15);
+  }
+
+  body {
+    font-family: 'Roboto', sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* TITLE BAR */
+  .titlebar {
+    background: #0a0e17;
+    border-bottom: 1px solid var(--border);
+    height: 40px;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 12px;
+    user-select: none;
+  }
+  .titlebar-dots { display: flex; gap: 6px; }
+  .titlebar-dot {
+    width: 12px; height: 12px; border-radius: 50%;
+  }
+  .dot-red { background: #ff5f56; }
+  .dot-yellow { background: #ffbd2e; }
+  .dot-green { background: #27c93f; }
+  .titlebar-title {
+    font-size: 12px;
+    color: var(--text-secondary);
+    flex: 1;
+    text-align: center;
+    font-family: 'Roboto Mono', monospace;
+    letter-spacing: 0.5px;
+  }
+  .titlebar-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--accent-green);
+    font-family: 'Roboto Mono', monospace;
+  }
+  .titlebar-status .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent-green);
+    animation: blink 1.2s infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  /* TOP BAR */
+  .topbar {
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .match-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .team-flag { font-size: 20px; }
+  .team-name { font-weight: 600; font-size: 14px; }
+  .score-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 14px;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 2px;
+  }
+  .match-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+  .live-badge {
+    background: var(--accent-red);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 3px;
+    letter-spacing: 0.5px;
+    animation: livepulse 2s infinite;
+  }
+  @keyframes livepulse { 0%,100%{opacity:1} 50%{opacity:0.7} }
+  .topbar-right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .latency-badge {
+    background: var(--bg-card);
+    border: 1px solid var(--accent-green);
+    border-radius: 4px;
+    padding: 3px 10px;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 11px;
+    color: var(--accent-green);
+  }
+  .btn-capture {
+    background: var(--accent-blue);
+    border: none;
+    border-radius: 5px;
+    color: white;
+    padding: 5px 14px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.2s;
+  }
+  .btn-capture:hover { background: #5c9fff; }
+  .btn-capture.active { background: var(--accent-red); }
+
+  /* MAIN LAYOUT */
+  .main-layout {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    grid-template-rows: 1fr;
+    height: calc(100vh - 90px);
+    gap: 0;
+  }
+
+  /* VIDEO PANEL */
+  .video-panel {
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--border);
+    overflow: hidden;
+  }
+
+  .video-area {
+    position: relative;
+    flex: 1;
+    background: #000;
+    overflow: hidden;
+  }
+
+  .field-bg {
+    width: 100%;
+    height: 100%;
+    background:
+      linear-gradient(180deg, #1a4a1a 0%, #1e5c1e 30%, #1a4a1a 50%, #1e5c1e 70%, #1a4a1a 100%);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Field lines */
+  .field-bg::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      /* Center line */
+      linear-gradient(90deg, transparent 49.8%, rgba(255,255,255,0.3) 49.8%, rgba(255,255,255,0.3) 50.2%, transparent 50.2%),
+      /* Center circle */
+      radial-gradient(ellipse 18% 25% at 50% 50%, transparent 96%, rgba(255,255,255,0.25) 96%, rgba(255,255,255,0.25) 100%),
+      /* Left penalty area */
+      linear-gradient(90deg, transparent 15.8%, rgba(255,255,255,0.2) 15.8%, rgba(255,255,255,0.2) 16.2%, transparent 16.2%),
+      linear-gradient(180deg, transparent 25%, rgba(255,255,255,0.2) 25%, rgba(255,255,255,0.2) 25.4%, transparent 25.4%),
+      linear-gradient(180deg, transparent 74.6%, rgba(255,255,255,0.2) 74.6%, rgba(255,255,255,0.2) 75%, transparent 75%),
+      /* Right penalty area */
+      linear-gradient(90deg, transparent 83.8%, rgba(255,255,255,0.2) 83.8%, rgba(255,255,255,0.2) 84.2%, transparent 84.2%),
+      /* Outer border */
+      linear-gradient(90deg, transparent 2%, rgba(255,255,255,0.2) 2%, rgba(255,255,255,0.2) 2.4%, transparent 2.4%),
+      linear-gradient(90deg, transparent 97.6%, rgba(255,255,255,0.2) 97.6%, rgba(255,255,255,0.2) 98%, transparent 98%),
+      linear-gradient(180deg, transparent 2%, rgba(255,255,255,0.2) 2%, rgba(255,255,255,0.2) 2.5%, transparent 2.5%),
+      linear-gradient(180deg, transparent 97.5%, rgba(255,255,255,0.2) 97.5%, rgba(255,255,255,0.2) 98%, transparent 98%);
+    pointer-events: none;
+  }
+
+  /* Player dots */
+  .player {
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    font-weight: 700;
+    color: white;
+    transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 10;
+  }
+  .player.home { background: #1565c0; }
+  .player.away { background: #c62828; }
+  .player.highlighted {
+    box-shadow: 0 0 0 4px var(--accent-yellow), 0 0 12px var(--accent-yellow);
+    z-index: 20;
+  }
+  .player.offside {
+    box-shadow: 0 0 0 4px var(--accent-red), 0 0 12px var(--accent-red);
+    z-index: 20;
+  }
+
+  /* Ball */
+  .ball {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid #333;
+    box-shadow: 0 0 8px rgba(255,255,255,0.8);
+    transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 15;
+  }
+
+  /* Detection box */
+  .detection-box {
+    position: absolute;
+    border: 2px solid var(--accent-red);
+    border-radius: 2px;
+    pointer-events: none;
+    z-index: 25;
+    animation: detectpulse 0.5s ease-out;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .detection-box.visible { opacity: 1; }
+  .detection-box .det-label {
+    position: absolute;
+    top: -22px;
+    left: 0;
+    background: var(--accent-red);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    white-space: nowrap;
+    font-family: 'Roboto Mono', monospace;
+  }
+  .detection-box.offside { border-color: var(--accent-red); }
+  .detection-box.offside .det-label { background: var(--accent-red); }
+  .detection-box.foul { border-color: var(--accent-yellow); }
+  .detection-box.foul .det-label { background: var(--accent-orange); }
+  .detection-box.save { border-color: var(--accent-blue); }
+  .detection-box.save .det-label { background: var(--accent-blue); }
+
+  @keyframes detectpulse {
+    0% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+  }
+
+  /* Offside line */
+  .offside-line {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--accent-red);
+    opacity: 0;
+    transition: opacity 0.3s;
+    z-index: 18;
+    box-shadow: 0 0 8px var(--accent-red);
+  }
+  .offside-line.visible { opacity: 0.8; }
+  .offside-line::after {
+    content: 'IMPEDIMENTO';
+    position: absolute;
+    top: 10px;
+    left: 6px;
+    color: var(--accent-red);
+    font-size: 10px;
+    font-weight: 700;
+    font-family: 'Roboto Mono', monospace;
+    white-space: nowrap;
+    text-shadow: 0 0 6px rgba(255,82,82,0.8);
+  }
+
+  /* Video overlay info */
+  .video-overlay-info {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    display: flex;
+    gap: 6px;
+    z-index: 30;
+  }
+  .ov-badge {
+    background: rgba(0,0,0,0.7);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 3px;
+    padding: 3px 8px;
+    font-size: 10px;
+    font-family: 'Roboto Mono', monospace;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .ov-badge .dot {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: var(--accent-red);
+    animation: blink 1s infinite;
+  }
+
+  .fps-badge {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background: rgba(0,0,0,0.7);
+    border: 1px solid var(--accent-green);
+    border-radius: 3px;
+    padding: 3px 8px;
+    font-size: 10px;
+    font-family: 'Roboto Mono', monospace;
+    color: var(--accent-green);
+    z-index: 30;
+  }
+
+  /* Alert overlay */
+  .alert-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 82, 82, 0.12);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+    z-index: 22;
+    border: 3px solid var(--accent-red);
+  }
+  .alert-overlay.flash { opacity: 1; }
+
+  /* CONFIDENCE METER */
+  .confidence-bar-area {
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border);
+    padding: 8px 12px;
+    display: flex;
+    gap: 16px;
+    align-items: center;
+  }
+  .conf-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+  }
+  .conf-label {
+    font-size: 10px;
+    color: var(--text-secondary);
+    font-family: 'Roboto Mono', monospace;
+    white-space: nowrap;
+    width: 90px;
+  }
+  .conf-bar-wrap {
+    flex: 1;
+    height: 6px;
+    background: var(--bg-card);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .conf-bar {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.6s ease;
+  }
+  .conf-bar.high { background: var(--accent-green); }
+  .conf-bar.med { background: var(--accent-yellow); }
+  .conf-bar.low { background: var(--accent-red); }
+  .conf-pct {
+    font-size: 10px;
+    font-family: 'Roboto Mono', monospace;
+    width: 36px;
+    text-align: right;
+  }
+
+  /* RIGHT PANEL */
+  .right-panel {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--bg-secondary);
+  }
+
+  .panel-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+  }
+  .panel-tab {
+    flex: 1;
+    padding: 10px 8px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    letter-spacing: 0.3px;
+  }
+  .panel-tab.active {
+    color: var(--accent-green);
+    border-bottom-color: var(--accent-green);
+    background: var(--bg-card);
+  }
+
+  /* ALERT FEED */
+  .alert-feed {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .alert-feed::-webkit-scrollbar { width: 4px; }
+  .alert-feed::-webkit-scrollbar-track { background: transparent; }
+  .alert-feed::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .alert-item {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    animation: slidein 0.3s ease-out;
+    position: relative;
+    overflow: hidden;
+  }
+  .alert-item::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+  }
+  .alert-item.offside::before { background: var(--accent-red); }
+  .alert-item.foul::before { background: var(--accent-yellow); }
+  .alert-item.save::before { background: var(--accent-blue); }
+  .alert-item.danger::before { background: var(--accent-orange); }
+
+  @keyframes slidein {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  .alert-item.new {
+    background: var(--bg-hover);
+    border-color: var(--accent-red);
+    box-shadow: 0 0 12px var(--glow-red);
+  }
+
+  .alert-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .alert-type {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .alert-type.offside { color: var(--accent-red); }
+  .alert-type.foul { color: var(--accent-yellow); }
+  .alert-type.save { color: var(--accent-blue); }
+  .alert-type.danger { color: var(--accent-orange); }
+  .alert-time {
+    font-size: 10px;
+    font-family: 'Roboto Mono', monospace;
+    color: var(--text-muted);
+  }
+  .alert-desc {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+  }
+  .alert-confidence {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 2px;
+  }
+  .alert-conf-label { font-size: 10px; color: var(--text-muted); }
+  .alert-conf-bar-wrap {
+    flex: 1;
+    height: 3px;
+    background: var(--bg-secondary);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .alert-conf-bar {
+    height: 100%;
+    border-radius: 2px;
+    background: var(--accent-green);
+  }
+  .alert-conf-pct {
+    font-size: 10px;
+    font-family: 'Roboto Mono', monospace;
+    color: var(--accent-green);
+  }
+
+  .feed-empty {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 8px;
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+  .feed-empty i { font-size: 28px; opacity: 0.4; }
+
+  /* STATS PANEL */
+  .stats-grid {
+    padding: 12px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .stat-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.3px;
+  }
+  .stat-value {
+    font-size: 24px;
+    font-weight: 700;
+    font-family: 'Roboto Mono', monospace;
+    line-height: 1;
+  }
+  .stat-value.green { color: var(--accent-green); }
+  .stat-value.yellow { color: var(--accent-yellow); }
+  .stat-value.red { color: var(--accent-red); }
+  .stat-value.blue { color: var(--accent-blue); }
+  .stat-sub {
+    font-size: 10px;
+    color: var(--text-secondary);
+  }
+
+  /* TIMELINE */
+  .timeline-section {
+    padding: 0 12px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+    overflow-y: auto;
+  }
+  .timeline-section::-webkit-scrollbar { width: 4px; }
+  .timeline-section::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .timeline-title {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    letter-spacing: 0.8px;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  /* Minute ruler */
+  .minute-ruler {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 48px;
+    margin-top: 4px;
+  }
+  .min-bar {
+    flex: 1;
+    background: var(--bg-card);
+    border-radius: 1px;
+    min-height: 4px;
+    transition: background 0.3s, height 0.3s;
+    cursor: default;
+    position: relative;
+  }
+  .min-bar.has-event { background: rgba(255,82,82,0.4); }
+  .min-bar.current { background: var(--accent-green); }
+  .min-bar:hover { background: var(--accent-blue); }
+  .min-bar .tooltip {
+    display: none;
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 3px 6px;
+    font-size: 9px;
+    font-family: 'Roboto Mono', monospace;
+    white-space: nowrap;
+    border-radius: 3px;
+    z-index: 100;
+    pointer-events: none;
+  }
+  .min-bar:hover .tooltip { display: block; }
+  .ruler-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 9px;
+    font-family: 'Roboto Mono', monospace;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  /* Session events list */
+  .session-events {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 4px;
+  }
+  .session-event {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    padding: 5px 8px;
+    border-radius: 4px;
+    background: var(--bg-card);
+  }
+  .session-event-min {
+    font-family: 'Roboto Mono', monospace;
+    font-weight: 600;
+    font-size: 12px;
+    width: 28px;
+    color: var(--text-secondary);
+  }
+  .session-event-icon { font-size: 12px; width: 16px; text-align: center; }
+  .session-event-type {
+    flex: 1;
+    color: var(--text-primary);
+  }
+  .session-event-conf {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 10px;
+  }
+
+  /* BOTTOM STATUS */
+  .bottombar {
+    background: #0a0e17;
+    border-top: 1px solid var(--border);
+    padding: 5px 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: 'Roboto Mono', monospace;
+  }
+  .bottombar-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .bottombar-item i { font-size: 10px; }
+  .bottombar-item.active { color: var(--accent-green); }
+  .bottombar-right { margin-left: auto; }
+
+  /* BIG ALERT TOAST */
+  .toast-container {
+    position: fixed;
+    top: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+  }
+  .toast {
+    background: var(--bg-card);
+    border: 2px solid var(--accent-red);
+    border-radius: 8px;
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 0 24px var(--glow-red), 0 4px 20px rgba(0,0,0,0.5);
+    animation: toastin 0.3s ease-out;
+    opacity: 0;
+    transition: opacity 0.3s;
+    min-width: 280px;
+  }
+  .toast.visible { opacity: 1; }
+  .toast.foul-toast { border-color: var(--accent-yellow); box-shadow: 0 0 24px var(--glow-yellow), 0 4px 20px rgba(0,0,0,0.5); }
+  @keyframes toastin {
+    from { transform: translateY(-20px) scale(0.9); opacity: 0; }
+    to { transform: translateY(0) scale(1); opacity: 1; }
+  }
+  .toast-icon { font-size: 24px; }
+  .toast-body { display: flex; flex-direction: column; gap: 2px; }
+  .toast-title { font-size: 14px; font-weight: 700; color: var(--accent-red); letter-spacing: 0.5px; }
+  .toast-title.foul { color: var(--accent-yellow); }
+  .toast-detail { font-size: 12px; color: var(--text-secondary); }
+  .toast-conf { font-size: 11px; font-family: 'Roboto Mono', monospace; color: var(--accent-green); }
+
+  /* CONTROLS */
+  .ctrl-bar {
+    display: flex;
+    gap: 8px;
+    padding: 8px 12px;
+    border-top: 1px solid var(--border);
+    background: var(--bg-primary);
+  }
+  .ctrl-btn {
+    flex: 1;
+    padding: 7px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    border-radius: 5px;
+    font-size: 11px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    transition: all 0.2s;
+    font-family: 'Roboto', sans-serif;
+  }
+  .ctrl-btn:hover { background: var(--bg-hover); color: var(--text-primary); border-color: var(--accent-blue); }
+  .ctrl-btn.primary { background: var(--accent-green); border-color: var(--accent-green); color: #000; font-weight: 600; }
+  .ctrl-btn.primary:hover { background: #00ff88; }
+
+  /* Responsive */
+  @media (max-width: 700px) {
+    .main-layout { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+    .right-panel { height: 280px; }
+    .video-panel { border-right: none; border-bottom: 1px solid var(--border); }
+  }
+</style>
+</head>
+<body>
+
+<!-- Title Bar (desktop window chrome) -->
+<div class="titlebar">
+  <div class="titlebar-dots">
+    <div class="titlebar-dot dot-red"></div>
+    <div class="titlebar-dot dot-yellow"></div>
+    <div class="titlebar-dot dot-green"></div>
+  </div>
+  <div class="titlebar-title">TraderVision v1.0 — Detector de Lances em Tempo Real</div>
+  <div class="titlebar-status">
+    <div class="dot"></div>
+    CAPTURANDO
+  </div>
+</div>
+
+<!-- Top bar: Match info -->
+<div class="topbar">
+  <div class="match-info">
+    <span class="team-flag">🇧🇷</span>
+    <span class="team-name">Flamengo</span>
+  </div>
+  <div class="score-box" id="scoreBox">1 — 1</div>
+  <div class="match-info">
+    <span class="team-name">Palmeiras</span>
+    <span class="team-flag">🇧🇷</span>
+  </div>
+  <div class="match-meta">
+    <span class="live-badge">AO VIVO</span>
+    <span id="matchMinute">67'</span>
+    <span style="color:var(--border)">|</span>
+    <span>Brasileirao Serie A</span>
+  </div>
+  <div class="topbar-right">
+    <div class="latency-badge" id="latencyBadge">
+      <i class="fa-solid fa-bolt" style="font-size:9px"></i> &nbsp;142ms
+    </div>
+    <button class="btn-capture active" id="captureBtn" onclick="toggleCapture()">
+      <i class="fa-solid fa-circle-dot"></i> CAPTURANDO
+    </button>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div class="toast-container" id="toastContainer">
+  <div class="toast" id="mainToast">
+    <div class="toast-icon">🚩</div>
+    <div class="toast-body">
+      <div class="toast-title" id="toastTitle">IMPEDIMENTO DETECTADO</div>
+      <div class="toast-detail" id="toastDetail">Atacante em posição irregular</div>
+      <div class="toast-conf" id="toastConf">Confiança: 94.2%</div>
+    </div>
+  </div>
+</div>
+
+<!-- Main layout -->
+<div class="main-layout">
+
+  <!-- Left: Video feed -->
+  <div class="video-panel">
+    <div class="video-area" id="videoArea">
+      <!-- Field background -->
+      <div class="field-bg" id="fieldBg">
+
+        <!-- Players - home team -->
+        <div class="player home" id="p1" style="left:8%;top:45%">GK</div>
+        <div class="player home" id="p2" style="left:18%;top:20%">2</div>
+        <div class="player home" id="p3" style="left:18%;top:40%">5</div>
+        <div class="player home" id="p4" style="left:18%;top:60%">3</div>
+        <div class="player home" id="p5" style="left:18%;top:78%">6</div>
+        <div class="player home" id="p6" style="left:38%;top:25%">8</div>
+        <div class="player home" id="p7" style="left:38%;top:50%">4</div>
+        <div class="player home" id="p8" style="left:38%;top:72%">11</div>
+        <div class="player home" id="p9" style="left:55%;top:30%">10</div>
+        <div class="player home" id="p10" style="left:55%;top:65%">7</div>
+        <div class="player home" id="p11" style="left:60%;top:48%">9</div>
+
+        <!-- Players - away team -->
+        <div class="player away" id="q1" style="left:92%;top:45%">GK</div>
+        <div class="player away" id="q2" style="left:82%;top:20%">2</div>
+        <div class="player away" id="q3" style="left:82%;top:40%">5</div>
+        <div class="player away" id="q4" style="left:82%;top:62%">3</div>
+        <div class="player away" id="q5" style="left:82%;top:78%">4</div>
+        <div class="player away" id="q6" style="left:65%;top:25%">8</div>
+        <div class="player away" id="q7" style="left:65%;top:50%">6</div>
+        <div class="player away" id="q8" style="left:65%;top:72%">11</div>
+        <div class="player away" id="q9" style="left:72%;top:35%">10</div>
+        <div class="player away" id="q10" style="left:72%;top:62%">7</div>
+        <div class="player away" id="q11" style="left:77%;top:48%">9</div>
+
+        <!-- Ball -->
+        <div class="ball" id="ball" style="left:60%;top:47%"></div>
+
+        <!-- Offside line -->
+        <div class="offside-line" id="offsideLine" style="left:76%"></div>
+
+        <!-- Detection box -->
+        <div class="detection-box offside" id="detectionBox" style="left:76%;top:30%;width:30px;height:30px">
+          <div class="det-label" id="detLabel">IMPEDIMENTO</div>
+        </div>
+
+      </div>
+
+      <!-- Overlay info -->
+      <div class="video-overlay-info">
+        <div class="ov-badge"><div class="dot"></div> REC</div>
+        <div class="ov-badge" id="frameCount">Frame 98,441</div>
+        <div class="ov-badge" id="clockBadge">67:23</div>
+      </div>
+
+      <div class="fps-badge" id="fpsBadge">30 FPS | GPU</div>
+
+      <!-- Alert flash overlay -->
+      <div class="alert-overlay" id="alertOverlay"></div>
+    </div>
+
+    <!-- Confidence bars -->
+    <div class="confidence-bar-area">
+      <div class="conf-item">
+        <div class="conf-label">IMPEDIMENTO</div>
+        <div class="conf-bar-wrap">
+          <div class="conf-bar high" id="confOffside" style="width:94%"></div>
+        </div>
+        <div class="conf-pct" id="confOffsidePct" style="color:var(--accent-green)">94%</div>
+      </div>
+      <div class="conf-item">
+        <div class="conf-label">FALTA ATAQUE</div>
+        <div class="conf-bar-wrap">
+          <div class="conf-bar med" id="confFoul" style="width:12%"></div>
+        </div>
+        <div class="conf-pct" id="confFoulPct" style="color:var(--text-muted)">12%</div>
+      </div>
+      <div class="conf-item">
+        <div class="conf-label">DEFESA GK</div>
+        <div class="conf-bar-wrap">
+          <div class="conf-bar low" id="confSave" style="width:5%"></div>
+        </div>
+        <div class="conf-pct" id="confSavePct" style="color:var(--text-muted)">5%</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right panel -->
+  <div class="right-panel">
+    <div class="panel-tabs">
+      <div class="panel-tab active" id="tabAlerts" onclick="switchTab('alerts')">
+        <i class="fa-solid fa-bell"></i> ALERTAS
+      </div>
+      <div class="panel-tab" id="tabStats" onclick="switchTab('stats')">
+        <i class="fa-solid fa-chart-bar"></i> STATS
+      </div>
+      <div class="panel-tab" id="tabTimeline" onclick="switchTab('timeline')">
+        <i class="fa-solid fa-clock-rotate-left"></i> HISTÓRICO
+      </div>
+    </div>
+
+    <!-- Alerts tab -->
+    <div id="panelAlerts" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+      <div class="alert-feed" id="alertFeed">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+
+    <!-- Stats tab -->
+    <div id="panelStats" style="display:none;flex:1;overflow-y:auto">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">IMPEDIMENTOS</div>
+          <div class="stat-value red" id="statOffside">3</div>
+          <div class="stat-sub">nesta partida</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">FALTAS ATAQUE</div>
+          <div class="stat-value yellow" id="statFouls">2</div>
+          <div class="stat-sub">nesta partida</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">DEFESAS GK</div>
+          <div class="stat-value blue" id="statSaves">4</div>
+          <div class="stat-sub">nesta partida</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">PRECISAO MEDIA</div>
+          <div class="stat-value green">92<span style="font-size:14px">%</span></div>
+          <div class="stat-sub">todos os eventos</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">LATENCIA MEDIA</div>
+          <div class="stat-value green" style="font-size:18px" id="statLatency">142ms</div>
+          <div class="stat-sub">por frame detectado</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">ALERTAS EMITIDOS</div>
+          <div class="stat-value green" id="statTotal">9</div>
+          <div class="stat-sub">sessao atual</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Timeline tab -->
+    <div id="panelTimeline" style="display:none;flex:1;overflow-y:auto;display:none">
+      <div class="timeline-section">
+        <div class="timeline-title">MINUTO A MINUTO</div>
+        <div class="minute-ruler" id="minuteRuler"></div>
+        <div class="ruler-labels">
+          <span>1'</span><span>15'</span><span>30'</span><span>45'</span>
+          <span>45+</span><span>60'</span><span>67'</span>
+        </div>
+        <div class="timeline-title" style="margin-top:8px">EVENTOS DETECTADOS</div>
+        <div class="session-events" id="sessionEvents"></div>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="ctrl-bar">
+      <button class="ctrl-btn" onclick="triggerOffside()">
+        <i class="fa-solid fa-flag" style="color:var(--accent-red)"></i> Simular Impedimento
+      </button>
+      <button class="ctrl-btn" onclick="triggerFoul()">
+        <i class="fa-solid fa-hand-back-fist" style="color:var(--accent-yellow)"></i> Simular Falta
+      </button>
+      <button class="ctrl-btn primary" onclick="resetDemo()">
+        <i class="fa-solid fa-rotate-right"></i> Reset
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Bottom status bar -->
+<div class="bottombar">
+  <div class="bottombar-item active">
+    <i class="fa-solid fa-circle" style="color:var(--accent-green)"></i> Engine ativo
+  </div>
+  <div class="bottombar-item">
+    <i class="fa-solid fa-microchip"></i> GPU 0: RTX 3060 | 34% util
+  </div>
+  <div class="bottombar-item">
+    <i class="fa-solid fa-memory"></i> RAM: 1.2 GB / 16 GB
+  </div>
+  <div class="bottombar-item" id="modelInfo">
+    <i class="fa-solid fa-brain"></i> YOLOv8m-football v2.1
+  </div>
+  <div class="bottombar-item bottombar-right" id="sessionDuration">
+    <i class="fa-solid fa-timer"></i> Sessao: 14:32
+  </div>
+</div>
+
+<script>
+  // State
+  let capturing = true;
+  let alertCount = 0;
+  let activeTab = 'alerts';
+  let sessionSeconds = 872;
+  let matchSeconds = 67 * 60 + 23;
+  let frameCount = 98441;
+  let latencyBase = 142;
+
+  // Pre-populated session events
+  const sessionData = [
+    { min: 12, type: 'offside', label: 'IMPEDIMENTO', desc: 'Atacante fora da linha', conf: 91, color: 'var(--accent-red)' },
+    { min: 28, type: 'foul', label: 'FALTA ATAQUE', desc: 'Contato irregular no ataque', conf: 87, color: 'var(--accent-yellow)' },
+    { min: 35, type: 'save', label: 'DEFESA GK', desc: 'Goleiro salva finalização', conf: 96, color: 'var(--accent-blue)' },
+    { min: 41, type: 'offside', label: 'IMPEDIMENTO', desc: 'Atacante em posição irregular', conf: 89, color: 'var(--accent-red)' },
+    { min: 45, type: 'foul', label: 'FALTA ATAQUE', desc: 'Empurrao antes do chute', conf: 82, color: 'var(--accent-yellow)' },
+    { min: 52, type: 'save', label: 'DEFESA GK', desc: 'Defesa no canto esquerdo', conf: 94, color: 'var(--accent-blue)' },
+    { min: 58, type: 'save', label: 'DEFESA GK', desc: 'Double save na grande area', conf: 98, color: 'var(--accent-blue)' },
+    { min: 63, type: 'offside', label: 'IMPEDIMENTO', desc: 'Lance cancelado pós análise', conf: 93, color: 'var(--accent-red)' },
+    { min: 65, type: 'save', label: 'DEFESA GK', desc: 'Reflexo no cruzamento', conf: 88, color: 'var(--accent-blue)' },
+  ];
+
+  // Build alert feed
+  function buildInitialFeed() {
+    const feed = document.getElementById('alertFeed');
+    feed.innerHTML = '';
+    [...sessionData].reverse().forEach(ev => {
+      feed.appendChild(createAlertItem(ev, false));
+    });
+  }
+
+  function createAlertItem(ev, isNew) {
+    const div = document.createElement('div');
+    div.className = 'alert-item ' + ev.type + (isNew ? ' new' : '');
+    const icons = { offside: 'fa-flag', foul: 'fa-hand-back-fist', save: 'fa-hands-catching', danger: 'fa-triangle-exclamation' };
+    const icon = icons[ev.type] || 'fa-circle';
+    div.innerHTML = `
+      <div class="alert-header">
+        <div class="alert-type ${ev.type}">
+          <i class="fa-solid ${icon}"></i> ${ev.label}
+        </div>
+        <div class="alert-time">${ev.min}'</div>
+      </div>
+      <div class="alert-desc">${ev.desc}</div>
+      <div class="alert-confidence">
+        <div class="alert-conf-label">CONF</div>
+        <div class="alert-conf-bar-wrap">
+          <div class="alert-conf-bar" style="width:${ev.conf}%;background:${ev.conf>85?'var(--accent-green)':ev.conf>70?'var(--accent-yellow)':'var(--accent-red)'}"></div>
+        </div>
+        <div class="alert-conf-pct">${ev.conf}%</div>
+      </div>
+    `;
+    return div;
+  }
+
+  // Build minute ruler
+  function buildRuler() {
+    const ruler = document.getElementById('minuteRuler');
+    ruler.innerHTML = '';
+    for (let i = 1; i <= 67; i++) {
+      const bar = document.createElement('div');
+      bar.className = 'min-bar';
+      const ev = sessionData.find(e => e.min === i);
+      const height = ev ? 28 + Math.random() * 16 : 4 + Math.random() * 10;
+      bar.style.height = height + 'px';
+      if (ev) {
+        bar.classList.add('has-event');
+        bar.innerHTML = `<div class="tooltip">${i}' ${ev.label}</div>`;
+      }
+      if (i === 67) bar.classList.add('current');
+      ruler.appendChild(bar);
+    }
+  }
+
+  // Build session events
+  function buildSessionEvents() {
+    const container = document.getElementById('sessionEvents');
+    container.innerHTML = '';
+    const icons = { offside: '🚩', foul: '✋', save: '🧤' };
+    const confs = { offside: 'var(--accent-red)', foul: 'var(--accent-yellow)', save: 'var(--accent-blue)' };
+    sessionData.forEach(ev => {
+      const div = document.createElement('div');
+      div.className = 'session-event';
+      div.innerHTML = `
+        <div class="session-event-min">${ev.min}'</div>
+        <div class="session-event-icon">${icons[ev.type]}</div>
+        <div class="session-event-type">${ev.desc}</div>
+        <div class="session-event-conf" style="color:${confs[ev.type]}">${ev.conf}%</div>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  // Switch tabs
+  function switchTab(tab) {
+    activeTab = tab;
+    ['alerts','stats','timeline'].forEach(t => {
+      const btn = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
+      const panel = document.getElementById('panel' + t.charAt(0).toUpperCase() + t.slice(1));
+      if (btn) btn.className = 'panel-tab' + (t === tab ? ' active' : '');
+      if (panel) panel.style.display = (t === tab) ? 'flex' : 'none';
+    });
+    if (tab === 'timeline') {
+      document.getElementById('panelTimeline').style.display = 'block';
+    }
+  }
+
+  // Toggle capture
+  function toggleCapture() {
+    capturing = !capturing;
+    const btn = document.getElementById('captureBtn');
+    if (capturing) {
+      btn.innerHTML = '<i class="fa-solid fa-circle-dot"></i> CAPTURANDO';
+      btn.classList.add('active');
+    } else {
+      btn.innerHTML = '<i class="fa-solid fa-play"></i> INICIAR';
+      btn.classList.remove('active');
+    }
+  }
+
+  // Show toast
+  function showToast(title, detail, conf, isFoul) {
+    const toast = document.getElementById('mainToast');
+    const tTitle = document.getElementById('toastTitle');
+    const tDetail = document.getElementById('toastDetail');
+    const tConf = document.getElementById('toastConf');
+    tTitle.textContent = title;
+    tTitle.className = 'toast-title' + (isFoul ? ' foul' : '');
+    tDetail.textContent = detail;
+    tConf.textContent = 'Confiança: ' + conf;
+    toast.className = 'toast visible' + (isFoul ? ' foul-toast' : '');
+    clearTimeout(window._toastTimer);
+    window._toastTimer = setTimeout(() => {
+      toast.className = 'toast' + (isFoul ? ' foul-toast' : '');
+    }, 3000);
+  }
+
+  // Flash overlay
+  function flashOverlay() {
+    const ov = document.getElementById('alertOverlay');
+    ov.classList.add('flash');
+    setTimeout(() => ov.classList.remove('flash'), 600);
+  }
+
+  // Add alert to feed
+  function addAlert(ev) {
+    alertCount++;
+    if (activeTab !== 'alerts') switchTab('alerts');
+    const feed = document.getElementById('alertFeed');
+    const item = createAlertItem(ev, true);
+    feed.insertBefore(item, feed.firstChild);
+    setTimeout(() => item.classList.remove('new'), 3000);
+
+    // Update stats
+    const statMap = { offside: 'statOffside', foul: 'statFouls', save: 'statSaves' };
+    if (statMap[ev.type]) {
+      const el = document.getElementById(statMap[ev.type]);
+      el.textContent = parseInt(el.textContent) + 1;
+    }
+    document.getElementById('statTotal').textContent = parseInt(document.getElementById('statTotal').textContent) + 1;
+  }
+
+  // Trigger offside
+  function triggerOffside() {
+    if (!capturing) return;
+
+    // Animate players
+    const p9 = document.getElementById('p9');
+    const q3 = document.getElementById('q3');
+    const ball = document.getElementById('ball');
+
+    p9.style.left = '78%';
+    p9.style.top = '35%';
+    p9.classList.add('offside');
+    ball.style.left = '72%';
+    ball.style.top = '36%';
+
+    // Show offside line
+    const line = document.getElementById('offsideLine');
+    line.style.left = '76%';
+    line.classList.add('visible');
+
+    // Show detection box near p9
+    const box = document.getElementById('detectionBox');
+    box.style.left = '75%';
+    box.style.top = '28%';
+    box.style.width = '36px';
+    box.style.height = '36px';
+    box.className = 'detection-box offside visible';
+    document.getElementById('detLabel').textContent = 'IMPEDIMENTO';
+
+    // Update confidence bars
+    document.getElementById('confOffside').style.width = '94%';
+    document.getElementById('confOffsidePct').textContent = '94%';
+    document.getElementById('confOffsidePct').style.color = 'var(--accent-green)';
+    document.getElementById('confFoul').style.width = '7%';
+    document.getElementById('confFoulPct').textContent = '7%';
+    document.getElementById('confFoulPct').style.color = 'var(--text-muted)';
+
+    flashOverlay();
+    showToast('IMPEDIMENTO DETECTADO', 'Atacante em posição irregular — lance em análise', '94.2%', false);
+
+    const min = Math.floor(matchSeconds / 60);
+    addAlert({ min, type: 'offside', label: 'IMPEDIMENTO', desc: 'Atacante em posição irregular', conf: 94, color: 'var(--accent-red)' });
+
+    // Animate latency reading
+    const latEl = document.getElementById('latencyBadge');
+    let l = 80;
+    const li = setInterval(() => {
+      l += 8;
+      latEl.innerHTML = `<i class="fa-solid fa-bolt" style="font-size:9px"></i> &nbsp;${l}ms`;
+      if (l >= 142) { clearInterval(li); }
+    }, 16);
+
+    // Reset after 4s
+    setTimeout(() => {
+      p9.style.left = '55%'; p9.style.top = '30%';
+      p9.classList.remove('offside');
+      ball.style.left = '60%'; ball.style.top = '47%';
+      line.classList.remove('visible');
+      box.classList.remove('visible');
+      document.getElementById('confOffside').style.width = '18%';
+      document.getElementById('confOffsidePct').textContent = '18%';
+      document.getElementById('confOffsidePct').style.color = 'var(--text-muted)';
+    }, 4000);
+  }
+
+  // Trigger foul
+  function triggerFoul() {
+    if (!capturing) return;
+
+    const p10 = document.getElementById('p10');
+    const q8 = document.getElementById('q8');
+    const ball = document.getElementById('ball');
+
+    p10.style.left = '65%'; p10.style.top = '68%';
+    q8.style.left = '68%'; q8.style.top = '68%';
+    q8.classList.add('highlighted');
+    ball.style.left = '66%'; ball.style.top = '67%';
+
+    const line = document.getElementById('offsideLine');
+    line.classList.remove('visible');
+
+    const box = document.getElementById('detectionBox');
+    box.style.left = '62%'; box.style.top = '62%';
+    box.style.width = '50px'; box.style.height = '50px';
+    box.className = 'detection-box foul visible';
+    document.getElementById('detLabel').textContent = 'FALTA ATAQUE';
+
+    document.getElementById('confFoul').style.width = '87%';
+    document.getElementById('confFoulPct').textContent = '87%';
+    document.getElementById('confFoulPct').style.color = 'var(--accent-yellow)';
+    document.getElementById('confOffside').style.width = '9%';
+    document.getElementById('confOffsidePct').textContent = '9%';
+    document.getElementById('confOffsidePct').style.color = 'var(--text-muted)';
+
+    const ov = document.getElementById('alertOverlay');
+    ov.style.background = 'rgba(255,215,64,0.1)';
+    ov.style.borderColor = 'var(--accent-yellow)';
+    ov.classList.add('flash');
+    setTimeout(() => { ov.classList.remove('flash'); ov.style.background = ''; ov.style.borderColor = ''; }, 600);
+
+    showToast('FALTA NO ATAQUE', 'Contato irregular detectado antes do chute', '87.1%', true);
+
+    const min = Math.floor(matchSeconds / 60);
+    addAlert({ min, type: 'foul', label: 'FALTA ATAQUE', desc: 'Contato irregular antes do chute', conf: 87, color: 'var(--accent-yellow)' });
+
+    setTimeout(() => {
+      p10.style.left = '55%'; p10.style.top = '65%';
+      q8.style.left = '65%'; q8.style.top = '72%';
+      q8.classList.remove('highlighted');
+      ball.style.left = '60%'; ball.style.top = '47%';
+      box.classList.remove('visible');
+      document.getElementById('confFoul').style.width = '12%';
+      document.getElementById('confFoulPct').textContent = '12%';
+      document.getElementById('confFoulPct').style.color = 'var(--text-muted)';
+    }, 4000);
+  }
+
+  // Reset demo
+  function resetDemo() {
+    document.querySelectorAll('.player').forEach(p => { p.classList.remove('offside','highlighted'); });
+    document.getElementById('offsideLine').classList.remove('visible');
+    document.getElementById('detectionBox').classList.remove('visible');
+    document.getElementById('ball').style.left = '60%';
+    document.getElementById('ball').style.top = '47%';
+    document.getElementById('p9').style.left = '55%'; document.getElementById('p9').style.top = '30%';
+    document.getElementById('p10').style.left = '55%'; document.getElementById('p10').style.top = '65%';
+    document.getElementById('q8').style.left = '65%'; document.getElementById('q8').style.top = '72%';
+    document.getElementById('confOffside').style.width = '18%';
+    document.getElementById('confOffsidePct').textContent = '18%';
+    document.getElementById('confOffsidePct').style.color = 'var(--text-muted)';
+    document.getElementById('confFoul').style.width = '12%';
+    document.getElementById('confFoulPct').textContent = '12%';
+    document.getElementById('confFoulPct').style.color = 'var(--text-muted)';
+    buildInitialFeed();
+    document.getElementById('statOffside').textContent = '3';
+    document.getElementById('statFouls').textContent = '2';
+    document.getElementById('statSaves').textContent = '4';
+    document.getElementById('statTotal').textContent = '9';
+  }
+
+  // Tick clock
+  function tickClock() {
+    if (!capturing) return;
+    matchSeconds++;
+    sessionSeconds++;
+    frameCount += 30;
+
+    const m = Math.floor(matchSeconds / 60);
+    const s = matchSeconds % 60;
+    document.getElementById('matchMinute').textContent = m + "'";
+    document.getElementById('clockBadge').textContent = m + ':' + String(s).padStart(2,'0');
+    document.getElementById('frameCount').textContent = 'Frame ' + frameCount.toLocaleString('pt-BR');
+
+    const ss = sessionSeconds;
+    const sm = Math.floor(ss/60); const ssec = ss % 60;
+    document.getElementById('sessionDuration').innerHTML = `<i class="fa-solid fa-timer"></i> Sessao: ${String(sm).padStart(2,'0')}:${String(ssec).padStart(2,'0')}`;
+
+    // Vary latency slightly
+    const jitter = Math.floor(Math.random() * 20) - 10;
+    const lat = latencyBase + jitter;
+    document.getElementById('latencyBadge').innerHTML = `<i class="fa-solid fa-bolt" style="font-size:9px"></i> &nbsp;${lat}ms`;
+    document.getElementById('statLatency').textContent = lat + 'ms';
+  }
+
+  // Auto demo sequence
+  let autoTimer = null;
+  function startAutoDemo() {
+    const sequence = [
+      { delay: 5000, fn: triggerOffside },
+      { delay: 12000, fn: triggerFoul },
+      { delay: 20000, fn: triggerOffside },
+    ];
+    sequence.forEach(s => setTimeout(s.fn, s.delay));
+  }
+
+  // Init
+  buildInitialFeed();
+  buildRuler();
+  buildSessionEvents();
+  setInterval(tickClock, 1000);
+  startAutoDemo();
+
+  // Player gentle motion
+  function jigglePlayers() {
+    if (!capturing) return;
+    const players = document.querySelectorAll('.player:not(.offside):not(.highlighted)');
+    players.forEach(p => {
+      const dx = (Math.random() - 0.5) * 2;
+      const dy = (Math.random() - 0.5) * 1.5;
+      const cur = p.style.left;
+      const curTop = p.style.top;
+      if (cur && curTop) {
+        const x = parseFloat(cur);
+        const y = parseFloat(curTop);
+        const newX = Math.max(3, Math.min(96, x + dx));
+        const newY = Math.max(5, Math.min(92, y + dy));
+        p.style.left = newX + '%';
+        p.style.top = newY + '%';
+      }
+    });
+  }
+  setInterval(jigglePlayers, 1500);
+</script>
+</body>
+</html>
