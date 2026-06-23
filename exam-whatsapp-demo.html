@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AutoLaudo - Envio de Exames via WhatsApp</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --green-dark: #1a7a4a;
+    --green-mid: #25a165;
+    --green-light: #34c97e;
+    --green-pale: #e8f7ef;
+    --green-bg: #f2fbf6;
+    --teal: #0d9488;
+    --whatsapp: #25D366;
+    --whatsapp-dark: #128C7E;
+    --whatsapp-bubble: #dcf8c6;
+    --gray-100: #f8f9fa;
+    --gray-200: #e9ecef;
+    --gray-300: #dee2e6;
+    --gray-500: #adb5bd;
+    --gray-700: #495057;
+    --gray-900: #212529;
+    --red: #dc3545;
+    --amber: #f59e0b;
+    --blue: #0d6efd;
+    --white: #ffffff;
+    --shadow: 0 2px 12px rgba(0,0,0,0.08);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+  }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--green-bg);
+    color: var(--gray-900);
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  .header {
+    background: var(--green-dark);
+    color: white;
+    padding: 0 24px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  .header-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.2rem;
+    font-weight: 800;
+  }
+  .header-brand i { color: var(--green-light); font-size: 1.3rem; }
+  .header-meta {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 0.8rem;
+    opacity: 0.85;
+  }
+  .status-dot {
+    width: 8px; height: 8px;
+    background: var(--green-light);
+    border-radius: 50%;
+    display: inline-block;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity: 1; } 50% { opacity: 0.4; }
+  }
+
+  /* LAYOUT */
+  .layout {
+    display: grid;
+    grid-template-columns: 340px 1fr 300px;
+    gap: 0;
+    height: calc(100vh - 60px);
+  }
+
+  /* SIDEBAR LEFT - PASTA MONITORADA */
+  .sidebar {
+    background: white;
+    border-right: 1px solid var(--gray-200);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .sidebar-header {
+    padding: 16px;
+    background: var(--gray-100);
+    border-bottom: 1px solid var(--gray-200);
+  }
+  .sidebar-header h3 {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--gray-700);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .sidebar-header h3 i { color: var(--green-mid); }
+  .folder-path {
+    margin-top: 6px;
+    font-size: 0.7rem;
+    color: var(--gray-500);
+    background: var(--gray-200);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-family: monospace;
+    word-break: break-all;
+  }
+  .exam-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+  }
+  .exam-item {
+    border: 1px solid var(--gray-200);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: white;
+    position: relative;
+  }
+  .exam-item:hover { border-color: var(--green-mid); background: var(--green-pale); }
+  .exam-item.active { border-color: var(--green-mid); background: var(--green-pale); box-shadow: 0 0 0 2px rgba(37,161,101,0.15); }
+  .exam-item.sent { opacity: 0.6; }
+  .exam-item-name {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .exam-item-name i { color: var(--red); font-size: 0.9rem; }
+  .exam-item-meta {
+    font-size: 0.7rem;
+    color: var(--gray-500);
+    margin-top: 3px;
+  }
+  .exam-badge {
+    position: absolute;
+    top: 8px; right: 8px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 20px;
+  }
+  .badge-new { background: var(--amber); color: white; }
+  .badge-sent { background: var(--green-light); color: white; }
+  .badge-failed { background: var(--red); color: white; }
+
+  .exam-new-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--amber);
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 20px;
+    animation: fadeIn 0.5s ease;
+  }
+
+  /* MAIN CENTER - PROCESSAMENTO */
+  .main {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--green-bg);
+  }
+  .main-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+  }
+
+  .card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .card-header {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--gray-200);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--gray-700);
+  }
+  .card-header i { color: var(--green-mid); }
+  .card-body { padding: 18px; }
+
+  /* PATIENT CARD */
+  .patient-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .field-group label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--gray-500);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    display: block;
+    margin-bottom: 3px;
+  }
+  .field-value {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--gray-900);
+    background: var(--gray-100);
+    padding: 7px 10px;
+    border-radius: 6px;
+  }
+  .field-value.phone {
+    color: var(--green-dark);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .field-value.phone i { color: var(--whatsapp); }
+  .field-value.loading {
+    color: var(--gray-500);
+    animation: shimmer 1.5s infinite;
+  }
+  @keyframes shimmer {
+    0%,100% { opacity: 1; } 50% { opacity: 0.4; }
+  }
+
+  .source-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--green-pale);
+    color: var(--green-dark);
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 20px;
+    margin-top: 8px;
+  }
+
+  /* FLOW STEPS */
+  .flow-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .step {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--gray-200);
+    background: var(--gray-100);
+    transition: all 0.4s ease;
+    opacity: 0.5;
+  }
+  .step.active {
+    background: var(--green-pale);
+    border-color: var(--green-light);
+    opacity: 1;
+  }
+  .step.done {
+    background: white;
+    border-color: var(--green-light);
+    opacity: 1;
+  }
+  .step-icon {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    background: var(--gray-200);
+    color: var(--gray-500);
+    flex-shrink: 0;
+    transition: all 0.4s ease;
+  }
+  .step.active .step-icon {
+    background: var(--green-mid);
+    color: white;
+  }
+  .step.done .step-icon {
+    background: var(--green-light);
+    color: white;
+  }
+  .step-text { font-size: 0.82rem; font-weight: 600; }
+  .step-sub { font-size: 0.72rem; color: var(--gray-500); margin-top: 1px; }
+  .step-check {
+    margin-left: auto;
+    color: var(--green-light);
+    font-size: 1rem;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .step.done .step-check { opacity: 1; }
+  .step-spinner {
+    margin-left: auto;
+    width: 16px; height: 16px;
+    border: 2px solid var(--gray-200);
+    border-top-color: var(--green-mid);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    display: none;
+  }
+  .step.active .step-spinner { display: block; }
+  .step.done .step-spinner { display: none; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* TEMPLATE PREVIEW */
+  .template-box {
+    background: var(--green-pale);
+    border: 1px dashed var(--green-mid);
+    border-radius: 10px;
+    padding: 14px;
+    font-size: 0.82rem;
+    line-height: 1.5;
+    color: var(--gray-700);
+  }
+  .template-box .template-header {
+    font-weight: 800;
+    color: var(--green-dark);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .template-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--green-mid);
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 20px;
+    margin-left: 8px;
+  }
+
+  /* ACTION BUTTON */
+  .btn-process {
+    width: 100%;
+    padding: 14px;
+    background: var(--green-dark);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s;
+    box-shadow: 0 4px 12px rgba(26,122,74,0.3);
+  }
+  .btn-process:hover:not(:disabled) {
+    background: var(--green-mid);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(26,122,74,0.4);
+  }
+  .btn-process:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+  /* RIGHT SIDEBAR - WHATSAPP */
+  .wa-panel {
+    background: #ece5dd;
+    border-left: 1px solid var(--gray-200);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .wa-header {
+    background: var(--whatsapp-dark);
+    color: white;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .wa-avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--green-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    color: white;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+  .wa-contact-name { font-size: 0.88rem; font-weight: 700; }
+  .wa-contact-status { font-size: 0.7rem; opacity: 0.8; }
+  .wa-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .wa-bubble {
+    background: var(--whatsapp-bubble);
+    border-radius: 8px 8px 0 8px;
+    padding: 8px 10px;
+    max-width: 90%;
+    align-self: flex-end;
+    font-size: 0.78rem;
+    line-height: 1.5;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    animation: slideIn 0.3s ease;
+    position: relative;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .wa-bubble .wa-time {
+    font-size: 0.65rem;
+    color: var(--gray-500);
+    text-align: right;
+    margin-top: 4px;
+  }
+  .wa-bubble .wa-ticks {
+    color: #53bdeb;
+    font-size: 0.7rem;
+    margin-left: 4px;
+  }
+  .wa-bubble-info {
+    background: white;
+    border-radius: 0 8px 8px 8px;
+    padding: 8px 10px;
+    align-self: flex-start;
+    font-size: 0.75rem;
+    color: var(--gray-700);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  }
+  .wa-pdf-attach {
+    background: white;
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid var(--gray-200);
+  }
+  .wa-pdf-attach i { color: var(--red); font-size: 1.5rem; }
+  .wa-pdf-name { font-size: 0.78rem; font-weight: 700; }
+  .wa-pdf-size { font-size: 0.68rem; color: var(--gray-500); }
+
+  .wa-status-bar {
+    padding: 10px 14px;
+    background: white;
+    border-top: 1px solid var(--gray-200);
+    font-size: 0.72rem;
+  }
+  .wa-status-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+  }
+  .wa-status-label { font-weight: 700; color: var(--gray-700); }
+  .status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 0.68rem;
+    font-weight: 700;
+  }
+  .chip-sent { background: #e3f2fd; color: #1565c0; }
+  .chip-delivered { background: #e8f5e9; color: #2e7d32; }
+  .chip-read { background: var(--green-pale); color: var(--green-dark); }
+  .chip-waiting { background: #fff3e0; color: #e65100; }
+
+  /* LOG TABLE */
+  .log-section {
+    background: white;
+    border-top: 1px solid var(--gray-200);
+    padding: 14px;
+    max-height: 160px;
+    overflow-y: auto;
+  }
+  .log-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--gray-500);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-bottom: 8px;
+  }
+  .log-entry {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.72rem;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--gray-100);
+    animation: fadeIn 0.4s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .log-time { color: var(--gray-500); font-family: monospace; flex-shrink: 0; }
+  .log-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .dot-ok { background: var(--green-light); }
+  .dot-warn { background: var(--amber); }
+  .dot-err { background: var(--red); }
+
+  /* STATS ROW */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .stat-card {
+    background: white;
+    border-radius: 10px;
+    padding: 12px;
+    box-shadow: var(--shadow);
+    text-align: center;
+  }
+  .stat-number {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--green-dark);
+  }
+  .stat-label {
+    font-size: 0.68rem;
+    color: var(--gray-500);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--gray-500);
+  }
+  .empty-state i { font-size: 2.5rem; margin-bottom: 12px; color: var(--gray-300); }
+  .empty-state p { font-size: 0.82rem; }
+
+  .restart-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: 1px solid var(--gray-300);
+    color: var(--gray-500);
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .restart-btn:hover { border-color: var(--green-mid); color: var(--green-mid); }
+
+  .highlight-box {
+    background: linear-gradient(135deg, var(--green-dark), var(--teal));
+    color: white;
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-bottom: 16px;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .highlight-box i { font-size: 1.4rem; opacity: 0.9; }
+  .highlight-box strong { font-weight: 800; display: block; font-size: 0.88rem; margin-bottom: 2px; }
+
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 280px 1fr; }
+    .wa-panel { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-brand">
+    <i class="fa-solid fa-notes-medical"></i>
+    AutoLaudo
+    <span style="font-size:0.7rem;font-weight:500;opacity:0.7;margin-left:4px;">Sistema de Envio de Exames</span>
+  </div>
+  <div class="header-meta">
+    <span><span class="status-dot"></span> Monitoramento ativo</span>
+    <span><i class="fa-brands fa-whatsapp"></i> WABA conectada</span>
+    <button class="restart-btn" onclick="resetDemo()"><i class="fa-solid fa-rotate-left"></i> Reiniciar demo</button>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- LEFT: PASTA MONITORADA -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <h3><i class="fa-solid fa-folder-open"></i> Pasta Monitorada</h3>
+      <div class="folder-path">\\SERVIDOR-CLINICA\Digisca\Laudos\</div>
+    </div>
+    <div class="exam-list" id="examList">
+      <!-- populated by JS -->
+    </div>
+  </div>
+
+  <!-- CENTER: PROCESSAMENTO -->
+  <div class="main">
+    <div class="main-content" id="mainContent">
+
+      <!-- INITIAL STATE -->
+      <div id="initialState">
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-number" id="statTotal">0</div>
+            <div class="stat-label">Enviados hoje</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="statDelivered" style="color:var(--teal)">0</div>
+            <div class="stat-label">Confirmados</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="statFailed" style="color:var(--red)">0</div>
+            <div class="stat-label">Falhas</div>
+          </div>
+        </div>
+
+        <div class="highlight-box">
+          <i class="fa-solid fa-circle-check"></i>
+          <div>
+            <strong>Sistema ativo e monitorando</strong>
+            Selecione um exame na lista ao lado para processar e enviar ao paciente via WhatsApp.
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><i class="fa-solid fa-list-check"></i> Como funciona</div>
+          <div class="card-body">
+            <div class="flow-steps">
+              <div class="step active" id="hint1">
+                <div class="step-icon"><i class="fa-solid fa-folder"></i></div>
+                <div>
+                  <div class="step-text">1. Exame detectado na pasta</div>
+                  <div class="step-sub">Monitoramento contínuo em \\SERVIDOR-CLINICA\Digisca\Laudos</div>
+                </div>
+              </div>
+              <div class="step" id="hint2">
+                <div class="step-icon"><i class="fa-solid fa-user"></i></div>
+                <div>
+                  <div class="step-text">2. Paciente identificado</div>
+                  <div class="step-sub">Busca automática por CPF ou protocolo no cadastro</div>
+                </div>
+              </div>
+              <div class="step" id="hint3">
+                <div class="step-icon"><i class="fa-brands fa-whatsapp"></i></div>
+                <div>
+                  <div class="step-text">3. Mensagem enviada via WABA</div>
+                  <div class="step-sub">Template aprovado pela Meta com PDF do laudo</div>
+                </div>
+              </div>
+              <div class="step" id="hint4">
+                <div class="step-icon"><i class="fa-solid fa-chart-bar"></i></div>
+                <div>
+                  <div class="step-text">4. Status rastreado em tempo real</div>
+                  <div class="step-sub">Enviado / Entregue / Lido / Falha por paciente</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROCESSING STATE -->
+      <div id="processingState" style="display:none">
+
+        <div class="card">
+          <div class="card-header"><i class="fa-solid fa-file-medical"></i> Exame Selecionado</div>
+          <div class="card-body">
+            <div style="display:flex;align-items:center;gap:12px;padding:10px;background:var(--gray-100);border-radius:8px;">
+              <i class="fa-solid fa-file-pdf" style="font-size:2rem;color:var(--red)"></i>
+              <div>
+                <div style="font-weight:700;font-size:0.88rem" id="selectedFileName">-</div>
+                <div style="font-size:0.72rem;color:var(--gray-500)" id="selectedFileMeta">-</div>
+              </div>
+              <span class="exam-new-badge" style="margin-left:auto"><i class="fa-solid fa-circle"></i> Novo</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><i class="fa-solid fa-user-nurse"></i> Dados do Paciente</div>
+          <div class="card-body">
+            <div class="patient-row" id="patientData">
+              <div class="field-group">
+                <label>Nome</label>
+                <div class="field-value loading" id="pName">Buscando...</div>
+              </div>
+              <div class="field-group">
+                <label>CPF</label>
+                <div class="field-value loading" id="pCpf">Buscando...</div>
+              </div>
+              <div class="field-group">
+                <label>WhatsApp</label>
+                <div class="field-value phone loading" id="pPhone">Buscando...</div>
+              </div>
+              <div class="field-group">
+                <label>Exame</label>
+                <div class="field-value loading" id="pExam">Buscando...</div>
+              </div>
+            </div>
+            <div id="dataSource" style="display:none" class="source-tag">
+              <i class="fa-solid fa-database"></i> Dados via Digisca Export
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><i class="fa-solid fa-message"></i> Template de Mensagem (Meta aprovado)</div>
+          <div class="card-body">
+            <div class="template-box" id="templatePreview" style="display:none">
+              <div class="template-header">
+                <i class="fa-solid fa-shield-check"></i> LAUDO_RESULTADO_v1
+                <span class="template-tag"><i class="fa-solid fa-check"></i> Aprovado</span>
+              </div>
+              <div id="templateText">-</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><i class="fa-solid fa-gears"></i> Processamento</div>
+          <div class="card-body">
+            <div class="flow-steps" id="flowSteps">
+              <div class="step" id="stepDetect">
+                <div class="step-icon"><i class="fa-solid fa-folder-open"></i></div>
+                <div>
+                  <div class="step-text">Arquivo detectado</div>
+                  <div class="step-sub" id="stepDetectSub">Aguardando...</div>
+                </div>
+                <div class="step-check"><i class="fa-solid fa-circle-check"></i></div>
+                <div class="step-spinner"></div>
+              </div>
+              <div class="step" id="stepPatient">
+                <div class="step-icon"><i class="fa-solid fa-user"></i></div>
+                <div>
+                  <div class="step-text">Paciente identificado</div>
+                  <div class="step-sub" id="stepPatientSub">Aguardando...</div>
+                </div>
+                <div class="step-check"><i class="fa-solid fa-circle-check"></i></div>
+                <div class="step-spinner"></div>
+              </div>
+              <div class="step" id="stepTemplate">
+                <div class="step-icon"><i class="fa-solid fa-message"></i></div>
+                <div>
+                  <div class="step-text">Template aplicado</div>
+                  <div class="step-sub" id="stepTemplateSub">Aguardando...</div>
+                </div>
+                <div class="step-check"><i class="fa-solid fa-circle-check"></i></div>
+                <div class="step-spinner"></div>
+              </div>
+              <div class="step" id="stepSend">
+                <div class="step-icon"><i class="fa-brands fa-whatsapp"></i></div>
+                <div>
+                  <div class="step-text">Mensagem enviada via WABA</div>
+                  <div class="step-sub" id="stepSendSub">Aguardando...</div>
+                </div>
+                <div class="step-check"><i class="fa-solid fa-circle-check"></i></div>
+                <div class="step-spinner"></div>
+              </div>
+              <div class="step" id="stepDelivered">
+                <div class="step-icon"><i class="fa-solid fa-circle-check"></i></div>
+                <div>
+                  <div class="step-text">Entregue ao paciente</div>
+                  <div class="step-sub" id="stepDeliveredSub">Aguardando...</div>
+                </div>
+                <div class="step-check"><i class="fa-solid fa-circle-check"></i></div>
+                <div class="step-spinner"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn-process" id="processBtn" onclick="startProcess()">
+          <i class="fa-solid fa-paper-plane"></i> Processar Exame e Enviar via WhatsApp
+        </button>
+
+      </div>
+
+    </div>
+
+    <!-- LOG -->
+    <div class="log-section">
+      <div class="log-title"><i class="fa-solid fa-terminal"></i> Log do sistema</div>
+      <div id="logEntries">
+        <div class="log-entry">
+          <span class="log-time">09:00:00</span>
+          <span class="log-dot dot-ok"></span>
+          <span>Sistema iniciado. Monitorando \\SERVIDOR-CLINICA\Digisca\Laudos...</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: WHATSAPP PREVIEW -->
+  <div class="wa-panel">
+    <div class="wa-header">
+      <div class="wa-avatar" id="waAvatar">?</div>
+      <div>
+        <div class="wa-contact-name" id="waContactName">Selecione um exame</div>
+        <div class="wa-contact-status" id="waContactStatus">aguardando...</div>
+      </div>
+    </div>
+    <div class="wa-messages" id="waMessages">
+      <div class="wa-bubble-info" style="font-size:0.72rem;color:var(--gray-500);text-align:center;margin:auto">
+        <i class="fa-solid fa-lock" style="font-size:0.8rem;margin-right:4px"></i>
+        Mensagens protegidas com criptografia de ponta a ponta
+      </div>
+    </div>
+    <div class="wa-status-bar">
+      <div class="log-title" style="margin-bottom:6px">Status de entrega</div>
+      <div class="wa-status-row">
+        <span class="wa-status-label">Enviado</span>
+        <span class="status-chip chip-waiting" id="statusSent">-</span>
+      </div>
+      <div class="wa-status-row">
+        <span class="wa-status-label">Entregue</span>
+        <span class="status-chip chip-waiting" id="statusDelivered">-</span>
+      </div>
+      <div class="wa-status-row">
+        <span class="wa-status-label">Lido</span>
+        <span class="status-chip chip-waiting" id="statusRead">-</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const EXAMS = [
+  {
+    id: 1,
+    file: 'LAB_20260623_0187.pdf',
+    size: '1.2 MB',
+    time: '08:47',
+    type: 'Hemograma Completo',
+    patient: 'Maria Fernanda Costa',
+    cpf: '387.241.089-12',
+    phone: '+55 11 99812-4471',
+    initials: 'MC',
+    status: 'new'
+  },
+  {
+    id: 2,
+    file: 'LAB_20260623_0188.pdf',
+    size: '0.8 MB',
+    time: '09:12',
+    type: 'Ultrassom Abdominal',
+    patient: 'Roberto Andrade Silva',
+    cpf: '512.867.234-09',
+    phone: '+55 21 98754-0023',
+    initials: 'RS',
+    status: 'new'
+  },
+  {
+    id: 3,
+    file: 'LAB_20260623_0186.pdf',
+    size: '2.1 MB',
+    time: '07:30',
+    type: 'Raio-X Tórax',
+    patient: 'Ana Paula Mendes',
+    cpf: '104.523.671-88',
+    phone: '+55 31 97623-9901',
+    initials: 'AM',
+    status: 'sent'
+  }
+];
+
+let selectedExam = null;
+let processing = false;
+let sentCount = 0;
+let deliveredCount = 0;
+let logTime = { h: 9, m: 15, s: 0 };
+
+function getTime() {
+  logTime.s += Math.floor(Math.random() * 3) + 1;
+  if (logTime.s >= 60) { logTime.s = 0; logTime.m++; }
+  if (logTime.m >= 60) { logTime.m = 0; logTime.h++; }
+  return `${String(logTime.h).padStart(2,'0')}:${String(logTime.m).padStart(2,'0')}:${String(logTime.s).padStart(2,'0')}`;
+}
+
+function addLog(msg, type = 'ok') {
+  const div = document.createElement('div');
+  div.className = 'log-entry';
+  div.innerHTML = `<span class="log-time">${getTime()}</span><span class="log-dot dot-${type}"></span><span>${msg}</span>`;
+  document.getElementById('logEntries').appendChild(div);
+  div.scrollIntoView({ behavior: 'smooth' });
+}
+
+function renderExams() {
+  const list = document.getElementById('examList');
+  list.innerHTML = '';
+  EXAMS.forEach(e => {
+    const div = document.createElement('div');
+    div.className = `exam-item${e.status === 'sent' ? ' sent' : ''}${selectedExam && selectedExam.id === e.id ? ' active' : ''}`;
+    div.onclick = () => selectExam(e);
+    div.innerHTML = `
+      <div class="exam-item-name"><i class="fa-solid fa-file-pdf"></i>${e.file}</div>
+      <div class="exam-item-meta">${e.type} &bull; ${e.time} &bull; ${e.size}</div>
+      <span class="exam-badge ${e.status === 'sent' ? 'badge-sent' : 'badge-new'}">${e.status === 'sent' ? 'Enviado' : 'Novo'}</span>
+    `;
+    list.appendChild(div);
+  });
+}
+
+function selectExam(exam) {
+  if (processing) return;
+  selectedExam = exam;
+  renderExams();
+
+  document.getElementById('initialState').style.display = 'none';
+  document.getElementById('processingState').style.display = 'block';
+
+  // Reset fields
+  document.getElementById('selectedFileName').textContent = exam.file;
+  document.getElementById('selectedFileMeta').textContent = `${exam.type} • ${exam.size} • Detectado às ${exam.time}`;
+  document.getElementById('pName').textContent = 'Buscando...';
+  document.getElementById('pCpf').textContent = 'Buscando...';
+  document.getElementById('pPhone').innerHTML = 'Buscando...';
+  document.getElementById('pExam').textContent = 'Buscando...';
+  document.getElementById('pName').className = 'field-value loading';
+  document.getElementById('pCpf').className = 'field-value loading';
+  document.getElementById('pPhone').className = 'field-value phone loading';
+  document.getElementById('pExam').className = 'field-value loading';
+  document.getElementById('dataSource').style.display = 'none';
+  document.getElementById('templatePreview').style.display = 'none';
+  document.getElementById('processBtn').disabled = false;
+
+  // Reset steps
+  ['stepDetect','stepPatient','stepTemplate','stepSend','stepDelivered'].forEach(id => {
+    const el = document.getElementById(id);
+    el.className = 'step';
+  });
+
+  // Reset WA panel
+  document.getElementById('waAvatar').textContent = '?';
+  document.getElementById('waContactName').textContent = 'Aguardando processamento...';
+  document.getElementById('waContactStatus').textContent = 'aguardando...';
+  document.getElementById('waMessages').innerHTML = `
+    <div class="wa-bubble-info" style="font-size:0.72rem;color:var(--gray-500);text-align:center;margin:auto">
+      <i class="fa-solid fa-lock" style="font-size:0.8rem;margin-right:4px"></i>
+      Mensagens protegidas com criptografia de ponta a ponta
+    </div>`;
+  document.getElementById('statusSent').className = 'status-chip chip-waiting';
+  document.getElementById('statusSent').textContent = '-';
+  document.getElementById('statusDelivered').className = 'status-chip chip-waiting';
+  document.getElementById('statusDelivered').textContent = '-';
+  document.getElementById('statusRead').className = 'status-chip chip-waiting';
+  document.getElementById('statusRead').textContent = '-';
+
+  addLog(`Novo arquivo detectado: ${exam.file}`);
+}
+
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+async function startProcess() {
+  if (!selectedExam || processing) return;
+  processing = true;
+  document.getElementById('processBtn').disabled = true;
+
+  const exam = selectedExam;
+
+  // STEP 1: Detect
+  activateStep('stepDetect');
+  await delay(600);
+  document.getElementById('stepDetectSub').textContent = exam.file;
+  completeStep('stepDetect');
+  addLog(`Arquivo validado: ${exam.file} (${exam.size})`);
+  await delay(400);
+
+  // STEP 2: Patient
+  activateStep('stepPatient');
+  await delay(900);
+  document.getElementById('pName').textContent = exam.patient;
+  document.getElementById('pName').className = 'field-value';
+  document.getElementById('pCpf').textContent = exam.cpf;
+  document.getElementById('pCpf').className = 'field-value';
+  document.getElementById('pPhone').innerHTML = `<i class="fa-brands fa-whatsapp"></i>${exam.phone}`;
+  document.getElementById('pPhone').className = 'field-value phone';
+  document.getElementById('pExam').textContent = exam.type;
+  document.getElementById('pExam').className = 'field-value';
+  document.getElementById('dataSource').style.display = 'inline-flex';
+  document.getElementById('stepPatientSub').textContent = exam.patient + ' — ' + exam.phone;
+
+  document.getElementById('waAvatar').textContent = exam.initials;
+  document.getElementById('waContactName').textContent = exam.patient;
+  document.getElementById('waContactStatus').textContent = exam.phone;
+
+  completeStep('stepPatient');
+  addLog(`Paciente identificado: ${exam.patient} (${exam.cpf})`);
+  addLog(`WhatsApp: ${exam.phone}`);
+  await delay(400);
+
+  // STEP 3: Template
+  activateStep('stepTemplate');
+  await delay(700);
+  const templateMsg = `Olá, *${exam.patient.split(' ')[0]}*! 👋\n\nSeu resultado de *${exam.type}* está disponível.\n\nO laudo em PDF está em anexo. Em caso de dúvidas entre em contato com nossa clínica.\n\n_Clínica São Lucas — (11) 3000-0000_`;
+  document.getElementById('templateText').innerHTML = templateMsg.replace(/\*(.*?)\*/g, '<strong>$1</strong>').replace(/_(.*)_/, '<em>$1</em>').replace(/\n/g,'<br>');
+  document.getElementById('templatePreview').style.display = 'block';
+  document.getElementById('stepTemplateSub').textContent = 'LAUDO_RESULTADO_v1 aplicado';
+  completeStep('stepTemplate');
+  addLog('Template LAUDO_RESULTADO_v1 aplicado com sucesso');
+  await delay(400);
+
+  // STEP 4: Send
+  activateStep('stepSend');
+  await delay(1200);
+
+  // Add WA messages
+  const waMsg = document.getElementById('waMessages');
+  waMsg.innerHTML = `
+    <div class="wa-bubble-info" style="font-size:0.72rem;color:var(--gray-500);text-align:center;margin-bottom:8px">
+      <i class="fa-solid fa-lock" style="font-size:0.8rem;margin-right:4px"></i>
+      Mensagens protegidas com criptografia de ponta a ponta
+    </div>
+    <div class="wa-bubble">
+      <div class="wa-pdf-attach">
+        <i class="fa-solid fa-file-pdf"></i>
+        <div>
+          <div class="wa-pdf-name">${exam.file}</div>
+          <div class="wa-pdf-size">PDF • ${exam.size}</div>
+        </div>
+        <i class="fa-solid fa-arrow-down-to-bracket" style="margin-left:auto;color:var(--green-mid);font-size:1rem"></i>
+      </div>
+      ${templateMsg.replace(/\*(.*?)\*/g, '<strong>$1</strong>').replace(/_(.*)_/, '<em>$1</em>').replace(/\n/g,'<br>')}
+      <div class="wa-time">${getWaTime()} <i class="fa-solid fa-check-double wa-ticks"></i></div>
+    </div>`;
+
+  document.getElementById('statusSent').className = 'status-chip chip-sent';
+  document.getElementById('statusSent').innerHTML = '<i class="fa-solid fa-check"></i> ' + getWaTime();
+  document.getElementById('stepSendSub').textContent = 'Enviado às ' + getWaTime();
+  completeStep('stepSend');
+  addLog(`Mensagem enviada via WABA para ${exam.phone}`);
+  await delay(400);
+
+  // STEP 5: Delivered
+  activateStep('stepDelivered');
+  await delay(1500);
+  document.getElementById('statusDelivered').className = 'status-chip chip-delivered';
+  document.getElementById('statusDelivered').innerHTML = '<i class="fa-solid fa-check-double"></i> ' + getWaTime();
+  await delay(800);
+  document.getElementById('statusRead').className = 'status-chip chip-read';
+  document.getElementById('statusRead').innerHTML = '<i class="fa-solid fa-check-double" style="color:var(--teal)"></i> ' + getWaTime();
+  document.getElementById('waContactStatus').textContent = 'Lido às ' + getWaTime();
+  document.getElementById('stepDeliveredSub').textContent = 'Lido pelo paciente';
+  completeStep('stepDelivered');
+  addLog(`Entregue e lido por ${exam.patient}`, 'ok');
+
+  // Update exam status
+  exam.status = 'sent';
+  sentCount++;
+  deliveredCount++;
+  document.getElementById('statTotal').textContent = sentCount;
+  document.getElementById('statDelivered').textContent = deliveredCount;
+  renderExams();
+
+  processing = false;
+  addLog('Fluxo concluído. Aguardando próximo arquivo...');
+}
+
+function getWaTime() {
+  const now = new Date();
+  return `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+}
+
+function activateStep(id) {
+  const el = document.getElementById(id);
+  el.className = 'step active';
+}
+
+function completeStep(id) {
+  const el = document.getElementById(id);
+  el.className = 'step done';
+}
+
+function resetDemo() {
+  EXAMS.forEach(e => { if (e.id !== 3) e.status = 'new'; });
+  selectedExam = null;
+  processing = false;
+  sentCount = 0;
+  deliveredCount = 0;
+  logTime = { h: 9, m: 15, s: 0 };
+
+  document.getElementById('statTotal').textContent = '0';
+  document.getElementById('statDelivered').textContent = '0';
+  document.getElementById('statFailed').textContent = '0';
+  document.getElementById('initialState').style.display = 'block';
+  document.getElementById('processingState').style.display = 'none';
+  document.getElementById('logEntries').innerHTML = `
+    <div class="log-entry">
+      <span class="log-time">09:00:00</span>
+      <span class="log-dot dot-ok"></span>
+      <span>Sistema iniciado. Monitorando \\\\SERVIDOR-CLINICA\\Digisca\\Laudos...</span>
+    </div>`;
+  document.getElementById('waAvatar').textContent = '?';
+  document.getElementById('waContactName').textContent = 'Selecione um exame';
+  document.getElementById('waContactStatus').textContent = 'aguardando...';
+  document.getElementById('waMessages').innerHTML = `
+    <div class="wa-bubble-info" style="font-size:0.72rem;color:var(--gray-500);text-align:center;margin:auto">
+      <i class="fa-solid fa-lock" style="font-size:0.8rem;margin-right:4px"></i>
+      Mensagens protegidas com criptografia de ponta a ponta
+    </div>`;
+  document.getElementById('statusSent').className = 'status-chip chip-waiting';
+  document.getElementById('statusSent').textContent = '-';
+  document.getElementById('statusDelivered').className = 'status-chip chip-waiting';
+  document.getElementById('statusDelivered').textContent = '-';
+  document.getElementById('statusRead').className = 'status-chip chip-waiting';
+  document.getElementById('statusRead').textContent = '-';
+  renderExams();
+}
+
+// INIT
+renderExams();
+
+// Auto-hint animation
+setTimeout(() => {
+  ['hint1','hint2','hint3','hint4'].forEach((id,i) => {
+    setTimeout(() => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.classList.add('done');
+        setTimeout(() => el.className = 'step active', 1800);
+      }
+    }, i * 600);
+  });
+}, 1000);
+</script>
+</body>
+</html>
