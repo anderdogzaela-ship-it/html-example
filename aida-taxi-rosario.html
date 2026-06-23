@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Despachá — App Demo Rosario</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:'Nunito',sans-serif;
+  background:radial-gradient(ellipse at top,#1c1207 0%,#0a0a0a 60%);
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-start;
+  padding:40px 20px 120px;
+  color:#f9fafb;
+}
+
+/* Header */
+.page-header{text-align:center;margin-bottom:32px}
+.page-header .logo{font-size:2rem;font-weight:900;color:#F59E0B;letter-spacing:-1px;display:flex;align-items:center;gap:10px;justify-content:center}
+.page-header .logo i{font-size:1.6rem}
+.page-header p{font-size:0.85rem;color:#6B7280;margin-top:6px;max-width:380px;line-height:1.5}
+
+/* Phone */
+.phone-outer{
+  position:relative;
+  width:375px;
+  margin:0 auto;
+}
+.phone{
+  width:375px;
+  height:780px;
+  background:#111827;
+  border-radius:52px;
+  border:8px solid #1F2937;
+  box-shadow:
+    0 0 0 1px #374151,
+    inset 0 0 0 1px #374151,
+    0 40px 100px rgba(0,0,0,0.9),
+    0 0 60px rgba(245,158,11,0.08);
+  overflow:hidden;
+  position:relative;
+}
+
+/* Notch */
+.notch{
+  position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:126px;height:34px;
+  background:#111827;
+  border-radius:0 0 22px 22px;
+  z-index:20;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.notch-cam{width:10px;height:10px;border-radius:50%;background:#1F2937;border:1px solid #374151}
+.notch-speaker{width:42px;height:5px;border-radius:4px;background:#1F2937}
+
+/* Status bar */
+.status-bar{
+  height:44px;padding:14px 20px 0;
+  display:flex;justify-content:space-between;align-items:center;
+  font-size:0.65rem;font-weight:800;color:#f9fafb;
+  position:relative;z-index:10;
+}
+.status-right{display:flex;gap:6px;align-items:center}
+
+/* Screen */
+.screen{
+  display:none;
+  flex-direction:column;
+  position:absolute;
+  top:0;left:0;right:0;bottom:0;
+  overflow:hidden;
+}
+.screen.active{
+  display:flex;
+  animation:slideIn 0.35s cubic-bezier(0.25,0.46,0.45,0.94);
+}
+.screen.slide-back.active{
+  animation:slideBack 0.35s cubic-bezier(0.25,0.46,0.45,0.94);
+}
+@keyframes slideIn{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}
+@keyframes slideBack{from{opacity:0;transform:translateX(-30px)}to{opacity:1;transform:translateX(0)}}
+
+/* ========================
+   SCREEN 1 — HOME
+   ======================== */
+.screen-home{background:#0F172A}
+
+.map-area{
+  flex:1;
+  position:relative;
+  overflow:hidden;
+  background:#111827;
+}
+
+/* CSS Map grid */
+.map-grid{
+  position:absolute;inset:0;
+  background:
+    linear-gradient(rgba(55,65,81,0.15) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(55,65,81,0.15) 1px,transparent 1px);
+  background-size:36px 36px;
+}
+
+/* Streets */
+.st{position:absolute;background:#1E293B}
+.st-h{height:14px;left:-10px;right:-10px}
+.st-v{width:14px;top:-10px;bottom:-10px}
+
+/* City blocks */
+.blk{position:absolute;background:#0F172A;border-radius:3px;opacity:0.8}
+
+/* User pin */
+.pin-user{
+  position:absolute;
+  bottom:42%;left:48%;
+  width:44px;height:44px;
+  background:#F59E0B;
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  color:#111827;font-size:1.1rem;
+  box-shadow:0 0 0 10px rgba(245,158,11,0.15),0 4px 16px rgba(245,158,11,0.4);
+  z-index:6;
+  animation:userPulse 2.5s ease-in-out infinite;
+}
+@keyframes userPulse{
+  0%,100%{box-shadow:0 0 0 10px rgba(245,158,11,0.15),0 4px 16px rgba(245,158,11,0.4)}
+  50%{box-shadow:0 0 0 20px rgba(245,158,11,0.05),0 4px 20px rgba(245,158,11,0.5)}
+}
+
+/* Commerce pins */
+.pin-com{
+  position:absolute;
+  width:36px;height:36px;
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:0.9rem;
+  z-index:6;cursor:pointer;
+  transition:transform 0.2s;
+  border:2px solid white;
+}
+.pin-com:hover{transform:scale(1.2)}
+
+.dtag{
+  position:absolute;
+  top:-18px;left:50%;transform:translateX(-50%);
+  font-size:0.55rem;font-weight:900;
+  padding:2px 6px;border-radius:10px;
+  white-space:nowrap;color:#111827;
+}
+.dtag-green{background:#10B981;color:white}
+.dtag-teal{background:#06B6D4;color:#111827}
+.dtag-purple{background:#A78BFA;color:white}
+.dtag-amber{background:#F59E0B;color:#111827}
+
+/* Top search overlay */
+.map-top{
+  position:absolute;top:0;left:0;right:0;z-index:8;
+  padding:14px 16px;
+  background:linear-gradient(to bottom,rgba(15,23,42,0.98) 70%,transparent);
+}
+.search-box{
+  background:rgba(30,41,59,0.95);
+  border:1px solid #334155;
+  border-radius:16px;
+  padding:12px 16px;
+  display:flex;align-items:center;gap:10px;
+  cursor:pointer;
+  backdrop-filter:blur(8px);
+}
+.search-box i{color:#F59E0B;font-size:0.95rem}
+.search-box span{color:#94A3B8;font-size:0.9rem;flex:1}
+.search-box .dest{color:#F59E0B;font-size:0.75rem;font-weight:700;background:rgba(245,158,11,0.1);padding:4px 10px;border-radius:10px}
+
+/* Home bottom panel */
+.home-panel{
+  background:#0F172A;
+  border-top:1px solid #1E293B;
+  padding:16px 16px 24px;
+  border-radius:24px 24px 0 0;
+}
+.section-title{
+  font-size:0.7rem;font-weight:800;
+  color:#64748B;text-transform:uppercase;letter-spacing:1.2px;
+  margin-bottom:12px;
+}
+
+.promo-row{
+  display:flex;gap:10px;
+  overflow-x:auto;scrollbar-width:none;
+  margin-bottom:16px;padding-bottom:4px;
+}
+.promo-card{
+  flex-shrink:0;width:110px;
+  background:#1E293B;border-radius:14px;
+  padding:12px 8px;
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  cursor:pointer;
+  border:1.5px solid #334155;
+  transition:border-color 0.2s,transform 0.15s;
+}
+.promo-card:hover{border-color:#F59E0B;transform:translateY(-1px)}
+.promo-icon{
+  width:40px;height:40px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.2rem;
+}
+.promo-name{font-size:0.68rem;font-weight:800;text-align:center;line-height:1.2;color:#E2E8F0}
+.promo-badge{
+  font-size:0.68rem;font-weight:900;
+  padding:2px 8px;border-radius:20px;
+}
+
+.btn-main{
+  width:100%;
+  background:linear-gradient(135deg,#F59E0B,#D97706);
+  color:#111827;border:none;border-radius:16px;
+  padding:16px;font-family:'Nunito',sans-serif;
+  font-size:0.95rem;font-weight:900;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  transition:opacity 0.2s,transform 0.15s;
+  box-shadow:0 4px 20px rgba(245,158,11,0.3);
+}
+.btn-main:hover{opacity:0.9;transform:translateY(-1px)}
+
+/* ========================
+   SCREEN 2 — COMMERCE LIST
+   ======================== */
+.screen-list{background:#0F172A}
+
+.list-header{
+  padding:12px 16px 0;
+  background:#0F172A;
+  border-bottom:1px solid #1E293B;
+  padding-bottom:14px;
+}
+.list-header-top{
+  display:flex;align-items:center;gap:12px;margin-bottom:12px;
+}
+.back-btn{
+  width:36px;height:36px;border:none;
+  background:#1E293B;border-radius:50%;
+  color:#E2E8F0;cursor:pointer;font-size:0.9rem;
+  display:flex;align-items:center;justify-content:center;
+  transition:background 0.2s;
+}
+.back-btn:hover{background:#334155}
+.list-title{font-size:1rem;font-weight:900;color:#F9FAFB}
+.list-subtitle{font-size:0.75rem;color:#64748B;margin-top:1px}
+
+.filter-row{
+  display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;
+}
+.ftab{
+  flex-shrink:0;padding:6px 14px;border-radius:20px;
+  font-size:0.72rem;font-weight:800;cursor:pointer;
+  border:1.5px solid #334155;background:transparent;
+  color:#64748B;font-family:'Nunito',sans-serif;
+  transition:all 0.2s;
+}
+.ftab.on{background:#F59E0B;color:#111827;border-color:#F59E0B}
+
+.com-list{
+  flex:1;overflow-y:auto;scrollbar-width:none;
+  padding:12px 16px;
+  display:flex;flex-direction:column;gap:10px;
+}
+
+.com-card{
+  background:#1E293B;border-radius:16px;
+  padding:14px;display:flex;gap:12px;align-items:center;
+  cursor:pointer;border:1.5px solid #334155;
+  transition:border-color 0.2s,transform 0.15s;
+  position:relative;
+}
+.com-card:hover{border-color:#F59E0B;transform:translateX(2px)}
+.com-card.featured{border-color:rgba(16,185,129,0.5)}
+
+.feat-badge{
+  position:absolute;top:-9px;right:14px;
+  background:#10B981;color:white;
+  font-size:0.6rem;font-weight:900;
+  padding:2px 10px;border-radius:20px;
+}
+
+.com-icon{
+  width:52px;height:52px;border-radius:14px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.4rem;flex-shrink:0;
+}
+.com-info{flex:1}
+.com-name{font-size:0.88rem;font-weight:800;color:#F9FAFB;margin-bottom:2px}
+.com-cat{font-size:0.72rem;color:#64748B;margin-bottom:5px}
+.com-meta{display:flex;gap:12px;align-items:center}
+.com-dist{font-size:0.68rem;color:#94A3B8;display:flex;align-items:center;gap:3px}
+
+.dbig{
+  font-size:0.78rem;font-weight:900;
+  padding:3px 10px;border-radius:20px;
+}
+.d100{background:#10B981;color:white}
+.d80{background:#06B6D4;color:#0F172A}
+.d75{background:#A78BFA;color:white}
+.d50{background:#F59E0B;color:#111827}
+
+.com-arr{color:#475569;font-size:0.8rem}
+
+/* ========================
+   SCREEN 3 — RIDE DETAIL
+   ======================== */
+.screen-detail{background:#0F172A}
+
+.detail-header{
+  padding:12px 16px 14px;
+  background:#0F172A;
+  border-bottom:1px solid #1E293B;
+  display:flex;align-items:center;gap:12px;
+}
+.detail-title-wrap{flex:1}
+.detail-title{font-size:0.95rem;font-weight:900;color:#F9FAFB}
+.detail-subtitle{font-size:0.72rem;color:#64748B}
+
+/* Route map visual */
+.route-vis{
+  height:150px;
+  background:#111827;
+  position:relative;
+  overflow:hidden;
+  border-bottom:1px solid #1E293B;
+}
+.route-grid{
+  position:absolute;inset:0;
+  background:
+    linear-gradient(rgba(51,65,85,0.12) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(51,65,85,0.12) 1px,transparent 1px);
+  background-size:28px 28px;
+}
+.route-path{
+  position:absolute;
+  top:50%;left:60px;right:60px;
+  height:3px;
+  transform:translateY(-50%);
+}
+.route-path-line{
+  position:absolute;inset:0;
+  background:linear-gradient(90deg,#F59E0B,#10B981);
+  border-radius:2px;
+}
+.route-dot{
+  position:absolute;top:50%;
+  width:14px;height:14px;border-radius:50%;
+  transform:translateY(-50%);
+  border:3px solid #111827;
+}
+.route-dot.from{left:-7px;background:#F59E0B}
+.route-dot.to{right:-7px;background:#10B981}
+
+.route-label{
+  position:absolute;bottom:12px;
+  font-size:0.65rem;color:#64748B;font-weight:700;
+}
+.route-label.from-lbl{left:20px}
+.route-label.to-lbl{right:20px;text-align:right}
+.route-label span{display:block;color:#94A3B8;font-weight:600;font-size:0.62rem}
+
+/* Car animation on route */
+.car-on-route{
+  position:absolute;
+  top:50%;left:80px;
+  transform:translateY(-50%);
+  font-size:1rem;
+  z-index:5;
+  animation:carMove 3s ease-in-out infinite;
+}
+@keyframes carMove{
+  0%{left:80px;opacity:0}
+  10%{opacity:1}
+  90%{opacity:1}
+  100%{left:calc(100% - 100px);opacity:0}
+}
+
+.detail-body{
+  flex:1;overflow-y:auto;scrollbar-width:none;
+  padding:16px;
+  display:flex;flex-direction:column;gap:14px;
+}
+
+.stats-row{display:flex;gap:10px}
+.stat-box{
+  flex:1;background:#1E293B;border-radius:14px;
+  padding:12px;text-align:center;
+  border:1px solid #334155;
+}
+.stat-val{font-size:1.05rem;font-weight:900;color:#F59E0B}
+.stat-lbl{font-size:0.65rem;color:#64748B;margin-top:2px}
+
+/* Price breakdown */
+.price-card{
+  background:#1E293B;border-radius:16px;
+  padding:16px;
+  border:1px solid #334155;
+}
+.price-card-title{
+  font-size:0.7rem;font-weight:800;
+  color:#64748B;text-transform:uppercase;letter-spacing:1px;
+  margin-bottom:12px;
+}
+.price-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:9px 0;
+  font-size:0.84rem;
+  border-bottom:1px solid #334155;
+}
+.price-row:last-child{border:none}
+.price-row .pl{color:#94A3B8}
+.price-row .pv{font-weight:800;color:#F9FAFB}
+.price-row.disc .pl{color:#10B981}
+.price-row.disc .pv{color:#10B981}
+.price-row.total .pl{font-weight:900;color:#F9FAFB;font-size:0.9rem}
+.price-row.total .pv{color:#F59E0B;font-size:1.1rem;font-weight:900}
+
+.commerce-pays-note{
+  background:rgba(16,185,129,0.08);
+  border:1px solid rgba(16,185,129,0.2);
+  border-radius:12px;
+  padding:10px 12px;
+  display:flex;align-items:center;gap:8px;
+  font-size:0.72rem;color:#6EE7B7;
+}
+.commerce-pays-note i{font-size:0.9rem;color:#10B981}
+
+.btn-confirm{
+  width:100%;
+  background:linear-gradient(135deg,#10B981,#059669);
+  color:white;border:none;border-radius:16px;
+  padding:16px;font-family:'Nunito',sans-serif;
+  font-size:0.95rem;font-weight:900;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  box-shadow:0 4px 20px rgba(16,185,129,0.25);
+  transition:opacity 0.2s,transform 0.15s;
+}
+.btn-confirm:hover{opacity:0.9;transform:translateY(-1px)}
+
+/* ========================
+   SCREEN 4 — CONFIRMED
+   ======================== */
+.screen-conf{background:#0F172A}
+
+.conf-top{
+  background:linear-gradient(135deg,#064E3B,#065F46);
+  padding:36px 20px 24px;
+  text-align:center;
+  border-bottom:1px solid rgba(16,185,129,0.2);
+}
+.conf-icon{
+  width:64px;height:64px;background:#10B981;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.8rem;color:white;
+  margin:0 auto 14px;
+  box-shadow:0 0 0 12px rgba(16,185,129,0.15);
+  animation:popIn 0.5s cubic-bezier(0.175,0.885,0.32,1.275);
+}
+@keyframes popIn{from{transform:scale(0)}to{transform:scale(1)}}
+.conf-title{font-size:1.2rem;font-weight:900;color:#F9FAFB;margin-bottom:4px}
+.conf-sub{font-size:0.78rem;color:#6EE7B7}
+
+.conf-body{
+  flex:1;overflow-y:auto;scrollbar-width:none;
+  padding:16px;
+  display:flex;flex-direction:column;gap:12px;
+}
+
+.driver-card{
+  background:#1E293B;border-radius:16px;
+  padding:14px;display:flex;gap:12px;align-items:center;
+  border:1px solid #334155;
+}
+.driver-avatar{
+  width:52px;height:52px;background:#334155;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.5rem;
+}
+.driver-info{flex:1}
+.driver-name{font-size:0.9rem;font-weight:800;color:#F9FAFB}
+.driver-car{font-size:0.72rem;color:#64748B;margin-top:1px}
+.driver-stars{font-size:0.7rem;color:#F59E0B;margin-top:3px}
+.eta-box{
+  background:#0F172A;border-radius:12px;
+  padding:10px 14px;text-align:center;
+  border:1px solid #1E293B;
+}
+.eta-num{font-size:1.3rem;font-weight:900;color:#F59E0B;line-height:1}
+.eta-lbl{font-size:0.6rem;color:#64748B;margin-top:2px}
+
+.savings-card{
+  background:linear-gradient(135deg,rgba(6,78,59,0.6),rgba(6,95,70,0.6));
+  border:1px solid rgba(16,185,129,0.3);
+  border-radius:16px;padding:16px;
+  display:flex;gap:12px;align-items:center;
+}
+.savings-icon{font-size:2rem;color:#10B981}
+.savings-info{}
+.savings-amount{font-size:1.3rem;font-weight:900;color:#10B981}
+.savings-label{font-size:0.72rem;color:#6EE7B7;margin-top:2px}
+
+.tracking-card{
+  background:#1E293B;border-radius:16px;
+  padding:14px 16px;
+  display:flex;align-items:center;gap:12px;
+  border:1px solid #334155;
+}
+.tdot{
+  width:10px;height:10px;border-radius:50%;background:#10B981;
+  flex-shrink:0;
+  animation:blink 1.4s ease-in-out infinite;
+}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.25}}
+.tracking-info{flex:1}
+.tracking-text{font-size:0.82rem;font-weight:700;color:#E2E8F0}
+.tracking-sub{font-size:0.7rem;color:#64748B;margin-top:2px}
+
+.route-summary{
+  background:#1E293B;border-radius:14px;
+  padding:12px 14px;
+  display:flex;flex-direction:column;gap:6px;
+  border:1px solid #334155;
+}
+.route-sum-row{display:flex;gap:8px;align-items:center;font-size:0.78rem}
+.route-sum-icon{width:20px;text-align:center;font-size:0.8rem}
+
+/* ========================
+   SCREEN 5 — COMMERCE DASHBOARD
+   ======================== */
+.screen-dash{background:#0F172A}
+
+.dash-header{
+  padding:12px 16px 14px;
+  background:#0F172A;border-bottom:1px solid #1E293B;
+}
+.dash-header-top{display:flex;align-items:center;gap:12px;margin-bottom:4px}
+.dash-brand{
+  width:36px;height:36px;background:#1E293B;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;font-size:1rem;
+}
+.dash-title{font-size:0.95rem;font-weight:900;color:#F9FAFB}
+.dash-subtitle{font-size:0.72rem;color:#64748B}
+
+.dash-body{flex:1;overflow-y:auto;scrollbar-width:none;padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+
+.period-tabs{display:flex;gap:6px;margin-bottom:2px}
+.ptab{
+  padding:5px 12px;border-radius:20px;
+  font-size:0.7rem;font-weight:800;cursor:pointer;
+  border:1.5px solid #334155;background:transparent;
+  color:#64748B;font-family:'Nunito',sans-serif;
+}
+.ptab.on{background:#1E293B;color:#F9FAFB;border-color:#475569}
+
+.metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.metric-box{
+  background:#1E293B;border-radius:14px;
+  padding:14px;
+  border:1px solid #334155;
+}
+.metric-box.highlight{
+  background:linear-gradient(135deg,rgba(245,158,11,0.12),rgba(217,119,6,0.08));
+  border-color:rgba(245,158,11,0.3);
+}
+.metric-val{font-size:1.3rem;font-weight:900;color:#F59E0B}
+.metric-val.green{color:#10B981}
+.metric-val.blue{color:#06B6D4}
+.metric-lbl{font-size:0.65rem;color:#64748B;margin-top:3px;line-height:1.3}
+.metric-trend{font-size:0.62rem;color:#10B981;margin-top:5px;display:flex;align-items:center;gap:3px}
+
+.roi-card{
+  background:linear-gradient(135deg,rgba(6,78,59,0.5),rgba(6,95,70,0.3));
+  border:1px solid rgba(16,185,129,0.25);
+  border-radius:16px;padding:16px;
+}
+.roi-title{font-size:0.7rem;font-weight:800;color:#6EE7B7;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px}
+.roi-row{display:flex;justify-content:space-between;align-items:center;font-size:0.82rem;padding:7px 0;border-bottom:1px solid rgba(16,185,129,0.1)}
+.roi-row:last-child{border:none}
+.roi-row .rl{color:#94A3B8}
+.roi-row .rv{font-weight:800;color:#F9FAFB}
+.roi-row .rv.green{color:#10B981}
+
+.chart-bar-section{}
+.chart-title{font-size:0.7rem;font-weight:800;color:#64748B;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
+.chart-bars{display:flex;gap:6px;align-items:flex-end;height:60px}
+.bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
+.bar{
+  width:100%;border-radius:4px 4px 0 0;
+  background:linear-gradient(to top,#F59E0B,#FCD34D);
+  transition:height 0.6s ease;
+  min-height:4px;
+}
+.bar-label{font-size:0.58rem;color:#64748B}
+
+/* Bottom nav dots */
+.screen-indicator{
+  position:absolute;bottom:16px;left:50%;transform:translateX(-50%);
+  display:flex;gap:6px;z-index:15;
+}
+.ind-dot{
+  width:6px;height:6px;border-radius:50%;
+  background:#334155;cursor:pointer;
+  transition:all 0.25s;
+}
+.ind-dot.active{width:18px;border-radius:3px;background:#F59E0B}
+
+/* ========================
+   OUTER CONTROLS
+   ======================== */
+.outer-controls{
+  margin-top:24px;
+  display:flex;flex-direction:column;align-items:center;gap:16px;
+  width:375px;
+}
+
+.nav-row{display:flex;gap:10px;justify-content:center}
+.nav-btn{
+  background:rgba(15,23,42,0.9);
+  border:1px solid #334155;
+  color:#94A3B8;
+  padding:10px 20px;border-radius:24px;cursor:pointer;
+  font-family:'Nunito',sans-serif;font-size:0.8rem;font-weight:800;
+  display:flex;align-items:center;gap:8px;
+  transition:all 0.2s;
+  backdrop-filter:blur(8px);
+}
+.nav-btn:hover{border-color:#475569;color:#E2E8F0}
+.nav-btn.primary{
+  background:linear-gradient(135deg,#F59E0B,#D97706);
+  color:#111827;border-color:transparent;
+}
+.nav-btn.primary:hover{opacity:0.9}
+.nav-btn.green{
+  background:linear-gradient(135deg,#10B981,#059669);
+  color:white;border-color:transparent;
+}
+
+.screen-label-box{
+  background:rgba(15,23,42,0.8);
+  border:1px solid #1E293B;
+  border-radius:12px;padding:8px 16px;
+  font-size:0.72rem;color:#64748B;text-align:center;
+  backdrop-filter:blur(8px);
+  line-height:1.5;
+}
+.screen-label-box b{color:#F59E0B}
+
+.restart-row{
+  display:flex;gap:8px;align-items:center;cursor:pointer;
+  color:#475569;font-size:0.75rem;font-weight:700;
+  padding:8px 16px;border-radius:20px;
+  border:1px solid #1E293B;
+  background:rgba(15,23,42,0.6);
+  transition:color 0.2s,border-color 0.2s;
+}
+.restart-row:hover{color:#64748B;border-color:#334155}
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <div class="logo"><i class="fa-solid fa-taxi"></i> Despachá</div>
+  <p>App de despacho de viajes con bonificaciones de comercios — Rosario</p>
+</div>
+
+<div class="phone-outer">
+  <div class="phone">
+    <div class="notch">
+      <div class="notch-speaker"></div>
+      <div class="notch-cam"></div>
+    </div>
+
+    <!-- ======= SCREEN 1: HOME ======= -->
+    <div class="screen screen-home active" id="s1">
+      <div class="status-bar">
+        <span>9:41</span>
+        <div class="status-right">
+          <i class="fa-solid fa-signal" style="font-size:0.6rem"></i>
+          <i class="fa-solid fa-wifi" style="font-size:0.6rem"></i>
+          <i class="fa-solid fa-battery-full" style="font-size:0.6rem;color:#10B981"></i>
+        </div>
+      </div>
+      <div class="map-area">
+        <div class="map-grid"></div>
+        <!-- Horizontal streets -->
+        <div class="st st-h" style="top:20%"></div>
+        <div class="st st-h" style="top:40%"></div>
+        <div class="st st-h" style="top:62%"></div>
+        <div class="st st-h" style="top:82%"></div>
+        <!-- Vertical streets -->
+        <div class="st st-v" style="left:22%"></div>
+        <div class="st st-v" style="left:50%"></div>
+        <div class="st st-v" style="left:74%"></div>
+        <!-- Blocks -->
+        <div class="blk" style="top:22%;left:24%;width:24%;height:16%"></div>
+        <div class="blk" style="top:22%;left:52%;width:20%;height:16%"></div>
+        <div class="blk" style="top:42%;left:24%;width:24%;height:18%"></div>
+        <div class="blk" style="top:42%;left:52%;width:20%;height:18%"></div>
+        <div class="blk" style="top:64%;left:24%;width:24%;height:16%"></div>
+        <div class="blk" style="top:64%;left:52%;width:20%;height:16%"></div>
+
+        <!-- User pin -->
+        <div class="pin-user"><i class="fa-solid fa-user"></i></div>
+
+        <!-- Commerce pins -->
+        <div class="pin-com" style="top:28%;left:60%;background:#10B981" onclick="goTo(2)">
+          <i class="fa-solid fa-pills" style="font-size:0.9rem;color:white"></i>
+          <div class="dtag dtag-green">100%</div>
+        </div>
+        <div class="pin-com" style="top:55%;left:28%;background:#06B6D4" onclick="goTo(2)">
+          <i class="fa-solid fa-utensils" style="font-size:0.85rem;color:white"></i>
+          <div class="dtag dtag-teal">80%</div>
+        </div>
+        <div class="pin-com" style="top:30%;left:30%;background:#A78BFA" onclick="goTo(2)">
+          <i class="fa-solid fa-dumbbell" style="font-size:0.8rem;color:white"></i>
+          <div class="dtag dtag-purple">75%</div>
+        </div>
+        <div class="pin-com" style="top:70%;left:65%;background:#F59E0B" onclick="goTo(2)">
+          <i class="fa-solid fa-book" style="font-size:0.85rem;color:#111827"></i>
+          <div class="dtag dtag-amber">50%</div>
+        </div>
+
+        <div class="map-top">
+          <div class="search-box" onclick="goTo(2)">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <span>¿A qué comercio querés ir?</span>
+            <div class="dest">Ver descuentos</div>
+          </div>
+        </div>
+      </div>
+      <div class="home-panel">
+        <div class="section-title">Comercios que pagan tu viaje</div>
+        <div class="promo-row">
+          <div class="promo-card" onclick="goTo(2)">
+            <div class="promo-icon" style="background:rgba(16,185,129,0.12)"><i class="fa-solid fa-pills" style="color:#10B981"></i></div>
+            <div class="promo-name">Farmacia Centro</div>
+            <div class="promo-badge d100">100%</div>
+          </div>
+          <div class="promo-card" onclick="goTo(2)">
+            <div class="promo-icon" style="background:rgba(6,182,212,0.12)"><i class="fa-solid fa-utensils" style="color:#06B6D4"></i></div>
+            <div class="promo-name">La Orilla</div>
+            <div class="promo-badge d80">80%</div>
+          </div>
+          <div class="promo-card" onclick="goTo(2)">
+            <div class="promo-icon" style="background:rgba(167,139,250,0.12)"><i class="fa-solid fa-dumbbell" style="color:#A78BFA"></i></div>
+            <div class="promo-name">Gym Norte</div>
+            <div class="promo-badge d75">75%</div>
+          </div>
+          <div class="promo-card" onclick="goTo(2)">
+            <div class="promo-icon" style="background:rgba(245,158,11,0.12)"><i class="fa-solid fa-book" style="color:#F59E0B"></i></div>
+            <div class="promo-name">Librería El Saber</div>
+            <div class="promo-badge d50">50%</div>
+          </div>
+        </div>
+        <button class="btn-main" onclick="goTo(2)">
+          <i class="fa-solid fa-store"></i> Ver todos los comercios
+        </button>
+      </div>
+      <div class="screen-indicator">
+        <div class="ind-dot active" onclick="goTo(1)"></div>
+        <div class="ind-dot" onclick="goTo(2)"></div>
+        <div class="ind-dot" onclick="goTo(3)"></div>
+        <div class="ind-dot" onclick="goTo(4)"></div>
+        <div class="ind-dot" onclick="goTo(5)"></div>
+      </div>
+    </div>
+
+    <!-- ======= SCREEN 2: COMMERCE LIST ======= -->
+    <div class="screen screen-list" id="s2">
+      <div class="status-bar">
+        <span>9:42</span>
+        <div class="status-right">
+          <i class="fa-solid fa-signal" style="font-size:0.6rem"></i>
+          <i class="fa-solid fa-wifi" style="font-size:0.6rem"></i>
+          <i class="fa-solid fa-battery-full" style="font-size:0.6rem;color:#10B981"></i>
+        </div>
+      </div>
+      <div class="list-header">
+        <div class="list-header-top">
+          <button class="back-btn" onclick="goTo(1)"><i class="fa-solid fa-arrow-left"></i></button>
+          <div>
+            <div class="list-title">¿A qué comercio vas?</div>
+            <div class="list-subtitle">El comercio financia tu viaje</div>
+          </div>
+        </div>
+        <div class="filter-row">
+          <button class="ftab on">Todos</button>
+          <button class="ftab">100% gratis</button>
+          <button class="ftab">80%+</button>
+          <button class="ftab">Más cercanos</button>
+        </div>
+      </div>
+      <div class="com-list">
+        <div class="com-card featured" onclick="goTo(3)">
+          <div class="feat-badge">Más pedido</div>
+          <div class="com-icon" style="background:rgba(16,185,129,0.12)"><i class="fa-solid fa-pills" style="color:#10B981"></i></div>
+          <div class="com-info">
+            <div class="com-name">Farmacia del Centro</div>
+            <div class="com-cat">Farmacia · San Martín 1240</div>
+            <div class="com-meta">
+              <div class="com-dist"><i class="fa-solid fa-location-dot"></i> 1.2 km</div>
+              <div class="dbig d100">100% bonificado</div>
+            </div>
+          </div>
+          <div class="com-arr"><i class="fa-solid fa-chevron-right"></i></div>
+        </div>
+        <div class="com-card" onclick="goTo(3)">
+          <div class="com-icon" style="background:rgba(6,182,212,0.12)"><i class="fa-solid fa-utensils" style="color:#06B6D4"></i></div>
+          <div class="com-info">
+            <div class="com-name">Restaurante La Orilla</div>
+            <div class="com-cat">Gastronomía · Costanera Este 870</div>
+            <div class="com-meta">
+              <div class="com-dist"><i class="fa-solid fa-location-dot"></i> 2.3 km</div>
+              <div class="dbig d80">80% bonificado</div>
+            </div>
+          </div>
+          <div class="com-arr"><i class="fa-solid fa-chevron-right"></i></div>
+        </div>
+        <div class="com-card" onclick="goTo(3)">
+          <div class="com-icon" style="background:rgba(167,139,250,0.12)"><i class="fa-solid fa-dumbbell" style="color:#A78BFA"></i></div>
+          <div class="com-info">
+            <div class="com-name">Gym Norte Rosario</div>
+            <div class="com-cat">Deporte · Bv. Oroño 2100</div>
+            <div class="com-meta">
+              <div class="com-dist"><i class="fa-solid fa-location-dot"></i> 3.1 km</div>
+              <div class="dbig d75">75% bonificado</div>
+            </div>
+          </div>
+          <div class="com-arr"><i class="fa-solid fa-chevron-right"></i></div>
+        </div>
+        <div class="com-card" onclick="goTo(3)">
+          <div class="com-icon" style="background:rgba(245,158,11,0.12)"><i class="fa-solid fa-book" style="color:#F59E0B"></i></div>
+          <div class="com-info">
+            <div class="com-name">Librería El Saber</div>
+            <div class="com-cat">Librería · Corrientes 480</div>
+            <div class="com-meta">
+              <div class="com-dist"><i class="fa-solid fa-location-dot"></i> 0.8 km</div>
+              <div class="dbig d50">50% bonificado</div>
+            </div>
+          </div>
+          <div class="com-arr"><i class="fa-solid fa-chevron-right"></i></div>
+        </div>
+        <div class="com-card" onclick="goTo(3)">
+          <div class="com-icon" style="background:rgba(251,191,36,0.12)"><i class="fa-solid fa-scissors" style="color:#FBBF24"></i></div>
+          <div class="com-info">
+            <div class="com-name">Peluquería Estilo</div>
+            <div class="com-cat">Belleza · Pellegrini 1560</div>
+            <div class="com-meta">
+              <div class="com-dist"><i class="fa-solid fa-location-dot"></i> 1.8 km</div>
+              <div class="dbig d80">80% bonificado</div>
+            </div>
+          </div>
+          <div class="com-arr"><i class="fa-solid fa-chevron-right"></i></div>
+        </div>
+      </div>
+      <div class="screen-indicator">
+        <div class="ind-dot" onclick="goTo(1)"></div>
+        <div class="ind-dot active" onclick="goTo(2)"></div>
+        <div class="ind-dot" onclick="goTo(3)"></div>
+        <div class="ind-dot" onclick="goTo(4)"></div>
+        <div class="ind-dot" onclick="goTo(5)"></div>
+      </div>
+    </div>
+
+    <!-- ======= SCREEN 3: RIDE DETAIL ======= -->
+    <div class="screen screen-detail" id="s3">
+      <div class="status-bar">
+        <span>9:43</span>
+        <div class="status-right">
+          <i class="fa-solid fa-signal" style="font-size:0.6rem"></i>
+          <i class="fa-solid fa-wifi" style="font-size:0.6rem"></i>
+          <i class="fa-solid fa-battery-full" style="font-size:0.6rem;color:#10B981"></i>
+        </div>
+      </div>
+      <div class="detail-header">
+        <button class="back-btn" onclick="goTo(2)"><i class="fa-solid fa-arrow-left"></i></button>
+        <div class="detail-title-wrap">
+          <div class="detail-title">Restaurante La Orilla</div>
+          <div class="detail-subtitle">Costanera Este 870 · 80% bonificado</div>
+        </div>
+        <div style="width:36px;height:36px;background:rgba(6,182,212,0.12);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1rem">
+          <i class="fa-solid fa-utensils" style="color:#06B6D4"></i>
+        </div>
+      </div>
+      <div class="route-vis">
+        <div class="route-grid"></div>
+        <div class="route-path" style="left:56px;right:56px">
+          <div class="route-path-line"></div>
+          <div class="route-dot from"></div>
+          <div class="route-dot to"></div>
+        </div>
+        <div class="car-on-route"><i class="fa-solid fa-taxi" style="color:#F59E0B"></i></div>
+        <div class="route-label from-lbl">Tu ubicación<span>Corrientes y San Martín</span></div>
+        <div class="route-label to-lbl">Destino<span>Costanera Este 870</span></div>
+      </div>
+      <div class="detail-body">
+        <div class="stats-row">
+          <div class="stat-box">
+            <div class="stat-val">2.3 km</div>
+            <div class="stat-lbl">Distancia</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-val">8 min</div>
+            <div class="stat-lbl">Tiempo estimado</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-val"><i class="fa-solid fa-star" style="color:#F59E0B;font-size:0.8rem"></i> 4.9</div>
+            <div class="stat-lbl">Rating conductores</div>
+          </div>
+        </div>
+
+        <div class="price-card">
+          <div class="price-card-title">Detalle del viaje</div>
+          <div class="price-row">
+            <span class="pl">Costo estimado del viaje</span>
+            <span class="pv">$1.500</span>
+          </div>
+          <div class="price-row disc">
+            <span class="pl"><i class="fa-solid fa-store" style="font-size:0.75rem;margin-right:4px"></i> La Orilla bonifica (80%)</span>
+            <span class="pv">- $1.200</span>
+          </div>
+          <div class="price-row total">
+            <span class="pl">Tu pago</span>
+            <span class="pv">$300</span>
+          </div>
+        </div>
+
+        <div class="commerce-pays-note">
+          <i class="fa-solid fa-circle-check"></i>
+          <span>La Orilla cubre el 80% del viaje para que llegues a su local. El cobro al comercio se procesa automáticamente al completar el viaje.</span>
+        </div>
+
+        <button class="btn-confirm" onclick="goTo(4)">
+          <i class="fa-solid fa-taxi"></i> Confirmar viaje — pago $300
+        </button>
+      </div>
+      <div class="screen-indicator">
+        <div class="ind-dot" onclick="goTo(1)"></div>
+        <div class="ind-dot" onclick="goTo(2)"></div>
+        <div class="ind-dot active" onclick="goTo(3)"></div>
+        <div class="ind-dot" onclick="goTo(4)"></div>
+        <div class="ind-dot" onclick="goTo(5)"></div>
+      </div>
+    </div>
+
+    <!-- ======= SCREEN 4: CONFIRMED ======= -->
+    <div class="screen screen-conf" id="s4">
+      <div class="status-bar" style="background:linear-gradient(135deg,#064E3B,#065F46)">
+        <span>9:43</span>
+        <div class="status-right">
+          <i class="fa-solid fa-signal" style="font-size:0.6rem"></i>
+          <i class="fa-solid fa-wifi" style="font-size:0.6rem"></i>
+          <i class="fa-solid fa-battery-full" style="font-size:0.6rem;color:#10B981"></i>
+        </div>
+      </div>
+      <div class="conf-top">
+        <div class="conf-icon"><i class="fa-solid fa-check"></i></div>
+        <div class="conf-title">¡Viaje confirmado!</div>
+        <div class="conf-sub">Tu conductor está en camino</div>
+      </div>
+      <div class="conf-body">
+        <div class="driver-card">
+          <div class="driver-avatar"><i class="fa-solid fa-user"></i></div>
+          <div class="driver-info">
+            <div class="driver-name">Roberto C.</div>
+            <div class="driver-car">VW Gol · DKV 782</div>
+            <div class="driver-stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i> 4.9 · 847 viajes</div>
+          </div>
+          <div class="eta-box">
+            <div class="eta-num">4</div>
+            <div class="eta-lbl">min</div>
+          </div>
+        </div>
+
+        <div class="savings-card">
+          <div class="savings-icon"><i class="fa-solid fa-piggy-bank"></i></div>
+          <div class="savings-info">
+            <div class="savings-amount">$1.200 ahorrados</div>
+            <div class="savings-label">La Orilla cubrió el 80% de tu viaje</div>
+          </div>
+        </div>
+
+        <div class="tracking-card">
+          <div class="tdot"></div>
+          <div class="tracking-info">
+            <div class="tracking-text">Roberto está en camino hacia vos</div>
+            <div class="tracking-sub">Recibirás una notificación cuando llegue</div>
+          </div>
+        </div>
+
+        <div class="route-summary">
+          <div class="route-sum-row">
+            <div class="route-sum-icon"><i class="fa-solid fa-circle-dot" style="color:#F59E0B;font-size:0.7rem"></i></div>
+            <span style="font-size:0.78rem;color:#94A3B8">Corrientes y San Martín</span>
+          </div>
+          <div style="width:1px;height:14px;background:#334155;margin-left:9px"></div>
+          <div class="route-sum-row">
+            <div class="route-sum-icon"><i class="fa-solid fa-location-dot" style="color:#10B981"></i></div>
+            <span style="font-size:0.78rem;color:#94A3B8">Restaurante La Orilla — Costanera Este 870</span>
+          </div>
+        </div>
+
+        <div onclick="goTo(5)" style="background:#1E293B;border:1px solid #334155;border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:10px;cursor:pointer">
+          <div style="width:36px;height:36px;background:rgba(245,158,11,0.12);border-radius:10px;display:flex;align-items:center;justify-content:center">
+            <i class="fa-solid fa-chart-bar" style="color:#F59E0B;font-size:0.9rem"></i>
+          </div>
+          <div style="flex:1">
+            <div style="font-size:0.82rem;font-weight:800;color:#F9FAFB">Ver panel del comercio</div>
+            <div style="font-size:0.68rem;color:#64748B;margin-top:1px">Analytics de La Orilla este mes</div>
+          </div>
+          <i class="fa-solid fa-chevron-right" style="color:#475569;font-size:0.8rem"></i>
+        </div>
+      </div>
+      <div class="screen-indicator">
+        <div class="ind-dot" onclick="goTo(1)"></div>
+        <div class="ind-dot" onclick="goTo(2)"></div>
+        <div class="ind-dot" onclick="goTo(3)"></div>
+        <div class="ind-dot active" onclick="goTo(4)"></div>
+        <div class="ind-dot" onclick="goTo(5)"></div>
+      </div>
+    </div>
+
+    <!-- ======= SCREEN 5: COMMERCE DASHBOARD ======= -->
+    <div class="screen screen-dash" id="s5">
+      <div class="status-bar">
+        <span>9:44</span>
+        <div class="status-right">
+          <i class="fa-solid fa-signal" style="font-size:0.6rem"></i>
+          <i class="fa-solid fa-wifi" style="font-size:0.6rem"></i>
+          <i class="fa-solid fa-battery-full" style="font-size:0.6rem;color:#10B981"></i>
+        </div>
+      </div>
+      <div class="dash-header">
+        <div class="dash-header-top">
+          <div class="dash-brand"><i class="fa-solid fa-utensils" style="color:#06B6D4;font-size:0.9rem"></i></div>
+          <div>
+            <div class="dash-title">Restaurante La Orilla</div>
+            <div class="dash-subtitle">Panel de bonificaciones</div>
+          </div>
+        </div>
+        <div class="period-tabs">
+          <button class="ptab">Hoy</button>
+          <button class="ptab on">Este mes</button>
+          <button class="ptab">Historial</button>
+        </div>
+      </div>
+      <div class="dash-body">
+        <div class="metric-grid">
+          <div class="metric-box highlight">
+            <div class="metric-val">48</div>
+            <div class="metric-lbl">Clientes nuevos este mes</div>
+            <div class="metric-trend"><i class="fa-solid fa-arrow-trend-up"></i> +23% vs mes anterior</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-val green">$28.400</div>
+            <div class="metric-lbl">Inversión en bonificaciones</div>
+            <div class="metric-trend" style="color:#64748B">Promedio $591 por cliente</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-val blue">$172.000</div>
+            <div class="metric-lbl">Venta generada estimada</div>
+            <div class="metric-trend"><i class="fa-solid fa-arrow-trend-up"></i> Ticket prom. $3.583</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-val" style="color:#A78BFA">6.1x</div>
+            <div class="metric-lbl">ROI en bonificaciones</div>
+            <div class="metric-trend"><i class="fa-solid fa-arrow-trend-up"></i> Meta: 4x</div>
+          </div>
+        </div>
+
+        <div class="roi-card">
+          <div class="roi-title">Resumen financiero del mes</div>
+          <div class="roi-row">
+            <span class="rl">Viajes completados</span>
+            <span class="rv">48</span>
+          </div>
+          <div class="roi-row">
+            <span class="rl">Costo promedio por viaje</span>
+            <span class="rv">$591</span>
+          </div>
+          <div class="roi-row">
+            <span class="rl">Total invertido en bonificaciones</span>
+            <span class="rv">$28.400</span>
+          </div>
+          <div class="roi-row">
+            <span class="rl">Venta generada estimada</span>
+            <span class="rv green">$172.000</span>
+          </div>
+          <div class="roi-row">
+            <span class="rl">ROI neto</span>
+            <span class="rv green">+$143.600</span>
+          </div>
+        </div>
+
+        <div class="chart-bar-section">
+          <div class="chart-title">Viajes por semana</div>
+          <div class="chart-bars">
+            <div class="bar-wrap"><div class="bar" style="height:32px"></div><div class="bar-label">S1</div></div>
+            <div class="bar-wrap"><div class="bar" style="height:44px"></div><div class="bar-label">S2</div></div>
+            <div class="bar-wrap"><div class="bar" style="height:28px"></div><div class="bar-label">S3</div></div>
+            <div class="bar-wrap"><div class="bar" style="height:52px"></div><div class="bar-label">S4</div></div>
+            <div class="bar-wrap"><div class="bar" style="height:38px;opacity:0.4"></div><div class="bar-label" style="color:#475569">S5</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="screen-indicator">
+        <div class="ind-dot" onclick="goTo(1)"></div>
+        <div class="ind-dot" onclick="goTo(2)"></div>
+        <div class="ind-dot" onclick="goTo(3)"></div>
+        <div class="ind-dot" onclick="goTo(4)"></div>
+        <div class="ind-dot active" onclick="goTo(5)"></div>
+      </div>
+    </div>
+
+  </div><!-- /phone -->
+</div><!-- /phone-outer -->
+
+<div class="outer-controls">
+  <div class="nav-row">
+    <button class="nav-btn" onclick="prevScreen()"><i class="fa-solid fa-arrow-left"></i> Anterior</button>
+    <button class="nav-btn primary" onclick="nextScreen()">Siguiente <i class="fa-solid fa-arrow-right"></i></button>
+  </div>
+  <div class="screen-label-box" id="screenLabel">
+    <b>Pantalla 1 de 5</b> — Inicio: mapa con comercios activos y sus bonificaciones
+  </div>
+  <div class="restart-row" onclick="goTo(1)">
+    <i class="fa-solid fa-rotate-left"></i> Reiniciar demo
+  </div>
+</div>
+
+<script>
+let current = 1;
+const total = 5;
+const labels = [
+  'Inicio: mapa con comercios activos y sus bonificaciones visibles en el mapa',
+  'Lista de comercios: filtros por nivel de bonificación y distancia',
+  'Detalle del viaje: ruta + desglose de quién paga qué (comercio vs usuario)',
+  'Viaje confirmado: conductor asignado y ahorro aplicado en tiempo real',
+  'Panel del comercio: analytics de clientes traídos y ROI de las bonificaciones'
+];
+
+function goTo(n, back=false){
+  const prev = document.getElementById('s'+current);
+  const next = document.getElementById('s'+n);
+  if(prev) prev.classList.remove('active');
+  if(next){
+    if(back) next.classList.add('slide-back'); else next.classList.remove('slide-back');
+    next.classList.add('active');
+    setTimeout(()=>next.classList.remove('slide-back'),400);
+  }
+  current = n;
+  document.getElementById('screenLabel').innerHTML =
+    '<b>Pantalla '+n+' de '+total+'</b> — '+labels[n-1];
+}
+
+function nextScreen(){
+  if(current < total) goTo(current+1,false);
+  else goTo(1,false);
+}
+function prevScreen(){
+  if(current > 1) goTo(current-1,true);
+  else goTo(total,true);
+}
+
+// Filter tabs toggle
+document.querySelectorAll('.ftab').forEach(t=>{
+  t.addEventListener('click',function(){
+    document.querySelectorAll('.ftab').forEach(x=>x.classList.remove('on'));
+    this.classList.add('on');
+  });
+});
+document.querySelectorAll('.ptab').forEach(t=>{
+  t.addEventListener('click',function(){
+    document.querySelectorAll('.ptab').forEach(x=>x.classList.remove('on'));
+    this.classList.add('on');
+  });
+});
+</script>
+</body>
+</html>
