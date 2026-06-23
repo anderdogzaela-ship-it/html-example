@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agente IA Acabamentos</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Nunito', sans-serif; background: #E8DDD1; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 24px 16px; }
+
+    .phone-shell {
+      width: 100%;
+      max-width: 390px;
+      background: #fff;
+      border-radius: 36px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,.25), 0 0 0 1px rgba(0,0,0,.08);
+      min-height: 780px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Status bar */
+    .status-bar {
+      background: #1A1A1A;
+      color: white;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 10px 24px 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .status-icons { display: flex; gap: 5px; align-items: center; font-size: 10px; }
+
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, #8B5E3C 0%, #C4752B 60%, #D4893C 100%);
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: white;
+    }
+    .back-btn { font-size: 20px; opacity: .8; cursor: pointer; }
+    .agent-avatar {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: rgba(255,255,255,.2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; flex-shrink: 0;
+    }
+    .agent-info h2 { font-size: 15px; font-weight: 800; }
+    .agent-info p { font-size: 11px; opacity: .75; }
+    .online-dot { width: 9px; height: 9px; background: #4CAF50; border-radius: 50%; margin-left: auto; box-shadow: 0 0 0 2px rgba(255,255,255,.4); }
+
+    /* Chat */
+    .chat {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px 12px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: #ECE5DD url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23C4A882' fill-opacity='0.07'%3E%3Ccircle cx='10' cy='10' r='3'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+
+    /* Messages */
+    .msg { max-width: 82%; display: flex; flex-direction: column; gap: 2px; }
+    .msg.bot { align-self: flex-start; }
+    .msg.user { align-self: flex-end; }
+    .bubble {
+      padding: 9px 13px;
+      border-radius: 12px;
+      font-size: 13.5px;
+      line-height: 1.55;
+      position: relative;
+    }
+    .bot .bubble {
+      background: #ffffff;
+      border-radius: 2px 12px 12px 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.1);
+    }
+    .user .bubble {
+      background: #DCF8C6;
+      border-radius: 12px 2px 12px 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.1);
+    }
+    .msg-time { font-size: 10px; color: #aaa; text-align: right; padding: 0 4px; }
+
+    /* Date chip */
+    .date-chip {
+      text-align: center;
+      font-size: 11px;
+      color: #999;
+      background: rgba(255,255,255,.7);
+      border-radius: 10px;
+      padding: 3px 10px;
+      align-self: center;
+      margin: 4px 0;
+    }
+
+    /* Options */
+    .options { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 8px; }
+    .opt-btn {
+      background: white;
+      border: 2px solid #C4752B;
+      border-radius: 20px;
+      padding: 7px 14px;
+      font-size: 12.5px;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      color: #C4752B;
+      cursor: pointer;
+      transition: all .18s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .opt-btn:hover { background: #C4752B; color: white; transform: translateY(-1px); }
+    .opt-btn.sel { background: #C4752B; color: white; pointer-events: none; }
+    .opt-btn:disabled { opacity: .5; pointer-events: none; }
+
+    /* Color palette */
+    .palette { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 10px; padding-bottom: 18px; }
+    .swatch-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .swatch {
+      width: 40px; height: 40px; border-radius: 50%; cursor: pointer;
+      border: 3px solid transparent; transition: all .18s;
+    }
+    .swatch:hover { transform: scale(1.15); box-shadow: 0 3px 8px rgba(0,0,0,.2); }
+    .swatch.sel { border-color: #2C2C2C; transform: scale(1.15); box-shadow: 0 3px 8px rgba(0,0,0,.25); }
+    .swatch-lbl { font-size: 9.5px; color: #777; text-align: center; font-weight: 600; }
+
+    /* Room SVG container */
+    .room-card {
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-top: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.1);
+    }
+    .room-card svg { width: 100%; display: block; }
+    .room-caption {
+      font-size: 11px; color: #999; text-align: center;
+      padding: 6px 0 8px; font-weight: 600; letter-spacing: .3px;
+    }
+
+    /* Quote card */
+    .quote-card {
+      background: white; border-radius: 12px;
+      padding: 14px; margin-top: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.1);
+    }
+    .q-title {
+      font-size: 12.5px; font-weight: 800; color: #C4752B;
+      margin-bottom: 10px; display: flex; align-items: center; gap: 7px;
+      text-transform: uppercase; letter-spacing: .5px;
+    }
+    .q-row {
+      display: flex; justify-content: space-between;
+      font-size: 12.5px; padding: 5px 0;
+      border-bottom: 1px solid #F0EBE3;
+      color: #444;
+    }
+    .q-row.last { border: none; }
+    .q-total {
+      display: flex; justify-content: space-between;
+      font-size: 15px; font-weight: 800; color: #2C2C2C;
+      margin-top: 10px; padding-top: 10px;
+      border-top: 2px solid #C4752B;
+    }
+
+    /* WA button */
+    .wa-btn {
+      background: #25D366; color: white; border: none;
+      border-radius: 25px; padding: 11px 20px;
+      font-size: 13.5px; font-family: 'Nunito', sans-serif;
+      font-weight: 700; cursor: pointer;
+      display: flex; align-items: center; gap: 8px;
+      margin-top: 10px; width: 100%; justify-content: center;
+      transition: all .18s;
+    }
+    .wa-btn:hover { background: #128C7E; transform: translateY(-1px); }
+
+    /* WA Preview */
+    .wa-wrap {
+      background: #E5DDD5; border-radius: 12px;
+      padding: 12px; margin-top: 8px;
+    }
+    .wa-bubble {
+      background: #DCF8C6;
+      border-radius: 3px 12px 12px 12px;
+      padding: 10px 13px; font-size: 13px;
+      line-height: 1.6; box-shadow: 0 1px 2px rgba(0,0,0,.1);
+    }
+    .wa-status {
+      text-align: right; font-size: 11px; color: #8E8E8E;
+      margin-top: 5px; display: flex; align-items: center;
+      justify-content: flex-end; gap: 4px;
+    }
+
+    /* Measure input */
+    .m-input {
+      background: #FAFAFA; border: 2px solid #E0D8CE;
+      border-radius: 10px; padding: 9px 13px;
+      font-size: 14px; font-family: 'Nunito', sans-serif;
+      width: 100%; margin-top: 9px; outline: none;
+      transition: border .18s;
+    }
+    .m-input:focus { border-color: #C4752B; }
+    .m-submit {
+      background: linear-gradient(135deg, #C4752B, #8B5E3C);
+      color: white; border: none; border-radius: 10px;
+      padding: 10px 18px; font-size: 13.5px;
+      font-family: 'Nunito', sans-serif; font-weight: 700;
+      cursor: pointer; margin-top: 8px; width: 100%;
+      transition: all .18s;
+    }
+    .m-submit:hover { opacity: .9; transform: translateY(-1px); }
+
+    /* Loading dots */
+    .loading-bubble {
+      background: white; border-radius: 2px 12px 12px 12px;
+      padding: 12px 16px; box-shadow: 0 1px 3px rgba(0,0,0,.1);
+      display: inline-flex; align-items: center; gap: 5px;
+    }
+    .dot {
+      width: 7px; height: 7px; background: #C4752B;
+      border-radius: 50%; animation: pulse .8s infinite;
+    }
+    .dot:nth-child(2) { animation-delay: .16s; }
+    .dot:nth-child(3) { animation-delay: .32s; }
+    @keyframes pulse {
+      0%, 80%, 100% { transform: scale(1); opacity: .5; }
+      40% { transform: scale(1.3); opacity: 1; }
+    }
+
+    /* Fade in */
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .fade { animation: slideIn .35s ease forwards; }
+
+    /* Restart bar */
+    .restart-bar {
+      background: #FAF6F0; padding: 10px 18px;
+      border-top: 1px solid #E8DDD1; text-align: center;
+    }
+    .restart-btn {
+      background: none; border: none; color: #C4752B;
+      font-family: 'Nunito', sans-serif; font-size: 13px;
+      font-weight: 700; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .restart-btn:hover { opacity: .7; }
+
+    /* Generating bar */
+    .gen-bar {
+      height: 3px; background: #F0EBE3; border-radius: 2px; margin-top: 8px; overflow: hidden;
+    }
+    .gen-progress {
+      height: 100%; background: linear-gradient(90deg, #C4752B, #D4893C);
+      border-radius: 2px; animation: progress 2.5s ease forwards;
+    }
+    @keyframes progress { from { width: 0%; } to { width: 100%; } }
+  </style>
+</head>
+<body>
+<div class="phone-shell">
+
+  <!-- Status bar -->
+  <div class="status-bar">
+    <span>9:41</span>
+    <div class="status-icons">
+      <i class="fa-solid fa-signal"></i>
+      <i class="fa-solid fa-wifi"></i>
+      <i class="fa-solid fa-battery-full"></i>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <div class="header">
+    <span class="back-btn"><i class="fa-solid fa-chevron-left"></i></span>
+    <div class="agent-avatar"><i class="fa-solid fa-palette"></i></div>
+    <div class="agent-info">
+      <h2>Assistente Acabamentos IA</h2>
+      <p>Simulacao visual + orcamento automatico</p>
+    </div>
+    <div class="online-dot"></div>
+  </div>
+
+  <!-- Chat -->
+  <div class="chat" id="chat">
+    <div class="date-chip">Hoje</div>
+
+    <div class="msg bot fade" id="msg0">
+      <div class="bubble">
+        Ola. Sou seu assistente de acabamentos com IA. Vou simular o resultado e gerar o orcamento em menos de 2 minutos. <strong>Qual ambiente vamos trabalhar?</strong>
+        <div class="options" id="room-opts">
+          <button class="opt-btn" onclick="pick('room','Sala de Estar',this,'room-opts')"><i class="fa-solid fa-couch"></i> Sala</button>
+          <button class="opt-btn" onclick="pick('room','Quarto',this,'room-opts')"><i class="fa-solid fa-bed"></i> Quarto</button>
+          <button class="opt-btn" onclick="pick('room','Cozinha',this,'room-opts')"><i class="fa-solid fa-kitchen-set"></i> Cozinha</button>
+          <button class="opt-btn" onclick="pick('room','Escritorio',this,'room-opts')"><i class="fa-solid fa-briefcase"></i> Escritorio</button>
+        </div>
+      </div>
+      <div class="msg-time">09:41</div>
+    </div>
+  </div>
+
+  <!-- Restart -->
+  <div class="restart-bar">
+    <button class="restart-btn" onclick="restart()">
+      <i class="fa-solid fa-rotate-left"></i> Recomecar demonstracao
+    </button>
+  </div>
+</div>
+
+<script>
+const chat = document.getElementById('chat');
+const state = { room: '', product: '', color: '', colorName: '', area: 0 };
+
+const colors = [
+  { hex: '#F5E6D0', name: 'Areia' },
+  { hex: '#C4752B', name: 'Terracota' },
+  { hex: '#8B5E3C', name: 'Mogno' },
+  { hex: '#6B9E6B', name: 'Sage' },
+  { hex: '#2C5F7A', name: 'Indigo' },
+  { hex: '#EED9B7', name: 'Palha' },
+  { hex: '#8E7BAE', name: 'Lavanda' },
+  { hex: '#D8D8D8', name: 'Gelo' },
+];
+
+const productPrices = {
+  'Tinta Premium Acetinada': { mat: 42.9, lab: 16.5 },
+  'Revestimento Ceramico': { mat: 89.5, lab: 35.0 },
+  'Textura Decorativa': { mat: 67.0, lab: 28.5 },
+};
+
+function t() {
+  const now = new Date();
+  return `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+}
+
+function appendMsg(html, type, delay) {
+  return new Promise(res => setTimeout(() => {
+    const d = document.createElement('div');
+    d.className = `msg ${type} fade`;
+    d.innerHTML = `<div class="bubble">${html}</div><div class="msg-time">${t()}</div>`;
+    chat.appendChild(d);
+    chat.scrollTop = 9999;
+    res(d);
+  }, delay || 0));
+}
+
+function showLoading() {
+  const d = document.createElement('div');
+  d.className = 'msg bot fade'; d.id = 'ld';
+  d.innerHTML = `<div class="loading-bubble"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>`;
+  chat.appendChild(d); chat.scrollTop = 9999;
+  return d;
+}
+function rmLoad() { const e = document.getElementById('ld'); if (e) e.remove(); }
+
+function lockOptions(id) {
+  document.getElementById(id).querySelectorAll('.opt-btn').forEach(b => { b.disabled = true; });
+}
+
+function pick(key, val, btn, optId) {
+  state[key] = val;
+  document.getElementById(optId).querySelectorAll('.opt-btn').forEach(b => b.classList.remove('sel'));
+  btn.classList.add('sel');
+  lockOptions(optId);
+  appendMsg(val, 'user', 0).then(() => {
+    const ld = showLoading();
+    setTimeout(() => { rmLoad(); nextStep(key); }, 950);
+  });
+}
+
+function nextStep(key) {
+  if (key === 'room') showProductStep();
+  else if (key === 'product') showColorStep();
+}
+
+function showProductStep() {
+  appendMsg(`
+    Perfeito. <strong>${state.room}</strong> selecionado. Que tipo de acabamento vamos simular?
+    <div class="options" id="prod-opts">
+      <button class="opt-btn" onclick="pick('product','Tinta Premium Acetinada',this,'prod-opts')"><i class="fa-solid fa-paint-roller"></i> Tinta</button>
+      <button class="opt-btn" onclick="pick('product','Revestimento Ceramico',this,'prod-opts')"><i class="fa-solid fa-border-all"></i> Ceramica</button>
+      <button class="opt-btn" onclick="pick('product','Textura Decorativa',this,'prod-opts')"><i class="fa-solid fa-layer-group"></i> Textura</button>
+    </div>`, 'bot', 0);
+}
+
+function showColorStep() {
+  const swatches = colors.map(c =>
+    `<div class="swatch-wrap">
+      <div class="swatch" style="background:${c.hex}" onclick="pickColor('${c.hex}','${c.name}',this)"></div>
+      <span class="swatch-lbl">${c.name}</span>
+    </div>`).join('');
+  appendMsg(`Escolha a cor ou tonalidade:<div class="palette">${swatches}</div>`, 'bot', 0);
+}
+
+function pickColor(hex, name, el) {
+  document.querySelectorAll('.swatch').forEach(s => s.classList.remove('sel'));
+  el.classList.add('sel');
+  state.color = hex; state.colorName = name;
+  appendMsg(`<span style="display:inline-flex;align-items:center;gap:7px;"><span style="width:16px;height:16px;border-radius:50%;background:${hex};display:inline-block;border:1.5px solid #ccc;"></span> ${name}</span>`, 'user', 0);
+  const ld = showLoading();
+  setTimeout(() => { rmLoad(); showMeasure(); }, 750);
+}
+
+function showMeasure() {
+  appendMsg(`Qual a area total a cobrir? <span style="color:#aaa;font-size:11.5px;">(em m2)</span>
+    <input type="number" class="m-input" id="area-in" placeholder="Ex: 18" min="1" max="999">
+    <button class="m-submit" onclick="submitArea()"><i class="fa-solid fa-calculator"></i> Gerar simulacao e orcamento</button>`, 'bot', 0);
+}
+
+function submitArea() {
+  const inp = document.getElementById('area-in');
+  const val = parseFloat(inp.value);
+  if (!val || val < 1) { inp.style.borderColor = '#E53935'; return; }
+  state.area = val;
+  inp.disabled = true;
+  document.querySelector('.m-submit').disabled = true;
+  document.querySelector('.m-submit').style.opacity = '.5';
+  appendMsg(`${val} m2`, 'user', 0).then(() => {
+    showGenerating();
+  });
+}
+
+function showGenerating() {
+  const steps = [
+    '<i class="fa-solid fa-microchip" style="color:#C4752B"></i> Analisando ambiente e produto...',
+    '<i class="fa-solid fa-wand-magic-sparkles" style="color:#C4752B"></i> Aplicando IA de visualizacao...',
+    '<i class="fa-solid fa-file-invoice-dollar" style="color:#C4752B"></i> Calculando materiais e custos...',
+  ];
+  let i = 0;
+  const d = document.createElement('div');
+  d.className = 'msg bot fade'; d.id = 'gen';
+  d.innerHTML = `<div class="bubble" id="gen-txt">${steps[0]}<div class="gen-bar"><div class="gen-progress"></div></div></div>`;
+  chat.appendChild(d); chat.scrollTop = 9999;
+  const iv = setInterval(() => {
+    i++;
+    if (i < steps.length) {
+      document.getElementById('gen-txt').innerHTML = steps[i] + `<div class="gen-bar"><div class="gen-progress"></div></div>`;
+    } else {
+      clearInterval(iv);
+      setTimeout(() => { document.getElementById('gen').remove(); showResult(); }, 400);
+    }
+  }, 900);
+}
+
+function shade(hex, pct) {
+  let r = parseInt(hex.slice(1,3),16);
+  let g = parseInt(hex.slice(3,5),16);
+  let b = parseInt(hex.slice(5,7),16);
+  const f = 1 + pct/100;
+  r = Math.max(0,Math.min(255,Math.round(r*f)));
+  g = Math.max(0,Math.min(255,Math.round(g*f)));
+  b = Math.max(0,Math.min(255,Math.round(b*f)));
+  return '#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');
+}
+
+function buildRoom(wallHex) {
+  const dark = shade(wallHex, -28);
+  const mid  = shade(wallHex, -14);
+  const flr  = '#B8956A';
+  const ceil = '#F5EFE6';
+  const win  = '#A8CCE0';
+  return `<svg viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg">
+    <!-- ceiling -->
+    <polygon points="0,0 300,0 245,35 55,35" fill="${ceil}"/>
+    <!-- back wall -->
+    <polygon points="55,35 245,35 245,165 55,165" fill="${wallHex}"/>
+    <!-- left wall -->
+    <polygon points="0,0 55,35 55,165 0,200" fill="${dark}"/>
+    <!-- right wall -->
+    <polygon points="300,0 245,35 245,165 300,200" fill="${mid}"/>
+    <!-- floor -->
+    <polygon points="0,200 300,200 245,165 55,165" fill="${flr}"/>
+    <!-- skirting -->
+    <line x1="55" y1="160" x2="245" y2="160" stroke="rgba(0,0,0,.12)" stroke-width="3"/>
+    <!-- window -->
+    <rect x="120" y="55" width="60" height="54" rx="3" fill="${win}" opacity=".88"/>
+    <rect x="120" y="55" width="60" height="54" rx="3" fill="none" stroke="#8B7355" stroke-width="2.5"/>
+    <line x1="150" y1="55" x2="150" y2="109" stroke="#8B7355" stroke-width="1.8"/>
+    <line x1="120" y1="82" x2="180" y2="82" stroke="#8B7355" stroke-width="1.8"/>
+    <rect x="123" y="57" width="25" height="23" fill="rgba(255,255,255,.18)"/>
+    <!-- light reflection -->
+    <polygon points="120,55 180,55 170,65 130,65" fill="rgba(255,255,255,.08)"/>
+    <!-- door -->
+    <rect x="82" y="100" width="32" height="65" rx="2" fill="${shade(wallHex,-40)}" stroke="#7A6248" stroke-width="2"/>
+    <circle cx="110" cy="133" r="2.5" fill="#C4A230"/>
+    <!-- floor shadow -->
+    <polygon points="55,165 245,165 255,172 45,172" fill="rgba(0,0,0,.07)"/>
+  </svg>`;
+}
+
+function showResult() {
+  const { area, color, colorName, product, room } = state;
+  const prices = productPrices[product] || { mat: 45.9, lab: 18.5 };
+  const matT  = (area * prices.mat).toFixed(2).replace('.', ',');
+  const labT  = (area * prices.lab).toFixed(2).replace('.', ',');
+  const total = (area * (prices.mat + prices.lab)).toFixed(2).replace('.', ',');
+  const totalNum = (area * (prices.mat + prices.lab)).toFixed(2);
+
+  const roomEl = document.createElement('div');
+  roomEl.className = 'msg bot fade';
+  roomEl.innerHTML = `
+    <div class="bubble">
+      <strong><i class="fa-solid fa-wand-magic-sparkles" style="color:#C4752B"></i> Simulacao gerada.</strong> Veja como ficara o seu ${room.toLowerCase()}:
+      <div class="room-card">
+        ${buildRoom(color)}
+        <div class="room-caption"><i class="fa-solid fa-circle" style="color:${color};font-size:9px;"></i> Cor: ${colorName} &nbsp;|&nbsp; ${product}</div>
+      </div>
+    </div>
+    <div class="msg-time">${t()}</div>`;
+  chat.appendChild(roomEl); chat.scrollTop = 9999;
+
+  setTimeout(() => {
+    const quoteEl = document.createElement('div');
+    quoteEl.className = 'msg bot fade';
+    quoteEl.innerHTML = `
+      <div class="bubble">
+        <div class="quote-card">
+          <div class="q-title"><i class="fa-solid fa-file-invoice-dollar"></i> Orcamento Tecnico</div>
+          <div class="q-row"><span>Ambiente</span><span><strong>${room}</strong></span></div>
+          <div class="q-row"><span>Area total</span><span><strong>${area} m2</strong></span></div>
+          <div class="q-row"><span>${product}</span><span>R$ ${prices.mat.toFixed(2).replace('.',',')}/m2</span></div>
+          <div class="q-row"><span>Material</span><span>R$ ${matT}</span></div>
+          <div class="q-row last"><span>Aplicacao profissional</span><span>R$ ${labT}</span></div>
+          <div class="q-total"><span>Total estimado</span><span>R$ ${total}</span></div>
+        </div>
+        <button class="wa-btn" onclick="sendWA('${room}','${colorName}','${product}',${area},'${total}')">
+          <i class="fa-brands fa-whatsapp"></i> Enviar para o cliente via WhatsApp
+        </button>
+      </div>
+      <div class="msg-time">${t()}</div>`;
+    chat.appendChild(quoteEl); chat.scrollTop = 9999;
+  }, 700);
+}
+
+function sendWA(room, color, product, area, total) {
+  document.querySelector('.wa-btn').disabled = true;
+  document.querySelector('.wa-btn').innerHTML = '<i class="fa-solid fa-check"></i> Enviado';
+  document.querySelector('.wa-btn').style.background = '#128C7E';
+
+  const waEl = document.createElement('div');
+  waEl.className = 'msg bot fade';
+  waEl.innerHTML = `
+    <div class="bubble">
+      <strong><i class="fa-brands fa-whatsapp" style="color:#25D366"></i> Orcamento enviado ao cliente.</strong>
+      <div class="wa-wrap">
+        <div class="wa-bubble">
+          Ola. Segue o orcamento para o seu ${room.toLowerCase()}.<br><br>
+          <strong>Produto:</strong> ${product}<br>
+          <strong>Cor:</strong> ${color}<br>
+          <strong>Area:</strong> ${area} m2<br>
+          <strong>Total estimado:</strong> R$ ${total}<br><br>
+          A simulacao visual do ambiente foi gerada com IA e esta disponivel para visualizacao. Posso ajustar a cor ou o produto se quiser comparar opcoes.
+        </div>
+        <div class="wa-status">
+          <i class="fa-solid fa-check-double" style="color:#53BDEB;font-size:13px;"></i>
+          Entregue - ${t()}
+        </div>
+      </div>
+      <p style="font-size:11.5px;color:#aaa;margin-top:8px;text-align:center;">
+        <i class="fa-solid fa-bolt" style="color:#C4752B;"></i>
+        Do pedido ao cliente em menos de 90 segundos.
+      </p>
+    </div>
+    <div class="msg-time">${t()}</div>`;
+  chat.appendChild(waEl); chat.scrollTop = 9999;
+}
+
+function restart() {
+  Object.assign(state, { room:'', product:'', color:'', colorName:'', area:0 });
+  chat.innerHTML = `
+    <div class="date-chip">Hoje</div>
+    <div class="msg bot fade" id="msg0">
+      <div class="bubble">
+        Ola. Sou seu assistente de acabamentos com IA. Vou simular o resultado e gerar o orcamento em menos de 2 minutos. <strong>Qual ambiente vamos trabalhar?</strong>
+        <div class="options" id="room-opts">
+          <button class="opt-btn" onclick="pick('room','Sala de Estar',this,'room-opts')"><i class="fa-solid fa-couch"></i> Sala</button>
+          <button class="opt-btn" onclick="pick('room','Quarto',this,'room-opts')"><i class="fa-solid fa-bed"></i> Quarto</button>
+          <button class="opt-btn" onclick="pick('room','Cozinha',this,'room-opts')"><i class="fa-solid fa-kitchen-set"></i> Cozinha</button>
+          <button class="opt-btn" onclick="pick('room','Escritorio',this,'room-opts')"><i class="fa-solid fa-briefcase"></i> Escritorio</button>
+        </div>
+      </div>
+      <div class="msg-time">${t()}</div>
+    </div>`;
+}
+</script>
+</body>
+</html>
