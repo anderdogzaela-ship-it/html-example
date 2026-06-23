@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FechaSorte — Sistema de Fechamentos Lotéricos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #09090f;
+      --surface: #111120;
+      --surface2: #181830;
+      --border: #26264a;
+      --gold: #c9960f;
+      --gold-light: #f5c133;
+      --gold-glow: rgba(201, 150, 15, 0.18);
+      --text: #e8e8f5;
+      --text-muted: #6868a0;
+      --green: #22c55e;
+      --green-glow: rgba(34, 197, 94, 0.18);
+      --red: #ef4444;
+    }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ── */
+    header {
+      background: linear-gradient(90deg, #0c0c20 0%, #141428 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 200;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 20px;
+      font-weight: 900;
+      text-decoration: none;
+      color: var(--text);
+    }
+
+    .logo-icon {
+      width: 34px;
+      height: 34px;
+      background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      color: #09090f;
+    }
+
+    .logo-word { color: var(--gold-light); }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .badge {
+      background: var(--gold-glow);
+      border: 1px solid var(--gold);
+      color: var(--gold-light);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    /* ── LAYOUT ── */
+    .app-layout {
+      display: grid;
+      grid-template-columns: 248px 1fr;
+      min-height: calc(100vh - 58px);
+    }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 20px 14px;
+      position: sticky;
+      top: 58px;
+      height: calc(100vh - 58px);
+      overflow-y: auto;
+    }
+
+    .sidebar-label {
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      padding-left: 6px;
+    }
+
+    .lottery-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      border: 1.5px solid transparent;
+      transition: all 0.18s;
+      margin-bottom: 4px;
+    }
+
+    .lottery-item:hover { background: var(--surface2); border-color: var(--border); }
+
+    .lottery-item.active {
+      background: var(--gold-glow);
+      border-color: var(--gold);
+    }
+
+    .l-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+
+    .l-info { flex: 1; min-width: 0; }
+    .l-name { font-weight: 800; font-size: 13px; }
+    .l-range { font-size: 11px; color: var(--text-muted); }
+
+    .l-check { color: var(--gold); font-size: 13px; opacity: 0; transition: opacity 0.18s; }
+    .lottery-item.active .l-check { opacity: 1; }
+
+    .sidebar-sep { height: 1px; background: var(--border); margin: 16px 0; }
+
+    .saved-empty {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.65;
+      padding-left: 6px;
+    }
+
+    /* ── MAIN ── */
+    .main { padding: 26px 28px; overflow-y: auto; }
+
+    .page-title { font-size: 21px; font-weight: 900; margin-bottom: 3px; }
+    .page-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 22px; }
+
+    /* ── TABS ── */
+    .tabs {
+      display: flex;
+      gap: 3px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      padding: 4px;
+      width: fit-content;
+      margin-bottom: 24px;
+    }
+
+    .tab {
+      padding: 7px 18px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      font-family: 'Nunito', sans-serif;
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: var(--text-muted);
+      transition: all 0.18s;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .tab.active {
+      background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      color: #09090f;
+    }
+
+    /* ── STEP CARD ── */
+    .step-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 14px;
+    }
+
+    .step-hd {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      margin-bottom: 16px;
+    }
+
+    .step-badge {
+      width: 27px;
+      height: 27px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 900;
+      color: #09090f;
+      flex-shrink: 0;
+    }
+
+    .step-title { font-weight: 800; font-size: 14px; }
+    .step-desc { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+
+    /* ── CLOSURE TYPE ── */
+    .closure-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    .closure-opt {
+      background: var(--surface2);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.18s;
+    }
+
+    .closure-opt:hover { border-color: var(--gold); }
+    .closure-opt.active { border-color: var(--gold); background: var(--gold-glow); }
+
+    .closure-opt i { font-size: 22px; color: var(--gold); margin-bottom: 8px; display: block; }
+    .closure-name { font-weight: 800; font-size: 13px; }
+    .closure-desc { font-size: 11px; color: var(--text-muted); margin-top: 3px; line-height: 1.4; }
+
+    /* ── NUMBER GRID ── */
+    .num-grid {
+      display: grid;
+      gap: 5px;
+    }
+
+    .nb {
+      aspect-ratio: 1;
+      border-radius: 7px;
+      border: 1.5px solid var(--border);
+      background: var(--surface2);
+      color: var(--text-muted);
+      font-weight: 800;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.13s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Nunito', sans-serif;
+    }
+
+    .nb:hover { border-color: var(--gold); color: var(--text); }
+
+    .nb.on {
+      background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      border-color: var(--gold-light);
+      color: #09090f;
+      box-shadow: 0 0 10px var(--gold-glow);
+    }
+
+    .nb.fixed-on {
+      background: linear-gradient(135deg, #7c3aed, #a855f7);
+      border-color: #a855f7;
+      color: white;
+    }
+
+    .num-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 12px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .sel-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 13px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .sel-pill span { color: var(--gold); }
+
+    .clear-btn {
+      background: none;
+      border: none;
+      font-family: 'Nunito', sans-serif;
+      font-size: 12px;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .clear-btn:hover { color: var(--red); }
+
+    .num-hint {
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    /* ── GROUPS ── */
+    .groups-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    .group-box {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+    }
+
+    .group-label {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--gold);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .group-nums { display: flex; flex-wrap: wrap; gap: 5px; }
+
+    .g-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      color: #09090f;
+    }
+
+    .g-num.purple {
+      background: linear-gradient(135deg, #7c3aed, #a855f7);
+      color: white;
+    }
+
+    .fixas-row {
+      margin-top: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .fixas-row input { accent-color: var(--gold); width: 15px; height: 15px; cursor: pointer; }
+    .fixas-row label { font-size: 13px; font-weight: 600; cursor: pointer; }
+
+    /* ── GENERATE BUTTON ── */
+    .btn-gen {
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      border: none;
+      border-radius: 12px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 15px;
+      font-weight: 900;
+      color: #09090f;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      transition: all 0.18s;
+      margin-top: 6px;
+    }
+
+    .btn-gen:hover { transform: translateY(-2px); box-shadow: 0 8px 28px var(--gold-glow); }
+    .btn-gen:active { transform: translateY(0); }
+
+    /* ── STATS ── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .stat-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 13px;
+      text-align: center;
+    }
+
+    .stat-val { font-size: 22px; font-weight: 900; color: var(--gold-light); }
+    .stat-lbl { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+    /* ── RESULTS ── */
+    .results-hd {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .res-title { font-size: 17px; font-weight: 800; }
+
+    .res-pill {
+      background: var(--gold-glow);
+      border: 1px solid var(--gold);
+      color: var(--gold-light);
+      padding: 4px 13px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .res-actions { display: flex; gap: 7px; }
+
+    .btn-act {
+      padding: 7px 14px;
+      border-radius: 9px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text);
+      transition: all 0.18s;
+    }
+
+    .btn-act:hover { border-color: var(--gold); color: var(--gold); }
+
+    .tickets-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(195px, 1fr));
+      gap: 10px;
+    }
+
+    .ticket {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      padding: 13px;
+      animation: tIn 0.25s ease both;
+    }
+
+    @keyframes tIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .ticket.winner {
+      border-color: var(--green);
+      background: var(--green-glow);
+      box-shadow: 0 0 18px var(--green-glow);
+    }
+
+    .t-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-bottom: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .t-nums { display: flex; flex-wrap: wrap; gap: 4px; }
+
+    .tn {
+      width: 29px;
+      height: 29px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 800;
+      background: var(--surface2);
+      border: 1.5px solid var(--border);
+      color: var(--text-muted);
+    }
+
+    .tn.hit {
+      background: linear-gradient(135deg, var(--green), #15803d);
+      border-color: var(--green);
+      color: white;
+      box-shadow: 0 0 7px var(--green-glow);
+    }
+
+    .t-hits {
+      margin-top: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--green);
+    }
+
+    /* ── VERIFICADOR ── */
+    .veri-section { display: none; }
+    .veri-section.on { display: block; }
+
+    .r-num-grid { display: flex; flex-wrap: wrap; gap: 5px; }
+
+    .rn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border);
+      background: var(--surface2);
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.13s;
+      font-family: 'Nunito', sans-serif;
+    }
+
+    .rn:hover { border-color: var(--green); color: var(--green); }
+
+    .rn.drawn {
+      background: linear-gradient(135deg, var(--green), #15803d);
+      border-color: var(--green);
+      color: white;
+      box-shadow: 0 0 9px var(--green-glow);
+    }
+
+    .btn-veri {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #16a34a, var(--green));
+      border: none;
+      border-radius: 12px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 14px;
+      font-weight: 900;
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.18s;
+      margin-top: 14px;
+    }
+
+    .btn-veri:hover { transform: translateY(-2px); box-shadow: 0 8px 28px var(--green-glow); }
+
+    /* ── EMPTY STATE ── */
+    .empty { text-align: center; padding: 52px 16px; color: var(--text-muted); }
+    .empty i { font-size: 44px; color: var(--border); margin-bottom: 14px; display: block; }
+    .empty p { font-size: 14px; font-weight: 600; }
+
+    /* ── PRINT ── */
+    @media print {
+      header, .sidebar, .tabs, .step-card, .res-actions, .btn-gen, .btn-veri { display: none !important; }
+      .app-layout { display: block; }
+      .main { padding: 0; }
+      .tickets-grid { grid-template-columns: repeat(4, 1fr); }
+      .ticket { border: 1px solid #aaa; page-break-inside: avoid; }
+      .page-title, .page-sub { display: block !important; }
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 800px) {
+      .app-layout { grid-template-columns: 1fr; }
+      .sidebar {
+        position: static;
+        height: auto;
+        display: flex;
+        gap: 6px;
+        overflow-x: auto;
+        padding: 10px;
+        flex-direction: row;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+      }
+      .lottery-item { flex-shrink: 0; min-width: 120px; }
+      .sidebar-label, .sidebar-sep, .saved-empty { display: none; }
+      .stats-row { grid-template-columns: 1fr 1fr; }
+    }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: var(--surface); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--gold); }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon"><i class="fa-solid fa-clover"></i></div>
+    Fecha<span class="logo-word">Sorte</span>
+  </div>
+  <div class="header-right">
+    <div class="badge"><i class="fa-solid fa-shield-check"></i>&nbsp; Cobertura Verificada</div>
+  </div>
+</header>
+
+<div class="app-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-label">Loteria</div>
+
+    <div class="lottery-item active" onclick="setLottery(this,'megasena')">
+      <div class="l-dot" style="background:#209869;"></div>
+      <div class="l-info">
+        <div class="l-name">Mega-Sena</div>
+        <div class="l-range">1-60 | 6 dezenas</div>
+      </div>
+      <i class="fa-solid fa-check l-check"></i>
+    </div>
+
+    <div class="lottery-item" onclick="setLottery(this,'lotofacil')">
+      <div class="l-dot" style="background:#930089;"></div>
+      <div class="l-info">
+        <div class="l-name">Lotofácil</div>
+        <div class="l-range">1-25 | 15 dezenas</div>
+      </div>
+      <i class="fa-solid fa-check l-check"></i>
+    </div>
+
+    <div class="lottery-item" onclick="setLottery(this,'quina')">
+      <div class="l-dot" style="background:#260085;"></div>
+      <div class="l-info">
+        <div class="l-name">Quina</div>
+        <div class="l-range">1-80 | 5 dezenas</div>
+      </div>
+      <i class="fa-solid fa-check l-check"></i>
+    </div>
+
+    <div class="lottery-item" onclick="setLottery(this,'duplasena')">
+      <div class="l-dot" style="background:#c40000;"></div>
+      <div class="l-info">
+        <div class="l-name">Dupla-Sena</div>
+        <div class="l-range">1-50 | 6 dezenas</div>
+      </div>
+      <i class="fa-solid fa-check l-check"></i>
+    </div>
+
+    <div class="lottery-item" onclick="setLottery(this,'lotomania')">
+      <div class="l-dot" style="background:#f37922;"></div>
+      <div class="l-info">
+        <div class="l-name">Lotomania</div>
+        <div class="l-range">1-100 | 20 dezenas</div>
+      </div>
+      <i class="fa-solid fa-check l-check"></i>
+    </div>
+
+    <div class="lottery-item" onclick="setLottery(this,'timemania')">
+      <div class="l-dot" style="background:#00a650;"></div>
+      <div class="l-info">
+        <div class="l-name">Timemania</div>
+        <div class="l-range">1-80 | 10 dezenas</div>
+      </div>
+      <i class="fa-solid fa-check l-check"></i>
+    </div>
+
+    <div class="lottery-item" onclick="setLottery(this,'diasorte')">
+      <div class="l-dot" style="background:#00b4d8;"></div>
+      <div class="l-info">
+        <div class="l-name">Dia de Sorte</div>
+        <div class="l-range">1-31 | 7 dezenas</div>
+      </div>
+      <i class="fa-solid fa-check l-check"></i>
+    </div>
+
+    <div class="sidebar-sep"></div>
+    <div class="sidebar-label">Fechamentos Salvos</div>
+    <div class="saved-empty">Nenhum fechamento salvo ainda.<br>Gere e salve seus jogos aqui.</div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <div class="page-title" id="pg-title">Mega-Sena</div>
+    <div class="page-sub" id="pg-sub">Números de 1 a 60 &nbsp;|&nbsp; Escolha ao menos 7 dezenas para um fechamento</div>
+
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('fechamentos',this)">
+        <i class="fa-solid fa-grid-2"></i> Fechamentos
+      </button>
+      <button class="tab" onclick="switchTab('verificador',this)">
+        <i class="fa-solid fa-magnifying-glass-chart"></i> Verificador
+      </button>
+    </div>
+
+    <!-- ── FECHAMENTOS ── -->
+    <div id="fechamentos-section">
+
+      <!-- Step 1 -->
+      <div class="step-card">
+        <div class="step-hd">
+          <div class="step-badge">1</div>
+          <div>
+            <div class="step-title">Tipo de Fechamento</div>
+            <div class="step-desc">Escolha a modalidade</div>
+          </div>
+        </div>
+        <div class="closure-grid">
+          <div class="closure-opt active" onclick="setClosureType(this,'comum')">
+            <i class="fa-solid fa-table-cells"></i>
+            <div class="closure-name">Fechamento Comum</div>
+            <div class="closure-desc">Todas as combinações possíveis entre as dezenas selecionadas</div>
+          </div>
+          <div class="closure-opt" onclick="setClosureType(this,'especial')">
+            <i class="fa-solid fa-object-group"></i>
+            <div class="closure-name">Fechamento Especial</div>
+            <div class="closure-desc">Grupos de dezenas com ou sem dezenas fixas</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Numbers -->
+      <div class="step-card" id="step-nums">
+        <div class="step-hd">
+          <div class="step-badge">2</div>
+          <div>
+            <div class="step-title">Selecione as Dezenas</div>
+            <div class="step-desc" id="step-nums-desc">Clique nos números que deseja incluir no fechamento</div>
+          </div>
+        </div>
+        <div class="num-grid" id="num-grid"></div>
+        <div class="num-footer">
+          <div class="sel-pill">
+            <i class="fa-solid fa-check" style="color:var(--gold);font-size:11px;"></i>
+            <span id="sel-count">0</span>&nbsp;selecionadas
+          </div>
+          <button class="clear-btn" onclick="clearNums()"><i class="fa-solid fa-xmark"></i> Limpar</button>
+        </div>
+        <div class="num-hint" id="num-hint">Selecione pelo menos 7 dezenas</div>
+      </div>
+
+      <!-- Step 3: Special groups (hidden) -->
+      <div class="step-card" id="step-groups" style="display:none;">
+        <div class="step-hd">
+          <div class="step-badge">3</div>
+          <div>
+            <div class="step-title">Grupos de Dezenas</div>
+            <div class="step-desc">Dezenas organizadas por grupo para o fechamento especial</div>
+          </div>
+        </div>
+        <div class="groups-grid" id="groups-grid"></div>
+        <div class="fixas-row">
+          <input type="checkbox" id="fixas-toggle">
+          <label for="fixas-toggle">Incluir dezenas fixas (aparecem em todos os tickets)</label>
+        </div>
+        <div id="fixas-area" style="display:none; margin-top:12px; padding:12px; background:var(--surface2); border-radius:10px; border:1px dashed var(--gold);">
+          <div style="font-size:11px;color:var(--gold);font-weight:800;margin-bottom:8px;"><i class="fa-solid fa-thumbtack"></i> Dezenas Fixas</div>
+          <div class="num-grid" id="fixas-grid" style="grid-template-columns:repeat(12,1fr);gap:4px;"></div>
+        </div>
+      </div>
+
+      <!-- Generate -->
+      <button class="btn-gen" onclick="generate()">
+        <i class="fa-solid fa-wand-magic-sparkles"></i>
+        Gerar Fechamento
+      </button>
+
+      <!-- Results -->
+      <div id="results" style="margin-top:22px; display:none;">
+        <div class="stats-row">
+          <div class="stat-box"><div class="stat-val" id="st-tickets">0</div><div class="stat-lbl">Tickets</div></div>
+          <div class="stat-box"><div class="stat-val" id="st-dezenas">0</div><div class="stat-lbl">Dezenas</div></div>
+          <div class="stat-box"><div class="stat-val" id="st-garantia">-</div><div class="stat-lbl">Garantia Mínima</div></div>
+          <div class="stat-box"><div class="stat-val" id="st-custo">R$ 0</div><div class="stat-lbl">Custo Total</div></div>
+        </div>
+        <div class="results-hd">
+          <div class="res-title">Tickets Gerados</div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <div class="res-pill" id="tickets-pill">0 tickets</div>
+            <div class="res-actions">
+              <button class="btn-act" onclick="exportTXT()"><i class="fa-solid fa-file-lines"></i> TXT</button>
+              <button class="btn-act" onclick="window.print()"><i class="fa-solid fa-print"></i> Imprimir</button>
+            </div>
+          </div>
+        </div>
+        <div class="tickets-grid" id="tickets-grid"></div>
+      </div>
+
+    </div>
+
+    <!-- ── VERIFICADOR ── -->
+    <div class="veri-section" id="verificador-section">
+
+      <div class="step-card">
+        <div class="step-hd">
+          <div class="step-badge"><i class="fa-solid fa-magnifying-glass" style="font-size:12px;"></i></div>
+          <div>
+            <div class="step-title">Verificador de Resultado</div>
+            <div class="step-desc">Marque os números sorteados — o sistema destaca quais tickets ganharam</div>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);font-weight:700;margin-bottom:9px;">Números Sorteados</div>
+        <div class="r-num-grid" id="r-grid"></div>
+        <div style="margin-top:10px;font-size:12px;color:var(--text-muted);">
+          <span id="drawn-ct">0</span> marcados
+        </div>
+        <button class="btn-veri" onclick="verificar()">
+          <i class="fa-solid fa-magnifying-glass-chart"></i>
+          Verificar Resultado
+        </button>
+      </div>
+
+      <div id="veri-results" style="display:none;">
+        <div class="stats-row" id="veri-stats"></div>
+        <div class="tickets-grid" id="veri-grid"></div>
+      </div>
+
+    </div>
+
+  </main>
+</div>
+
+<script>
+const LOTTERIES = {
+  megasena:  { name:'Mega-Sena',    max:60,  pick:6,  price:5.00,  sub:'Números de 1 a 60 | Escolha ao menos 7 dezenas para um fechamento' },
+  lotofacil: { name:'Lotofácil',    max:25,  pick:15, price:3.00,  sub:'Números de 1 a 25 | Escolha ao menos 16 dezenas para um fechamento' },
+  quina:     { name:'Quina',        max:80,  pick:5,  price:2.50,  sub:'Números de 1 a 80 | Escolha ao menos 6 dezenas para um fechamento' },
+  duplasena: { name:'Dupla-Sena',   max:50,  pick:6,  price:3.50,  sub:'Números de 1 a 50 | Escolha ao menos 7 dezenas para um fechamento' },
+  lotomania: { name:'Lotomania',    max:100, pick:20, price:3.00,  sub:'Números de 1 a 100 | Escolha ao menos 21 dezenas para um fechamento' },
+  timemania: { name:'Timemania',    max:80,  pick:10, price:3.50,  sub:'Números de 1 a 80 | Escolha ao menos 11 dezenas para um fechamento' },
+  diasorte:  { name:'Dia de Sorte', max:31,  pick:7,  price:2.50,  sub:'Números de 1 a 31 | Escolha ao menos 8 dezenas para um fechamento' },
+};
+
+const GUARANTEES = { 6:'4 pontos (quina)', 15:'11 pontos (quadra+)', 5:'4 pontos (quadra)', 10:'7 pontos (septena)', 20:'15 pontos', 7:'5 pontos (quadra)' };
+
+let curLottery = 'megasena';
+let selectedNums = new Set();
+let fixedNums = new Set();
+let closureType = 'comum';
+let generatedTickets = [];
+let drawnNums = new Set();
+
+function comb(arr, k) {
+  const res = [];
+  function go(s, cur) {
+    if (cur.length === k) { res.push([...cur]); return; }
+    if (arr.length - s < k - cur.length) return;
+    cur.push(arr[s]); go(s+1, cur); cur.pop();
+    go(s+1, cur);
+  }
+  go(0, []);
+  return res;
+}
+
+function fmt(n) { return n < 10 ? '0'+n : ''+n; }
+
+function setLottery(el, key) {
+  document.querySelectorAll('.lottery-item').forEach(x => x.classList.remove('active'));
+  el.classList.add('active');
+  curLottery = key;
+  selectedNums.clear(); fixedNums.clear(); generatedTickets = []; drawnNums.clear();
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('veri-results').style.display = 'none';
+  const L = LOTTERIES[key];
+  document.getElementById('pg-title').textContent = L.name;
+  document.getElementById('pg-sub').textContent = L.sub;
+  buildNumGrid();
+  buildRGrid();
+  updateHint();
+  if (closureType === 'especial') buildGroups();
+}
+
+function setClosureType(el, type) {
+  document.querySelectorAll('.closure-opt').forEach(x => x.classList.remove('active'));
+  el.classList.add('active');
+  closureType = type;
+  document.getElementById('step-groups').style.display = type === 'especial' ? 'block' : 'none';
+  if (type === 'especial') buildGroups();
+}
+
+function switchTab(tab, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('fechamentos-section').style.display = tab === 'fechamentos' ? 'block' : 'none';
+  document.getElementById('verificador-section').classList.toggle('on', tab === 'verificador');
+}
+
+function buildNumGrid() {
+  const L = LOTTERIES[curLottery];
+  const grid = document.getElementById('num-grid');
+  const cols = L.max <= 31 ? 8 : L.max <= 60 ? 10 : 10;
+  grid.style.gridTemplateColumns = `repeat(${cols},1fr)`;
+  grid.innerHTML = '';
+  for (let i = 1; i <= L.max; i++) {
+    const btn = document.createElement('button');
+    btn.className = 'nb' + (selectedNums.has(i) ? ' on' : '');
+    btn.textContent = fmt(i);
+    btn.onclick = () => {
+      if (selectedNums.has(i)) { selectedNums.delete(i); btn.classList.remove('on'); }
+      else { selectedNums.add(i); btn.classList.add('on'); }
+      document.getElementById('sel-count').textContent = selectedNums.size;
+      updateHint();
+    };
+    grid.appendChild(btn);
+  }
+  document.getElementById('sel-count').textContent = 0;
+}
+
+function buildRGrid() {
+  const L = LOTTERIES[curLottery];
+  const grid = document.getElementById('r-grid');
+  grid.innerHTML = '';
+  drawnNums.clear();
+  for (let i = 1; i <= L.max; i++) {
+    const btn = document.createElement('div');
+    btn.className = 'rn';
+    btn.textContent = fmt(i);
+    btn.onclick = () => {
+      if (drawnNums.has(i)) { drawnNums.delete(i); btn.classList.remove('drawn'); }
+      else { drawnNums.add(i); btn.classList.add('drawn'); }
+      document.getElementById('drawn-ct').textContent = drawnNums.size;
+    };
+    grid.appendChild(btn);
+  }
+}
+
+function buildGroups() {
+  const L = LOTTERIES[curLottery];
+  const grid = document.getElementById('groups-grid');
+  const defs = [
+    { label:'Grupo A', nums:[1,5,10,15,20,25].filter(n=>n<=L.max) },
+    { label:'Grupo B', nums:[2,7,12,17,22,27].filter(n=>n<=L.max) },
+    { label:'Grupo C', nums:[3,8,13,18,23,28].filter(n=>n<=L.max) },
+    { label:'Grupo D', nums:[4,9,14,19,24,29].filter(n=>n<=L.max) },
+  ].filter(g=>g.nums.length>0);
+
+  grid.innerHTML = defs.map(g => `
+    <div class="group-box">
+      <div class="group-label"><i class="fa-solid fa-layer-group"></i> ${g.label}</div>
+      <div class="group-nums">
+        ${g.nums.map(n => `<div class="g-num">${fmt(n)}</div>`).join('')}
+        <div style="width:28px;height:28px;border-radius:50%;border:1.5px dashed var(--border);display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--text-muted);cursor:pointer;">+</div>
+      </div>
+    </div>
+  `).join('');
+
+  const fixasToggle = document.getElementById('fixas-toggle');
+  fixasToggle.checked = false;
+  document.getElementById('fixas-area').style.display = 'none';
+  fixasToggle.onchange = function() {
+    document.getElementById('fixas-area').style.display = this.checked ? 'block' : 'none';
+    if (this.checked) buildFixasGrid();
+  };
+}
+
+function buildFixasGrid() {
+  const L = LOTTERIES[curLottery];
+  const grid = document.getElementById('fixas-grid');
+  grid.innerHTML = '';
+  const demo = new Set([4,9]);
+  fixedNums = new Set(demo);
+  for (let i = 1; i <= Math.min(L.max, 30); i++) {
+    const btn = document.createElement('button');
+    btn.className = 'nb' + (demo.has(i) ? ' fixed-on' : '');
+    btn.textContent = fmt(i);
+    btn.style.fontSize = '11px';
+    btn.onclick = () => {
+      if (fixedNums.has(i)) { fixedNums.delete(i); btn.classList.remove('fixed-on'); }
+      else { fixedNums.add(i); btn.classList.add('fixed-on'); }
+    };
+    grid.appendChild(btn);
+  }
+}
+
+function updateHint() {
+  const L = LOTTERIES[curLottery];
+  const hint = document.getElementById('num-hint');
+  const need = L.pick + 1;
+  if (selectedNums.size < need) {
+    hint.textContent = `Selecione pelo menos ${need} dezenas para gerar o fechamento`;
+    hint.style.color = 'var(--text-muted)';
+  } else {
+    const c = comb([...selectedNums], L.pick).length;
+    const shown = Math.min(c, 300);
+    hint.textContent = `${c} tickets serão gerados${c>300?' (exibindo primeiros 300)':''}`;
+    hint.style.color = 'var(--gold-light)';
+  }
+}
+
+function clearNums() {
+  selectedNums.clear();
+  buildNumGrid();
+  updateHint();
+}
+
+function generate() {
+  const L = LOTTERIES[curLottery];
+  const need = L.pick + 1;
+  let nums = [...selectedNums].sort((a,b)=>a-b);
+
+  if (nums.length < need) {
+    // Auto-demo: pre-select numbers
+    const defaults = {
+      megasena:  [3,7,12,18,25,33,41,47,55],
+      lotofacil: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16],
+      quina:     [5,12,20,35,50,65,75],
+      duplasena: [4,9,15,22,33,41,47],
+      lotomania: [1,5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100],
+      timemania: [3,8,14,20,28,35,42,50,58,67,75],
+      diasorte:  [2,5,9,14,19,25,30],
+    };
+    nums = defaults[curLottery].slice(0, Math.max(need, L.pick + 3));
+    // Update UI
+    selectedNums = new Set(nums);
+    buildNumGrid();
+    nums.forEach(n => {
+      const btns = document.querySelectorAll('#num-grid .nb');
+      btns.forEach(b => { if (parseInt(b.textContent) === n) b.classList.add('on'); });
+    });
+    document.getElementById('sel-count').textContent = nums.length;
+    updateHint();
+  }
+
+  let tickets = [];
+  if (closureType === 'comum') {
+    tickets = comb(nums, L.pick);
+    if (tickets.length > 300) tickets = tickets.slice(0, 300);
+  } else {
+    // Special: group closures with optional fixas
+    const fixas = [...fixedNums].sort((a,b)=>a-b);
+    const groups = [
+      [1,5,10,15,20,25].filter(n=>n<=L.max && nums.includes(n)),
+      [2,7,12,17,22,27].filter(n=>n<=L.max && nums.includes(n)),
+      [3,8,13,18,23,28].filter(n=>n<=L.max && nums.includes(n)),
+    ].filter(g=>g.length>0);
+
+    const remaining = L.pick - fixas.length;
+    if (groups.length >= 2 && remaining >= 2) {
+      const perGroup = Math.floor(remaining / groups.length);
+      groups.forEach(g => {
+        const gc = comb(g, Math.min(perGroup, g.length));
+        gc.forEach(picks => {
+          const other = groups.filter(gg=>gg!==g).flat();
+          const otherPicks = other.slice(0, remaining - picks.length);
+          const t = [...fixas, ...picks, ...otherPicks].slice(0, L.pick).sort((a,b)=>a-b);
+          if (t.length === L.pick) tickets.push(t);
+        });
+      });
+    }
+    // Deduplicate
+    const seen = new Set();
+    tickets = tickets.filter(t => { const k=t.join(','); if(seen.has(k)) return false; seen.add(k); return true; });
+    if (tickets.length === 0) tickets = comb(nums, L.pick).slice(0, 80);
+    if (tickets.length > 300) tickets = tickets.slice(0, 300);
+  }
+
+  generatedTickets = tickets;
+
+  // Stats
+  document.getElementById('st-tickets').textContent = tickets.length;
+  document.getElementById('st-dezenas').textContent = nums.length;
+  document.getElementById('st-garantia').textContent = GUARANTEES[L.pick] || (L.pick-2)+' pontos';
+  document.getElementById('st-custo').textContent = 'R$ ' + (tickets.length * L.price).toFixed(2).replace('.',',');
+  document.getElementById('tickets-pill').textContent = tickets.length + ' ticket' + (tickets.length!==1?'s':'');
+
+  renderTickets(tickets, new Set(), 'tickets-grid');
+
+  document.getElementById('results').style.display = 'block';
+  setTimeout(() => document.getElementById('results').scrollIntoView({behavior:'smooth',block:'start'}), 80);
+}
+
+function renderTickets(tickets, hitSet, gridId) {
+  const grid = document.getElementById(gridId);
+  grid.innerHTML = '';
+  if (!tickets.length) {
+    grid.innerHTML = '<div class="empty"><i class="fa-solid fa-ticket"></i><p>Nenhum ticket gerado.</p></div>';
+    return;
+  }
+  const L = LOTTERIES[curLottery];
+  const minWin = L.pick===6?4 : L.pick===15?11 : L.pick===5?4 : Math.floor(L.pick*0.65);
+  tickets.forEach((ticket, idx) => {
+    const hits = ticket.filter(n=>hitSet.has(n)).length;
+    const won = hitSet.size > 0 && hits >= minWin;
+    const div = document.createElement('div');
+    div.className = 'ticket' + (won?' winner':'');
+    div.style.animationDelay = (idx*0.018)+'s';
+    div.innerHTML = `
+      <div class="t-label">
+        <span><i class="fa-solid fa-ticket"></i> ${String(idx+1).padStart(3,'0')}</span>
+        ${won?'<i class="fa-solid fa-trophy" style="color:var(--green);"></i>':''}
+      </div>
+      <div class="t-nums">
+        ${ticket.map(n=>`<div class="tn${hitSet.has(n)?' hit':''}">${fmt(n)}</div>`).join('')}
+      </div>
+      ${won?`<div class="t-hits"><i class="fa-solid fa-star"></i> ${hits} acertos</div>`:''}
+    `;
+    grid.appendChild(div);
+  });
+}
+
+function exportTXT() {
+  if (!generatedTickets.length) return;
+  const L = LOTTERIES[curLottery];
+  const d = new Date();
+  let txt = `FECHAMENTO LOTERICO — ${L.name.toUpperCase()}\n`;
+  txt += `Data: ${d.toLocaleDateString('pt-BR')} ${d.toLocaleTimeString('pt-BR')}\n`;
+  txt += `Tipo: ${closureType==='comum'?'Fechamento Comum':'Fechamento Especial'}\n`;
+  txt += `Total: ${generatedTickets.length} tickets\n`;
+  txt += `Custo: R$ ${(generatedTickets.length*L.price).toFixed(2)}\n`;
+  txt += '='.repeat(44)+'\n\n';
+  generatedTickets.forEach((t,i) => {
+    txt += `Ticket ${String(i+1).padStart(3,'0')}: ${t.map(n=>String(n).padStart(2,'0')).join(' - ')}\n`;
+  });
+  txt += '\n'+'='.repeat(44)+'\n';
+  txt += 'FechaSorte — Sistema Profissional de Fechamentos\n';
+  const blob = new Blob([txt],{type:'text/plain;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `fechamento_${curLottery}_${d.toISOString().slice(0,10)}.txt`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function verificar() {
+  const L = LOTTERIES[curLottery];
+  const drawn = [...drawnNums];
+
+  if (drawn.length === 0) {
+    // Demo: auto-mark some numbers
+    const demoDrawn = {
+      megasena:  [3,12,25,33,47,55],
+      lotofacil: [1,3,5,7,9,11,13,15,17,19,21,22,23,24,25],
+      quina:     [5,20,35,50,65],
+      duplasena: [4,15,33,41,47,9],
+      lotomania: [5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100],
+      timemania: [3,14,28,42,58,75,8,20,35,50],
+      diasorte:  [2,9,14,19,25,30,5],
+    };
+    const nums = demoDrawn[curLottery] || [1,2,3,4,5,6];
+    nums.forEach(n => {
+      drawnNums.add(n);
+      document.querySelectorAll('#r-grid .rn').forEach(b => {
+        if (parseInt(b.textContent) === n) b.classList.add('drawn');
+      });
+    });
+    document.getElementById('drawn-ct').textContent = drawnNums.size;
+    return;
+  }
+
+  let tickets = generatedTickets;
+  if (!tickets.length) {
+    // Generate demo tickets
+    const defaults = {
+      megasena:[3,7,12,18,25,33,41,47,55], lotofacil:[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16],
+      quina:[5,12,20,35,50,65,75], duplasena:[4,9,15,22,33,41,47],
+      lotomania:[1,5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100],
+      timemania:[3,8,14,20,28,35,42,50,58,67,75], diasorte:[2,5,9,14,19,25,30],
+    };
+    tickets = comb(defaults[curLottery]||[1,2,3,4,5,6,7], L.pick).slice(0,80);
+    generatedTickets = tickets;
+  }
+
+  const minWin = L.pick===6?4 : L.pick===15?11 : L.pick===5?4 : Math.floor(L.pick*0.65);
+  const results = tickets.map(t => {
+    const hits = t.filter(n=>drawnNums.has(n)).length;
+    return {t, hits, won: hits>=minWin};
+  });
+  results.sort((a,b)=>b.hits-a.hits);
+
+  const winners = results.filter(r=>r.won).length;
+  document.getElementById('veri-stats').innerHTML = `
+    <div class="stat-box"><div class="stat-val">${results.length}</div><div class="stat-lbl">Verificados</div></div>
+    <div class="stat-box"><div class="stat-val" style="color:var(--green);">${winners}</div><div class="stat-lbl">Premiados</div></div>
+    <div class="stat-box"><div class="stat-val">${drawn.length}</div><div class="stat-lbl">Sorteados</div></div>
+    <div class="stat-box"><div class="stat-val">${minWin}+</div><div class="stat-lbl">Acertos p/ Prêmio</div></div>
+  `;
+
+  const vgrid = document.getElementById('veri-grid');
+  vgrid.innerHTML = '';
+  results.forEach(({t, hits, won}, idx) => {
+    const div = document.createElement('div');
+    div.className = 'ticket'+(won?' winner':'');
+    div.style.animationDelay = (idx*0.018)+'s';
+    div.innerHTML = `
+      <div class="t-label">
+        <span>Ticket ${String(idx+1).padStart(3,'0')}</span>
+        ${won?'<i class="fa-solid fa-trophy" style="color:var(--green);"></i>':''}
+      </div>
+      <div class="t-nums">
+        ${t.map(n=>`<div class="tn${drawnNums.has(n)?' hit':''}">${fmt(n)}</div>`).join('')}
+      </div>
+      <div class="t-hits" style="color:${won?'var(--green)':'var(--text-muted)'};">
+        ${won?'<i class="fa-solid fa-star"></i> ':''} ${hits} acerto${hits!==1?'s':''}
+      </div>
+    `;
+    vgrid.appendChild(div);
+  });
+
+  document.getElementById('veri-results').style.display = 'block';
+  setTimeout(() => document.getElementById('veri-results').scrollIntoView({behavior:'smooth',block:'start'}), 80);
+}
+
+// INIT
+buildNumGrid();
+buildRGrid();
+updateHint();
+
+// Pre-select demo numbers on load
+setTimeout(() => {
+  const demo = [3,7,12,18,25,33,41];
+  demo.forEach(n => {
+    selectedNums.add(n);
+    document.querySelectorAll('#num-grid .nb').forEach(b => {
+      if (parseInt(b.textContent) === n) b.classList.add('on');
+    });
+  });
+  document.getElementById('sel-count').textContent = demo.length;
+  updateHint();
+}, 120);
+</script>
+</body>
+</html>
