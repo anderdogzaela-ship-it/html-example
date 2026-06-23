@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OCR Bolão - Leitura Automática de Palpites</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --green:#1a7a4a;
+    --green-mid:#27ae60;
+    --green-light:#e8f5ee;
+    --green-pale:#f2faf6;
+    --accent:#ff6b35;
+    --accent-light:#fff3ef;
+    --dark:#1a2332;
+    --mid:#4a5568;
+    --soft:#8a9bb0;
+    --border:#e2e8f0;
+    --white:#ffffff;
+    --shadow:0 4px 24px rgba(0,0,0,0.08);
+    --shadow-hover:0 8px 32px rgba(0,0,0,0.14);
+  }
+  body{font-family:'Nunito',sans-serif;background:#f4f7f4;color:var(--dark);min-height:100vh}
+
+  /* HEADER */
+  .header{background:var(--green);padding:18px 32px;display:flex;align-items:center;gap:14px;box-shadow:0 2px 12px rgba(0,0,0,0.15)}
+  .header-icon{width:44px;height:44px;background:rgba(255,255,255,0.15);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff}
+  .header-title{color:#fff;font-size:20px;font-weight:800;letter-spacing:-0.3px}
+  .header-sub{color:rgba(255,255,255,0.7);font-size:13px;font-weight:600}
+  .header-badge{margin-left:auto;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);border-radius:20px;padding:5px 14px;color:#fff;font-size:12px;font-weight:700}
+
+  /* MAIN */
+  .main{max-width:1100px;margin:0 auto;padding:32px 20px}
+
+  /* STEPS */
+  .steps-bar{display:flex;gap:0;margin-bottom:28px;background:#fff;border-radius:12px;overflow:hidden;box-shadow:var(--shadow)}
+  .step{flex:1;padding:14px 16px;display:flex;align-items:center;gap:10px;border-right:1px solid var(--border);cursor:pointer;transition:background 0.2s}
+  .step:last-child{border-right:none}
+  .step.active{background:var(--green-light)}
+  .step.done{background:var(--green-pale)}
+  .step-num{width:28px;height:28px;border-radius:50%;background:var(--border);color:var(--soft);font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .step.active .step-num{background:var(--green);color:#fff}
+  .step.done .step-num{background:var(--green-mid);color:#fff}
+  .step-label{font-size:13px;font-weight:700;color:var(--mid)}
+  .step.active .step-label{color:var(--green)}
+  .step.done .step-label{color:var(--green)}
+
+  /* PANELS */
+  .panel{display:none}
+  .panel.active{display:block}
+
+  /* UPLOAD PANEL */
+  .upload-area{background:#fff;border:2px dashed var(--border);border-radius:16px;padding:60px 32px;text-align:center;cursor:pointer;transition:all 0.2s;box-shadow:var(--shadow)}
+  .upload-area:hover,.upload-area.drag{border-color:var(--green);background:var(--green-light)}
+  .upload-icon{font-size:56px;color:var(--soft);margin-bottom:20px}
+  .upload-area:hover .upload-icon,.upload-area.drag .upload-icon{color:var(--green)}
+  .upload-title{font-size:22px;font-weight:800;color:var(--dark);margin-bottom:8px}
+  .upload-sub{font-size:15px;color:var(--soft);margin-bottom:28px}
+  .upload-btn{display:inline-flex;align-items:center;gap:10px;background:var(--green);color:#fff;border:none;border-radius:10px;padding:14px 28px;font-size:15px;font-weight:800;cursor:pointer;transition:all 0.2s;font-family:'Nunito',sans-serif}
+  .upload-btn:hover{background:#155e39;transform:translateY(-1px);box-shadow:0 4px 16px rgba(26,122,74,0.3)}
+  .formats{margin-top:20px;display:flex;gap:12px;justify-content:center}
+  .fmt-tag{background:var(--green-pale);border:1px solid var(--green-light);color:var(--green);border-radius:6px;padding:4px 12px;font-size:12px;font-weight:800}
+
+  /* SAMPLE FILES */
+  .sample-section{margin-top:24px}
+  .sample-title{font-size:13px;font-weight:700;color:var(--soft);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px}
+  .sample-files{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+  .sample-file{background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px 18px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:all 0.2s;box-shadow:0 2px 8px rgba(0,0,0,0.04)}
+  .sample-file:hover{border-color:var(--green);background:var(--green-light);transform:translateY(-1px)}
+  .sample-file i{font-size:20px;color:var(--accent)}
+  .sf-name{font-size:13px;font-weight:700;color:var(--dark)}
+  .sf-meta{font-size:11px;color:var(--soft)}
+
+  /* PROCESSING PANEL */
+  .proc-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start}
+  @media(max-width:720px){.proc-grid{grid-template-columns:1fr}}
+
+  .form-preview{background:#fff;border-radius:16px;padding:20px;box-shadow:var(--shadow)}
+  .form-preview-title{font-size:14px;font-weight:800;color:var(--mid);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+  .form-page{background:#fafafa;border:1px solid var(--border);border-radius:8px;padding:16px;position:relative}
+  .form-page-label{font-size:11px;font-weight:800;color:var(--soft);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px}
+  .squares-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+  .sq{background:#fff;border:1.5px solid var(--border);border-radius:6px;padding:6px;transition:all 0.3s;position:relative;min-height:52px}
+  .sq.scanning{border-color:var(--accent);background:var(--accent-light);transform:scale(1.06);box-shadow:0 2px 10px rgba(255,107,53,0.25);z-index:2}
+  .sq.done{border-color:var(--green-mid);background:var(--green-pale)}
+  .sq-num{font-size:9px;font-weight:900;color:var(--soft);margin-bottom:4px}
+  .sq.scanning .sq-num{color:var(--accent)}
+  .sq.done .sq-num{color:var(--green)}
+  .sq-marks{display:flex;flex-wrap:wrap;gap:2px}
+  .mark{width:10px;height:10px;border-radius:2px;background:var(--border)}
+  .sq.scanning .mark{background:rgba(255,107,53,0.3)}
+  .sq.done .mark{background:var(--green-mid)}
+  .sq-check{position:absolute;top:4px;right:4px;font-size:10px;color:var(--green);display:none}
+  .sq.done .sq-check{display:block}
+
+  .proc-log{background:#fff;border-radius:16px;padding:20px;box-shadow:var(--shadow)}
+  .proc-log-title{font-size:14px;font-weight:800;color:var(--mid);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+  .log-entries{display:flex;flex-direction:column;gap:6px;max-height:320px;overflow-y:auto}
+  .log-entry{display:flex;align-items:flex-start;gap:10px;padding:8px 10px;border-radius:8px;background:var(--green-pale);opacity:0;transform:translateY(4px);transition:all 0.3s}
+  .log-entry.visible{opacity:1;transform:translateY(0)}
+  .log-entry.warning{background:#fff8e1}
+  .log-entry.success{background:var(--green-pale)}
+  .log-entry.info{background:#f0f4ff}
+  .log-icon{font-size:14px;flex-shrink:0;margin-top:1px}
+  .log-entry.success .log-icon{color:var(--green)}
+  .log-entry.warning .log-icon{color:#e67e22}
+  .log-entry.info .log-icon{color:#4a7cdc}
+  .log-text{font-size:12px;font-weight:600;color:var(--dark);line-height:1.4}
+  .log-time{font-size:10px;color:var(--soft);margin-left:auto;flex-shrink:0}
+
+  .progress-bar-wrap{margin-top:16px}
+  .progress-label{display:flex;justify-content:space-between;font-size:12px;font-weight:700;color:var(--mid);margin-bottom:8px}
+  .progress-bar{background:var(--border);border-radius:100px;height:8px;overflow:hidden}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--green),var(--green-mid));border-radius:100px;width:0;transition:width 0.4s ease}
+
+  /* RESULTS PANEL */
+  .results-header{background:#fff;border-radius:16px;padding:20px 24px;margin-bottom:20px;box-shadow:var(--shadow);display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+  .results-stat{text-align:center}
+  .results-stat-num{font-size:28px;font-weight:900;color:var(--green)}
+  .results-stat-label{font-size:12px;font-weight:700;color:var(--soft)}
+  .results-stat-divider{width:1px;height:40px;background:var(--border)}
+  .results-accuracy{margin-left:auto;display:flex;align-items:center;gap:10px}
+  .accuracy-badge{background:var(--green-light);border:1px solid var(--green);border-radius:10px;padding:8px 16px;display:flex;align-items:center;gap:8px}
+  .accuracy-val{font-size:22px;font-weight:900;color:var(--green)}
+  .accuracy-label{font-size:12px;font-weight:700;color:var(--green)}
+
+  .results-controls{background:#fff;border-radius:12px;padding:14px 20px;margin-bottom:16px;box-shadow:var(--shadow);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .filter-btn{background:var(--border);border:none;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:700;color:var(--mid);cursor:pointer;font-family:'Nunito',sans-serif;transition:all 0.2s}
+  .filter-btn.active{background:var(--green);color:#fff}
+  .filter-btn:hover{background:var(--green-light);color:var(--green)}
+  .filter-btn.active:hover{background:var(--green)}
+  .export-btns{margin-left:auto;display:flex;gap:8px}
+  .export-btn{display:flex;align-items:center;gap:7px;background:var(--green);color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;transition:all 0.2s}
+  .export-btn:hover{background:#155e39;transform:translateY(-1px)}
+  .export-btn.secondary{background:#fff;color:var(--green);border:1.5px solid var(--green)}
+  .export-btn.secondary:hover{background:var(--green-light)}
+
+  .results-table-wrap{background:#fff;border-radius:16px;overflow:hidden;box-shadow:var(--shadow)}
+  .results-table{width:100%;border-collapse:collapse}
+  .results-table th{background:var(--dark);color:#fff;padding:11px 14px;font-size:12px;font-weight:800;text-align:left;text-transform:uppercase;letter-spacing:0.3px}
+  .results-table th:first-child{border-radius:0}
+  .results-table td{padding:9px 14px;font-size:13px;border-bottom:1px solid var(--border);color:var(--dark);font-weight:600}
+  .results-table tr:last-child td{border-bottom:none}
+  .results-table tr:hover td{background:var(--green-pale)}
+  .pag-badge{background:var(--green-light);color:var(--green);border-radius:6px;padding:3px 10px;font-size:12px;font-weight:800}
+  .jogo-badge{background:#f0f4ff;color:#4a7cdc;border-radius:6px;padding:3px 10px;font-size:12px;font-weight:800}
+  .pred-cell{font-size:12px;font-weight:700;color:var(--dark);background:var(--border);border-radius:5px;padding:2px 7px;display:inline-block}
+  .pred-cell.uncertain{background:#fff3cd;color:#856404}
+  .conf-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px}
+  .conf-high{background:#27ae60}
+  .conf-med{background:#f39c12}
+  .conf-low{background:#e74c3c}
+
+  .flag-row td{background:#fff8e1}
+
+  /* EXPORT NOTICE */
+  .export-notice{background:var(--green-light);border:1px solid var(--green);border-radius:10px;padding:14px 18px;margin-top:16px;display:flex;align-items:center;gap:12px}
+  .export-notice i{color:var(--green);font-size:18px}
+  .export-notice-text{font-size:13px;font-weight:700;color:var(--green)}
+
+  /* RESTART */
+  .restart-btn{position:fixed;bottom:24px;right:24px;background:var(--dark);color:#fff;border:none;border-radius:50px;padding:12px 22px;font-size:13px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;display:flex;align-items:center;gap:8px;box-shadow:0 4px 20px rgba(0,0,0,0.2);transition:all 0.2s;z-index:100}
+  .restart-btn:hover{background:#2d3748;transform:translateY(-2px)}
+
+  /* ANIMATIONS */
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .spin{animation:spin 1s linear infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+  .pulse{animation:pulse 1.5s ease infinite}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-icon"><i class="fa-solid fa-file-waveform"></i></div>
+  <div>
+    <div class="header-title">OCR Bolão de Futebol</div>
+    <div class="header-sub">Leitura automática de palpites em PDF ou imagem</div>
+  </div>
+  <div class="header-badge"><i class="fa-solid fa-circle" style="color:#4ade80;font-size:8px;margin-right:6px"></i>Pipeline Ativo</div>
+</div>
+
+<div class="main">
+
+  <!-- STEPS BAR -->
+  <div class="steps-bar">
+    <div class="step active" id="step1" onclick="goStep(1)">
+      <div class="step-num" id="snum1">1</div>
+      <div class="step-label">Upload</div>
+    </div>
+    <div class="step" id="step2" onclick="goStep(2)">
+      <div class="step-num" id="snum2">2</div>
+      <div class="step-label">Processando</div>
+    </div>
+    <div class="step" id="step3" onclick="goStep(3)">
+      <div class="step-num" id="snum3">3</div>
+      <div class="step-label">Resultados</div>
+    </div>
+  </div>
+
+  <!-- PANEL 1: UPLOAD -->
+  <div class="panel active" id="panel1">
+    <div class="upload-area" id="uploadArea" onclick="startProcessing()">
+      <div class="upload-icon"><i class="fa-solid fa-file-arrow-up"></i></div>
+      <div class="upload-title">Envie as folhas de palpites</div>
+      <div class="upload-sub">Arraste PDFs ou fotos aqui ou clique para selecionar</div>
+      <button class="upload-btn" onclick="startProcessing(event)">
+        <i class="fa-solid fa-folder-open"></i> Selecionar arquivos
+      </button>
+      <div class="formats">
+        <span class="fmt-tag"><i class="fa-solid fa-file-pdf"></i> PDF</span>
+        <span class="fmt-tag"><i class="fa-solid fa-image"></i> JPG</span>
+        <span class="fmt-tag"><i class="fa-solid fa-image"></i> PNG</span>
+        <span class="fmt-tag"><i class="fa-solid fa-file-image"></i> TIFF</span>
+      </div>
+    </div>
+
+    <div class="sample-section">
+      <div class="sample-title">Ou use um arquivo de exemplo</div>
+      <div class="sample-files">
+        <div class="sample-file" onclick="startProcessing(event)">
+          <i class="fa-solid fa-file-pdf"></i>
+          <div>
+            <div class="sf-name">bolao-copa-rodada3.pdf</div>
+            <div class="sf-meta">4 páginas · 96 jogos · 768 palpites</div>
+          </div>
+        </div>
+        <div class="sample-file" onclick="startProcessing(event)">
+          <i class="fa-solid fa-images"></i>
+          <div>
+            <div class="sf-name">fotos-folhas-set1.zip</div>
+            <div class="sf-meta">12 fotos · celular · 288 jogos</div>
+          </div>
+        </div>
+        <div class="sample-file" onclick="startProcessing(event)">
+          <i class="fa-solid fa-file-pdf"></i>
+          <div>
+            <div class="sf-name">brasileirao-semifinal.pdf</div>
+            <div class="sf-meta">2 páginas · 48 jogos · 384 palpites</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL 2: PROCESSING -->
+  <div class="panel" id="panel2">
+    <div class="proc-grid">
+      <div>
+        <div class="form-preview">
+          <div class="form-preview-title">
+            <i class="fa-solid fa-file-pdf" style="color:var(--accent)"></i>
+            bolao-copa-rodada3.pdf &mdash; Página 1
+          </div>
+          <div class="form-page">
+            <div class="form-page-label">Detecção de quadrantes (24 jogos)</div>
+            <div class="squares-grid" id="squaresGrid"></div>
+          </div>
+          <div class="progress-bar-wrap" style="margin-top:14px">
+            <div class="progress-label">
+              <span id="progressText">Inicializando...</span>
+              <span id="progressPct">0%</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="proc-log">
+          <div class="proc-log-title">
+            <i class="fa-solid fa-terminal" style="color:var(--green)"></i>
+            Log de processamento
+          </div>
+          <div class="log-entries" id="logEntries"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL 3: RESULTS -->
+  <div class="panel" id="panel3">
+    <div class="results-header">
+      <div class="results-stat">
+        <div class="results-stat-num" id="totalPages">4</div>
+        <div class="results-stat-label">Páginas</div>
+      </div>
+      <div class="results-stat-divider"></div>
+      <div class="results-stat">
+        <div class="results-stat-num">96</div>
+        <div class="results-stat-label">Jogos</div>
+      </div>
+      <div class="results-stat-divider"></div>
+      <div class="results-stat">
+        <div class="results-stat-num">768</div>
+        <div class="results-stat-label">Palpites lidos</div>
+      </div>
+      <div class="results-stat-divider"></div>
+      <div class="results-stat">
+        <div class="results-stat-num" style="color:var(--accent)">2</div>
+        <div class="results-stat-label">Para revisar</div>
+      </div>
+      <div class="results-accuracy">
+        <div class="accuracy-badge">
+          <i class="fa-solid fa-shield-check" style="font-size:20px;color:var(--green)"></i>
+          <div>
+            <div class="accuracy-val">98.7%</div>
+            <div class="accuracy-label">Precisão</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="results-controls">
+      <button class="filter-btn active" onclick="filterTable('all',this)">Todos</button>
+      <button class="filter-btn" onclick="filterTable('flag',this)"><i class="fa-solid fa-flag" style="color:var(--accent)"></i> Para revisar</button>
+      <button class="filter-btn" onclick="filterTable('p1',this)">Página 1</button>
+      <button class="filter-btn" onclick="filterTable('p2',this)">Página 2</button>
+      <div class="export-btns">
+        <button class="export-btn secondary" onclick="showExport()"><i class="fa-solid fa-file-excel"></i> Excel</button>
+        <button class="export-btn" onclick="showExport()"><i class="fa-solid fa-file-csv"></i> CSV</button>
+      </div>
+    </div>
+
+    <div class="results-table-wrap">
+      <table class="results-table">
+        <thead>
+          <tr>
+            <th>Página</th>
+            <th>Jogo</th>
+            <th>Palpite 1</th>
+            <th>Palpite 2</th>
+            <th>Palpite 3</th>
+            <th>Palpite 4</th>
+            <th>Palpite 5</th>
+            <th>Palpite 6</th>
+            <th>Palpite 7</th>
+            <th>Palpite 8</th>
+            <th>Conf.</th>
+          </tr>
+        </thead>
+        <tbody id="resultsBody"></tbody>
+      </table>
+    </div>
+
+    <div class="export-notice" id="exportNotice" style="display:none">
+      <i class="fa-solid fa-circle-check"></i>
+      <div class="export-notice-text">Arquivo gerado. Todas as colunas seguem o padrão (pag: N jogo N) pronto para importar na planilha de ranking.</div>
+    </div>
+  </div>
+
+</div>
+
+<button class="restart-btn" onclick="restart()"><i class="fa-solid fa-rotate-left"></i> Reiniciar demo</button>
+
+<script>
+const SAMPLE_DATA = [];
+const teams = ['Brasil','Argentina','França','Alemanha','Espanha','Portugal','Itália','Inglaterra','Holanda','Bélgica','Croácia','Uruguai'];
+const preds = ['1x0','2x1','0x0','3x1','1x1','2x0','0x1','1x2','2x2','3x0'];
+
+for(let page=1;page<=4;page++){
+  for(let jogo=1;jogo<=24;jogo++){
+    const row = {page, jogo, palpites:[], flag:false, conf:'high'};
+    for(let i=0;i<8;i++){
+      row.palpites.push(preds[Math.floor(Math.random()*preds.length)]);
+    }
+    if(page===2 && (jogo===7||jogo===15)){row.flag=true;row.conf='low';}
+    SAMPLE_DATA.push(row);
+  }
+}
+
+let currentFilter = 'all';
+
+function goStep(n){
+  [1,2,3].forEach(i=>{
+    document.getElementById('panel'+i).classList.toggle('active',i===n);
+    document.getElementById('step'+i).classList.toggle('active',i===n);
+  });
+}
+
+function startProcessing(e){
+  if(e)e.stopPropagation();
+  goStep(2);
+  buildSquaresGrid();
+  runProcessing();
+}
+
+function buildSquaresGrid(){
+  const g = document.getElementById('squaresGrid');
+  g.innerHTML='';
+  for(let i=1;i<=24;i++){
+    const sq=document.createElement('div');
+    sq.className='sq';
+    sq.id='sq'+i;
+    sq.innerHTML=`<div class="sq-num">J${i}</div><div class="sq-marks">${Array(8).fill('<div class="mark"></div>').join('')}</div><i class="fa-solid fa-check sq-check"></i>`;
+    g.appendChild(sq);
+  }
+}
+
+const logs = [
+  {type:'info',  text:'Pipeline iniciado. Carregando bolao-copa-rodada3.pdf...', delay:200},
+  {type:'success',text:'PDF aberto. 4 páginas detectadas (A4 300dpi).', delay:600},
+  {type:'info',  text:'Pág. 1 — Aplicando correção de perspectiva e normalização de contraste.', delay:1000},
+  {type:'success',text:'Pág. 1 — Grid detectado: 24 quadrantes localizados (6x4).', delay:1600},
+  {type:'success',text:'Pág. 1 — Quadrantes 1-8 extraídos. Reconhecimento em andamento...', delay:2400},
+  {type:'success',text:'Pág. 1 — Quadrantes 9-16 extraídos. Confiança média: 99.1%', delay:3200},
+  {type:'success',text:'Pág. 1 — Quadrantes 17-24 concluídos. 192 palpites lidos.', delay:4000},
+  {type:'info',  text:'Pág. 2 — Detectando estrutura da folha...', delay:4600},
+  {type:'success',text:'Pág. 2 — Grid detectado. Iniciando extração.', delay:5200},
+  {type:'warning',text:'Pág. 2 Jogo 7 — Baixa confiança (72%). Palpite ambíguo marcado para revisão.', delay:6000},
+  {type:'success',text:'Pág. 2 — 22 de 24 jogos com confiança alta. 2 sinalizados.', delay:6800},
+  {type:'info',  text:'Pág. 3 e 4 — Processando em lote...', delay:7400},
+  {type:'success',text:'Pág. 3 — 192 palpites. Confiança: 100%', delay:8200},
+  {type:'success',text:'Pág. 4 — 192 palpites. Confiança: 99.5%', delay:9000},
+  {type:'success',text:'Pipeline concluído. 768 palpites lidos. Precisão geral: 98.7%', delay:9800},
+];
+
+function runProcessing(){
+  const logEl = document.getElementById('logEntries');
+  const fill = document.getElementById('progressFill');
+  const pct = document.getElementById('progressPct');
+  const ptext = document.getElementById('progressText');
+  logEl.innerHTML='';
+
+  logs.forEach(l=>{
+    const el=document.createElement('div');
+    el.className='log-entry '+l.type;
+    const icons={success:'fa-circle-check',warning:'fa-triangle-exclamation',info:'fa-circle-info'};
+    el.innerHTML=`<i class="fa-solid ${icons[l.type]} log-icon"></i><div class="log-text">${l.text}</div>`;
+    logEl.appendChild(el);
+    setTimeout(()=>{el.classList.add('visible');logEl.scrollTop=logEl.scrollHeight;},l.delay);
+  });
+
+  // square animation
+  for(let i=1;i<=24;i++){
+    const delay = 1600 + (i-1)*120;
+    setTimeout(()=>{
+      const prev = document.getElementById('sq'+(i-1));
+      if(prev){prev.classList.remove('scanning');prev.classList.add('done');}
+      const cur = document.getElementById('sq'+i);
+      if(cur) cur.classList.add('scanning');
+      const p = Math.round((i/24)*100*0.25+0); // page 1 = 0-25%
+      fill.style.width = (p)+'%';
+      pct.textContent = p+'%';
+      ptext.textContent = `Página 1 — Jogo ${i} de 24`;
+      if(i===24){
+        cur.classList.remove('scanning');cur.classList.add('done');
+      }
+    },delay);
+  }
+
+  // pages 2-4
+  [2,3,4].forEach((page,pi)=>{
+    const baseDelay = 4600+pi*3000;
+    setTimeout(()=>{
+      ptext.textContent=`Página ${page} — processando...`;
+    },baseDelay);
+    setTimeout(()=>{
+      const p = 25 + (pi+1)*25;
+      fill.style.width=p+'%';
+      pct.textContent=p+'%';
+    },baseDelay+1400);
+  });
+
+  setTimeout(()=>{
+    fill.style.width='100%';
+    pct.textContent='100%';
+    ptext.textContent='Concluído. 768 palpites lidos.';
+    setTimeout(()=>showResults(),1200);
+  },10200);
+}
+
+function showResults(){
+  goStep(3);
+  buildResultsTable('all');
+}
+
+function buildResultsTable(filter){
+  const tbody = document.getElementById('resultsBody');
+  tbody.innerHTML='';
+  SAMPLE_DATA.forEach(row=>{
+    if(filter==='flag'&&!row.flag)return;
+    if(filter==='p1'&&row.page!==1)return;
+    if(filter==='p2'&&row.page!==2)return;
+
+    const tr=document.createElement('tr');
+    if(row.flag)tr.className='flag-row';
+    const confDot=row.conf==='high'?'conf-high':row.conf==='med'?'conf-med':'conf-low';
+    const confLabel=row.conf==='high'?'Alta':row.conf==='med'?'Média':'Baixa ⚠';
+    tr.innerHTML=`
+      <td><span class="pag-badge">pag: ${row.page}</span></td>
+      <td><span class="jogo-badge">jogo ${row.jogo}</span></td>
+      ${row.palpites.map((p,i)=>`<td><span class="pred-cell${row.flag&&i===2?' uncertain':''}">${p}</span></td>`).join('')}
+      <td><span class="conf-dot ${confDot}"></span>${confLabel}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function filterTable(f,btn){
+  currentFilter=f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  buildResultsTable(f);
+}
+
+function showExport(){
+  document.getElementById('exportNotice').style.display='flex';
+  setTimeout(()=>document.getElementById('exportNotice').style.display='none',4000);
+}
+
+function restart(){
+  goStep(1);
+  currentFilter='all';
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelector('.filter-btn').classList.add('active');
+  document.getElementById('exportNotice').style.display='none';
+  document.getElementById('progressFill').style.width='0';
+}
+</script>
+</body>
+</html>
