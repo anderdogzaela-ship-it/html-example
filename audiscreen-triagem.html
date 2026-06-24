@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AudiScreen — Triagem Auditiva</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background: linear-gradient(135deg, #1E3A5F 0%, #0C4A8A 50%, #0EA5E9 100%);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.demo-wrapper {
+  display: flex;
+  align-items: flex-start;
+  gap: 48px;
+  max-width: 900px;
+  width: 100%;
+}
+
+/* ── Phone shell ── */
+.phone-frame {
+  width: 360px;
+  min-width: 360px;
+  background: #0F172A;
+  border-radius: 52px;
+  padding: 12px;
+  box-shadow: 0 48px 96px rgba(0,0,0,0.55), inset 0 0 0 1px rgba(255,255,255,0.08);
+  position: relative;
+}
+
+.phone-notch {
+  width: 100px;
+  height: 26px;
+  background: #0F172A;
+  border-radius: 0 0 16px 16px;
+  margin: 0 auto -26px;
+  position: relative;
+  z-index: 10;
+}
+
+.phone-screen {
+  width: 100%;
+  height: 720px;
+  background: #EFF6FF;
+  border-radius: 42px;
+  overflow: hidden;
+  position: relative;
+}
+
+.screen {
+  position: absolute;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.screen.active { display: flex; }
+
+/* ── Status bar ── */
+.status-bar {
+  padding: 8px 20px 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+.status-bar.dark { background: #1E293B; color: #94A3B8; }
+.status-bar.blue { background: #2563EB; color: white; }
+.status-bar.light { background: #EFF6FF; color: #475569; }
+
+/* ── Buttons ── */
+.btn-primary {
+  width: 100%;
+  background: linear-gradient(135deg, #2563EB 0%, #0EA5E9 100%);
+  color: white;
+  border: none;
+  padding: 15px;
+  border-radius: 16px;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: 'Nunito', sans-serif;
+  box-shadow: 0 4px 16px rgba(37,99,235,0.35);
+  transition: transform 0.1s, box-shadow 0.1s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(37,99,235,0.45); }
+
+.btn-heard {
+  flex: 1;
+  background: #10B981;
+  color: white;
+  border: none;
+  padding: 15px 10px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: 'Nunito', sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.btn-not-heard {
+  flex: 1;
+  background: #1E293B;
+  color: #64748B;
+  border: 2px solid #334155;
+  padding: 15px 10px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: 'Nunito', sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+/* ── SCREEN 1: Welcome ── */
+.s1-header {
+  background: linear-gradient(180deg, #2563EB 0%, #1D4ED8 100%);
+  padding: 28px 20px 56px;
+  text-align: center;
+  color: white;
+  flex-shrink: 0;
+}
+
+.app-logo {
+  width: 72px;
+  height: 72px;
+  background: rgba(255,255,255,0.18);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 14px;
+  font-size: 30px;
+  color: white;
+}
+
+.app-name { font-size: 26px; font-weight: 900; letter-spacing: -0.5px; }
+.app-tagline { font-size: 12px; opacity: 0.8; margin-top: 3px; font-weight: 600; }
+
+.s1-card {
+  margin: -28px 16px 0;
+  background: white;
+  border-radius: 24px;
+  padding: 24px 20px;
+  box-shadow: 0 8px 32px rgba(37,99,235,0.14);
+  overflow-y: auto;
+  flex: 1;
+}
+
+.s1-card h2 { font-size: 17px; font-weight: 900; color: #1E3A5F; line-height: 1.3; margin-bottom: 14px; }
+
+.counters {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.counter-chip {
+  flex: 1;
+  background: #EFF6FF;
+  border-radius: 12px;
+  padding: 10px 8px;
+  text-align: center;
+}
+
+.counter-num { font-size: 17px; font-weight: 900; color: #2563EB; }
+.counter-label { font-size: 10px; color: #64748B; font-weight: 700; margin-top: 2px; }
+
+.feature-list { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+.feature-list li { display: flex; align-items: center; gap: 10px; font-size: 12px; color: #475569; font-weight: 700; }
+
+.feat-icon {
+  width: 34px; height: 34px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.fi-blue { background: #DBEAFE; color: #2563EB; }
+.fi-green { background: #D1FAE5; color: #059669; }
+.fi-purple { background: #EDE9FE; color: #7C3AED; }
+
+/* ── SCREEN 2: Instructions ── */
+.s2-header {
+  background: #2563EB;
+  padding: 16px 20px 18px;
+  color: white;
+  flex-shrink: 0;
+}
+.s2-header h2 { font-size: 17px; font-weight: 800; }
+.s2-header p { font-size: 11px; opacity: 0.8; margin-top: 2px; }
+
+.s2-body { padding: 16px; flex: 1; overflow-y: auto; background: #EFF6FF; }
+
+.duration-badge {
+  background: white;
+  border: 2px solid #BFDBFE;
+  border-radius: 12px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.duration-badge i { color: #2563EB; font-size: 18px; }
+.duration-main { font-size: 13px; font-weight: 800; color: #1E3A5F; }
+.duration-sub { font-size: 10px; color: #64748B; }
+
+.inst-step {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  background: white;
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+.step-num {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #2563EB, #0EA5E9);
+  color: white;
+  font-size: 16px;
+  font-weight: 900;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.step-txt h3 { font-size: 13px; font-weight: 800; color: #1E3A5F; }
+.step-txt p { font-size: 11px; color: #64748B; margin-top: 2px; line-height: 1.4; }
+
+/* ── SCREEN 3: Test ── */
+.s3 { background: #0F172A; }
+
+.s3-test-hdr {
+  background: #1E293B;
+  padding: 14px 20px;
+  flex-shrink: 0;
+}
+.s3-test-hdr h2 { color: white; font-size: 15px; font-weight: 800; }
+.s3-test-hdr p { color: #64748B; font-size: 10px; margin-top: 2px; }
+
+.freq-display {
+  padding: 20px 20px 12px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.freq-label { font-size: 10px; color: #475569; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+.freq-value { font-size: 44px; font-weight: 900; color: #0EA5E9; line-height: 1; margin: 4px 0; }
+.freq-unit { font-size: 14px; color: #475569; font-weight: 700; }
+
+.waveform-wrap {
+  margin: 0 16px 14px;
+  height: 72px;
+  background: #1E293B;
+  border-radius: 14px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+canvas { width: 100%; height: 100%; display: block; }
+
+.progress-wrap { padding: 0 20px 14px; flex-shrink: 0; }
+.progress-top {
+  display: flex;
+  justify-content: space-between;
+  color: #64748B;
+  font-size: 10px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.dots { display: flex; gap: 5px; }
+.dot {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: #334155;
+  transition: background 0.3s;
+}
+.dot.done { background: #0EA5E9; }
+.dot.cur { background: #38BDF8; animation: blink 1s ease-in-out infinite; }
+@keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+
+.listening-card {
+  margin: 0 16px 12px;
+  background: #1E293B;
+  border-radius: 14px;
+  padding: 14px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.ring {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  background: rgba(14,165,233,0.15);
+  border: 2px solid #0EA5E9;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 10px;
+  animation: rpulse 1.5s ease-in-out infinite;
+}
+@keyframes rpulse {
+  0%,100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(14,165,233,0.35); }
+  50% { transform: scale(1.06); box-shadow: 0 0 0 8px rgba(14,165,233,0); }
+}
+.ring i { color: #0EA5E9; font-size: 20px; }
+.l-text { color: #E2E8F0; font-size: 13px; font-weight: 800; }
+.l-sub { color: #64748B; font-size: 10px; margin-top: 2px; }
+
+.test-btn-label { color: #475569; font-size: 10px; font-weight: 700; text-align: center; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+.test-btns { display: flex; gap: 10px; padding: 0 16px 16px; flex-shrink: 0; }
+
+/* ── SCREEN 4: Results ── */
+.s4 { background: #EFF6FF; }
+
+.s4-header {
+  background: linear-gradient(135deg, #2563EB, #0EA5E9);
+  padding: 20px 20px 44px;
+  text-align: center;
+  color: white;
+  flex-shrink: 0;
+}
+.s4-title { font-size: 12px; font-weight: 700; opacity: 0.8; }
+.result-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(255,255,255,0.2);
+  border: 2px solid rgba(255,255,255,0.4);
+  border-radius: 100px;
+  padding: 7px 18px;
+  margin: 10px 0 4px;
+  font-size: 15px;
+  font-weight: 900;
+}
+.s4-sub { font-size: 11px; opacity: 0.75; }
+
+.result-card {
+  margin: -24px 14px 12px;
+  background: white;
+  border-radius: 20px;
+  padding: 18px;
+  box-shadow: 0 8px 28px rgba(37,99,235,0.12);
+}
+.result-card h3 { font-size: 10px; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 14px; }
+
+.freq-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.freq-lbl { width: 46px; font-size: 11px; font-weight: 700; color: #475569; }
+.bar-wrap { flex: 1; height: 7px; background: #F1F5F9; border-radius: 4px; overflow: hidden; }
+.bar { height: 100%; border-radius: 4px; }
+.b-green { background: #10B981; }
+.b-yellow { background: #F59E0B; }
+.b-orange { background: #F97316; }
+.b-red { background: #EF4444; }
+.freq-val { width: 44px; text-align: right; font-size: 10px; font-weight: 800; color: #64748B; }
+
+.rec-box {
+  margin: 0 14px 12px;
+  background: #FFFBEB;
+  border: 2px solid #FDE68A;
+  border-radius: 14px;
+  padding: 14px;
+}
+.rec-hdr { display: flex; align-items: center; gap: 7px; margin-bottom: 6px; }
+.rec-hdr i { color: #D97706; font-size: 16px; }
+.rec-hdr h4 { font-size: 13px; font-weight: 800; color: #92400E; }
+.rec-txt { font-size: 11px; color: #78350F; line-height: 1.5; }
+
+.s4-action { padding: 0 14px 16px; }
+.disclaimer { font-size: 9px; color: #94A3B8; text-align: center; margin-top: 8px; line-height: 1.4; }
+
+/* ── SCREEN 5: Lead Form ── */
+.s5 { background: #EFF6FF; }
+
+.s5-header {
+  background: #2563EB;
+  padding: 18px 20px;
+  color: white;
+  text-align: center;
+  flex-shrink: 0;
+}
+.s5-header h2 { font-size: 15px; font-weight: 800; }
+.s5-header p { font-size: 11px; opacity: 0.8; margin-top: 2px; }
+
+.s5-body { padding: 14px 16px; flex: 1; overflow-y: auto; }
+
+.result-preview {
+  background: white;
+  border: 2px solid #FDE68A;
+  border-radius: 12px;
+  padding: 11px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.rp-icon {
+  width: 38px; height: 38px;
+  background: #FEF3C7;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  color: #D97706;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+.rp-text h4 { font-size: 12px; font-weight: 800; color: #1E3A5F; }
+.rp-text p { font-size: 10px; color: #64748B; }
+
+.form-group { margin-bottom: 14px; }
+.form-lbl { font-size: 11px; font-weight: 800; color: #475569; margin-bottom: 5px; display: flex; align-items: center; gap: 5px; }
+.form-lbl i { color: #2563EB; font-size: 11px; }
+.form-input {
+  width: 100%;
+  padding: 11px 14px;
+  border: 2px solid #BFDBFE;
+  border-radius: 12px;
+  font-size: 13px;
+  font-family: 'Nunito', sans-serif;
+  background: white;
+  color: #1E3A5F;
+  font-weight: 700;
+  outline: none;
+}
+.form-input:focus { border-color: #2563EB; }
+
+.privacy { display: flex; align-items: flex-start; gap: 7px; font-size: 10px; color: #64748B; margin-bottom: 14px; line-height: 1.4; }
+.privacy i { color: #2563EB; margin-top: 1px; font-size: 11px; flex-shrink: 0; }
+
+/* ── SCREEN 6: Confirm ── */
+.s6 { background: linear-gradient(180deg, #2563EB 0%, #1D4ED8 45%, #EFF6FF 45%); align-items: center; }
+
+.s6-top { padding: 24px 20px; text-align: center; color: white; width: 100%; flex-shrink: 0; }
+.confirm-icon {
+  width: 76px; height: 76px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 14px;
+  font-size: 32px;
+  color: white;
+}
+.s6-top h2 { font-size: 20px; font-weight: 900; margin-bottom: 6px; }
+.s6-top p { font-size: 12px; opacity: 0.8; }
+
+.confirm-card {
+  margin: 0 16px;
+  background: white;
+  border-radius: 22px;
+  padding: 20px;
+  box-shadow: 0 8px 32px rgba(37,99,235,0.14);
+  width: calc(100% - 32px);
+}
+.c-step { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.c-step:last-child { margin-bottom: 0; }
+.c-icon {
+  width: 38px; height: 38px;
+  background: #DBEAFE;
+  color: #2563EB;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+.c-text h4 { font-size: 12px; font-weight: 800; color: #1E3A5F; }
+.c-text p { font-size: 10px; color: #64748B; }
+
+/* ── Sidebar ── */
+.sidebar {
+  color: white;
+  max-width: 260px;
+}
+
+.demo-tag {
+  font-size: 10px;
+  font-weight: 800;
+  opacity: 0.5;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-bottom: 22px;
+}
+
+.sidebar h3 {
+  font-size: 11px;
+  font-weight: 700;
+  opacity: 0.55;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 14px;
+}
+
+.screen-list { display: flex; flex-direction: column; gap: 7px; margin-bottom: 28px; }
+
+.sc-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0.5;
+  transition: opacity 0.3s;
+}
+.sc-item.on { opacity: 1; }
+.sc-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.25);
+  flex-shrink: 0;
+  transition: background 0.3s;
+}
+.sc-item.on .sc-dot { background: #0EA5E9; }
+
+.restart-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.25);
+  color: white;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: 'Nunito', sans-serif;
+  transition: background 0.2s;
+}
+.restart-btn:hover { background: rgba(255,255,255,0.22); }
+
+@media (max-width: 700px) {
+  .demo-wrapper { flex-direction: column; align-items: center; }
+  .sidebar { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="demo-wrapper">
+
+  <!-- Phone -->
+  <div class="phone-frame">
+    <div class="phone-notch"></div>
+    <div class="phone-screen">
+
+      <!-- SCREEN 1 — Welcome -->
+      <div class="screen active" id="s1">
+        <div class="status-bar blue">
+          <span>9:41</span>
+          <span><i class="fas fa-signal"></i>&nbsp;<i class="fas fa-wifi"></i>&nbsp;<i class="fas fa-battery-full"></i></span>
+        </div>
+        <div class="s1-header">
+          <div class="app-logo"><i class="fas fa-ear-listen"></i></div>
+          <div class="app-name">AudiScreen</div>
+          <div class="app-tagline">Triagem auditiva gratuita e rápida</div>
+        </div>
+        <div class="s1-card">
+          <h2>Descubra como está sua audição em 3 minutos</h2>
+          <div class="counters">
+            <div class="counter-chip">
+              <div class="counter-num">2.847</div>
+              <div class="counter-label">Triagens realizadas</div>
+            </div>
+            <div class="counter-chip">
+              <div class="counter-num">94%</div>
+              <div class="counter-label">Precisão validada</div>
+            </div>
+            <div class="counter-chip">
+              <div class="counter-num">5</div>
+              <div class="counter-label">Frequências testadas</div>
+            </div>
+          </div>
+          <ul class="feature-list">
+            <li><div class="feat-icon fi-blue"><i class="fas fa-headphones"></i></div> Protocolo de tons puros padronizado</li>
+            <li><div class="feat-icon fi-green"><i class="fas fa-chart-bar"></i></div> Resultado imediato por frequência</li>
+            <li><div class="feat-icon fi-purple"><i class="fas fa-user-doctor"></i></div> Encaminhamento gratuito se necessário</li>
+          </ul>
+          <button class="btn-primary" onclick="go(2)">
+            <i class="fas fa-play-circle"></i> Iniciar Triagem Gratuita
+          </button>
+        </div>
+      </div>
+
+      <!-- SCREEN 2 — Instructions -->
+      <div class="screen" id="s2">
+        <div class="status-bar blue">
+          <span>9:41</span>
+          <span><i class="fas fa-signal"></i>&nbsp;<i class="fas fa-wifi"></i>&nbsp;<i class="fas fa-battery-full"></i></span>
+        </div>
+        <div class="s2-header">
+          <h2>Antes de começar</h2>
+          <p>Siga as instruções para um resultado preciso</p>
+        </div>
+        <div class="s2-body">
+          <div class="duration-badge">
+            <i class="fas fa-clock"></i>
+            <div>
+              <div class="duration-main">Duração: aproximadamente 3 minutos</div>
+              <div class="duration-sub">5 frequências testadas em cada ouvido</div>
+            </div>
+          </div>
+          <div class="inst-step">
+            <div class="step-num">1</div>
+            <div class="step-txt">
+              <h3><i class="fas fa-headphones"></i>&nbsp; Use fones de ouvido</h3>
+              <p>Fones com fio ou Bluetooth. Evite caixinhas de som para maior precisão do resultado.</p>
+            </div>
+          </div>
+          <div class="inst-step">
+            <div class="step-num">2</div>
+            <div class="step-txt">
+              <h3><i class="fas fa-volume-xmark"></i>&nbsp; Ambiente silencioso</h3>
+              <p>Barulho externo compromete a leitura. Encontre um local tranquilo por 3 minutos.</p>
+            </div>
+          </div>
+          <div class="inst-step">
+            <div class="step-num">3</div>
+            <div class="step-txt">
+              <h3><i class="fas fa-hand-point-up"></i>&nbsp; Toque quando ouvir</h3>
+              <p>Por mais fraco que pareça o som. Responda a cada frequência.</p>
+            </div>
+          </div>
+          <button class="btn-primary" onclick="go(3); startTest()">
+            <i class="fas fa-check-circle"></i> Entendi — Começar Teste
+          </button>
+        </div>
+      </div>
+
+      <!-- SCREEN 3 — Test -->
+      <div class="screen s3" id="s3">
+        <div class="status-bar dark">
+          <span>9:41</span>
+          <span><i class="fas fa-signal"></i>&nbsp;<i class="fas fa-wifi"></i>&nbsp;<i class="fas fa-battery-full"></i></span>
+        </div>
+        <div class="s3-test-hdr">
+          <h2>Ouvido Esquerdo</h2>
+          <p>Etapa 1 de 2</p>
+        </div>
+
+        <div class="freq-display">
+          <div class="freq-label">Frequência atual</div>
+          <div class="freq-value" id="freqVal">1.000</div>
+          <div class="freq-unit">Hz</div>
+        </div>
+
+        <div class="waveform-wrap">
+          <canvas id="waveCanvas" width="328" height="72"></canvas>
+        </div>
+
+        <div class="progress-wrap">
+          <div class="progress-top">
+            <span>Progresso</span>
+            <span id="progLabel">1 / 5</span>
+          </div>
+          <div class="dots">
+            <div class="dot cur" id="d0"></div>
+            <div class="dot" id="d1"></div>
+            <div class="dot" id="d2"></div>
+            <div class="dot" id="d3"></div>
+            <div class="dot" id="d4"></div>
+          </div>
+        </div>
+
+        <div class="listening-card">
+          <div class="ring"><i class="fas fa-ear-listen"></i></div>
+          <div class="l-text">Reproduzindo tom...</div>
+          <div class="l-sub">Volume adaptado ao modelo do seu dispositivo</div>
+        </div>
+
+        <div class="test-btn-label">Ouvido esquerdo — responda para cada tom</div>
+        <div class="test-btns">
+          <button class="btn-heard" onclick="answer(true)">
+            <i class="fas fa-check"></i> Estou ouvindo
+          </button>
+          <button class="btn-not-heard" onclick="answer(false)">
+            <i class="fas fa-xmark"></i> Não ouvi
+          </button>
+        </div>
+      </div>
+
+      <!-- SCREEN 4 — Results -->
+      <div class="screen s4" id="s4">
+        <div class="status-bar blue">
+          <span>9:41</span>
+          <span><i class="fas fa-signal"></i>&nbsp;<i class="fas fa-wifi"></i>&nbsp;<i class="fas fa-battery-full"></i></span>
+        </div>
+        <div class="s4-header">
+          <div class="s4-title">Resultado da sua triagem</div>
+          <div class="result-badge">
+            <i class="fas fa-triangle-exclamation"></i> Atenção Necessária
+          </div>
+          <div class="s4-sub">Variação detectada nas frequências médias-altas</div>
+        </div>
+        <div style="flex:1;overflow-y:auto;padding-bottom:8px;">
+          <div class="result-card">
+            <h3>Desempenho por frequência</h3>
+            <div class="freq-row">
+              <div class="freq-lbl">500 Hz</div>
+              <div class="bar-wrap"><div class="bar b-green" style="width:88%"></div></div>
+              <div class="freq-val" style="color:#10B981">Normal</div>
+            </div>
+            <div class="freq-row">
+              <div class="freq-lbl">1 kHz</div>
+              <div class="bar-wrap"><div class="bar b-green" style="width:82%"></div></div>
+              <div class="freq-val" style="color:#10B981">Normal</div>
+            </div>
+            <div class="freq-row">
+              <div class="freq-lbl">2 kHz</div>
+              <div class="bar-wrap"><div class="bar b-yellow" style="width:56%"></div></div>
+              <div class="freq-val" style="color:#F59E0B">Atenção</div>
+            </div>
+            <div class="freq-row">
+              <div class="freq-lbl">4 kHz</div>
+              <div class="bar-wrap"><div class="bar b-orange" style="width:38%"></div></div>
+              <div class="freq-val" style="color:#F97316">Atenção</div>
+            </div>
+            <div class="freq-row">
+              <div class="freq-lbl">8 kHz</div>
+              <div class="bar-wrap"><div class="bar b-red" style="width:22%"></div></div>
+              <div class="freq-val" style="color:#EF4444">Baixo</div>
+            </div>
+          </div>
+
+          <div class="rec-box">
+            <div class="rec-hdr">
+              <i class="fas fa-triangle-exclamation"></i>
+              <h4>Recomendação clínica</h4>
+            </div>
+            <div class="rec-txt">
+              Sua triagem indica redução na percepção de sons agudos acima de 2 kHz. Isso é comum e tratável. Recomendamos avaliação com audiologista para diagnóstico preciso e encaminhamento adequado.
+            </div>
+          </div>
+
+          <div class="s4-action">
+            <button class="btn-primary" onclick="go(5)">
+              <i class="fas fa-user-doctor"></i> Receber Avaliação Gratuita
+            </button>
+            <p class="disclaimer">Resultado orientativo. Não substitui avaliação clínica profissional.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- SCREEN 5 — Lead Form -->
+      <div class="screen s5" id="s5">
+        <div class="status-bar blue">
+          <span>9:41</span>
+          <span><i class="fas fa-signal"></i>&nbsp;<i class="fas fa-wifi"></i>&nbsp;<i class="fas fa-battery-full"></i></span>
+        </div>
+        <div class="s5-header">
+          <h2>Avaliação profissional gratuita</h2>
+          <p>Um audiologista parceiro entrará em contato</p>
+        </div>
+        <div class="s5-body">
+          <div class="result-preview">
+            <div class="rp-icon"><i class="fas fa-triangle-exclamation"></i></div>
+            <div class="rp-text">
+              <h4>Resultado: Atenção Necessária</h4>
+              <p>Variação detectada em 2 kHz — 8 kHz</p>
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="form-lbl"><i class="fas fa-user"></i> Nome completo</div>
+            <input class="form-input" type="text" value="Maria Santos">
+          </div>
+          <div class="form-group">
+            <div class="form-lbl"><i class="fas fa-phone"></i> Telefone / WhatsApp</div>
+            <input class="form-input" type="tel" value="(11) 98765-4321">
+          </div>
+          <div class="form-group">
+            <div class="form-lbl"><i class="fas fa-envelope"></i> E-mail</div>
+            <input class="form-input" type="email" value="maria@email.com">
+          </div>
+          <div class="privacy">
+            <i class="fas fa-lock"></i>
+            Seus dados são protegidos. Usados apenas para o contato com o especialista.
+          </div>
+          <button class="btn-primary" onclick="go(6)">
+            <i class="fas fa-paper-plane"></i> Enviar e Receber Contato
+          </button>
+        </div>
+      </div>
+
+      <!-- SCREEN 6 — Confirm -->
+      <div class="screen s6" id="s6">
+        <div class="status-bar blue">
+          <span>9:41</span>
+          <span><i class="fas fa-signal"></i>&nbsp;<i class="fas fa-wifi"></i>&nbsp;<i class="fas fa-battery-full"></i></span>
+        </div>
+        <div class="s6-top">
+          <div class="confirm-icon"><i class="fas fa-check"></i></div>
+          <h2>Lead registrado com sucesso</h2>
+          <p>Um especialista entrará em contato em até 24 horas</p>
+        </div>
+        <div class="confirm-card">
+          <div class="c-step">
+            <div class="c-icon"><i class="fas fa-database"></i></div>
+            <div class="c-text">
+              <h4>Dados salvos no painel</h4>
+              <p>Resultado completo disponível no dashboard do gestor</p>
+            </div>
+          </div>
+          <div class="c-step">
+            <div class="c-icon"><i class="fab fa-whatsapp"></i></div>
+            <div class="c-text">
+              <h4>Notificação enviada</h4>
+              <p>Equipe parceira recebeu o lead qualificado por WhatsApp</p>
+            </div>
+          </div>
+          <div class="c-step">
+            <div class="c-icon"><i class="fas fa-calendar-check"></i></div>
+            <div class="c-text">
+              <h4>Agendamento em andamento</h4>
+              <p>Consulta será confirmada via WhatsApp em breve</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end phone-screen -->
+  </div><!-- end phone-frame -->
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="demo-tag">Protótipo interativo</div>
+    <h3>Fluxo de telas</h3>
+    <div class="screen-list" id="scList">
+      <div class="sc-item on" id="si1"><div class="sc-dot"></div> Boas-vindas</div>
+      <div class="sc-item" id="si2"><div class="sc-dot"></div> Instruções de uso</div>
+      <div class="sc-item" id="si3"><div class="sc-dot"></div> Teste auditivo (5 Hz)</div>
+      <div class="sc-item" id="si4"><div class="sc-dot"></div> Resultado por frequência</div>
+      <div class="sc-item" id="si5"><div class="sc-dot"></div> Captação de lead</div>
+      <div class="sc-item" id="si6"><div class="sc-dot"></div> Confirmação</div>
+    </div>
+    <button class="restart-btn" onclick="restart()">
+      <i class="fas fa-rotate-left"></i> Reiniciar demonstração
+    </button>
+  </div>
+
+</div><!-- end demo-wrapper -->
+
+<script>
+  var cur = 1;
+  var freqIdx = 0;
+  var freqs = [500, 1000, 2000, 4000, 8000];
+  var freqLabels = ['500', '1.000', '2.000', '4.000', '8.000'];
+  var animId;
+  var phase = 0;
+
+  function go(n) {
+    document.getElementById('s' + cur).classList.remove('active');
+    document.getElementById('si' + cur).classList.remove('on');
+    cur = n;
+    document.getElementById('s' + cur).classList.add('active');
+    document.getElementById('si' + cur).classList.add('on');
+  }
+
+  function startTest() {
+    freqIdx = 0;
+    updateTest();
+    cancelAnimationFrame(animId);
+    drawWave();
+  }
+
+  function updateTest() {
+    document.getElementById('freqVal').textContent = freqLabels[freqIdx];
+    document.getElementById('progLabel').textContent = (freqIdx + 1) + ' / 5';
+    for (var i = 0; i < 5; i++) {
+      var d = document.getElementById('d' + i);
+      d.className = 'dot';
+      if (i < freqIdx) d.classList.add('done');
+      else if (i === freqIdx) d.classList.add('cur');
+    }
+  }
+
+  function answer(heard) {
+    freqIdx++;
+    if (freqIdx >= 5) {
+      cancelAnimationFrame(animId);
+      go(4);
+    } else {
+      updateTest();
+    }
+  }
+
+  function drawWave() {
+    var canvas = document.getElementById('waveCanvas');
+    var ctx = canvas.getContext('2d');
+    canvas.width = canvas.offsetWidth || 328;
+    canvas.height = canvas.offsetHeight || 72;
+
+    function frame() {
+      var w = canvas.width;
+      var h = canvas.height;
+      var freq = freqs[freqIdx] || 1000;
+      var cycles = Math.max(2, Math.min(freq / 180, 9));
+
+      ctx.clearRect(0, 0, w, h);
+
+      // main wave
+      ctx.strokeStyle = '#0EA5E9';
+      ctx.lineWidth = 2.5;
+      ctx.shadowColor = '#0EA5E9';
+      ctx.shadowBlur = 10;
+      ctx.beginPath();
+      for (var x = 0; x < w; x++) {
+        var t = (x / w) * cycles * Math.PI * 2 + phase;
+        var amp = 24 * Math.sin(x / w * Math.PI);
+        var y = h / 2 + Math.sin(t) * amp;
+        if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      // secondary wave
+      ctx.strokeStyle = 'rgba(14,165,233,0.3)';
+      ctx.lineWidth = 1.5;
+      ctx.shadowBlur = 4;
+      ctx.beginPath();
+      for (var x = 0; x < w; x++) {
+        var t = (x / w) * cycles * Math.PI * 2 + phase + 0.6;
+        var amp = 14 * Math.sin(x / w * Math.PI);
+        var y = h / 2 + Math.sin(t) * amp;
+        if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      phase += 0.07;
+      animId = requestAnimationFrame(frame);
+    }
+    frame();
+  }
+
+  function restart() {
+    cancelAnimationFrame(animId);
+    freqIdx = 0;
+    for (var i = 1; i <= 6; i++) {
+      document.getElementById('s' + i).classList.remove('active');
+      document.getElementById('si' + i).classList.remove('on');
+    }
+    cur = 1;
+    document.getElementById('s1').classList.add('active');
+    document.getElementById('si1').classList.add('on');
+  }
+</script>
+
+</body>
+</html>
