@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GestControl — Sistema de Gestão de Clientes</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: #0f172a;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .app-window {
+            width: 1100px;
+            max-width: 100%;
+            height: 700px;
+            background: #f1f5f9;
+            border-radius: 14px;
+            box-shadow: 0 40px 120px rgba(0,0,0,0.6);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Title bar */
+        .title-bar {
+            background: #1e2235;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        .dot { width: 12px; height: 12px; border-radius: 50%; }
+        .dot-red { background: #ff5f57; }
+        .dot-yellow { background: #febc2e; }
+        .dot-green { background: #28c840; }
+        .title-bar-text {
+            flex: 1; text-align: center; color: #64748b;
+            font-size: 13px; font-weight: 500;
+        }
+
+        /* Layout */
+        .app-body { display: flex; flex: 1; overflow: hidden; }
+
+        /* Sidebar */
+        .sidebar {
+            width: 220px;
+            background: #1e2235;
+            display: flex;
+            flex-direction: column;
+            padding: 20px 0;
+            flex-shrink: 0;
+        }
+        .sidebar-logo {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            margin-bottom: 16px;
+        }
+        .sidebar-logo-name { font-size: 19px; font-weight: 900; color: #fff; }
+        .sidebar-logo-name span { color: #6366f1; }
+        .sidebar-logo-sub { font-size: 11px; color: #475569; margin-top: 3px; }
+
+        .nav-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 12px 20px;
+            color: #94a3b8; font-size: 14px; font-weight: 600;
+            cursor: pointer; transition: all 0.2s;
+            border-left: 3px solid transparent;
+            user-select: none;
+        }
+        .nav-item:hover { background: rgba(255,255,255,0.05); color: #cbd5e1; }
+        .nav-item.active {
+            background: rgba(99,102,241,0.14);
+            color: #818cf8;
+            border-left-color: #6366f1;
+        }
+        .nav-item i { width: 18px; text-align: center; font-size: 14px; }
+        .nav-badge {
+            margin-left: auto;
+            background: #6366f1;
+            color: white;
+            font-size: 11px; font-weight: 800;
+            padding: 2px 8px;
+            border-radius: 20px;
+            min-width: 24px;
+            text-align: center;
+        }
+        .sidebar-footer {
+            margin-top: auto;
+            padding: 16px 20px;
+            border-top: 1px solid rgba(255,255,255,0.06);
+        }
+        .sidebar-footer div { font-size: 11px; color: #334155; margin-top: 3px; }
+        .sidebar-footer div:first-child { color: #475569; }
+
+        /* Content */
+        .content { flex: 1; overflow-y: auto; padding: 28px; }
+
+        /* Screens */
+        .screen { display: none; }
+        .screen.active { display: block; }
+
+        /* Header */
+        .screen-header { margin-bottom: 24px; }
+        .screen-title { font-size: 22px; font-weight: 900; color: #1e293b; }
+        .screen-subtitle { font-size: 13px; color: #64748b; margin-top: 4px; }
+
+        /* Occupancy hero */
+        .occ-hero {
+            background: linear-gradient(135deg, #1e2235 0%, #312e81 100%);
+            border-radius: 14px;
+            padding: 22px 28px;
+            display: flex;
+            align-items: center;
+            gap: 28px;
+            margin-bottom: 20px;
+            color: white;
+        }
+        .occ-number { font-size: 52px; font-weight: 900; line-height: 1; }
+        .occ-label { font-size: 13px; opacity: 0.65; margin-top: 4px; }
+        .occ-bar-wrap { flex: 1; }
+        .occ-bar-meta { display: flex; justify-content: space-between; font-size: 12px; opacity: 0.75; margin-bottom: 8px; }
+        .occ-bar { height: 8px; background: rgba(255,255,255,0.12); border-radius: 4px; overflow: hidden; }
+        .occ-fill { height: 100%; background: #818cf8; border-radius: 4px; transition: width 0.6s ease; }
+        .occ-cap { font-size: 11px; opacity: 0.5; margin-top: 6px; }
+
+        /* Stats */
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+        .stat-card { background: white; border-radius: 12px; padding: 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+        .stat-icon {
+            width: 38px; height: 38px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 15px; margin-bottom: 10px;
+        }
+        .si-blue { background: #eff6ff; color: #3b82f6; }
+        .si-green { background: #f0fdf4; color: #22c55e; }
+        .si-purple { background: #faf5ff; color: #a855f7; }
+        .si-red { background: #fef2f2; color: #ef4444; }
+        .stat-value { font-size: 26px; font-weight: 900; color: #1e293b; }
+        .stat-label { font-size: 12px; color: #64748b; margin-top: 2px; }
+
+        /* Card */
+        .card { background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); overflow: hidden; }
+        .card-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #f1f5f9;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .card-title { font-size: 15px; font-weight: 700; color: #1e293b; }
+
+        /* Table */
+        table { width: 100%; border-collapse: collapse; }
+        th {
+            padding: 11px 20px;
+            text-align: left;
+            font-size: 11px; font-weight: 800;
+            color: #94a3b8;
+            text-transform: uppercase; letter-spacing: 0.06em;
+            background: #f8fafc;
+        }
+        td {
+            padding: 13px 20px;
+            font-size: 14px; color: #334155;
+            border-bottom: 1px solid #f8fafc;
+        }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: #fafafa; }
+
+        /* Badges */
+        .badge {
+            padding: 3px 10px; border-radius: 20px;
+            font-size: 12px; font-weight: 700;
+            display: inline-flex; align-items: center; gap: 5px;
+        }
+        .badge-green { background: #dcfce7; color: #16a34a; }
+        .badge-red { background: #fee2e2; color: #dc2626; }
+        .badge-blue { background: #dbeafe; color: #2563eb; }
+        .badge-yellow { background: #fef9c3; color: #a16207; }
+
+        /* Activity */
+        .activity-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 11px 20px;
+            border-bottom: 1px solid #f8fafc;
+            font-size: 13px; color: #374151;
+        }
+        .activity-item:last-child { border-bottom: none; }
+        .adot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+        .adot-green { background: #22c55e; }
+        .adot-red { background: #ef4444; }
+        .adot-blue { background: #3b82f6; }
+        .activity-time { margin-left: auto; font-size: 12px; color: #94a3b8; flex-shrink: 0; }
+
+        /* Search */
+        .search-card { background: white; border-radius: 12px; padding: 22px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); margin-bottom: 14px; }
+        .search-row { display: flex; gap: 10px; align-items: center; }
+        .search-input {
+            flex: 1; padding: 12px 16px;
+            border: 2px solid #e2e8f0; border-radius: 10px;
+            font-family: 'Nunito', sans-serif; font-size: 15px; color: #1e293b;
+            outline: none; transition: border-color 0.2s;
+        }
+        .search-input:focus { border-color: #6366f1; }
+        .search-label { font-size: 14px; font-weight: 700; color: #374151; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+        .search-label i { color: #6366f1; }
+
+        /* Buttons */
+        .btn {
+            padding: 11px 22px; border: none; border-radius: 10px;
+            font-family: 'Nunito', sans-serif; font-size: 14px; font-weight: 700;
+            cursor: pointer; transition: all 0.2s;
+            display: inline-flex; align-items: center; gap: 8px;
+        }
+        .btn-primary { background: #6366f1; color: white; }
+        .btn-primary:hover { background: #4f46e5; }
+        .btn-success { background: #22c55e; color: white; }
+        .btn-success:hover { background: #16a34a; }
+        .btn-ghost { background: #f1f5f9; color: #64748b; }
+        .btn-ghost:hover { background: #e2e8f0; }
+
+        /* Duplicate warning */
+        .dup-warn {
+            background: #fefce8; border: 1.5px solid #fde047;
+            border-radius: 10px; padding: 12px 16px;
+            display: flex; gap: 12px; align-items: flex-start;
+            margin-bottom: 12px;
+            animation: fadeIn 0.3s ease;
+        }
+        .dup-warn i { color: #ca8a04; margin-top: 1px; font-size: 15px; }
+        .dup-warn-text { font-size: 13px; color: #713f12; line-height: 1.55; }
+
+        /* Client cards */
+        .client-results { display: flex; flex-direction: column; gap: 10px; }
+        .client-card {
+            background: white; border-radius: 12px; padding: 15px 18px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            display: flex; align-items: center; gap: 14px;
+            cursor: pointer; transition: all 0.2s;
+            border: 2px solid transparent;
+            animation: fadeInUp 0.25s ease forwards;
+        }
+        .client-card:hover { border-color: #6366f1; box-shadow: 0 4px 16px rgba(99,102,241,0.18); transform: translateY(-1px); }
+        .avatar {
+            width: 44px; height: 44px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; font-weight: 800; color: white; flex-shrink: 0;
+        }
+        .av-blue { background: #3b82f6; }
+        .av-purple { background: #7c3aed; }
+        .av-green { background: #059669; }
+        .av-orange { background: #ea580c; }
+        .client-info { flex: 1; }
+        .client-name { font-size: 15px; font-weight: 700; color: #1e293b; }
+        .client-meta { font-size: 12px; color: #64748b; margin-top: 2px; }
+        .minor-tag { color: #dc2626; font-weight: 700; }
+
+        /* Access screens */
+        .access-screen {
+            border-radius: 16px; padding: 44px 36px;
+            text-align: center; display: none;
+            animation: fadeInUp 0.3s ease;
+        }
+        .access-screen.show { display: block; }
+        .access-granted { background: linear-gradient(135deg, #f0fdf4, #dcfce7); border: 2px solid #86efac; }
+        .access-denied { background: linear-gradient(135deg, #fef2f2, #fee2e2); border: 2px solid #fca5a5; }
+        .access-icon { font-size: 60px; margin-bottom: 18px; }
+        .access-icon.green { color: #15803d; }
+        .access-icon.red { color: #b91c1c; }
+        .access-title { font-size: 28px; font-weight: 900; margin-bottom: 10px; }
+        .access-title.green { color: #15803d; }
+        .access-title.red { color: #b91c1c; }
+        .access-person { font-size: 18px; font-weight: 700; color: #334155; margin-bottom: 4px; }
+        .access-detail { font-size: 14px; color: #64748b; }
+        .access-actions { margin-top: 26px; display: flex; gap: 12px; justify-content: center; }
+
+        /* Form */
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-label { font-size: 13px; font-weight: 700; color: #374151; }
+        .form-input {
+            padding: 10px 14px; border: 2px solid #e2e8f0; border-radius: 8px;
+            font-family: 'Nunito', sans-serif; font-size: 14px; color: #1e293b;
+            outline: none; transition: border-color 0.2s;
+        }
+        .form-input:focus { border-color: #6366f1; }
+        .form-info {
+            background: #eff6ff; border: 1px solid #bfdbfe;
+            border-radius: 8px; padding: 12px 16px;
+            font-size: 13px; color: #1e40af;
+            display: flex; gap: 10px; align-items: flex-start;
+            margin-top: 4px;
+        }
+
+        /* Exit action button */
+        .exit-btn {
+            padding: 6px 14px; border: none; border-radius: 6px;
+            font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 700;
+            cursor: pointer; transition: all 0.2s;
+            background: #fee2e2; color: #dc2626;
+            display: inline-flex; align-items: center; gap: 6px;
+        }
+        .exit-btn:hover { background: #fca5a5; }
+
+        /* Visits bar */
+        .vbar-wrap { display: flex; align-items: center; gap: 8px; }
+        .vbar-bg { flex: 1; height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden; }
+        .vbar-fill { height: 100%; background: #6366f1; border-radius: 3px; }
+        .vbar-num { font-size: 12px; font-weight: 800; color: #6366f1; width: 26px; text-align: right; }
+
+        /* Hidden */
+        .hidden { display: none; }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(14px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Scrollbar */
+        .content::-webkit-scrollbar { width: 6px; }
+        .content::-webkit-scrollbar-track { background: transparent; }
+        .content::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    </style>
+</head>
+<body>
+<div class="app-window">
+
+    <!-- Title bar -->
+    <div class="title-bar">
+        <div class="dot dot-red"></div>
+        <div class="dot dot-yellow"></div>
+        <div class="dot dot-green"></div>
+        <span class="title-bar-text">GestControl — Sistema de Gestão de Clientes v1.0</span>
+    </div>
+
+    <div class="app-body">
+
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-logo">
+                <div class="sidebar-logo-name">Gest<span>Control</span></div>
+                <div class="sidebar-logo-sub">Controle de Acesso</div>
+            </div>
+
+            <div class="nav-item active" data-screen="dashboard" onclick="goTo(this)">
+                <i class="fa-solid fa-gauge-high"></i><span>Dashboard</span>
+            </div>
+            <div class="nav-item" data-screen="entrada" onclick="goTo(this)">
+                <i class="fa-solid fa-right-to-bracket"></i><span>Nova Entrada</span>
+            </div>
+            <div class="nav-item" data-screen="cadastro" onclick="goTo(this)">
+                <i class="fa-solid fa-user-plus"></i><span>Cadastrar Cliente</span>
+            </div>
+            <div class="nav-item" data-screen="saida" onclick="goTo(this)">
+                <i class="fa-solid fa-right-from-bracket"></i><span>Registrar Saída</span>
+                <span class="nav-badge" id="inside-badge">3</span>
+            </div>
+            <div class="nav-item" data-screen="historico" onclick="goTo(this)">
+                <i class="fa-solid fa-clock-rotate-left"></i><span>Histórico</span>
+            </div>
+
+            <div class="sidebar-footer">
+                <div>SQL Server 2022 · C# WPF</div>
+                <div>Windows 11 Compatible</div>
+                <div>v1.0.0-demo</div>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+
+            <!-- ======== DASHBOARD ======== -->
+            <div class="screen active" id="screen-dashboard">
+                <div class="screen-header">
+                    <div class="screen-title">Dashboard</div>
+                    <div class="screen-subtitle">Visão geral do estabelecimento em tempo real</div>
+                </div>
+
+                <div class="occ-hero">
+                    <div>
+                        <div class="occ-number" id="occ-num">3</div>
+                        <div class="occ-label">pessoas dentro agora</div>
+                    </div>
+                    <div class="occ-bar-wrap">
+                        <div class="occ-bar-meta">
+                            <span>Ocupação atual</span>
+                            <span id="occ-pct">30% da capacidade</span>
+                        </div>
+                        <div class="occ-bar">
+                            <div class="occ-fill" id="occ-fill" style="width:30%"></div>
+                        </div>
+                        <div class="occ-cap">Capacidade máxima configurável — ex: 10 pessoas</div>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon si-blue"><i class="fa-solid fa-users"></i></div>
+                        <div class="stat-value">7</div>
+                        <div class="stat-label">Clientes Cadastrados</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon si-green"><i class="fa-solid fa-door-open"></i></div>
+                        <div class="stat-value" id="entries-count">5</div>
+                        <div class="stat-label">Entradas Hoje</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon si-purple"><i class="fa-solid fa-arrow-right-from-bracket"></i></div>
+                        <div class="stat-value" id="exits-count">2</div>
+                        <div class="stat-label">Saídas Hoje</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon si-red"><i class="fa-solid fa-ban"></i></div>
+                        <div class="stat-value" id="blocked-count">0</div>
+                        <div class="stat-label">Menores Bloqueados</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">Atividade Recente</span>
+                    </div>
+                    <div id="activity-feed">
+                        <div class="activity-item">
+                            <div class="adot adot-green"></div>
+                            <div><strong>Ana Lima</strong> registrou entrada</div>
+                            <div class="activity-time">14:32</div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="adot adot-green"></div>
+                            <div><strong>Carlos Ferreira</strong> registrou entrada</div>
+                            <div class="activity-time">14:18</div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="adot adot-red"></div>
+                            <div><strong>Maria Santos</strong> registrou saída</div>
+                            <div class="activity-time">13:55</div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="adot adot-green"></div>
+                            <div><strong>Maria Santos</strong> registrou entrada</div>
+                            <div class="activity-time">12:10</div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="adot adot-blue"></div>
+                            <div><strong>Rafael Costa</strong> cadastrado como novo cliente</div>
+                            <div class="activity-time">11:45</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ======== NOVA ENTRADA ======== -->
+            <div class="screen" id="screen-entrada">
+                <div class="screen-header">
+                    <div class="screen-title">Nova Entrada</div>
+                    <div class="screen-subtitle">Busque o cliente pelo nome para registrar a entrada</div>
+                </div>
+
+                <div class="search-card" id="search-area">
+                    <div class="search-label"><i class="fa-solid fa-magnifying-glass"></i>Nome do Cliente</div>
+                    <div class="search-row">
+                        <input type="text" class="search-input" id="search-input"
+                            placeholder="Digite o nome..." oninput="doSearch(this.value)">
+                        <button class="btn btn-ghost" onclick="clearSearch()">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="results-area" class="hidden">
+                    <div id="dup-warn" class="dup-warn hidden">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        <div class="dup-warn-text">
+                            <strong>Atenção: 2 clientes com o mesmo nome encontrados.</strong><br>
+                            Selecione pelo sobrenome e ano de nascimento para garantir o acesso correto. Este é o motivo de usarmos chave composta.
+                        </div>
+                    </div>
+                    <div class="client-results" id="results-list"></div>
+                </div>
+
+                <!-- Access granted -->
+                <div class="access-screen access-granted" id="granted-screen">
+                    <div class="access-icon green"><i class="fa-solid fa-circle-check"></i></div>
+                    <div class="access-title green">ACESSO LIBERADO</div>
+                    <div class="access-person" id="granted-name"></div>
+                    <div class="access-detail" id="granted-detail"></div>
+                    <div class="access-actions">
+                        <button class="btn btn-success" onclick="confirmEntry()">
+                            <i class="fa-solid fa-check"></i> Confirmar Entrada
+                        </button>
+                        <button class="btn btn-ghost" onclick="backToSearch()">
+                            <i class="fa-solid fa-arrow-left"></i> Voltar
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Access denied -->
+                <div class="access-screen access-denied" id="denied-screen">
+                    <div class="access-icon red"><i class="fa-solid fa-circle-xmark"></i></div>
+                    <div class="access-title red">ACESSO NEGADO</div>
+                    <div class="access-person" id="denied-name"></div>
+                    <div class="access-detail" id="denied-detail">Menor de 18 anos — entrada não permitida pelo sistema.</div>
+                    <div class="access-actions">
+                        <button class="btn btn-ghost" onclick="backToSearch()">
+                            <i class="fa-solid fa-arrow-left"></i> Nova Busca
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Entry registered -->
+                <div class="access-screen access-granted" id="entry-ok-screen">
+                    <div class="access-icon green"><i class="fa-solid fa-door-open"></i></div>
+                    <div class="access-title green">ENTRADA REGISTRADA</div>
+                    <div class="access-person" id="entry-ok-name"></div>
+                    <div class="access-detail">Entrada registrada com sucesso. Horário salvo no banco de dados.</div>
+                    <div class="access-actions">
+                        <button class="btn btn-primary" onclick="newEntry()">
+                            <i class="fa-solid fa-plus"></i> Nova Entrada
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ======== CADASTRAR CLIENTE ======== -->
+            <div class="screen" id="screen-cadastro">
+                <div class="screen-header">
+                    <div class="screen-title">Cadastrar Cliente</div>
+                    <div class="screen-subtitle">Adicione um novo cliente ao sistema</div>
+                </div>
+
+                <div class="search-card">
+                    <div class="form-grid" style="margin-bottom:16px;">
+                        <div class="form-group">
+                            <label class="form-label">Nome *</label>
+                            <input type="text" class="form-input" placeholder="Ex: João">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Sobrenome *</label>
+                            <input type="text" class="form-input" placeholder="Ex: Silva">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Data de Nascimento *</label>
+                            <input type="date" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Telefone (opcional)</label>
+                            <input type="text" class="form-input" placeholder="Ex: (11) 99999-9999">
+                        </div>
+                    </div>
+                    <div class="form-info" style="margin-bottom:16px;">
+                        <i class="fa-solid fa-shield-halved" style="color:#3b82f6;margin-top:1px;flex-shrink:0;"></i>
+                        <span>A data de nascimento é usada para verificação automática de menores de 18 anos a cada entrada. O sistema calcula a idade em tempo real com base na data atual.</span>
+                    </div>
+                    <button class="btn btn-primary" onclick="showCadastroOk()">
+                        <i class="fa-solid fa-user-plus"></i> Cadastrar Cliente
+                    </button>
+                </div>
+
+                <div id="cadastro-ok" class="hidden" style="margin-top:14px;">
+                    <div class="card" style="padding:20px;display:flex;align-items:center;gap:14px;">
+                        <div style="width:40px;height:40px;background:#dcfce7;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#16a34a;font-size:18px;flex-shrink:0;">
+                            <i class="fa-solid fa-check"></i>
+                        </div>
+                        <div>
+                            <div style="font-weight:700;color:#1e293b;">Cliente cadastrado com sucesso</div>
+                            <div style="font-size:13px;color:#64748b;margin-top:2px;">Dados salvos no SQL Server. Disponível imediatamente para controle de acesso.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ======== REGISTRAR SAÍDA ======== -->
+            <div class="screen" id="screen-saida">
+                <div class="screen-header">
+                    <div class="screen-title">Registrar Saída</div>
+                    <div class="screen-subtitle">Clientes atualmente dentro do estabelecimento</div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">Dentro Agora</span>
+                        <span class="badge badge-blue" id="inside-badge-count">3 pessoas</span>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Cliente</th>
+                                <th>Entrada</th>
+                                <th>Tempo Dentro</th>
+                                <th>Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inside-table">
+                            <tr data-name="Maria Santos">
+                                <td><strong>Maria Santos</strong></td>
+                                <td>12:10</td>
+                                <td>2h 24min</td>
+                                <td><button class="exit-btn" onclick="doExit(this)"><i class="fa-solid fa-right-from-bracket"></i> Saída</button></td>
+                            </tr>
+                            <tr data-name="Carlos Ferreira">
+                                <td><strong>Carlos Ferreira</strong></td>
+                                <td>14:18</td>
+                                <td>16min</td>
+                                <td><button class="exit-btn" onclick="doExit(this)"><i class="fa-solid fa-right-from-bracket"></i> Saída</button></td>
+                            </tr>
+                            <tr data-name="Ana Lima">
+                                <td><strong>Ana Lima</strong></td>
+                                <td>14:32</td>
+                                <td>02min</td>
+                                <td><button class="exit-btn" onclick="doExit(this)"><i class="fa-solid fa-right-from-bracket"></i> Saída</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div id="empty-state" class="hidden" style="padding:32px;text-align:center;color:#94a3b8;">
+                        <i class="fa-solid fa-circle-check" style="font-size:32px;color:#22c55e;margin-bottom:10px;display:block;"></i>
+                        <div style="font-weight:600;color:#374151;">Nenhum cliente dentro</div>
+                        <div style="font-size:13px;margin-top:4px;">Todos que entraram já registraram saída.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ======== HISTÓRICO ======== -->
+            <div class="screen" id="screen-historico">
+                <div class="screen-header">
+                    <div class="screen-title">Histórico de Frequência</div>
+                    <div class="screen-subtitle">Registro de visitas por cliente</div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">Frequência de Visitas</span>
+                        <button class="btn btn-ghost" style="padding:8px 16px;font-size:12px;">
+                            <i class="fa-solid fa-filter"></i> Filtrar
+                        </button>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Cliente</th>
+                                <th>Última Visita</th>
+                                <th>Total de Visitas</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <div style="font-weight:700;">Carlos Ferreira</div>
+                                    <div style="font-size:12px;color:#64748b;">Nascido em 1988 · 37 anos</div>
+                                </td>
+                                <td>Hoje</td>
+                                <td>
+                                    <div class="vbar-wrap">
+                                        <div class="vbar-bg"><div class="vbar-fill" style="width:92%"></div></div>
+                                        <div class="vbar-num">23</div>
+                                    </div>
+                                </td>
+                                <td><span class="badge badge-green">Ativo</span></td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div style="font-weight:700;">Ana Lima</div>
+                                    <div style="font-size:12px;color:#64748b;">Nascida em 1999 · 26 anos</div>
+                                </td>
+                                <td>Hoje</td>
+                                <td>
+                                    <div class="vbar-wrap">
+                                        <div class="vbar-bg"><div class="vbar-fill" style="width:60%"></div></div>
+                                        <div class="vbar-num">15</div>
+                                    </div>
+                                </td>
+                                <td><span class="badge badge-green">Ativo</span></td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div style="font-weight:700;">Maria Santos</div>
+                                    <div style="font-size:12px;color:#64748b;">Nascida em 2001 · 24 anos</div>
+                                </td>
+                                <td>Hoje</td>
+                                <td>
+                                    <div class="vbar-wrap">
+                                        <div class="vbar-bg"><div class="vbar-fill" style="width:28%"></div></div>
+                                        <div class="vbar-num">7</div>
+                                    </div>
+                                </td>
+                                <td><span class="badge badge-green">Ativo</span></td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div style="font-weight:700;">João Silva</div>
+                                    <div style="font-size:12px;color:#64748b;">Nascido em <strong>1996</strong> · 29 anos</div>
+                                </td>
+                                <td>23/06/2026</td>
+                                <td>
+                                    <div class="vbar-wrap">
+                                        <div class="vbar-bg"><div class="vbar-fill" style="width:48%"></div></div>
+                                        <div class="vbar-num">12</div>
+                                    </div>
+                                </td>
+                                <td><span class="badge badge-blue">Regular</span></td>
+                            </tr>
+                            <tr style="background:#fef2f2;">
+                                <td>
+                                    <div style="font-weight:700;">João Silva</div>
+                                    <div style="font-size:12px;color:#dc2626;font-weight:600;">Nascido em <strong>2007</strong> · 18 anos — mesmo nome, pessoa diferente</div>
+                                </td>
+                                <td>20/06/2026</td>
+                                <td>
+                                    <div class="vbar-wrap">
+                                        <div class="vbar-bg"><div class="vbar-fill" style="width:16%;background:#ef4444;"></div></div>
+                                        <div class="vbar-num" style="color:#ef4444;">4</div>
+                                    </div>
+                                </td>
+                                <td><span class="badge badge-red"><i class="fa-solid fa-ban"></i> Bloqueado</span></td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div style="font-weight:700;">Rafael Costa</div>
+                                    <div style="font-size:12px;color:#64748b;">Nascido em 1993 · 32 anos</div>
+                                </td>
+                                <td>22/06/2026</td>
+                                <td>
+                                    <div class="vbar-wrap">
+                                        <div class="vbar-bg"><div class="vbar-fill" style="width:12%"></div></div>
+                                        <div class="vbar-num">3</div>
+                                    </div>
+                                </td>
+                                <td><span class="badge badge-yellow">Novo</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div><!-- /content -->
+    </div><!-- /app-body -->
+</div><!-- /app-window -->
+
+<script>
+    // ---- State ----
+    var insideCount = 3;
+    var entriesCount = 5;
+    var exitsCount = 2;
+    var blockedCount = 0;
+    var selectedClient = null;
+
+    var clients = [
+        { id:1, nome:"João",    sob:"Silva",    dobYear:1996, age:29, minor:false, visits:12, av:"JS", avColor:"av-blue"   },
+        { id:2, nome:"João",    sob:"Silva",    dobYear:2007, age:18, minor:true,  visits:4,  av:"JS", avColor:"av-purple" },
+        { id:3, nome:"Maria",   sob:"Santos",   dobYear:2001, age:24, minor:false, visits:7,  av:"MS", avColor:"av-green"  },
+        { id:4, nome:"Carlos",  sob:"Ferreira", dobYear:1988, age:37, minor:false, visits:23, av:"CF", avColor:"av-orange" },
+        { id:5, nome:"Ana",     sob:"Lima",     dobYear:1999, age:26, minor:false, visits:15, av:"AL", avColor:"av-blue"   },
+        { id:6, nome:"Rafael",  sob:"Costa",    dobYear:1993, age:32, minor:false, visits:3,  av:"RC", avColor:"av-green"  },
+        { id:7, nome:"Fernanda",sob:"Oliveira", dobYear:2005, age:20, minor:false, visits:1,  av:"FO", avColor:"av-purple" }
+    ];
+
+    // ---- Navigation ----
+    function goTo(el) {
+        document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('active'); });
+        el.classList.add('active');
+        var sc = el.getAttribute('data-screen');
+        document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+        document.getElementById('screen-' + sc).classList.add('active');
+        if (sc === 'entrada') resetEntrada();
+    }
+
+    // ---- Search ----
+    function doSearch(val) {
+        var q = val.trim().toLowerCase();
+        var ra = document.getElementById('results-area');
+        var rl = document.getElementById('results-list');
+        var dw = document.getElementById('dup-warn');
+
+        hideAccessScreens();
+
+        if (q.length < 2) { ra.classList.add('hidden'); return; }
+
+        var matches = clients.filter(function(c){
+            return (c.nome + ' ' + c.sob).toLowerCase().indexOf(q) >= 0
+                || c.nome.toLowerCase().indexOf(q) >= 0
+                || c.sob.toLowerCase().indexOf(q) >= 0;
+        });
+
+        ra.classList.remove('hidden');
+
+        if (matches.length === 0) {
+            dw.classList.add('hidden');
+            rl.innerHTML = '<div style="padding:24px;text-align:center;color:#94a3b8;">'
+                + '<i class="fa-solid fa-user-slash" style="font-size:28px;display:block;margin-bottom:8px;"></i>'
+                + '<div style="font-weight:600;color:#475569;">Nenhum cliente encontrado</div>'
+                + '<div style="font-size:13px;margin-top:4px;">Deseja <a href="#" onclick="goToCadastro(event)" style="color:#6366f1;font-weight:700;">cadastrar novo cliente</a>?</div>'
+                + '</div>';
+            return;
+        }
+
+        // Check duplicates
+        var nameMap = {};
+        matches.forEach(function(c){
+            var k = c.nome.toLowerCase();
+            nameMap[k] = (nameMap[k] || 0) + 1;
+        });
+        var hasDup = Object.keys(nameMap).some(function(k){ return nameMap[k] > 1; });
+        hasDup ? dw.classList.remove('hidden') : dw.classList.add('hidden');
+
+        rl.innerHTML = matches.map(function(c){
+            var minorBadge = c.minor
+                ? '<span class="badge badge-red"><i class="fa-solid fa-ban"></i> Menor</span>'
+                : '<span class="badge badge-green"><i class="fa-solid fa-check"></i> Adulto</span>';
+            var minorTag = c.minor ? ' <span class="minor-tag">· Menor de Idade</span>' : '';
+            return '<div class="client-card" onclick="selectClient(' + c.id + ')">'
+                + '<div class="avatar ' + c.avColor + '">' + c.av + '</div>'
+                + '<div class="client-info">'
+                + '<div class="client-name">' + c.nome + ' ' + c.sob + '</div>'
+                + '<div class="client-meta">Nascido em ' + c.dobYear + ' &nbsp;&middot;&nbsp; ' + c.visits + ' visitas' + minorTag + '</div>'
+                + '</div>'
+                + minorBadge
+                + '</div>';
+        }).join('');
+    }
+
+    function selectClient(id) {
+        selectedClient = clients.filter(function(c){ return c.id === id; })[0];
+        document.getElementById('search-area').style.display = 'none';
+        document.getElementById('results-area').classList.add('hidden');
+
+        if (selectedClient.minor) {
+            document.getElementById('denied-name').textContent = selectedClient.nome + ' ' + selectedClient.sob;
+            document.getElementById('denied-detail').textContent =
+                'Nascido em ' + selectedClient.dobYear + ' — menor de 18 anos. Sistema bloqueou automaticamente.';
+            document.getElementById('denied-screen').classList.add('show');
+            blockedCount++;
+            document.getElementById('blocked-count').textContent = blockedCount;
+        } else {
+            document.getElementById('granted-name').textContent = selectedClient.nome + ' ' + selectedClient.sob;
+            document.getElementById('granted-detail').textContent =
+                selectedClient.age + ' anos · ' + selectedClient.visits + ' visitas anteriores';
+            document.getElementById('granted-screen').classList.add('show');
+        }
+    }
+
+    function confirmEntry() {
+        document.getElementById('granted-screen').classList.remove('show');
+        document.getElementById('entry-ok-name').textContent = selectedClient.nome + ' ' + selectedClient.sob;
+        document.getElementById('entry-ok-screen').classList.add('show');
+        insideCount++;
+        entriesCount++;
+        updateCounters();
+        addActivity(selectedClient.nome + ' ' + selectedClient.sob, 'entrada');
+    }
+
+    function newEntry() {
+        resetEntrada();
+    }
+
+    function backToSearch() {
+        hideAccessScreens();
+        document.getElementById('search-area').style.display = '';
+        document.getElementById('search-input').value = '';
+        document.getElementById('results-area').classList.add('hidden');
+    }
+
+    function clearSearch() {
+        document.getElementById('search-input').value = '';
+        document.getElementById('results-area').classList.add('hidden');
+    }
+
+    function hideAccessScreens() {
+        ['granted-screen','denied-screen','entry-ok-screen'].forEach(function(id){
+            document.getElementById(id).classList.remove('show');
+        });
+    }
+
+    function resetEntrada() {
+        hideAccessScreens();
+        document.getElementById('search-area').style.display = '';
+        document.getElementById('search-input').value = '';
+        document.getElementById('results-area').classList.add('hidden');
+    }
+
+    // ---- Exit ----
+    function doExit(btn) {
+        var row = btn.closest('tr');
+        var name = row.getAttribute('data-name');
+        row.style.transition = 'opacity 0.3s';
+        row.style.opacity = '0';
+        setTimeout(function(){
+            row.remove();
+            insideCount--;
+            exitsCount++;
+            updateCounters();
+            addActivity(name, 'saida');
+            var count = document.getElementById('inside-table').querySelectorAll('tr').length;
+            document.getElementById('inside-badge-count').textContent = count + (count === 1 ? ' pessoa' : ' pessoas');
+            if (count === 0) document.getElementById('empty-state').classList.remove('hidden');
+        }, 300);
+    }
+
+    // ---- Counters ----
+    function updateCounters() {
+        document.getElementById('occ-num').textContent = insideCount;
+        var pct = Math.max(0, Math.round(insideCount * 10));
+        document.getElementById('occ-pct').textContent = pct + '% da capacidade';
+        document.getElementById('occ-fill').style.width = pct + '%';
+        document.getElementById('inside-badge').textContent = insideCount;
+        document.getElementById('entries-count').textContent = entriesCount;
+        document.getElementById('exits-count').textContent = exitsCount;
+    }
+
+    function addActivity(name, type) {
+        var feed = document.getElementById('activity-feed');
+        var item = document.createElement('div');
+        item.className = 'activity-item';
+        item.style.animation = 'fadeIn 0.3s ease';
+        var dot = type === 'entrada' ? 'adot-green' : 'adot-red';
+        var action = type === 'entrada' ? 'registrou entrada' : 'registrou saída';
+        var now = new Date();
+        var t = now.getHours() + ':' + String(now.getMinutes()).padStart(2,'0');
+        item.innerHTML = '<div class="adot ' + dot + '"></div>'
+            + '<div><strong>' + name + '</strong> ' + action + '</div>'
+            + '<div class="activity-time">' + t + '</div>';
+        feed.insertBefore(item, feed.firstChild);
+    }
+
+    // ---- Cadastro ----
+    function showCadastroOk() {
+        document.getElementById('cadastro-ok').classList.remove('hidden');
+    }
+
+    function goToCadastro(e) {
+        e.preventDefault();
+        document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('active'); });
+        document.querySelector('[data-screen="cadastro"]').classList.add('active');
+        document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+        document.getElementById('screen-cadastro').classList.add('active');
+    }
+</script>
+</body>
+</html>
