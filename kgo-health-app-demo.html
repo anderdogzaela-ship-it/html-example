@@ -1,0 +1,1840 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SaúdeMatch — Demo</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy: #0F2B4C;
+    --teal: #00BFA5;
+    --teal-dark: #009688;
+    --teal-light: #E0F7F4;
+    --sky: #4FC3F7;
+    --amber: #FFB300;
+    --red: #EF5350;
+    --green: #43A047;
+    --white: #FFFFFF;
+    --gray-50: #F8FAFB;
+    --gray-100: #F0F4F8;
+    --gray-200: #E2EAF0;
+    --gray-400: #9EAFC0;
+    --gray-600: #5A6E82;
+    --gray-800: #2D3E50;
+    --text: #1A2E42;
+    --shadow-sm: 0 2px 8px rgba(15,43,76,0.08);
+    --shadow-md: 0 6px 24px rgba(15,43,76,0.14);
+    --shadow-lg: 0 16px 48px rgba(15,43,76,0.2);
+    --radius: 20px;
+    --radius-sm: 12px;
+    --radius-xs: 8px;
+  }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: linear-gradient(135deg, #0F2B4C 0%, #1a4a7a 50%, #0F2B4C 100%);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px 60px;
+    color: var(--text);
+  }
+
+  /* ── Page Header ── */
+  .page-header {
+    text-align: center;
+    margin-bottom: 36px;
+    color: white;
+  }
+  .page-header .logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 50px;
+    padding: 8px 20px;
+    margin-bottom: 16px;
+  }
+  .page-header .logo i { color: var(--teal); font-size: 18px; }
+  .page-header .logo span { font-weight: 800; font-size: 16px; letter-spacing: 0.5px; }
+  .page-header h1 { font-size: 28px; font-weight: 900; margin-bottom: 8px; }
+  .page-header p { font-size: 15px; opacity: 0.7; }
+
+  /* ── Mode Switcher ── */
+  .mode-switcher {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 32px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 50px;
+    padding: 6px;
+    border: 1px solid rgba(255,255,255,0.12);
+  }
+  .mode-btn {
+    padding: 10px 28px;
+    border-radius: 50px;
+    border: none;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: rgba(255,255,255,0.6);
+    background: transparent;
+  }
+  .mode-btn.active {
+    background: var(--teal);
+    color: white;
+    box-shadow: 0 4px 16px rgba(0,191,165,0.4);
+  }
+  .mode-btn:not(.active):hover { color: white; }
+
+  /* ── Phone Shell ── */
+  .phone-wrapper { position: relative; }
+  .phone {
+    width: 375px;
+    height: 780px;
+    background: var(--gray-50);
+    border-radius: 50px;
+    border: 10px solid #1a2e3f;
+    box-shadow: var(--shadow-lg), inset 0 0 0 1px rgba(255,255,255,0.05), 0 0 0 2px rgba(0,191,165,0.15);
+    overflow: hidden;
+    position: relative;
+  }
+  .phone::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 120px; height: 28px;
+    background: #1a2e3f;
+    border-radius: 0 0 18px 18px;
+    z-index: 100;
+  }
+  .phone::after {
+    content: '';
+    position: absolute;
+    top: 8px; left: 50%;
+    transform: translateX(-50%);
+    width: 10px; height: 10px;
+    background: #2d4055;
+    border-radius: 50%;
+    z-index: 101;
+  }
+
+  /* ── Screen Base ── */
+  .screen {
+    position: absolute;
+    inset: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: none;
+    flex-direction: column;
+    background: var(--gray-50);
+    scrollbar-width: none;
+  }
+  .screen::-webkit-scrollbar { display: none; }
+  .screen.active { display: flex; }
+
+  /* ── Status Bar ── */
+  .status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 36px 24px 6px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--navy);
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+  .status-bar.light { background: white; }
+  .status-bar.dark { background: var(--navy); color: white; }
+  .status-bar.transparent-dark { background: transparent; color: white; position: absolute; width: 100%; }
+  .status-bar.transparent-light { background: transparent; color: var(--navy); position: absolute; width: 100%; }
+  .status-icons { display: flex; gap: 4px; align-items: center; }
+
+  /* ── Navigation Bar ── */
+  .nav-bar {
+    display: flex;
+    justify-content: space-around;
+    padding: 10px 0 20px;
+    background: white;
+    border-top: 1px solid var(--gray-200);
+    position: sticky;
+    bottom: 0;
+    z-index: 50;
+    flex-shrink: 0;
+  }
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--gray-400);
+    cursor: pointer;
+  }
+  .nav-item.active { color: var(--teal); }
+  .nav-item i { font-size: 20px; }
+
+  /* ── Buttons ── */
+  .btn-primary {
+    background: linear-gradient(135deg, var(--teal), var(--teal-dark));
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 16px 32px;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    font-size: 15px;
+    cursor: pointer;
+    width: 100%;
+    transition: all 0.25s ease;
+    box-shadow: 0 4px 16px rgba(0,191,165,0.35);
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(0,191,165,0.45); }
+  .btn-secondary {
+    background: white;
+    color: var(--navy);
+    border: 2px solid var(--gray-200);
+    border-radius: 50px;
+    padding: 14px 32px;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    font-size: 15px;
+    cursor: pointer;
+    width: 100%;
+    transition: all 0.25s ease;
+  }
+  .btn-icon {
+    background: var(--teal-light);
+    color: var(--teal-dark);
+    border: none;
+    border-radius: 50%;
+    width: 44px; height: 44px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  /* ── Cards ── */
+  .card {
+    background: white;
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* ── Badge ── */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 50px;
+    font-size: 11px;
+    font-weight: 800;
+  }
+  .badge-teal { background: var(--teal-light); color: var(--teal-dark); }
+  .badge-amber { background: #FFF8E1; color: #F57F17; }
+  .badge-green { background: #E8F5E9; color: #2E7D32; }
+  .badge-red { background: #FFEBEE; color: #C62828; }
+  .badge-navy { background: rgba(15,43,76,0.08); color: var(--navy); }
+
+  /* ── Avatar ── */
+  .avatar {
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+
+  /* ── Stars ── */
+  .stars { color: var(--amber); font-size: 12px; }
+
+  /* ── Divider ── */
+  .divider {
+    height: 8px;
+    background: var(--gray-100);
+    margin: 0 -20px;
+  }
+
+  /* ── Progress Steps ── */
+  .progress-steps {
+    display: flex;
+    gap: 6px;
+    padding: 0 24px;
+    margin-bottom: 20px;
+  }
+  .step-dot {
+    height: 4px;
+    border-radius: 2px;
+    flex: 1;
+    background: var(--gray-200);
+    transition: background 0.3s;
+  }
+  .step-dot.done { background: var(--teal); }
+
+  /* ── Map Background ── */
+  .map-bg {
+    position: relative;
+    background: #e8f4e8;
+    overflow: hidden;
+  }
+  .map-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,150,136,0.08) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,150,136,0.08) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+  .map-road-h {
+    position: absolute;
+    left: 0; right: 0;
+    height: 14px;
+    background: rgba(255,255,255,0.8);
+    border-top: 1px solid rgba(0,0,0,0.06);
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+  }
+  .map-road-v {
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 14px;
+    background: rgba(255,255,255,0.8);
+    border-left: 1px solid rgba(0,0,0,0.06);
+    border-right: 1px solid rgba(0,0,0,0.06);
+  }
+  .map-pin {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    transform: translate(-50%, -100%);
+    transition: transform 0.2s;
+  }
+  .map-pin:hover { transform: translate(-50%, -100%) scale(1.1); }
+  .map-pin-bubble {
+    background: white;
+    border-radius: 50px;
+    padding: 6px 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: var(--shadow-md);
+    border: 2px solid var(--teal);
+    white-space: nowrap;
+  }
+  .map-pin-bubble .pin-avatar {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  .map-pin-bubble span { font-size: 11px; font-weight: 800; color: var(--navy); }
+  .map-pin-bubble .pin-dist { font-size: 10px; font-weight: 700; color: var(--teal-dark); }
+  .map-pin-tail {
+    width: 0; height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 8px solid var(--teal);
+    margin-top: -1px;
+  }
+  .map-user-pin {
+    position: absolute;
+    transform: translate(-50%, -50%);
+  }
+  .map-user-dot {
+    width: 20px; height: 20px;
+    background: var(--sky);
+    border: 3px solid white;
+    border-radius: 50%;
+    box-shadow: 0 0 0 8px rgba(79,195,247,0.2);
+  }
+
+  /* ── Input ── */
+  .input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+  .input-group label {
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--gray-600);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .input-field {
+    background: var(--gray-100);
+    border: 2px solid transparent;
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    width: 100%;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .input-field:focus { border-color: var(--teal); background: white; }
+  .input-field.filled { border-color: var(--gray-200); background: white; }
+  .input-with-icon { position: relative; }
+  .input-with-icon .input-field { padding-left: 44px; }
+  .input-with-icon .input-icon {
+    position: absolute; left: 14px; top: 50%;
+    transform: translateY(-50%);
+    color: var(--gray-400); font-size: 16px;
+  }
+
+  /* ── Specialty Chips ── */
+  .specialty-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .specialty-chip {
+    padding: 8px 14px;
+    border-radius: 50px;
+    border: 2px solid var(--gray-200);
+    background: white;
+    font-family: 'Nunito', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--gray-600);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .specialty-chip.selected {
+    border-color: var(--teal);
+    background: var(--teal-light);
+    color: var(--teal-dark);
+  }
+
+  /* ── Upload Box ── */
+  .upload-box {
+    border: 2px dashed var(--gray-200);
+    border-radius: var(--radius-sm);
+    padding: 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--gray-50);
+  }
+  .upload-box:hover { border-color: var(--teal); background: var(--teal-light); }
+  .upload-box.uploaded { border-color: var(--green); background: #E8F5E9; }
+  .upload-box i { font-size: 28px; margin-bottom: 8px; }
+
+  /* ── Availability Toggle ── */
+  .toggle-switch {
+    position: relative;
+    width: 52px; height: 28px;
+    cursor: pointer;
+  }
+  .toggle-switch input { display: none; }
+  .toggle-track {
+    position: absolute;
+    inset: 0;
+    background: var(--gray-200);
+    border-radius: 50px;
+    transition: background 0.3s;
+  }
+  .toggle-switch input:checked + .toggle-track { background: var(--teal); }
+  .toggle-thumb {
+    position: absolute;
+    top: 3px; left: 3px;
+    width: 22px; height: 22px;
+    background: white;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    transition: left 0.3s;
+  }
+  .toggle-switch input:checked ~ .toggle-thumb { left: 27px; }
+
+  /* ── Escrow Flow ── */
+  .escrow-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    position: relative;
+  }
+  .escrow-steps::before {
+    content: '';
+    position: absolute;
+    left: 19px; top: 20px; bottom: 20px;
+    width: 2px;
+    background: var(--gray-200);
+    z-index: 0;
+  }
+  .escrow-step {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    padding: 12px 0;
+    position: relative;
+    z-index: 1;
+  }
+  .escrow-step-icon {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+    border: 3px solid white;
+  }
+  .escrow-step-icon.done { background: var(--teal); color: white; }
+  .escrow-step-icon.active { background: var(--amber); color: white; }
+  .escrow-step-icon.pending { background: var(--gray-200); color: var(--gray-400); }
+  .escrow-step-content { flex: 1; padding-top: 8px; }
+  .escrow-step-content h4 { font-size: 13px; font-weight: 800; color: var(--navy); }
+  .escrow-step-content p { font-size: 11px; color: var(--gray-600); margin-top: 2px; }
+
+  /* ── Notification Toast ── */
+  .toast {
+    position: absolute;
+    top: 56px;
+    left: 16px; right: 16px;
+    background: var(--navy);
+    color: white;
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    box-shadow: var(--shadow-md);
+    z-index: 200;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: all 0.4s ease;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+  .toast i { font-size: 20px; color: var(--teal); flex-shrink: 0; }
+  .toast-title { font-size: 13px; font-weight: 800; }
+  .toast-body { font-size: 11px; opacity: 0.7; margin-top: 2px; }
+
+  /* ── Bottom Sheet ── */
+  .bottom-sheet {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: white;
+    border-radius: 24px 24px 0 0;
+    padding: 20px 20px 32px;
+    box-shadow: 0 -8px 32px rgba(15,43,76,0.12);
+    transform: translateY(100%);
+    transition: transform 0.4s cubic-bezier(0.34, 1.2, 0.64, 1);
+    z-index: 150;
+  }
+  .bottom-sheet.open { transform: translateY(0); }
+  .sheet-handle {
+    width: 40px; height: 4px;
+    background: var(--gray-200);
+    border-radius: 2px;
+    margin: 0 auto 20px;
+  }
+
+  /* ─────────────── SCREENS ─────────────── */
+
+  /* S1: Welcome */
+  #s-welcome {
+    background: linear-gradient(170deg, var(--navy) 0%, #1a4a7a 60%, #0d7a6a 100%);
+    justify-content: flex-end;
+  }
+  .welcome-hero {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 24px 0;
+    text-align: center;
+  }
+  .welcome-icon-ring {
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    background: rgba(0,191,165,0.15);
+    border: 2px solid rgba(0,191,165,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 24px;
+    position: relative;
+  }
+  .welcome-icon-ring::after {
+    content: '';
+    position: absolute;
+    inset: -12px;
+    border-radius: 50%;
+    border: 1px solid rgba(0,191,165,0.15);
+  }
+  .welcome-icon-ring i { font-size: 44px; color: var(--teal); }
+  .welcome-hero h1 { font-size: 28px; font-weight: 900; color: white; line-height: 1.2; margin-bottom: 12px; }
+  .welcome-hero p { font-size: 14px; color: rgba(255,255,255,0.6); line-height: 1.6; }
+  .welcome-bottom {
+    background: white;
+    border-radius: 28px 28px 0 0;
+    padding: 28px 24px 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .welcome-bottom p {
+    text-align: center;
+    font-size: 12px;
+    color: var(--gray-400);
+    margin-top: 4px;
+  }
+  .welcome-bottom p span { color: var(--teal-dark); font-weight: 700; cursor: pointer; }
+
+  /* S2: Patient GPS Map */
+  #s-patient-map { background: white; overflow: hidden; }
+  .map-container {
+    position: relative;
+    flex: 1;
+    background: #dff0e8;
+    min-height: 360px;
+  }
+  .map-search-bar {
+    position: absolute;
+    top: 52px; left: 16px; right: 16px;
+    background: white;
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: var(--shadow-md);
+    z-index: 10;
+  }
+  .map-search-bar i { color: var(--teal-dark); font-size: 16px; }
+  .map-search-bar span { font-size: 13px; font-weight: 700; color: var(--gray-600); }
+  .map-filters {
+    position: absolute;
+    top: 108px; left: 16px;
+    display: flex;
+    gap: 8px;
+    z-index: 10;
+  }
+  .map-filter-chip {
+    background: white;
+    border-radius: 50px;
+    padding: 6px 12px;
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--navy);
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+  }
+  .map-filter-chip.active { background: var(--navy); color: white; }
+  .map-filter-chip i { font-size: 10px; }
+  .map-prof-sheet {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: white;
+    border-radius: 20px 20px 0 0;
+    padding: 16px;
+    box-shadow: 0 -4px 20px rgba(15,43,76,0.1);
+    z-index: 10;
+  }
+  .map-prof-scroll {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+  }
+  .map-prof-scroll::-webkit-scrollbar { display: none; }
+  .prof-mini-card {
+    min-width: 180px;
+    background: var(--gray-50);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  .prof-mini-card.selected { border-color: var(--teal); background: var(--teal-light); }
+  .prof-mini-top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .prof-mini-top img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+  .prof-mini-name { font-size: 13px; font-weight: 800; color: var(--navy); }
+  .prof-mini-specialty { font-size: 11px; color: var(--gray-600); }
+  .prof-mini-stats { display: flex; justify-content: space-between; align-items: center; }
+
+  /* S3: Professional Profile */
+  #s-prof-profile { background: white; }
+  .prof-header-bg {
+    height: 200px;
+    background: linear-gradient(170deg, var(--navy) 0%, #1a4a7a 100%);
+    position: relative;
+    flex-shrink: 0;
+  }
+  .prof-avatar-wrapper {
+    position: absolute;
+    bottom: -40px;
+    left: 24px;
+  }
+  .prof-avatar-wrapper img {
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    border: 4px solid white;
+    object-fit: cover;
+  }
+  .prof-online-dot {
+    position: absolute;
+    bottom: 4px; right: 4px;
+    width: 18px; height: 18px;
+    background: var(--green);
+    border: 3px solid white;
+    border-radius: 50%;
+  }
+  .prof-info-section { padding: 52px 24px 20px; }
+  .prof-name { font-size: 22px; font-weight: 900; color: var(--navy); }
+  .prof-specialty { font-size: 14px; color: var(--gray-600); margin-top: 2px; }
+  .prof-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  .prof-stats-row {
+    display: flex;
+    gap: 4px;
+    padding: 16px 24px;
+    background: white;
+    flex-shrink: 0;
+  }
+  .prof-stat {
+    flex: 1;
+    text-align: center;
+    padding: 12px 8px;
+    background: var(--gray-50);
+    border-radius: var(--radius-xs);
+  }
+  .prof-stat-value { font-size: 18px; font-weight: 900; color: var(--navy); }
+  .prof-stat-label { font-size: 10px; color: var(--gray-400); font-weight: 700; margin-top: 2px; }
+  .prof-section { padding: 20px 24px; border-top: 1px solid var(--gray-100); }
+  .prof-section-title { font-size: 13px; font-weight: 900; color: var(--navy); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .service-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--gray-100);
+  }
+  .service-item:last-child { border-bottom: none; }
+  .service-name { font-size: 14px; font-weight: 700; color: var(--text); }
+  .service-duration { font-size: 12px; color: var(--gray-400); margin-top: 2px; }
+  .service-price { font-size: 16px; font-weight: 900; color: var(--navy); }
+  .booking-bar {
+    padding: 16px 20px 28px;
+    background: white;
+    border-top: 1px solid var(--gray-100);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+  .booking-bar .price-block { flex: 1; }
+  .booking-bar .price-main { font-size: 22px; font-weight: 900; color: var(--navy); }
+  .booking-bar .price-label { font-size: 11px; color: var(--gray-400); }
+  .booking-bar .btn-book {
+    background: linear-gradient(135deg, var(--teal), var(--teal-dark));
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 14px 28px;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    font-size: 14px;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0,191,165,0.35);
+  }
+
+  /* S4: Payment / Escrow */
+  #s-payment { background: var(--gray-50); }
+  .payment-header {
+    background: white;
+    padding: 52px 24px 20px;
+    border-bottom: 1px solid var(--gray-100);
+    flex-shrink: 0;
+  }
+  .payment-header .back-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--gray-600);
+    cursor: pointer;
+    margin-bottom: 16px;
+  }
+  .payment-header h2 { font-size: 22px; font-weight: 900; color: var(--navy); }
+  .payment-header p { font-size: 13px; color: var(--gray-600); margin-top: 4px; }
+  .payment-content { padding: 20px; flex: 1; overflow-y: auto; }
+  .summary-card {
+    background: white;
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow-sm);
+  }
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--gray-100);
+    font-size: 13px;
+  }
+  .summary-row:last-child { border-bottom: none; }
+  .summary-row .label { color: var(--gray-600); font-weight: 600; }
+  .summary-row .value { font-weight: 800; color: var(--text); }
+  .summary-row.total .label { font-size: 14px; font-weight: 900; color: var(--navy); }
+  .summary-row.total .value { font-size: 18px; font-weight: 900; color: var(--navy); }
+  .escrow-info-box {
+    background: var(--teal-light);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    margin-bottom: 16px;
+  }
+  .escrow-info-box i { color: var(--teal-dark); font-size: 18px; margin-top: 2px; }
+  .escrow-info-box p { font-size: 12px; color: var(--teal-dark); font-weight: 700; line-height: 1.5; }
+  .payment-method-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .payment-method {
+    background: white;
+    border: 2px solid var(--gray-200);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .payment-method.selected { border-color: var(--teal); background: var(--teal-light); }
+  .payment-method i { font-size: 24px; color: var(--gray-400); margin-bottom: 6px; display: block; }
+  .payment-method.selected i { color: var(--teal-dark); }
+  .payment-method span { font-size: 12px; font-weight: 800; color: var(--gray-600); }
+  .payment-method.selected span { color: var(--teal-dark); }
+  .payment-footer {
+    padding: 16px 20px 28px;
+    background: white;
+    border-top: 1px solid var(--gray-100);
+    flex-shrink: 0;
+  }
+  .security-note {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    justify-content: center;
+    font-size: 11px;
+    color: var(--gray-400);
+    font-weight: 700;
+    margin-top: 10px;
+  }
+
+  /* S5: Confirmation */
+  #s-confirmation {
+    background: linear-gradient(170deg, var(--navy) 0%, #1a4a7a 60%, #0d7a6a 100%);
+    justify-content: center;
+    align-items: center;
+    padding: 40px 28px;
+    text-align: center;
+  }
+  .confirm-icon {
+    width: 100px; height: 100px;
+    background: rgba(0,191,165,0.15);
+    border: 3px solid var(--teal);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 28px;
+  }
+  .confirm-icon i { font-size: 44px; color: var(--teal); }
+  #s-confirmation h2 { font-size: 26px; font-weight: 900; color: white; margin-bottom: 10px; }
+  #s-confirmation p { font-size: 14px; color: rgba(255,255,255,0.65); line-height: 1.6; margin-bottom: 32px; }
+  .confirm-card {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: var(--radius);
+    padding: 20px;
+    width: 100%;
+    margin-bottom: 28px;
+    text-align: left;
+  }
+  .confirm-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    font-size: 13px;
+  }
+  .confirm-row:last-child { border-bottom: none; }
+  .confirm-row .label { color: rgba(255,255,255,0.5); }
+  .confirm-row .value { color: white; font-weight: 800; }
+  .btn-confirm-home {
+    background: white;
+    color: var(--navy);
+    border: none;
+    border-radius: 50px;
+    padding: 16px 40px;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    font-size: 15px;
+    cursor: pointer;
+    width: 100%;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  }
+
+  /* ─── PROFESSIONAL SCREENS ─── */
+
+  /* SP1: Pro Onboarding */
+  #sp-onboarding { background: white; }
+  .pro-onboard-header {
+    background: linear-gradient(135deg, var(--navy), #1a4a7a);
+    padding: 52px 24px 28px;
+    flex-shrink: 0;
+  }
+  .pro-onboard-header h2 { font-size: 22px; font-weight: 900; color: white; }
+  .pro-onboard-header p { font-size: 13px; color: rgba(255,255,255,0.6); margin-top: 4px; }
+  .pro-onboard-content { padding: 24px; flex: 1; overflow-y: auto; }
+
+  /* SP2: Pro Dashboard */
+  #sp-dashboard { background: var(--gray-50); }
+  .pro-dash-header {
+    background: linear-gradient(135deg, var(--navy), #1a4a7a);
+    padding: 52px 20px 24px;
+    flex-shrink: 0;
+  }
+  .pro-dash-topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  .pro-greeting { font-size: 20px; font-weight: 900; color: white; }
+  .pro-greeting span { color: var(--teal); }
+  .pro-avail-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(255,255,255,0.08);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .avail-label { font-size: 13px; font-weight: 800; color: white; }
+  .avail-sub { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 2px; }
+  .pro-dash-content { padding: 16px; flex: 1; overflow-y: auto; }
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+  .stat-card {
+    background: white;
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    box-shadow: var(--shadow-sm);
+  }
+  .stat-card-icon {
+    width: 36px; height: 36px;
+    border-radius: var(--radius-xs);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    margin-bottom: 10px;
+  }
+  .stat-card-value { font-size: 22px; font-weight: 900; color: var(--navy); }
+  .stat-card-label { font-size: 11px; color: var(--gray-400); font-weight: 700; margin-top: 2px; }
+  .request-card {
+    background: white;
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 10px;
+    border-left: 4px solid var(--teal);
+  }
+  .request-top { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+  .request-top img { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; }
+  .request-name { font-size: 15px; font-weight: 800; color: var(--navy); }
+  .request-type { font-size: 12px; color: var(--gray-600); }
+  .request-detail { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--gray-600); margin-bottom: 12px; }
+  .request-detail i { color: var(--teal); }
+  .request-actions { display: flex; gap: 8px; }
+  .btn-accept { flex: 1; background: var(--teal); color: white; border: none; border-radius: 50px; padding: 10px; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 13px; cursor: pointer; }
+  .btn-decline { flex: 1; background: var(--gray-100); color: var(--gray-600); border: none; border-radius: 50px; padding: 10px; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 13px; cursor: pointer; }
+
+  /* SP3: Pro Earnings */
+  #sp-earnings { background: var(--gray-50); }
+  .earnings-header {
+    background: linear-gradient(135deg, var(--navy), #1a4a7a);
+    padding: 52px 20px 24px;
+    flex-shrink: 0;
+  }
+  .earnings-header h2 { font-size: 20px; font-weight: 900; color: white; margin-bottom: 4px; }
+  .earnings-balance {
+    text-align: center;
+    padding: 20px;
+    background: rgba(255,255,255,0.08);
+    border-radius: var(--radius);
+    border: 1px solid rgba(255,255,255,0.12);
+    margin-top: 8px;
+  }
+  .earnings-balance .amount { font-size: 36px; font-weight: 900; color: white; }
+  .earnings-balance .label { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 4px; }
+  .earnings-content { padding: 16px; flex: 1; overflow-y: auto; }
+  .earning-item {
+    background: white;
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: var(--shadow-sm);
+  }
+  .earning-dot {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .earning-info { flex: 1; }
+  .earning-title { font-size: 13px; font-weight: 800; color: var(--navy); }
+  .earning-date { font-size: 11px; color: var(--gray-400); margin-top: 2px; }
+  .earning-amount { font-size: 15px; font-weight: 900; }
+
+  /* ── Restart button ── */
+  .restart-btn {
+    margin-top: 28px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: rgba(255,255,255,0.7);
+    border-radius: 50px;
+    padding: 12px 32px;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .restart-btn:hover { background: rgba(255,255,255,0.14); color: white; }
+
+  /* ── Animations ── */
+  @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes pinBounce { 0%{transform:translate(-50%,-80%) scale(0)} 60%{transform:translate(-50%,-110%) scale(1.15)} 100%{transform:translate(-50%,-100%) scale(1)} }
+  .animate-fade-up { animation: fadeUp 0.4s ease forwards; }
+  .pin-animate { animation: pinBounce 0.5s ease forwards; }
+</style>
+</head>
+<body>
+
+<!-- ── Page Header ── -->
+<div class="page-header">
+  <div class="logo">
+    <i class="fa-solid fa-heart-pulse"></i>
+    <span>SaúdeMatch</span>
+  </div>
+  <h1>Demo Interativo</h1>
+  <p>Clique nos botões para navegar pelo app</p>
+</div>
+
+<!-- ── Mode Switcher ── -->
+<div class="mode-switcher">
+  <button class="mode-btn active" onclick="setMode('patient')"><i class="fa-solid fa-user-injured"></i> Sou Paciente</button>
+  <button class="mode-btn" onclick="setMode('pro')"><i class="fa-solid fa-user-doctor"></i> Sou Profissional</button>
+</div>
+
+<!-- ── Phone ── -->
+<div class="phone-wrapper">
+<div class="phone">
+
+  <!-- PATIENT SCREENS -->
+
+  <!-- S1: Welcome -->
+  <div class="screen active" id="s-welcome">
+    <div class="welcome-hero">
+      <div class="welcome-icon-ring">
+        <i class="fa-solid fa-heart-pulse"></i>
+      </div>
+      <h1>Saúde a domicílio, agora e perto de você</h1>
+      <p>Encontre profissionais verificados disponíveis agora mesmo na sua região.</p>
+    </div>
+    <div class="welcome-bottom animate-fade-up">
+      <button class="btn-primary" onclick="goto('s-patient-map')">
+        <i class="fa-solid fa-location-dot"></i> Encontrar Profissional
+      </button>
+      <button class="btn-secondary" onclick="goto('sp-onboarding'); setMode('pro')">
+        <i class="fa-solid fa-user-doctor"></i> Sou Profissional de Saúde
+      </button>
+      <p>Já tem conta? <span>Entrar</span></p>
+    </div>
+  </div>
+
+  <!-- S2: Patient GPS Map -->
+  <div class="screen" id="s-patient-map">
+    <!-- Toast notification -->
+    <div class="toast" id="map-toast">
+      <i class="fa-solid fa-location-dot"></i>
+      <div>
+        <div class="toast-title">3 profissionais disponíveis</div>
+        <div class="toast-body">Raio de 2 km da sua localização</div>
+      </div>
+    </div>
+
+    <div class="map-container">
+      <!-- Status bar -->
+      <div class="status-bar transparent-dark" style="position:absolute;top:0;z-index:20">
+        <span>09:41</span>
+        <div class="status-icons">
+          <i class="fa-solid fa-signal"></i>
+          <i class="fa-solid fa-wifi"></i>
+          <i class="fa-solid fa-battery-three-quarters"></i>
+        </div>
+      </div>
+
+      <div class="map-grid"></div>
+      <!-- Roads -->
+      <div class="map-road-h" style="top:35%"></div>
+      <div class="map-road-h" style="top:65%"></div>
+      <div class="map-road-v" style="left:30%"></div>
+      <div class="map-road-v" style="left:65%"></div>
+
+      <!-- Search -->
+      <div class="map-search-bar" style="top:52px">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <span>Fisioterapeuta, Médico, Nutricionista...</span>
+      </div>
+
+      <!-- Filters -->
+      <div class="map-filters" style="top:110px">
+        <div class="map-filter-chip active"><i class="fa-solid fa-check"></i> Disponível agora</div>
+        <div class="map-filter-chip"><i class="fa-solid fa-star"></i> Top avaliados</div>
+      </div>
+
+      <!-- User pin -->
+      <div class="map-user-pin" style="left:50%;top:52%">
+        <div class="map-user-dot"></div>
+      </div>
+
+      <!-- Professional pins (added by JS) -->
+      <div id="map-pins"></div>
+    </div>
+
+    <!-- Bottom sheet -->
+    <div class="map-prof-sheet">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <span style="font-size:13px;font-weight:800;color:var(--navy)">Profissionais próximos</span>
+        <span style="font-size:11px;color:var(--teal-dark);font-weight:700">Ver todos</span>
+      </div>
+      <div class="map-prof-scroll" id="prof-cards"></div>
+    </div>
+  </div>
+
+  <!-- S3: Professional Profile -->
+  <div class="screen" id="s-prof-profile">
+    <div class="status-bar light" style="position:relative">
+      <span>09:41</span>
+      <div class="status-icons">
+        <i class="fa-solid fa-signal"></i>
+        <i class="fa-solid fa-wifi"></i>
+        <i class="fa-solid fa-battery-three-quarters"></i>
+      </div>
+    </div>
+
+    <!-- Back nav -->
+    <div style="padding:8px 20px;background:white;display:flex;align-items:center;gap:8px;cursor:pointer;flex-shrink:0" onclick="goto('s-patient-map')">
+      <i class="fa-solid fa-chevron-left" style="color:var(--teal-dark)"></i>
+      <span style="font-size:14px;font-weight:700;color:var(--gray-600)">Mapa</span>
+    </div>
+
+    <div style="flex:1;overflow-y:auto;scrollbar-width:none">
+      <div class="prof-header-bg">
+        <div class="prof-avatar-wrapper">
+          <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=160&h=160&fit=crop&crop=face" alt="Dra. Ana">
+          <div class="prof-online-dot"></div>
+        </div>
+        <!-- Heart btn -->
+        <div style="position:absolute;top:16px;right:20px;background:rgba(255,255,255,0.15);width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer">
+          <i class="fa-regular fa-heart" style="color:white;font-size:16px"></i>
+        </div>
+      </div>
+
+      <div class="prof-info-section">
+        <div class="prof-name">Dra. Ana Carolina Lima</div>
+        <div class="prof-specialty">Fisioterapeuta • CRF-SP 123456</div>
+        <div class="prof-badges">
+          <span class="badge badge-green"><i class="fa-solid fa-circle-check"></i> Credencial Verificada</span>
+          <span class="badge badge-teal"><i class="fa-solid fa-location-dot"></i> 1.2 km</span>
+          <span class="badge badge-amber"><i class="fa-solid fa-bolt"></i> Disponível agora</span>
+        </div>
+      </div>
+
+      <div class="prof-stats-row">
+        <div class="prof-stat">
+          <div class="prof-stat-value">4.9</div>
+          <div class="prof-stat-label"><i class="fa-solid fa-star" style="color:var(--amber)"></i> Avaliação</div>
+        </div>
+        <div class="prof-stat">
+          <div class="prof-stat-value">247</div>
+          <div class="prof-stat-label">Atendimentos</div>
+        </div>
+        <div class="prof-stat">
+          <div class="prof-stat-value">5 anos</div>
+          <div class="prof-stat-label">Experiência</div>
+        </div>
+      </div>
+
+      <div class="prof-section">
+        <div class="prof-section-title">Sobre</div>
+        <p style="font-size:13px;color:var(--gray-600);line-height:1.6">Especialista em reabilitação ortopédica e esportiva. Atendimentos domiciliares com equipamentos completos. Formada pela USP com pós em Fisioterapia Esportiva.</p>
+      </div>
+
+      <div class="prof-section">
+        <div class="prof-section-title">Serviços</div>
+        <div class="service-item">
+          <div>
+            <div class="service-name">Consulta Fisioterapêutica</div>
+            <div class="service-duration"><i class="fa-regular fa-clock" style="color:var(--teal)"></i> 60 minutos</div>
+          </div>
+          <div class="service-price">R$ 180</div>
+        </div>
+        <div class="service-item">
+          <div>
+            <div class="service-name">Sessão de RPG</div>
+            <div class="service-duration"><i class="fa-regular fa-clock" style="color:var(--teal)"></i> 45 minutos</div>
+          </div>
+          <div class="service-price">R$ 150</div>
+        </div>
+        <div class="service-item">
+          <div>
+            <div class="service-name">Reabilitação Pós-Cirúrgica</div>
+            <div class="service-duration"><i class="fa-regular fa-clock" style="color:var(--teal)"></i> 90 minutos</div>
+          </div>
+          <div class="service-price">R$ 220</div>
+        </div>
+      </div>
+
+      <div style="height:20px"></div>
+    </div>
+
+    <div class="booking-bar">
+      <div class="price-block">
+        <div class="price-main">R$ 180</div>
+        <div class="price-label">Consulta padrão</div>
+      </div>
+      <button class="btn-book" onclick="goto('s-payment')">Agendar Agora</button>
+    </div>
+  </div>
+
+  <!-- S4: Payment / Escrow -->
+  <div class="screen" id="s-payment">
+    <div class="payment-header">
+      <div class="back-btn" onclick="goto('s-prof-profile')">
+        <i class="fa-solid fa-chevron-left"></i> Voltar
+      </div>
+      <h2>Confirmar e Pagar</h2>
+      <p>Pagamento protegido por escrow</p>
+    </div>
+
+    <div class="payment-content">
+      <!-- Professional summary -->
+      <div class="summary-card">
+        <div style="display:flex;gap:12px;align-items:center;margin-bottom:16px">
+          <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=80&h=80&fit=crop&crop=face" style="width:52px;height:52px;border-radius:50%;object-fit:cover" alt="Dra. Ana">
+          <div>
+            <div style="font-size:15px;font-weight:900;color:var(--navy)">Dra. Ana Carolina Lima</div>
+            <div style="font-size:12px;color:var(--gray-600)">Consulta Fisioterapêutica • 60 min</div>
+            <div style="margin-top:4px"><span class="badge badge-teal"><i class="fa-solid fa-location-dot"></i> 1.2 km</span></div>
+          </div>
+        </div>
+        <div class="summary-row">
+          <span class="label">Data e horário</span>
+          <span class="value">Hoje, 11h00</span>
+        </div>
+        <div class="summary-row">
+          <span class="label">Endereço</span>
+          <span class="value">Rua das Flores, 42</span>
+        </div>
+        <div class="summary-row">
+          <span class="label">Consulta</span>
+          <span class="value">R$ 180,00</span>
+        </div>
+        <div class="summary-row">
+          <span class="label">Taxa de serviço</span>
+          <span class="value">R$ 9,00</span>
+        </div>
+        <div class="summary-row total">
+          <span class="label">Total</span>
+          <span class="value">R$ 189,00</span>
+        </div>
+      </div>
+
+      <!-- Escrow info -->
+      <div class="escrow-info-box">
+        <i class="fa-solid fa-shield-halved"></i>
+        <p>Seu pagamento fica retido com segurança até o atendimento ser concluído. O profissional recebe somente após você confirmar o serviço.</p>
+      </div>
+
+      <!-- Escrow flow steps -->
+      <div class="card" style="margin-bottom:16px">
+        <div style="font-size:13px;font-weight:900;color:var(--navy);margin-bottom:16px">Como funciona o Escrow</div>
+        <div class="escrow-steps">
+          <div class="escrow-step">
+            <div class="escrow-step-icon done"><i class="fa-solid fa-lock"></i></div>
+            <div class="escrow-step-content">
+              <h4>Pagamento retido</h4>
+              <p>Valor bloqueado em conta garantida</p>
+            </div>
+          </div>
+          <div class="escrow-step">
+            <div class="escrow-step-icon active"><i class="fa-solid fa-user-doctor"></i></div>
+            <div class="escrow-step-content">
+              <h4>Atendimento realizado</h4>
+              <p>Profissional vai até você</p>
+            </div>
+          </div>
+          <div class="escrow-step">
+            <div class="escrow-step-icon pending"><i class="fa-solid fa-circle-check"></i></div>
+            <div class="escrow-step-content">
+              <h4>Você confirma</h4>
+              <p>Libera o pagamento ao profissional</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Payment method -->
+      <div class="card" style="margin-bottom:16px">
+        <div style="font-size:13px;font-weight:900;color:var(--navy);margin-bottom:12px">Forma de Pagamento</div>
+        <div class="payment-method-grid">
+          <div class="payment-method selected">
+            <i class="fa-brands fa-pix"></i>
+            <span>Pix</span>
+          </div>
+          <div class="payment-method">
+            <i class="fa-solid fa-credit-card"></i>
+            <span>Cartão</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="height:8px"></div>
+    </div>
+
+    <div class="payment-footer">
+      <button class="btn-primary" onclick="goto('s-confirmation')">
+        <i class="fa-solid fa-shield-halved"></i> Pagar R$ 189,00 com Segurança
+      </button>
+      <div class="security-note">
+        <i class="fa-solid fa-lock"></i>
+        Pagamento processado via MercadoPago • Dados criptografados
+      </div>
+    </div>
+  </div>
+
+  <!-- S5: Confirmation -->
+  <div class="screen" id="s-confirmation">
+    <div style="position:absolute;top:0;left:0;right:0;padding:36px 24px 8px;display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.6)">09:41</span>
+      <div style="display:flex;gap:4px;color:rgba(255,255,255,0.6);font-size:12px">
+        <i class="fa-solid fa-signal"></i>
+        <i class="fa-solid fa-wifi"></i>
+        <i class="fa-solid fa-battery-three-quarters"></i>
+      </div>
+    </div>
+
+    <div class="confirm-icon">
+      <i class="fa-solid fa-circle-check"></i>
+    </div>
+    <h2>Agendado com Sucesso!</h2>
+    <p>Seu pagamento de R$ 189,00 está protegido em escrow. A Dra. Ana está a caminho.</p>
+
+    <div class="confirm-card">
+      <div class="confirm-row">
+        <span class="label">Profissional</span>
+        <span class="value">Dra. Ana C. Lima</span>
+      </div>
+      <div class="confirm-row">
+        <span class="label">Serviço</span>
+        <span class="value">Fisioterapia • 60 min</span>
+      </div>
+      <div class="confirm-row">
+        <span class="label">Horário</span>
+        <span class="value">Hoje, 11h00</span>
+      </div>
+      <div class="confirm-row">
+        <span class="label">Pagamento</span>
+        <span class="value" style="color:var(--teal)"><i class="fa-solid fa-shield-halved"></i> Escrow ativo</span>
+      </div>
+      <div class="confirm-row">
+        <span class="label">ETA</span>
+        <span class="value">~18 minutos</span>
+      </div>
+    </div>
+
+    <button class="btn-confirm-home" onclick="goto('s-patient-map')">
+      <i class="fa-solid fa-map-location-dot"></i> Acompanhar no Mapa
+    </button>
+    <button class="restart-btn" onclick="restart()">
+      <i class="fa-solid fa-rotate-left"></i> Reiniciar demo
+    </button>
+  </div>
+
+
+  <!-- PROFESSIONAL SCREENS -->
+
+  <!-- SP1: Pro Onboarding -->
+  <div class="screen" id="sp-onboarding">
+    <div class="pro-onboard-header">
+      <div class="status-bar transparent-dark" style="position:relative;padding:0 0 16px">
+        <span>09:41</span>
+        <div class="status-icons">
+          <i class="fa-solid fa-signal"></i>
+          <i class="fa-solid fa-wifi"></i>
+          <i class="fa-solid fa-battery-three-quarters"></i>
+        </div>
+      </div>
+      <div class="progress-steps">
+        <div class="step-dot done" id="step1"></div>
+        <div class="step-dot done" id="step2"></div>
+        <div class="step-dot active-step" id="step3" style="background:var(--teal)"></div>
+        <div class="step-dot" id="step4"></div>
+      </div>
+      <h2>Cadastro Profissional</h2>
+      <p>Etapa 3 de 4 — Credenciais e Documentação</p>
+    </div>
+
+    <div class="pro-onboard-content">
+      <div class="input-group">
+        <label>Nome Completo</label>
+        <div class="input-with-icon">
+          <i class="fa-solid fa-user input-icon"></i>
+          <input class="input-field filled" type="text" value="Dr. Carlos Mendes" readonly>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label>Especialidade</label>
+        <div class="specialty-chips">
+          <div class="specialty-chip selected">Fisioterapia</div>
+          <div class="specialty-chip">Medicina</div>
+          <div class="specialty-chip">Nutrição</div>
+          <div class="specialty-chip">Psicologia</div>
+          <div class="specialty-chip">Enfermagem</div>
+        </div>
+      </div>
+
+      <div class="input-group" style="margin-top:16px">
+        <label>Número do Registro Profissional</label>
+        <div class="input-with-icon">
+          <i class="fa-solid fa-id-card input-icon"></i>
+          <input class="input-field filled" type="text" value="CREFITO-3 / 98765-F" readonly>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label>Upload de Documentos</label>
+        <div class="upload-box uploaded" id="upload-box">
+          <i class="fa-solid fa-circle-check" style="color:var(--green)"></i>
+          <div style="font-size:13px;font-weight:800;color:var(--green);margin-top:6px">Carteira CREFITO anexada</div>
+          <div style="font-size:11px;color:var(--gray-400);margin-top:4px">crefito_carlos_mendes.pdf</div>
+        </div>
+      </div>
+
+      <div style="background:var(--teal-light);border-radius:var(--radius-sm);padding:14px;display:flex;gap:10px;align-items:flex-start;margin-bottom:16px">
+        <i class="fa-solid fa-clock" style="color:var(--teal-dark);margin-top:2px"></i>
+        <div>
+          <div style="font-size:13px;font-weight:800;color:var(--teal-dark)">Verificação em até 24h</div>
+          <div style="font-size:11px;color:var(--teal-dark);opacity:0.8;margin-top:2px">Nossa equipe valida suas credenciais antes de você receber solicitações.</div>
+        </div>
+      </div>
+
+      <button class="btn-primary" onclick="goto('sp-dashboard')">
+        Concluir Cadastro <i class="fa-solid fa-arrow-right"></i>
+      </button>
+      <div style="height:20px"></div>
+    </div>
+  </div>
+
+  <!-- SP2: Pro Dashboard -->
+  <div class="screen" id="sp-dashboard">
+    <div class="pro-dash-header">
+      <div class="status-bar transparent-dark" style="position:relative;padding:0 0 0">
+        <span>09:41</span>
+        <div class="status-icons">
+          <i class="fa-solid fa-signal"></i>
+          <i class="fa-solid fa-wifi"></i>
+          <i class="fa-solid fa-battery-three-quarters"></i>
+        </div>
+      </div>
+      <div class="pro-dash-topbar">
+        <div>
+          <div class="pro-greeting">Olá, <span>Dr. Carlos</span></div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.5)">CREFITO verificado <i class="fa-solid fa-circle-check" style="color:var(--teal)"></i></div>
+        </div>
+        <img src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=80&h=80&fit=crop&crop=face" style="width:44px;height:44px;border-radius:50%;border:2px solid var(--teal);object-fit:cover" alt="Dr. Carlos">
+      </div>
+      <div class="pro-avail-row">
+        <div>
+          <div class="avail-label"><i class="fa-solid fa-circle" style="color:var(--teal);font-size:10px"></i> Disponível para atendimentos</div>
+          <div class="avail-sub">Visível para pacientes na sua área</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" checked>
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
+    </div>
+
+    <div class="pro-dash-content">
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-card-icon" style="background:#E0F7F4"><i class="fa-solid fa-calendar-check" style="color:var(--teal-dark)"></i></div>
+          <div class="stat-card-value">12</div>
+          <div class="stat-card-label">Atendimentos este mês</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-icon" style="background:#FFF8E1"><i class="fa-solid fa-brazilian-real-sign" style="color:#F57F17"></i></div>
+          <div class="stat-card-value">R$1.980</div>
+          <div class="stat-card-label">Ganhos do mês</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-icon" style="background:#E8F5E9"><i class="fa-solid fa-star" style="color:var(--green)"></i></div>
+          <div class="stat-card-value">4.9</div>
+          <div class="stat-card-label">Avaliação média</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-icon" style="background:#EDE7F6"><i class="fa-solid fa-location-dot" style="color:#7B1FA2"></i></div>
+          <div class="stat-card-value">3</div>
+          <div class="stat-card-label">Solicitações próximas</div>
+        </div>
+      </div>
+
+      <div style="font-size:13px;font-weight:900;color:var(--navy);margin-bottom:12px;display:flex;align-items:center;gap:6px">
+        <i class="fa-solid fa-bell" style="color:var(--teal)"></i> Solicitações Pendentes
+      </div>
+
+      <div class="request-card">
+        <div class="request-top">
+          <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&h=80&fit=crop&crop=face" alt="Mariana">
+          <div>
+            <div class="request-name">Mariana Oliveira</div>
+            <div class="request-type">Consulta Fisioterapêutica • 60 min</div>
+          </div>
+          <span class="badge badge-amber" style="margin-left:auto">Hoje, 11h</span>
+        </div>
+        <div class="request-detail">
+          <i class="fa-solid fa-location-dot"></i>
+          <span>Rua das Flores, 42 — 1.2 km de você</span>
+        </div>
+        <div class="request-detail">
+          <i class="fa-solid fa-shield-halved"></i>
+          <span>R$ 180 em escrow — liberado após atendimento</span>
+        </div>
+        <div class="request-actions">
+          <button class="btn-accept" onclick="goto('sp-earnings')"><i class="fa-solid fa-check"></i> Aceitar</button>
+          <button class="btn-decline">Recusar</button>
+        </div>
+      </div>
+
+      <div class="request-card" style="border-left-color:var(--gray-200)">
+        <div class="request-top">
+          <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&fit=crop&crop=face" alt="Roberto">
+          <div>
+            <div class="request-name">Roberto Silva</div>
+            <div class="request-type">Sessão de RPG • 45 min</div>
+          </div>
+          <span class="badge badge-navy" style="margin-left:auto">Amanhã, 9h</span>
+        </div>
+        <div class="request-detail">
+          <i class="fa-solid fa-location-dot"></i>
+          <span>Av. Paulista, 1000 — 2.8 km de você</span>
+        </div>
+        <div class="request-detail">
+          <i class="fa-solid fa-shield-halved"></i>
+          <span>R$ 150 em escrow</span>
+        </div>
+        <div class="request-actions">
+          <button class="btn-accept"><i class="fa-solid fa-check"></i> Aceitar</button>
+          <button class="btn-decline">Recusar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav-bar">
+      <div class="nav-item active">
+        <i class="fa-solid fa-house"></i>
+        <span>Início</span>
+      </div>
+      <div class="nav-item" onclick="goto('sp-earnings')">
+        <i class="fa-solid fa-wallet"></i>
+        <span>Ganhos</span>
+      </div>
+      <div class="nav-item">
+        <i class="fa-solid fa-calendar"></i>
+        <span>Agenda</span>
+      </div>
+      <div class="nav-item">
+        <i class="fa-solid fa-user"></i>
+        <span>Perfil</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SP3: Pro Earnings -->
+  <div class="screen" id="sp-earnings">
+    <div class="earnings-header">
+      <div class="status-bar transparent-dark" style="position:relative;padding:0 0 12px">
+        <span>09:41</span>
+        <div class="status-icons">
+          <i class="fa-solid fa-signal"></i>
+          <i class="fa-solid fa-wifi"></i>
+          <i class="fa-solid fa-battery-three-quarters"></i>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;cursor:pointer" onclick="goto('sp-dashboard')">
+        <i class="fa-solid fa-chevron-left" style="color:rgba(255,255,255,0.6);font-size:14px"></i>
+        <h2 style="font-size:18px">Meus Ganhos</h2>
+      </div>
+      <div class="earnings-balance">
+        <div class="amount">R$ 2.160,00</div>
+        <div class="label">Saldo disponível para saque</div>
+      </div>
+    </div>
+
+    <div class="earnings-content">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <span style="font-size:13px;font-weight:900;color:var(--navy)">Histórico de Pagamentos</span>
+        <span style="font-size:11px;color:var(--teal-dark);font-weight:700">Junho 2026</span>
+      </div>
+
+      <div class="earning-item">
+        <div class="earning-dot" style="background:#E0F7F4;color:var(--teal-dark)">
+          <i class="fa-solid fa-circle-check"></i>
+        </div>
+        <div class="earning-info">
+          <div class="earning-title">Consulta — Mariana Oliveira</div>
+          <div class="earning-date">Hoje, 13h22 • Escrow liberado</div>
+        </div>
+        <div class="earning-amount" style="color:var(--green)">+R$ 180</div>
+      </div>
+
+      <div class="earning-item">
+        <div class="earning-dot" style="background:#E0F7F4;color:var(--teal-dark)">
+          <i class="fa-solid fa-circle-check"></i>
+        </div>
+        <div class="earning-info">
+          <div class="earning-title">RPG — Lucas Ferreira</div>
+          <div class="earning-date">Ontem, 10h15 • Escrow liberado</div>
+        </div>
+        <div class="earning-amount" style="color:var(--green)">+R$ 150</div>
+      </div>
+
+      <div class="earning-item">
+        <div class="earning-dot" style="background:#E0F7F4;color:var(--teal-dark)">
+          <i class="fa-solid fa-circle-check"></i>
+        </div>
+        <div class="earning-info">
+          <div class="earning-title">Reabilitação — Carla Santos</div>
+          <div class="earning-date">23/06/2026 • Escrow liberado</div>
+        </div>
+        <div class="earning-amount" style="color:var(--green)">+R$ 220</div>
+      </div>
+
+      <div class="earning-item">
+        <div class="earning-dot" style="background:#FFF8E1;color:#F57F17">
+          <i class="fa-solid fa-lock"></i>
+        </div>
+        <div class="earning-info">
+          <div class="earning-title">Consulta — Roberto Silva</div>
+          <div class="earning-date">Amanhã, 9h00 • Em escrow</div>
+        </div>
+        <div class="earning-amount" style="color:var(--amber)">R$ 150</div>
+      </div>
+
+      <div style="margin-top:20px">
+        <button class="btn-primary" style="background:linear-gradient(135deg,var(--navy),#1a4a7a);box-shadow:0 4px 16px rgba(15,43,76,0.3)">
+          <i class="fa-solid fa-arrow-up-from-bracket"></i> Sacar R$ 2.160,00
+        </button>
+      </div>
+
+      <div style="height:16px"></div>
+    </div>
+
+    <div class="nav-bar">
+      <div class="nav-item" onclick="goto('sp-dashboard')">
+        <i class="fa-solid fa-house"></i>
+        <span>Início</span>
+      </div>
+      <div class="nav-item active">
+        <i class="fa-solid fa-wallet"></i>
+        <span>Ganhos</span>
+      </div>
+      <div class="nav-item">
+        <i class="fa-solid fa-calendar"></i>
+        <span>Agenda</span>
+      </div>
+      <div class="nav-item">
+        <i class="fa-solid fa-user"></i>
+        <span>Perfil</span>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end phone -->
+</div><!-- end phone-wrapper -->
+
+<script>
+  // ── State ──
+  let mode = 'patient';
+  const patientFlow = ['s-welcome','s-patient-map','s-prof-profile','s-payment','s-confirmation'];
+  const proFlow = ['sp-onboarding','sp-dashboard','sp-earnings'];
+
+  // ── Professionals data ──
+  const professionals = [
+    { name:'Dra. Ana Lima', specialty:'Fisioterapeuta', dist:'1.2 km', rating:'4.9', available:true, x:'42%', y:'42%', img:'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=60&h=60&fit=crop&crop=face' },
+    { name:'Dr. Fábio Reis', specialty:'Médico Geral', dist:'1.8 km', rating:'4.7', available:true, x:'68%', y:'28%', img:'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=60&h=60&fit=crop&crop=face' },
+    { name:'Dra. Sofia Nunes', specialty:'Nutricionista', dist:'2.1 km', rating:'5.0', available:false, x:'28%', y:'62%', img:'https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=60&h=60&fit=crop&crop=face' }
+  ];
+
+  // ── Mode switch ──
+  function setMode(m) {
+    mode = m;
+    document.querySelectorAll('.mode-btn').forEach((b,i) => {
+      b.classList.toggle('active', (i===0 && m==='patient') || (i===1 && m==='pro'));
+    });
+    if (m === 'patient') goto('s-welcome');
+    else goto('sp-onboarding');
+  }
+
+  // ── Navigation ──
+  function goto(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    const target = document.getElementById(id);
+    if (target) { target.classList.add('active'); target.scrollTop = 0; }
+    if (id === 's-patient-map') initMap();
+    if (id === 's-confirmation') confetti();
+  }
+
+  // ── Restart ──
+  function restart() { setMode('patient'); goto('s-welcome'); }
+
+  // ── Map init ──
+  function initMap() {
+    const pinsEl = document.getElementById('map-pins');
+    const cardsEl = document.getElementById('prof-cards');
+    pinsEl.innerHTML = '';
+    cardsEl.innerHTML = '';
+
+    // Show toast
+    const toast = document.getElementById('map-toast');
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3500);
+
+    professionals.forEach((p, i) => {
+      // Pin
+      const pin = document.createElement('div');
+      pin.className = 'map-pin pin-animate';
+      pin.style.left = p.x;
+      pin.style.top = p.y;
+      pin.style.animationDelay = (i * 0.15) + 's';
+      pin.style.opacity = p.available ? '1' : '0.45';
+      pin.innerHTML = `
+        <div class="map-pin-bubble">
+          <img class="pin-avatar" src="${p.img}" alt="${p.name}">
+          <div>
+            <div style="display:flex;align-items:center;gap:4px">
+              <span>${p.name.split(' ')[1]}</span>
+              ${p.available ? '<span style="width:6px;height:6px;background:#43A047;border-radius:50%;display:inline-block"></span>' : ''}
+            </div>
+            <div class="pin-dist">${p.dist} • ⭐ ${p.rating}</div>
+          </div>
+        </div>
+        <div class="map-pin-tail"></div>
+      `;
+      if (p.available) pin.onclick = () => goto('s-prof-profile');
+      pinsEl.appendChild(pin);
+
+      // Mini card
+      const card = document.createElement('div');
+      card.className = 'prof-mini-card' + (i===0?' selected':'');
+      card.innerHTML = `
+        <div class="prof-mini-top">
+          <img src="${p.img}" alt="${p.name}" style="width:40px;height:40px;border-radius:50%;object-fit:cover">
+          <div>
+            <div class="prof-mini-name">${p.name}</div>
+            <div class="prof-mini-specialty">${p.specialty}</div>
+          </div>
+        </div>
+        <div class="prof-mini-stats">
+          <span class="badge ${p.available ? 'badge-green' : 'badge-red'}" style="font-size:10px">
+            <i class="fa-solid fa-circle" style="font-size:7px"></i>
+            ${p.available ? 'Disponível' : 'Ocupada'}
+          </span>
+          <span style="font-size:11px;font-weight:700;color:var(--gray-600)">${p.dist}</span>
+        </div>
+      `;
+      if (p.available) card.onclick = () => goto('s-prof-profile');
+      cardsEl.appendChild(card);
+    });
+  }
+
+  // ── Confetti (simple) ──
+  function confetti() {
+    const colors = ['#00BFA5','#4FC3F7','#FFB300','#FFFFFF','#43A047'];
+    const phone = document.querySelector('.phone');
+    for (let i = 0; i < 30; i++) {
+      const dot = document.createElement('div');
+      dot.style.cssText = `
+        position:absolute;
+        width:8px;height:8px;
+        background:${colors[i%colors.length]};
+        border-radius:50%;
+        left:${20 + Math.random()*60}%;
+        top:${10 + Math.random()*30}%;
+        z-index:300;
+        pointer-events:none;
+        animation:confettiFall ${0.8+Math.random()*1.2}s ease forwards;
+        animation-delay:${Math.random()*0.4}s;
+      `;
+      phone.appendChild(dot);
+      setTimeout(() => dot.remove(), 2000);
+    }
+  }
+
+  // ── Confetti keyframe ──
+  const styleTag = document.createElement('style');
+  styleTag.textContent = `
+    @keyframes confettiFall {
+      0%  { opacity:1; transform:translateY(0) scale(1); }
+      100%{ opacity:0; transform:translateY(200px) scale(0.3) rotate(360deg); }
+    }
+  `;
+  document.head.appendChild(styleTag);
+</script>
+</body>
+</html>
