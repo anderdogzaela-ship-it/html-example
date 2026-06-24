@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Power App – Gestión de Pedidos de Vendedores</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Roboto', sans-serif;
+      background: linear-gradient(135deg, #e8f0fe 0%, #f0f4ff 50%, #e3f2fd 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+
+    .outer {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .demo-header {
+      text-align: center;
+    }
+    .demo-header h2 {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 4px;
+    }
+    .demo-header p {
+      font-size: 13px;
+      color: #666;
+    }
+    .demo-header span {
+      display: inline-block;
+      background: #0078D4;
+      color: white;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 20px;
+      margin-top: 6px;
+      letter-spacing: 0.5px;
+    }
+
+    /* Phone Frame */
+    .phone-frame {
+      width: 375px;
+      height: 812px;
+      background: #f4f6f9;
+      border-radius: 44px;
+      box-shadow:
+        0 0 0 2px #1a1a2e,
+        0 0 0 6px #2d2d3e,
+        0 30px 80px rgba(0,0,0,0.30);
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Status Bar */
+    .status-bar {
+      height: 46px;
+      background: #0078D4;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      flex-shrink: 0;
+    }
+    .status-time { color: #fff; font-size: 14px; font-weight: 600; }
+    .status-icons { color: #fff; font-size: 12px; display: flex; gap: 6px; align-items: center; }
+
+    /* Screens */
+    .screen { flex: 1; display: none; flex-direction: column; overflow: hidden; }
+    .screen.active { display: flex; animation: fadeSlide 0.22s ease; }
+    @keyframes fadeSlide {
+      from { opacity: 0; transform: translateX(16px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    /* App Bar */
+    .app-bar {
+      background: #0078D4;
+      color: white;
+      padding: 14px 20px 18px;
+      flex-shrink: 0;
+    }
+    .app-bar h1 { font-size: 19px; font-weight: 500; line-height: 1.3; }
+    .app-bar p { font-size: 12px; opacity: 0.8; margin-top: 2px; }
+
+    .app-bar-row {
+      background: #0078D4;
+      color: white;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px 14px;
+      flex-shrink: 0;
+    }
+    .back-btn {
+      width: 34px; height: 34px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 0.15s;
+    }
+    .back-btn:hover { background: rgba(255,255,255,0.28); }
+    .ab-title { flex: 1; min-width: 0; }
+    .ab-title h1 { font-size: 16px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ab-title p { font-size: 11px; opacity: 0.75; }
+    .cart-badge {
+      background: #FFB900;
+      color: #1a1a1a;
+      border-radius: 14px;
+      padding: 3px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    /* ── Screen 1: Select Client ── */
+    .s1-body {
+      flex: 1;
+      padding: 20px 18px;
+      overflow-y: auto;
+    }
+    .icon-block {
+      width: 68px; height: 68px;
+      background: #E3F2FD;
+      border-radius: 18px;
+      display: flex; align-items: center; justify-content: center;
+      margin: 4px auto 18px;
+    }
+    .icon-block i { font-size: 30px; color: #0078D4; }
+    .s1-title { text-align: center; font-size: 20px; font-weight: 700; color: #1a1a2e; margin-bottom: 3px; }
+    .s1-sub { text-align: center; font-size: 13px; color: #777; margin-bottom: 24px; }
+
+    .field-lbl {
+      font-size: 10px;
+      font-weight: 700;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      margin-bottom: 8px;
+    }
+
+    .client-list {
+      border: 1.5px solid #d8dde6;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 22px;
+    }
+    .c-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 13px 14px;
+      cursor: pointer;
+      border-bottom: 1px solid #f0f0f0;
+      transition: background 0.12s;
+    }
+    .c-item:last-child { border-bottom: none; }
+    .c-item:hover { background: #f5f8ff; }
+    .c-item.sel { background: #EBF3FB; border-left: 3px solid #0078D4; }
+    .c-av {
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 700; color: white;
+      flex-shrink: 0;
+    }
+    .av-blue { background: #0078D4; }
+    .av-green { background: #107C10; }
+    .av-purple { background: #8764B8; }
+    .c-info { flex: 1; }
+    .c-info strong { font-size: 14px; color: #1a1a2e; display: block; line-height: 1.3; }
+    .c-info em { font-size: 11px; color: #888; font-style: normal; }
+    .c-check { color: #0078D4; font-size: 18px; opacity: 0; transition: opacity 0.2s; }
+    .c-item.sel .c-check { opacity: 1; }
+
+    .start-btn {
+      width: 100%;
+      padding: 15px;
+      background: #0078D4;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      font-family: 'Roboto', sans-serif;
+      transition: background 0.2s;
+    }
+    .start-btn:hover { background: #106EBE; }
+    .start-btn:disabled { background: #b8c8d8; cursor: not-allowed; }
+
+    /* ── Screen 2: Products ── */
+    .search-wrap {
+      background: #0078D4;
+      padding: 0 16px 14px;
+      flex-shrink: 0;
+    }
+    .search-box {
+      background: rgba(255,255,255,0.15);
+      border: 1.5px solid rgba(255,255,255,0.35);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 9px 13px;
+    }
+    .search-box i { color: rgba(255,255,255,0.75); font-size: 14px; }
+    .search-box input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: white;
+      font-size: 14px;
+      width: 100%;
+      font-family: 'Roboto', sans-serif;
+    }
+    .search-box input::placeholder { color: rgba(255,255,255,0.6); }
+
+    .prod-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 14px;
+    }
+    .prod-hdr {
+      font-size: 10px;
+      font-weight: 700;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 10px;
+      padding: 0 2px;
+    }
+
+    .prod-card {
+      background: white;
+      border-radius: 10px;
+      padding: 11px 13px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      cursor: pointer;
+      border: 1.5px solid transparent;
+      transition: all 0.15s;
+    }
+    .prod-card:hover { border-color: #0078D4; box-shadow: 0 2px 10px rgba(0,120,212,0.12); }
+    .prod-card.in-cart { border-color: #107C10; background: #f0faf0; }
+    .prod-ico {
+      width: 40px; height: 40px;
+      background: #EBF3FB;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .prod-ico i { font-size: 17px; color: #0078D4; }
+    .prod-info { flex: 1; min-width: 0; }
+    .prod-code { font-size: 10px; color: #aaa; font-weight: 600; }
+    .prod-name { font-size: 13px; font-weight: 500; color: #1a1a2e; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .prod-price { font-size: 14px; font-weight: 700; color: #0078D4; flex-shrink: 0; }
+    .add-btn {
+      width: 30px; height: 30px;
+      background: #0078D4;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-size: 15px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.15s;
+      font-family: 'Roboto', sans-serif;
+    }
+    .add-btn:hover { background: #106EBE; }
+    .add-btn.done { background: #107C10; }
+
+    .order-bar {
+      background: white;
+      border-top: 1px solid #e8e8e8;
+      padding: 11px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+      box-shadow: 0 -3px 12px rgba(0,0,0,0.07);
+    }
+    .ob-info { flex: 1; }
+    .ob-count { font-size: 11px; color: #999; margin-bottom: 1px; }
+    .ob-total { font-size: 18px; font-weight: 700; color: #1a1a2e; }
+    .view-btn {
+      padding: 10px 16px;
+      background: #0078D4;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      white-space: nowrap;
+      font-family: 'Roboto', sans-serif;
+    }
+    .view-btn:hover { background: #106EBE; }
+
+    /* ── Screen 3: Summary ── */
+    .sum-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px 14px 20px;
+    }
+    .order-meta {
+      background: #EBF3FB;
+      border-radius: 10px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .order-meta i { color: #0078D4; font-size: 18px; flex-shrink: 0; }
+    .order-meta strong { font-size: 13px; color: #1a1a2e; display: block; }
+    .order-meta span { font-size: 11px; color: #777; }
+
+    .sec-lbl {
+      font-size: 10px;
+      font-weight: 700;
+      color: #aaa;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 10px;
+    }
+
+    .sum-item {
+      background: white;
+      border-radius: 10px;
+      padding: 11px 13px;
+      margin-bottom: 8px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+    .si-top {
+      display: flex;
+      align-items: center;
+      margin-bottom: 9px;
+    }
+    .si-name { flex: 1; font-size: 13px; font-weight: 500; color: #1a1a2e; }
+    .si-del {
+      width: 26px; height: 26px;
+      background: #fff0f0;
+      border: none;
+      border-radius: 6px;
+      color: #cc0000;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px;
+      font-family: 'Roboto', sans-serif;
+    }
+    .si-bot {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .qty-ctrl {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #f5f5f5;
+      border-radius: 8px;
+      padding: 4px 8px;
+    }
+    .q-btn {
+      width: 24px; height: 24px;
+      background: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #0078D4;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.10);
+      font-family: 'Roboto', sans-serif;
+    }
+    .q-num { min-width: 24px; text-align: center; font-size: 14px; font-weight: 700; color: #1a1a2e; }
+    .si-unit { font-size: 11px; color: #aaa; flex: 1; }
+    .si-sub { font-size: 14px; font-weight: 700; color: #0078D4; }
+
+    .total-card {
+      background: linear-gradient(135deg, #0078D4, #005a9e);
+      border-radius: 12px;
+      padding: 16px 18px;
+      margin: 14px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .tc-lbl { color: rgba(255,255,255,0.8); font-size: 13px; }
+    .tc-amt { color: white; font-size: 24px; font-weight: 700; }
+
+    .action-btns {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding-bottom: 4px;
+    }
+    .act-btn {
+      width: 100%;
+      padding: 13px 18px;
+      border: none;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      font-family: 'Roboto', sans-serif;
+      transition: all 0.18s;
+    }
+    .btn-xl { background: #107C10; color: white; }
+    .btn-xl:hover { background: #0a6b0a; transform: translateY(-1px); }
+    .btn-wa { background: #25D366; color: white; }
+    .btn-wa:hover { background: #1cb358; transform: translateY(-1px); }
+    .btn-em { background: white; color: #0078D4; border: 2px solid #0078D4; }
+    .btn-em:hover { background: #f0f6ff; }
+
+    /* Toast */
+    .toast {
+      position: absolute;
+      bottom: 72px;
+      left: 50%;
+      transform: translateX(-50%) translateY(16px);
+      background: #107C10;
+      color: white;
+      padding: 9px 18px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      white-space: nowrap;
+      opacity: 0;
+      transition: all 0.25s;
+      pointer-events: none;
+      z-index: 99;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* Restart */
+    .restart-bar {
+      background: #1a1a2e;
+      padding: 8px 16px;
+      display: flex;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .rst-btn {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.25);
+      color: rgba(255,255,255,0.65);
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 11px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'Roboto', sans-serif;
+      transition: background 0.15s;
+    }
+    .rst-btn:hover { background: rgba(255,255,255,0.1); }
+
+    ::-webkit-scrollbar { width: 3px; }
+    ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+<div class="outer">
+
+  <div class="demo-header">
+    <h2>Power App · Gestión de Pedidos</h2>
+    <p>Demo interactiva — flujo completo de captura de pedido</p>
+    <span>Microsoft Power Apps + Power Automate</span>
+  </div>
+
+  <div class="phone-frame">
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+      <span class="status-time">9:41</span>
+      <div class="status-icons">
+        <i class="fa-solid fa-signal"></i>
+        <i class="fa-solid fa-wifi"></i>
+        <i class="fa-solid fa-battery-three-quarters"></i>
+      </div>
+    </div>
+
+    <!-- ── Screen 1: Client Selection ── -->
+    <div class="screen active" id="s1">
+      <div class="app-bar">
+        <h1><i class="fa-solid fa-clipboard-list" style="opacity:.9;margin-right:8px"></i>Pedidos de Venta</h1>
+        <p>Selecciona un cliente para comenzar</p>
+      </div>
+      <div class="s1-body">
+        <div class="icon-block"><i class="fa-solid fa-store"></i></div>
+        <div class="s1-title">Nueva Orden</div>
+        <div class="s1-sub">Selecciona el cliente y captura los productos</div>
+
+        <div class="field-lbl">Cliente</div>
+        <div class="client-list">
+          <div class="c-item" onclick="pickClient(this,'Supermercado La Merced')">
+            <div class="c-av av-blue">SM</div>
+            <div class="c-info">
+              <strong>Supermercado La Merced</strong>
+              <em>CDMX · Cliente frecuente</em>
+            </div>
+            <i class="fa-solid fa-circle-check c-check"></i>
+          </div>
+          <div class="c-item" onclick="pickClient(this,'Tienda San Juan')">
+            <div class="c-av av-green">SJ</div>
+            <div class="c-info">
+              <strong>Tienda San Juan</strong>
+              <em>Monterrey · Mensual</em>
+            </div>
+            <i class="fa-solid fa-circle-check c-check"></i>
+          </div>
+          <div class="c-item" onclick="pickClient(this,'Abarrotes El Roble')">
+            <div class="c-av av-purple">AR</div>
+            <div class="c-info">
+              <strong>Abarrotes El Roble</strong>
+              <em>Guadalajara · Quincenal</em>
+            </div>
+            <i class="fa-solid fa-circle-check c-check"></i>
+          </div>
+        </div>
+
+        <button class="start-btn" id="startBtn" disabled onclick="goS2()">
+          <i class="fa-solid fa-plus"></i> Iniciar Orden
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Screen 2: Product Entry ── -->
+    <div class="screen" id="s2">
+      <div class="app-bar-row">
+        <div class="back-btn" onclick="goS1()">
+          <i class="fa-solid fa-arrow-left" style="color:white;font-size:13px"></i>
+        </div>
+        <div class="ab-title">
+          <h1 id="s2client">Cliente</h1>
+          <p>Pedido #PV-2026-089</p>
+        </div>
+        <span class="cart-badge" id="badgeCount">0</span>
+      </div>
+
+      <div class="search-wrap">
+        <div class="search-box">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" id="searchIn" placeholder="Buscar por código o descripción..." oninput="filterProds()">
+        </div>
+      </div>
+
+      <div class="prod-list" id="prodList"></div>
+
+      <div class="order-bar">
+        <div class="ob-info">
+          <div class="ob-count" id="obCount">0 productos</div>
+          <div class="ob-total" id="obTotal">$0.00</div>
+        </div>
+        <button class="view-btn" onclick="goS3()">
+          Ver pedido <i class="fa-solid fa-chevron-right"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Screen 3: Order Summary ── -->
+    <div class="screen" id="s3">
+      <div class="app-bar-row">
+        <div class="back-btn" onclick="goS2()">
+          <i class="fa-solid fa-arrow-left" style="color:white;font-size:13px"></i>
+        </div>
+        <div class="ab-title">
+          <h1>Resumen del Pedido</h1>
+          <p id="s3client">Cliente</p>
+        </div>
+      </div>
+
+      <div class="sum-body">
+        <div class="order-meta">
+          <i class="fa-solid fa-file-invoice"></i>
+          <div>
+            <strong>Pedido #PV-2026-089</strong>
+            <span>24 de junio de 2026</span>
+          </div>
+        </div>
+
+        <div class="sec-lbl">Productos del pedido</div>
+        <div id="sumItems"></div>
+
+        <div class="total-card">
+          <div class="tc-lbl">Total del pedido</div>
+          <div class="tc-amt" id="sumTotal">$0.00</div>
+        </div>
+
+        <div class="sec-lbl">Enviar pedido</div>
+        <div class="action-btns">
+          <button class="act-btn btn-xl" onclick="toast2('fa-solid fa-file-excel','Pedido exportado a Excel — formato Aspel SAE incluido')">
+            <i class="fa-solid fa-file-excel"></i> Exportar a Excel
+          </button>
+          <button class="act-btn btn-wa" onclick="toast2('fa-brands fa-whatsapp','Pedido enviado por WhatsApp al cliente')">
+            <i class="fa-brands fa-whatsapp"></i> Enviar por WhatsApp
+          </button>
+          <button class="act-btn btn-em" onclick="toast2('fa-solid fa-envelope','Pedido enviado al correo del cliente')">
+            <i class="fa-solid fa-envelope"></i> Enviar por Email
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">
+      <i id="toastIco" class="fa-solid fa-circle-check"></i>
+      <span id="toastTxt"></span>
+    </div>
+
+    <!-- Restart -->
+    <div class="restart-bar">
+      <button class="rst-btn" onclick="restart()">
+        <i class="fa-solid fa-rotate-left"></i> Reiniciar demo
+      </button>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+const PRODS = [
+  { code:'PRD-001', name:'Aceite Vegetal 1L',        price:28.50, ico:'fa-bottle-droplet' },
+  { code:'PRD-002', name:'Harina de Trigo 1kg',      price:22.00, ico:'fa-seedling' },
+  { code:'PRD-003', name:'Azucar Refinada 1kg',      price:26.00, ico:'fa-jar' },
+  { code:'PRD-004', name:'Sal de Mesa 1kg',           price:12.00, ico:'fa-jar' },
+  { code:'PRD-005', name:'Arroz Grano Largo 1kg',    price:35.00, ico:'fa-bowl-rice' },
+  { code:'PRD-006', name:'Frijol Negro 1kg',         price:42.00, ico:'fa-leaf' },
+  { code:'PRD-007', name:'Aceite de Oliva 500ml',    price:89.00, ico:'fa-bottle-droplet' },
+  { code:'PRD-008', name:'Vinagre Blanco 1L',        price:18.00, ico:'fa-flask' },
+  { code:'PRD-009', name:'Salsa Catsup 400g',        price:32.00, ico:'fa-droplet' },
+  { code:'PRD-010', name:'Mayonesa 390g',            price:38.00, ico:'fa-jar' },
+  { code:'PRD-011', name:'Crema Agria 400ml',        price:28.00, ico:'fa-mug-hot' },
+  { code:'PRD-012', name:'Leche Entera 1L',          price:24.50, ico:'fa-bottle-water' },
+  { code:'PRD-013', name:'Atun en Agua 140g',        price:18.50, ico:'fa-fish' },
+  { code:'PRD-014', name:'Pasta Espagueti 500g',     price:22.00, ico:'fa-utensils' },
+  { code:'PRD-015', name:'Galletas Avena 400g',      price:34.00, ico:'fa-cookie' },
+];
+
+let client = '';
+let cart = {};
+
+function pickClient(el, name) {
+  document.querySelectorAll('.c-item').forEach(x => x.classList.remove('sel'));
+  el.classList.add('sel');
+  client = name;
+  document.getElementById('startBtn').disabled = false;
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function goS1() { showScreen('s1'); }
+function goS2() {
+  document.getElementById('s2client').textContent = client;
+  showScreen('s2');
+  renderProds('');
+}
+function goS3() {
+  if (!Object.keys(cart).length) { toast2('fa-solid fa-triangle-exclamation','Agrega al menos un producto'); return; }
+  document.getElementById('s3client').textContent = client;
+  renderSummary();
+  showScreen('s3');
+}
+
+function filterProds() { renderProds(document.getElementById('searchIn').value); }
+
+function renderProds(q) {
+  const el = document.getElementById('prodList');
+  const sq = q.toLowerCase().trim();
+  const list = sq ? PRODS.filter(p => p.code.toLowerCase().includes(sq) || p.name.toLowerCase().includes(sq)) : PRODS;
+  el.innerHTML = `<div class="prod-hdr">2,000 productos disponibles${sq ? ' &mdash; ' + list.length + ' resultados' : ''}</div>`;
+  list.forEach(p => {
+    const inC = cart[p.code] !== undefined;
+    el.innerHTML += `
+      <div class="prod-card${inC?' in-cart':''}" id="pc-${p.code}" onclick="addProd('${p.code}')">
+        <div class="prod-ico"><i class="fa-solid ${p.ico}"></i></div>
+        <div class="prod-info">
+          <div class="prod-code">${p.code}</div>
+          <div class="prod-name">${p.name}</div>
+        </div>
+        <div class="prod-price">$${p.price.toFixed(2)}</div>
+        <button class="add-btn${inC?' done':''}" onclick="event.stopPropagation();addProd('${p.code}')">
+          <i class="fa-solid ${inC?'fa-check':'fa-plus'}"></i>
+        </button>
+      </div>`;
+  });
+}
+
+function addProd(code) {
+  const p = PRODS.find(x => x.code === code);
+  if (!p) return;
+  cart[code] = (cart[code] || 0) + 1;
+  updateBar();
+  const card = document.getElementById('pc-' + code);
+  if (card) {
+    card.classList.add('in-cart');
+    const btn = card.querySelector('.add-btn');
+    btn.classList.add('done');
+    btn.innerHTML = '<i class="fa-solid fa-check"></i>';
+  }
+  toast2('fa-solid fa-circle-check', p.name + ' agregado');
+}
+
+function total() {
+  return Object.entries(cart).reduce((s,[c,q]) => {
+    const p = PRODS.find(x => x.code === c);
+    return s + (p ? p.price * q : 0);
+  }, 0);
+}
+
+function updateBar() {
+  const n = Object.keys(cart).length;
+  document.getElementById('badgeCount').textContent = n;
+  document.getElementById('obCount').textContent = n + (n === 1 ? ' producto' : ' productos');
+  document.getElementById('obTotal').textContent = '$' + total().toFixed(2);
+}
+
+function renderSummary() {
+  const el = document.getElementById('sumItems');
+  el.innerHTML = '';
+  Object.entries(cart).forEach(([code, qty]) => {
+    const p = PRODS.find(x => x.code === code);
+    if (!p) return;
+    el.innerHTML += `
+      <div class="sum-item" id="si-${code}">
+        <div class="si-top">
+          <div class="si-name">${p.name}</div>
+          <button class="si-del" onclick="delItem('${code}')"><i class="fa-solid fa-trash"></i></button>
+        </div>
+        <div class="si-bot">
+          <div class="qty-ctrl">
+            <button class="q-btn" onclick="chQty('${code}',-1)">-</button>
+            <span class="q-num" id="qn-${code}">${qty}</span>
+            <button class="q-btn" onclick="chQty('${code}',1)">+</button>
+          </div>
+          <div class="si-unit">$${p.price.toFixed(2)} c/u</div>
+          <div class="si-sub" id="ss-${code}">$${(p.price*qty).toFixed(2)}</div>
+        </div>
+      </div>`;
+  });
+  updateSumTotal();
+}
+
+function chQty(code, d) {
+  if (!cart[code]) return;
+  cart[code] = Math.max(1, cart[code] + d);
+  const p = PRODS.find(x => x.code === code);
+  document.getElementById('qn-' + code).textContent = cart[code];
+  document.getElementById('ss-' + code).textContent = '$' + (p.price * cart[code]).toFixed(2);
+  updateSumTotal();
+  updateBar();
+}
+
+function delItem(code) {
+  delete cart[code];
+  const el = document.getElementById('si-' + code);
+  if (el) el.remove();
+  updateSumTotal();
+  updateBar();
+  if (!Object.keys(cart).length) goS2();
+}
+
+function updateSumTotal() {
+  document.getElementById('sumTotal').textContent = '$' + total().toFixed(2);
+}
+
+function toast2(ico, msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toastIco').className = ico;
+  document.getElementById('toastTxt').textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._tid);
+  t._tid = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+function restart() {
+  cart = {}; client = '';
+  document.querySelectorAll('.c-item').forEach(x => x.classList.remove('sel'));
+  document.getElementById('startBtn').disabled = true;
+  document.getElementById('searchIn').value = '';
+  document.getElementById('badgeCount').textContent = '0';
+  document.getElementById('obCount').textContent = '0 productos';
+  document.getElementById('obTotal').textContent = '$0.00';
+  goS1();
+}
+
+renderProds('');
+</script>
+
+</body>
+</html>
