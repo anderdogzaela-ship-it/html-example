@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HotelSmart — Motor de Reservas</title>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --navy:#0F2044;
+    --navy-mid:#1A3461;
+    --gold:#C9A227;
+    --gold-light:#E8C547;
+    --cream:#F8F6F0;
+    --white:#FFFFFF;
+    --gray-100:#F4F2EE;
+    --gray-200:#E8E5DE;
+    --gray-400:#B0A898;
+    --gray-600:#6B6358;
+    --gray-800:#2D2921;
+    --green:#1A7A4A;
+    --green-light:#E8F5EE;
+    --red:#C0392B;
+    --red-light:#FDECEA;
+    --orange:#D68910;
+    --orange-light:#FEF3D7;
+    --shadow-sm:0 1px 4px rgba(15,32,68,.08);
+    --shadow-md:0 4px 16px rgba(15,32,68,.12);
+    --shadow-lg:0 8px 32px rgba(15,32,68,.16);
+    --radius:10px;
+    --radius-lg:16px;
+  }
+  body{font-family:'Lexend',sans-serif;background:var(--cream);color:var(--gray-800);min-height:100vh;overflow-x:hidden}
+
+  /* SCREENS */
+  .screen{display:none;min-height:100vh;animation:fadeIn .35s ease}
+  .screen.active{display:block}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+  /* NAVBAR */
+  .navbar{background:var(--navy);padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:var(--shadow-md)}
+  .navbar-brand{display:flex;align-items:center;gap:10px;color:var(--white);font-size:1.2rem;font-weight:700;text-decoration:none}
+  .navbar-brand .icon{width:32px;height:32px;background:var(--gold);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.9rem;color:var(--navy)}
+  .navbar-links{display:flex;align-items:center;gap:20px}
+  .navbar-links a{color:rgba(255,255,255,.7);font-size:.85rem;font-weight:500;text-decoration:none;cursor:pointer;transition:.2s}
+  .navbar-links a:hover{color:var(--white)}
+  .navbar-links .btn-nav{background:var(--gold);color:var(--navy);padding:6px 16px;border-radius:6px;font-weight:600;font-size:.82rem}
+
+  /* HERO / SEARCH */
+  .hero{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-mid) 60%,#1E4A8A 100%);padding:56px 24px 80px;position:relative;overflow:hidden}
+  .hero::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:60px;background:var(--cream);clip-path:ellipse(60% 100% at 50% 100%)}
+  .hero-content{max-width:800px;margin:0 auto;text-align:center}
+  .hero-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(201,162,39,.2);border:1px solid rgba(201,162,39,.4);color:var(--gold-light);padding:4px 12px;border-radius:20px;font-size:.75rem;font-weight:600;margin-bottom:20px;letter-spacing:.05em}
+  .hero h1{color:var(--white);font-size:2.2rem;font-weight:700;line-height:1.2;margin-bottom:10px}
+  .hero h1 span{color:var(--gold-light)}
+  .hero p{color:rgba(255,255,255,.65);font-size:.95rem;margin-bottom:36px}
+
+  /* SEARCH CARD */
+  .search-card{background:var(--white);border-radius:var(--radius-lg);padding:24px;box-shadow:var(--shadow-lg);max-width:800px;margin:0 auto}
+  .search-tabs{display:flex;gap:4px;margin-bottom:20px;background:var(--gray-100);padding:4px;border-radius:8px;width:fit-content}
+  .search-tab{padding:6px 16px;border-radius:6px;font-size:.82rem;font-weight:600;cursor:pointer;color:var(--gray-600);transition:.2s}
+  .search-tab.active{background:var(--navy);color:var(--white)}
+  .search-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:12px;align-items:end}
+  @media(max-width:700px){.search-grid{grid-template-columns:1fr 1fr;}}
+  .field-group label{display:block;font-size:.72rem;font-weight:600;color:var(--gray-600);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em}
+  .field-input{display:flex;align-items:center;gap:8px;border:1.5px solid var(--gray-200);border-radius:8px;padding:10px 14px;background:var(--white);cursor:pointer;transition:.2s}
+  .field-input:hover{border-color:var(--navy)}
+  .field-input i{color:var(--navy);font-size:.9rem;width:16px}
+  .field-input span{font-size:.88rem;font-weight:500;color:var(--gray-800)}
+  .field-input .sub{font-size:.72rem;color:var(--gray-400);display:block}
+  .btn-search{background:var(--gold);color:var(--navy);border:none;border-radius:8px;padding:12px 24px;font-size:.9rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;white-space:nowrap;transition:.2s;font-family:'Lexend',sans-serif;height:52px}
+  .btn-search:hover{background:var(--gold-light)}
+
+  /* RESULTS PAGE */
+  .results-wrap{max-width:1100px;margin:0 auto;padding:28px 20px;display:grid;grid-template-columns:270px 1fr;gap:24px}
+  @media(max-width:800px){.results-wrap{grid-template-columns:1fr}}
+
+  /* FILTERS SIDEBAR */
+  .filters-sidebar{background:var(--white);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow-sm);height:fit-content;position:sticky;top:80px}
+  .filter-title{font-size:.78rem;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px}
+  .filter-section{margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--gray-200)}
+  .filter-section:last-child{border:none;margin:0;padding:0}
+  .star-row{display:flex;gap:6px;flex-wrap:wrap}
+  .star-chip{border:1.5px solid var(--gray-200);border-radius:6px;padding:5px 10px;font-size:.8rem;font-weight:600;cursor:pointer;color:var(--gray-600);display:flex;align-items:center;gap:4px;transition:.2s}
+  .star-chip.active{border-color:var(--navy);background:var(--navy);color:var(--white)}
+  .star-chip i{color:var(--gold);font-size:.7rem}
+  .star-chip.active i{color:var(--gold-light)}
+  .price-range{display:flex;flex-direction:column;gap:8px}
+  .price-slider{width:100%;accent-color:var(--navy)}
+  .price-labels{display:flex;justify-content:space-between;font-size:.78rem;color:var(--gray-600)}
+  .amenity-list{display:flex;flex-direction:column;gap:8px}
+  .amenity-item{display:flex;align-items:center;gap:8px;cursor:pointer}
+  .amenity-item input[type="checkbox"]{accent-color:var(--navy);width:15px;height:15px}
+  .amenity-item label{font-size:.83rem;color:var(--gray-700);cursor:pointer}
+
+  /* HOTEL CARDS */
+  .results-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+  .results-count{font-size:.85rem;color:var(--gray-600)}
+  .results-count strong{color:var(--navy);font-weight:700}
+  .sort-select{border:1.5px solid var(--gray-200);border-radius:7px;padding:6px 12px;font-size:.8rem;font-family:'Lexend',sans-serif;color:var(--gray-700);outline:none;cursor:pointer}
+  .hotel-list{display:flex;flex-direction:column;gap:16px}
+  .hotel-card{background:var(--white);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-sm);display:grid;grid-template-columns:260px 1fr;transition:.2s;cursor:pointer}
+  .hotel-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px)}
+  @media(max-width:640px){.hotel-card{grid-template-columns:1fr}}
+  .hotel-img{position:relative;height:180px}
+  .hotel-img img{width:100%;height:100%;object-fit:cover}
+  .hotel-badge{position:absolute;top:10px;left:10px;background:var(--gold);color:var(--navy);padding:3px 8px;border-radius:5px;font-size:.7rem;font-weight:700}
+  .hotel-badge.available{background:var(--green);color:var(--white)}
+  .hotel-body{padding:18px;display:flex;flex-direction:column;gap:8px}
+  .hotel-name{font-size:1rem;font-weight:700;color:var(--navy)}
+  .hotel-location{font-size:.78rem;color:var(--gray-600);display:flex;align-items:center;gap:5px}
+  .stars{display:flex;gap:2px;color:var(--gold);font-size:.75rem}
+  .hotel-amenities{display:flex;gap:10px;flex-wrap:wrap}
+  .amenity-tag{font-size:.72rem;color:var(--gray-600);display:flex;align-items:center;gap:4px}
+  .amenity-tag i{color:var(--navy-mid);font-size:.7rem}
+  .hotel-footer{display:flex;align-items:flex-end;justify-content:space-between;margin-top:auto;padding-top:8px;border-top:1px solid var(--gray-200)}
+  .hotel-price .label{font-size:.7rem;color:var(--gray-400)}
+  .hotel-price .amount{font-size:1.4rem;font-weight:700;color:var(--navy)}
+  .hotel-price .per{font-size:.72rem;color:var(--gray-400)}
+  .hotel-price .policy{font-size:.7rem;color:var(--green);font-weight:600;margin-top:2px}
+  .btn-select{background:var(--navy);color:var(--white);border:none;border-radius:7px;padding:9px 18px;font-size:.83rem;font-weight:600;cursor:pointer;font-family:'Lexend',sans-serif;transition:.2s}
+  .btn-select:hover{background:var(--navy-mid)}
+
+  /* HOTEL DETAIL */
+  .detail-wrap{max-width:1000px;margin:0 auto;padding:24px 20px}
+  .breadcrumb{font-size:.78rem;color:var(--gray-600);margin-bottom:16px;display:flex;align-items:center;gap:6px}
+  .breadcrumb a{color:var(--navy);cursor:pointer;text-decoration:none}
+  .breadcrumb a:hover{text-decoration:underline}
+  .detail-gallery{display:grid;grid-template-columns:2fr 1fr 1fr;grid-template-rows:200px 200px;gap:8px;border-radius:var(--radius-lg);overflow:hidden;margin-bottom:24px}
+  @media(max-width:700px){.detail-gallery{grid-template-columns:1fr;grid-template-rows:200px}}
+  .detail-gallery img{width:100%;height:100%;object-fit:cover}
+  .detail-gallery img:first-child{grid-row:1/3}
+  @media(max-width:700px){.detail-gallery img:not(:first-child){display:none}}
+  .detail-main{display:grid;grid-template-columns:1fr 340px;gap:24px;align-items:start}
+  @media(max-width:750px){.detail-main{grid-template-columns:1fr}}
+  .detail-header{margin-bottom:20px}
+  .detail-name{font-size:1.5rem;font-weight:700;color:var(--navy);margin-bottom:6px}
+  .detail-meta{display:flex;align-items:center;gap:16px;flex-wrap:wrap;font-size:.82rem;color:var(--gray-600)}
+  .detail-meta .stars{font-size:.82rem}
+  .detail-rating{background:var(--navy);color:var(--white);padding:3px 8px;border-radius:5px;font-size:.78rem;font-weight:700}
+  .section-title{font-size:.82rem;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--gold)}
+  .facilities-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:24px}
+  @media(max-width:500px){.facilities-grid{grid-template-columns:repeat(2,1fr)}}
+  .facility-item{display:flex;align-items:center;gap:8px;font-size:.8rem;color:var(--gray-700)}
+  .facility-item i{color:var(--navy);width:16px;text-align:center}
+
+  /* ROOM CARDS */
+  .room-card{border:1.5px solid var(--gray-200);border-radius:var(--radius);padding:16px;margin-bottom:12px;display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;transition:.2s}
+  .room-card:hover{border-color:var(--navy);box-shadow:var(--shadow-sm)}
+  .room-name{font-size:.92rem;font-weight:700;color:var(--navy);margin-bottom:4px}
+  .room-specs{display:flex;gap:14px;flex-wrap:wrap}
+  .room-spec{font-size:.75rem;color:var(--gray-600);display:flex;align-items:center;gap:4px}
+  .room-spec i{color:var(--navy-mid);font-size:.7rem}
+  .room-policy{margin-top:8px}
+  .policy-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:5px;font-size:.7rem;font-weight:600}
+  .policy-badge.free{background:var(--green-light);color:var(--green)}
+  .policy-badge.partial{background:var(--orange-light);color:var(--orange)}
+  .policy-badge.nonref{background:var(--red-light);color:var(--red)}
+  .room-right{text-align:right}
+  .room-price .amount{font-size:1.3rem;font-weight:700;color:var(--navy)}
+  .room-price .per{font-size:.72rem;color:var(--gray-400)}
+  .btn-room{background:var(--gold);color:var(--navy);border:none;border-radius:7px;padding:9px 18px;font-size:.82rem;font-weight:700;cursor:pointer;font-family:'Lexend',sans-serif;margin-top:8px;transition:.2s;display:block;width:100%}
+  .btn-room:hover{background:var(--gold-light)}
+
+  /* BOOKING CARD */
+  .booking-card{background:var(--white);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow-md);position:sticky;top:80px}
+  .booking-card .bh{font-size:.9rem;font-weight:700;color:var(--navy);margin-bottom:16px}
+  .booking-summary{background:var(--gray-100);border-radius:8px;padding:14px;margin-bottom:16px}
+  .bs-row{display:flex;justify-content:space-between;font-size:.8rem;margin-bottom:8px;color:var(--gray-700)}
+  .bs-row:last-child{margin:0;padding-top:8px;border-top:1px solid var(--gray-200);font-weight:700;color:var(--navy)}
+  .trust-items{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+  .trust-item{display:flex;align-items:center;gap:8px;font-size:.75rem;color:var(--gray-600)}
+  .trust-item i{color:var(--green);width:14px}
+  .btn-book{background:var(--gold);color:var(--navy);border:none;border-radius:8px;padding:13px;font-size:.9rem;font-weight:700;cursor:pointer;font-family:'Lexend',sans-serif;width:100%;transition:.2s}
+  .btn-book:hover{background:var(--gold-light)}
+
+  /* CHECKOUT */
+  .checkout-wrap{max-width:900px;margin:0 auto;padding:28px 20px;display:grid;grid-template-columns:1fr 320px;gap:24px;align-items:start}
+  @media(max-width:720px){.checkout-wrap{grid-template-columns:1fr}}
+  .checkout-section{background:var(--white);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow-sm);margin-bottom:16px}
+  .checkout-section-title{font-size:.85rem;font-weight:700;color:var(--navy);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+  .checkout-section-title .num{width:22px;height:22px;background:var(--navy);color:var(--white);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;flex-shrink:0}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+  @media(max-width:500px){.form-row{grid-template-columns:1fr}}
+  .form-group{display:flex;flex-direction:column;gap:5px}
+  .form-group label{font-size:.72rem;font-weight:600;color:var(--gray-600);text-transform:uppercase;letter-spacing:.05em}
+  .form-group input,.form-group select{border:1.5px solid var(--gray-200);border-radius:7px;padding:10px 12px;font-size:.85rem;font-family:'Lexend',sans-serif;color:var(--gray-800);outline:none;transition:.2s;background:var(--white)}
+  .form-group input:focus,.form-group select:focus{border-color:var(--navy)}
+  .card-input-wrap{display:flex;align-items:center;gap:8px;border:1.5px solid var(--gray-200);border-radius:7px;padding:10px 12px}
+  .card-input-wrap input{border:none;outline:none;font-size:.85rem;font-family:'Lexend',sans-serif;flex:1}
+  .card-icons{display:flex;gap:4px}
+  .card-icon{width:30px;height:20px;border-radius:3px;background:var(--gray-200);display:flex;align-items:center;justify-content:center;font-size:.55rem;font-weight:700;color:var(--gray-600)}
+  .card-icon.visa{background:#1A1F71;color:white}
+  .card-icon.mc{background:#EB001B;color:white}
+  .stripe-badge{display:flex;align-items:center;gap:6px;font-size:.72rem;color:var(--gray-400);margin-top:8px}
+  .stripe-badge i{color:#635BFF}
+
+  /* ORDER SUMMARY CARD */
+  .order-card{background:var(--white);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow-sm);position:sticky;top:80px}
+  .order-hotel-img{width:100%;height:120px;object-fit:cover;border-radius:7px;margin-bottom:14px}
+  .order-hotel-name{font-size:.88rem;font-weight:700;color:var(--navy);margin-bottom:4px}
+  .order-hotel-sub{font-size:.75rem;color:var(--gray-600);margin-bottom:14px;display:flex;align-items:center;gap:5px}
+  .order-divider{height:1px;background:var(--gray-200);margin:14px 0}
+  .order-line{display:flex;justify-content:space-between;font-size:.8rem;color:var(--gray-700);margin-bottom:8px}
+  .order-total{display:flex;justify-content:space-between;font-size:.92rem;font-weight:700;color:var(--navy);padding-top:10px;border-top:2px solid var(--navy)}
+  .btn-confirm{background:var(--gold);color:var(--navy);border:none;border-radius:8px;padding:13px;font-size:.9rem;font-weight:700;cursor:pointer;font-family:'Lexend',sans-serif;width:100%;margin-top:16px;transition:.2s;display:flex;align-items:center;justify-content:center;gap:8px}
+  .btn-confirm:hover{background:var(--gold-light)}
+  .secure-note{display:flex;align-items:center;justify-content:center;gap:6px;font-size:.72rem;color:var(--gray-400);margin-top:10px}
+  .secure-note i{color:var(--green)}
+
+  /* CONFIRMATION */
+  .confirm-wrap{max-width:640px;margin:0 auto;padding:40px 20px;text-align:center}
+  .status-circle{width:80px;height:80px;border-radius:50%;margin:0 auto 20px;display:flex;align-items:center;justify-content:center;font-size:2rem;position:relative}
+  .status-circle.pending{background:var(--orange-light);color:var(--orange)}
+  .status-circle.confirmed{background:var(--green-light);color:var(--green)}
+  .status-circle .pulse{position:absolute;width:100%;height:100%;border-radius:50%;animation:pulse 1.5s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(214,137,16,.5)}70%{box-shadow:0 0 0 14px rgba(214,137,16,0)}100%{box-shadow:0 0 0 0 rgba(214,137,16,0)}}
+  .confirm-status{font-size:1.3rem;font-weight:700;color:var(--navy);margin-bottom:8px}
+  .confirm-sub{font-size:.85rem;color:var(--gray-600);margin-bottom:28px;line-height:1.6}
+  .polling-bar{background:var(--gray-200);border-radius:10px;height:6px;overflow:hidden;margin-bottom:20px}
+  .polling-fill{height:100%;border-radius:10px;background:linear-gradient(90deg,var(--gold),var(--navy));width:0%;transition:width .5s ease}
+  .polling-label{font-size:.75rem;color:var(--gray-600);margin-bottom:24px}
+  .confirm-card{background:var(--white);border-radius:var(--radius-lg);padding:24px;box-shadow:var(--shadow-md);text-align:left;margin-bottom:20px}
+  .confirm-card-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--gray-100)}
+  .confirm-card-row:last-child{border:none}
+  .confirm-card-row .lbl{font-size:.75rem;color:var(--gray-600);font-weight:500}
+  .confirm-card-row .val{font-size:.85rem;font-weight:600;color:var(--navy)}
+  .voucher-id{font-family:monospace;background:var(--gray-100);padding:2px 6px;border-radius:4px;font-size:.8rem;color:var(--navy)}
+  .btn-voucher{background:var(--navy);color:var(--white);border:none;border-radius:8px;padding:12px 24px;font-size:.85rem;font-weight:600;cursor:pointer;font-family:'Lexend',sans-serif;display:inline-flex;align-items:center;gap:8px;margin-right:10px;transition:.2s}
+  .btn-voucher:hover{background:var(--navy-mid)}
+  .btn-outline{background:transparent;border:1.5px solid var(--navy);color:var(--navy);border-radius:8px;padding:11px 22px;font-size:.85rem;font-weight:600;cursor:pointer;font-family:'Lexend',sans-serif;display:inline-flex;align-items:center;gap:8px;transition:.2s}
+  .btn-outline:hover{background:var(--gray-100)}
+
+  /* ADMIN DASHBOARD */
+  .admin-wrap{max-width:1100px;margin:0 auto;padding:28px 20px}
+  .admin-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+  .admin-header h2{font-size:1.2rem;font-weight:700;color:var(--navy)}
+  .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
+  @media(max-width:700px){.stats-grid{grid-template-columns:repeat(2,1fr)}}
+  .stat-card{background:var(--white);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow-sm)}
+  .stat-icon{width:40px;height:40px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1rem;margin-bottom:12px}
+  .stat-icon.blue{background:#EFF4FF;color:var(--navy)}
+  .stat-icon.gold{background:#FEF7E5;color:var(--gold)}
+  .stat-icon.green{background:var(--green-light);color:var(--green)}
+  .stat-icon.red{background:var(--red-light);color:var(--red)}
+  .stat-value{font-size:1.4rem;font-weight:700;color:var(--navy);margin-bottom:2px}
+  .stat-label{font-size:.75rem;color:var(--gray-600)}
+  .stat-change{font-size:.72rem;color:var(--green);font-weight:600;margin-top:4px}
+  .admin-section-title{font-size:.82rem;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px}
+  .table-wrap{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow-sm);overflow:hidden}
+  .table-head{display:grid;grid-template-columns:90px 1fr 130px 100px 100px 90px;padding:10px 18px;background:var(--gray-100);font-size:.72rem;font-weight:700;color:var(--gray-600);text-transform:uppercase;letter-spacing:.06em}
+  @media(max-width:700px){.table-head{display:none}}
+  .table-row{display:grid;grid-template-columns:90px 1fr 130px 100px 100px 90px;padding:14px 18px;border-bottom:1px solid var(--gray-100);align-items:center;transition:.2s;cursor:pointer}
+  .table-row:hover{background:var(--gray-100)}
+  .table-row:last-child{border:none}
+  @media(max-width:700px){.table-row{grid-template-columns:1fr;gap:6px}}
+  .booking-id{font-size:.78rem;font-family:monospace;color:var(--navy);font-weight:600}
+  .hotel-cell{font-size:.82rem;color:var(--gray-800)}
+  .hotel-cell .sub{font-size:.72rem;color:var(--gray-400)}
+  .dates-cell{font-size:.78rem;color:var(--gray-700)}
+  .amount-cell{font-size:.85rem;font-weight:700;color:var(--navy)}
+  .status-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:600}
+  .status-pill.confirmed{background:var(--green-light);color:var(--green)}
+  .status-pill.pending{background:var(--orange-light);color:var(--orange)}
+  .status-pill.cancelled{background:var(--red-light);color:var(--red)}
+  .status-pill.onrequest{background:#EFF4FF;color:var(--navy)}
+  .actions-cell{display:flex;gap:8px}
+  .action-btn{width:28px;height:28px;border:none;border-radius:6px;background:var(--gray-100);color:var(--gray-600);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.75rem;transition:.2s}
+  .action-btn:hover{background:var(--navy);color:var(--white)}
+
+  /* RESTART BUTTON */
+  .restart-btn{position:fixed;bottom:20px;right:20px;background:var(--navy);color:var(--white);border:none;border-radius:30px;padding:10px 18px;font-size:.78rem;font-weight:600;cursor:pointer;font-family:'Lexend',sans-serif;display:flex;align-items:center;gap:7px;box-shadow:var(--shadow-md);z-index:1000;transition:.2s}
+  .restart-btn:hover{background:var(--navy-mid)}
+
+  /* UTILITIES */
+  .page-header{background:var(--white);border-bottom:1px solid var(--gray-200);padding:16px 20px;margin-bottom:0}
+  .page-header-inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between}
+  .page-header h2{font-size:1rem;font-weight:700;color:var(--navy)}
+  .trip-summary{display:flex;align-items:center;gap:16px;background:var(--gray-100);border-radius:8px;padding:10px 16px;font-size:.8rem;color:var(--gray-700)}
+  .trip-summary span{display:flex;align-items:center;gap:5px}
+  .trip-summary i{color:var(--navy)}
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="navbar-brand">
+    <div class="icon"><i class="fa-solid fa-hotel"></i></div>
+    HotelSmart
+  </div>
+  <div class="navbar-links">
+    <a onclick="goTo('admin')"><i class="fa-solid fa-chart-line"></i> Admin</a>
+    <a class="btn-nav" onclick="goTo('search')"><i class="fa-solid fa-magnifying-glass"></i> Nova Busca</a>
+  </div>
+</nav>
+
+<!-- SCREEN 1: SEARCH -->
+<div id="screen-search" class="screen active">
+  <div class="hero">
+    <div class="hero-content">
+      <div class="hero-badge"><i class="fa-solid fa-bolt"></i> Motor de Reservas B2C / B2B</div>
+      <h1>Hotéis com tarifas <span>atacadistas</span><br>direto para seu cliente</h1>
+      <p>Acesso a TBO Hotels, Hotelbeds e mais de 300.000 propriedades em 180 países</p>
+      <div class="search-card">
+        <div class="search-tabs">
+          <div class="search-tab active">Hotéis</div>
+          <div class="search-tab">Pacotes</div>
+          <div class="search-tab">Transfers</div>
+        </div>
+        <div class="search-grid">
+          <div class="field-group">
+            <label>Destino</label>
+            <div class="field-input">
+              <i class="fa-solid fa-location-dot"></i>
+              <div><span>Cancún, México</span><span class="sub">Cidade, aeroporto ou hotel</span></div>
+            </div>
+          </div>
+          <div class="field-group">
+            <label>Check-in</label>
+            <div class="field-input">
+              <i class="fa-solid fa-calendar"></i>
+              <span>15 Jul 2025</span>
+            </div>
+          </div>
+          <div class="field-group">
+            <label>Check-out</label>
+            <div class="field-input">
+              <i class="fa-solid fa-calendar-check"></i>
+              <span>20 Jul 2025</span>
+            </div>
+          </div>
+          <div class="field-group">
+            <label>Hóspedes</label>
+            <div class="field-input">
+              <i class="fa-solid fa-user"></i>
+              <div><span>2 Adultos</span><span class="sub">1 Quarto</span></div>
+            </div>
+          </div>
+          <div class="field-group">
+            <button class="btn-search" onclick="goTo('results')"><i class="fa-solid fa-magnifying-glass"></i> Buscar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 2: RESULTS -->
+<div id="screen-results" class="screen">
+  <div class="page-header">
+    <div class="page-header-inner">
+      <h2>Cancún, México — 15 a 20 Jul · 2 adultos</h2>
+      <button class="btn-select" style="font-size:.78rem" onclick="goTo('search')"><i class="fa-solid fa-pencil"></i> Editar Busca</button>
+    </div>
+  </div>
+  <div class="results-wrap">
+    <aside class="filters-sidebar">
+      <div class="filter-section">
+        <div class="filter-title">Categoria</div>
+        <div class="star-row">
+          <div class="star-chip"><i class="fa-solid fa-star"></i> 5</div>
+          <div class="star-chip active"><i class="fa-solid fa-star"></i> 4</div>
+          <div class="star-chip"><i class="fa-solid fa-star"></i> 3</div>
+          <div class="star-chip"><i class="fa-solid fa-star"></i> 2</div>
+        </div>
+      </div>
+      <div class="filter-section">
+        <div class="filter-title">Preço por noite</div>
+        <div class="price-range">
+          <input type="range" class="price-slider" min="50" max="800" value="400">
+          <div class="price-labels"><span>USD 50</span><span>USD 400</span></div>
+        </div>
+      </div>
+      <div class="filter-section">
+        <div class="filter-title">Regime</div>
+        <div class="amenity-list">
+          <div class="amenity-item"><input type="checkbox" checked id="ai"><label for="ai">All Inclusive</label></div>
+          <div class="amenity-item"><input type="checkbox" id="bb"><label for="bb">Café da Manhã</label></div>
+          <div class="amenity-item"><input type="checkbox" id="ro"><label for="ro">Só Acomodação</label></div>
+        </div>
+      </div>
+      <div class="filter-section">
+        <div class="filter-title">Comodidades</div>
+        <div class="amenity-list">
+          <div class="amenity-item"><input type="checkbox" checked id="pool"><label for="pool">Piscina</label></div>
+          <div class="amenity-item"><input type="checkbox" checked id="spa"><label for="spa">Spa</label></div>
+          <div class="amenity-item"><input type="checkbox" id="pet"><label for="pet">Pet Friendly</label></div>
+          <div class="amenity-item"><input type="checkbox" id="beach"><label for="beach">Acesso à Praia</label></div>
+        </div>
+      </div>
+    </aside>
+    <main>
+      <div class="results-header">
+        <div class="results-count">Exibindo <strong>4 hotéis</strong> disponíveis</div>
+        <select class="sort-select"><option>Menor preço</option><option>Melhor avaliação</option><option>Mais popular</option></select>
+      </div>
+      <div class="hotel-list">
+
+        <div class="hotel-card" onclick="goTo('detail')">
+          <div class="hotel-img">
+            <img src="https://images.unsplash.com/photo-1568084680786-a84f91d1153c?w=400&q=80" alt="Grand Sunset Palace">
+            <div class="hotel-badge available">Disponível</div>
+          </div>
+          <div class="hotel-body">
+            <div class="hotel-name">Grand Sunset Palace Resort</div>
+            <div class="hotel-location"><i class="fa-solid fa-location-dot"></i> Zona Hoteleira, Cancún</div>
+            <div class="stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
+            <div class="hotel-amenities">
+              <div class="amenity-tag"><i class="fa-solid fa-umbrella-beach"></i> Frente Mar</div>
+              <div class="amenity-tag"><i class="fa-solid fa-utensils"></i> All Inclusive</div>
+              <div class="amenity-tag"><i class="fa-solid fa-spa"></i> Spa</div>
+              <div class="amenity-tag"><i class="fa-solid fa-wifi"></i> Wi-Fi Grátis</div>
+            </div>
+            <div class="hotel-footer">
+              <div class="hotel-price">
+                <div class="label">A partir de</div>
+                <div class="amount">USD 189 <span class="per">/ noite</span></div>
+                <div class="policy"><i class="fa-solid fa-circle-check"></i> Cancelamento gratuito até 3 dias antes</div>
+              </div>
+              <button class="btn-select">Ver quartos</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="hotel-card" onclick="goTo('detail')">
+          <div class="hotel-img">
+            <img src="https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=400&q=80" alt="Iberostar Selection">
+            <div class="hotel-badge" style="background:var(--navy);color:white">Boa oferta</div>
+          </div>
+          <div class="hotel-body">
+            <div class="hotel-name">Iberostar Selection Cancún</div>
+            <div class="hotel-location"><i class="fa-solid fa-location-dot"></i> Punta Cancún, Zona Hoteleira</div>
+            <div class="stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-regular fa-star"></i></div>
+            <div class="hotel-amenities">
+              <div class="amenity-tag"><i class="fa-solid fa-swimming-pool"></i> 3 Piscinas</div>
+              <div class="amenity-tag"><i class="fa-solid fa-utensils"></i> All Inclusive</div>
+              <div class="amenity-tag"><i class="fa-solid fa-dumbbell"></i> Academia</div>
+            </div>
+            <div class="hotel-footer">
+              <div class="hotel-price">
+                <div class="label">A partir de</div>
+                <div class="amount">USD 142 <span class="per">/ noite</span></div>
+                <div class="policy" style="color:var(--orange)"><i class="fa-solid fa-triangle-exclamation"></i> Não reembolsável</div>
+              </div>
+              <button class="btn-select">Ver quartos</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="hotel-card" onclick="goTo('detail')">
+          <div class="hotel-img">
+            <img src="https://images.unsplash.com/photo-1445019980597-93fa8acb246c?w=400&q=80" alt="Live Aqua">
+          </div>
+          <div class="hotel-body">
+            <div class="hotel-name">Live Aqua Beach Resort Cancún</div>
+            <div class="hotel-location"><i class="fa-solid fa-location-dot"></i> Blvd. Kukulcán Km 12.6</div>
+            <div class="stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
+            <div class="hotel-amenities">
+              <div class="amenity-tag"><i class="fa-solid fa-martini-glass"></i> Adults Only</div>
+              <div class="amenity-tag"><i class="fa-solid fa-spa"></i> Spa Luxo</div>
+              <div class="amenity-tag"><i class="fa-solid fa-moon"></i> Área Rooftop</div>
+            </div>
+            <div class="hotel-footer">
+              <div class="hotel-price">
+                <div class="label">A partir de</div>
+                <div class="amount">USD 267 <span class="per">/ noite</span></div>
+                <div class="policy"><i class="fa-solid fa-circle-check"></i> Cancelamento gratuito até 5 dias antes</div>
+              </div>
+              <button class="btn-select">Ver quartos</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- SCREEN 3: HOTEL DETAIL -->
+<div id="screen-detail" class="screen">
+  <div class="detail-wrap">
+    <div class="breadcrumb">
+      <a onclick="goTo('results')"><i class="fa-solid fa-chevron-left"></i> Resultados</a>
+      <span>›</span>
+      <span>Grand Sunset Palace Resort</span>
+    </div>
+    <div class="detail-gallery">
+      <img src="https://images.unsplash.com/photo-1568084680786-a84f91d1153c?w=700&q=80" alt="">
+      <img src="https://images.unsplash.com/photo-1582719508461-905c673771fd?w=350&q=80" alt="">
+      <img src="https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=350&q=80" alt="">
+      <img src="https://images.unsplash.com/photo-1540541338537-71cf3a4ea374?w=350&q=80" alt="">
+      <img src="https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=350&q=80" alt="">
+    </div>
+    <div class="detail-main">
+      <div>
+        <div class="detail-header">
+          <div class="detail-name">Grand Sunset Palace Resort</div>
+          <div class="detail-meta">
+            <div class="stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
+            <div class="detail-rating">9.2 Excelente</div>
+            <span><i class="fa-solid fa-location-dot"></i> Zona Hoteleira, Cancún</span>
+            <span><i class="fa-solid fa-utensils"></i> All Inclusive</span>
+          </div>
+        </div>
+
+        <div class="section-title">Comodidades</div>
+        <div class="facilities-grid" style="margin-bottom:24px">
+          <div class="facility-item"><i class="fa-solid fa-umbrella-beach"></i> Frente ao mar</div>
+          <div class="facility-item"><i class="fa-solid fa-swimming-pool"></i> 4 Piscinas</div>
+          <div class="facility-item"><i class="fa-solid fa-spa"></i> Spa & Wellness</div>
+          <div class="facility-item"><i class="fa-solid fa-wifi"></i> Wi-Fi grátis</div>
+          <div class="facility-item"><i class="fa-solid fa-car"></i> Estacionamento</div>
+          <div class="facility-item"><i class="fa-solid fa-dumbbell"></i> Academia 24h</div>
+          <div class="facility-item"><i class="fa-solid fa-champagne-glasses"></i> 7 Restaurantes</div>
+          <div class="facility-item"><i class="fa-solid fa-baby"></i> Clube infantil</div>
+          <div class="facility-item"><i class="fa-solid fa-water"></i> Esportes aquáticos</div>
+        </div>
+
+        <div class="section-title">Selecione o Quarto</div>
+
+        <div class="room-card">
+          <div>
+            <div class="room-name">Quarto Superior Vista Jardim</div>
+            <div class="room-specs">
+              <div class="room-spec"><i class="fa-solid fa-bed"></i> 1 Cama King</div>
+              <div class="room-spec"><i class="fa-solid fa-maximize"></i> 42 m²</div>
+              <div class="room-spec"><i class="fa-solid fa-user-group"></i> Até 2 pessoas</div>
+              <div class="room-spec"><i class="fa-solid fa-snowflake"></i> Ar condicionado</div>
+            </div>
+            <div class="room-policy">
+              <div class="policy-badge free"><i class="fa-solid fa-circle-check"></i> Cancelamento gratuito até 72h antes</div>
+            </div>
+          </div>
+          <div class="room-right">
+            <div class="room-price"><div class="amount">USD 189</div><div class="per">por noite · 5 noites</div></div>
+            <button class="btn-room" onclick="goTo('checkout')">Reservar</button>
+          </div>
+        </div>
+
+        <div class="room-card">
+          <div>
+            <div class="room-name">Suíte Deluxe Vista Mar</div>
+            <div class="room-specs">
+              <div class="room-spec"><i class="fa-solid fa-bed"></i> 1 Cama King</div>
+              <div class="room-spec"><i class="fa-solid fa-maximize"></i> 65 m²</div>
+              <div class="room-spec"><i class="fa-solid fa-user-group"></i> Até 3 pessoas</div>
+              <div class="room-spec"><i class="fa-solid fa-bath"></i> Banheira de imersão</div>
+            </div>
+            <div class="room-policy">
+              <div class="policy-badge partial"><i class="fa-solid fa-triangle-exclamation"></i> Reembolso parcial até 48h antes</div>
+            </div>
+          </div>
+          <div class="room-right">
+            <div class="room-price"><div class="amount">USD 284</div><div class="per">por noite · 5 noites</div></div>
+            <button class="btn-room" onclick="goTo('checkout')">Reservar</button>
+          </div>
+        </div>
+
+        <div class="room-card">
+          <div>
+            <div class="room-name">Quarto Standard All Inclusive</div>
+            <div class="room-specs">
+              <div class="room-spec"><i class="fa-solid fa-bed"></i> 2 Camas Twin</div>
+              <div class="room-spec"><i class="fa-solid fa-maximize"></i> 36 m²</div>
+              <div class="room-spec"><i class="fa-solid fa-user-group"></i> Até 2 pessoas</div>
+            </div>
+            <div class="room-policy">
+              <div class="policy-badge nonref"><i class="fa-solid fa-xmark"></i> Não reembolsável</div>
+            </div>
+          </div>
+          <div class="room-right">
+            <div class="room-price"><div class="amount">USD 148</div><div class="per">por noite · 5 noites</div></div>
+            <button class="btn-room" onclick="goTo('checkout')">Reservar</button>
+          </div>
+        </div>
+
+      </div>
+
+      <div>
+        <div class="booking-card">
+          <div class="bh">Resumo da viagem</div>
+          <div class="trip-summary" style="margin-bottom:14px;background:var(--gray-100);border-radius:8px;padding:10px 14px">
+            <div style="font-size:.78rem;color:var(--gray-700)">
+              <div style="margin-bottom:6px"><i class="fa-solid fa-calendar" style="color:var(--navy);margin-right:6px"></i> <strong>15 – 20 Jul 2025</strong> · 5 noites</div>
+              <div><i class="fa-solid fa-user-group" style="color:var(--navy);margin-right:6px"></i> 2 adultos · 1 quarto</div>
+            </div>
+          </div>
+          <div class="booking-summary">
+            <div class="bs-row"><span>Quarto Superior Vista Jardim</span></div>
+            <div class="bs-row"><span>USD 189 × 5 noites</span><span>USD 945</span></div>
+            <div class="bs-row"><span>Taxas e impostos</span><span>USD 94</span></div>
+            <div class="bs-row"><span>Total</span><span>USD 1.039</span></div>
+          </div>
+          <div class="trust-items">
+            <div class="trust-item"><i class="fa-solid fa-shield-halved"></i> Pagamento 100% seguro com Stripe</div>
+            <div class="trust-item"><i class="fa-solid fa-circle-check"></i> Confirmação imediata ou notificação por e-mail</div>
+            <div class="trust-item"><i class="fa-solid fa-headset"></i> Suporte 24h para sua reserva</div>
+          </div>
+          <button class="btn-book" onclick="goTo('checkout')"><i class="fa-solid fa-lock"></i> Continuar para pagamento</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 4: CHECKOUT -->
+<div id="screen-checkout" class="screen">
+  <div class="page-header">
+    <div class="page-header-inner">
+      <h2><i class="fa-solid fa-lock" style="font-size:.85rem;color:var(--green)"></i> Checkout seguro</h2>
+    </div>
+  </div>
+  <div class="checkout-wrap">
+    <div>
+      <div class="checkout-section">
+        <div class="checkout-section-title"><div class="num">1</div> Dados do Hóspede Principal</div>
+        <div class="form-row">
+          <div class="form-group"><label>Nome</label><input type="text" value="Carlos" readonly></div>
+          <div class="form-group"><label>Sobrenome</label><input type="text" value="Mendes" readonly></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>E-mail</label><input type="email" value="carlos@empresa.com.br" readonly></div>
+          <div class="form-group"><label>Telefone</label><input type="tel" value="+55 11 99999-8888" readonly></div>
+        </div>
+        <div class="form-group"><label>Documento (CPF / Passaporte)</label><input type="text" value="123.456.789-00" readonly></div>
+      </div>
+
+      <div class="checkout-section">
+        <div class="checkout-section-title"><div class="num">2</div> Informações de Pagamento</div>
+        <div class="form-group" style="margin-bottom:12px">
+          <label>Número do Cartão</label>
+          <div class="card-input-wrap">
+            <i class="fa-solid fa-credit-card" style="color:var(--navy);font-size:.9rem"></i>
+            <input type="text" value="4242 4242 4242 4242" readonly>
+            <div class="card-icons">
+              <div class="card-icon visa">VISA</div>
+              <div class="card-icon mc">MC</div>
+            </div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Validade</label><input type="text" value="12/27" readonly></div>
+          <div class="form-group"><label>CVV</label><input type="text" value="•••" readonly></div>
+        </div>
+        <div class="stripe-badge"><i class="fa-brands fa-stripe"></i> Processado com segurança pelo Stripe · Dados criptografados SSL</div>
+      </div>
+
+      <div class="checkout-section">
+        <div class="checkout-section-title"><div class="num">3</div> Pedidos Especiais</div>
+        <div class="form-group"><label>Solicitação (opcional)</label>
+          <input type="text" value="Quarto em andar alto se disponível" readonly>
+        </div>
+        <p style="font-size:.72rem;color:var(--gray-400);margin-top:8px">Solicitações estão sujeitas à disponibilidade e não são garantidas.</p>
+      </div>
+    </div>
+
+    <div>
+      <div class="order-card">
+        <img src="https://images.unsplash.com/photo-1568084680786-a84f91d1153c?w=400&q=80" class="order-hotel-img" alt="">
+        <div class="order-hotel-name">Grand Sunset Palace Resort</div>
+        <div class="order-hotel-sub"><i class="fa-solid fa-star" style="color:var(--gold);font-size:.7rem"></i><i class="fa-solid fa-star" style="color:var(--gold);font-size:.7rem"></i><i class="fa-solid fa-star" style="color:var(--gold);font-size:.7rem"></i><i class="fa-solid fa-star" style="color:var(--gold);font-size:.7rem"></i><i class="fa-solid fa-star" style="color:var(--gold);font-size:.7rem"></i> · Zona Hoteleira, Cancún</div>
+        <div class="order-divider"></div>
+        <div class="order-line"><span>Quarto Superior Vista Jardim</span></div>
+        <div class="order-line"><span><i class="fa-solid fa-calendar"></i> 15 – 20 Jul 2025</span><span>5 noites</span></div>
+        <div class="order-line"><span><i class="fa-solid fa-user-group"></i> 2 adultos</span></div>
+        <div class="order-line"><span><i class="fa-solid fa-utensils"></i> All Inclusive</span></div>
+        <div class="order-divider"></div>
+        <div class="order-line"><span>Tarifa do quarto (5 noites)</span><span>USD 945</span></div>
+        <div class="order-line"><span>Taxas e impostos</span><span>USD 94</span></div>
+        <div class="order-total"><span>Total</span><span>USD 1.039</span></div>
+        <button class="btn-confirm" onclick="goTo('confirm')"><i class="fa-solid fa-lock"></i> Confirmar Reserva · USD 1.039</button>
+        <div class="secure-note"><i class="fa-solid fa-shield-halved"></i> Garantia de melhor preço · Sem taxas ocultas</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 5: CONFIRMATION -->
+<div id="screen-confirm" class="screen">
+  <div class="confirm-wrap">
+    <div id="status-icon" class="status-circle pending">
+      <div class="pulse"></div>
+      <i class="fa-solid fa-clock" id="status-fa-icon"></i>
+    </div>
+    <div class="confirm-status" id="confirm-title">Reserva em Processamento</div>
+    <div class="confirm-sub" id="confirm-sub">Aguardando confirmação do provedor (TBO Hotels).<br>Isso leva entre 30 segundos e 2 minutos.</div>
+
+    <div class="polling-bar" id="polling-bar-wrap">
+      <div class="polling-fill" id="polling-fill"></div>
+    </div>
+    <div class="polling-label" id="polling-label">Status: <strong>OnRequest</strong> · Verificando disponibilidade final...</div>
+
+    <div class="confirm-card">
+      <div class="confirm-card-row">
+        <div class="lbl">ID da Reserva</div>
+        <div class="val"><span class="voucher-id">HSM-2025-084721</span></div>
+      </div>
+      <div class="confirm-card-row">
+        <div class="lbl">Hotel</div>
+        <div class="val">Grand Sunset Palace Resort</div>
+      </div>
+      <div class="confirm-card-row">
+        <div class="lbl">Check-in / Check-out</div>
+        <div class="val">15 Jul – 20 Jul 2025</div>
+      </div>
+      <div class="confirm-card-row">
+        <div class="lbl">Hóspede</div>
+        <div class="val">Carlos Mendes</div>
+      </div>
+      <div class="confirm-card-row">
+        <div class="lbl">Quarto</div>
+        <div class="val">Superior Vista Jardim · All Inclusive</div>
+      </div>
+      <div class="confirm-card-row">
+        <div class="lbl">Total Pago</div>
+        <div class="val">USD 1.039</div>
+      </div>
+      <div class="confirm-card-row">
+        <div class="lbl">Status</div>
+        <div class="val" id="booking-status-val"><span class="status-pill onrequest"><i class="fa-solid fa-circle-notch fa-spin"></i> OnRequest</span></div>
+      </div>
+    </div>
+
+    <div id="confirm-actions" style="display:none">
+      <button class="btn-voucher"><i class="fa-solid fa-file-pdf"></i> Baixar Voucher</button>
+      <button class="btn-outline" onclick="goTo('admin')"><i class="fa-solid fa-chart-line"></i> Ver no Dashboard</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 6: ADMIN DASHBOARD -->
+<div id="screen-admin" class="screen">
+  <div class="admin-wrap">
+    <div class="admin-header">
+      <h2><i class="fa-solid fa-chart-line"></i> Dashboard de Gestão</h2>
+      <div style="display:flex;gap:10px">
+        <select class="sort-select"><option>Julho 2025</option><option>Junho 2025</option></select>
+        <button class="btn-select"><i class="fa-solid fa-download"></i> Exportar</button>
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon blue"><i class="fa-solid fa-calendar-check"></i></div>
+        <div class="stat-value">142</div>
+        <div class="stat-label">Reservas este mês</div>
+        <div class="stat-change"><i class="fa-solid fa-arrow-trend-up"></i> +18% vs mês anterior</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon gold"><i class="fa-solid fa-dollar-sign"></i></div>
+        <div class="stat-value">USD 87.4k</div>
+        <div class="stat-label">Receita total</div>
+        <div class="stat-change"><i class="fa-solid fa-arrow-trend-up"></i> +24% vs mês anterior</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon green"><i class="fa-solid fa-circle-check"></i></div>
+        <div class="stat-value">134</div>
+        <div class="stat-label">Confirmadas</div>
+        <div class="stat-change" style="color:var(--gray-400)">94.4% taxa de confirmação</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon red"><i class="fa-solid fa-clock"></i></div>
+        <div class="stat-value">8</div>
+        <div class="stat-label">OnRequest / Pendentes</div>
+        <div class="stat-change" style="color:var(--orange)">Aguardando provedor</div>
+      </div>
+    </div>
+
+    <div class="admin-section-title">Reservas Recentes</div>
+    <div class="table-wrap">
+      <div class="table-head">
+        <span>ID</span>
+        <span>Hotel / Hóspede</span>
+        <span>Datas</span>
+        <span>Valor</span>
+        <span>Status</span>
+        <span>Ações</span>
+      </div>
+
+      <div class="table-row">
+        <div class="booking-id">HSM-084721</div>
+        <div class="hotel-cell">Grand Sunset Palace<div class="sub">Carlos Mendes</div></div>
+        <div class="dates-cell">15–20 Jul 25</div>
+        <div class="amount-cell">USD 1.039</div>
+        <div><span class="status-pill onrequest"><i class="fa-solid fa-circle-notch fa-spin"></i> OnRequest</span></div>
+        <div class="actions-cell"><button class="action-btn"><i class="fa-solid fa-eye"></i></button><button class="action-btn"><i class="fa-solid fa-file-pdf"></i></button></div>
+      </div>
+
+      <div class="table-row">
+        <div class="booking-id">HSM-084698</div>
+        <div class="hotel-cell">Iberostar Selection<div class="sub">Ana Paula Souza</div></div>
+        <div class="dates-cell">10–15 Jul 25</div>
+        <div class="amount-cell">USD 710</div>
+        <div><span class="status-pill confirmed"><i class="fa-solid fa-circle-check"></i> Confirmada</span></div>
+        <div class="actions-cell"><button class="action-btn"><i class="fa-solid fa-eye"></i></button><button class="action-btn"><i class="fa-solid fa-file-pdf"></i></button></div>
+      </div>
+
+      <div class="table-row">
+        <div class="booking-id">HSM-084651</div>
+        <div class="hotel-cell">Live Aqua Resort<div class="sub">Rodrigo Lima</div></div>
+        <div class="dates-cell">05–08 Jul 25</div>
+        <div class="amount-cell">USD 1.602</div>
+        <div><span class="status-pill confirmed"><i class="fa-solid fa-circle-check"></i> Confirmada</span></div>
+        <div class="actions-cell"><button class="action-btn"><i class="fa-solid fa-eye"></i></button><button class="action-btn"><i class="fa-solid fa-file-pdf"></i></button></div>
+      </div>
+
+      <div class="table-row">
+        <div class="booking-id">HSM-084589</div>
+        <div class="hotel-cell">Grand Sunset Palace<div class="sub">Fernanda Costa</div></div>
+        <div class="dates-cell">01–07 Jul 25</div>
+        <div class="amount-cell">USD 1.134</div>
+        <div><span class="status-pill cancelled"><i class="fa-solid fa-xmark"></i> Cancelada</span></div>
+        <div class="actions-cell"><button class="action-btn"><i class="fa-solid fa-eye"></i></button><button class="action-btn"><i class="fa-solid fa-rotate-left"></i></button></div>
+      </div>
+
+      <div class="table-row">
+        <div class="booking-id">HSM-084501</div>
+        <div class="hotel-cell">Iberostar Selection<div class="sub">Marcos Pereira</div></div>
+        <div class="dates-cell">28 Jun–02 Jul 25</div>
+        <div class="amount-cell">USD 568</div>
+        <div><span class="status-pill confirmed"><i class="fa-solid fa-circle-check"></i> Confirmada</span></div>
+        <div class="actions-cell"><button class="action-btn"><i class="fa-solid fa-eye"></i></button><button class="action-btn"><i class="fa-solid fa-file-pdf"></i></button></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- RESTART -->
+<button class="restart-btn" onclick="restart()"><i class="fa-solid fa-rotate-left"></i> Reiniciar Demo</button>
+
+<script>
+  const screens = ['search','results','detail','checkout','confirm','admin'];
+  let pollingInterval = null;
+  let pollingProgress = 0;
+
+  function goTo(id) {
+    screens.forEach(s => {
+      document.getElementById('screen-' + s).classList.remove('active');
+    });
+    document.getElementById('screen-' + id).classList.add('active');
+    window.scrollTo({top: 0, behavior: 'smooth'});
+    if(id === 'confirm') startPolling();
+  }
+
+  function startPolling() {
+    pollingProgress = 0;
+    document.getElementById('polling-fill').style.width = '0%';
+    document.getElementById('polling-bar-wrap').style.display = 'block';
+    document.getElementById('confirm-actions').style.display = 'none';
+    document.getElementById('confirm-title').textContent = 'Reserva em Processamento';
+    document.getElementById('confirm-sub').innerHTML = 'Aguardando confirmação do provedor (TBO Hotels).<br>Isso leva entre 30 segundos e 2 minutos.';
+    document.getElementById('polling-label').innerHTML = 'Status: <strong>OnRequest</strong> · Verificando disponibilidade final...';
+    document.getElementById('status-icon').className = 'status-circle pending';
+    document.getElementById('status-fa-icon').className = 'fa-solid fa-clock';
+    document.getElementById('booking-status-val').innerHTML = '<span class="status-pill onrequest"><i class="fa-solid fa-circle-notch fa-spin"></i> OnRequest</span>';
+
+    if(pollingInterval) clearInterval(pollingInterval);
+    pollingInterval = setInterval(function() {
+      pollingProgress += 4;
+      document.getElementById('polling-fill').style.width = pollingProgress + '%';
+
+      if(pollingProgress >= 50 && pollingProgress < 55) {
+        document.getElementById('polling-label').innerHTML = 'Status: <strong>OnRequest</strong> · Consultando disponibilidade em tempo real...';
+      }
+      if(pollingProgress >= 80) {
+        document.getElementById('polling-label').innerHTML = 'Status: <strong>Processing</strong> · Finalizando reserva no provedor...';
+      }
+      if(pollingProgress >= 100) {
+        clearInterval(pollingInterval);
+        pollingProgress = 100;
+        document.getElementById('polling-fill').style.width = '100%';
+        setTimeout(function() {
+          document.getElementById('polling-bar-wrap').style.display = 'none';
+          document.getElementById('status-icon').className = 'status-circle confirmed';
+          document.getElementById('status-icon').querySelector('.pulse').style.animation = 'none';
+          document.getElementById('status-fa-icon').className = 'fa-solid fa-circle-check';
+          document.getElementById('confirm-title').textContent = 'Reserva Confirmada!';
+          document.getElementById('confirm-sub').innerHTML = 'Sua reserva foi confirmada pelo provedor.<br>Um voucher foi enviado para carlos@empresa.com.br.';
+          document.getElementById('polling-label').innerHTML = '';
+          document.getElementById('booking-status-val').innerHTML = '<span class="status-pill confirmed"><i class="fa-solid fa-circle-check"></i> Confirmada</span>';
+          document.getElementById('confirm-actions').style.display = 'block';
+        }, 400);
+      }
+    }, 120);
+  }
+
+  function restart() {
+    if(pollingInterval) clearInterval(pollingInterval);
+    pollingProgress = 0;
+    goTo('search');
+  }
+</script>
+</body>
+</html>
