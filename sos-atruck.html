@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SOS ATruck — App do Mecânico</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --amber: #f59e0b;
+      --amber-light: #fbbf24;
+      --amber-dark: #d97706;
+      --navy: #0f172a;
+      --panel: #1e293b;
+      --card: #243248;
+      --border: #334155;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --warning: #f97316;
+    }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--navy);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Header ── */
+    .header {
+      text-align: center;
+      padding: 48px 24px 24px;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all .7s ease;
+    }
+    .header.visible { opacity: 1; transform: translateY(0); }
+    .logo-badge {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: linear-gradient(135deg, var(--amber), var(--amber-dark));
+      color: #0f172a; font-weight: 900; font-size: 1.4rem;
+      padding: 10px 22px; border-radius: 50px; margin-bottom: 16px;
+    }
+    .header h1 { font-size: 2rem; font-weight: 900; color: var(--text); }
+    .header h1 span { color: var(--amber); }
+    .header p { color: var(--muted); font-size: 1rem; margin-top: 8px; }
+
+    /* ── Offline Banner ── */
+    .offline-bar {
+      display: none; align-items: center; justify-content: center; gap: 8px;
+      background: var(--danger); color: #fff; font-size: .85rem; font-weight: 700;
+      padding: 8px 16px; text-align: center;
+    }
+    .offline-bar.active { display: flex; }
+
+    /* ── Stage Track ── */
+    .stage-track {
+      display: flex; align-items: center; justify-content: center;
+      gap: 0; padding: 20px 24px 0; flex-wrap: nowrap; overflow: hidden;
+    }
+    .stage-dot {
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      flex: 1; position: relative; cursor: default;
+    }
+    .stage-dot:not(:last-child)::after {
+      content: '';
+      position: absolute; top: 14px; left: 60%; width: 80%;
+      height: 2px; background: var(--border);
+      z-index: 0;
+    }
+    .stage-dot.done:not(:last-child)::after { background: var(--amber); }
+    .dot-circle {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--panel); border: 2px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: .65rem; font-weight: 800; color: var(--muted);
+      position: relative; z-index: 1; transition: all .3s;
+    }
+    .stage-dot.active .dot-circle { background: var(--amber); border-color: var(--amber); color: #0f172a; transform: scale(1.15); }
+    .stage-dot.done .dot-circle { background: var(--success); border-color: var(--success); color: #fff; }
+    .dot-label { font-size: .6rem; color: var(--muted); font-weight: 700; }
+    .stage-dot.active .dot-label { color: var(--amber); }
+    .stage-dot.done .dot-label { color: var(--success); }
+
+    /* ── Demo Stage ── */
+    .demo-wrap {
+      display: flex; justify-content: center; padding: 24px 16px 8px;
+    }
+
+    /* ── Phone Shell ── */
+    .phone {
+      width: 360px; min-height: 620px;
+      background: #090f1c;
+      border-radius: 44px;
+      border: 3px solid #2d3f5a;
+      box-shadow: 0 0 0 1px #1e2d42, 0 30px 80px rgba(0,0,0,.7);
+      overflow: hidden; position: relative;
+      display: flex; flex-direction: column;
+    }
+
+    /* Status bar */
+    .status-bar {
+      background: #090f1c; padding: 10px 20px 4px;
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: .7rem; font-weight: 700; flex-shrink: 0;
+    }
+    .status-time { color: var(--text); }
+    .status-icons { display: flex; gap: 5px; align-items: center; color: var(--text); font-size: .7rem; }
+    .offline-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--success); display: inline-block;
+      transition: background .3s;
+    }
+    .offline-dot.off { background: var(--danger); animation: blink 1s infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+    /* App Header */
+    .app-header {
+      background: linear-gradient(135deg, #d97706, #f59e0b);
+      padding: 12px 18px; display: flex; align-items: center;
+      justify-content: space-between; flex-shrink: 0;
+    }
+    .app-header-left { display: flex; align-items: center; gap: 10px; }
+    .app-header-icon { font-size: 1.4rem; color: #0f172a; }
+    .app-header-title { font-size: .95rem; font-weight: 900; color: #0f172a; line-height: 1.1; }
+    .app-header-sub { font-size: .65rem; color: #451a03; font-weight: 600; }
+    .app-header-badge {
+      background: var(--danger); color: #fff;
+      border-radius: 50px; font-size: .65rem; font-weight: 800;
+      padding: 2px 8px;
+    }
+    .app-header-badge.hidden { display: none; }
+
+    /* Screen container */
+    .screen-wrap {
+      flex: 1; position: relative; overflow: hidden;
+    }
+    .screen {
+      position: absolute; inset: 0;
+      padding: 16px; overflow-y: auto;
+      opacity: 0; pointer-events: none;
+      transform: translateX(30px);
+      transition: all .35s cubic-bezier(.4,0,.2,1);
+    }
+    .screen.active {
+      opacity: 1; pointer-events: auto;
+      transform: translateX(0);
+    }
+    .screen.exit {
+      opacity: 0; transform: translateX(-30px);
+    }
+
+    /* ── Screen 0: Notification ── */
+    .notif-hero {
+      background: var(--panel); border-radius: 16px; padding: 16px;
+      margin-bottom: 12px; text-align: center;
+    }
+    .notif-hero .hero-icon { font-size: 2.5rem; color: var(--amber); margin-bottom: 8px; }
+    .notif-hero h2 { font-size: 1rem; font-weight: 900; margin-bottom: 4px; }
+    .notif-hero p { font-size: .75rem; color: var(--muted); }
+
+    .whatsapp-bubble {
+      background: #1a3c2a; border-radius: 14px 14px 14px 4px;
+      padding: 12px 14px; margin-bottom: 12px;
+      border-left: 3px solid #25d366;
+      animation: slideIn .5s ease;
+    }
+    @keyframes slideIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+    .wa-header { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+    .wa-icon { color: #25d366; font-size: .9rem; }
+    .wa-sender { font-size: .7rem; color: #25d366; font-weight: 800; }
+    .wa-time { font-size: .65rem; color: var(--muted); margin-left: auto; }
+    .wa-msg { font-size: .78rem; line-height: 1.5; color: var(--text); font-family: monospace; }
+    .wa-field { display: flex; gap: 6px; margin-bottom: 2px; }
+    .wa-key { color: var(--amber); font-weight: 700; min-width: 80px; }
+    .wa-val { color: #e2e8f0; }
+
+    .os-created-card {
+      background: linear-gradient(135deg, #14532d, #166534);
+      border: 1px solid #22c55e; border-radius: 14px;
+      padding: 14px; text-align: center; margin-bottom: 12px;
+      animation: slideIn .5s ease .3s both;
+    }
+    .os-created-card .oc-icon { font-size: 1.5rem; color: var(--success); margin-bottom: 6px; }
+    .os-created-card h3 { font-size: .85rem; font-weight: 800; color: var(--success); }
+    .os-created-card p { font-size: .72rem; color: #86efac; margin-top: 2px; }
+
+    /* ── Shared Cards ── */
+    .os-card {
+      background: var(--panel); border-radius: 14px; padding: 14px;
+      margin-bottom: 10px;
+    }
+    .os-card-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 10px; padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .os-number { font-size: .7rem; color: var(--muted); font-weight: 700; }
+    .os-badge {
+      font-size: .65rem; font-weight: 800; padding: 3px 10px;
+      border-radius: 50px; letter-spacing: .5px;
+    }
+    .os-badge.urgent { background: #7f1d1d; color: #fca5a5; }
+    .os-badge.progress { background: #1e3a5f; color: #93c5fd; }
+    .os-badge.done-badge { background: #14532d; color: #86efac; }
+
+    .info-row {
+      display: flex; align-items: flex-start; gap: 10px;
+      margin-bottom: 8px; font-size: .78rem;
+    }
+    .info-icon { color: var(--amber); width: 16px; flex-shrink: 0; margin-top: 2px; }
+    .info-label { color: var(--muted); margin-right: 4px; }
+    .info-value { color: var(--text); font-weight: 700; }
+
+    /* ── Timer ── */
+    .timer-card {
+      background: var(--card); border-radius: 14px; padding: 16px;
+      text-align: center; margin-bottom: 10px;
+    }
+    .timer-label { font-size: .7rem; color: var(--muted); font-weight: 700; margin-bottom: 4px; }
+    .timer-value { font-size: 2rem; font-weight: 900; color: var(--amber); letter-spacing: 2px; }
+
+    /* ── Photo capture ── */
+    .photo-prompt {
+      background: var(--card); border-radius: 14px; padding: 16px;
+      text-align: center; margin-bottom: 10px; border: 2px dashed var(--border);
+      cursor: pointer; transition: border-color .2s;
+    }
+    .photo-prompt:hover { border-color: var(--amber); }
+    .photo-prompt .ph-icon { font-size: 2.5rem; color: var(--muted); margin-bottom: 8px; }
+    .photo-prompt h3 { font-size: .85rem; font-weight: 800; color: var(--text); }
+    .photo-prompt p { font-size: .72rem; color: var(--muted); margin-top: 4px; }
+    .photo-prompt.captured { border-style: solid; border-color: var(--success); }
+    .photo-prompt.captured .ph-icon { color: var(--success); }
+    .photo-thumb {
+      width: 100%; height: 120px; border-radius: 10px; object-fit: cover;
+      display: none; margin-top: 8px;
+    }
+    .photo-prompt.captured .photo-thumb { display: block; }
+    .photo-prompt.captured h3 { color: var(--success); }
+
+    /* ── Checklist ── */
+    .checklist-item {
+      display: flex; align-items: center; gap: 12px;
+      background: var(--panel); border-radius: 10px; padding: 12px;
+      margin-bottom: 8px; cursor: pointer; transition: background .2s;
+    }
+    .checklist-item:hover { background: var(--card); }
+    .check-box {
+      width: 24px; height: 24px; border-radius: 6px;
+      border: 2px solid var(--border); flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      transition: all .2s; font-size: .8rem; color: transparent;
+    }
+    .checklist-item.checked .check-box {
+      background: var(--success); border-color: var(--success);
+      color: #fff;
+    }
+    .check-label { font-size: .8rem; font-weight: 600; color: var(--text); }
+    .checklist-item.checked .check-label { color: var(--muted); text-decoration: line-through; }
+
+    /* ── Km Validation ── */
+    .km-row {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 10px; margin-bottom: 10px;
+    }
+    .km-card {
+      background: var(--panel); border-radius: 12px; padding: 12px; text-align: center;
+    }
+    .km-label { font-size: .65rem; color: var(--muted); font-weight: 700; margin-bottom: 4px; }
+    .km-val { font-size: 1.4rem; font-weight: 900; color: var(--text); }
+    .km-source { font-size: .6rem; color: var(--muted); }
+
+    .validation-card {
+      border-radius: 12px; padding: 12px;
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 10px; font-size: .8rem; font-weight: 700;
+    }
+    .validation-card.ok { background: #14532d; color: #86efac; border: 1px solid var(--success); }
+    .validation-card.warn { background: #7f1d1d; color: #fca5a5; border: 1px solid var(--danger); }
+
+    /* ── Conclusion ── */
+    .success-anim {
+      text-align: center; padding: 16px 0 8px;
+    }
+    .success-ring {
+      width: 72px; height: 72px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--success), #16a34a);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem; color: #fff; margin: 0 auto 12px;
+      animation: pop .5s cubic-bezier(.175,.885,.32,1.275);
+    }
+    @keyframes pop { from{transform:scale(0)} to{transform:scale(1)} }
+    .success-title { font-size: 1.1rem; font-weight: 900; color: var(--success); }
+    .success-sub { font-size: .75rem; color: var(--muted); margin-top: 4px; }
+
+    .delivery-row {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--panel); border-radius: 10px; padding: 10px 14px;
+      margin-bottom: 8px; font-size: .8rem;
+    }
+    .delivery-row .di { font-size: .9rem; }
+    .delivery-row span { font-weight: 700; }
+    .delivery-row .tick { margin-left: auto; color: var(--success); font-size: .9rem; }
+
+    .summary-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;
+    }
+    .summary-card {
+      background: var(--card); border-radius: 10px; padding: 10px; text-align: center;
+    }
+    .summary-card .sv { font-size: 1.2rem; font-weight: 900; color: var(--amber); }
+    .summary-card .sl { font-size: .65rem; color: var(--muted); font-weight: 700; }
+
+    /* ── Buttons ── */
+    .btn {
+      width: 100%; padding: 14px; border: none; border-radius: 14px;
+      font-family: 'Nunito', sans-serif; font-size: .9rem; font-weight: 800;
+      cursor: pointer; transition: all .2s; letter-spacing: .3px;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--amber), var(--amber-dark));
+      color: #0f172a;
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(245,158,11,.4); }
+    .btn-primary:disabled {
+      background: var(--panel); color: var(--muted); cursor: not-allowed;
+      transform: none; box-shadow: none;
+    }
+    .btn-ghost {
+      background: var(--panel); color: var(--text); border: 1px solid var(--border);
+    }
+    .btn-success { background: linear-gradient(135deg, var(--success), #16a34a); color: #fff; }
+
+    /* ── Nav Controls ── */
+    .controls {
+      display: flex; align-items: center; justify-content: center;
+      gap: 12px; padding: 16px 24px 8px;
+    }
+    .ctrl-btn {
+      background: var(--panel); border: 1px solid var(--border); color: var(--text);
+      border-radius: 50px; padding: 10px 20px; font-family: 'Nunito', sans-serif;
+      font-size: .82rem; font-weight: 700; cursor: pointer; transition: all .2s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .ctrl-btn:hover { background: var(--card); border-color: var(--amber); }
+    .ctrl-btn:disabled { opacity: .3; cursor: not-allowed; }
+    .ctrl-btn.offline-toggle {
+      background: #14532d; border-color: var(--success); color: #86efac;
+    }
+    .ctrl-btn.offline-toggle.active { background: #7f1d1d; border-color: var(--danger); color: #fca5a5; }
+
+    /* ── Info Footer ── */
+    .footer-note {
+      text-align: center; padding: 8px 24px 32px;
+      font-size: .75rem; color: var(--muted); line-height: 1.5;
+    }
+    .footer-note strong { color: var(--amber); }
+
+    /* ── Scroll Reveal ── */
+    .reveal { opacity: 0; transform: translateY(24px); transition: all .6s ease; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    @media (max-width: 420px) {
+      .phone { width: 100%; border-radius: 0; border-left: none; border-right: none; }
+      .demo-wrap { padding: 0; }
+      .stage-track { gap: 0; padding: 16px 12px 0; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header" id="mainHeader">
+  <div class="logo-badge"><i class="fa-solid fa-truck-medical"></i> SOS ATruck</div>
+  <h1>App do <span>Mecânico</span></h1>
+  <p>Demonstração do fluxo completo de atendimento — T1 a T6</p>
+</div>
+
+<!-- Offline Banner -->
+<div class="offline-bar" id="offlineBanner">
+  <i class="fa-solid fa-wifi-slash"></i>
+  SEM CONEXÃO — 2 itens na fila de sincronização
+</div>
+
+<!-- Stage Track -->
+<div class="stage-track reveal" id="stageTrack">
+  <div class="stage-dot" id="dot-0">
+    <div class="dot-circle"><i class="fa-solid fa-bell" style="font-size:.55rem"></i></div>
+    <div class="dot-label">OS</div>
+  </div>
+  <div class="stage-dot" id="dot-1">
+    <div class="dot-circle">T1</div>
+    <div class="dot-label">Desl.</div>
+  </div>
+  <div class="stage-dot" id="dot-2">
+    <div class="dot-circle">T2</div>
+    <div class="dot-label">Chegada</div>
+  </div>
+  <div class="stage-dot" id="dot-3">
+    <div class="dot-circle">T3</div>
+    <div class="dot-label">Início</div>
+  </div>
+  <div class="stage-dot" id="dot-4">
+    <div class="dot-circle">T4</div>
+    <div class="dot-label">Serviço</div>
+  </div>
+  <div class="stage-dot" id="dot-5">
+    <div class="dot-circle">T5</div>
+    <div class="dot-label">KM</div>
+  </div>
+  <div class="stage-dot" id="dot-6">
+    <div class="dot-circle">T6</div>
+    <div class="dot-label">Laudo</div>
+  </div>
+</div>
+
+<!-- Demo -->
+<div class="demo-wrap reveal" id="demoWrap">
+  <div class="phone">
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+      <span class="status-time" id="clockDisplay">09:47</span>
+      <div class="status-icons">
+        <span class="offline-dot" id="connDot"></span>
+        <i class="fa-solid fa-signal"></i>
+        <i class="fa-solid fa-battery-three-quarters"></i>
+      </div>
+    </div>
+
+    <!-- App Header -->
+    <div class="app-header">
+      <div class="app-header-left">
+        <div class="app-header-icon"><i class="fa-solid fa-truck-medical"></i></div>
+        <div>
+          <div class="app-header-title">SOS ATruck</div>
+          <div class="app-header-sub" id="appSubtitle">Central de Socorro</div>
+        </div>
+      </div>
+      <div class="app-header-badge" id="notifBadge">1 nova OS</div>
+    </div>
+
+    <!-- Screen Container -->
+    <div class="screen-wrap">
+
+      <!-- Screen 0: Notification -->
+      <div class="screen active" id="screen0">
+        <div class="notif-hero">
+          <div class="hero-icon"><i class="fa-solid fa-truck-medical"></i></div>
+          <h2>Central de Socorro</h2>
+          <p>Chamado recebido via WhatsApp</p>
+        </div>
+        <div class="whatsapp-bubble">
+          <div class="wa-header">
+            <i class="fa-brands fa-whatsapp wa-icon"></i>
+            <span class="wa-sender">Motorista — Transportadora RN</span>
+            <span class="wa-time">09:47</span>
+          </div>
+          <div class="wa-msg">
+            <div class="wa-field"><span class="wa-key">PANE</span></div>
+            <div class="wa-field"><span class="wa-key">PLACA:</span><span class="wa-val">MHR-2847</span></div>
+            <div class="wa-field"><span class="wa-key">MOTORISTA:</span><span class="wa-val">João Silva</span></div>
+            <div class="wa-field"><span class="wa-key">PANE:</span><span class="wa-val">motor superaquecido</span></div>
+            <div class="wa-field"><span class="wa-key">LOCAL:</span><span class="wa-val">km 287 BR-116 SP</span></div>
+          </div>
+        </div>
+        <div class="os-created-card">
+          <div class="oc-icon"><i class="fa-solid fa-circle-check"></i></div>
+          <h3>OS #2024061001 criada automaticamente</h3>
+          <p>Mecânico Pedro Mendes notificado — alta prioridade</p>
+        </div>
+        <button class="btn btn-primary" onclick="goTo(1)">
+          <i class="fa-solid fa-arrow-right"></i> Ver OS e aceitar chamado
+        </button>
+      </div>
+
+      <!-- Screen 1: T1 Deslocamento -->
+      <div class="screen" id="screen1">
+        <div class="os-card">
+          <div class="os-card-header">
+            <span class="os-number">OS #2024061001</span>
+            <span class="os-badge urgent"><i class="fa-solid fa-triangle-exclamation"></i> URGENTE</span>
+          </div>
+          <div class="info-row">
+            <i class="fa-solid fa-truck info-icon"></i>
+            <div><span class="info-label">Placa</span><span class="info-value">MHR-2847</span></div>
+          </div>
+          <div class="info-row">
+            <i class="fa-solid fa-user info-icon"></i>
+            <div><span class="info-label">Motorista</span><span class="info-value">João Silva</span></div>
+          </div>
+          <div class="info-row">
+            <i class="fa-solid fa-wrench info-icon"></i>
+            <div><span class="info-label">Pane</span><span class="info-value">Motor superaquecido</span></div>
+          </div>
+          <div class="info-row">
+            <i class="fa-solid fa-location-dot info-icon"></i>
+            <div><span class="info-label">Local</span><span class="info-value">km 287, BR-116, SP</span></div>
+          </div>
+          <div class="info-row">
+            <i class="fa-solid fa-route info-icon"></i>
+            <div><span class="info-label">Distância est.</span><span class="info-value">48 km de você</span></div>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="goTo(2)" style="margin-bottom:8px">
+          <i class="fa-solid fa-play"></i> Iniciar Deslocamento — T1
+        </button>
+        <button class="btn btn-ghost" onclick="goTo(0)">
+          <i class="fa-solid fa-arrow-left"></i> Voltar
+        </button>
+      </div>
+
+      <!-- Screen 2: T2 Em rota -->
+      <div class="screen" id="screen2">
+        <div class="timer-card">
+          <div class="timer-label"><i class="fa-solid fa-car"></i> TEMPO DE DESLOCAMENTO</div>
+          <div class="timer-value" id="timerDisp">00:42:17</div>
+        </div>
+        <!-- Map placeholder -->
+        <div style="background:var(--card);border-radius:14px;height:140px;margin-bottom:10px;overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center;">
+          <img src="https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=400&fit=crop" alt="Rodovia" style="width:100%;height:100%;object-fit:cover;opacity:.4;position:absolute;inset:0">
+          <div style="position:relative;z-index:1;text-align:center">
+            <div style="background:var(--amber);width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;box-shadow:0 0 0 8px rgba(245,158,11,.25)">
+              <i class="fa-solid fa-location-arrow" style="color:#0f172a;font-size:.8rem"></i>
+            </div>
+            <div style="font-size:.7rem;font-weight:700;color:#fff;background:rgba(0,0,0,.6);padding:2px 8px;border-radius:50px">BR-116 — 12 km restantes</div>
+          </div>
+        </div>
+        <div class="os-card" style="margin-bottom:10px">
+          <div class="info-row" style="margin-bottom:0">
+            <i class="fa-solid fa-location-dot info-icon"></i>
+            <div><span class="info-label">Destino</span><span class="info-value">km 287, BR-116, SP</span></div>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="goTo(3)" style="margin-bottom:8px">
+          <i class="fa-solid fa-map-pin"></i> Confirmar Chegada — T2
+        </button>
+        <button class="btn btn-ghost" onclick="goTo(1)">
+          <i class="fa-solid fa-arrow-left"></i> Voltar
+        </button>
+      </div>
+
+      <!-- Screen 3: T3 Foto obrigatória -->
+      <div class="screen" id="screen3">
+        <div class="os-card" style="margin-bottom:10px">
+          <div class="os-card-header">
+            <span class="os-number">OS #2024061001</span>
+            <span class="os-badge progress">T3 — Início serviço</span>
+          </div>
+          <div class="info-row" style="margin-bottom:0">
+            <i class="fa-solid fa-wrench info-icon"></i>
+            <div><span class="info-value">Motor superaquecido — MHR-2847</span></div>
+          </div>
+        </div>
+        <div class="photo-prompt" id="photoPrompt" onclick="capturePhoto()">
+          <div class="ph-icon"><i class="fa-solid fa-camera" id="cameraIcon"></i></div>
+          <h3 id="photoTitle">FOTO OBRIGATÓRIA</h3>
+          <p id="photoSub">Registro antes do início do serviço</p>
+          <img class="photo-thumb" id="photoThumb" src="https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=400&fit=crop" alt="Registro do veículo">
+        </div>
+        <button class="btn btn-primary" id="btnIniciarServico" onclick="goTo(4)" disabled style="margin-bottom:8px">
+          <i class="fa-solid fa-play"></i> Iniciar Serviço — T3
+        </button>
+        <button class="btn btn-ghost" onclick="goTo(2)">
+          <i class="fa-solid fa-arrow-left"></i> Voltar
+        </button>
+      </div>
+
+      <!-- Screen 4: T4 Checklist -->
+      <div class="screen" id="screen4">
+        <div style="font-size:.8rem;font-weight:800;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px">
+          <i class="fa-solid fa-list-check" style="color:var(--amber)"></i> Checklist de Serviço
+        </div>
+        <div class="checklist-item" id="chk0" onclick="toggleCheck(0)">
+          <div class="check-box" id="chkBox0"><i class="fa-solid fa-check"></i></div>
+          <span class="check-label">Diagnóstico do sistema de arrefecimento</span>
+        </div>
+        <div class="checklist-item" id="chk1" onclick="toggleCheck(1)">
+          <div class="check-box" id="chkBox1"><i class="fa-solid fa-check"></i></div>
+          <span class="check-label">Limpeza e troca do fluido de arrefecimento</span>
+        </div>
+        <div class="checklist-item" id="chk2" onclick="toggleCheck(2)">
+          <div class="check-box" id="chkBox2"><i class="fa-solid fa-check"></i></div>
+          <span class="check-label">Verificação da bomba d'água e mangueiras</span>
+        </div>
+        <div class="checklist-item" id="chk3" onclick="toggleCheck(3)">
+          <div class="check-box" id="chkBox3"><i class="fa-solid fa-check"></i></div>
+          <span class="check-label">Teste de temperatura após reparo</span>
+        </div>
+        <div style="margin-top:4px;margin-bottom:10px">
+          <div style="background:var(--panel);border-radius:8px;height:6px;overflow:hidden">
+            <div id="checkProgress" style="background:var(--amber);height:100%;width:0;transition:width .3s"></div>
+          </div>
+          <div style="font-size:.7rem;color:var(--muted);font-weight:700;margin-top:4px" id="checkCount">0 de 4 concluídos</div>
+        </div>
+        <button class="btn btn-primary" id="btnConcluir" onclick="goTo(5)" disabled style="margin-bottom:8px">
+          <i class="fa-solid fa-check"></i> Concluir Serviço — T4
+        </button>
+        <button class="btn btn-ghost" onclick="goTo(3)">
+          <i class="fa-solid fa-arrow-left"></i> Voltar
+        </button>
+      </div>
+
+      <!-- Screen 5: T5 KM + GPS validation -->
+      <div class="screen" id="screen5">
+        <div style="font-size:.8rem;font-weight:800;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px">
+          <i class="fa-solid fa-gauge-high" style="color:var(--amber)"></i> Registro de Quilometragem
+        </div>
+        <div class="km-row">
+          <div class="km-card">
+            <div class="km-label"><i class="fa-solid fa-satellite-dish"></i> GPS TRACK</div>
+            <div class="km-val" style="color:var(--muted)">48.2</div>
+            <div class="km-source">km calculado</div>
+          </div>
+          <div class="km-card">
+            <div class="km-label"><i class="fa-solid fa-gauge-simple-high"></i> ODÔMETRO</div>
+            <div class="km-val" style="color:var(--amber)">49.1</div>
+            <div class="km-source">registrado</div>
+          </div>
+        </div>
+        <div class="validation-card ok">
+          <i class="fa-solid fa-shield-check" style="font-size:1.1rem"></i>
+          <div>
+            <div>Diferença: 1.9% — Dentro do limite</div>
+            <div style="font-size:.68rem;opacity:.8;font-weight:600">Validação automática aprovada. Cobrança liberada.</div>
+          </div>
+        </div>
+        <div style="background:var(--panel);border-radius:12px;padding:12px;margin-bottom:10px;font-size:.78rem">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+            <span style="color:var(--muted);font-weight:700">Base de cobrança</span>
+            <span style="color:var(--text);font-weight:900">49.1 km</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+            <span style="color:var(--muted);font-weight:700">Tabela</span>
+            <span style="color:var(--text);font-weight:900">Mista (fixa + variável)</span>
+          </div>
+          <div style="display:flex;justify-content:space-between">
+            <span style="color:var(--muted);font-weight:700">Duração</span>
+            <span style="color:var(--text);font-weight:900">1h 23min</span>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="goTo(6)" style="margin-bottom:8px">
+          <i class="fa-solid fa-flag-checkered"></i> Encerrar OS — T5/T6
+        </button>
+        <button class="btn btn-ghost" onclick="goTo(4)">
+          <i class="fa-solid fa-arrow-left"></i> Voltar
+        </button>
+      </div>
+
+      <!-- Screen 6: T6 Laudo + delivery -->
+      <div class="screen" id="screen6">
+        <div class="success-anim">
+          <div class="success-ring"><i class="fa-solid fa-check"></i></div>
+          <div class="success-title">OS Encerrada</div>
+          <div class="success-sub">Laudo gerado e enviado automaticamente</div>
+        </div>
+        <div class="summary-grid" style="margin-top:14px">
+          <div class="summary-card">
+            <div class="sv">1h 23m</div>
+            <div class="sl">DURAÇÃO</div>
+          </div>
+          <div class="summary-card">
+            <div class="sv">49.1 km</div>
+            <div class="sl">DISTÂNCIA</div>
+          </div>
+        </div>
+        <div style="font-size:.75rem;font-weight:800;color:var(--muted);margin:10px 0 6px;text-transform:uppercase;letter-spacing:.5px">
+          Laudo enviado via
+        </div>
+        <div class="delivery-row">
+          <i class="fa-brands fa-whatsapp di" style="color:#25d366;font-size:1.2rem"></i>
+          <div>
+            <div><span>WhatsApp</span> — João Silva</div>
+            <div style="font-size:.68rem;color:var(--muted)">Laudo_MHR2847_2024061001.pdf</div>
+          </div>
+          <i class="fa-solid fa-circle-check tick"></i>
+        </div>
+        <div class="delivery-row">
+          <i class="fa-solid fa-envelope di" style="color:var(--amber);font-size:1.1rem"></i>
+          <div>
+            <div><span>E-mail</span> — transportadorarn@gmail.com</div>
+            <div style="font-size:.68rem;color:var(--muted)">Entregue às 11:23</div>
+          </div>
+          <i class="fa-solid fa-circle-check tick"></i>
+        </div>
+        <button class="btn btn-ghost" onclick="restart()" style="margin-top:8px">
+          <i class="fa-solid fa-rotate-left"></i> Reiniciar demonstração
+        </button>
+      </div>
+
+    </div><!-- screen-wrap -->
+  </div><!-- phone -->
+</div><!-- demo-wrap -->
+
+<!-- Controls -->
+<div class="controls reveal" id="controls">
+  <button class="ctrl-btn" id="btnPrev" onclick="prevScreen()" disabled>
+    <i class="fa-solid fa-chevron-left"></i> Anterior
+  </button>
+  <button class="ctrl-btn offline-toggle" id="offlineToggle" onclick="toggleOffline()">
+    <i class="fa-solid fa-wifi"></i> Offline
+  </button>
+  <button class="ctrl-btn" id="btnNext" onclick="nextScreen()">
+    Próximo <i class="fa-solid fa-chevron-right"></i>
+  </button>
+</div>
+
+<!-- Footer -->
+<div class="footer-note reveal" id="footerNote">
+  <strong>App do Mecânico</strong> — fluxo T1 a T6 com suporte offline e sincronização automática.<br>
+  Demo do sistema real. Desenvolvido por David Jin · Technical Partner.
+</div>
+
+<script>
+  let currentScreen = 0;
+  const totalScreens = 7;
+  let isOffline = false;
+  let photoTaken = false;
+  let checks = [false, false, false, false];
+
+  // Clock
+  function updateClock() {
+    const now = new Date();
+    document.getElementById('clockDisplay').textContent =
+      String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+  }
+  updateClock();
+  setInterval(updateClock, 30000);
+
+  // Scroll reveal
+  function checkReveal() {
+    document.querySelectorAll('.reveal, .header').forEach(el => {
+      if (el.getBoundingClientRect().top < window.innerHeight - 40) {
+        el.classList.add('visible');
+      }
+    });
+  }
+  window.addEventListener('scroll', checkReveal);
+  setTimeout(checkReveal, 100);
+
+  // Stage dots
+  const dotIds = ['dot-0','dot-1','dot-2','dot-3','dot-4','dot-5','dot-6'];
+  function updateDots(s) {
+    dotIds.forEach((id, i) => {
+      const el = document.getElementById(id);
+      el.classList.remove('active','done');
+      if (i < s) el.classList.add('done');
+      else if (i === s) el.classList.add('active');
+    });
+  }
+
+  function goTo(idx) {
+    const cur = document.getElementById('screen' + currentScreen);
+    cur.classList.remove('active');
+    cur.classList.add('exit');
+    setTimeout(() => cur.classList.remove('exit'), 350);
+
+    const next = document.getElementById('screen' + idx);
+    next.classList.add('active');
+
+    currentScreen = idx;
+    updateDots(currentScreen);
+    updateNavBtns();
+    updateAppHeader();
+  }
+
+  function nextScreen() {
+    if (currentScreen < totalScreens - 1) goTo(currentScreen + 1);
+  }
+  function prevScreen() {
+    if (currentScreen > 0) goTo(currentScreen - 1);
+  }
+
+  function updateNavBtns() {
+    document.getElementById('btnPrev').disabled = currentScreen === 0;
+    document.getElementById('btnNext').disabled = currentScreen === totalScreens - 1;
+  }
+
+  const subtitles = [
+    'Nova OS recebida',
+    'T1 — Deslocamento',
+    'T2 — Em rota',
+    'T3 — Início de serviço',
+    'T4 — Serviço em andamento',
+    'T5 — Registro de KM',
+    'T6 — OS encerrada'
+  ];
+  function updateAppHeader() {
+    document.getElementById('appSubtitle').textContent = subtitles[currentScreen] || '';
+    document.getElementById('notifBadge').classList.toggle('hidden', currentScreen > 0);
+  }
+
+  // Photo capture
+  function capturePhoto() {
+    if (photoTaken) return;
+    photoTaken = true;
+    const prompt = document.getElementById('photoPrompt');
+    prompt.classList.add('captured');
+    document.getElementById('cameraIcon').className = 'fa-solid fa-circle-check';
+    document.getElementById('photoTitle').textContent = 'Foto registrada';
+    document.getElementById('photoSub').textContent = 'Registro salvo — ' + new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
+    document.getElementById('btnIniciarServico').disabled = false;
+  }
+
+  // Checklist
+  function toggleCheck(i) {
+    checks[i] = !checks[i];
+    document.getElementById('chk' + i).classList.toggle('checked', checks[i]);
+    const done = checks.filter(Boolean).length;
+    document.getElementById('checkProgress').style.width = (done / 4 * 100) + '%';
+    document.getElementById('checkCount').textContent = done + ' de 4 concluídos';
+    document.getElementById('btnConcluir').disabled = done < 4;
+  }
+
+  // Offline toggle
+  function toggleOffline() {
+    isOffline = !isOffline;
+    const btn = document.getElementById('offlineToggle');
+    const banner = document.getElementById('offlineBanner');
+    const dot = document.getElementById('connDot');
+
+    btn.classList.toggle('active', isOffline);
+    btn.innerHTML = isOffline
+      ? '<i class="fa-solid fa-wifi-slash"></i> Online'
+      : '<i class="fa-solid fa-wifi"></i> Offline';
+    banner.classList.toggle('active', isOffline);
+    dot.classList.toggle('off', isOffline);
+  }
+
+  function restart() {
+    photoTaken = false;
+    checks = [false, false, false, false];
+
+    // Reset photo
+    const prompt = document.getElementById('photoPrompt');
+    prompt.classList.remove('captured');
+    document.getElementById('cameraIcon').className = 'fa-solid fa-camera';
+    document.getElementById('photoTitle').textContent = 'FOTO OBRIGATÓRIA';
+    document.getElementById('photoSub').textContent = 'Registro antes do início do serviço';
+    document.getElementById('btnIniciarServico').disabled = true;
+
+    // Reset checklist
+    [0,1,2,3].forEach(i => {
+      document.getElementById('chk' + i).classList.remove('checked');
+    });
+    document.getElementById('checkProgress').style.width = '0';
+    document.getElementById('checkCount').textContent = '0 de 4 concluídos';
+    document.getElementById('btnConcluir').disabled = true;
+
+    // Reset offline
+    if (isOffline) toggleOffline();
+
+    goTo(0);
+  }
+
+  updateDots(0);
+  updateNavBtns();
+</script>
+</body>
+</html>
