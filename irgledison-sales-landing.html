@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Método Expansão Digital</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:      #0e0d1e;
+      --navy2:     #161528;
+      --navy3:     #1f1d38;
+      --gold:      #f0c430;
+      --gold2:     #ffe066;
+      --white:     #ffffff;
+      --text:      #d4d2f0;
+      --muted:     #7c7a9e;
+      --radius:    12px;
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--navy);
+      color: var(--text);
+      line-height: 1.65;
+      overflow-x: hidden;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(14,13,30,.92);
+      backdrop-filter: blur(10px);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 clamp(1rem,5vw,4rem);
+      height: 64px;
+      border-bottom: 1px solid rgba(240,196,48,.15);
+    }
+    .nav-logo {
+      font-weight: 900; font-size: 1.2rem;
+      color: var(--gold);
+      letter-spacing: .04em;
+    }
+    .nav-cta {
+      background: var(--gold); color: var(--navy);
+      font-weight: 800; font-size: .85rem;
+      padding: .45rem 1.2rem; border-radius: 50px;
+      text-decoration: none; white-space: nowrap;
+      transition: background .2s;
+    }
+    .nav-cta:hover { background: var(--gold2); }
+
+    /* ── SECTIONS ── */
+    section { width: 100%; }
+    .container { max-width: 860px; margin: 0 auto; padding: 0 clamp(1rem,5vw,2rem); }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      background: linear-gradient(160deg, #100f22 0%, #1a1738 60%, #0e0d1e 100%);
+      display: flex; align-items: center;
+      padding: 96px 0 64px;
+      position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; top: -120px; right: -80px;
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(240,196,48,.12) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+    .hero-inner {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3rem; align-items: center;
+    }
+    @media(max-width:700px){ .hero-inner { grid-template-columns: 1fr; } }
+
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: .5rem;
+      background: rgba(240,196,48,.12);
+      border: 1px solid rgba(240,196,48,.3);
+      color: var(--gold); font-size: .8rem; font-weight: 700;
+      padding: .35rem .9rem; border-radius: 50px; margin-bottom: 1.2rem;
+      letter-spacing: .06em; text-transform: uppercase;
+    }
+    .hero h1 {
+      font-size: clamp(1.9rem, 4.5vw, 2.9rem);
+      font-weight: 900; color: var(--white);
+      line-height: 1.2; margin-bottom: 1.1rem;
+    }
+    .hero h1 span { color: var(--gold); }
+    .hero-sub {
+      font-size: clamp(.95rem,2vw,1.1rem);
+      color: var(--text); margin-bottom: 2rem; max-width: 480px;
+    }
+    .btn-primary {
+      display: inline-block;
+      background: linear-gradient(135deg, var(--gold), #e6b820);
+      color: var(--navy); font-weight: 900; font-size: 1.05rem;
+      padding: 1rem 2.2rem; border-radius: 50px;
+      text-decoration: none; cursor: pointer; border: none;
+      box-shadow: 0 6px 28px rgba(240,196,48,.35);
+      transition: transform .2s, box-shadow .2s;
+      animation: pulse 2.5s infinite;
+    }
+    @keyframes pulse {
+      0%,100% { box-shadow: 0 6px 28px rgba(240,196,48,.35); }
+      50%      { box-shadow: 0 6px 42px rgba(240,196,48,.6); }
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 36px rgba(240,196,48,.5); }
+    .btn-sub { font-size: .8rem; color: var(--muted); margin-top: .7rem; }
+    .btn-sub i { color: var(--gold); margin-right: .3rem; }
+
+    .hero-img-wrap {
+      position: relative;
+    }
+    .hero-img {
+      width: 100%; border-radius: 20px;
+      box-shadow: 0 24px 64px rgba(0,0,0,.5);
+      display: block;
+    }
+    .hero-proof {
+      position: absolute; bottom: -16px; left: -16px;
+      background: var(--navy3);
+      border: 1px solid rgba(240,196,48,.2);
+      border-radius: 14px; padding: .8rem 1.1rem;
+      display: flex; align-items: center; gap: .8rem;
+      box-shadow: 0 8px 24px rgba(0,0,0,.4);
+    }
+    .hero-proof-icon { font-size: 1.4rem; color: var(--gold); }
+    .hero-proof-text { font-size: .78rem; color: var(--text); }
+    .hero-proof-text strong { display: block; font-size: 1rem; color: var(--white); font-weight: 800; }
+
+    /* ── TRUST BAR ── */
+    .trust-bar {
+      background: var(--navy2);
+      border-top: 1px solid rgba(255,255,255,.05);
+      border-bottom: 1px solid rgba(255,255,255,.05);
+      padding: 1.4rem 0;
+    }
+    .trust-items {
+      display: flex; flex-wrap: wrap; justify-content: center;
+      gap: 2rem 3.5rem;
+    }
+    .trust-item {
+      display: flex; align-items: center; gap: .6rem;
+      font-size: .88rem; font-weight: 700; color: var(--muted);
+    }
+    .trust-item i { color: var(--gold); font-size: 1rem; }
+
+    /* ── DOR ── */
+    .dor-section { padding: 80px 0; background: var(--navy); }
+    .section-label {
+      font-size: .75rem; font-weight: 800; letter-spacing: .12em;
+      text-transform: uppercase; color: var(--gold);
+      margin-bottom: .6rem; display: block;
+    }
+    .section-title {
+      font-size: clamp(1.5rem,3.5vw,2.2rem);
+      font-weight: 900; color: var(--white);
+      line-height: 1.25; margin-bottom: 1rem;
+    }
+    .section-title span { color: var(--gold); }
+    .section-sub { color: var(--text); font-size: 1rem; max-width: 600px; margin-bottom: 2.5rem; }
+
+    .dor-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr));
+      gap: 1.2rem; margin-top: 2.5rem;
+    }
+    .dor-card {
+      background: var(--navy2);
+      border: 1px solid rgba(255,255,255,.06);
+      border-radius: var(--radius); padding: 1.4rem 1.2rem;
+      transition: border-color .3s, transform .3s;
+    }
+    .dor-card:hover { border-color: rgba(240,196,48,.3); transform: translateY(-3px); }
+    .dor-card i { color: #e05a5a; font-size: 1.3rem; margin-bottom: .7rem; display: block; }
+    .dor-card p { font-size: .9rem; color: var(--text); }
+
+    /* ── PARA QUEM ── */
+    .paraquem { padding: 80px 0; background: var(--navy2); }
+    .list-check {
+      list-style: none; display: flex; flex-direction: column; gap: .9rem;
+      margin-top: 2rem;
+    }
+    .list-check li {
+      display: flex; align-items: flex-start; gap: .8rem;
+      font-size: .98rem; color: var(--text);
+    }
+    .list-check li i { color: var(--gold); margin-top: .2rem; flex-shrink: 0; }
+
+    /* ── MÉTODO ── */
+    .metodo { padding: 80px 0; background: var(--navy); }
+    .modulos-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(240px,1fr));
+      gap: 1.2rem; margin-top: 2.5rem;
+    }
+    .modulo-card {
+      background: var(--navy2); border-radius: var(--radius);
+      border: 1px solid rgba(255,255,255,.07);
+      padding: 1.4rem 1.3rem; position: relative; overflow: hidden;
+      transition: border-color .3s;
+    }
+    .modulo-card:hover { border-color: rgba(240,196,48,.3); }
+    .modulo-num {
+      font-size: 2.8rem; font-weight: 900; color: rgba(240,196,48,.08);
+      position: absolute; top: .5rem; right: .8rem; line-height: 1;
+    }
+    .modulo-card h4 { font-size: 1rem; font-weight: 800; color: var(--white); margin-bottom: .4rem; }
+    .modulo-card p { font-size: .85rem; color: var(--muted); }
+    .modulo-icon { font-size: 1.5rem; color: var(--gold); margin-bottom: .8rem; display: block; }
+
+    /* ── SOBRE ── */
+    .sobre { padding: 80px 0; background: var(--navy2); }
+    .sobre-inner {
+      display: grid; grid-template-columns: 300px 1fr;
+      gap: 3rem; align-items: center;
+    }
+    @media(max-width:680px){ .sobre-inner { grid-template-columns: 1fr; } }
+    .sobre-img {
+      width: 100%; border-radius: 16px;
+      box-shadow: 0 16px 48px rgba(0,0,0,.5);
+    }
+    .sobre-stats {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 1rem; margin-top: 1.5rem;
+    }
+    .stat-box {
+      background: var(--navy3); border-radius: 10px;
+      padding: 1rem; text-align: center;
+      border: 1px solid rgba(240,196,48,.1);
+    }
+    .stat-box strong { display: block; font-size: 1.6rem; font-weight: 900; color: var(--gold); }
+    .stat-box span { font-size: .78rem; color: var(--muted); }
+
+    /* ── DEPOIMENTOS ── */
+    .depoimentos { padding: 80px 0; background: var(--navy); }
+    .depo-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(260px,1fr));
+      gap: 1.2rem; margin-top: 2.5rem;
+    }
+    .depo-card {
+      background: var(--navy2); border-radius: var(--radius);
+      border: 1px solid rgba(255,255,255,.07);
+      padding: 1.6rem 1.4rem;
+      transition: border-color .3s;
+    }
+    .depo-card:hover { border-color: rgba(240,196,48,.25); }
+    .stars { color: var(--gold); font-size: .9rem; margin-bottom: .9rem; }
+    .depo-card blockquote {
+      font-size: .9rem; color: var(--text); font-style: italic;
+      margin-bottom: 1.1rem; line-height: 1.6;
+    }
+    .depo-author {
+      display: flex; align-items: center; gap: .8rem;
+    }
+    .depo-avatar {
+      width: 42px; height: 42px; border-radius: 50%;
+      object-fit: cover; border: 2px solid var(--gold);
+    }
+    .depo-author-name { font-weight: 800; font-size: .88rem; color: var(--white); }
+    .depo-author-role { font-size: .76rem; color: var(--muted); }
+
+    /* ── O QUE VOCÊ RECEBE ── */
+    .recebe { padding: 80px 0; background: var(--navy2); }
+    .recebe-box {
+      background: var(--navy3);
+      border: 2px solid rgba(240,196,48,.25);
+      border-radius: 20px; padding: 2.5rem 2rem;
+      margin-top: 2.5rem;
+    }
+    .recebe-item {
+      display: flex; align-items: flex-start; gap: 1rem;
+      padding: 1rem 0;
+      border-bottom: 1px solid rgba(255,255,255,.05);
+    }
+    .recebe-item:last-child { border-bottom: none; }
+    .recebe-icon {
+      width: 46px; height: 46px; border-radius: 10px;
+      background: rgba(240,196,48,.12);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem; color: var(--gold); flex-shrink: 0;
+    }
+    .recebe-info h4 { font-weight: 800; color: var(--white); margin-bottom: .2rem; }
+    .recebe-info p { font-size: .85rem; color: var(--muted); }
+    .recebe-valor { margin-left: auto; text-align: right; flex-shrink: 0; }
+    .recebe-valor .de { font-size: .75rem; color: var(--muted); text-decoration: line-through; }
+    .recebe-valor .por { font-size: .85rem; color: var(--gold); font-weight: 700; }
+
+    /* ── BÔNUS ── */
+    .bonus { padding: 80px 0; background: var(--navy); }
+    .bonus-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr));
+      gap: 1.2rem; margin-top: 2.5rem;
+    }
+    .bonus-card {
+      background: linear-gradient(145deg, #1a1932, #15142a);
+      border: 1px solid rgba(240,196,48,.2);
+      border-radius: var(--radius); padding: 1.6rem 1.4rem;
+      text-align: center; position: relative;
+    }
+    .bonus-tag {
+      position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+      background: var(--gold); color: var(--navy);
+      font-size: .7rem; font-weight: 900; padding: .25rem .7rem;
+      border-radius: 50px; white-space: nowrap; letter-spacing: .06em;
+    }
+    .bonus-card i { font-size: 2rem; color: var(--gold); margin-bottom: .8rem; display: block; }
+    .bonus-card h4 { font-weight: 800; color: var(--white); margin-bottom: .4rem; font-size: .98rem; }
+    .bonus-card p { font-size: .82rem; color: var(--muted); }
+
+    /* ── GARANTIA ── */
+    .garantia {
+      padding: 60px 0; background: var(--navy2);
+      text-align: center;
+    }
+    .garantia-box {
+      display: inline-flex; align-items: center; gap: 2rem;
+      background: var(--navy3); border: 2px solid rgba(240,196,48,.3);
+      border-radius: 20px; padding: 2rem 2.5rem; max-width: 600px;
+    }
+    @media(max-width:560px){ .garantia-box { flex-direction: column; text-align: center; } }
+    .garantia-badge {
+      width: 90px; height: 90px; flex-shrink: 0;
+      border-radius: 50%; background: rgba(240,196,48,.12);
+      border: 3px solid var(--gold);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      font-weight: 900;
+    }
+    .garantia-badge .days { font-size: 1.9rem; color: var(--gold); line-height: 1; }
+    .garantia-badge .label { font-size: .6rem; color: var(--gold); letter-spacing: .05em; }
+    .garantia-text h3 { font-weight: 900; color: var(--white); margin-bottom: .4rem; font-size: 1.1rem; }
+    .garantia-text p { font-size: .86rem; color: var(--muted); }
+
+    /* ── CTA FINAL ── */
+    .cta-final {
+      padding: 96px 0 80px;
+      background: linear-gradient(160deg, #0f0e1f 0%, #1c1a38 50%, #0f0e1f 100%);
+      text-align: center; position: relative; overflow: hidden;
+    }
+    .cta-final::before {
+      content: '';
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+      width: 700px; height: 400px;
+      background: radial-gradient(ellipse, rgba(240,196,48,.08) 0%, transparent 70%);
+    }
+    .cta-final .section-title { margin-bottom: .8rem; }
+    .preco-area { margin: 2rem 0; }
+    .preco-de { font-size: .9rem; color: var(--muted); text-decoration: line-through; margin-bottom: .3rem; }
+    .preco-por { font-size: .9rem; color: var(--muted); margin-bottom: .2rem; }
+    .preco-valor { font-size: 3.2rem; font-weight: 900; color: var(--white); line-height: 1; }
+    .preco-valor span { color: var(--gold); }
+    .preco-parcelas { font-size: .85rem; color: var(--muted); margin-top: .4rem; }
+    .btn-cta-final {
+      display: inline-block;
+      background: linear-gradient(135deg, var(--gold), #d4a800);
+      color: var(--navy); font-weight: 900; font-size: 1.15rem;
+      padding: 1.1rem 3rem; border-radius: 50px; text-decoration: none;
+      box-shadow: 0 8px 36px rgba(240,196,48,.4);
+      transition: transform .2s, box-shadow .2s;
+      animation: pulse 2.5s infinite;
+      margin-top: 1.5rem; cursor: pointer; border: none;
+    }
+    .btn-cta-final:hover { transform: translateY(-3px); }
+    .cta-subs {
+      display: flex; justify-content: center; gap: 1.8rem; flex-wrap: wrap;
+      margin-top: 1.4rem;
+    }
+    .cta-sub-item { font-size: .8rem; color: var(--muted); display: flex; align-items: center; gap: .4rem; }
+    .cta-sub-item i { color: var(--gold); }
+
+    /* ── FOOTER ── */
+    footer {
+      background: #080713;
+      padding: 2rem 0; text-align: center;
+      font-size: .8rem; color: var(--muted);
+      border-top: 1px solid rgba(255,255,255,.05);
+    }
+
+    /* ── SCROLL REVEAL ── */
+    .reveal { opacity: 0; transform: translateY(28px); transition: opacity .6s ease, transform .6s ease; }
+    .reveal.visible { opacity: 1; transform: none; }
+
+    /* ── COUNTDOWN ── */
+    .countdown-bar {
+      background: linear-gradient(90deg, #1a0a00, #2a1400);
+      border-bottom: 2px solid var(--gold);
+      text-align: center; padding: .65rem 1rem;
+      font-size: .85rem; color: var(--text); font-weight: 700;
+      display: flex; justify-content: center; align-items: center; gap: .8rem; flex-wrap: wrap;
+    }
+    .countdown-units { display: flex; gap: .5rem; }
+    .c-unit {
+      background: var(--navy3); border: 1px solid rgba(240,196,48,.3);
+      border-radius: 6px; padding: .25rem .5rem;
+      font-size: .9rem; font-weight: 900; color: var(--gold); min-width: 38px; text-align: center;
+    }
+    .c-sep { color: var(--gold); font-weight: 900; }
+  </style>
+</head>
+<body>
+
+<!-- COUNTDOWN BAR -->
+<div class="countdown-bar">
+  <i class="fa-solid fa-fire" style="color:var(--gold)"></i>
+  <span>Oferta encerra em</span>
+  <div class="countdown-units">
+    <span class="c-unit" id="cd-h">02</span>
+    <span class="c-sep">:</span>
+    <span class="c-unit" id="cd-m">47</span>
+    <span class="c-sep">:</span>
+    <span class="c-unit" id="cd-s">00</span>
+  </div>
+  <span>— não perca o desconto de lançamento</span>
+</div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo"><i class="fa-solid fa-bolt"></i> Método Expansão</div>
+  <a href="#cta-final" class="nav-cta">Quero minha vaga</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="hero">
+  <div class="container">
+    <div class="hero-inner">
+      <div>
+        <div class="hero-badge"><i class="fa-solid fa-star"></i> Método comprovado</div>
+        <h1>Do zero ao seu primeiro <span>negócio digital lucrativo</span> em 90 dias</h1>
+        <p class="hero-sub">Sem experiência técnica, sem seguidores, sem investimento alto. A estrutura exata que mais de 4.200 alunos usaram para sair do emprego e viver do digital.</p>
+        <a href="#cta-final" class="btn-primary"><i class="fa-solid fa-lock-open"></i> &nbsp;Quero minha vaga agora</a>
+        <p class="btn-sub"><i class="fa-solid fa-shield-halved"></i> Garantia de 7 dias ou devolução total</p>
+      </div>
+      <div class="hero-img-wrap">
+        <img class="hero-img" src="https://images.unsplash.com/photo-1573164713988-8665fc963095?w=600&q=80" alt="Infoprodutora profissional" />
+        <div class="hero-proof">
+          <div class="hero-proof-icon"><i class="fa-solid fa-users"></i></div>
+          <div class="hero-proof-text">
+            <strong>4.200+</strong>
+            alunos transformados
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TRUST BAR -->
+<div class="trust-bar">
+  <div class="container">
+    <div class="trust-items">
+      <div class="trust-item"><i class="fa-solid fa-play-circle"></i> Acesso imediato</div>
+      <div class="trust-item"><i class="fa-solid fa-infinity"></i> Acesso vitalício</div>
+      <div class="trust-item"><i class="fa-solid fa-mobile-screen"></i> Funciona no celular</div>
+      <div class="trust-item"><i class="fa-solid fa-certificate"></i> Certificado incluso</div>
+      <div class="trust-item"><i class="fa-solid fa-headset"></i> Suporte dedicado</div>
+    </div>
+  </div>
+</div>
+
+<!-- DOR -->
+<section class="dor-section" id="dor">
+  <div class="container">
+    <span class="section-label reveal">Você se identifica com isso?</span>
+    <h2 class="section-title reveal">Você está preso num ciclo que <span>nunca muda</span></h2>
+    <p class="section-sub reveal">Se uma dessas frases ressoa com você, você está no lugar certo.</p>
+    <div class="dor-grid">
+      <div class="dor-card reveal">
+        <i class="fa-solid fa-clock"></i>
+        <p>Troca tempo por dinheiro e sente que nunca tem o suficiente dos dois.</p>
+      </div>
+      <div class="dor-card reveal">
+        <i class="fa-solid fa-face-tired"></i>
+        <p>Já tentou vender online mas não sabe por onde começar de verdade.</p>
+      </div>
+      <div class="dor-card reveal">
+        <i class="fa-solid fa-chart-line-down"></i>
+        <p>Acompanha pessoas que estão crescendo no digital e não entende como elas fizeram isso.</p>
+      </div>
+      <div class="dor-card reveal">
+        <i class="fa-solid fa-dollar-sign"></i>
+        <p>Quer uma renda extra ou principal mas não quer depender de chefe nem de localização.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PARA QUEM -->
+<section class="paraquem" id="paraquem">
+  <div class="container">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:3rem;align-items:center;">
+      <div>
+        <span class="section-label reveal">Este método foi feito para você se</span>
+        <h2 class="section-title reveal">Você quer <span>resultados reais</span> sem enrolação</h2>
+        <ul class="list-check">
+          <li class="reveal"><i class="fa-solid fa-circle-check"></i> Quer criar uma fonte de renda digital do zero mesmo sem ter produto próprio ainda</li>
+          <li class="reveal"><i class="fa-solid fa-circle-check"></i> Não entende de tecnologia e precisa de um método simples e direto</li>
+          <li class="reveal"><i class="fa-solid fa-circle-check"></i> Tem pouco tempo disponível e não pode perder com conteúdo irrelevante</li>
+          <li class="reveal"><i class="fa-solid fa-circle-check"></i> Quer parar de procrastinar e finalmente agir com uma estratégia clara</li>
+          <li class="reveal"><i class="fa-solid fa-circle-check"></i> Está pronto para mudar a sua situação financeira nos próximos 90 dias</li>
+        </ul>
+      </div>
+      <div class="reveal" style="position:relative;">
+        <img src="https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=500&q=80" alt="Aluna feliz" style="width:100%;border-radius:16px;box-shadow:0 20px 56px rgba(0,0,0,.5);" />
+        <div style="position:absolute;top:-16px;right:-12px;background:var(--gold);color:var(--navy);font-weight:900;font-size:.85rem;padding:.5rem 1rem;border-radius:50px;box-shadow:0 4px 16px rgba(0,0,0,.3);">
+          <i class="fa-solid fa-trophy"></i> 4.200+ alunos
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<style>@media(max-width:680px){.paraquem .container > div{grid-template-columns:1fr!important;}}</style>
+
+<!-- MÉTODO -->
+<section class="metodo" id="metodo">
+  <div class="container">
+    <span class="section-label reveal">O método</span>
+    <h2 class="section-title reveal">6 módulos que vão de <span>ideia a venda real</span></h2>
+    <p class="section-sub reveal">Cada módulo é uma etapa concreta. Sem teoria vazia, sem enrolação. Cada aula termina com uma ação prática.</p>
+    <div class="modulos-grid">
+      <div class="modulo-card reveal">
+        <div class="modulo-num">01</div>
+        <i class="fa-solid fa-compass modulo-icon"></i>
+        <h4>Escolha de nicho e produto</h4>
+        <p>Como validar sua ideia antes de criar qualquer coisa. Zero risco de investir no que não vende.</p>
+      </div>
+      <div class="modulo-card reveal">
+        <div class="modulo-num">02</div>
+        <i class="fa-solid fa-bullseye modulo-icon"></i>
+        <h4>Posicionamento e oferta irresistível</h4>
+        <p>A fórmula que transforma qualquer conhecimento em uma proposta que o cliente não consegue recusar.</p>
+      </div>
+      <div class="modulo-card reveal">
+        <div class="modulo-num">03</div>
+        <i class="fa-solid fa-funnel-dollar modulo-icon"></i>
+        <h4>Página de vendas que converte</h4>
+        <p>Estrutura palavra por palavra de uma página que vende enquanto você dorme.</p>
+      </div>
+      <div class="modulo-card reveal">
+        <div class="modulo-num">04</div>
+        <i class="fa-brands fa-instagram modulo-icon"></i>
+        <h4>Tráfego orgânico e pago</h4>
+        <p>Como atrair clientes no Instagram e no Google sem precisar de uma audiência grande para começar.</p>
+      </div>
+      <div class="modulo-card reveal">
+        <div class="modulo-num">05</div>
+        <i class="fa-solid fa-envelope-open-text modulo-icon"></i>
+        <h4>Lista de e-mail e automação</h4>
+        <p>Construa uma máquina de vendas automática que converte leads em clientes sem você precisar estar online.</p>
+      </div>
+      <div class="modulo-card reveal">
+        <div class="modulo-num">06</div>
+        <i class="fa-solid fa-chart-line modulo-icon"></i>
+        <h4>Escala e reinvestimento</h4>
+        <p>O que fazer depois da primeira venda para transformar um negócio pequeno em uma renda real e crescente.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SOBRE -->
+<section class="sobre" id="sobre">
+  <div class="container">
+    <div class="sobre-inner">
+      <div class="reveal">
+        <img class="sobre-img" src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=500&q=80" alt="Instrutora" />
+      </div>
+      <div>
+        <span class="section-label reveal">Quem vai te guiar</span>
+        <h2 class="section-title reveal">Uma trajetória real, não um <span>conto de fadas</span></h2>
+        <p class="reveal" style="color:var(--text);margin-bottom:1rem;">Comecei do zero, sem audiência e sem capital. Faturei meu primeiro R$1.000 online 47 dias depois de aplicar o método. Hoje ajudo mais de 4.000 pessoas a replicar esse resultado com seus próprios negócios digitais.</p>
+        <p class="reveal" style="color:var(--text);">Minha missão é simples: transformar conhecimento comum em liberdade financeira para quem está disposto a agir.</p>
+        <div class="sobre-stats">
+          <div class="stat-box reveal"><strong>4.200+</strong><span>Alunos formados</span></div>
+          <div class="stat-box reveal"><strong>R$2M+</strong><span>Gerados pelos alunos</span></div>
+          <div class="stat-box reveal"><strong>7 anos</strong><span>No mercado digital</span></div>
+          <div class="stat-box reveal"><strong>98%</strong><span>Taxa de satisfação</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DEPOIMENTOS -->
+<section class="depoimentos" id="depoimentos">
+  <div class="container">
+    <span class="section-label reveal">Resultados reais</span>
+    <h2 class="section-title reveal">Pessoas reais com <span>resultados reais</span></h2>
+    <div class="depo-grid">
+      <div class="depo-card reveal">
+        <div class="stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
+        <blockquote>"Em 38 dias eu fiz minha primeira venda digital. Parecia impossível antes do método. Hoje estou com R$3.200 de renda extra por mês."</blockquote>
+        <div class="depo-author">
+          <img class="depo-avatar" src="https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=80&q=80" alt="Aluna" />
+          <div>
+            <div class="depo-author-name">Camila R.</div>
+            <div class="depo-author-role">Analista de RH, São Paulo</div>
+          </div>
+        </div>
+      </div>
+      <div class="depo-card reveal">
+        <div class="stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
+        <blockquote>"Larguei o emprego no 4° mês. Meu negócio digital já fatura mais do que o salário que eu recebia. Isso é possível quando você segue um método real."</blockquote>
+        <div class="depo-author">
+          <img class="depo-avatar" src="https://images.unsplash.com/photo-1552058544-f2b08422138a?w=80&q=80" alt="Aluno" />
+          <div>
+            <div class="depo-author-name">Lucas M.</div>
+            <div class="depo-author-role">Ex-analista financeiro, Curitiba</div>
+          </div>
+        </div>
+      </div>
+      <div class="depo-card reveal">
+        <div class="stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
+        <blockquote>"Sem seguidores, sem experiência, com 47 anos de idade. Fiz R$6.800 no primeiro lançamento. Se eu consegui, qualquer pessoa consegue."</blockquote>
+        <div class="depo-author">
+          <img class="depo-avatar" src="https://images.unsplash.com/photo-1548142813-c348350df52b?w=80&q=80" alt="Aluna" />
+          <div>
+            <div class="depo-author-name">Marisa T.</div>
+            <div class="depo-author-role">Professora, Belo Horizonte</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- O QUE VOCÊ RECEBE -->
+<section class="recebe" id="recebe">
+  <div class="container">
+    <span class="section-label reveal">Tudo que está incluso</span>
+    <h2 class="section-title reveal">O que você leva hoje <span>com sua inscrição</span></h2>
+    <div class="recebe-box reveal">
+      <div class="recebe-item">
+        <div class="recebe-icon"><i class="fa-solid fa-play"></i></div>
+        <div class="recebe-info">
+          <h4>Método Expansão Digital Completo</h4>
+          <p>6 módulos, 48 aulas, acesso vitalício</p>
+        </div>
+        <div class="recebe-valor"><div class="de">R$ 1.497</div><div class="por">incluso</div></div>
+      </div>
+      <div class="recebe-item">
+        <div class="recebe-icon"><i class="fa-solid fa-users"></i></div>
+        <div class="recebe-info">
+          <h4>Comunidade exclusiva de alunos</h4>
+          <p>Networking, dúvidas e parceiros</p>
+        </div>
+        <div class="recebe-valor"><div class="de">R$ 297</div><div class="por">incluso</div></div>
+      </div>
+      <div class="recebe-item">
+        <div class="recebe-icon"><i class="fa-solid fa-file-lines"></i></div>
+        <div class="recebe-info">
+          <h4>Templates prontos de página e copy</h4>
+          <p>Copy de venda, e-mail e anúncios</p>
+        </div>
+        <div class="recebe-valor"><div class="de">R$ 197</div><div class="por">incluso</div></div>
+      </div>
+      <div class="recebe-item">
+        <div class="recebe-icon"><i class="fa-solid fa-certificate"></i></div>
+        <div class="recebe-info">
+          <h4>Certificado de conclusão</h4>
+          <p>Reconhecido no mercado digital</p>
+        </div>
+        <div class="recebe-valor"><div class="de">R$ 97</div><div class="por">incluso</div></div>
+      </div>
+      <div style="text-align:center;padding-top:1.2rem;font-size:.85rem;color:var(--muted);">
+        Valor total: <span style="text-decoration:line-through">R$ 2.088</span> &nbsp; — &nbsp; Hoje por apenas:
+        <div style="font-size:2.2rem;font-weight:900;color:var(--gold);margin:.3rem 0;">R$ 497</div>
+        <span>ou 12x de R$ 49,90</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BÔNUS -->
+<section class="bonus" id="bonus">
+  <div class="container">
+    <span class="section-label reveal">Bônus exclusivos</span>
+    <h2 class="section-title reveal">Bônus que <span>aceleram seus resultados</span></h2>
+    <div class="bonus-grid">
+      <div class="bonus-card reveal">
+        <div class="bonus-tag">BÔNUS 1</div>
+        <i class="fa-solid fa-rocket"></i>
+        <h4>Checklist de Lançamento Rápido</h4>
+        <p>Do zero à primeira venda em 14 dias com uma lista de ações diárias.</p>
+      </div>
+      <div class="bonus-card reveal">
+        <div class="bonus-tag">BÔNUS 2</div>
+        <i class="fa-solid fa-wand-magic-sparkles"></i>
+        <h4>Banco de 50 Hooks que Vendem</h4>
+        <p>As aberturas de copy que mais convertiram nos últimos 12 meses.</p>
+      </div>
+      <div class="bonus-card reveal">
+        <div class="bonus-tag">BÔNUS 3</div>
+        <i class="fa-brands fa-whatsapp"></i>
+        <h4>Scripts de Venda via WhatsApp</h4>
+        <p>Conversas prontas que transformam curiosos em compradores.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- GARANTIA -->
+<section class="garantia" id="garantia">
+  <div class="container">
+    <span class="section-label reveal" style="text-align:center;display:block;">Risco zero</span>
+    <h2 class="section-title reveal" style="text-align:center;margin-bottom:2rem;">Você não tem <span>nada a perder</span></h2>
+    <div class="garantia-box reveal" style="margin:0 auto;">
+      <div class="garantia-badge">
+        <div class="days">7</div>
+        <div class="label">DIAS</div>
+      </div>
+      <div class="garantia-text">
+        <h3>Garantia incondicional de 7 dias</h3>
+        <p>Se por qualquer motivo você não ficar satisfeito nos primeiros 7 dias após a compra, devolvemos 100% do seu dinheiro. Sem perguntas, sem burocracia.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA FINAL -->
+<section class="cta-final" id="cta-final">
+  <div class="container">
+    <span class="section-label reveal" style="text-align:center;display:block;">Última chamada</span>
+    <h2 class="section-title reveal" style="text-align:center;">Essa é a <span>sua vez</span> de mudar</h2>
+    <p class="reveal" style="text-align:center;color:var(--text);max-width:520px;margin:0 auto;">Cada dia que passa sem agir é mais um dia trabalhando para o sonho de outra pessoa. Esse método funciona. A única variável és você.</p>
+    <div class="preco-area reveal">
+      <div class="preco-de">De R$ 2.088</div>
+      <div class="preco-por">Por apenas</div>
+      <div class="preco-valor">R$ <span>497</span></div>
+      <div class="preco-parcelas">ou 12x de R$ 49,90 no cartão</div>
+    </div>
+    <div style="text-align:center;" class="reveal">
+      <button class="btn-cta-final"><i class="fa-solid fa-lock-open"></i> &nbsp; Quero minha vaga agora</button>
+      <div class="cta-subs">
+        <div class="cta-sub-item"><i class="fa-solid fa-shield-halved"></i> Garantia de 7 dias</div>
+        <div class="cta-sub-item"><i class="fa-solid fa-lock"></i> Pagamento 100% seguro</div>
+        <div class="cta-sub-item"><i class="fa-solid fa-infinity"></i> Acesso vitalício</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <p>© 2026 Método Expansão Digital. Todos os direitos reservados.</p>
+    <p style="margin-top:.4rem;">Este site não é afiliado ao Facebook, Instagram ou Google.</p>
+  </div>
+</footer>
+
+<script>
+  // Scroll reveal
+  const els = document.querySelectorAll('.reveal');
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); } });
+  }, { threshold: 0.1 });
+  els.forEach(el => io.observe(el));
+
+  // Countdown — starts from a fixed offset so it always shows a ticking timer
+  function initCountdown() {
+    const base = 2 * 3600 + 47 * 60; // 2h47m in seconds
+    const start = Math.floor(Date.now() / 1000);
+    function tick() {
+      const elapsed = Math.floor(Date.now() / 1000) - start;
+      let rem = Math.max(0, base - elapsed);
+      const h = String(Math.floor(rem / 3600)).padStart(2, '0');
+      const m = String(Math.floor((rem % 3600) / 60)).padStart(2, '0');
+      const s = String(rem % 60).padStart(2, '0');
+      document.getElementById('cd-h').textContent = h;
+      document.getElementById('cd-m').textContent = m;
+      document.getElementById('cd-s').textContent = s;
+      if (rem > 0) requestAnimationFrame(tick);
+    }
+    tick();
+  }
+  initCountdown();
+</script>
+</body>
+</html>
