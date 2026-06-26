@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RoutePay - Gestión de Rutas y Liquidación</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d1117;
+    --card: #161b22;
+    --card2: #1c2128;
+    --orange: #f97316;
+    --orange-dim: #f9731622;
+    --orange-glow: #f9731644;
+    --green: #2dd4a4;
+    --red: #f43f5e;
+    --yellow: #fbbf24;
+    --blue: #60a5fa;
+    --text: #e6edf3;
+    --muted: #7d8590;
+    --border: #30363d;
+    --radius: 16px;
+    --phone-w: 375px;
+  }
+
+  body {
+    font-family: 'Roboto', sans-serif;
+    background: var(--bg);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 40px 16px 60px;
+    color: var(--text);
+  }
+
+  /* ── Layout ── */
+  .demo-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+    width: 100%;
+    max-width: 900px;
+  }
+
+  .demo-header {
+    text-align: center;
+  }
+  .demo-header h1 { font-size: 22px; font-weight: 700; color: var(--orange); letter-spacing: 1px; }
+  .demo-header p { font-size: 13px; color: var(--muted); margin-top: 6px; }
+
+  .demo-row {
+    display: flex;
+    gap: 32px;
+    align-items: flex-start;
+    justify-content: center;
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  /* ── Phone shell ── */
+  .phone-shell {
+    width: var(--phone-w);
+    border-radius: 44px;
+    background: #000;
+    border: 2px solid #2a2a2a;
+    box-shadow: 0 0 0 1px #111, 0 30px 80px #000a, inset 0 0 0 1px #333;
+    padding: 12px;
+    flex-shrink: 0;
+  }
+  .phone-notch {
+    width: 120px;
+    height: 30px;
+    background: #000;
+    border-radius: 0 0 20px 20px;
+    margin: 0 auto 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .notch-cam {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #1a1a1a; border: 1px solid #333;
+  }
+  .phone-screen {
+    background: var(--bg);
+    border-radius: 36px;
+    overflow: hidden;
+    height: 720px;
+    position: relative;
+  }
+  .status-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 20px 4px;
+    font-size: 11px; font-weight: 600; color: var(--text);
+  }
+  .status-icons { display: flex; gap: 6px; align-items: center; }
+  .signal-bar { width: 3px; background: var(--text); border-radius: 1px; }
+
+  /* ── Screens ── */
+  .screen {
+    display: none;
+    flex-direction: column;
+    height: calc(720px - 36px);
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+  .screen::-webkit-scrollbar { display: none; }
+  .screen.active { display: flex; }
+
+  /* ── SCREEN 0: Splash ── */
+  .splash {
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    padding: 32px 24px;
+    background: linear-gradient(160deg, #0d1117 0%, #1a0f05 100%);
+  }
+  .splash-logo {
+    width: 80px; height: 80px;
+    border-radius: 24px;
+    background: linear-gradient(135deg, var(--orange), #ea580c);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 40px var(--orange-glow);
+  }
+  .splash-logo svg { width: 44px; height: 44px; }
+  .splash-title { font-size: 28px; font-weight: 700; text-align: center; }
+  .splash-sub { font-size: 13px; color: var(--muted); text-align: center; line-height: 1.6; }
+
+  .input-group { width: 100%; }
+  .input-group label { display: block; font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+  .input-field {
+    width: 100%; padding: 14px 16px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; color: var(--text); font-size: 15px; font-family: 'Roboto', sans-serif;
+    outline: none; transition: border-color 0.2s;
+  }
+  .input-field:focus { border-color: var(--orange); }
+
+  .btn-primary {
+    width: 100%; padding: 15px;
+    background: var(--orange); color: #fff;
+    border: none; border-radius: 14px;
+    font-size: 15px; font-weight: 700; font-family: 'Roboto', sans-serif;
+    cursor: pointer; transition: opacity 0.2s, transform 0.1s;
+    letter-spacing: 0.5px;
+  }
+  .btn-primary:active { opacity: 0.85; transform: scale(0.98); }
+
+  .btn-secondary {
+    flex: 1; padding: 13px;
+    background: var(--card2); color: var(--text);
+    border: 1px solid var(--border); border-radius: 12px;
+    font-size: 14px; font-weight: 600; font-family: 'Roboto', sans-serif;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .btn-secondary.selected {
+    background: var(--orange-dim); border-color: var(--orange); color: var(--orange);
+  }
+
+  /* ── SCREEN 1: Check-in ── */
+  .screen-header {
+    padding: 16px 20px 12px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .back-btn {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: var(--card2); border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .screen-title { font-size: 17px; font-weight: 700; }
+  .screen-subtitle { font-size: 12px; color: var(--muted); }
+
+  .screen-body { padding: 0 20px; flex: 1; display: flex; flex-direction: column; gap: 20px; }
+
+  .route-badge {
+    background: linear-gradient(135deg, #f97316, #ea580c);
+    border-radius: 16px; padding: 20px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .route-badge-icon { font-size: 32px; }
+  .route-badge-text { flex: 1; }
+  .route-badge-text h3 { font-size: 22px; font-weight: 800; letter-spacing: 2px; }
+  .route-badge-text p { font-size: 12px; opacity: 0.8; margin-top: 2px; }
+
+  .section-label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+
+  .toggle-row { display: flex; gap: 10px; }
+
+  .select-field {
+    width: 100%; padding: 13px 16px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; color: var(--text); font-size: 14px; font-family: 'Roboto', sans-serif;
+    outline: none;
+  }
+
+  .photo-prompt {
+    border: 2px dashed var(--orange);
+    border-radius: 16px; padding: 20px;
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+    background: var(--orange-dim); cursor: pointer; transition: background 0.2s;
+  }
+  .photo-prompt:hover { background: var(--orange-glow); }
+  .photo-prompt-icon { font-size: 28px; }
+  .photo-prompt-title { font-size: 14px; font-weight: 600; }
+  .photo-prompt-sub { font-size: 12px; color: var(--muted); text-align: center; }
+
+  .photo-captured {
+    border-radius: 16px; overflow: hidden;
+    position: relative; display: none;
+  }
+  .photo-captured img { width: 100%; height: 120px; object-fit: cover; border-radius: 16px; }
+  .photo-check {
+    position: absolute; top: 10px; right: 10px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--green); display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+
+  .gps-indicator {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--card2); border-radius: 12px; padding: 12px 16px;
+    border: 1px solid var(--border);
+  }
+  .gps-dot {
+    width: 10px; height: 10px; border-radius: 50%; background: var(--green);
+    animation: pulse-gps 1.5s infinite;
+  }
+  @keyframes pulse-gps {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+  .gps-text { font-size: 13px; }
+  .gps-coords { font-size: 11px; color: var(--muted); }
+
+  /* ── SCREEN 2: Ruta Activa ── */
+  .map-placeholder {
+    height: 200px; border-radius: 16px; overflow: hidden;
+    position: relative; background: #1a2035;
+    margin: 0 20px;
+  }
+  .map-grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(99,136,247,0.08) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(99,136,247,0.08) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+  .map-route-line {
+    position: absolute; top: 40%; left: 15%; right: 20%;
+    height: 3px; background: var(--orange);
+    border-radius: 2px;
+  }
+  .map-dot-start {
+    position: absolute; top: calc(40% - 8px); left: calc(15% - 8px);
+    width: 16px; height: 16px; border-radius: 50%;
+    background: var(--green); border: 2px solid var(--bg);
+    box-shadow: 0 0 10px var(--green);
+  }
+  .map-dot-current {
+    position: absolute; top: calc(40% - 10px); right: calc(20% - 10px);
+    width: 20px; height: 20px; border-radius: 50%;
+    background: var(--orange); border: 3px solid #fff;
+    box-shadow: 0 0 0 6px var(--orange-glow);
+    animation: pulse-map 2s infinite;
+  }
+  @keyframes pulse-map {
+    0%, 100% { box-shadow: 0 0 0 6px var(--orange-glow); }
+    50% { box-shadow: 0 0 0 12px transparent; }
+  }
+  .map-label {
+    position: absolute; bottom: 10px; left: 10px;
+    background: rgba(0,0,0,0.7); padding: 4px 10px;
+    border-radius: 8px; font-size: 11px; color: var(--text);
+  }
+
+  .stats-row {
+    display: flex; gap: 10px; padding: 0 20px;
+  }
+  .stat-card {
+    flex: 1; background: var(--card2); border-radius: 14px;
+    padding: 14px 12px; border: 1px solid var(--border);
+    text-align: center;
+  }
+  .stat-value { font-size: 20px; font-weight: 800; color: var(--orange); }
+  .stat-label { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  .active-badge {
+    margin: 0 20px;
+    background: linear-gradient(135deg, rgba(45,212,164,0.15), rgba(45,212,164,0.05));
+    border: 1px solid rgba(45,212,164,0.3);
+    border-radius: 14px; padding: 14px 16px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .active-badge-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--green); flex-shrink: 0; animation: pulse-gps 1.5s infinite; }
+  .active-badge-text { font-size: 13px; font-weight: 500; color: var(--green); }
+
+  .driver-info-card {
+    margin: 0 20px;
+    background: var(--card); border-radius: 14px; padding: 16px;
+    border: 1px solid var(--border); display: flex; align-items: center; gap: 12px;
+  }
+  .driver-avatar {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: linear-gradient(135deg, var(--orange), #dc2626);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 800; color: #fff; flex-shrink: 0;
+  }
+  .driver-name { font-size: 15px; font-weight: 700; }
+  .driver-aux { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .driver-route { margin-left: auto; font-size: 14px; font-weight: 700; color: var(--orange); }
+
+  /* ── SCREEN 3: Check-out ── */
+  .photo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 20px; }
+  .photo-card {
+    border-radius: 14px; overflow: hidden;
+    background: var(--card2); border: 1px solid var(--border);
+    aspect-ratio: 1; position: relative; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+    transition: border-color 0.2s;
+  }
+  .photo-card.captured { border-color: var(--green); }
+  .photo-card img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; border-radius: 14px; }
+  .photo-card-icon { font-size: 24px; }
+  .photo-card-label { font-size: 11px; color: var(--muted); text-align: center; }
+  .photo-card-check {
+    position: absolute; top: 8px; right: 8px;
+    width: 24px; height: 24px; border-radius: 50%;
+    background: var(--green); display: flex; align-items: center; justify-content: center;
+    font-size: 12px; display: none;
+  }
+  .photo-card.captured .photo-card-check { display: flex; }
+  .photo-card.captured .photo-card-icon, .photo-card.captured .photo-card-label { display: none; }
+
+  .checkout-summary {
+    margin: 0 20px;
+    background: var(--card); border-radius: 14px; padding: 16px;
+    border: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px;
+  }
+  .summary-row { display: flex; justify-content: space-between; align-items: center; }
+  .summary-label { font-size: 13px; color: var(--muted); }
+  .summary-value { font-size: 13px; font-weight: 600; }
+  .summary-divider { height: 1px; background: var(--border); }
+
+  .btn-danger {
+    width: 100%; padding: 15px;
+    background: var(--red); color: #fff;
+    border: none; border-radius: 14px;
+    font-size: 15px; font-weight: 700; font-family: 'Roboto', sans-serif;
+    cursor: pointer; margin: 0 20px; width: calc(100% - 40px);
+  }
+
+  /* ── SCREEN 4: Liquidación ── */
+  .liquidacion-header {
+    background: linear-gradient(135deg, #1a0f05, #0d1117);
+    padding: 20px; border-bottom: 1px solid var(--border);
+  }
+  .week-title { font-size: 13px; color: var(--muted); }
+  .week-total { font-size: 32px; font-weight: 800; color: var(--orange); margin-top: 4px; }
+  .week-status {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(251,191,36,0.15); border: 1px solid rgba(251,191,36,0.3);
+    border-radius: 20px; padding: 4px 12px; font-size: 11px; color: var(--yellow);
+    margin-top: 8px; font-weight: 600;
+  }
+
+  .driver-payment-card {
+    margin: 0 16px;
+    background: var(--card); border-radius: 14px;
+    border: 1px solid var(--border); overflow: hidden;
+  }
+  .payment-card-header {
+    padding: 14px 16px;
+    display: flex; align-items: center; gap: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .payment-card-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
+  .pay-row { display: flex; justify-content: space-between; align-items: center; }
+  .pay-label { font-size: 13px; color: var(--muted); }
+  .pay-value { font-size: 13px; font-weight: 600; }
+  .pay-value.positive { color: var(--green); }
+  .pay-value.negative { color: var(--red); }
+  .pay-divider { height: 1px; background: var(--border); margin: 4px 0; }
+  .pay-total-row { display: flex; justify-content: space-between; align-items: center; }
+  .pay-total-label { font-size: 14px; font-weight: 700; }
+  .pay-total-value { font-size: 18px; font-weight: 800; color: var(--orange); }
+
+  .approve-btn {
+    margin: 0 16px;
+    padding: 14px;
+    background: var(--green); color: #0d1117;
+    border: none; border-radius: 14px;
+    font-size: 14px; font-weight: 800; font-family: 'Roboto', sans-serif;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: opacity 0.2s;
+  }
+  .approve-btn:hover { opacity: 0.9; }
+
+  .timeline-list { padding: 0 16px; display: flex; flex-direction: column; gap: 8px; }
+  .timeline-item {
+    background: var(--card2); border-radius: 12px; padding: 12px 14px;
+    display: flex; align-items: center; gap: 12px; border: 1px solid var(--border);
+  }
+  .timeline-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--orange); flex-shrink: 0; }
+  .timeline-text { font-size: 12px; flex: 1; }
+  .timeline-time { font-size: 11px; color: var(--muted); }
+
+  /* ── Web Panel ── */
+  .web-panel {
+    width: 460px;
+    background: var(--card);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .panel-top-bar {
+    background: var(--card2); border-bottom: 1px solid var(--border);
+    padding: 14px 20px; display: flex; align-items: center; gap: 10px;
+  }
+  .panel-top-bar h2 { font-size: 15px; font-weight: 700; flex: 1; }
+  .panel-badge {
+    padding: 4px 10px; border-radius: 20px;
+    background: rgba(251,191,36,0.15); color: var(--yellow);
+    font-size: 11px; font-weight: 700;
+  }
+  .panel-body { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+
+  .panel-summary-row {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+  }
+  .panel-stat {
+    background: var(--card2); border-radius: 12px; padding: 14px;
+    border: 1px solid var(--border); text-align: center;
+  }
+  .panel-stat-value { font-size: 22px; font-weight: 800; }
+  .panel-stat-value.orange { color: var(--orange); }
+  .panel-stat-value.green { color: var(--green); }
+  .panel-stat-value.yellow { color: var(--yellow); }
+  .panel-stat-label { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  .panel-section-title { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+
+  .driver-row {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--card2); border-radius: 12px; padding: 12px 14px;
+    border: 1px solid var(--border); cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .driver-row:hover { border-color: var(--orange); }
+  .driver-row-avatar {
+    width: 38px; height: 38px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 800; color: #fff; flex-shrink: 0;
+  }
+  .driver-row-info { flex: 1; }
+  .driver-row-name { font-size: 14px; font-weight: 600; }
+  .driver-row-route { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .driver-row-status {
+    padding: 4px 10px; border-radius: 20px;
+    font-size: 11px; font-weight: 700;
+  }
+  .status-active { background: rgba(45,212,164,0.15); color: var(--green); }
+  .status-done { background: rgba(96,165,250,0.15); color: var(--blue); }
+  .status-pending { background: rgba(251,191,36,0.15); color: var(--yellow); }
+
+  .driver-row-pay { font-size: 15px; font-weight: 800; color: var(--orange); margin-left: 8px; }
+
+  .alert-card {
+    background: rgba(244,63,94,0.08); border: 1px solid rgba(244,63,94,0.25);
+    border-radius: 12px; padding: 12px 14px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .alert-icon { font-size: 18px; }
+  .alert-text { font-size: 12px; flex: 1; line-height: 1.5; }
+  .alert-text strong { color: var(--red); }
+
+  .panel-approve-all {
+    width: 100%; padding: 14px;
+    background: var(--orange); color: #fff;
+    border: none; border-radius: 12px;
+    font-size: 14px; font-weight: 700; font-family: 'Roboto', sans-serif;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+
+  /* ── Navigation dots ── */
+  .nav-dots {
+    display: flex; gap: 8px; justify-content: center;
+  }
+  .nav-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--border); transition: all 0.3s; cursor: pointer;
+  }
+  .nav-dot.active { background: var(--orange); width: 24px; border-radius: 4px; }
+
+  .screen-footer { padding: 16px 20px 20px; }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: var(--green); color: #000; padding: 12px 24px; border-radius: 12px;
+    font-size: 14px; font-weight: 700; transition: transform 0.3s; z-index: 999;
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 600px) {
+    .demo-row { flex-direction: column; align-items: center; }
+    .web-panel { width: 100%; max-width: 375px; }
+    body { padding: 24px 12px 40px; }
+  }
+</style>
+</head>
+<body>
+<div class="demo-wrapper">
+
+  <div class="demo-header">
+    <h1>RoutePay</h1>
+    <p>Demo interactivo de gestión de rutas y liquidación semanal de choferes</p>
+  </div>
+
+  <div class="demo-row">
+
+    <!-- ── PHONE SHELL ── -->
+    <div class="phone-shell">
+      <div class="phone-notch">
+        <div class="notch-cam"></div>
+        <div class="notch-cam" style="width:4px;height:4px;border-radius:2px;background:#333"></div>
+      </div>
+      <div class="phone-screen">
+        <div class="status-bar">
+          <span style="font-size:12px;font-weight:700">9:41</span>
+          <div class="status-icons">
+            <div style="display:flex;gap:2px;align-items:flex-end">
+              <div class="signal-bar" style="height:4px"></div>
+              <div class="signal-bar" style="height:6px"></div>
+              <div class="signal-bar" style="height:9px"></div>
+              <div class="signal-bar" style="height:12px"></div>
+            </div>
+            <span style="font-size:11px">WiFi</span>
+            <span style="font-size:11px">87%</span>
+          </div>
+        </div>
+
+        <!-- SCREEN 0: Splash / Login -->
+        <div class="screen splash active" id="screen-0">
+          <div class="splash-logo">
+            <svg viewBox="0 0 44 44" fill="none">
+              <path d="M8 32 L22 10 L36 32" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="22" cy="32" r="5" fill="#fff"/>
+              <path d="M15 26 L29 26" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+            </svg>
+          </div>
+          <div class="splash-title">RoutePay</div>
+          <div class="splash-sub">Registro de rutas y liquidación semanal para choferes de última milla</div>
+          <div class="input-group">
+            <label>Número de empleado</label>
+            <input class="input-field" type="text" value="CH-047" readonly>
+          </div>
+          <div class="input-group">
+            <label>Contraseña</label>
+            <input class="input-field" type="password" value="••••••" readonly>
+          </div>
+          <button class="btn-primary" onclick="goScreen(1)">Entrar</button>
+          <div style="font-size:12px;color:var(--muted);text-align:center">Carlos Mendoza · Chofer Activo</div>
+        </div>
+
+        <!-- SCREEN 1: Check-in -->
+        <div class="screen" id="screen-1">
+          <div class="screen-header">
+            <button class="back-btn" onclick="goScreen(0)">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8L10 13" stroke="#7d8590" stroke-width="2" stroke-linecap="round"/></svg>
+            </button>
+            <div>
+              <div class="screen-title">Iniciar Día</div>
+              <div class="screen-subtitle">Check-in en CEDIS · Jue 26 Jun</div>
+            </div>
+          </div>
+          <div class="screen-body">
+            <div>
+              <div class="section-label" style="margin-bottom:10px">Número de ruta</div>
+              <div class="route-badge">
+                <div class="route-badge-icon">
+                  <svg width="36" height="36" viewBox="0 0 36 36" fill="none"><rect width="36" height="36" rx="10" fill="rgba(255,255,255,0.15)"/><path d="M9 27L18 9L27 27M13 22H23" stroke="white" stroke-width="2.5" stroke-linecap="round"/></svg>
+                </div>
+                <div class="route-badge-text">
+                  <h3>NTE-105</h3>
+                  <p>Zona Norte · Turno matutino</p>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div class="section-label" style="margin-bottom:10px">¿Llevas Auxiliar hoy?</div>
+              <div class="toggle-row">
+                <button class="btn-secondary selected" id="aux-si" onclick="selectAux(true)">Si llevo auxiliar</button>
+                <button class="btn-secondary" id="aux-no" onclick="selectAux(false)">No llevo auxiliar</button>
+              </div>
+            </div>
+
+            <div id="aux-select-group">
+              <div class="section-label" style="margin-bottom:10px">Nombre del auxiliar</div>
+              <select class="select-field">
+                <option>Seleccionar auxiliar...</option>
+                <option selected>Jorge Ramirez Soto</option>
+                <option>Ana Luisa Torres</option>
+                <option>Miguel Angel Fuentes</option>
+              </select>
+            </div>
+
+            <div id="photo-group">
+              <div class="section-label" style="margin-bottom:10px">Foto antifraude obligatoria</div>
+              <div class="photo-prompt" id="photo-prompt-btn" onclick="capturePhoto()">
+                <div class="photo-prompt-icon">
+                  <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="7" stroke="#f97316" stroke-width="2"/><path d="M16 2 C16 2 20 8 20 8 L28 8 C29 8 30 9 30 10 L30 26 C30 27 29 28 28 28 L4 28 C3 28 2 27 2 26 L2 10 C2 9 3 8 4 8 L12 8 C12 8 16 2 16 2Z" stroke="#f97316" stroke-width="2" fill="none" stroke-linejoin="round"/></svg>
+                </div>
+                <div class="photo-prompt-title">Selfie con tu auxiliar</div>
+                <div class="photo-prompt-sub">Tomar foto juntos dentro del CEDIS antes de salir</div>
+              </div>
+              <div class="photo-captured" id="photo-captured">
+                <img src="https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?w=400&h=120&fit=crop&crop=faces" alt="Foto capturada">
+                <div class="photo-check">✓</div>
+              </div>
+            </div>
+
+            <div class="gps-indicator">
+              <div class="gps-dot"></div>
+              <div>
+                <div class="gps-text">GPS capturado</div>
+                <div class="gps-coords">19.4326° N, 99.1332° W · CDMX</div>
+              </div>
+              <div style="font-size:11px;color:var(--green);font-weight:600">✓ OK</div>
+            </div>
+          </div>
+          <div class="screen-footer">
+            <button class="btn-primary" onclick="goScreen(2)">Confirmar Check-in</button>
+          </div>
+        </div>
+
+        <!-- SCREEN 2: Ruta Activa -->
+        <div class="screen" id="screen-2" style="gap:16px;padding-bottom:20px">
+          <div class="screen-header">
+            <div>
+              <div class="screen-title">Ruta Activa</div>
+              <div class="screen-subtitle">NTE-105 · En curso</div>
+            </div>
+            <div style="margin-left:auto;display:flex;align-items:center;gap:6px;background:rgba(244,63,94,0.1);border:1px solid rgba(244,63,94,0.2);border-radius:10px;padding:6px 12px">
+              <div style="width:8px;height:8px;border-radius:50%;background:var(--red);animation:pulse-gps 1.5s infinite"></div>
+              <span style="font-size:11px;font-weight:700;color:var(--red)">EN VIVO</span>
+            </div>
+          </div>
+
+          <div class="map-placeholder">
+            <div class="map-grid"></div>
+            <div class="map-route-line"></div>
+            <div class="map-dot-start"></div>
+            <div class="map-dot-current"></div>
+            <div class="map-label">CDMX · Zona Norte</div>
+          </div>
+
+          <div class="stats-row">
+            <div class="stat-card">
+              <div class="stat-value">4h 22m</div>
+              <div class="stat-label">Tiempo activo</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">48</div>
+              <div class="stat-label">Paradas</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">134 km</div>
+              <div class="stat-label">Distancia</div>
+            </div>
+          </div>
+
+          <div class="driver-info-card">
+            <div class="driver-avatar">CM</div>
+            <div>
+              <div class="driver-name">Carlos Mendoza</div>
+              <div class="driver-aux">Aux: Jorge Ramirez · GPS cada 5 min</div>
+            </div>
+            <div class="driver-route">NTE-105</div>
+          </div>
+
+          <div class="active-badge">
+            <div class="active-badge-dot"></div>
+            <div class="active-badge-text">Ubicación verificada con foreground service activo</div>
+          </div>
+
+          <div style="padding:0 20px">
+            <button class="btn-primary" style="background:var(--red)" onclick="goScreen(3)">Finalizar Ruta</button>
+          </div>
+        </div>
+
+        <!-- SCREEN 3: Check-out -->
+        <div class="screen" id="screen-3" style="gap:16px;padding-bottom:20px">
+          <div class="screen-header">
+            <button class="back-btn" onclick="goScreen(2)">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8L10 13" stroke="#7d8590" stroke-width="2" stroke-linecap="round"/></svg>
+            </button>
+            <div>
+              <div class="screen-title">Finalizar Ruta</div>
+              <div class="screen-subtitle">Check-out en Resguardo · NTE-105</div>
+            </div>
+          </div>
+
+          <div style="padding:0 20px">
+            <div class="section-label" style="margin-bottom:12px">Evidencia fotográfica obligatoria</div>
+          </div>
+          <div class="photo-grid">
+            <div class="photo-card captured" id="pc1" onclick="togglePhoto('pc1')">
+              <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=200&h=200&fit=crop" alt="Tablero">
+              <div class="photo-card-check">✓</div>
+              <div class="photo-card-icon">📷</div>
+              <div class="photo-card-label">Tablero de unidad</div>
+            </div>
+            <div class="photo-card captured" id="pc2" onclick="togglePhoto('pc2')">
+              <img src="https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=200&h=200&fit=crop" alt="Resguardo">
+              <div class="photo-card-check">✓</div>
+              <div class="photo-card-icon">📷</div>
+              <div class="photo-card-label">Camioneta resguardada</div>
+            </div>
+          </div>
+
+          <div style="padding:0 20px">
+            <div class="section-label" style="margin-bottom:10px">Resumen del día</div>
+          </div>
+          <div class="checkout-summary">
+            <div class="summary-row">
+              <span class="summary-label">Ruta</span>
+              <span class="summary-value">NTE-105</span>
+            </div>
+            <div class="summary-row">
+              <span class="summary-label">Check-in</span>
+              <span class="summary-value">06:14 AM</span>
+            </div>
+            <div class="summary-row">
+              <span class="summary-label">Check-out</span>
+              <span class="summary-value">04:37 PM</span>
+            </div>
+            <div class="summary-row">
+              <span class="summary-label">Auxiliar</span>
+              <span class="summary-value" style="color:var(--green)">Jorge Ramirez ✓</span>
+            </div>
+            <div class="summary-divider"></div>
+            <div class="summary-row">
+              <span class="summary-label">Peaje registrado</span>
+              <span class="summary-value" style="color:var(--yellow)">$120 MXN</span>
+            </div>
+          </div>
+
+          <div style="padding:0 20px">
+            <button class="btn-primary" onclick="showToastAndGo(4)">Confirmar Finalización</button>
+          </div>
+        </div>
+
+        <!-- SCREEN 4: Mi Liquidación -->
+        <div class="screen" id="screen-4" style="gap:14px;padding-bottom:20px">
+          <div class="liquidacion-header">
+            <div class="week-title">Liquidación · Semana 26 Jun 2026</div>
+            <div class="week-total">$4,280 MXN</div>
+            <div class="week-status">
+              <span style="width:6px;height:6px;border-radius:50%;background:var(--yellow);display:inline-block"></span>
+              Pendiente aprobación
+            </div>
+          </div>
+
+          <div class="driver-payment-card">
+            <div class="payment-card-header">
+              <div class="driver-avatar" style="width:36px;height:36px;border-radius:10px;font-size:14px">CM</div>
+              <div>
+                <div class="driver-row-name">Carlos Mendoza</div>
+                <div class="driver-row-route" style="margin-top:0">5 días trabajados esta semana</div>
+              </div>
+            </div>
+            <div class="payment-card-body">
+              <div class="pay-row">
+                <span class="pay-label">Pago base (5 días)</span>
+                <span class="pay-value positive">+ $5,500</span>
+              </div>
+              <div class="pay-row">
+                <span class="pay-label">Bono auxiliar (3 días)</span>
+                <span class="pay-value positive">+ $300</span>
+              </div>
+              <div class="pay-divider"></div>
+              <div class="pay-row">
+                <span class="pay-label">Ponchadura (Mar)</span>
+                <span class="pay-value negative">- $850</span>
+              </div>
+              <div class="pay-row">
+                <span class="pay-label">Descuento combustible</span>
+                <span class="pay-value negative">- $670</span>
+              </div>
+              <div class="pay-divider"></div>
+              <div class="pay-total-row">
+                <span class="pay-total-label">Total a pagar</span>
+                <span class="pay-total-value">$4,280</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="padding:0 16px">
+            <div class="section-label" style="margin-bottom:10px">Historial de la semana</div>
+          </div>
+          <div class="timeline-list">
+            <div class="timeline-item">
+              <div class="timeline-dot" style="background:var(--green)"></div>
+              <div class="timeline-text">Check-in NTE-105 con auxiliar Jorge R.</div>
+              <div class="timeline-time">Lun 06:12</div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot" style="background:var(--red)"></div>
+              <div class="timeline-text">Ponchadura registrada · Desc. $850</div>
+              <div class="timeline-time">Mar 14:30</div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot" style="background:var(--green)"></div>
+              <div class="timeline-text">Ruta completada con evidencia fotográfica</div>
+              <div class="timeline-time">Jue 16:37</div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /phone-screen -->
+    </div><!-- /phone-shell -->
+
+    <!-- ── WEB PANEL ── -->
+    <div class="web-panel">
+      <div class="panel-top-bar">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect width="22" height="22" rx="6" fill="#f97316"/><path d="M5 16 L11 6 L17 16 M8 13 H14" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+        <h2>Panel Supervisor · Semana 22-26 Jun</h2>
+        <div class="panel-badge">Sábado · Liquidación</div>
+      </div>
+      <div class="panel-body">
+
+        <div class="panel-summary-row">
+          <div class="panel-stat">
+            <div class="panel-stat-value orange">12</div>
+            <div class="panel-stat-label">Choferes activos hoy</div>
+          </div>
+          <div class="panel-stat">
+            <div class="panel-stat-value green">9</div>
+            <div class="panel-stat-label">Rutas completadas</div>
+          </div>
+          <div class="panel-stat">
+            <div class="panel-stat-value yellow">3</div>
+            <div class="panel-stat-label">Pendientes validar</div>
+          </div>
+        </div>
+
+        <div class="alert-card">
+          <div class="alert-icon">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 3 L18 17 H2 Z" stroke="#f43f5e" stroke-width="1.5" fill="rgba(244,63,94,0.1)" stroke-linejoin="round"/><line x1="10" y1="9" x2="10" y2="13" stroke="#f43f5e" stroke-width="1.5" stroke-linecap="round"/><circle cx="10" cy="15.5" r="0.75" fill="#f43f5e"/></svg>
+          </div>
+          <div class="alert-text"><strong>Alerta:</strong> Roberto Fuentes no ha registrado checkout. Estimado retorno 16:00. Ya son las 18:42.</div>
+        </div>
+
+        <div>
+          <div class="panel-section-title" style="margin-bottom:10px">Liquidaciones de la semana</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+
+            <div class="driver-row">
+              <div class="driver-row-avatar" style="background:linear-gradient(135deg,#f97316,#dc2626)">CM</div>
+              <div class="driver-row-info">
+                <div class="driver-row-name">Carlos Mendoza</div>
+                <div class="driver-row-route">NTE-105 · 5 días · Aux: 3 días</div>
+              </div>
+              <div class="driver-row-status status-done">Listo</div>
+              <div class="driver-row-pay">$4,280</div>
+            </div>
+
+            <div class="driver-row">
+              <div class="driver-row-avatar" style="background:linear-gradient(135deg,#8b5cf6,#6d28d9)">LP</div>
+              <div class="driver-row-info">
+                <div class="driver-row-name">Luis Perez</div>
+                <div class="driver-row-route">SUR-202 · 5 días · Sin auxiliar</div>
+              </div>
+              <div class="driver-row-status status-done">Listo</div>
+              <div class="driver-row-pay">$4,950</div>
+            </div>
+
+            <div class="driver-row">
+              <div class="driver-row-avatar" style="background:linear-gradient(135deg,#0ea5e9,#0284c7)">RF</div>
+              <div class="driver-row-info">
+                <div class="driver-row-name">Roberto Fuentes</div>
+                <div class="driver-row-route">OTE-340 · Sin checkout registrado</div>
+              </div>
+              <div class="driver-row-status status-pending">Pendiente</div>
+              <div class="driver-row-pay" style="color:var(--muted)">--</div>
+            </div>
+
+            <div class="driver-row">
+              <div class="driver-row-avatar" style="background:linear-gradient(135deg,#22c55e,#16a34a)">MV</div>
+              <div class="driver-row-info">
+                <div class="driver-row-name">Maria Vasquez</div>
+                <div class="driver-row-route">PON-118 · 4 días · Aux: 4 días</div>
+              </div>
+              <div class="driver-row-status status-active">En ruta</div>
+              <div class="driver-row-pay" style="color:var(--muted)">--</div>
+            </div>
+
+          </div>
+        </div>
+
+        <div>
+          <div class="panel-section-title" style="margin-bottom:10px">Resumen de gastos esta semana</div>
+          <div style="background:var(--card2);border-radius:12px;padding:14px;border:1px solid var(--border);display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;justify-content:space-between">
+              <span style="font-size:13px;color:var(--muted)">Peajes totales</span>
+              <span style="font-size:13px;font-weight:600;color:var(--yellow)">$1,840 MXN</span>
+            </div>
+            <div style="display:flex;justify-content:space-between">
+              <span style="font-size:13px;color:var(--muted)">Ponchaduras</span>
+              <span style="font-size:13px;font-weight:600;color:var(--red)">$2,100 MXN</span>
+            </div>
+            <div style="display:flex;justify-content:space-between">
+              <span style="font-size:13px;color:var(--muted)">Otros descuentos</span>
+              <span style="font-size:13px;font-weight:600;color:var(--red)">$670 MXN</span>
+            </div>
+            <div style="height:1px;background:var(--border)"></div>
+            <div style="display:flex;justify-content:space-between">
+              <span style="font-size:14px;font-weight:700">Total liquidaciones</span>
+              <span style="font-size:16px;font-weight:800;color:var(--orange)">$51,240 MXN</span>
+            </div>
+          </div>
+        </div>
+
+        <button class="panel-approve-all" onclick="showToast('Liquidaciones aprobadas y cerradas para la semana')">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3 9 L7 13 L15 5" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Aprobar y Cerrar Semana
+        </button>
+
+      </div>
+    </div><!-- /web-panel -->
+
+  </div><!-- /demo-row -->
+
+  <div class="nav-dots">
+    <div class="nav-dot active" onclick="goScreen(0)"></div>
+    <div class="nav-dot" onclick="goScreen(1)"></div>
+    <div class="nav-dot" onclick="goScreen(2)"></div>
+    <div class="nav-dot" onclick="goScreen(3)"></div>
+    <div class="nav-dot" onclick="goScreen(4)"></div>
+  </div>
+
+</div><!-- /demo-wrapper -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+  let currentScreen = 0;
+  let auxSelected = true;
+  let photoCaptured = false;
+
+  function goScreen(n) {
+    document.getElementById('screen-' + currentScreen).classList.remove('active');
+    document.getElementById('screen-' + n).classList.add('active');
+    document.querySelectorAll('.nav-dot').forEach((d, i) => {
+      d.classList.toggle('active', i === n);
+    });
+    currentScreen = n;
+  }
+
+  function selectAux(isYes) {
+    auxSelected = isYes;
+    document.getElementById('aux-si').classList.toggle('selected', isYes);
+    document.getElementById('aux-no').classList.toggle('selected', !isYes);
+    document.getElementById('aux-select-group').style.display = isYes ? 'block' : 'none';
+    document.getElementById('photo-group').style.display = isYes ? 'block' : 'none';
+  }
+
+  function capturePhoto() {
+    document.getElementById('photo-prompt-btn').style.display = 'none';
+    document.getElementById('photo-captured').style.display = 'block';
+  }
+
+  function togglePhoto(id) {
+    // Photos already captured in this demo
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg || 'Jornada finalizada correctamente';
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2800);
+  }
+
+  function showToastAndGo(n) {
+    showToast('Ruta finalizada y evidencia enviada al servidor');
+    setTimeout(() => goScreen(n), 600);
+  }
+</script>
+</body>
+</html>
