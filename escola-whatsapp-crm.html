@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EduAgent — Agente WhatsApp + CRM Escolar</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --primary: #1565C0;
+      --primary-light: #1976D2;
+      --accent: #F9A825;
+      --bg: #EEF2F7;
+      --white: #FFFFFF;
+      --text: #1A2B45;
+      --text-light: #5A6A82;
+      --border: #D0DCF0;
+      --wa-green: #25D366;
+      --wa-bg: #E5DDD5;
+      --wa-bot: #FFFFFF;
+      --wa-parent: #DCF8C6;
+      --success: #27AE60;
+      --s1: #3498DB;
+      --s2: #9B59B6;
+      --s3: #F39C12;
+      --s4: #27AE60;
+    }
+    body { font-family: 'Nunito', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* Header */
+    .header {
+      background: var(--primary);
+      color: white;
+      padding: 14px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 3px 16px rgba(21,101,192,0.35);
+    }
+    .hbrand { display: flex; align-items: center; gap: 14px; }
+    .hlogo {
+      width: 40px; height: 40px;
+      background: var(--accent);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; color: #1A2B45;
+    }
+    .htitle { font-size: 18px; font-weight: 800; }
+    .hsub { font-size: 12px; opacity: 0.7; margin-top: 2px; }
+    .btn-restart {
+      background: rgba(255,255,255,0.15);
+      border: 1.5px solid rgba(255,255,255,0.35);
+      color: white;
+      padding: 8px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      font-size: 13px;
+      transition: background 0.2s;
+      display: flex; align-items: center; gap: 7px;
+    }
+    .btn-restart:hover { background: rgba(255,255,255,0.28); }
+
+    /* Tabs */
+    .tabs {
+      background: white;
+      border-bottom: 2px solid var(--border);
+      display: flex;
+      padding: 0 28px;
+    }
+    .tab {
+      padding: 14px 22px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--text-light);
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      transition: all 0.2s;
+      display: flex; align-items: center; gap: 8px;
+      white-space: nowrap;
+    }
+    .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+    .tab:hover { color: var(--primary); }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* Layout: atendimento */
+    .layout-at {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 24px;
+      padding: 28px;
+      max-width: 1160px;
+      margin: 0 auto;
+    }
+
+    /* Phone */
+    .phone {
+      width: 310px;
+      background: #111;
+      border-radius: 42px;
+      padding: 12px;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.32), inset 0 0 0 2px #2a2a2a;
+    }
+    .phone-screen { border-radius: 32px; overflow: hidden; background: var(--wa-bg); }
+
+    .wa-hdr {
+      background: #075E54;
+      padding: 10px 14px;
+      display: flex; align-items: center; gap: 10px;
+      color: white;
+    }
+    .wa-av {
+      width: 36px; height: 36px;
+      background: var(--accent);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; color: #1A2B45; flex-shrink: 0;
+    }
+    .wa-nm { font-weight: 800; font-size: 13px; }
+    .wa-st { font-size: 11px; opacity: 0.75; }
+
+    .wa-chat {
+      height: 430px;
+      overflow-y: auto;
+      padding: 12px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+    .wa-chat::-webkit-scrollbar { width: 3px; }
+    .wa-chat::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 2px; }
+
+    .msg {
+      max-width: 78%;
+      padding: 8px 12px;
+      border-radius: 12px;
+      font-size: 12.5px;
+      line-height: 1.45;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.3s, transform 0.3s;
+    }
+    .msg.visible { opacity: 1; transform: translateY(0); }
+    .msg.bot {
+      background: var(--wa-bot);
+      align-self: flex-start;
+      border-top-left-radius: 3px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    .msg.parent {
+      background: var(--wa-parent);
+      align-self: flex-end;
+      border-top-right-radius: 3px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+    }
+    .msg-time {
+      font-size: 10px;
+      color: var(--text-light);
+      text-align: right;
+      margin-top: 3px;
+    }
+    .msg.parent .msg-time { color: #5a7a5a; }
+
+    .typing {
+      display: none;
+      align-items: center;
+      gap: 4px;
+      padding: 10px 14px;
+      background: var(--wa-bot);
+      border-radius: 12px;
+      border-top-left-radius: 3px;
+      width: fit-content;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    .typing.show { display: flex; }
+    .typing span {
+      width: 6px; height: 6px;
+      background: #aaa;
+      border-radius: 50%;
+      animation: bounce 1.1s infinite;
+    }
+    .typing span:nth-child(2) { animation-delay: 0.15s; }
+    .typing span:nth-child(3) { animation-delay: 0.3s; }
+    @keyframes bounce {
+      0%, 60%, 100% { transform: translateY(0); }
+      30% { transform: translateY(-6px); }
+    }
+
+    .wa-input-bar {
+      background: #F0F0F0;
+      padding: 8px 10px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .wa-inp {
+      flex: 1; background: white; border-radius: 22px;
+      padding: 8px 14px; font-size: 12px; color: #aaa;
+    }
+    .wa-send {
+      width: 34px; height: 34px;
+      background: var(--wa-green);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 13px;
+    }
+
+    /* CRM side panel */
+    .crm-col { display: flex; flex-direction: column; gap: 16px; }
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 2px 14px rgba(0,0,0,0.06);
+    }
+    .card-title {
+      font-size: 12px; font-weight: 800;
+      color: var(--text-light);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 14px;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    /* Lead card */
+    .lead-box {
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      transition: border-color 0.4s, box-shadow 0.4s;
+    }
+    .lead-box.active {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(21,101,192,0.1);
+    }
+    .lead-name { font-weight: 800; font-size: 15px; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 10px; border-radius: 20px;
+      font-size: 11px; font-weight: 700;
+      margin-top: 6px;
+    }
+    .b1 { background: #EBF5FB; color: var(--s1); }
+    .b2 { background: #F5EEF8; color: var(--s2); }
+    .b3 { background: #FEF9E7; color: var(--s3); }
+    .b4 { background: #EAFAF1; color: var(--s4); }
+
+    .lead-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 8px; margin-top: 12px;
+    }
+    .lf { display: flex; flex-direction: column; gap: 2px; }
+    .lf-lbl { font-size: 10px; color: var(--text-light); }
+    .lf-val { font-size: 13px; font-weight: 700; }
+
+    .stages {
+      display: flex; margin-top: 14px;
+    }
+    .st {
+      flex: 1; text-align: center; position: relative;
+    }
+    .st-dot {
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      background: var(--border);
+      margin: 0 auto 4px;
+      transition: background 0.5s;
+      position: relative; z-index: 1;
+    }
+    .st-dot.done { background: var(--primary); }
+    .st-lbl { font-size: 10px; color: var(--text-light); }
+    .st-line {
+      position: absolute;
+      top: 5px; left: 50%;
+      width: 100%; height: 2px;
+      background: var(--border);
+      z-index: 0;
+      transition: background 0.5s;
+    }
+    .st-line.done { background: var(--primary); }
+    .st:last-child .st-line { display: none; }
+
+    /* Funnel */
+    .fi { margin-bottom: 11px; }
+    .fi-lbl { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; }
+    .fi-bg { height: 9px; background: var(--bg); border-radius: 5px; overflow: hidden; }
+    .fi-bar { height: 100%; border-radius: 5px; transition: width 1.2s ease; }
+
+    /* Activity */
+    .act { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 12.5px; }
+    .act:last-child { border-bottom: none; }
+    .act-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .act-time { font-size: 11px; color: var(--text-light); margin-left: auto; white-space: nowrap; }
+
+    /* Dashboard tab */
+    .layout-db { padding: 28px; max-width: 1080px; margin: 0 auto; }
+    .stats {
+      display: grid; grid-template-columns: repeat(4,1fr);
+      gap: 16px; margin-bottom: 24px;
+    }
+    .stat-card { background: white; border-radius: 16px; padding: 20px; box-shadow: 0 2px 14px rgba(0,0,0,0.06); }
+    .stat-v { font-size: 34px; font-weight: 800; color: var(--primary); }
+    .stat-l { font-size: 12px; color: var(--text-light); margin-top: 4px; }
+    .stat-t { font-size: 11px; color: var(--success); margin-top: 6px; font-weight: 700; }
+
+    .db-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+    .filter-pill {
+      display: inline-flex; padding: 4px 12px;
+      border-radius: 20px; font-size: 12px; font-weight: 700;
+      cursor: pointer; transition: background 0.2s;
+    }
+    .fp-on { background: var(--primary); color: white; }
+    .fp-off { background: var(--bg); color: var(--text-light); }
+    .fp-off:hover { background: var(--border); }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { padding: 8px 8px; text-align: left; color: var(--text-light); font-weight: 700; border-bottom: 2px solid var(--border); }
+    td { padding: 10px 8px; border-bottom: 1px solid var(--border); }
+    tr:last-child td { border-bottom: none; }
+
+    /* Remarketing tab */
+    .layout-rm { padding: 28px; max-width: 860px; margin: 0 auto; }
+    .rm-item {
+      background: white; border-radius: 12px;
+      padding: 16px 20px; margin-bottom: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+      display: flex; align-items: center; gap: 16px;
+    }
+    .rm-av {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 17px; font-weight: 800; color: white; flex-shrink: 0;
+    }
+    .rm-info { flex: 1; }
+    .rm-name { font-weight: 800; font-size: 14px; }
+    .rm-det { font-size: 12px; color: var(--text-light); margin-top: 2px; }
+    .rm-days { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; background: #FEF3CD; color: #856404; white-space: nowrap; }
+    .btn-wa {
+      background: var(--wa-green); color: white; border: none;
+      padding: 8px 16px; border-radius: 8px;
+      font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 12px;
+      cursor: pointer; display: flex; align-items: center; gap: 6px;
+      transition: background 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+    .btn-wa:hover { background: #1da851; }
+    .btn-wa:active { transform: scale(0.97); }
+
+    .tpl-card { background: white; border-radius: 16px; padding: 22px; box-shadow: 0 2px 14px rgba(0,0,0,0.06); margin-top: 22px; }
+    .tpl-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 10px; background: #EAFAF1; color: var(--success);
+      border-radius: 20px; font-size: 11px; font-weight: 800; margin-bottom: 12px;
+    }
+    .tpl-msg {
+      background: var(--wa-bot);
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 13.5px;
+      line-height: 1.65;
+      max-width: 440px;
+    }
+    .tpl-note { font-size: 12px; color: var(--text-light); margin-top: 12px; line-height: 1.5; }
+
+    /* Notification */
+    .notif {
+      display: none; position: fixed; bottom: 24px; right: 24px;
+      background: var(--primary); color: white;
+      padding: 12px 20px; border-radius: 12px;
+      font-size: 13px; font-weight: 700;
+      box-shadow: 0 6px 24px rgba(21,101,192,0.35);
+      z-index: 200;
+      animation: slideUp 0.3s ease;
+    }
+    .notif.show { display: flex; align-items: center; gap: 10px; }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 900px) {
+      .layout-at { grid-template-columns: 1fr; }
+      .phone { width: 100%; max-width: 310px; margin: 0 auto; }
+      .stats { grid-template-columns: repeat(2,1fr); }
+      .db-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="hbrand">
+    <div class="hlogo"><i class="fa-solid fa-graduation-cap"></i></div>
+    <div>
+      <div class="htitle">EduAgent — Demonstração</div>
+      <div class="hsub">Agente WhatsApp + CRM Escolar</div>
+    </div>
+  </div>
+  <button class="btn-restart" onclick="restart()">
+    <i class="fa-solid fa-rotate-right"></i> Reiniciar
+  </button>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('at',this)">
+    <i class="fa-brands fa-whatsapp"></i> Atendimento ao Vivo
+  </div>
+  <div class="tab" onclick="switchTab('db',this)">
+    <i class="fa-solid fa-chart-line"></i> Dashboard CRM
+  </div>
+  <div class="tab" onclick="switchTab('rm',this)">
+    <i class="fa-solid fa-bullhorn"></i> Remarketing
+  </div>
+</div>
+
+<!-- TAB 1: Atendimento -->
+<div id="tab-at" class="tab-content active">
+  <div class="layout-at">
+
+    <!-- Phone frame -->
+    <div style="display:flex;flex-direction:column;align-items:center">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="wa-hdr">
+            <i class="fa-solid fa-arrow-left" style="opacity:0.5;font-size:13px"></i>
+            <div class="wa-av"><i class="fa-solid fa-graduation-cap"></i></div>
+            <div>
+              <div class="wa-nm">Escola Pequenos Passos</div>
+              <div class="wa-st" id="wa-st">online</div>
+            </div>
+            <i class="fa-solid fa-ellipsis-vertical" style="margin-left:auto;opacity:0.6;font-size:13px"></i>
+          </div>
+          <div class="wa-chat" id="wa-chat">
+            <div class="typing" id="typing">
+              <span></span><span></span><span></span>
+            </div>
+          </div>
+          <div class="wa-input-bar">
+            <div class="wa-inp">Mensagem</div>
+            <div class="wa-send"><i class="fa-solid fa-microphone"></i></div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:14px;font-size:12px;color:var(--text-light);text-align:center">
+        <i class="fa-solid fa-circle-info"></i> Conversa simulada em tempo real
+      </div>
+    </div>
+
+    <!-- CRM side -->
+    <div class="crm-col">
+      <div class="card">
+        <div class="card-title"><i class="fa-solid fa-user-plus" style="color:var(--primary)"></i> Lead Registrado Automaticamente</div>
+        <div class="lead-box" id="lead-box">
+          <div style="color:var(--text-light);font-size:13px;text-align:center;padding:22px 0">
+            <i class="fa-solid fa-circle-notch fa-spin" style="font-size:26px;display:block;margin-bottom:8px;opacity:0.25"></i>
+            Aguardando primeiro contato...
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><i class="fa-solid fa-chart-simple" style="color:var(--primary)"></i> Funil Hoje</div>
+        <div class="fi">
+          <div class="fi-lbl"><span>Primeiro Contato</span><span id="f1" style="font-weight:700">45</span></div>
+          <div class="fi-bg"><div class="fi-bar" style="width:100%;background:var(--s1)"></div></div>
+        </div>
+        <div class="fi">
+          <div class="fi-lbl"><span>Interesse Confirmado</span><span id="f2" style="font-weight:700">28</span></div>
+          <div class="fi-bg"><div class="fi-bar" style="width:62%;background:var(--s2)"></div></div>
+        </div>
+        <div class="fi">
+          <div class="fi-lbl"><span>Visita Agendada</span><span id="f3" style="font-weight:700">12</span></div>
+          <div class="fi-bg"><div class="fi-bar" style="width:27%;background:var(--s3)"></div></div>
+        </div>
+        <div class="fi">
+          <div class="fi-lbl"><span>Matrícula</span><span id="f4" style="font-weight:700">5</span></div>
+          <div class="fi-bg"><div class="fi-bar" style="width:11%;background:var(--s4)"></div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><i class="fa-solid fa-clock-rotate-left" style="color:var(--primary)"></i> Atividade Recente</div>
+        <div id="activity">
+          <div class="act">
+            <div class="act-dot" style="background:var(--s4)"></div>
+            <span>Carlos M. confirmou matrícula — Berçário I</span>
+            <span class="act-time">09:14</span>
+          </div>
+          <div class="act">
+            <div class="act-dot" style="background:var(--s3)"></div>
+            <span>Ana P. agendou visita EF I — terça 14h</span>
+            <span class="act-time">09:02</span>
+          </div>
+          <div class="act">
+            <div class="act-dot" style="background:var(--s2)"></div>
+            <span>Roberto S. pediu informações sobre EF II</span>
+            <span class="act-time">08:47</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 2: Dashboard -->
+<div id="tab-db" class="tab-content">
+  <div class="layout-db">
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-v">127</div>
+        <div class="stat-l">Contatos este mês</div>
+        <div class="stat-t"><i class="fa-solid fa-arrow-trend-up"></i> +34% vs mês anterior</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-v">89%</div>
+        <div class="stat-l">Resolvidos pelo agente</div>
+        <div class="stat-t"><i class="fa-solid fa-robot"></i> 11% escalados para humano</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-v">3 min</div>
+        <div class="stat-l">Tempo médio de resposta</div>
+        <div class="stat-t" style="color:var(--success)"><i class="fa-solid fa-arrow-trend-down"></i> Era 4h com atendimento manual</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-v">23</div>
+        <div class="stat-l">Visitas agendadas</div>
+        <div class="stat-t"><i class="fa-solid fa-arrow-trend-up"></i> +8 vs mês anterior</div>
+      </div>
+    </div>
+
+    <div class="db-grid">
+      <div class="card">
+        <div class="card-title"><i class="fa-solid fa-filter" style="color:var(--primary)"></i> Funil de Matrículas</div>
+        <div class="fi">
+          <div class="fi-lbl"><span>Primeiro Contato</span><span style="font-weight:700">127</span></div>
+          <div class="fi-bg"><div class="fi-bar" style="width:100%;background:var(--s1)"></div></div>
+        </div>
+        <div class="fi">
+          <div class="fi-lbl"><span>Interesse Confirmado</span><span style="font-weight:700">78</span></div>
+          <div class="fi-bg"><div class="fi-bar" style="width:61%;background:var(--s2)"></div></div>
+        </div>
+        <div class="fi">
+          <div class="fi-lbl"><span>Visita Agendada</span><span style="font-weight:700">43</span></div>
+          <div class="fi-bg"><div class="fi-bar" style="width:34%;background:var(--s3)"></div></div>
+        </div>
+        <div class="fi">
+          <div class="fi-lbl"><span>Matrícula</span><span style="font-weight:700">19</span></div>
+          <div class="fi-bg"><div class="fi-bar" style="width:15%;background:var(--s4)"></div></div>
+        </div>
+        <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+          <div style="font-size:11px;color:var(--text-light);margin-bottom:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px">Filtrar por série</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <span class="filter-pill fp-on">Todos</span>
+            <span class="filter-pill fp-off" onclick="filterPill(this)">Berçário</span>
+            <span class="filter-pill fp-off" onclick="filterPill(this)">Ed. Infantil</span>
+            <span class="filter-pill fp-off" onclick="filterPill(this)">EF I</span>
+            <span class="filter-pill fp-off" onclick="filterPill(this)">EF II</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><i class="fa-solid fa-users" style="color:var(--primary)"></i> Leads Recentes</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Nome</th><th>Série</th><th>Estágio</th><th>Contato</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="font-weight:700">Maria S.</td>
+              <td>Berçário II</td>
+              <td><span class="badge b3"><i class="fa-solid fa-calendar-check"></i> Visita Agendada</span></td>
+              <td style="color:var(--text-light)">agora</td>
+            </tr>
+            <tr>
+              <td style="font-weight:700">João F.</td>
+              <td>EF I</td>
+              <td><span class="badge b2"><i class="fa-solid fa-circle-dot"></i> Interesse</span></td>
+              <td style="color:var(--text-light)">12 min</td>
+            </tr>
+            <tr>
+              <td style="font-weight:700">Patricia R.</td>
+              <td>Ed. Infantil</td>
+              <td><span class="badge b1"><i class="fa-solid fa-circle-dot"></i> Primeiro Contato</span></td>
+              <td style="color:var(--text-light)">28 min</td>
+            </tr>
+            <tr>
+              <td style="font-weight:700">Carlos M.</td>
+              <td>Berçário I</td>
+              <td><span class="badge b4"><i class="fa-solid fa-check-circle"></i> Matrícula</span></td>
+              <td style="color:var(--text-light)">1h</td>
+            </tr>
+            <tr>
+              <td style="font-weight:700">Ana P.</td>
+              <td>EF I</td>
+              <td><span class="badge b3"><i class="fa-solid fa-calendar-check"></i> Visita Agendada</span></td>
+              <td style="color:var(--text-light)">2h</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 3: Remarketing -->
+<div id="tab-rm" class="tab-content">
+  <div class="layout-rm">
+    <div class="card">
+      <div class="card-title"><i class="fa-solid fa-bullhorn" style="color:var(--primary)"></i> Recontatos Pendentes</div>
+      <div style="font-size:13px;color:var(--text-light);margin-bottom:18px;line-height:1.5">
+        Leads que demonstraram interesse mas não agendaram visita. Todos os envios usam templates pré-aprovados pelo Meta — nenhuma mensagem livre é enviada fora da janela de 24h de conversa ativa.
+      </div>
+
+      <div class="rm-item">
+        <div class="rm-av" style="background:#9B59B6">F</div>
+        <div class="rm-info">
+          <div class="rm-name">Fernanda O.</div>
+          <div class="rm-det">Perguntou sobre Ed. Infantil · Não agendou visita</div>
+        </div>
+        <span class="rm-days">5 dias sem resposta</span>
+        <button class="btn-wa" onclick="sendRM(this,'Fernanda')"><i class="fa-brands fa-whatsapp"></i> Recontatar</button>
+      </div>
+
+      <div class="rm-item">
+        <div class="rm-av" style="background:#E74C3C">L</div>
+        <div class="rm-info">
+          <div class="rm-name">Lucas T.</div>
+          <div class="rm-det">Pediu valores EF II · Disse que iria pensar</div>
+        </div>
+        <span class="rm-days">3 dias sem resposta</span>
+        <button class="btn-wa" onclick="sendRM(this,'Lucas')"><i class="fa-brands fa-whatsapp"></i> Recontatar</button>
+      </div>
+
+      <div class="rm-item">
+        <div class="rm-av" style="background:#F39C12">R</div>
+        <div class="rm-info">
+          <div class="rm-name">Renata V.</div>
+          <div class="rm-det">Consultou Berçário I · Sem retorno após 7 dias</div>
+        </div>
+        <span class="rm-days">7 dias sem resposta</span>
+        <button class="btn-wa" onclick="sendRM(this,'Renata')"><i class="fa-brands fa-whatsapp"></i> Recontatar</button>
+      </div>
+    </div>
+
+    <div class="tpl-card">
+      <div class="card-title"><i class="fa-solid fa-message" style="color:var(--primary)"></i> Template de Recontato</div>
+      <div class="tpl-badge"><i class="fa-solid fa-check-circle"></i> Aprovado pelo Meta</div>
+      <div class="tpl-msg">
+        Olá <strong>{{nome_responsavel}}</strong>! 😊<br><br>
+        Percebemos que você demonstrou interesse no <strong>{{segmento}}</strong> da Escola Pequenos Passos.<br><br>
+        As vagas para <strong>{{ano_letivo}}</strong> estão quase esgotadas. Que tal agendarmos uma visita esta semana para conhecer nossa estrutura pessoalmente?<br><br>
+        👉 Responda <strong>SIM</strong> para ver os horários disponíveis.
+      </div>
+      <div class="tpl-note">
+        <i class="fa-solid fa-shield-halved"></i> Templates são aprovados previamente pelo Meta. Fora da janela de 24h de conversa ativa somente templates aprovados são enviados — nunca texto livre.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Notification -->
+<div class="notif" id="notif">
+  <i class="fa-solid fa-check-circle"></i>
+  <span id="notif-txt"></span>
+</div>
+
+<script>
+  const MSGS = [
+    { who:'parent', text:'Olá! Gostaria de saber mais sobre a escola 😊', time:'10:02', delay:600 },
+    { who:'bot', text:'Olá! Bem-vindo à Escola Pequenos Passos! 🎓\n\nPara te ajudar melhor, qual a idade do seu filho ou filha?', time:'10:02', delay:2200 },
+    { who:'parent', text:'Ele tem 2 anos', time:'10:03', delay:4000 },
+    { who:'bot', text:'✅ Perfil identificado: Berçário II\n\nPara crianças de 2 anos temos turmas com até 12 alunos, rotina estruturada das 7h às 17h com alimentação inclusa. Mensalidade a partir de R$ 1.850.\n\nGostaria de agendar uma visita para conhecer a escola?', time:'10:03', delay:6200 },
+    { who:'parent', text:'Sim, quero visitar!', time:'10:04', delay:8600 },
+    { who:'bot', text:'Ótimo! 😊 Temos horários disponíveis:\n\n📅 Terça-feira — 9h ou 10h\n📅 Quinta-feira — 10h ou 14h\n\nQual prefere?', time:'10:04', delay:10600 },
+    { who:'parent', text:'Terça às 10h', time:'10:05', delay:12600 },
+    { who:'bot', text:'✅ Visita confirmada!\n\n📍 Terça-feira às 10h\n📍 Rua das Flores, 234 — Jardim Europa\n\nConfirmarei por aqui na véspera. Até terça! 🌟', time:'10:05', delay:14200 },
+  ];
+
+  const CRM_UPDATES = [
+    { at:800,   stage:1 },
+    { at:6400,  stage:2 },
+    { at:14400, stage:3 },
+  ];
+
+  let timers = [];
+
+  function addMsg(m) {
+    const chat = document.getElementById('wa-chat');
+    const typing = document.getElementById('typing');
+    if (m.who === 'bot') {
+      typing.classList.add('show');
+    }
+    const d = document.createElement('div');
+    d.className = 'msg ' + m.who;
+    d.innerHTML = m.text.replace(/\n/g,'<br>') +
+      '<div class="msg-time">' + m.time +
+      (m.who==='parent' ? ' <i class="fa-solid fa-check-double" style="color:#34B7F1;font-size:9px"></i>' : '') +
+      '</div>';
+    if (m.who === 'bot') {
+      setTimeout(() => {
+        typing.classList.remove('show');
+        chat.insertBefore(d, typing);
+        setTimeout(() => d.classList.add('visible'), 40);
+        chat.scrollTop = chat.scrollHeight;
+      }, 700);
+    } else {
+      chat.insertBefore(d, typing);
+      setTimeout(() => d.classList.add('visible'), 40);
+      chat.scrollTop = chat.scrollHeight;
+    }
+  }
+
+  function setCRM(stage) {
+    const box = document.getElementById('lead-box');
+    if (stage === 1) {
+      box.classList.add('active');
+      box.innerHTML = `
+        <div class="lead-name">Maria S.</div>
+        <span class="badge b1" id="lead-badge"><i class="fa-solid fa-circle-dot"></i> Primeiro Contato</span>
+        <div class="lead-grid">
+          <div class="lf"><span class="lf-lbl">Telefone</span><span class="lf-val">(11) 9 8765-4321</span></div>
+          <div class="lf"><span class="lf-lbl">Série</span><span class="lf-val" id="lv-serie">—</span></div>
+          <div class="lf"><span class="lf-lbl">Estágio</span><span class="lf-val" id="lv-stage">Primeiro Contato</span></div>
+          <div class="lf"><span class="lf-lbl">Visita</span><span class="lf-val" id="lv-visita">—</span></div>
+        </div>
+        <div class="stages">
+          <div class="st"><div class="st-dot done" id="sd1"></div><div class="st-line done" id="sl1"></div><div class="st-lbl">Contato</div></div>
+          <div class="st"><div class="st-dot" id="sd2"></div><div class="st-line" id="sl2"></div><div class="st-lbl">Interesse</div></div>
+          <div class="st"><div class="st-dot" id="sd3"></div><div class="st-line" id="sl3"></div><div class="st-lbl">Visita</div></div>
+          <div class="st"><div class="st-dot" id="sd4"></div><div class="st-line"></div><div class="st-lbl">Matrícula</div></div>
+        </div>`;
+      document.getElementById('f1').textContent = '46';
+      showNotif('Novo lead registrado: Maria S. — Berçário II');
+    } else if (stage === 2) {
+      el('sd2').classList.add('done');
+      el('sl2').classList.add('done');
+      el('lv-serie').textContent = 'Berçário II';
+      el('lv-stage').textContent = 'Interesse Confirmado';
+      el('lead-badge').className = 'badge b2';
+      el('lead-badge').innerHTML = '<i class="fa-solid fa-circle-dot"></i> Interesse Confirmado';
+      document.getElementById('f2').textContent = '29';
+      showNotif('Faixa etária detectada: Berçário II — conteúdo ajustado automaticamente');
+    } else if (stage === 3) {
+      el('sd3').classList.add('done');
+      el('sl3').classList.add('done');
+      el('lv-visita').textContent = 'Terça 10h';
+      el('lv-stage').textContent = 'Visita Agendada';
+      el('lead-badge').className = 'badge b3';
+      el('lead-badge').innerHTML = '<i class="fa-solid fa-calendar-check"></i> Visita Agendada';
+      document.getElementById('f3').textContent = '13';
+      const feed = document.getElementById('activity');
+      const ni = document.createElement('div');
+      ni.className = 'act';
+      ni.innerHTML = '<div class="act-dot" style="background:var(--s3)"></div><span><strong>Maria S.</strong> agendou visita Berçário II — terça 10h</span><span class="act-time">agora</span>';
+      feed.insertBefore(ni, feed.firstChild);
+      showNotif('Visita agendada — lead avançou para estágio 3 no funil');
+    }
+  }
+
+  function el(id) { return document.getElementById(id); }
+
+  function showNotif(txt) {
+    const n = document.getElementById('notif');
+    document.getElementById('notif-txt').textContent = txt;
+    n.classList.add('show');
+    setTimeout(() => n.classList.remove('show'), 3200);
+  }
+
+  function start() {
+    MSGS.forEach(m => {
+      timers.push(setTimeout(() => addMsg(m), m.delay));
+    });
+    CRM_UPDATES.forEach(u => {
+      timers.push(setTimeout(() => setCRM(u.stage), u.at));
+    });
+  }
+
+  function restart() {
+    timers.forEach(t => clearTimeout(t));
+    timers = [];
+    document.getElementById('wa-chat').innerHTML = '<div class="typing" id="typing"><span></span><span></span><span></span></div>';
+    document.getElementById('lead-box').classList.remove('active');
+    document.getElementById('lead-box').innerHTML = '<div style="color:var(--text-light);font-size:13px;text-align:center;padding:22px 0"><i class="fa-solid fa-circle-notch fa-spin" style="font-size:26px;display:block;margin-bottom:8px;opacity:0.25"></i>Aguardando primeiro contato...</div>';
+    document.getElementById('f1').textContent = '45';
+    document.getElementById('f2').textContent = '28';
+    document.getElementById('f3').textContent = '12';
+    document.getElementById('f4').textContent = '5';
+    setTimeout(() => start(), 600);
+  }
+
+  function switchTab(name, el) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('tab-'+name).classList.add('active');
+  }
+
+  function filterPill(el) {
+    document.querySelectorAll('.filter-pill').forEach(p => { p.className = 'filter-pill fp-off'; });
+    el.className = 'filter-pill fp-on';
+  }
+
+  function sendRM(btn, name) {
+    btn.innerHTML = '<i class="fa-solid fa-check"></i> Enviado';
+    btn.style.background = '#27AE60';
+    btn.disabled = true;
+    showNotif('Template enviado para ' + name + ' — Meta aprovado');
+  }
+
+  setTimeout(() => start(), 900);
+</script>
+</body>
+</html>
