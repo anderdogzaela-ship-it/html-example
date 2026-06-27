@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SomIA - Crie e Venda Músicas com Inteligência Artificial</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0b0b18;
+      --surface: #12121f;
+      --surface2: #1a1a2e;
+      --border: #2a2a45;
+      --gold: #f5c842;
+      --gold-dim: #c9a22a;
+      --purple: #8b5cf6;
+      --purple-light: #a78bfa;
+      --text: #eeeef4;
+      --text-dim: #9999bb;
+      --green: #10b981;
+      --radius: 14px;
+    }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── NAV ─────────────────────────────────── */
+    nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 32px;
+      background: rgba(11,11,24,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .logo { display: flex; align-items: center; gap: 10px; font-size: 1.4rem; font-weight: 900; }
+    .logo i { color: var(--gold); font-size: 1.3rem; }
+    .logo span { color: var(--gold); }
+    .nav-links { display: flex; gap: 6px; }
+    .nav-btn {
+      background: none; border: 1px solid var(--border); color: var(--text-dim);
+      padding: 8px 16px; border-radius: 8px; font-family: inherit; font-size: .85rem;
+      cursor: pointer; transition: all .2s;
+    }
+    .nav-btn:hover { border-color: var(--gold); color: var(--gold); }
+    .nav-btn.primary {
+      background: var(--gold); color: #000; border-color: var(--gold);
+      font-weight: 700;
+    }
+    .nav-btn.primary:hover { background: var(--gold-dim); }
+    .credits-badge {
+      display: flex; align-items: center; gap: 6px;
+      background: var(--surface2); border: 1px solid var(--border);
+      padding: 7px 14px; border-radius: 8px; font-size: .85rem; font-weight: 700;
+    }
+    .credits-badge i { color: var(--gold); }
+
+    /* ── SCREENS ─────────────────────────────── */
+    .screen { display: none; animation: fadeIn .35s ease; }
+    .screen.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ── HERO ────────────────────────────────── */
+    .hero {
+      position: relative; overflow: hidden;
+      padding: 80px 32px 60px;
+      text-align: center;
+    }
+    .hero-bg {
+      position: absolute; inset: 0; z-index: 0;
+      background:
+        radial-gradient(ellipse 70% 60% at 50% -10%, rgba(139,92,246,.35) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 40% at 80% 80%, rgba(245,200,66,.12) 0%, transparent 60%);
+    }
+    .hero > * { position: relative; z-index: 1; }
+    .hero-tag {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(139,92,246,.18); border: 1px solid rgba(139,92,246,.4);
+      color: var(--purple-light); padding: 6px 16px; border-radius: 20px;
+      font-size: .82rem; font-weight: 700; margin-bottom: 24px; letter-spacing: .05em;
+    }
+    .hero h1 { font-size: clamp(2rem, 5vw, 3.4rem); font-weight: 900; line-height: 1.15; margin-bottom: 20px; }
+    .hero h1 em { font-style: normal; color: var(--gold); }
+    .hero p { font-size: 1.1rem; color: var(--text-dim); max-width: 560px; margin: 0 auto 36px; line-height: 1.7; }
+    .hero-cta { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 9px;
+      padding: 14px 28px; border-radius: 10px; font-family: inherit;
+      font-size: 1rem; font-weight: 700; cursor: pointer; border: none;
+      transition: all .22s; text-decoration: none;
+    }
+    .btn-gold { background: var(--gold); color: #000; }
+    .btn-gold:hover { background: var(--gold-dim); transform: translateY(-1px); box-shadow: 0 8px 24px rgba(245,200,66,.3); }
+    .btn-outline { background: transparent; border: 1.5px solid var(--border); color: var(--text); }
+    .btn-outline:hover { border-color: var(--purple-light); color: var(--purple-light); }
+
+    /* stats row */
+    .stats-row {
+      display: flex; justify-content: center; gap: 48px;
+      padding: 32px 32px 0; flex-wrap: wrap;
+    }
+    .stat { text-align: center; }
+    .stat-num { font-size: 2rem; font-weight: 900; color: var(--gold); }
+    .stat-label { font-size: .82rem; color: var(--text-dim); margin-top: 2px; }
+
+    /* ── HOW IT WORKS ────────────────────────── */
+    .section { padding: 60px 32px; max-width: 1100px; margin: 0 auto; }
+    .section-title { font-size: 1.5rem; font-weight: 800; margin-bottom: 8px; }
+    .section-sub { color: var(--text-dim); margin-bottom: 36px; }
+
+    .steps-row { display: flex; gap: 16px; flex-wrap: wrap; }
+    .step-card {
+      flex: 1; min-width: 200px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 24px; position: relative;
+      transition: border-color .2s;
+    }
+    .step-card:hover { border-color: var(--purple); }
+    .step-num {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--purple), var(--gold));
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 900; font-size: .9rem; margin-bottom: 14px;
+    }
+    .step-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 6px; }
+    .step-card p { font-size: .85rem; color: var(--text-dim); line-height: 1.6; }
+    .step-arrow {
+      display: flex; align-items: center; padding-top: 46px;
+      color: var(--border); font-size: 1.2rem;
+    }
+
+    /* track gallery */
+    .tracks-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap: 16px; }
+    .track-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden; transition: all .22s; cursor: pointer;
+    }
+    .track-card:hover { border-color: var(--gold); transform: translateY(-2px); }
+    .track-cover {
+      height: 160px; background: linear-gradient(135deg, #1e1040 0%, #0d2b1e 100%);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 3rem; position: relative; overflow: hidden;
+    }
+    .track-cover img { width: 100%; height: 100%; object-fit: cover; opacity: .7; }
+    .track-cover .play-overlay {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(0,0,0,.35); opacity: 0; transition: opacity .2s;
+    }
+    .track-card:hover .play-overlay { opacity: 1; }
+    .play-overlay i { font-size: 2rem; color: #fff; }
+    .track-info { padding: 14px 16px; }
+    .track-title { font-weight: 700; font-size: .95rem; margin-bottom: 4px; }
+    .track-meta { font-size: .78rem; color: var(--text-dim); display: flex; gap: 12px; margin-bottom: 10px; }
+    .genre-tag {
+      display: inline-block; background: rgba(139,92,246,.2); color: var(--purple-light);
+      padding: 2px 10px; border-radius: 12px; font-size: .73rem; font-weight: 700;
+    }
+    .track-price { font-weight: 800; color: var(--gold); }
+
+    /* ── CREATE SCREEN ───────────────────────── */
+    .create-wrap { max-width: 720px; margin: 0 auto; padding: 40px 24px; }
+    .steps-nav {
+      display: flex; gap: 0; margin-bottom: 36px; border-radius: var(--radius);
+      overflow: hidden; border: 1px solid var(--border);
+    }
+    .step-tab {
+      flex: 1; padding: 13px; text-align: center;
+      background: var(--surface); font-size: .85rem; font-weight: 700;
+      color: var(--text-dim); position: relative;
+    }
+    .step-tab.done { background: rgba(16,185,129,.1); color: var(--green); }
+    .step-tab.active { background: rgba(245,200,66,.12); color: var(--gold); }
+    .step-tab i { margin-right: 6px; }
+
+    .card-panel {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 28px;
+    }
+    .card-panel h2 { font-size: 1.25rem; font-weight: 800; margin-bottom: 6px; }
+    .card-panel .sub { color: var(--text-dim); font-size: .9rem; margin-bottom: 24px; }
+
+    .toggle-tabs { display: flex; gap: 0; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
+    .toggle-tab {
+      flex: 1; padding: 11px; text-align: center; background: none;
+      font-family: inherit; font-size: .88rem; font-weight: 700;
+      color: var(--text-dim); cursor: pointer; border: none; transition: all .2s;
+    }
+    .toggle-tab.active { background: var(--gold); color: #000; }
+
+    textarea {
+      width: 100%; background: var(--surface2); border: 1.5px solid var(--border);
+      color: var(--text); font-family: inherit; font-size: .95rem;
+      border-radius: 10px; padding: 14px; resize: vertical; min-height: 140px;
+      outline: none; transition: border-color .2s; line-height: 1.6;
+    }
+    textarea:focus { border-color: var(--gold); }
+    .ai-gen-box {
+      background: var(--surface2); border: 1.5px dashed var(--border);
+      border-radius: 10px; padding: 20px; text-align: center;
+    }
+    .ai-gen-box p { color: var(--text-dim); font-size: .88rem; margin-bottom: 14px; }
+    input[type="text"] {
+      width: 100%; background: var(--surface2); border: 1.5px solid var(--border);
+      color: var(--text); font-family: inherit; font-size: .95rem;
+      border-radius: 10px; padding: 12px 14px; outline: none; transition: border-color .2s;
+    }
+    input[type="text"]:focus { border-color: var(--gold); }
+    .input-label { font-size: .82rem; font-weight: 700; color: var(--text-dim); margin-bottom: 7px; display: block; }
+    .form-group { margin-bottom: 18px; }
+    .char-count { text-align: right; font-size: .75rem; color: var(--text-dim); margin-top: 5px; }
+
+    /* style grid */
+    .style-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+    @media (max-width: 480px) { .style-grid { grid-template-columns: repeat(2,1fr); } }
+    .style-card {
+      background: var(--surface2); border: 2px solid var(--border);
+      border-radius: 10px; padding: 16px 10px; text-align: center;
+      cursor: pointer; transition: all .2s;
+    }
+    .style-card:hover { border-color: var(--purple); }
+    .style-card.selected { border-color: var(--gold); background: rgba(245,200,66,.08); }
+    .style-card i { font-size: 1.6rem; margin-bottom: 8px; display: block; }
+    .style-card span { font-size: .8rem; font-weight: 700; }
+
+    /* generating animation */
+    .generating-box { text-align: center; padding: 30px 0; }
+    .wave-bars { display: flex; align-items: flex-end; justify-content: center; gap: 5px; height: 50px; margin-bottom: 20px; }
+    .wave-bar {
+      width: 8px; border-radius: 4px;
+      background: linear-gradient(to top, var(--purple), var(--gold));
+      animation: wave 1.2s ease-in-out infinite;
+    }
+    .wave-bar:nth-child(1) { animation-delay: 0s; }
+    .wave-bar:nth-child(2) { animation-delay: .1s; }
+    .wave-bar:nth-child(3) { animation-delay: .2s; }
+    .wave-bar:nth-child(4) { animation-delay: .3s; }
+    .wave-bar:nth-child(5) { animation-delay: .4s; }
+    .wave-bar:nth-child(6) { animation-delay: .3s; }
+    .wave-bar:nth-child(7) { animation-delay: .2s; }
+    @keyframes wave {
+      0%, 100% { height: 8px; }
+      50% { height: 48px; }
+    }
+    .gen-label { color: var(--text-dim); font-size: .9rem; }
+    .gen-label strong { color: var(--gold); }
+
+    /* player */
+    .player-box {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 12px; padding: 20px; margin-top: 20px;
+    }
+    .player-track { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+    .player-art {
+      width: 52px; height: 52px; border-radius: 8px;
+      background: linear-gradient(135deg, var(--purple), var(--gold));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem; flex-shrink: 0;
+    }
+    .player-name { font-weight: 700; font-size: .95rem; }
+    .player-style { font-size: .78rem; color: var(--text-dim); margin-top: 2px; }
+    .player-controls { display: flex; align-items: center; gap: 12px; }
+    .play-btn {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: var(--gold); border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; color: #000; transition: transform .15s;
+    }
+    .play-btn:hover { transform: scale(1.08); }
+    .progress-wrap { flex: 1; }
+    .progress-bar {
+      height: 5px; background: var(--border); border-radius: 3px;
+      overflow: hidden; cursor: pointer; margin-bottom: 5px;
+    }
+    .progress-fill {
+      height: 100%; background: linear-gradient(to right, var(--purple), var(--gold));
+      border-radius: 3px; width: 30%; transition: width .3s;
+    }
+    .time-row { display: flex; justify-content: space-between; font-size: .72rem; color: var(--text-dim); }
+
+    .action-row { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+    .btn-sm {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 10px 18px; border-radius: 8px; font-family: inherit;
+      font-size: .85rem; font-weight: 700; cursor: pointer; border: none; transition: all .2s;
+    }
+    .btn-sm-gold { background: var(--gold); color: #000; }
+    .btn-sm-gold:hover { background: var(--gold-dim); }
+    .btn-sm-outline { background: transparent; border: 1.5px solid var(--border); color: var(--text); }
+    .btn-sm-outline:hover { border-color: var(--purple-light); color: var(--purple-light); }
+
+    /* payment screen */
+    .payment-wrap { max-width: 480px; margin: 0 auto; padding: 40px 24px; }
+    .pix-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 28px; margin-top: 16px;
+    }
+    .credit-options { display: flex; gap: 10px; margin-bottom: 20px; }
+    .credit-opt {
+      flex: 1; background: var(--surface2); border: 2px solid var(--border);
+      border-radius: 10px; padding: 14px; text-align: center; cursor: pointer;
+      transition: all .2s;
+    }
+    .credit-opt:hover { border-color: var(--purple); }
+    .credit-opt.selected { border-color: var(--gold); background: rgba(245,200,66,.08); }
+    .credit-opt .credit-num { font-size: 1.4rem; font-weight: 900; color: var(--gold); }
+    .credit-opt .credit-label { font-size: .75rem; color: var(--text-dim); margin-top: 2px; }
+    .credit-opt .credit-price { font-size: .85rem; font-weight: 700; margin-top: 6px; }
+    .credit-opt .credit-badge {
+      display: inline-block; background: var(--green); color: #fff;
+      font-size: .68rem; font-weight: 700; padding: 2px 7px; border-radius: 10px; margin-top: 4px;
+    }
+
+    .pix-code-box {
+      background: var(--surface2); border: 1.5px dashed var(--border);
+      border-radius: 10px; padding: 20px; text-align: center; margin-bottom: 16px;
+    }
+    .pix-qr {
+      width: 140px; height: 140px; background: #fff; border-radius: 8px;
+      margin: 0 auto 14px; display: flex; align-items: center; justify-content: center;
+      font-size: 3rem;
+    }
+    .pix-code { font-family: monospace; font-size: .72rem; color: var(--text-dim); word-break: break-all; }
+    .copy-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--surface); border: 1px solid var(--border); color: var(--text);
+      padding: 8px 16px; border-radius: 7px; font-family: inherit;
+      font-size: .8rem; font-weight: 700; cursor: pointer; margin-top: 10px;
+      transition: all .2s;
+    }
+    .copy-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+    .summary-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .summary-row .label { color: var(--text-dim); font-size: .88rem; }
+    .summary-row .value { font-weight: 700; }
+    .divider { height: 1px; background: var(--border); margin: 14px 0; }
+    .total-row { display: flex; justify-content: space-between; align-items: center; }
+    .total-row .label { font-weight: 700; }
+    .total-row .value { font-size: 1.2rem; font-weight: 900; color: var(--gold); }
+
+    .success-box {
+      text-align: center; padding: 36px 20px; display: none;
+    }
+    .success-icon {
+      width: 72px; height: 72px; border-radius: 50%;
+      background: rgba(16,185,129,.15); border: 2px solid var(--green);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.8rem; color: var(--green); margin: 0 auto 18px;
+    }
+    .success-box h2 { font-size: 1.4rem; font-weight: 800; margin-bottom: 8px; }
+    .success-box p { color: var(--text-dim); font-size: .9rem; }
+
+    /* library screen */
+    .library-wrap { max-width: 900px; margin: 0 auto; padding: 40px 24px; }
+    .library-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 14px; }
+    .credits-info {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--surface); border: 1px solid var(--border);
+      padding: 10px 18px; border-radius: 10px;
+    }
+    .credits-info i { color: var(--gold); }
+    .credits-info strong { color: var(--gold); }
+
+    /* breadcrumb */
+    .breadcrumb { display: flex; align-items: center; gap: 8px; padding: 14px 32px 0; font-size: .82rem; color: var(--text-dim); }
+    .breadcrumb a { color: var(--text-dim); text-decoration: none; cursor: pointer; }
+    .breadcrumb a:hover { color: var(--gold); }
+    .breadcrumb i { font-size: .6rem; }
+
+    /* nav active */
+    .nav-link-active { color: var(--gold) !important; border-color: var(--gold) !important; }
+
+    /* footer hint */
+    .restart-btn {
+      position: fixed; bottom: 20px; right: 20px;
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text-dim); padding: 10px 16px; border-radius: 10px;
+      font-family: inherit; font-size: .8rem; font-weight: 700;
+      cursor: pointer; transition: all .2s; z-index: 200;
+      display: flex; align-items: center; gap: 7px;
+    }
+    .restart-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+    @media (max-width: 600px) {
+      nav { padding: 14px 16px; }
+      .nav-links { gap: 4px; }
+      .nav-btn { padding: 7px 10px; font-size: .78rem; }
+      .hero { padding: 50px 20px 40px; }
+      .stats-row { gap: 28px; }
+      .section { padding: 40px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── NAV ──────────────────────────────────────────────── -->
+<nav>
+  <div class="logo">
+    <i class="fa-solid fa-music"></i>
+    Som<span>IA</span>
+  </div>
+  <div class="nav-links">
+    <button class="nav-btn" onclick="goTo('home')"><i class="fa-solid fa-house"></i></button>
+    <button class="nav-btn" id="nav-create" onclick="goTo('create')">Criar</button>
+    <button class="nav-btn" id="nav-library" onclick="goTo('library')">Biblioteca</button>
+    <button class="nav-btn primary" onclick="goTo('credits')">
+      <i class="fa-solid fa-bolt"></i> Créditos
+    </button>
+    <div class="credits-badge" id="credits-badge">
+      <i class="fa-solid fa-coins"></i>
+      <span id="credits-count">5</span> créditos
+    </div>
+  </div>
+</nav>
+
+<!-- ── HOME ─────────────────────────────────────────────── -->
+<div class="screen active" id="screen-home">
+  <div class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-tag"><i class="fa-solid fa-wand-magic-sparkles"></i> IA Generativa de Música</div>
+    <h1>Crie músicas com IA.<br>Venda para o mundo.</h1>
+    <p>Escreva ou gere a letra, escolha o estilo e a inteligência artificial compõe a faixa. Tudo em minutos.</p>
+    <div class="hero-cta">
+      <button class="btn btn-gold" onclick="goTo('create')">
+        <i class="fa-solid fa-wand-magic-sparkles"></i> Criar Música
+      </button>
+      <button class="btn btn-outline" onclick="goTo('library')">
+        <i class="fa-solid fa-headphones"></i> Ver Biblioteca
+      </button>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat"><div class="stat-num">2.4k</div><div class="stat-label">Músicas geradas</div></div>
+    <div class="stat"><div class="stat-num">840</div><div class="stat-label">Artistas ativos</div></div>
+    <div class="stat"><div class="stat-num">12</div><div class="stat-label">Estilos disponíveis</div></div>
+    <div class="stat"><div class="stat-num">R$0</div><div class="stat-label">Taxa mensal</div></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Como funciona</div>
+    <div class="section-sub">Em 4 passos da ideia à música vendida</div>
+    <div class="steps-row">
+      <div class="step-card">
+        <div class="step-num">1</div>
+        <h3>Escreva ou gere a letra</h3>
+        <p>Digite a letra da sua música ou peça para a IA criar a partir de um tema.</p>
+      </div>
+      <div class="step-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+      <div class="step-card">
+        <div class="step-num">2</div>
+        <h3>Escolha o estilo</h3>
+        <p>Sertanejo, funk, pop, eletrônico, pagode, MPB e muito mais.</p>
+      </div>
+      <div class="step-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+      <div class="step-card">
+        <div class="step-num">3</div>
+        <h3>IA compõe a faixa</h3>
+        <p>A inteligência artificial gera a música completa com instrumentos e voz.</p>
+      </div>
+      <div class="step-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+      <div class="step-card">
+        <div class="step-num">4</div>
+        <h3>Ouça e compre</h3>
+        <p>Preview gratuito. Compra com um crédito via PIX. Download imediato.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" style="padding-top:0">
+    <div class="section-title">Músicas em destaque</div>
+    <div class="section-sub">Criadas por usuários nas últimas 24 horas</div>
+    <div class="tracks-grid">
+      <div class="track-card" onclick="goTo('create')">
+        <div class="track-cover">
+          <img src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&q=80" alt="cover">
+          <div class="play-overlay"><i class="fa-solid fa-play"></i></div>
+        </div>
+        <div class="track-info">
+          <div class="track-title">Noite de Sertão</div>
+          <div class="track-meta">
+            <span><i class="fa-solid fa-clock"></i> 3:42</span>
+            <span><i class="fa-solid fa-user"></i> @mariu_voz</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span class="genre-tag">Sertanejo</span>
+            <span class="track-price">1 crédito</span>
+          </div>
+        </div>
+      </div>
+      <div class="track-card" onclick="goTo('create')">
+        <div class="track-cover">
+          <img src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400&q=80" alt="cover">
+          <div class="play-overlay"><i class="fa-solid fa-play"></i></div>
+        </div>
+        <div class="track-info">
+          <div class="track-title">Verão Eletrônico</div>
+          <div class="track-meta">
+            <span><i class="fa-solid fa-clock"></i> 4:15</span>
+            <span><i class="fa-solid fa-user"></i> @dj_brunowave</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span class="genre-tag" style="background:rgba(245,200,66,.2);color:var(--gold)">Eletrônico</span>
+            <span class="track-price">1 crédito</span>
+          </div>
+        </div>
+      </div>
+      <div class="track-card" onclick="goTo('create')">
+        <div class="track-cover">
+          <img src="https://images.unsplash.com/photo-1511735111819-9a3f7709049c?w=400&q=80" alt="cover">
+          <div class="play-overlay"><i class="fa-solid fa-play"></i></div>
+        </div>
+        <div class="track-info">
+          <div class="track-title">Amor de Carnaval</div>
+          <div class="track-meta">
+            <span><i class="fa-solid fa-clock"></i> 2:58</span>
+            <span><i class="fa-solid fa-user"></i> @cris_pagode</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span class="genre-tag" style="background:rgba(16,185,129,.2);color:#10b981">Pagode</span>
+            <span class="track-price">1 crédito</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── CREATE: LYRICS ────────────────────────────────────── -->
+<div class="screen" id="screen-create">
+  <div class="breadcrumb">
+    <a onclick="goTo('home')">Início</a>
+    <i class="fa-solid fa-chevron-right"></i>
+    <span>Criar Música</span>
+  </div>
+  <div class="create-wrap">
+    <div class="steps-nav">
+      <div class="step-tab active" id="tab1"><i class="fa-solid fa-pen"></i> Letra</div>
+      <div class="step-tab" id="tab2"><i class="fa-solid fa-music"></i> Estilo</div>
+      <div class="step-tab" id="tab3"><i class="fa-solid fa-wand-magic-sparkles"></i> Gerar</div>
+    </div>
+
+    <div class="card-panel">
+      <h2>Sua letra</h2>
+      <div class="sub">Digite manualmente ou deixe a IA criar para você</div>
+
+      <div class="toggle-tabs">
+        <button class="toggle-tab active" id="tab-manual" onclick="switchLyricsTab('manual')">
+          <i class="fa-solid fa-keyboard"></i> Escrever
+        </button>
+        <button class="toggle-tab" id="tab-ai" onclick="switchLyricsTab('ai')">
+          <i class="fa-solid fa-wand-magic-sparkles"></i> Gerar com IA
+        </button>
+      </div>
+
+      <div id="manual-panel">
+        <div class="form-group">
+          <label class="input-label">Título da música</label>
+          <input type="text" id="track-title-input" placeholder="ex: Amor de Verão" value="Noite no Sertão">
+        </div>
+        <div class="form-group">
+          <label class="input-label">Letra</label>
+          <textarea id="lyrics-text" oninput="updateCharCount()" placeholder="Cole ou escreva a letra aqui...">Nas estradas de barro vermelho eu caminhei
+Sob o sol que queima mas também abraça
+O coração sertanejo não se apaga
+É chama viva que o vento não desfaz</textarea>
+          <div class="char-count"><span id="char-count">143</span> / 2000 caracteres</div>
+        </div>
+      </div>
+
+      <div id="ai-panel" style="display:none">
+        <div class="ai-gen-box">
+          <i class="fa-solid fa-wand-magic-sparkles" style="font-size:2rem;color:var(--gold);display:block;margin-bottom:12px"></i>
+          <p>Descreva o tema e a IA vai criar a letra completa para você</p>
+          <div class="form-group" style="text-align:left">
+            <label class="input-label">Tema ou história</label>
+            <input type="text" placeholder="ex: saudade da cidade natal, amor perdido, festa de interior..." value="Saudade do interior e do pôr do sol no campo">
+          </div>
+          <button class="btn btn-gold btn-sm btn-sm-gold" style="margin-top:8px" onclick="aiGenerateLyrics()">
+            <i class="fa-solid fa-wand-magic-sparkles"></i> Gerar Letra com IA
+          </button>
+        </div>
+      </div>
+
+      <button class="btn btn-gold" style="width:100%;margin-top:20px;justify-content:center" onclick="goToStyle()">
+        Próximo: Escolher Estilo <i class="fa-solid fa-arrow-right"></i>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── CREATE: STYLE ─────────────────────────────────────── -->
+<div class="screen" id="screen-style">
+  <div class="breadcrumb">
+    <a onclick="goTo('home')">Início</a>
+    <i class="fa-solid fa-chevron-right"></i>
+    <a onclick="goTo('create')">Criar</a>
+    <i class="fa-solid fa-chevron-right"></i>
+    <span>Estilo Musical</span>
+  </div>
+  <div class="create-wrap">
+    <div class="steps-nav">
+      <div class="step-tab done" id="tab1s"><i class="fa-solid fa-check"></i> Letra</div>
+      <div class="step-tab active" id="tab2s"><i class="fa-solid fa-music"></i> Estilo</div>
+      <div class="step-tab" id="tab3s"><i class="fa-solid fa-wand-magic-sparkles"></i> Gerar</div>
+    </div>
+
+    <div class="card-panel">
+      <h2>Estilo musical</h2>
+      <div class="sub">Escolha o gênero. A IA vai adaptar a composição para soar autêntico.</div>
+
+      <div class="style-grid">
+        <div class="style-card selected" onclick="selectStyle(this,'Sertanejo')">
+          <i class="fa-solid fa-hat-cowboy" style="color:#f5c842"></i>
+          <span>Sertanejo</span>
+        </div>
+        <div class="style-card" onclick="selectStyle(this,'Funk')">
+          <i class="fa-solid fa-fire" style="color:#f97316"></i>
+          <span>Funk</span>
+        </div>
+        <div class="style-card" onclick="selectStyle(this,'Pop')">
+          <i class="fa-solid fa-star" style="color:#a78bfa"></i>
+          <span>Pop</span>
+        </div>
+        <div class="style-card" onclick="selectStyle(this,'Eletrônico')">
+          <i class="fa-solid fa-bolt" style="color:#38bdf8"></i>
+          <span>Eletrônico</span>
+        </div>
+        <div class="style-card" onclick="selectStyle(this,'Pagode')">
+          <i class="fa-solid fa-drum" style="color:#10b981"></i>
+          <span>Pagode</span>
+        </div>
+        <div class="style-card" onclick="selectStyle(this,'MPB')">
+          <i class="fa-solid fa-guitar" style="color:#f472b6"></i>
+          <span>MPB</span>
+        </div>
+        <div class="style-card" onclick="selectStyle(this,'Forró')">
+          <i class="fa-solid fa-people-arrows" style="color:#fb923c"></i>
+          <span>Forró</span>
+        </div>
+        <div class="style-card" onclick="selectStyle(this,'Rock')">
+          <i class="fa-solid fa-record-vinyl" style="color:#e11d48"></i>
+          <span>Rock</span>
+        </div>
+        <div class="style-card" onclick="selectStyle(this,'Gospel')">
+          <i class="fa-solid fa-dove" style="color:#fbbf24"></i>
+          <span>Gospel</span>
+        </div>
+      </div>
+
+      <div style="margin-top:20px;padding:14px;background:var(--surface2);border-radius:10px;display:flex;align-items:center;gap:10px">
+        <i class="fa-solid fa-coins" style="color:var(--gold)"></i>
+        <span style="font-size:.88rem;color:var(--text-dim)">Cada geração consome <strong style="color:var(--gold)">1 crédito</strong>. Você tem <strong style="color:var(--gold)" id="credits-style">5 créditos</strong>.</span>
+      </div>
+
+      <button class="btn btn-gold" style="width:100%;margin-top:20px;justify-content:center" onclick="goToGenerate()">
+        <i class="fa-solid fa-wand-magic-sparkles"></i> Gerar Música
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── CREATE: GENERATING ────────────────────────────────── -->
+<div class="screen" id="screen-generate">
+  <div class="breadcrumb">
+    <a onclick="goTo('home')">Início</a>
+    <i class="fa-solid fa-chevron-right"></i>
+    <span>Gerando sua música...</span>
+  </div>
+  <div class="create-wrap">
+    <div class="steps-nav">
+      <div class="step-tab done"><i class="fa-solid fa-check"></i> Letra</div>
+      <div class="step-tab done"><i class="fa-solid fa-check"></i> Estilo</div>
+      <div class="step-tab active"><i class="fa-solid fa-wand-magic-sparkles"></i> Gerar</div>
+    </div>
+
+    <div class="card-panel">
+      <div class="generating-box" id="gen-loading">
+        <div class="wave-bars">
+          <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+          <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+        </div>
+        <div class="gen-label">Compondo <strong id="gen-style-label">Sertanejo</strong>...</div>
+        <div style="font-size:.78rem;color:var(--text-dim);margin-top:8px">1 crédito consumido</div>
+      </div>
+
+      <div id="gen-result" style="display:none">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+          <div style="width:10px;height:10px;border-radius:50%;background:var(--green)"></div>
+          <span style="font-weight:700;color:var(--green)">Música gerada com sucesso</span>
+        </div>
+
+        <div class="player-box">
+          <div class="player-track">
+            <div class="player-art"><i class="fa-solid fa-music"></i></div>
+            <div>
+              <div class="player-name" id="result-title">Noite no Sertão</div>
+              <div class="player-style" id="result-style">Sertanejo · 3:28 · Gerado agora</div>
+            </div>
+          </div>
+          <div class="player-controls">
+            <button class="play-btn" onclick="togglePlay(this)" id="play-btn-main">
+              <i class="fa-solid fa-play" id="play-icon-main"></i>
+            </button>
+            <div class="progress-wrap">
+              <div class="progress-bar" onclick="seekTrack(event, this)">
+                <div class="progress-fill" id="progress-main"></div>
+              </div>
+              <div class="time-row">
+                <span id="time-current">0:38</span>
+                <span>3:28</span>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top:12px;padding:10px 14px;background:rgba(245,200,66,.08);border:1px solid rgba(245,200,66,.2);border-radius:8px;font-size:.8rem;color:var(--text-dim)">
+            <i class="fa-solid fa-info-circle" style="color:var(--gold);margin-right:6px"></i>
+            Preview de 45 segundos. Compre com 1 crédito para baixar a faixa completa.
+          </div>
+        </div>
+
+        <div class="action-row">
+          <button class="btn-sm btn-sm-gold" onclick="goTo('payment')">
+            <i class="fa-solid fa-cart-shopping"></i> Comprar faixa completa (1 crédito)
+          </button>
+          <button class="btn-sm btn-sm-outline" onclick="goTo('create')">
+            <i class="fa-solid fa-rotate"></i> Gerar outra versão
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── CREDITS / PAYMENT ─────────────────────────────────── -->
+<div class="screen" id="screen-payment">
+  <div class="breadcrumb">
+    <a onclick="goTo('home')">Início</a>
+    <i class="fa-solid fa-chevron-right"></i>
+    <span>Comprar Créditos</span>
+  </div>
+  <div class="payment-wrap">
+    <h1 style="font-size:1.5rem;font-weight:800;margin-bottom:6px">Comprar créditos</h1>
+    <p style="color:var(--text-dim);font-size:.9rem;margin-bottom:24px">Cada crédito = 1 geração ou 1 download de faixa completa</p>
+
+    <div class="pix-card">
+      <div style="font-weight:700;margin-bottom:16px">Escolha o pacote</div>
+      <div class="credit-options">
+        <div class="credit-opt" onclick="selectCredits(this,5,'R$ 9,90')">
+          <div class="credit-num">5</div>
+          <div class="credit-label">créditos</div>
+          <div class="credit-price">R$ 9,90</div>
+        </div>
+        <div class="credit-opt selected" onclick="selectCredits(this,10,'R$ 17,90')">
+          <div class="credit-num">10</div>
+          <div class="credit-label">créditos</div>
+          <div class="credit-price">R$ 17,90</div>
+          <div class="credit-badge">-10%</div>
+        </div>
+        <div class="credit-opt" onclick="selectCredits(this,25,'R$ 39,90')">
+          <div class="credit-num">25</div>
+          <div class="credit-label">créditos</div>
+          <div class="credit-price">R$ 39,90</div>
+          <div class="credit-badge">-20%</div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <div class="summary-row"><span class="label">Pacote selecionado</span><span class="value" id="pkg-label">10 créditos</span></div>
+      <div class="summary-row"><span class="label">Valor</span><span class="value" id="pkg-price">R$ 17,90</span></div>
+      <div class="divider"></div>
+      <div class="total-row"><span class="label">Total via PIX</span><span class="value" id="pkg-total">R$ 17,90</span></div>
+    </div>
+
+    <div class="pix-card" style="margin-top:14px" id="pix-code-section">
+      <div style="font-weight:700;margin-bottom:14px"><i class="fa-solid fa-qrcode" style="color:var(--gold);margin-right:8px"></i>Pagar com PIX</div>
+      <div class="pix-code-box">
+        <div class="pix-qr">
+          <i class="fa-solid fa-qrcode" style="color:#000;font-size:3rem"></i>
+        </div>
+        <div style="font-size:.78rem;color:var(--text-dim);margin-bottom:6px">Ou copie o código PIX</div>
+        <div class="pix-code">00020126580014BR.GOV.BCB.PIX0136somia@pix.com0208SomIA10520400005303986540517.905802BR5913SomIA Music6008Sao Paulo62070503***6304A1B2</div>
+        <button class="copy-btn" onclick="copyPix(this)"><i class="fa-solid fa-copy"></i> Copiar código</button>
+      </div>
+      <button class="btn btn-gold" style="width:100%;justify-content:center" onclick="simulatePix()">
+        <i class="fa-solid fa-check-circle"></i> Simular pagamento confirmado
+      </button>
+    </div>
+
+    <div class="success-box" id="pix-success">
+      <div class="success-icon"><i class="fa-solid fa-check"></i></div>
+      <h2>Pagamento confirmado!</h2>
+      <p style="margin-bottom:6px">Seus créditos foram adicionados à conta.</p>
+      <p style="margin-bottom:20px;color:var(--gold);font-weight:700" id="success-credits">Saldo: 15 créditos</p>
+      <button class="btn btn-gold" onclick="goTo('create')">
+        <i class="fa-solid fa-wand-magic-sparkles"></i> Criar nova música
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── LIBRARY ────────────────────────────────────────────── -->
+<div class="screen" id="screen-library">
+  <div class="library-wrap">
+    <div class="library-header">
+      <div>
+        <h1 style="font-size:1.5rem;font-weight:800">Minha Biblioteca</h1>
+        <p style="color:var(--text-dim);font-size:.88rem;margin-top:4px">Suas músicas geradas e compradas</p>
+      </div>
+      <div class="credits-info">
+        <i class="fa-solid fa-coins"></i>
+        <span>Saldo: <strong id="credits-library">5</strong> créditos</span>
+        <button class="btn-sm btn-sm-gold" style="padding:6px 12px;font-size:.78rem" onclick="goTo('payment')">+ Comprar</button>
+      </div>
+    </div>
+
+    <div class="tracks-grid">
+      <div class="track-card">
+        <div class="track-cover">
+          <img src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&q=80" alt="">
+          <div class="play-overlay"><i class="fa-solid fa-play"></i></div>
+        </div>
+        <div class="track-info">
+          <div class="track-title">Noite no Sertão</div>
+          <div class="track-meta">
+            <span><i class="fa-solid fa-calendar"></i> hoje</span>
+            <span><i class="fa-solid fa-clock"></i> 3:28</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span class="genre-tag">Sertanejo</span>
+            <button class="btn-sm btn-sm-gold" style="padding:5px 12px;font-size:.75rem">
+              <i class="fa-solid fa-download"></i> Baixar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="track-card" style="border-style:dashed;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:240px;cursor:pointer" onclick="goTo('create')">
+        <i class="fa-solid fa-plus" style="font-size:2rem;color:var(--border);margin-bottom:12px"></i>
+        <span style="color:var(--text-dim);font-size:.88rem">Criar nova música</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── RESTART BTN ───────────────────────────────────────── -->
+<button class="restart-btn" onclick="restart()">
+  <i class="fa-solid fa-rotate-left"></i> Reiniciar demo
+</button>
+
+<script>
+  let credits = 5;
+  let selectedStyle = 'Sertanejo';
+  let selectedCredits = { count: 10, price: 'R$ 17,90' };
+  let playing = false;
+  let playInterval = null;
+  let progress = 30;
+
+  function goTo(screen) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('screen-' + screen).classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function updateCreditsDisplay() {
+    document.getElementById('credits-count').textContent = credits;
+    const sl = document.getElementById('credits-style');
+    if (sl) sl.textContent = credits + ' créditos';
+    const lb = document.getElementById('credits-library');
+    if (lb) lb.textContent = credits;
+  }
+
+  function switchLyricsTab(tab) {
+    document.getElementById('manual-panel').style.display = tab === 'manual' ? 'block' : 'none';
+    document.getElementById('ai-panel').style.display = tab === 'ai' ? 'block' : 'none';
+    document.getElementById('tab-manual').className = 'toggle-tab' + (tab === 'manual' ? ' active' : '');
+    document.getElementById('tab-ai').className = 'toggle-tab' + (tab === 'ai' ? ' active' : '');
+  }
+
+  function updateCharCount() {
+    const t = document.getElementById('lyrics-text');
+    document.getElementById('char-count').textContent = t.value.length;
+  }
+
+  function selectStyle(el, style) {
+    document.querySelectorAll('.style-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedStyle = style;
+  }
+
+  function selectCredits(el, count, price) {
+    document.querySelectorAll('.credit-opt').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedCredits = { count, price };
+    document.getElementById('pkg-label').textContent = count + ' créditos';
+    document.getElementById('pkg-price').textContent = price;
+    document.getElementById('pkg-total').textContent = price;
+  }
+
+  function goToStyle() {
+    goTo('style');
+    document.getElementById('credits-style').textContent = credits + ' créditos';
+  }
+
+  function goToGenerate() {
+    if (credits <= 0) {
+      alert('Você não tem créditos suficientes. Compre mais créditos via PIX.');
+      goTo('payment');
+      return;
+    }
+    credits--;
+    updateCreditsDisplay();
+    document.getElementById('gen-style-label').textContent = selectedStyle;
+    document.getElementById('result-style').textContent = selectedStyle + ' · 3:28 · Gerado agora';
+    const titleInput = document.getElementById('track-title-input');
+    if (titleInput) document.getElementById('result-title').textContent = titleInput.value || 'Minha Música';
+    document.getElementById('gen-loading').style.display = 'block';
+    document.getElementById('gen-result').style.display = 'none';
+    goTo('generate');
+    setTimeout(() => {
+      document.getElementById('gen-loading').style.display = 'none';
+      document.getElementById('gen-result').style.display = 'block';
+    }, 2800);
+  }
+
+  function togglePlay(btn) {
+    playing = !playing;
+    const icon = document.getElementById('play-icon-main');
+    if (playing) {
+      icon.className = 'fa-solid fa-pause';
+      playInterval = setInterval(() => {
+        progress = Math.min(progress + 0.5, 100);
+        document.getElementById('progress-main').style.width = progress + '%';
+        const secs = Math.floor((progress / 100) * 208);
+        const m = Math.floor(secs / 60);
+        const s = secs % 60;
+        document.getElementById('time-current').textContent = m + ':' + (s < 10 ? '0' : '') + s;
+        if (progress >= 100) { clearInterval(playInterval); playing = false; icon.className = 'fa-solid fa-play'; progress = 0; }
+      }, 150);
+    } else {
+      icon.className = 'fa-solid fa-play';
+      clearInterval(playInterval);
+    }
+  }
+
+  function seekTrack(e, bar) {
+    const rect = bar.getBoundingClientRect();
+    progress = ((e.clientX - rect.left) / rect.width) * 100;
+    document.getElementById('progress-main').style.width = progress + '%';
+    const secs = Math.floor((progress / 100) * 208);
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    document.getElementById('time-current').textContent = m + ':' + (s < 10 ? '0' : '') + s;
+  }
+
+  function simulatePix() {
+    credits += selectedCredits.count;
+    updateCreditsDisplay();
+    document.getElementById('pix-code-section').style.display = 'none';
+    const sb = document.getElementById('pix-success');
+    sb.style.display = 'block';
+    document.getElementById('success-credits').textContent = 'Saldo: ' + credits + ' créditos';
+  }
+
+  function copyPix(btn) {
+    btn.innerHTML = '<i class="fa-solid fa-check"></i> Copiado!';
+    btn.style.color = 'var(--green)';
+    btn.style.borderColor = 'var(--green)';
+    setTimeout(() => {
+      btn.innerHTML = '<i class="fa-solid fa-copy"></i> Copiar código';
+      btn.style.color = '';
+      btn.style.borderColor = '';
+    }, 2000);
+  }
+
+  function aiGenerateLyrics() {
+    const btn = event.target;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Gerando...';
+    btn.disabled = true;
+    setTimeout(() => {
+      switchLyricsTab('manual');
+      document.getElementById('lyrics-text').value = 'Saí da cidade buscando o que perdi\nO cheiro de terra molhada e do mato\nA voz do meu pai chamando pra janta\nE o pôr do sol laranja lá no quintal\n\nSaudade não tem endereço certo\nMas mora em tudo que eu deixei pra trás\nO campo me chama e eu preciso voltar\nPra ser de novo quem eu fui um dia';
+      updateCharCount();
+      btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Gerar Letra com IA';
+      btn.disabled = false;
+    }, 1800);
+  }
+
+  function restart() {
+    credits = 5;
+    progress = 30;
+    playing = false;
+    clearInterval(playInterval);
+    updateCreditsDisplay();
+    document.getElementById('gen-loading').style.display = 'block';
+    document.getElementById('gen-result').style.display = 'none';
+    document.getElementById('pix-code-section').style.display = 'block';
+    document.getElementById('pix-success').style.display = 'none';
+    document.getElementById('progress-main').style.width = '30%';
+    document.getElementById('play-icon-main').className = 'fa-solid fa-play';
+    document.querySelectorAll('.style-card').forEach(c => c.classList.remove('selected'));
+    document.querySelectorAll('.style-card')[0].classList.add('selected');
+    goTo('home');
+  }
+</script>
+</body>
+</html>
