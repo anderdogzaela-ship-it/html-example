@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Abelhinha Aprende — Demo Interativo</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.page-title {
+  color: #FFD700;
+  font-size: 2rem;
+  font-weight: 900;
+  text-align: center;
+  margin-bottom: 4px;
+  text-shadow: 0 2px 12px rgba(255,215,0,0.5);
+  letter-spacing: -0.5px;
+}
+.page-subtitle {
+  color: #a0c4ff;
+  font-size: 0.88rem;
+  text-align: center;
+  margin-bottom: 22px;
+  font-weight: 700;
+}
+
+.phone-frame {
+  width: 360px;
+  height: 720px;
+  background: #0d0d0d;
+  border-radius: 44px;
+  padding: 14px;
+  box-shadow: 0 40px 80px rgba(0,0,0,0.7), 0 0 0 2px #2a2a2a, inset 0 0 0 2px #1a1a1a;
+  position: relative;
+}
+
+.phone-notch {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 110px;
+  height: 26px;
+  background: #0d0d0d;
+  border-radius: 0 0 18px 18px;
+  z-index: 200;
+}
+
+.game-screen {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(180deg, #87CEEB 0%, #B0E0FF 55%, #98FB98 75%, #4CAF50 100%);
+  border-radius: 32px;
+  position: relative;
+  overflow: hidden;
+  cursor: crosshair;
+  user-select: none;
+}
+
+/* Clouds */
+.cloud {
+  position: absolute;
+  pointer-events: none;
+}
+
+/* Score bar */
+.hud {
+  position: absolute;
+  top: 38px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 14px;
+  z-index: 30;
+}
+
+.hud-pill {
+  background: rgba(255,255,255,0.92);
+  border-radius: 20px;
+  padding: 5px 14px;
+  font-weight: 800;
+  font-size: 0.82rem;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+}
+
+.level-badge {
+  background: linear-gradient(135deg, #FF8C00, #FFD700);
+  border-radius: 20px;
+  padding: 5px 14px;
+  font-weight: 900;
+  font-size: 0.8rem;
+  color: white;
+  box-shadow: 0 3px 10px rgba(255,140,0,0.4);
+}
+
+/* Mode display */
+.mode-pill {
+  position: absolute;
+  top: 38px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255,255,255,0.92);
+  border-radius: 15px;
+  padding: 4px 12px;
+  font-size: 0.72rem;
+  font-weight: 900;
+  color: #444;
+  z-index: 31;
+  white-space: nowrap;
+}
+
+/* Bee */
+.bee {
+  position: absolute;
+  width: 54px;
+  height: 54px;
+  z-index: 50;
+  pointer-events: none;
+  filter: drop-shadow(0 4px 10px rgba(0,0,0,0.3));
+  transition: transform 0.05s;
+}
+
+/* Letter bubbles */
+.lbubble {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 900;
+  z-index: 30;
+  box-shadow: 0 5px 18px rgba(0,0,0,0.22), inset 0 -3px 0 rgba(0,0,0,0.18);
+  text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+
+.lbubble:hover { transform: scale(1.08) translateY(-4px); }
+
+.lbubble.big-num { font-size: 0.95rem; }
+.lbubble.letter { font-size: 1.55rem; }
+.lbubble.syl { font-size: 1.05rem; }
+
+@keyframes floatBob {
+  0%, 100% { margin-top: 0px; }
+  50% { margin-top: -10px; }
+}
+
+.lbubble.collected {
+  animation: popCollect 0.35s forwards !important;
+  pointer-events: none;
+}
+
+@keyframes popCollect {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.5); opacity: 0.7; }
+  100% { transform: scale(0); opacity: 0; }
+}
+
+/* Feedback popup */
+.feedback-pop {
+  position: absolute;
+  background: white;
+  border-radius: 18px;
+  padding: 10px 16px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+  z-index: 120;
+  text-align: center;
+  transform: translateX(-50%);
+  pointer-events: none;
+  min-width: 110px;
+  animation: feedIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.feedback-pop .fl { font-size: 2.4rem; font-weight: 900; line-height: 1; }
+.feedback-pop .fw { font-size: 0.73rem; color: #666; font-weight: 800; margin-top: 2px; }
+.feedback-pop .fs { font-size: 1.1rem; margin-top: 2px; }
+
+@keyframes feedIn {
+  from { transform: translateX(-50%) scale(0.4) translateY(20px); opacity: 0; }
+  to { transform: translateX(-50%) scale(1) translateY(0); opacity: 1; }
+}
+
+/* Stars */
+.star-fx {
+  position: absolute;
+  pointer-events: none;
+  z-index: 110;
+  font-size: 1.1rem;
+  animation: starUp 0.9s forwards;
+}
+
+@keyframes starUp {
+  0% { transform: translateY(0) scale(0); opacity: 1; }
+  100% { transform: translateY(-70px) scale(1.4); opacity: 0; }
+}
+
+/* Score float */
+.score-fx {
+  position: absolute;
+  font-size: 1.4rem;
+  font-weight: 900;
+  color: #FFD700;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.4);
+  pointer-events: none;
+  z-index: 130;
+  animation: scoreUp 0.8s forwards;
+}
+
+@keyframes scoreUp {
+  from { transform: translateY(0); opacity: 1; }
+  to { transform: translateY(-55px); opacity: 0; }
+}
+
+/* Ground */
+.ground {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 88px;
+  background: linear-gradient(180deg, #56ab2f 0%, #2E7D32 100%);
+  border-radius: 0 0 32px 32px;
+}
+
+.flower { position: absolute; bottom: 64px; font-size: 1.4rem; pointer-events: none; }
+
+/* Instruction */
+.instr {
+  position: absolute;
+  bottom: 96px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255,255,255,0.92);
+  border-radius: 14px;
+  padding: 6px 14px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #444;
+  white-space: nowrap;
+  z-index: 25;
+  transition: opacity 0.4s;
+}
+
+/* Completion */
+.completion {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  border-radius: 24px;
+  padding: 26px 30px;
+  text-align: center;
+  z-index: 160;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  display: none;
+  min-width: 220px;
+}
+
+.completion.show {
+  display: block;
+  animation: feedIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.c-emoji { font-size: 3.2rem; }
+.c-title { font-size: 1.3rem; font-weight: 900; color: #333; margin-top: 8px; }
+.c-sub { font-size: 0.78rem; color: #777; margin-top: 4px; font-weight: 700; }
+.c-btn {
+  margin-top: 14px;
+  padding: 10px 24px;
+  background: linear-gradient(135deg, #FFD700, #FF8C00);
+  border: none;
+  border-radius: 14px;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 900;
+  font-size: 0.9rem;
+  color: white;
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+.c-btn:hover { transform: scale(1.05); }
+
+/* Dashboard overlay */
+.dash {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, #0f2027 0%, #203a43 100%);
+  border-radius: 32px;
+  z-index: 200;
+  padding: 50px 16px 18px;
+  display: none;
+  overflow-y: auto;
+}
+
+.dash.show { display: block; }
+
+.d-title { color: #FFD700; font-size: 1.1rem; font-weight: 900; text-align: center; }
+.d-sub { color: #a0c4ff; font-size: 0.7rem; text-align: center; font-weight: 700; margin-bottom: 14px; }
+
+.d-label {
+  color: #a0c4ff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 7px;
+  margin-top: 12px;
+}
+
+.stats-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.stat-c {
+  flex: 1;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 10px 8px;
+  text-align: center;
+}
+
+.s-num { font-size: 1.8rem; font-weight: 900; color: #FFD700; line-height: 1; }
+.s-lbl { font-size: 0.63rem; color: #a0c4ff; font-weight: 700; margin-top: 2px; }
+
+.alpha-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.a-cell {
+  aspect-ratio: 1;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.68rem;
+  font-weight: 900;
+  color: white;
+}
+
+.a-cell.mastered { background: #43a047; }
+.a-cell.learning { background: #FF8C00; }
+.a-cell.none { background: #1e3a4a; color: #4a7080; }
+
+.syl-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 14px;
+}
+
+.syl-tag {
+  background: rgba(255,215,0,0.12);
+  border: 1px solid rgba(255,215,0,0.28);
+  border-radius: 8px;
+  padding: 4px 9px;
+  font-size: 0.72rem;
+  font-weight: 900;
+  color: #FFD700;
+}
+
+.syl-tag.done {
+  background: rgba(67,160,71,0.2);
+  border-color: rgba(67,160,71,0.4);
+  color: #81C784;
+}
+
+.session-bar-wrap {
+  background: rgba(255,255,255,0.06);
+  border-radius: 12px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+
+.bar-label { font-size: 0.7rem; color: #a0c4ff; font-weight: 700; margin-bottom: 6px; display: flex; justify-content: space-between; }
+.bar-track { height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #FFD700, #FF8C00); transition: width 0.8s; }
+
+.close-d {
+  width: 100%;
+  padding: 11px;
+  background: linear-gradient(135deg, #FFD700, #FF8C00);
+  border: none;
+  border-radius: 14px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 900;
+  color: white;
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+.close-d:hover { transform: scale(1.02); }
+
+/* Controls below phone */
+.ctrl-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.ctrl-btn {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 24px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  transition: transform 0.15s, box-shadow 0.15s;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+}
+.ctrl-btn:hover { transform: translateY(-2px); box-shadow: 0 7px 20px rgba(0,0,0,0.35); }
+.ctrl-btn:active { transform: translateY(0); }
+
+.btn-red { background: linear-gradient(135deg, #FF6B6B, #c0392b); color: white; }
+.btn-purple { background: linear-gradient(135deg, #a29bfe, #6c5ce7); color: white; }
+.btn-gold { background: linear-gradient(135deg, #FFD700, #FF8C00); color: white; }
+
+/* Wing flap */
+@keyframes wingFlap {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(0.5); }
+}
+</style>
+</head>
+<body>
+
+<div class="page-title">🐝 Abelhinha Aprende</div>
+<div class="page-subtitle">Toque na tela para guiar a abelhinha até as letras</div>
+
+<div class="phone-frame">
+  <div class="phone-notch"></div>
+
+  <div class="game-screen" id="gs">
+
+    <!-- HUD -->
+    <div class="hud">
+      <div class="hud-pill">
+        <i class="fa-solid fa-star" style="color:#FFD700"></i>
+        <span id="scoreEl">0</span>
+      </div>
+      <div class="level-badge">Nível <span id="lvlEl">1</span></div>
+    </div>
+    <div class="mode-pill" id="modeEl">Alfabeto</div>
+
+    <!-- Clouds -->
+    <svg class="cloud" style="top:60px;left:20px;opacity:0.85;animation:none" width="90" height="40" viewBox="0 0 90 40">
+      <ellipse cx="45" cy="28" rx="38" ry="14" fill="white"/>
+      <ellipse cx="28" cy="22" rx="18" ry="16" fill="white"/>
+      <ellipse cx="62" cy="20" rx="20" ry="17" fill="white"/>
+    </svg>
+    <svg class="cloud" style="top:80px;right:15px;opacity:0.7;animation:none" width="70" height="32" viewBox="0 0 70 32">
+      <ellipse cx="35" cy="22" rx="28" ry="11" fill="white"/>
+      <ellipse cx="22" cy="18" rx="14" ry="12" fill="white"/>
+      <ellipse cx="48" cy="16" rx="16" ry="13" fill="white"/>
+    </svg>
+
+    <!-- Bee -->
+    <div class="bee" id="beeEl" style="left:154px;top:340px;">
+      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <!-- Wings -->
+        <ellipse cx="29" cy="36" rx="23" ry="13" fill="rgba(173,216,230,0.85)" stroke="#ADD8E6" stroke-width="1.5" style="animation:wingFlap 0.12s ease-in-out infinite; transform-origin:29px 40px;"/>
+        <ellipse cx="71" cy="36" rx="23" ry="13" fill="rgba(173,216,230,0.85)" stroke="#ADD8E6" stroke-width="1.5" style="animation:wingFlap 0.12s ease-in-out infinite 0.06s; transform-origin:71px 40px;"/>
+        <!-- Body -->
+        <ellipse cx="50" cy="60" rx="22" ry="27" fill="#FFD700"/>
+        <!-- Stripes -->
+        <rect x="28" y="54" width="44" height="8" rx="4" fill="#1a1a1a" opacity="0.8"/>
+        <rect x="28" y="66" width="44" height="8" rx="4" fill="#1a1a1a" opacity="0.8"/>
+        <!-- Stinger -->
+        <ellipse cx="50" cy="86" rx="5" ry="4" fill="#FF8C00"/>
+        <!-- Head -->
+        <circle cx="50" cy="38" r="18" fill="#FFD700"/>
+        <!-- Eyes -->
+        <circle cx="42" cy="36" r="5.5" fill="white"/>
+        <circle cx="58" cy="36" r="5.5" fill="white"/>
+        <circle cx="43" cy="37" r="3.2" fill="#1a1a1a"/>
+        <circle cx="59" cy="37" r="3.2" fill="#1a1a1a"/>
+        <circle cx="44" cy="36" r="1.1" fill="white"/>
+        <circle cx="60" cy="36" r="1.1" fill="white"/>
+        <!-- Smile -->
+        <path d="M43 47 Q50 54 57 47" stroke="#1a1a1a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <!-- Cheeks -->
+        <circle cx="38" cy="43" r="4" fill="#FF8C00" opacity="0.5"/>
+        <circle cx="62" cy="43" r="4" fill="#FF8C00" opacity="0.5"/>
+        <!-- Antennae -->
+        <line x1="44" y1="22" x2="36" y2="10" stroke="#1a1a1a" stroke-width="2.2"/>
+        <circle cx="36" cy="10" r="3.2" fill="#FF6B6B"/>
+        <line x1="56" y1="22" x2="64" y2="10" stroke="#1a1a1a" stroke-width="2.2"/>
+        <circle cx="64" cy="10" r="3.2" fill="#FF6B6B"/>
+      </svg>
+    </div>
+
+    <!-- Containers -->
+    <div id="lettersDiv" style="position:absolute;inset:0;pointer-events:none;z-index:30;"></div>
+    <div id="fxDiv" style="position:absolute;inset:0;pointer-events:none;z-index:110;"></div>
+
+    <!-- Ground -->
+    <div class="ground"></div>
+    <div class="flower" style="left:18px">🌻</div>
+    <div class="flower" style="left:75px">🌸</div>
+    <div class="flower" style="right:18px">🌺</div>
+    <div class="flower" style="right:75px">🌼</div>
+    <div class="flower" style="left:50%;margin-left:-12px">🌷</div>
+
+    <!-- Instruction -->
+    <div class="instr" id="instrEl">👆 Toque na tela para guiar a abelhinha</div>
+
+    <!-- Completion -->
+    <div class="completion" id="compEl">
+      <div class="c-emoji">🎉</div>
+      <div class="c-title">Parabéns!</div>
+      <div class="c-sub" id="compSub">Fase concluída!</div>
+      <button class="c-btn" onclick="nextLevel()">Próxima fase ▶</button>
+    </div>
+
+    <!-- Dashboard -->
+    <div class="dash" id="dashEl">
+      <div class="d-title">📊 Progresso de Sofia</div>
+      <div class="d-sub">Relatório em tempo real para os pais</div>
+
+      <div class="stats-row">
+        <div class="stat-c">
+          <div class="s-num" id="dashL">8</div>
+          <div class="s-lbl">Letras dominadas</div>
+        </div>
+        <div class="stat-c">
+          <div class="s-num" id="dashN">12</div>
+          <div class="s-lbl">Números corretos</div>
+        </div>
+        <div class="stat-c">
+          <div class="s-num">14<span style="font-size:0.9rem">min</span></div>
+          <div class="s-lbl">Hoje</div>
+        </div>
+      </div>
+
+      <div class="d-label">Alfabeto — letras dominadas</div>
+      <div class="alpha-grid" id="alphaGrid"></div>
+
+      <div class="d-label">Famílias silábicas</div>
+      <div class="syl-row" id="sylRow"></div>
+
+      <div class="session-bar-wrap">
+        <div class="bar-label"><span>Sessão de hoje</span><span id="barPct">68%</span></div>
+        <div class="bar-track"><div class="bar-fill" id="barFill" style="width:68%"></div></div>
+      </div>
+
+      <button class="close-d" onclick="closeDash()">
+        <i class="fa-solid fa-arrow-left"></i> Voltar ao Jogo
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<div class="ctrl-row">
+  <button class="ctrl-btn btn-red" onclick="restartGame()">
+    <i class="fa-solid fa-rotate-right"></i> Reiniciar
+  </button>
+  <button class="ctrl-btn btn-purple" onclick="switchMode()">
+    <i class="fa-solid fa-shuffle"></i> <span id="modeBtn">Números</span>
+  </button>
+  <button class="ctrl-btn btn-gold" onclick="openDash()">
+    <i class="fa-solid fa-chart-bar"></i> Progresso
+  </button>
+</div>
+
+<script>
+const ALPHA = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+const NUMS = ['0','10','20','30','40','50','60','70','80','90','100'];
+const SYLS = ['BA','BE','BI','BO','BU','CA','CE','CO','CU','DA','DE','DI','DO','DU','FA'];
+const WORDS = {
+  A:'Abelha', B:'Borboleta', C:'Cachorro', D:'Dinossauro', E:'Elefante',
+  F:'Flamingo', G:'Girafa', H:'Hipopótamo', I:'Iguana', J:'Jacaré',
+  K:'Koala', L:'Leão', M:'Macaco', N:'Ninho', O:'Orca',
+  P:'Pinguim', Q:'Quivi', R:'Rinoceronte', S:'Sapo', T:'Tartaruga',
+  U:'Urubu', V:'Veado', W:'Wombat', X:'Xereta', Y:'Iaque', Z:'Zebra',
+  '0':'Zero', '10':'Dez', '20':'Vinte', '30':'Trinta', '40':'Quarenta',
+  '50':'Cinquenta', '60':'Sessenta', '70':'Setenta', '80':'Oitenta',
+  '90':'Noventa', '100':'Cem',
+  BA:'Bala', BE:'Bebê', BI:'Bico', BO:'Bola', BU:'Burro',
+  CA:'Casa', CE:'Cesta', CO:'Copo', CU:'Cubo',
+  DA:'Dado', DE:'Dedo', DI:'Dica', DO:'Dono', DU:'Ducha', FA:'Fada'
+};
+
+const COLORS = [
+  'linear-gradient(135deg,#FF6B6B,#c0392b)',
+  'linear-gradient(135deg,#a29bfe,#6c5ce7)',
+  'linear-gradient(135deg,#00b894,#00796b)',
+  'linear-gradient(135deg,#fd79a8,#c2185b)',
+  'linear-gradient(135deg,#fdcb6e,#e65100)',
+  'linear-gradient(135deg,#74b9ff,#0277bd)',
+  'linear-gradient(135deg,#55efc4,#00838f)',
+];
+
+let bX = 154, bY = 340, tX = 154, tY = 340;
+let score = 0, level = 1;
+let mode = 0; // 0=alpha, 1=nums, 2=syls
+const modeNames = ['Alfabeto','Números','Sílabas'];
+const modeBtnNext = ['Números','Sílabas','Alfabeto'];
+let items = [], elMap = {}, collected = [];
+let masteredArr = ['A','B','C','D','E','F','G','H'];
+let doneSyls = [];
+let instrShown = true;
+
+const gsEl = document.getElementById('gs');
+const beeEl = document.getElementById('beeEl');
+const lDiv = document.getElementById('lettersDiv');
+const fxDiv = document.getElementById('fxDiv');
+
+function pos(e) {
+  const r = gsEl.getBoundingClientRect();
+  const src = e.touches ? e.touches[0] : e;
+  return { x: src.clientX - r.left, y: src.clientY - r.top };
+}
+
+gsEl.addEventListener('click', e => {
+  if (e.target.closest('.dash') || e.target.closest('.completion')) return;
+  const p = pos(e); tX = p.x - 27; tY = p.y - 27;
+  if (instrShown) { document.getElementById('instrEl').style.opacity = '0'; instrShown = false; }
+});
+gsEl.addEventListener('touchstart', e => {
+  if (e.target.closest('.dash') || e.target.closest('.completion')) return;
+  e.preventDefault();
+  const p = pos(e); tX = p.x - 27; tY = p.y - 27;
+  if (instrShown) { document.getElementById('instrEl').style.opacity = '0'; instrShown = false; }
+}, { passive: false });
+
+function getItems() {
+  if (mode === 0) return ALPHA.slice((level - 1) * 5 % 26, (level - 1) * 5 % 26 + 5);
+  if (mode === 1) return NUMS.slice(0, 6);
+  return SYLS.slice(0, 6);
+}
+
+function spawnItem(item, idx) {
+  const el = document.createElement('div');
+  el.className = 'lbubble ' + (item.length === 1 && isNaN(item) ? 'letter' : item.length <= 2 && isNaN(item) ? 'syl' : 'big-num');
+  el.textContent = item;
+  const gw = 332, gh = 600;
+  const margin = 65;
+  const x = margin + Math.random() * (gw - margin * 2);
+  const y = 90 + Math.random() * (gh - 220);
+  el.style.cssText = `left:${x}px;top:${y}px;background:${COLORS[idx % COLORS.length]};animation:floatBob ${3 + Math.random() * 2}s ease-in-out ${Math.random() * 1.5}s infinite;`;
+  el.style.pointerEvents = 'auto';
+  el.addEventListener('click', ev => {
+    ev.stopPropagation();
+    const r = el.getBoundingClientRect(), gr = gsEl.getBoundingClientRect();
+    tX = r.left - gr.left + 30 - 27;
+    tY = r.top - gr.top + 30 - 27;
+  });
+  lDiv.appendChild(el);
+  elMap[item] = { el, x: x + 30, y: y + 30 };
+}
+
+function initLevel() {
+  lDiv.innerHTML = '';
+  fxDiv.innerHTML = '';
+  elMap = {};
+  collected = [];
+  document.getElementById('compEl').classList.remove('show');
+  items = getItems();
+  items.forEach((it, i) => spawnItem(it, i));
+  document.getElementById('modeEl').textContent = modeNames[mode];
+}
+
+function collect(item) {
+  if (collected.includes(item)) return;
+  collected.push(item);
+  const d = elMap[item];
+  if (!d) return;
+
+  d.el.classList.add('collected');
+  score += 10;
+  document.getElementById('scoreEl').textContent = score;
+
+  // Score float
+  const sf = document.createElement('div');
+  sf.className = 'score-fx';
+  sf.textContent = '+10';
+  sf.style.cssText = `left:${d.x - 15}px;top:${d.y - 20}px;`;
+  fxDiv.appendChild(sf);
+  setTimeout(() => sf.remove(), 850);
+
+  // Stars
+  ['⭐','✨','🌟','💫'].forEach((s, i) => {
+    const st = document.createElement('div');
+    st.className = 'star-fx';
+    st.textContent = s;
+    st.style.cssText = `left:${d.x + (Math.random() - 0.5) * 50}px;top:${d.y + (Math.random() - 0.5) * 30}px;animation-delay:${i * 0.08}s;`;
+    fxDiv.appendChild(st);
+    setTimeout(() => st.remove(), 1000);
+  });
+
+  // Feedback popup
+  const fp = document.createElement('div');
+  fp.className = 'feedback-pop';
+  const word = WORDS[item] || item;
+  const color = COLORS[items.indexOf(item) % COLORS.length].match(/#[0-9a-fA-F]{6}/)?.[0] || '#FF6B6B';
+  fp.innerHTML = `<div class="fl" style="color:${color}">${item}</div><div class="fw">${word}</div><div class="fs">🔊</div>`;
+  fp.style.cssText = `left:${d.x}px;top:${d.y - 92}px;`;
+  fxDiv.appendChild(fp);
+
+  // Web Speech
+  if ('speechSynthesis' in window) {
+    const u = new SpeechSynthesisUtterance(word);
+    u.lang = 'pt-BR'; u.rate = 0.82;
+    window.speechSynthesis.speak(u);
+  }
+
+  setTimeout(() => fp.remove(), 2100);
+  setTimeout(() => { if (d.el.parentNode) d.el.remove(); }, 380);
+
+  // Update dashboard
+  if (mode === 0 && !masteredArr.includes(item)) {
+    masteredArr.push(item);
+    document.getElementById('dashL').textContent = masteredArr.length;
+  }
+  if (mode === 2 && !doneSyls.includes(item)) {
+    doneSyls.push(item);
+  }
+
+  if (collected.length === items.length) setTimeout(showComplete, 550);
+}
+
+function showComplete() {
+  const b = document.getElementById('compEl');
+  b.classList.add('show');
+  document.getElementById('compSub').textContent =
+    mode === 0 ? 'Aprendeu: ' + items.join(' ') + '!' :
+    mode === 1 ? 'Números dominados!' : 'Sílabas concluídas!';
+}
+
+function nextLevel() {
+  level++;
+  if (mode === 0 && (level - 1) * 5 >= ALPHA.length) level = 1;
+  document.getElementById('lvlEl').textContent = level;
+  initLevel();
+}
+
+function restartGame() {
+  score = 0; level = 1;
+  document.getElementById('scoreEl').textContent = '0';
+  document.getElementById('lvlEl').textContent = '1';
+  bX = 154; bY = 340; tX = 154; tY = 340;
+  instrShown = true;
+  document.getElementById('instrEl').style.opacity = '1';
+  initLevel();
+}
+
+function switchMode() {
+  mode = (mode + 1) % 3;
+  document.getElementById('modeBtn').textContent = modeBtnNext[mode];
+  level = 1;
+  document.getElementById('lvlEl').textContent = '1';
+  initLevel();
+}
+
+function openDash() {
+  buildDash();
+  document.getElementById('dashEl').classList.add('show');
+}
+
+function closeDash() {
+  document.getElementById('dashEl').classList.remove('show');
+}
+
+function buildDash() {
+  // Alpha grid
+  const ag = document.getElementById('alphaGrid');
+  ag.innerHTML = '';
+  ALPHA.forEach(l => {
+    const c = document.createElement('div');
+    c.className = 'a-cell ' + (masteredArr.includes(l) ? 'mastered' : ['E','I','O','U'].includes(l) ? 'learning' : 'none');
+    c.textContent = l;
+    ag.appendChild(c);
+  });
+  // Syl row
+  const sr = document.getElementById('sylRow');
+  sr.innerHTML = '';
+  SYLS.slice(0, 10).forEach(s => {
+    const t = document.createElement('div');
+    t.className = 'syl-tag ' + (doneSyls.includes(s) ? 'done' : '');
+    t.textContent = s;
+    sr.appendChild(t);
+  });
+  // Progress bar
+  const pct = Math.round((masteredArr.length / 26) * 100);
+  document.getElementById('barPct').textContent = pct + '%';
+  document.getElementById('barFill').style.width = pct + '%';
+  document.getElementById('dashN').textContent = score > 0 ? Math.min(score, 30) : 12;
+}
+
+// Game loop
+function loop() {
+  const sp = 4.5;
+  const dx = tX - bX, dy = tY - bY;
+  const d = Math.sqrt(dx * dx + dy * dy);
+  if (d > sp) { bX += dx / d * sp; bY += dy / d * sp; }
+  else { bX = tX; bY = tY; }
+  bX = Math.max(0, Math.min(278, bX));
+  bY = Math.max(35, Math.min(620, bY));
+  beeEl.style.left = bX + 'px';
+  beeEl.style.top = bY + 'px';
+  beeEl.style.transform = dx < -5 ? 'scaleX(-1)' : 'scaleX(1)';
+
+  // Collision
+  Object.entries(elMap).forEach(([item, d]) => {
+    if (collected.includes(item)) return;
+    const cx = d.x, cy = d.y;
+    const dist = Math.sqrt((cx - (bX + 27)) ** 2 + (cy - (bY + 27)) ** 2);
+    if (dist < 46) collect(item);
+  });
+
+  requestAnimationFrame(loop);
+}
+
+initLevel();
+loop();
+</script>
+</body>
+</html>
