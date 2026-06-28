@@ -390,6 +390,81 @@
   .form-input:focus { border-color: var(--green); }
   .modal-actions { display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end; }
 
+  /* ---- DEMO CONTROLS BAR ---- */
+  .demo-bar {
+    background: linear-gradient(135deg, #0f2027 0%, #1a2c1e 50%, #0f2027 100%);
+    border-bottom: 1px solid rgba(37,211,102,0.25);
+    padding: 12px 28px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    position: sticky;
+    top: 65px;
+    z-index: 4;
+  }
+  .demo-label {
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--green);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-right: 4px;
+    white-space: nowrap;
+  }
+  .demo-label i { font-size: 10px; animation: pulse-green 1.4s infinite; }
+  .demo-sep { width: 1px; height: 24px; background: var(--border); margin: 0 4px; }
+  .demo-btn {
+    padding: 7px 14px;
+    border-radius: 20px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .demo-btn:hover { border-color: var(--green); color: var(--green); background: rgba(37,211,102,0.06); transform: translateY(-1px); }
+  .demo-btn i { font-size: 11px; }
+  .demo-btn.active-anim { border-color: var(--green); color: var(--green); background: rgba(37,211,102,0.08); }
+  .demo-auto {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-dim);
+    font-weight: 600;
+  }
+  .toggle-wrap { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+  .toggle {
+    width: 36px; height: 20px;
+    background: var(--green);
+    border-radius: 20px;
+    position: relative;
+    transition: background 0.2s;
+  }
+  .toggle.off { background: var(--border); }
+  .toggle::after {
+    content: '';
+    position: absolute;
+    width: 14px; height: 14px;
+    background: #fff;
+    border-radius: 50%;
+    top: 3px; left: 3px;
+    transition: left 0.2s;
+  }
+  .toggle.on::after { left: 19px; }
+
   /* ---- ANIMATIONS ---- */
   @keyframes pulse-green {
     0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(37,211,102,0.4); }
@@ -449,8 +524,34 @@
       <div class="topbar-sub">Atualizado em tempo real &mdash; 28 jun 2026</div>
     </div>
     <div class="topbar-right">
-      <button class="btn btn-ghost" onclick="simulateSend()"><i class="fa-solid fa-rotate"></i> Simular envio</button>
       <button class="btn btn-primary" onclick="openModal()"><i class="fa-solid fa-plus"></i> Nova campanha</button>
+    </div>
+  </div>
+
+  <!-- DEMO CONTROLS BAR -->
+  <div class="demo-bar">
+    <div class="demo-label"><i class="fa-solid fa-circle"></i> Demo interativo</div>
+    <div class="demo-sep"></div>
+    <button class="demo-btn" onclick="simulateSend()" id="demoSendBtn">
+      <i class="fa-solid fa-paper-plane"></i> Disparar lote de mensagens
+    </button>
+    <button class="demo-btn" onclick="triggerCooldown()">
+      <i class="fa-solid fa-temperature-arrow-down"></i> Número entra em cooldown
+    </button>
+    <button class="demo-btn" onclick="triggerFailureRetry()">
+      <i class="fa-solid fa-triangle-exclamation"></i> Simular falha + retry
+    </button>
+    <button class="demo-btn" onclick="triggerWarmup()">
+      <i class="fa-solid fa-fire"></i> Iniciar warm-up de número
+    </button>
+    <button class="demo-btn" onclick="openModal()">
+      <i class="fa-solid fa-rocket"></i> Criar campanha
+    </button>
+    <div class="demo-auto">
+      <div class="toggle-wrap" onclick="toggleAuto(this)">
+        <div class="toggle on" id="autoToggle"></div>
+        <span id="autoLabel">Auto-simulação ativa</span>
+      </div>
     </div>
   </div>
 
@@ -846,6 +947,85 @@ function tickerNow(msg) {
 function openModal() { document.getElementById('modalOverlay').classList.add('show'); }
 function closeModal() { document.getElementById('modalOverlay').classList.remove('show'); }
 
+function triggerCooldown() {
+  // Find the healthiest active number and drop it into cooldown
+  const active = numbers.filter(n => n.status === 'active');
+  if (!active.length) return;
+  const target = active[Math.floor(Math.random() * active.length)];
+  const prev = target.health;
+  target.health = Math.floor(Math.random() * 10 + 8);
+  target.status = 'cooldown';
+  renderNumbers();
+  tickerNow(`Número ${target.label} entrou em cooldown automático — health caiu de ${prev}% para ${target.health}% — rotação ativada`);
+  // recover after a few seconds for demo
+  setTimeout(() => {
+    target.health = Math.floor(Math.random() * 20 + 55);
+    target.status = 'active';
+    renderNumbers();
+    tickerNow(`Número ${target.label} recuperado após cooldown — health em ${target.health}% — de volta ao pool`);
+  }, 7000);
+}
+
+function triggerFailureRetry() {
+  // Spike failure count then show auto-retry
+  const spike = Math.floor(Math.random() * 120 + 80);
+  failedCount += spike;
+  document.getElementById('kpi-failed').textContent = failedCount.toLocaleString('pt-BR');
+  document.getElementById('bar-retry').style.width = '32%';
+  document.getElementById('cnt-retry').textContent = spike;
+  tickerNow(`${spike} mensagens falharam — retry automático iniciado em 15s — fila de reenvio ativa`);
+  // Show retry resolving
+  setTimeout(() => {
+    const resolved = Math.floor(spike * 0.85);
+    failedCount -= resolved;
+    document.getElementById('kpi-failed').textContent = failedCount.toLocaleString('pt-BR');
+    document.getElementById('bar-retry').style.width = '5%';
+    document.getElementById('cnt-retry').textContent = spike - resolved;
+    tickerNow(`Retry concluído — ${resolved} mensagens reentregues com sucesso — ${spike - resolved} descartadas`);
+  }, 5000);
+}
+
+function triggerWarmup() {
+  // Find a cooldown number and move it to warming
+  const cooldown = numbers.find(n => n.status === 'cooldown') || numbers.find(n => n.status === 'warming');
+  if (!cooldown) {
+    // force one into warming
+    numbers[3].status = 'warming';
+    numbers[3].health = 12;
+  } else {
+    cooldown.status = 'warming';
+    cooldown.health = Math.max(8, cooldown.health);
+  }
+  renderNumbers();
+  const target = numbers.find(n => n.status === 'warming');
+  tickerNow(`Protocolo de warm-up iniciado para ${target ? target.label : 'BR-04'} — dia 1 de 14 — limite: 200 msg/dia`);
+  // Progress the warmup
+  let day = 1;
+  const warmTimer = setInterval(() => {
+    day++;
+    if (target) { target.health = Math.min(45, target.health + Math.floor(Math.random() * 6 + 4)); }
+    renderNumbers();
+    tickerNow(`Warm-up ${target ? target.label : 'BR-04'} — dia ${day} — limite atual: ${day * 200} msg/dia — health: ${target ? target.health : '?'}%`);
+    if (day >= 4) {
+      clearInterval(warmTimer);
+      if (target) { target.status = 'active'; target.health = Math.min(70, target.health + 10); }
+      renderNumbers();
+      tickerNow(`Warm-up concluído — número ${target ? target.label : 'BR-04'} adicionado ao pool com limite de ${day * 200} msg/dia`);
+    }
+  }, 2200);
+}
+
+let autoEnabled = true;
+let autoTimer = null;
+
+function toggleAuto(wrap) {
+  autoEnabled = !autoEnabled;
+  const tog = document.getElementById('autoToggle');
+  const lbl = document.getElementById('autoLabel');
+  tog.className = 'toggle ' + (autoEnabled ? 'on' : 'off');
+  lbl.textContent = autoEnabled ? 'Auto-simulação ativa' : 'Auto-simulação pausada';
+}
+
 function launchCampaign() {
   const name = document.getElementById('campaignName').value || 'Nova Campanha';
   const total = document.getElementById('campaignTotal').value || '10000';
@@ -870,7 +1050,7 @@ requestAnimationFrame(() => {
 rotateTicker();
 setInterval(rotateTicker, 4000);
 setInterval(() => {
-  if (Math.random() < 0.35) simulateSend();
+  if (autoEnabled && Math.random() < 0.35) simulateSend();
 }, 3500);
 </script>
 </body>
