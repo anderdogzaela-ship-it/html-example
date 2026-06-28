@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GasJá - Demo Interativo</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background: linear-gradient(135deg, #1E3A5F 0%, #0A1628 100%);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+}
+
+.scene {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.label-top {
+  color: rgba(255,255,255,0.5);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+.restart-btn {
+  background: rgba(255,255,255,0.12);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.2);
+  padding: 8px 18px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.restart-btn:hover { background: rgba(255,255,255,0.2); }
+
+.phone {
+  width: 375px;
+  height: 780px;
+  background: #F8FAFC;
+  border-radius: 50px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 50px 100px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(255,255,255,0.08);
+  border: 10px solid #111827;
+}
+
+/* Notch */
+.phone::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 28px;
+  background: #111827;
+  border-radius: 0 0 18px 18px;
+  z-index: 100;
+}
+
+.status-bar {
+  height: 44px;
+  background: white;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 0 28px 6px;
+  position: relative;
+  z-index: 10;
+}
+.status-bar .time { font-weight: 800; font-size: 15px; color: #111; }
+.status-bar .icons { display: flex; gap: 5px; font-size: 12px; color: #111; }
+
+.screens {
+  height: calc(100% - 44px);
+  overflow: hidden;
+  position: relative;
+}
+
+.screen {
+  position: absolute;
+  inset: 0;
+  background: #F8FAFC;
+  transition: transform 0.38s cubic-bezier(0.4,0,0.2,1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.screen.hidden-right { transform: translateX(100%); }
+.screen.hidden-left  { transform: translateX(-110%); }
+.screen.active       { transform: translateX(0); }
+
+/* ===== HOME ===== */
+.home-header {
+  background: linear-gradient(150deg, #F97316 0%, #C2410C 100%);
+  padding: 18px 20px 28px;
+  color: white;
+  flex-shrink: 0;
+}
+.brand { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.brand-icon {
+  width: 38px; height: 38px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 19px;
+}
+.brand-name { font-size: 26px; font-weight: 900; letter-spacing: -0.5px; }
+.brand-sub  { font-size: 12px; opacity: 0.8; margin-top: -2px; }
+
+.address-pill {
+  background: rgba(255,255,255,0.18);
+  border-radius: 12px;
+  padding: 9px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.address-pill i:last-child { margin-left: auto; opacity: 0.7; }
+
+.home-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px 16px 8px;
+}
+.sec-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: #1E3A5F;
+  margin-bottom: 12px;
+}
+
+.products-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.prod-card {
+  background: white;
+  border-radius: 16px;
+  padding: 14px 12px;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+  border: 2px solid transparent;
+  transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+  text-align: center;
+}
+.prod-card:hover {
+  border-color: #F97316;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(249,115,22,0.18);
+}
+
+/* CSS gas cylinder */
+.cyl-wrap { width: 44px; height: 60px; margin: 0 auto 8px; position: relative; }
+.cyl-cap  { width: 22px; height: 6px; background: #F97316; border-radius: 3px; margin: 0 auto; }
+.cyl-neck { width: 16px; height: 8px; background: #475569; margin: 0 auto; border-radius: 3px 3px 0 0; }
+.cyl-body {
+  width: 34px; height: 48px;
+  background: linear-gradient(135deg, #94A3B8 0%, #475569 50%, #334155 100%);
+  border-radius: 8px 8px 6px 6px;
+  margin: 0 auto;
+  position: relative;
+  overflow: hidden;
+}
+.cyl-body::after {
+  content: '';
+  position: absolute;
+  top: 5px; left: 4px;
+  width: 7px; height: 26px;
+  background: rgba(255,255,255,0.18);
+  border-radius: 4px;
+}
+.cyl-body.lg { height: 60px; width: 38px; }
+
+.prod-name  { font-size: 13px; font-weight: 800; color: #1E3A5F; }
+.prod-sub   { font-size: 11px; color: #64748B; margin: 2px 0 6px; }
+.prod-price { font-size: 17px; font-weight: 900; color: #F97316; }
+
+.prod-card.wide {
+  grid-column: span 2;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-align: left;
+  padding: 12px 16px;
+}
+.prod-card.wide .cyl-wrap { flex-shrink: 0; }
+.prod-card.wide .prod-name,
+.prod-card.wide .prod-sub,
+.prod-card.wide .prod-price { text-align: left; }
+
+.promo-strip {
+  background: linear-gradient(135deg, #FEF9C3 0%, #FDE68A 100%);
+  border-radius: 14px;
+  padding: 13px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid #FCD34D;
+}
+.promo-icon-wrap { font-size: 26px; flex-shrink: 0; }
+.promo-title { font-size: 13px; font-weight: 800; color: #78350F; }
+.promo-desc  { font-size: 11px; color: #92400E; margin-top: 2px; }
+
+.bottom-nav {
+  height: 60px;
+  background: white;
+  border-top: 1px solid #F1F5F9;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+.nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 0;
+  cursor: pointer;
+}
+.nav-item .ni-ico  { font-size: 18px; color: #CBD5E1; }
+.nav-item .ni-lbl  { font-size: 10px; font-weight: 700; color: #CBD5E1; }
+.nav-item.on .ni-ico { color: #F97316; }
+.nav-item.on .ni-lbl { color: #F97316; }
+
+/* ===== ORDER ===== */
+.top-bar {
+  background: white;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid #F1F5F9;
+  flex-shrink: 0;
+}
+.back-btn {
+  width: 34px; height: 34px;
+  background: #F1F5F9;
+  border: none; border-radius: 10px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: #1E3A5F; font-size: 13px;
+}
+.top-title { font-size: 16px; font-weight: 800; color: #1E3A5F; }
+
+.order-body { flex: 1; overflow-y: auto; padding: 16px; }
+
+.sel-prod-card {
+  background: white;
+  border-radius: 16px;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+}
+.sel-prod-name  { font-size: 16px; font-weight: 800; color: #1E3A5F; }
+.sel-prod-sub   { font-size: 12px; color: #64748B; margin: 2px 0 6px; }
+.sel-prod-price { font-size: 22px; font-weight: 900; color: #F97316; }
+
+.field-block { margin-bottom: 12px; }
+.field-lbl {
+  font-size: 11px; font-weight: 700; color: #94A3B8;
+  text-transform: uppercase; letter-spacing: 0.6px;
+  display: flex; align-items: center; gap: 5px;
+  margin-bottom: 5px;
+}
+.field-inp {
+  width: 100%; padding: 11px 13px;
+  border: 2px solid #E2E8F0;
+  border-radius: 12px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 14px; font-weight: 600;
+  color: #1E3A5F;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.field-inp:focus { border-color: #F97316; }
+
+.promo-wrap { position: relative; }
+.promo-badge {
+  position: absolute;
+  right: 10px; top: 50%;
+  transform: translateY(-50%);
+  background: #16A34A;
+  color: white;
+  font-size: 11px; font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.price-box {
+  background: white;
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+.pr-row {
+  display: flex; justify-content: space-between;
+  align-items: center;
+  padding: 5px 0;
+  font-size: 14px; color: #64748B;
+}
+.pr-row.disc { color: #16A34A; }
+.pr-row.tot {
+  border-top: 2px dashed #E2E8F0;
+  margin-top: 6px; padding-top: 11px;
+  font-weight: 900; font-size: 17px;
+  color: #1E3A5F;
+}
+
+.confirm-btn {
+  width: 100%; padding: 15px;
+  background: linear-gradient(135deg, #F97316, #C2410C);
+  color: white; border: none;
+  border-radius: 16px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 16px; font-weight: 800;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  box-shadow: 0 8px 24px rgba(249,115,22,0.35);
+  transition: transform 0.15s;
+}
+.confirm-btn:active { transform: scale(0.98); }
+
+/* ===== TRACKING ===== */
+.track-header {
+  background: linear-gradient(150deg, #1E3A5F 0%, #0A1628 100%);
+  padding: 14px 18px 16px;
+  color: white;
+  flex-shrink: 0;
+}
+.th-sub { font-size: 12px; opacity: 0.6; font-weight: 600; }
+.th-id  { font-size: 20px; font-weight: 900; margin-bottom: 14px; }
+
+.steps-row {
+  display: flex;
+  align-items: flex-start;
+}
+.step-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+.step-dot {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.18);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700;
+  position: relative; z-index: 2;
+  transition: background 0.4s, transform 0.3s;
+  color: rgba(255,255,255,0.7);
+}
+.step-dot.done { background: #F97316; transform: scale(1.1); color: white; }
+.step-dot.cur  {
+  background: white; color: #1E3A5F;
+  box-shadow: 0 0 0 4px rgba(249,115,22,0.35);
+}
+.step-connector {
+  flex: 1;
+  height: 2px;
+  background: rgba(255,255,255,0.18);
+  margin-top: 13px;
+  position: relative; z-index: 1;
+  transition: background 0.5s;
+}
+.step-connector.done { background: #F97316; }
+.step-lbl {
+  font-size: 9px; font-weight: 600;
+  opacity: 0.6; margin-top: 4px;
+  text-align: center; width: 100%;
+}
+.step-lbl.done { opacity: 1; color: #FED7AA; }
+
+/* MAP */
+.map-area {
+  height: 190px;
+  background: #DCF0DC;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.map-area::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.45) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.45) 1px, transparent 1px);
+  background-size: 38px 38px;
+}
+.road-h {
+  position: absolute;
+  top: 50%; transform: translateY(-50%);
+  left: 0; right: 0; height: 22px;
+  background: #B8C4CE;
+  border-top: 2px solid #94A3B8;
+  border-bottom: 2px solid #94A3B8;
+}
+.road-h::after {
+  content: '';
+  position: absolute;
+  top: 50%; transform: translateY(-50%);
+  left: 0; right: 0; height: 2px;
+  background: repeating-linear-gradient(90deg, #F97316 0, #F97316 14px, transparent 14px, transparent 28px);
+}
+.pin-store {
+  position: absolute;
+  left: 20px; top: 50%;
+  transform: translateY(-100%);
+  font-size: 22px;
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3));
+}
+.pin-home {
+  position: absolute;
+  right: 20px; top: 50%;
+  transform: translateY(-100%);
+  font-size: 22px;
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3));
+}
+.truck {
+  position: absolute;
+  top: 50%; transform: translateY(-58%);
+  font-size: 22px;
+  left: 56px;
+  animation: truckRide 13s linear forwards;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.2));
+}
+@keyframes truckRide {
+  0%   { left: 56px; }
+  100% { left: calc(100% - 64px); }
+}
+.eta-chip {
+  position: absolute;
+  top: 10px; right: 12px;
+  background: white;
+  border-radius: 12px;
+  padding: 6px 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  text-align: center;
+}
+.eta-num { font-size: 20px; font-weight: 900; color: #F97316; line-height: 1; }
+.eta-txt { font-size: 10px; color: #64748B; font-weight: 600; }
+
+/* Tracking body */
+.track-body { flex: 1; overflow-y: auto; padding: 14px 16px; }
+
+.driver-row {
+  background: white;
+  border-radius: 16px;
+  padding: 13px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.drv-avatar {
+  width: 46px; height: 46px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #F97316, #C2410C);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; color: white;
+  flex-shrink: 0;
+}
+.drv-name   { font-size: 15px; font-weight: 800; color: #1E3A5F; }
+.drv-detail { font-size: 12px; color: #64748B; margin-top: 2px; }
+.drv-rating { margin-left: auto; text-align: center; }
+.drv-rating .rv { font-size: 19px; font-weight: 900; color: #F59E0B; line-height: 1; }
+.drv-rating .rs { font-size: 11px; color: #F59E0B; }
+
+.wa-btn {
+  width: 100%; padding: 13px;
+  background: #25D366; color: white;
+  border: none; border-radius: 14px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 14px; font-weight: 800;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  box-shadow: 0 4px 14px rgba(37,211,102,0.3);
+}
+
+/* NOTIFICATION TOAST */
+.notif-toast {
+  position: absolute;
+  top: 50px; left: 12px; right: 12px;
+  background: white;
+  border-radius: 18px;
+  padding: 13px 14px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.22);
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  z-index: 200;
+  border-left: 4px solid #F97316;
+  transform: translateY(-140px);
+  transition: transform 0.45s cubic-bezier(0.34,1.56,0.64,1);
+}
+.notif-toast.show { transform: translateY(0); }
+.notif-ico { font-size: 28px; }
+.notif-title { font-size: 13px; font-weight: 800; color: #1E3A5F; }
+.notif-body  { font-size: 11px; color: #64748B; margin-top: 1px; }
+</style>
+</head>
+<body>
+<div class="scene">
+  <div class="label-top">GasJá — Demonstração Interativa</div>
+
+  <div style="position:relative">
+    <button class="restart-btn" onclick="restart()" style="position:absolute;top:-38px;right:0">
+      <i class="fa-solid fa-rotate-right"></i> Reiniciar
+    </button>
+
+    <div class="phone">
+      <!-- Status Bar -->
+      <div class="status-bar">
+        <span class="time">9:41</span>
+        <div class="icons">
+          <i class="fa-solid fa-signal"></i>
+          <i class="fa-solid fa-wifi"></i>
+          <i class="fa-solid fa-battery-full"></i>
+        </div>
+      </div>
+
+      <!-- Global notification toast -->
+      <div class="notif-toast" id="toast">
+        <div class="notif-ico">🔥</div>
+        <div>
+          <div class="notif-title">Pedido entregue!</div>
+          <div class="notif-body">Avalie Carlos — como foi a entrega?</div>
+        </div>
+      </div>
+
+      <div class="screens">
+
+        <!-- ===== SCREEN: HOME ===== -->
+        <div class="screen active" id="s-home">
+          <div class="home-header">
+            <div class="brand">
+              <div class="brand-icon"><i class="fa-solid fa-fire"></i></div>
+              <div>
+                <div class="brand-name">GasJá</div>
+                <div class="brand-sub">Entrega em até 30 min</div>
+              </div>
+            </div>
+            <div class="address-pill">
+              <i class="fa-solid fa-location-dot"></i>
+              <span>Rua das Flores, 142 — São Paulo</span>
+              <i class="fa-solid fa-chevron-down"></i>
+            </div>
+          </div>
+
+          <div class="home-body">
+            <div class="sec-title">Selecione seu produto</div>
+
+            <div class="products-grid">
+              <div class="prod-card" onclick="openOrder('P13','Botijão P13','Uso residencial',85)">
+                <div class="cyl-wrap">
+                  <div class="cyl-cap"></div>
+                  <div class="cyl-neck"></div>
+                  <div class="cyl-body"></div>
+                </div>
+                <div class="prod-name">Botijão P13</div>
+                <div class="prod-sub">13 kg · Residencial</div>
+                <div class="prod-price">R$ 85</div>
+              </div>
+
+              <div class="prod-card" onclick="openOrder('P20','Botijão P20','Uso comercial leve',145)">
+                <div class="cyl-wrap">
+                  <div class="cyl-cap"></div>
+                  <div class="cyl-neck"></div>
+                  <div class="cyl-body lg"></div>
+                </div>
+                <div class="prod-name">Botijão P20</div>
+                <div class="prod-sub">20 kg · Comercial</div>
+                <div class="prod-price">R$ 145</div>
+              </div>
+
+              <div class="prod-card wide" onclick="openOrder('P45','Botijão P45','Restaurante / industrial',280)">
+                <div class="cyl-wrap" style="height:72px">
+                  <div class="cyl-cap"></div>
+                  <div class="cyl-neck"></div>
+                  <div class="cyl-body lg" style="height:68px;width:42px"></div>
+                </div>
+                <div>
+                  <div class="prod-name">Botijão P45</div>
+                  <div class="prod-sub">45 kg · Restaurante</div>
+                  <div class="prod-price">R$ 280</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="promo-strip">
+              <div class="promo-icon-wrap">🎉</div>
+              <div>
+                <div class="promo-title">10% OFF no primeiro pedido</div>
+                <div class="promo-desc">Use o código GAS10 · Válido hoje</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="bottom-nav">
+            <div class="nav-item on">
+              <div class="ni-ico"><i class="fa-solid fa-house"></i></div>
+              <div class="ni-lbl">Início</div>
+            </div>
+            <div class="nav-item">
+              <div class="ni-ico"><i class="fa-solid fa-receipt"></i></div>
+              <div class="ni-lbl">Pedidos</div>
+            </div>
+            <div class="nav-item">
+              <div class="ni-ico"><i class="fa-solid fa-tag"></i></div>
+              <div class="ni-lbl">Promoções</div>
+            </div>
+            <div class="nav-item">
+              <div class="ni-ico"><i class="fa-solid fa-user"></i></div>
+              <div class="ni-lbl">Perfil</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== SCREEN: ORDER ===== -->
+        <div class="screen hidden-right" id="s-order">
+          <div class="top-bar">
+            <button class="back-btn" onclick="navBack('s-home','s-order')">
+              <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <span class="top-title">Finalizar Pedido</span>
+          </div>
+
+          <div class="order-body">
+            <div class="sel-prod-card">
+              <div class="cyl-wrap" style="flex-shrink:0">
+                <div class="cyl-cap"></div>
+                <div class="cyl-neck"></div>
+                <div class="cyl-body"></div>
+              </div>
+              <div>
+                <div class="sel-prod-name" id="o-name">Botijão P13</div>
+                <div class="sel-prod-sub"  id="o-sub">Uso residencial</div>
+                <div class="sel-prod-price" id="o-price">R$ 85,00</div>
+              </div>
+            </div>
+
+            <div class="field-block">
+              <div class="field-lbl"><i class="fa-solid fa-location-dot"></i> Endereço</div>
+              <input class="field-inp" type="text" value="Rua das Flores, 142 — São Paulo">
+            </div>
+
+            <div class="field-block">
+              <div class="field-lbl"><i class="fa-solid fa-tag"></i> Cupom de desconto</div>
+              <div class="promo-wrap">
+                <input class="field-inp" type="text" value="GAS10">
+                <span class="promo-badge">-10%</span>
+              </div>
+            </div>
+
+            <div class="price-box">
+              <div class="pr-row"><span>Subtotal</span><span id="p-sub">R$ 85,00</span></div>
+              <div class="pr-row"><span>Taxa de entrega</span><span style="color:#16A34A;font-weight:700">Grátis</span></div>
+              <div class="pr-row disc">
+                <span><i class="fa-solid fa-circle-check"></i> Cupom GAS10</span>
+                <span id="p-disc">– R$ 8,50</span>
+              </div>
+              <div class="pr-row tot"><span>Total</span><span id="p-tot">R$ 76,50</span></div>
+            </div>
+
+            <button class="confirm-btn" onclick="goTracking()">
+              <i class="fa-solid fa-check"></i>
+              Confirmar Pedido
+            </button>
+          </div>
+        </div>
+
+        <!-- ===== SCREEN: TRACKING ===== -->
+        <div class="screen hidden-right" id="s-track">
+          <div class="track-header">
+            <div class="th-sub">Acompanhe em tempo real</div>
+            <div class="th-id">Pedido #4821</div>
+
+            <div class="steps-row">
+              <div class="step-col">
+                <div class="step-dot done" id="dot1"><i class="fa-solid fa-check"></i></div>
+                <div class="step-lbl done">Recebido</div>
+              </div>
+              <div class="step-connector" id="c1"></div>
+              <div class="step-col">
+                <div class="step-dot" id="dot2">2</div>
+                <div class="step-lbl" id="l2">Preparo</div>
+              </div>
+              <div class="step-connector" id="c2"></div>
+              <div class="step-col">
+                <div class="step-dot" id="dot3">3</div>
+                <div class="step-lbl" id="l3">A caminho</div>
+              </div>
+              <div class="step-connector" id="c3"></div>
+              <div class="step-col">
+                <div class="step-dot" id="dot4">4</div>
+                <div class="step-lbl" id="l4">Entregue</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="map-area">
+            <div class="road-h"></div>
+            <div class="pin-store">🏪</div>
+            <div class="pin-home">🏠</div>
+            <div class="truck" id="truck">🛵</div>
+            <div class="eta-chip">
+              <div class="eta-num" id="eta">13</div>
+              <div class="eta-txt">min</div>
+            </div>
+          </div>
+
+          <div class="track-body">
+            <div class="driver-row">
+              <div class="drv-avatar"><i class="fa-solid fa-user"></i></div>
+              <div>
+                <div class="drv-name">Carlos Silva</div>
+                <div class="drv-detail"><i class="fa-solid fa-motorcycle"></i> Honda CG 150 · Placa ABC-1234</div>
+              </div>
+              <div class="drv-rating">
+                <div class="rv">4.9</div>
+                <div class="rs">★★★★★</div>
+              </div>
+            </div>
+
+            <button class="wa-btn">
+              <i class="fa-brands fa-whatsapp" style="font-size:18px"></i>
+              Compartilhar promoção via WhatsApp
+            </button>
+          </div>
+        </div>
+
+      </div><!-- /screens -->
+    </div><!-- /phone -->
+  </div>
+</div>
+
+<script>
+let price = 85;
+let etaVal = 13;
+let etaTmr, stepTmrs = [];
+
+function fmt(n) {
+  return 'R$ ' + n.toFixed(2).replace('.', ',');
+}
+
+function openOrder(id, name, sub, p) {
+  price = p;
+  document.getElementById('o-name').textContent = name;
+  document.getElementById('o-sub').textContent = sub;
+  document.getElementById('o-price').textContent = fmt(p);
+  document.getElementById('p-sub').textContent = fmt(p);
+  document.getElementById('p-disc').textContent = '– ' + fmt(p * 0.1);
+  document.getElementById('p-tot').textContent = fmt(p * 0.9);
+  navTo('s-home', 's-order');
+}
+
+function goTracking() {
+  navTo('s-order', 's-track');
+  startTracking();
+}
+
+function navTo(from, to) {
+  document.getElementById(from).className = 'screen hidden-left';
+  document.getElementById(to).className = 'screen active';
+}
+
+function navBack(to, from) {
+  document.getElementById(from).className = 'screen hidden-right';
+  document.getElementById(to).className = 'screen active';
+}
+
+function startTracking() {
+  // Reset truck
+  const t = document.getElementById('truck');
+  t.style.animation = 'none';
+  void t.offsetHeight;
+  t.style.animation = 'truckRide 13s linear forwards';
+
+  // Reset steps
+  for (let i = 2; i <= 4; i++) {
+    const d = document.getElementById('dot' + i);
+    const l = document.getElementById('l' + i);
+    const c = document.getElementById('c' + (i-1));
+    d.className = 'step-dot';
+    d.textContent = i;
+    if (l) { l.className = 'step-lbl'; }
+    if (c) { c.className = 'step-connector'; }
+  }
+  document.getElementById('dot1').className = 'step-dot done';
+  document.getElementById('dot1').innerHTML = '<i class="fa-solid fa-check"></i>';
+  document.getElementById('l2').className = 'step-lbl';
+
+  // Hide toast
+  document.getElementById('toast').classList.remove('show');
+
+  // ETA countdown
+  etaVal = 13;
+  document.getElementById('eta').textContent = etaVal;
+  clearInterval(etaTmr);
+  etaTmr = setInterval(function() {
+    etaVal--;
+    if (etaVal < 0) etaVal = 0;
+    document.getElementById('eta').textContent = etaVal;
+    if (etaVal === 0) clearInterval(etaTmr);
+  }, 1000);
+
+  // Step progression
+  stepTmrs.forEach(clearTimeout);
+  stepTmrs = [];
+
+  var schedule = [
+    { t: 2200,  step: 2 },
+    { t: 5500,  step: 3 },
+    { t: 12500, step: 4 },
+  ];
+
+  schedule.forEach(function(s) {
+    var tm = setTimeout(function() { advanceStep(s.step); }, s.t);
+    stepTmrs.push(tm);
+  });
+}
+
+function advanceStep(n) {
+  // Mark previous as done
+  if (n > 2) {
+    var prev = document.getElementById('dot' + (n-1));
+    var pl   = document.getElementById('l' + (n-1));
+    prev.className = 'step-dot done';
+    prev.innerHTML = '<i class="fa-solid fa-check"></i>';
+    if (pl) pl.className = 'step-lbl done';
+  }
+  // Connector
+  var conn = document.getElementById('c' + (n-1));
+  if (conn) conn.className = 'step-connector done';
+
+  // Current step
+  var dot  = document.getElementById('dot' + n);
+  var lbl  = document.getElementById('l' + n);
+
+  if (n === 4) {
+    dot.className = 'step-dot done';
+    dot.innerHTML = '<i class="fa-solid fa-check"></i>';
+    if (lbl) lbl.className = 'step-lbl done';
+    setTimeout(function() {
+      document.getElementById('toast').classList.add('show');
+      setTimeout(function() {
+        document.getElementById('toast').classList.remove('show');
+      }, 4200);
+    }, 600);
+  } else {
+    dot.className = 'step-dot cur';
+    if (lbl) lbl.className = 'step-lbl';
+  }
+}
+
+function restart() {
+  clearInterval(etaTmr);
+  stepTmrs.forEach(clearTimeout);
+  document.getElementById('toast').classList.remove('show');
+  document.getElementById('s-home').className  = 'screen active';
+  document.getElementById('s-order').className = 'screen hidden-right';
+  document.getElementById('s-track').className = 'screen hidden-right';
+}
+</script>
+</body>
+</html>
