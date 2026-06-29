@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ProductBot — AI Search Demo</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#0f1117;
+    --surface:#1a1d2e;
+    --surface2:#252840;
+    --border:#2e3250;
+    --accent:#6c63ff;
+    --accent2:#00d4aa;
+    --accent3:#ff6b6b;
+    --text:#e8eaf6;
+    --muted:#8b90b8;
+    --card:#1e2235;
+    --user-bubble:#6c63ff;
+    --bot-bubble:#252840;
+  }
+  body{
+    font-family:'Nunito',sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+  }
+
+  /* HEADER */
+  header{
+    background:var(--surface);
+    border-bottom:1px solid var(--border);
+    padding:14px 24px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    position:sticky;
+    top:0;
+    z-index:100;
+  }
+  .logo-icon{
+    width:38px;height:38px;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    border-radius:10px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:18px;color:#fff;
+  }
+  .logo-text{font-weight:800;font-size:18px}
+  .logo-text span{color:var(--accent2)}
+  .header-badge{
+    margin-left:auto;
+    background:rgba(0,212,170,.15);
+    color:var(--accent2);
+    border:1px solid rgba(0,212,170,.3);
+    padding:4px 12px;
+    border-radius:20px;
+    font-size:12px;
+    font-weight:700;
+    display:flex;align-items:center;gap:6px;
+  }
+  .dot{width:7px;height:7px;background:var(--accent2);border-radius:50%;animation:pulse 1.5s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+  /* MAIN LAYOUT */
+  .app-layout{
+    display:flex;
+    flex:1;
+    height:calc(100vh - 67px);
+    overflow:hidden;
+  }
+
+  /* SIDEBAR */
+  .sidebar{
+    width:260px;
+    background:var(--surface);
+    border-right:1px solid var(--border);
+    display:flex;
+    flex-direction:column;
+    padding:16px 12px;
+    gap:6px;
+    overflow-y:auto;
+  }
+  .sidebar-label{
+    font-size:11px;
+    font-weight:700;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:.8px;
+    padding:8px 10px 4px;
+  }
+  .sidebar-btn{
+    background:transparent;
+    border:none;
+    color:var(--muted);
+    cursor:pointer;
+    padding:9px 12px;
+    border-radius:8px;
+    text-align:left;
+    font-family:'Nunito',sans-serif;
+    font-size:13px;
+    font-weight:600;
+    display:flex;align-items:center;gap:10px;
+    transition:.15s;
+    width:100%;
+  }
+  .sidebar-btn:hover,.sidebar-btn.active{
+    background:var(--surface2);
+    color:var(--text);
+  }
+  .sidebar-btn.active{color:var(--accent2)}
+  .sidebar-btn i{width:16px;text-align:center;font-size:13px}
+  .kb-section{
+    margin-top:16px;
+    padding:12px;
+    background:var(--surface2);
+    border-radius:10px;
+    border:1px solid var(--border);
+  }
+  .kb-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
+  .kb-item{
+    display:flex;align-items:center;gap:8px;
+    padding:5px 0;
+    font-size:12px;color:var(--text);
+  }
+  .kb-item i{color:var(--accent2);font-size:11px}
+  .kb-stat{
+    margin-left:auto;
+    background:rgba(108,99,255,.2);
+    color:var(--accent);
+    font-size:10px;font-weight:700;
+    padding:2px 7px;border-radius:10px;
+  }
+
+  /* CHAT AREA */
+  .chat-area{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+  }
+  .chat-header{
+    padding:14px 20px;
+    border-bottom:1px solid var(--border);
+    display:flex;align-items:center;gap:10px;
+  }
+  .chat-header-icon{
+    width:34px;height:34px;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    border-radius:8px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:15px;color:#fff;
+  }
+  .chat-header-info .name{font-weight:700;font-size:14px}
+  .chat-header-info .sub{font-size:11px;color:var(--accent2)}
+  .pipeline-badges{
+    margin-left:auto;
+    display:flex;gap:6px;
+  }
+  .pipe-badge{
+    font-size:10px;font-weight:700;
+    padding:3px 9px;border-radius:12px;
+    display:flex;align-items:center;gap:4px;
+  }
+  .pipe-badge.kb{background:rgba(0,212,170,.12);color:var(--accent2);border:1px solid rgba(0,212,170,.25)}
+  .pipe-badge.api{background:rgba(108,99,255,.12);color:var(--accent);border:1px solid rgba(108,99,255,.25)}
+  .pipe-badge.rag{background:rgba(255,107,107,.12);color:var(--accent3);border:1px solid rgba(255,107,107,.25)}
+
+  .messages{
+    flex:1;
+    overflow-y:auto;
+    padding:20px;
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+  }
+  .messages::-webkit-scrollbar{width:4px}
+  .messages::-webkit-scrollbar-track{background:transparent}
+  .messages::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+
+  /* MESSAGES */
+  .msg-row{display:flex;gap:10px;align-items:flex-end}
+  .msg-row.user{flex-direction:row-reverse}
+  .avatar{
+    width:30px;height:30px;border-radius:8px;
+    flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;
+    font-size:13px;
+  }
+  .avatar.bot{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
+  .avatar.user{background:var(--user-bubble);color:#fff}
+  .bubble{
+    max-width:75%;
+    padding:12px 16px;
+    border-radius:14px;
+    font-size:14px;
+    line-height:1.6;
+  }
+  .bubble.bot{
+    background:var(--bot-bubble);
+    border:1px solid var(--border);
+    border-bottom-left-radius:4px;
+    color:var(--text);
+  }
+  .bubble.user{
+    background:var(--user-bubble);
+    border-bottom-right-radius:4px;
+    color:#fff;
+  }
+
+  /* PIPELINE TRACE */
+  .pipeline-trace{
+    display:flex;align-items:center;gap:6px;
+    margin-bottom:8px;
+    font-size:11px;
+    flex-wrap:wrap;
+  }
+  .trace-step{
+    display:flex;align-items:center;gap:4px;
+    padding:2px 8px;border-radius:8px;
+    font-weight:700;
+  }
+  .trace-step.kb-step{background:rgba(0,212,170,.12);color:var(--accent2)}
+  .trace-step.api-step{background:rgba(108,99,255,.12);color:var(--accent)}
+  .trace-step.merge-step{background:rgba(255,107,107,.12);color:var(--accent3)}
+  .trace-step.llm-step{background:rgba(255,200,0,.1);color:#ffd000}
+  .trace-arrow{color:var(--muted);font-size:10px}
+
+  /* PRODUCT CARDS */
+  .product-cards{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+    gap:10px;
+    margin-top:12px;
+  }
+  .product-card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:10px;
+    overflow:hidden;
+    transition:.2s;
+    cursor:pointer;
+  }
+  .product-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+  .product-img{
+    width:100%;height:110px;
+    object-fit:cover;
+    background:var(--surface2);
+  }
+  .product-info{padding:10px 12px}
+  .product-name{font-size:12px;font-weight:700;margin-bottom:4px;line-height:1.3}
+  .product-price{
+    font-size:16px;font-weight:800;
+    color:var(--accent2);
+    margin-bottom:6px;
+  }
+  .product-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}
+  .product-tag{
+    font-size:10px;font-weight:700;
+    background:rgba(108,99,255,.15);
+    color:var(--accent);
+    padding:2px 7px;border-radius:6px;
+  }
+  .product-source{
+    font-size:10px;color:var(--muted);
+    display:flex;align-items:center;gap:4px;
+  }
+  .source-dot{width:5px;height:5px;border-radius:50%}
+  .source-dot.kb{background:var(--accent2)}
+  .source-dot.api{background:var(--accent)}
+
+  /* SUGGESTIONS */
+  .suggestions{
+    padding:8px 20px 12px;
+    display:flex;gap:8px;
+    flex-wrap:wrap;
+  }
+  .sugg-btn{
+    background:var(--surface2);
+    border:1px solid var(--border);
+    color:var(--text);
+    padding:7px 14px;
+    border-radius:20px;
+    font-family:'Nunito',sans-serif;
+    font-size:12px;
+    font-weight:600;
+    cursor:pointer;
+    transition:.15s;
+    display:flex;align-items:center;gap:6px;
+  }
+  .sugg-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+  /* INPUT */
+  .input-area{
+    padding:12px 20px 16px;
+    border-top:1px solid var(--border);
+    display:flex;gap:10px;align-items:flex-end;
+  }
+  .input-wrap{
+    flex:1;
+    background:var(--surface2);
+    border:1.5px solid var(--border);
+    border-radius:12px;
+    padding:10px 14px;
+    display:flex;align-items:center;gap:10px;
+    transition:.15s;
+  }
+  .input-wrap:focus-within{border-color:var(--accent)}
+  .input-wrap input{
+    flex:1;
+    background:transparent;
+    border:none;
+    outline:none;
+    color:var(--text);
+    font-family:'Nunito',sans-serif;
+    font-size:14px;
+  }
+  .input-wrap input::placeholder{color:var(--muted)}
+  .send-btn{
+    width:42px;height:42px;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    border:none;border-radius:10px;
+    color:#fff;font-size:16px;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+    transition:.15s;
+  }
+  .send-btn:hover{opacity:.85}
+
+  /* TYPING */
+  .typing-indicator{
+    display:flex;align-items:center;gap:4px;
+    padding:10px 14px;
+    background:var(--bot-bubble);
+    border:1px solid var(--border);
+    border-radius:14px;border-bottom-left-radius:4px;
+    width:fit-content;
+  }
+  .typing-dot{
+    width:7px;height:7px;
+    background:var(--muted);
+    border-radius:50%;
+    animation:bounce .9s infinite;
+  }
+  .typing-dot:nth-child(2){animation-delay:.15s}
+  .typing-dot:nth-child(3){animation-delay:.3s}
+  @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+
+  /* PROCESSING BANNER */
+  .processing-banner{
+    display:flex;align-items:center;gap:8px;
+    padding:7px 14px;
+    background:rgba(108,99,255,.08);
+    border-radius:8px;
+    font-size:11px;color:var(--accent);
+    margin-bottom:8px;
+    font-weight:600;
+  }
+  .processing-banner i{animation:spin 1.5s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .hidden{display:none!important}
+
+  /* SCROLLBAR */
+  .sidebar::-webkit-scrollbar{width:3px}
+  .sidebar::-webkit-scrollbar-track{background:transparent}
+  .sidebar::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+  /* RESPONSIVE */
+  @media(max-width:700px){
+    .sidebar{display:none}
+    .pipeline-badges{display:none}
+    .product-cards{grid-template-columns:1fr 1fr}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-icon"><i class="fa-solid fa-robot"></i></div>
+  <div class="logo-text">Product<span>Bot</span></div>
+  <div class="header-badge"><div class="dot"></div> Powered by Dify + Railway</div>
+</header>
+
+<div class="app-layout">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-label">Navigation</div>
+    <button class="sidebar-btn active"><i class="fa-solid fa-comments"></i> Product Chat</button>
+    <button class="sidebar-btn"><i class="fa-solid fa-magnifying-glass"></i> Browse Catalog</button>
+    <button class="sidebar-btn"><i class="fa-solid fa-clock-rotate-left"></i> History</button>
+    <button class="sidebar-btn"><i class="fa-solid fa-sliders"></i> Settings</button>
+
+    <div class="kb-section">
+      <div class="kb-title"><i class="fa-solid fa-database" style="margin-right:5px"></i>Knowledge Base</div>
+      <div class="kb-item">
+        <i class="fa-solid fa-circle-check"></i>
+        Product Catalog
+        <span class="kb-stat">2,847</span>
+      </div>
+      <div class="kb-item">
+        <i class="fa-solid fa-circle-check"></i>
+        Feature Specs
+        <span class="kb-stat">1,203</span>
+      </div>
+      <div class="kb-item">
+        <i class="fa-solid fa-circle-check"></i>
+        Categories
+        <span class="kb-stat">89</span>
+      </div>
+    </div>
+
+    <div class="kb-section" style="margin-top:8px">
+      <div class="kb-title"><i class="fa-solid fa-server" style="margin-right:5px"></i>Railway API</div>
+      <div class="kb-item">
+        <i class="fa-solid fa-circle" style="color:var(--accent2);font-size:8px"></i>
+        Live inventory
+      </div>
+      <div class="kb-item">
+        <i class="fa-solid fa-circle" style="color:var(--accent2);font-size:8px"></i>
+        Real-time pricing
+      </div>
+      <div class="kb-item">
+        <i class="fa-solid fa-circle" style="color:var(--accent2);font-size:8px"></i>
+        Stock status
+      </div>
+    </div>
+  </div>
+
+  <!-- CHAT -->
+  <div class="chat-area">
+    <div class="chat-header">
+      <div class="chat-header-icon"><i class="fa-solid fa-sparkles"></i></div>
+      <div class="chat-header-info">
+        <div class="name">Product Assistant</div>
+        <div class="sub">RAG + Live API — Dify Workflow</div>
+      </div>
+      <div class="pipeline-badges">
+        <div class="pipe-badge kb"><i class="fa-solid fa-database"></i> KB Retrieval</div>
+        <div class="pipe-badge api"><i class="fa-solid fa-plug"></i> Railway API</div>
+        <div class="pipe-badge rag"><i class="fa-solid fa-code-merge"></i> Code Merge</div>
+      </div>
+    </div>
+
+    <div class="messages" id="messages">
+      <!-- Welcome message -->
+      <div class="msg-row">
+        <div class="avatar bot"><i class="fa-solid fa-robot"></i></div>
+        <div class="bubble bot">
+          <strong>Hi! I'm your product assistant.</strong><br><br>
+          Ask me anything in natural language — price range, features, category. I'll search the product knowledge base and check live inventory from the Railway backend to give you accurate results.
+          <br><br>
+          <span style="font-size:12px;color:var(--muted)">Try one of the suggestions below or type your own query.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUGGESTIONS -->
+    <div class="suggestions" id="suggestions">
+      <button class="sugg-btn" onclick="sendSuggestion(this,'Laptops under $800 with at least 16GB RAM')">
+        <i class="fa-solid fa-laptop"></i> Laptops under $800, 16GB+
+      </button>
+      <button class="sugg-btn" onclick="sendSuggestion(this,'Wireless headphones good for remote work')">
+        <i class="fa-solid fa-headphones"></i> Headphones for remote work
+      </button>
+      <button class="sugg-btn" onclick="sendSuggestion(this,'Best selling items in electronics this week')">
+        <i class="fa-solid fa-fire"></i> Best sellers this week
+      </button>
+      <button class="sugg-btn" onclick="sendSuggestion(this,'Compact cameras under $400 for travel photography')">
+        <i class="fa-solid fa-camera"></i> Travel cameras under $400
+      </button>
+    </div>
+
+    <!-- INPUT -->
+    <div class="input-area">
+      <div class="input-wrap">
+        <i class="fa-solid fa-magnifying-glass" style="color:var(--muted);font-size:13px"></i>
+        <input type="text" id="chatInput" placeholder="Ask about any product in natural language..." onkeydown="if(event.key==='Enter')sendMessage()">
+      </div>
+      <button class="send-btn" onclick="sendMessage()"><i class="fa-solid fa-paper-plane"></i></button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const RESPONSES = {
+  laptop: {
+    query: "Laptops under $800 with at least 16GB RAM",
+    trace: [
+      {cls:"kb-step", icon:"fa-database", label:"KB Retrieval"},
+      {cls:"api-step", icon:"fa-plug", label:"Railway API"},
+      {cls:"merge-step", icon:"fa-code-merge", label:"Code Merge"},
+      {cls:"llm-step", icon:"fa-brain", label:"LLM Response"},
+    ],
+    text: "Found <strong>3 laptops</strong> matching your criteria — all with 16GB+ RAM and priced under $800. Stock data is live from Railway.",
+    products: [
+      {name:"Acer Aspire 5 Slim", price:"$649", tags:["16GB RAM","512GB SSD","AMD Ryzen 5"], img:"https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400&q=80", kbMatch:true, apiMatch:true},
+      {name:"Lenovo IdeaPad 3", price:"$729", tags:["16GB RAM","1TB SSD","Intel i5"], img:"https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=400&q=80", kbMatch:true, apiMatch:true},
+      {name:"ASUS VivoBook 15", price:"$769", tags:["24GB RAM","512GB SSD","Intel i7"], img:"https://images.unsplash.com/photo-1587614382346-4ec70e388b28?w=400&q=80", kbMatch:true, apiMatch:false},
+    ]
+  },
+  headphones: {
+    query: "Wireless headphones good for remote work",
+    trace: [
+      {cls:"kb-step", icon:"fa-database", label:"KB Retrieval"},
+      {cls:"api-step", icon:"fa-plug", label:"Railway API"},
+      {cls:"merge-step", icon:"fa-code-merge", label:"Code Merge"},
+      {cls:"llm-step", icon:"fa-brain", label:"LLM Response"},
+    ],
+    text: "Found <strong>3 headphones</strong> recommended for remote work — key features: active noise cancellation, long battery life, mic quality.",
+    products: [
+      {name:"Sony WH-1000XM5", price:"$349", tags:["ANC","30hr battery","USB-C"], img:"https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&q=80", kbMatch:true, apiMatch:true},
+      {name:"Bose QuietComfort 45", price:"$329", tags:["ANC","24hr battery","Foldable"], img:"https://images.unsplash.com/photo-1484704849700-f032a568e944?w=400&q=80", kbMatch:true, apiMatch:true},
+      {name:"Jabra Evolve2 55", price:"$449", tags:["Call quality","38hr battery","MS Teams"], img:"https://images.unsplash.com/photo-1524678606370-a47ad25cb82a?w=400&q=80", kbMatch:true, apiMatch:true},
+    ]
+  },
+  bestsellers: {
+    query: "Best selling items in electronics this week",
+    trace: [
+      {cls:"api-step", icon:"fa-plug", label:"Railway API"},
+      {cls:"kb-step", icon:"fa-database", label:"KB Enrichment"},
+      {cls:"merge-step", icon:"fa-code-merge", label:"Code Merge"},
+      {cls:"llm-step", icon:"fa-brain", label:"LLM Response"},
+    ],
+    text: "Here are this week's <strong>top 3 electronics</strong> by sales volume — data pulled live from Railway backend.",
+    products: [
+      {name:"Apple AirPods Pro 2", price:"$229", tags:["#1 this week","ANC","MagSafe"], img:"https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=400&q=80", kbMatch:false, apiMatch:true},
+      {name:"Samsung 65\" QLED TV", price:"$799", tags:["#2 this week","4K","Smart TV"], img:"https://images.unsplash.com/photo-1593359677879-a4bb92f829e1?w=400&q=80", kbMatch:false, apiMatch:true},
+      {name:"iPad Air M2", price:"$599", tags:["#3 this week","256GB","Wi-Fi 6E"], img:"https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=400&q=80", kbMatch:true, apiMatch:true},
+    ]
+  },
+  cameras: {
+    query: "Compact cameras under $400 for travel photography",
+    trace: [
+      {cls:"kb-step", icon:"fa-database", label:"KB Retrieval"},
+      {cls:"api-step", icon:"fa-plug", label:"Railway API"},
+      {cls:"merge-step", icon:"fa-code-merge", label:"Code Merge"},
+      {cls:"llm-step", icon:"fa-brain", label:"LLM Response"},
+    ],
+    text: "Found <strong>3 compact cameras</strong> under $400, optimized for travel — lightweight, good autofocus, optical zoom.",
+    products: [
+      {name:"Canon PowerShot G7 X III", price:"$749", tags:["4K video","20MP","Wi-Fi"], img:"https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=400&q=80", kbMatch:true, apiMatch:false},
+      {name:"Sony ZV-1 II", price:"$399", tags:["Vlog-ready","18MP","Eye-AF"], img:"https://images.unsplash.com/photo-1461151304267-38535e780c79?w=400&q=80", kbMatch:true, apiMatch:true},
+      {name:"Ricoh GR IIIx", price:"$999", tags:["Street photo","26MP","APS-C"], img:"https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=400&q=80", kbMatch:true, apiMatch:true},
+    ]
+  }
+};
+
+let busy = false;
+
+function sendSuggestion(btn, query) {
+  if(busy) return;
+  document.getElementById('chatInput').value = query;
+  document.querySelectorAll('.sugg-btn').forEach(b => b.style.opacity='.4');
+  btn.style.opacity='1';
+  setTimeout(()=>{ sendMessage(); }, 200);
+}
+
+function sendMessage(){
+  if(busy) return;
+  const input = document.getElementById('chatInput');
+  const q = input.value.trim();
+  if(!q) return;
+  input.value = '';
+  busy = true;
+
+  // Figure out which response to use
+  const qLower = q.toLowerCase();
+  let key = 'laptop';
+  if(qLower.includes('headphone') || qLower.includes('remote work')) key = 'headphones';
+  else if(qLower.includes('best') || qLower.includes('selling')) key = 'bestsellers';
+  else if(qLower.includes('camera') || qLower.includes('travel')) key = 'cameras';
+  else if(qLower.includes('laptop') || qLower.includes('ram')) key = 'laptop';
+
+  const data = RESPONSES[key];
+  appendUserMsg(q);
+
+  // Hide suggestions
+  document.getElementById('suggestions').style.display = 'none';
+
+  // Show typing
+  const typingRow = appendTyping();
+  scrollBottom();
+
+  // Step 1: processing banner inside bot bubble after 700ms
+  setTimeout(()=>{
+    typingRow.remove();
+    appendProcessing(data.trace, data.text, data.products);
+    busy = false;
+  }, 1800);
+}
+
+function appendUserMsg(text){
+  const row = document.createElement('div');
+  row.className = 'msg-row user';
+  row.innerHTML = `
+    <div class="avatar user"><i class="fa-solid fa-user"></i></div>
+    <div class="bubble user">${escHtml(text)}</div>
+  `;
+  document.getElementById('messages').appendChild(row);
+  scrollBottom();
+}
+
+function appendTyping(){
+  const row = document.createElement('div');
+  row.className = 'msg-row';
+  row.innerHTML = `
+    <div class="avatar bot"><i class="fa-solid fa-robot"></i></div>
+    <div class="typing-indicator">
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
+    </div>
+  `;
+  document.getElementById('messages').appendChild(row);
+  scrollBottom();
+  return row;
+}
+
+function appendProcessing(trace, text, products){
+  const row = document.createElement('div');
+  row.className = 'msg-row';
+
+  const traceHtml = trace.map((s,i) =>
+    `<span class="trace-step ${s.cls}"><i class="fa-solid ${s.icon}"></i> ${s.label}</span>${i<trace.length-1?'<span class="trace-arrow"><i class="fa-solid fa-chevron-right"></i></span>':''}`
+  ).join('');
+
+  const productsHtml = products.map(p => `
+    <div class="product-card">
+      <img class="product-img" src="${p.img}" alt="${p.name}" loading="lazy">
+      <div class="product-info">
+        <div class="product-name">${p.name}</div>
+        <div class="product-price">${p.price}</div>
+        <div class="product-tags">${p.tags.map(t=>`<span class="product-tag">${t}</span>`).join('')}</div>
+        <div class="product-source">
+          ${p.kbMatch?`<span class="source-dot kb"></span><span>KB</span>`:``}
+          ${p.apiMatch?`<span class="source-dot api" style="margin-left:${p.kbMatch?'6px':'0'}"></span><span>API</span>`:``}
+          ${!p.apiMatch?`<span style="color:#ff6b6b;font-size:10px;margin-left:4px">out of stock</span>`:''}
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  row.innerHTML = `
+    <div class="avatar bot"><i class="fa-solid fa-robot"></i></div>
+    <div class="bubble bot" style="max-width:90%">
+      <div class="pipeline-trace">${traceHtml}</div>
+      <p style="margin-bottom:12px">${text}</p>
+      <div class="product-cards">${productsHtml}</div>
+      <p style="margin-top:12px;font-size:12px;color:var(--muted)">
+        <i class="fa-solid fa-circle-info" style="margin-right:4px"></i>
+        Green dot = Knowledge Base match &nbsp;·&nbsp; Purple dot = Railway API live data
+      </p>
+    </div>
+  `;
+  document.getElementById('messages').appendChild(row);
+  scrollBottom();
+}
+
+function scrollBottom(){
+  const m = document.getElementById('messages');
+  m.scrollTop = m.scrollHeight;
+}
+
+function escHtml(s){
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+</body>
+</html>
