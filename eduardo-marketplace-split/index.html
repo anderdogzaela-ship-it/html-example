@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VendaJunto — Marketplace Multi-Vendedor com Split de Pagamento</title>
+<meta name="description" content="Demo interativo de marketplace multi-vendedor com checkout unificado, split automatico de pagamento por vendedor via Pagar.me Marketplace, painel do vendedor e painel operadora.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+:root{
+  --g50:#fffbeb;--g100:#fef3c7;--g200:#fde68a;--g300:#fcd34d;
+  --g400:#fbbf24;--g500:#f59e0b;--g600:#d97706;--g700:#b45309;
+  --g800:#92400e;--g900:#78350f;--g950:#451a03;
+  --n50:#fafaf9;--n100:#f5f5f4;--n200:#e7e5e4;--n300:#d6d3d1;
+  --n400:#a8a29e;--n500:#78716c;--n600:#57534e;--n700:#44403c;
+  --n800:#292524;--n900:#1c1917;
+  --green:#16a34a;--green-bg:#dcfce7;--green-border:#86efac;
+  --red:#dc2626;--red-bg:#fee2e2;
+  --blue:#2563eb;--blue-bg:#dbeafe;
+  --card:#ffffff;--bg:var(--n50);
+  --border:var(--n200);--border-l:var(--n100);
+  --shadow-xs:0 1px 3px rgba(69,26,3,.06);
+  --shadow-sm:0 2px 8px rgba(69,26,3,.08);
+  --shadow-md:0 6px 20px rgba(69,26,3,.12);
+  --shadow-lg:0 16px 48px rgba(69,26,3,.16);
+  --shadow-gold:0 4px 28px rgba(217,119,6,.35);
+  --r-sm:8px;--r-md:12px;--r-lg:16px;--r-xl:24px;--r-2xl:32px;
+  --ease-spring:cubic-bezier(.34,1.56,.64,1);
+  --ease-smooth:cubic-bezier(.4,0,.2,1);
+  --ease-out:cubic-bezier(0,0,.2,1);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'Lexend',sans-serif;background:var(--bg);color:var(--n900);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+button{font-family:inherit;cursor:pointer}
+a{color:inherit}
+
+@keyframes floatOrb{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(40px,-28px) scale(1.12)}66%{transform:translate(-24px,18px) scale(.94)}}
+@keyframes floatOrb2{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(-36px,20px) scale(.9)}66%{transform:translate(28px,-14px) scale(1.08)}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes pop{0%{transform:scale(.9);opacity:0}60%{transform:scale(1.03)}100%{transform:scale(1);opacity:1}}
+@keyframes toastIn{from{opacity:0;transform:translateY(40px) scale(.95)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes toastOut{to{opacity:0;transform:translateY(40px) scale(.95)}}
+@keyframes pulseDot{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes splitBar{from{width:0}}
+
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .55s var(--ease-out),transform .55s var(--ease-out)}
+.reveal.visible{opacity:1;transform:translateY(0)}
+
+/* ===== TOP NAV / SURFACE SWITCHER ===== */
+.topbar{position:sticky;top:0;z-index:200;background:rgba(28,25,23,.92);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:1px solid rgba(251,191,36,.15)}
+.topbar-inner{max-width:1280px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 24px}
+.brand{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.brand .logo{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,var(--g400),var(--g600));display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(217,119,6,.4);font-size:16px;color:#1c1917}
+.brand-text{display:flex;flex-direction:column;line-height:1.15}
+.brand-text b{font-size:16px;font-weight:800;color:#fff}
+.brand-text b span{color:var(--g400)}
+.brand-text small{font-size:10px;color:rgba(255,255,255,.5);font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+
+.surface-switch{display:flex;gap:4px;background:rgba(255,255,255,.06);border:1px solid rgba(251,191,36,.15);border-radius:100px;padding:4px}
+.surface-switch button{border:0;background:transparent;color:rgba(255,255,255,.6);padding:9px 16px;border-radius:100px;font-size:12.5px;font-weight:700;transition:.25s var(--ease-spring);display:flex;align-items:center;gap:7px;white-space:nowrap}
+.surface-switch button.active{background:linear-gradient(135deg,var(--g400),var(--g600));color:#1c1917;box-shadow:0 4px 14px rgba(217,119,6,.4)}
+.demo-tag{font-size:11px;color:rgba(255,255,255,.55);border:1px solid rgba(255,255,255,.15);padding:6px 12px;border-radius:100px;display:flex;align-items:center;gap:6px;flex-shrink:0}
+.restart-btn{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#fff;padding:9px 15px;border-radius:100px;font-size:12px;font-weight:700;display:flex;align-items:center;gap:7px;transition:.2s var(--ease-spring);flex-shrink:0}
+.restart-btn:hover{background:rgba(255,255,255,.14);transform:translateY(-1px)}
+.hamburger-top{display:none;background:none;border:none;color:#fff;font-size:1.3rem}
+@media(max-width:980px){
+  .demo-tag{display:none}
+  .brand-text small{display:none}
+  .surface-switch button span.lbl{display:none}
+  .surface-switch button{padding:9px 12px}
+}
+@media(max-width:640px){
+  .topbar-inner{flex-wrap:wrap;gap:10px}
+  .surface-switch{order:3;width:100%;justify-content:space-between}
+  .restart-btn span.lbl{display:none}
+}
+
+/* ===== HERO STRIP ===== */
+.hero-strip{position:relative;background:linear-gradient(135deg,var(--g950) 0%,var(--g900) 55%,var(--g800) 100%);padding:34px 24px 30px;overflow:hidden}
+.orb{position:absolute;border-radius:50%;pointer-events:none}
+.orb-1{width:420px;height:420px;background:radial-gradient(circle,rgba(251,191,36,.25) 0%,transparent 70%);top:-140px;left:-100px;animation:floatOrb 11s ease-in-out infinite}
+.orb-2{width:340px;height:340px;background:radial-gradient(circle,rgba(180,83,9,.25) 0%,transparent 70%);bottom:-120px;right:-80px;animation:floatOrb2 13s ease-in-out infinite}
+.hero-strip-inner{position:relative;z-index:1;max-width:1280px;margin:0 auto;text-align:center}
+.hero-pill{display:inline-flex;align-items:center;gap:8px;background:rgba(251,191,36,.15);border:1px solid rgba(251,191,36,.35);color:var(--g300);padding:6px 16px;border-radius:40px;font-size:.76rem;font-weight:700;margin-bottom:14px;letter-spacing:.4px;animation:fadeIn .7s .1s both}
+.hero-strip h1{font-size:clamp(1.3rem,3.2vw,1.9rem);font-weight:900;color:#fff;line-height:1.25;margin-bottom:8px;animation:slideUp .6s .2s both;letter-spacing:-.5px}
+.hero-strip h1 em{font-style:normal;color:var(--g400)}
+.hero-strip p{font-size:.86rem;color:rgba(255,255,255,.6);max-width:640px;margin:0 auto;animation:slideUp .6s .3s both;line-height:1.55}
+
+/* ===== SURFACES ===== */
+.surface{display:none}
+.surface.active{display:block;animation:fadeIn .35s var(--ease-out)}
+main{max-width:1280px;margin:0 auto;padding:24px 24px 70px}
+
+/* ===== CLIENTE: product grid ===== */
+.section-label{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.section-label i{color:var(--g600)}
+.section-label h2{font-size:1.05rem;font-weight:800}
+.section-label span{font-size:.78rem;color:var(--n500);font-weight:500}
+
+.cliente-layout{display:grid;grid-template-columns:1fr 340px;gap:22px;align-items:start}
+@media(max-width:980px){.cliente-layout{grid-template-columns:1fr}}
+
+.product-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:26px}
+@media(max-width:900px){.product-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.product-grid{grid-template-columns:1fr 1fr}}
+.product-card{background:var(--card);border-radius:var(--r-lg);border:1.5px solid var(--border);overflow:hidden;transition:transform .25s var(--ease-spring),box-shadow .25s var(--ease-smooth);cursor:pointer}
+.product-card:hover{transform:translateY(-5px);box-shadow:var(--shadow-lg);border-color:var(--n300)}
+.card-img-wrap{position:relative;height:150px;overflow:hidden;background:#f0e8d8}
+.card-img-wrap img{width:100%;height:100%;object-fit:cover;transition:transform .45s var(--ease-smooth);display:block}
+.product-card:hover .card-img-wrap img{transform:scale(1.07)}
+.card-body{padding:13px}
+.card-seller-tag{display:inline-flex;align-items:center;gap:5px;font-size:.68rem;font-weight:700;color:var(--g700);background:var(--g100);padding:3px 8px;border-radius:6px;margin-bottom:7px}
+.card-name{font-size:.85rem;font-weight:700;line-height:1.3;margin-bottom:8px;min-height:2.4em}
+.card-price-row{display:flex;align-items:center;justify-content:space-between}
+.card-price{font-size:1.02rem;font-weight:900;color:var(--n900);letter-spacing:-.4px}
+.btn-add{background:var(--n900);color:#fff;border:none;width:34px;height:34px;border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;transition:.2s var(--ease-spring);flex-shrink:0}
+.btn-add:hover{background:var(--g600);transform:scale(1.08)}
+.btn-add:active{transform:scale(.92)}
+.btn-add.added{background:var(--green)}
+
+/* ===== CART SIDEBAR ===== */
+.cart-panel{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r-lg);padding:18px;position:sticky;top:96px;box-shadow:var(--shadow-sm)}
+.cart-panel h3{font-size:.95rem;font-weight:800;display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.cart-panel h3 i{color:var(--g600)}
+.cart-panel .cart-sub{font-size:.74rem;color:var(--n500);margin-bottom:14px}
+.cart-empty{text-align:center;padding:30px 10px;color:var(--n400)}
+.cart-empty i{font-size:1.8rem;margin-bottom:10px;display:block}
+.cart-empty span{font-size:.82rem}
+.cart-items{display:flex;flex-direction:column;gap:10px;margin-bottom:14px;max-height:280px;overflow-y:auto}
+.cart-item{display:flex;align-items:center;gap:10px;padding:8px;border-radius:var(--r-sm);background:var(--n50)}
+.cart-item img{width:38px;height:38px;border-radius:7px;object-fit:cover;flex-shrink:0}
+.cart-item-info{flex:1;min-width:0}
+.cart-item-info b{font-size:.76rem;font-weight:700;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cart-item-info span{font-size:.7rem;color:var(--n500)}
+.cart-item-price{font-size:.78rem;font-weight:800;white-space:nowrap}
+.cart-remove{background:none;border:none;color:var(--n400);font-size:.75rem;padding:3px;flex-shrink:0}
+.cart-remove:hover{color:var(--red)}
+.cart-totals{border-top:1px dashed var(--border);padding-top:12px;display:flex;flex-direction:column;gap:6px}
+.cart-total-row{display:flex;justify-content:space-between;font-size:.82rem;color:var(--n600)}
+.cart-total-row.grand{font-size:1rem;font-weight:900;color:var(--n900);margin-top:4px}
+.btn-checkout{width:100%;margin-top:14px;background:linear-gradient(135deg,var(--g500),var(--g700));color:#fff;border:none;padding:13px;border-radius:var(--r-md);font-size:.9rem;font-weight:800;display:flex;align-items:center;justify-content:center;gap:9px;transition:.2s var(--ease-spring);box-shadow:var(--shadow-gold)}
+.btn-checkout:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 30px rgba(217,119,6,.45)}
+.btn-checkout:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
+
+/* ===== FULFILLMENT ===== */
+.fulfill-note{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.fulfill-chip{font-size:.68rem;font-weight:700;color:var(--n600);background:var(--n100);padding:4px 9px;border-radius:100px;display:flex;align-items:center;gap:5px}
+.fulfill-chip i{color:var(--g600)}
+
+/* ===== CHECKOUT MODAL ===== */
+.modal-backdrop{position:fixed;inset:0;background:rgba(28,25,23,.72);backdrop-filter:blur(6px);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .3s var(--ease-out)}
+.modal-backdrop.open{opacity:1;pointer-events:all}
+.checkout-modal{background:var(--card);border-radius:var(--r-xl);width:100%;max-width:560px;max-height:92vh;overflow-y:auto;box-shadow:0 40px 100px rgba(0,0,0,.5);transform:scale(.95) translateY(16px);transition:transform .35s var(--ease-spring),opacity .35s var(--ease-out);opacity:0}
+.modal-backdrop.open .checkout-modal{transform:scale(1) translateY(0);opacity:1}
+.modal-head{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--card);z-index:2}
+.modal-head h3{font-size:1rem;font-weight:800}
+.modal-close{width:32px;height:32px;border-radius:50%;border:1.5px solid var(--border);background:none;display:flex;align-items:center;justify-content:center;color:var(--n500);transition:.2s var(--ease-spring)}
+.modal-close:hover{background:var(--n100);transform:scale(1.1)}
+.modal-body{padding:22px 24px}
+
+.step-fulfill{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:20px}
+.fulfill-opt{display:flex;align-items:center;gap:12px;padding:13px;border:1.5px solid var(--border);border-radius:var(--r-md);cursor:pointer;transition:.2s var(--ease-spring)}
+.fulfill-opt:hover{border-color:var(--g400)}
+.fulfill-opt.sel{border-color:var(--g500);background:var(--g50)}
+.fulfill-opt i{font-size:1.1rem;color:var(--g600);width:22px;text-align:center}
+.fulfill-opt b{font-size:.86rem;display:block}
+.fulfill-opt span{font-size:.74rem;color:var(--n500)}
+
+.pay-btn-row{display:flex;gap:10px;margin-bottom:20px}
+.pay-opt{flex:1;padding:12px;border:1.5px solid var(--border);border-radius:var(--r-md);text-align:center;cursor:pointer;transition:.2s var(--ease-spring);font-size:.8rem;font-weight:700;color:var(--n600)}
+.pay-opt i{display:block;font-size:1.1rem;margin-bottom:5px;color:var(--n400)}
+.pay-opt.sel{border-color:var(--g500);background:var(--g50);color:var(--g700)}
+.pay-opt.sel i{color:var(--g600)}
+
+.btn-confirm-pay{width:100%;background:linear-gradient(135deg,var(--g500),var(--g700));color:#fff;border:none;padding:14px;border-radius:var(--r-md);font-size:.92rem;font-weight:800;display:flex;align-items:center;justify-content:center;gap:9px;transition:.2s var(--ease-spring);box-shadow:var(--shadow-gold)}
+.btn-confirm-pay:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(217,119,6,.45)}
+.btn-confirm-pay:active{transform:scale(.98)}
+
+/* ===== SPLIT BREAKDOWN (centerpiece) ===== */
+.split-wrap{display:none}
+.split-wrap.show{display:block;animation:fadeIn .4s var(--ease-out)}
+.split-hero{text-align:center;padding:6px 0 18px}
+.split-hero .split-check{width:60px;height:60px;border-radius:50%;background:var(--green-bg);border:2px solid var(--green-border);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:1.5rem;color:var(--green);animation:pop .5s var(--ease-spring) both}
+.split-hero h4{font-size:1.05rem;font-weight:900}
+.split-hero p{font-size:.8rem;color:var(--n500);margin-top:4px}
+
+.split-total-line{text-align:center;font-size:1.6rem;font-weight:900;color:var(--n900);margin:10px 0 4px;letter-spacing:-1px}
+.split-total-sub{text-align:center;font-size:.76rem;color:var(--n500);margin-bottom:18px}
+
+.split-flow{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+.split-flow .fnode{background:var(--n900);color:#fff;padding:8px 14px;border-radius:100px;font-size:.78rem;font-weight:700;display:flex;align-items:center;gap:7px}
+.split-flow i.arrow{color:var(--n400)}
+
+.split-row{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--r-md);margin-bottom:10px;opacity:0;animation:slideUp .5s var(--ease-out) forwards}
+.split-row .sr-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--g400),var(--g600));color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.8rem;flex-shrink:0}
+.split-row.plat .sr-avatar{background:linear-gradient(135deg,var(--n700),var(--n900))}
+.split-row-info{flex:1;min-width:0}
+.split-row-info b{font-size:.82rem;font-weight:700;display:block}
+.split-row-info span{font-size:.72rem;color:var(--n500)}
+.split-row-amt{text-align:right;flex-shrink:0}
+.split-row-amt b{font-size:.9rem;font-weight:900;display:block}
+.split-row-amt.recebe b{color:var(--green)}
+.split-row-amt.retem b{color:var(--n700)}
+.split-bar-track{height:5px;background:var(--n100);border-radius:4px;overflow:hidden;margin-top:6px}
+.split-bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--g400),var(--g600));background-size:200% 100%;animation:shimmer 1.6s ease infinite, splitBar 1s var(--ease-out) forwards}
+.split-row.plat .split-bar-fill{background:linear-gradient(90deg,var(--n600),var(--n900))}
+
+.split-order-id{background:var(--n50);border:1px dashed var(--border);border-radius:var(--r-md);padding:12px 14px;display:flex;align-items:center;justify-content:space-between;margin-top:16px;font-size:.78rem}
+.split-order-id b{font-weight:800;color:var(--n900)}
+.split-order-id span{color:var(--n500)}
+
+.btn-done{width:100%;margin-top:18px;background:var(--n900);color:#fff;border:none;padding:13px;border-radius:var(--r-md);font-size:.88rem;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px;transition:.2s var(--ease-spring)}
+.btn-done:hover{background:var(--g700);transform:translateY(-2px)}
+
+.checkout-step{display:none}
+.checkout-step.active{display:block}
+
+/* ===== VENDEDOR SURFACE ===== */
+.vendedor-topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px;flex-wrap:wrap}
+.vendedor-select{display:flex;align-items:center;gap:10px;background:var(--card);border:1.5px solid var(--border);border-radius:var(--r-md);padding:8px 8px 8px 14px}
+.vendedor-select label{font-size:.72rem;color:var(--n500);font-weight:700}
+.vendedor-select select{border:none;background:none;font-family:'Lexend',sans-serif;font-size:.86rem;font-weight:700;color:var(--n900);padding:6px;outline:none;cursor:pointer}
+
+.vend-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+@media(max-width:800px){.vend-kpis{grid-template-columns:repeat(2,1fr)}}
+.vkpi{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r-lg);padding:16px}
+.vkpi .lbl{font-size:.68rem;color:var(--n400);font-weight:800;text-transform:uppercase;letter-spacing:.05em}
+.vkpi .val{font-size:1.5rem;font-weight:900;margin-top:5px;color:var(--n900)}
+.vkpi .val.gold{color:var(--g600)}.vkpi .val.green{color:var(--green)}
+
+.panel-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:20px;align-items:start}
+@media(max-width:980px){.panel-grid{grid-template-columns:1fr}}
+.panel-card{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r-lg);padding:18px;margin-bottom:18px;box-shadow:var(--shadow-xs)}
+.panel-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:10px;flex-wrap:wrap}
+.panel-head h3{font-size:.94rem;font-weight:800;display:flex;align-items:center;gap:8px}
+.panel-head h3 i{color:var(--g600)}
+.panel-head p{font-size:.72rem;color:var(--n500);margin-top:2px}
+
+.order-row{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--border-l);border-radius:var(--r-md);margin-bottom:9px;transition:.2s}
+.order-row:hover{border-color:var(--n300)}
+.order-row-info{flex:1;min-width:0}
+.order-row-info b{font-size:.83rem;font-weight:700;display:block}
+.order-row-info span{font-size:.72rem;color:var(--n500)}
+.order-amt{font-size:.85rem;font-weight:800;white-space:nowrap}
+.status-pill{font-size:.68rem;font-weight:800;padding:5px 11px;border-radius:100px;white-space:nowrap;border:none;transition:.2s var(--ease-spring)}
+.status-pill:hover{transform:scale(1.05)}
+.status-pill.novo{background:var(--blue-bg);color:var(--blue)}
+.status-pill.confirmado{background:var(--g100);color:var(--g700)}
+.status-pill.processando{background:#ede9fe;color:#6d28d9}
+.status-pill.pronto{background:var(--green-bg);color:var(--green)}
+.order-empty{text-align:center;padding:30px 10px;color:var(--n400)}
+.order-empty i{font-size:1.6rem;margin-bottom:8px;display:block}
+.order-empty span{font-size:.8rem}
+
+.stock-tbl{width:100%;border-collapse:collapse;font-size:.8rem}
+.stock-tbl th{text-align:left;font-size:.66rem;text-transform:uppercase;letter-spacing:.05em;color:var(--n400);padding:8px 6px;border-bottom:1px solid var(--border);font-weight:800}
+.stock-tbl td{padding:10px 6px;border-bottom:1px solid var(--border-l);vertical-align:middle}
+.stock-tbl tr:last-child td{border-bottom:none}
+.stock-qty{display:flex;align-items:center;gap:6px}
+.qty-btn{width:22px;height:22px;border-radius:6px;border:1px solid var(--border);background:var(--n50);display:flex;align-items:center;justify-content:center;font-size:.7rem;transition:.2s var(--ease-spring)}
+.qty-btn:hover{background:var(--g100);border-color:var(--g400)}
+.qty-val{font-weight:800;min-width:20px;text-align:center}
+.qty-low{color:var(--red)}
+
+.payout-widget{display:flex;flex-direction:column;gap:12px}
+.payout-box{display:flex;align-items:center;justify-content:space-between;padding:14px;border-radius:var(--r-md);background:var(--n50)}
+.payout-box.pending{background:var(--g50);border:1px solid var(--g200)}
+.payout-box.received{background:var(--green-bg);border:1px solid var(--green-border)}
+.payout-box .pb-l{display:flex;align-items:center;gap:10px}
+.payout-box .pb-l i{font-size:1rem;color:var(--g600)}
+.payout-box.received .pb-l i{color:var(--green)}
+.payout-box b{font-size:.8rem;font-weight:700;display:block}
+.payout-box span{font-size:.7rem;color:var(--n500)}
+.payout-box .pb-val{font-size:1.05rem;font-weight:900}
+.payout-note{font-size:.72rem;color:var(--n500);line-height:1.5;padding-top:4px;border-top:1px dashed var(--border)}
+.payout-note i{color:var(--g600);margin-right:4px}
+
+/* ===== OPERADORA SURFACE ===== */
+.op-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+@media(max-width:800px){.op-kpis{grid-template-columns:repeat(2,1fr)}}
+.op-kpi{background:linear-gradient(135deg,var(--n900),var(--n800));border-radius:var(--r-lg);padding:18px;color:#fff;position:relative;overflow:hidden}
+.op-kpi::after{content:'';position:absolute;top:-30px;right:-30px;width:90px;height:90px;border-radius:50%;background:rgba(251,191,36,.12)}
+.op-kpi .lbl{font-size:.68rem;color:rgba(255,255,255,.55);font-weight:800;text-transform:uppercase;letter-spacing:.05em;position:relative}
+.op-kpi .val{font-size:1.7rem;font-weight:900;margin-top:6px;color:var(--g400);position:relative}
+.op-kpi .delta{font-size:.7rem;color:rgba(255,255,255,.45);margin-top:3px;position:relative}
+
+.seller-row{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--border-l);border-radius:var(--r-md);margin-bottom:9px}
+.seller-avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--g400),var(--g600));color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;flex-shrink:0}
+.seller-row-info{flex:1;min-width:0}
+.seller-row-info b{font-size:.83rem;font-weight:700;display:block}
+.seller-row-info span{font-size:.72rem;color:var(--n500)}
+.kyc-pill{font-size:.66rem;font-weight:800;padding:4px 10px;border-radius:100px;white-space:nowrap}
+.kyc-pill.pendente{background:var(--red-bg);color:var(--red)}
+.kyc-pill.aprovado{background:var(--green-bg);color:var(--green)}
+.seller-sales{font-size:.82rem;font-weight:800;white-space:nowrap;text-align:right}
+
+.feed-row{display:flex;align-items:center;gap:12px;padding:11px;border-bottom:1px solid var(--border-l);font-size:.8rem}
+.feed-row:last-child{border-bottom:none}
+.feed-dot{width:8px;height:8px;border-radius:50%;background:var(--g500);flex-shrink:0;animation:pulseDot 2s infinite}
+.feed-row-info{flex:1;min-width:0}
+.feed-row-info b{font-weight:700}
+.feed-row-info span{color:var(--n500);font-size:.72rem;display:block;margin-top:1px}
+.feed-time{font-size:.68rem;color:var(--n400);white-space:nowrap}
+
+.report-bars{display:flex;flex-direction:column;gap:12px}
+.rbar-row{display:flex;align-items:center;gap:10px}
+.rbar-label{font-size:.76rem;font-weight:700;width:120px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rbar-track{flex:1;height:9px;background:var(--n100);border-radius:5px;overflow:hidden}
+.rbar-fill{height:100%;border-radius:5px;background:linear-gradient(90deg,var(--g400),var(--g600))}
+.rbar-val{font-size:.76rem;font-weight:800;width:64px;text-align:right;flex-shrink:0}
+
+.recon-note{display:flex;gap:10px;align-items:flex-start;background:var(--g50);border:1px solid var(--g200);border-radius:var(--r-md);padding:13px;font-size:.78rem;color:var(--g800);line-height:1.5;margin-top:4px}
+.recon-note i{color:var(--g600);margin-top:2px}
+
+/* ===== TOAST ===== */
+.toast-container{position:fixed;bottom:24px;right:24px;z-index:900;display:flex;flex-direction:column;gap:10px;pointer-events:none}
+.toast{background:var(--n900);color:#fff;padding:13px 17px;border-radius:var(--r-md);font-size:.84rem;font-weight:600;display:flex;align-items:center;gap:10px;box-shadow:0 10px 40px rgba(0,0,0,.35);border:1px solid rgba(251,191,36,.2);animation:toastIn .45s var(--ease-spring) both;pointer-events:all;min-width:250px;max-width:340px}
+.toast.exit{animation:toastOut .3s var(--ease-smooth) forwards}
+.toast i{color:var(--g400);font-size:1.05rem;flex-shrink:0}
+.toast-close{margin-left:auto;background:none;border:none;color:rgba(255,255,255,.5);padding:2px 4px;flex-shrink:0}
+.toast-close:hover{color:#fff}
+@media(max-width:520px){.toast-container{left:16px;right:16px;bottom:16px}.toast{max-width:none}}
+
+.footer-note{margin-top:36px;text-align:center;color:var(--n400);font-size:.78rem;border-top:1px solid var(--border);padding-top:22px;line-height:1.6}
+.footer-note b{color:var(--n600)}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR / SURFACE SWITCH -->
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <span class="logo"><i class="fa-solid fa-store"></i></span>
+      <span class="brand-text"><b>Venda<span>Junto</span></b><small>Marketplace multi-vendedor</small></span>
+    </div>
+    <div class="surface-switch" id="switch">
+      <button data-surface="cliente" class="active"><i class="fa-solid fa-cart-shopping"></i> <span class="lbl">Cliente</span></button>
+      <button data-surface="vendedor"><i class="fa-solid fa-shop"></i> <span class="lbl">Vendedor</span></button>
+      <button data-surface="operadora"><i class="fa-solid fa-gauge"></i> <span class="lbl">Operadora</span></button>
+    </div>
+    <button class="restart-btn" id="restartBtn"><i class="fa-solid fa-rotate-left"></i> <span class="lbl">Reiniciar demo</span></button>
+  </div>
+</header>
+
+<!-- HERO STRIP (varies by surface via JS text swap, kept generic) -->
+<div class="hero-strip">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="hero-strip-inner">
+    <span class="hero-pill" id="heroPill"><i class="fa-solid fa-wand-magic-sparkles"></i> Demo interativo</span>
+    <h1 id="heroTitle">Um carrinho <em>varios vendedores</em> um pagamento so</h1>
+    <p id="heroSub">O cliente ve produtos de vendedores diferentes juntos. No checkout o valor total se divide sozinho entre cada vendedor e a comissao da plataforma via Pagar.me Marketplace.</p>
+  </div>
+</div>
+
+<main>
+
+<!-- ===================== SURFACE: CLIENTE ===================== -->
+<section class="surface active" id="surface-cliente">
+  <div class="cliente-layout">
+    <div>
+      <div class="section-label"><i class="fa-solid fa-bag-shopping"></i><h2>Vitrine</h2><span>Produtos de multiplos vendedores no mesmo catalogo</span></div>
+      <div class="product-grid" id="productGrid"></div>
+
+      <div class="fulfill-note">
+        <span class="fulfill-chip"><i class="fa-solid fa-store"></i> Retirada no vendedor</span>
+        <span class="fulfill-chip"><i class="fa-solid fa-motorcycle"></i> Delivery local</span>
+        <span class="fulfill-chip"><i class="fa-solid fa-box-archive"></i> Ponto de retirada</span>
+      </div>
+    </div>
+
+    <aside class="cart-panel">
+      <h3><i class="fa-solid fa-cart-shopping"></i> Seu carrinho</h3>
+      <div class="cart-sub">Pagamento unico. O split acontece depois de voce confirmar.</div>
+      <div id="cartEmpty" class="cart-empty">
+        <i class="fa-solid fa-basket-shopping"></i>
+        <span>Adicione produtos de qualquer vendedor</span>
+      </div>
+      <div class="cart-items" id="cartItems"></div>
+      <div class="cart-totals" id="cartTotals" style="display:none">
+        <div class="cart-total-row"><span>Subtotal</span><span id="cartSubtotal">R$ 0,00</span></div>
+        <div class="cart-total-row"><span>Frete</span><span id="cartFrete">R$ 0,00</span></div>
+        <div class="cart-total-row grand"><span>Total</span><span id="cartTotal">R$ 0,00</span></div>
+      </div>
+      <button class="btn-checkout" id="btnCheckout" disabled><i class="fa-solid fa-lock"></i> Finalizar compra</button>
+    </aside>
+  </div>
+</section>
+
+<!-- ===================== SURFACE: VENDEDOR ===================== -->
+<section class="surface" id="surface-vendedor" style="display:none">
+  <div class="vendedor-topbar">
+    <div class="section-label" style="margin-bottom:0"><i class="fa-solid fa-shop"></i><h2>Painel do vendedor</h2><span>Pedidos estoque e repasse</span></div>
+    <div class="vendedor-select">
+      <label>Vendo como</label>
+      <select id="vendedorSelect"></select>
+    </div>
+  </div>
+
+  <div class="vend-kpis">
+    <div class="vkpi"><div class="lbl">Pedidos hoje</div><div class="val gold" id="vkOrders">0</div></div>
+    <div class="vkpi"><div class="lbl">Itens em estoque</div><div class="val" id="vkStock">0</div></div>
+    <div class="vkpi"><div class="lbl">Repasse pendente</div><div class="val gold" id="vkPending">R$ 0</div></div>
+    <div class="vkpi"><div class="lbl">Ja recebido</div><div class="val green" id="vkReceived">R$ 0</div></div>
+  </div>
+
+  <div class="panel-grid">
+    <div>
+      <div class="panel-card">
+        <div class="panel-head"><h3><i class="fa-solid fa-receipt"></i> Meus pedidos</h3></div>
+        <div id="vendOrders"></div>
+        <div class="panel-head" style="margin-top:2px"><p style="font-size:.7rem">Clique no status para avancar novo -&gt; confirmado -&gt; processando -&gt; pronto</p></div>
+      </div>
+      <div class="panel-card">
+        <div class="panel-head"><h3><i class="fa-solid fa-boxes-stacked"></i> Estoque</h3></div>
+        <table class="stock-tbl">
+          <thead><tr><th>Produto</th><th>Preco</th><th>Qtd</th></tr></thead>
+          <tbody id="stockBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div>
+      <div class="panel-card">
+        <div class="panel-head"><h3><i class="fa-solid fa-sack-dollar"></i> Repasse</h3></div>
+        <div class="payout-widget">
+          <div class="payout-box pending">
+            <div class="pb-l"><i class="fa-solid fa-hourglass-half"></i><div><b>Pendente</b><span>Aguardando prazo do Pagar.me</span></div></div>
+            <div class="pb-val" id="payoutPending">R$ 0</div>
+          </div>
+          <div class="payout-box received">
+            <div class="pb-l"><i class="fa-solid fa-circle-check"></i><div><b>Recebido</b><span>Ja caiu na sua conta</span></div></div>
+            <div class="pb-val" id="payoutReceived">R$ 0</div>
+          </div>
+          <div class="payout-note"><i class="fa-solid fa-circle-info"></i>Cada venda gera um repasse individual. A plataforma retem a comissao automaticamente antes do envio via Pagar.me Marketplace.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== SURFACE: OPERADORA ===================== -->
+<section class="surface" id="surface-operadora" style="display:none">
+  <div class="section-label"><i class="fa-solid fa-gauge"></i><h2>Painel da operadora</h2><span>Visao central de vendedores pedidos e repasses</span></div>
+
+  <div class="op-kpis" id="opKpis">
+    <div class="op-kpi"><div class="lbl">Vendedores ativos</div><div class="val" data-target="0" id="opkSellers">0</div><div class="delta">na plataforma</div></div>
+    <div class="op-kpi"><div class="lbl">Vendas hoje (GMV)</div><div class="val" data-target="0" id="opkGmv">R$ 0</div><div class="delta">volume bruto</div></div>
+    <div class="op-kpi"><div class="lbl">Comissao retida</div><div class="val" data-target="0" id="opkComissao">R$ 0</div><div class="delta">receita da plataforma</div></div>
+    <div class="op-kpi"><div class="lbl">Pedidos no periodo</div><div class="val" data-target="0" id="opkOrders">0</div><div class="delta">todos os vendedores</div></div>
+  </div>
+
+  <div class="panel-grid">
+    <div>
+      <div class="panel-card">
+        <div class="panel-head"><h3><i class="fa-solid fa-store"></i> Vendedores cadastrados</h3><p>Status de verificacao KYC e desempenho</p></div>
+        <div id="sellersList"></div>
+      </div>
+      <div class="panel-card">
+        <div class="panel-head"><h3><i class="fa-solid fa-chart-simple"></i> Vendas por vendedor</h3><p>Distribuicao do GMV no periodo</p></div>
+        <div class="report-bars" id="reportBars"></div>
+      </div>
+    </div>
+    <div>
+      <div class="panel-card">
+        <div class="panel-head"><h3><i class="fa-solid fa-bolt"></i> Feed de pedidos</h3><p>Em tempo real entre todos os vendedores</p></div>
+        <div id="orderFeed"></div>
+      </div>
+      <div class="panel-card">
+        <div class="panel-head"><h3><i class="fa-solid fa-scale-balanced"></i> Reconciliacao de repasses</h3></div>
+        <div class="recon-note"><i class="fa-solid fa-circle-info"></i>Cada pedido gera um split automatico no Pagar.me Marketplace. A operadora ve aqui o total repassado e o total retido como comissao sem precisar conferir vendedor por vendedor.</div>
+        <div class="cart-totals" style="display:flex;margin-top:12px">
+          <div class="cart-total-row"><span>Total repassado aos vendedores</span><b id="reconRepassado">R$ 0</b></div>
+          <div class="cart-total-row grand"><span>Total retido pela plataforma</span><b id="reconRetido">R$ 0</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- CHECKOUT MODAL -->
+<div class="modal-backdrop" id="checkoutBg">
+  <div class="checkout-modal">
+    <div class="modal-head">
+      <h3 id="checkoutTitle">Finalizar compra</h3>
+      <button class="modal-close" id="checkoutClose"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+
+      <!-- STEP 1: fulfillment + payment -->
+      <div class="checkout-step active" id="stepPay">
+        <div class="section-label" style="margin-bottom:10px"><i class="fa-solid fa-truck-fast"></i><h2 style="font-size:.86rem">Como voce quer receber</h2></div>
+        <div class="step-fulfill" id="fulfillOpts">
+          <label class="fulfill-opt sel" data-f="retirada"><i class="fa-solid fa-store"></i><div><b>Retirada no vendedor</b><span>Buscar direto com cada vendedor</span></div></label>
+          <label class="fulfill-opt" data-f="delivery"><i class="fa-solid fa-motorcycle"></i><div><b>Delivery local</b><span>Entrega na sua regiao</span></div></label>
+          <label class="fulfill-opt" data-f="locker"><i class="fa-solid fa-box-archive"></i><div><b>Ponto de retirada</b><span>Locker parceiro mais perto de voce</span></div></label>
+        </div>
+
+        <div class="section-label" style="margin-bottom:10px"><i class="fa-solid fa-credit-card"></i><h2 style="font-size:.86rem">Forma de pagamento</h2></div>
+        <div class="pay-btn-row">
+          <div class="pay-opt sel" data-p="pix"><i class="fa-brands fa-pix"></i>Pix</div>
+          <div class="pay-opt" data-p="cartao"><i class="fa-solid fa-credit-card"></i>Cartao</div>
+          <div class="pay-opt" data-p="boleto"><i class="fa-solid fa-barcode"></i>Boleto</div>
+        </div>
+
+        <div class="cart-totals" style="display:flex;margin-bottom:16px">
+          <div class="cart-total-row grand"><span>Total a pagar</span><span id="payModalTotal">R$ 0,00</span></div>
+        </div>
+
+        <button class="btn-confirm-pay" id="btnConfirmPay"><i class="fa-solid fa-lock"></i> Confirmar e pagar</button>
+      </div>
+
+      <!-- STEP 2: split reveal -->
+      <div class="checkout-step" id="stepSplit">
+        <div class="split-wrap show">
+          <div class="split-hero">
+            <div class="split-check"><i class="fa-solid fa-check"></i></div>
+            <h4>Pagamento confirmado</h4>
+            <p>Veja como o valor foi dividido automaticamente</p>
+          </div>
+
+          <div class="split-total-line" id="splitTotalLine">R$ 0,00</div>
+          <div class="split-total-sub">total pago pelo cliente em uma unica transacao</div>
+
+          <div class="split-flow">
+            <span class="fnode"><i class="fa-solid fa-credit-card"></i> Pagamento unico</span>
+            <i class="fa-solid fa-arrow-right arrow"></i>
+            <span class="fnode"><i class="fa-solid fa-code-branch"></i> Split Pagar.me</span>
+            <i class="fa-solid fa-arrow-right arrow"></i>
+            <span class="fnode"><i class="fa-solid fa-users"></i> Repasses individuais</span>
+          </div>
+
+          <div id="splitRows"></div>
+
+          <div class="split-order-id">
+            <span>Pedido</span>
+            <b id="splitOrderId">#0000</b>
+          </div>
+
+          <button class="btn-done" id="btnSplitDone"><i class="fa-solid fa-check"></i> Concluir</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<div class="footer-note">Demo funcional em HTML CSS e JS com estado em memoria simulando <b>Pagar.me Marketplace API</b> para split automatico de pagamento. Arquitetura de producao usaria backend com webhooks de confirmacao de pagamento antes de disparar o split real por vendedor.</div>
+
+<script>
+"use strict";
+
+/* ===================== DATA ===================== */
+const SELLERS = {
+  "s1": {name:"Casa do Marceneiro", initials:"CM", commission:0.15, kyc:"aprovado"},
+  "s2": {name:"Sabor Mineiro Doces", initials:"SM", commission:0.18, kyc:"aprovado"},
+  "s3": {name:"Bela Pele Cosmeticos", initials:"BP", commission:0.16, kyc:"pendente"},
+  "s4": {name:"TechNorte Acessorios", initials:"TN", commission:0.14, kyc:"aprovado"},
+};
+
+const PRODUCTS = [
+  {id:1, seller:"s1", name:"Mesa de centro rustica em madeira de demolicao", price:389.90, img:"https://images.unsplash.com/photo-1533090161767-e6ffed986c88?w=500&q=75"},
+  {id:2, seller:"s2", name:"Caixa de brigadeiros gourmet com 24 unidades", price:64.90, img:"https://images.unsplash.com/photo-1571115177098-24ec42ed204d?w=500&q=75"},
+  {id:3, seller:"s3", name:"Kit skincare vitamina C serum e hidratante", price:149.90, img:"https://images.unsplash.com/photo-1556228720-195a672e8a03?w=500&q=75"},
+  {id:4, seller:"s4", name:"Fone de ouvido bluetooth com case carregador", price:179.90, img:"https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=500&q=75"},
+  {id:5, seller:"s1", name:"Luminaria de piso industrial preta fosca", price:229.90, img:"https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=500&q=75"},
+  {id:6, seller:"s2", name:"Bolo de pote red velvet artesanal", price:22.90, img:"https://images.unsplash.com/photo-1586985289906-406988974504?w=500&q=75"},
+  {id:7, seller:"s4", name:"Suporte ajustavel para notebook em aluminio", price:99.90, img:"https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=500&q=75"},
+  {id:8, seller:"s3", name:"Perfume contratipo alta fixacao 100ml", price:119.90, img:"https://images.unsplash.com/photo-1541643600914-78b084683601?w=500&q=75"},
+  {id:9, seller:"s1", name:"Cadeira estofada boucle bege", price:459.90, img:"https://images.unsplash.com/photo-1592078615290-033ee584e267?w=500&q=75"},
+];
+
+let cart = [];
+let orderCounter = 4821;
+let selectedFulfill = "retirada";
+let selectedPay = "pix";
+let currentVendedor = "s1";
+
+// orders list, shared across cliente checkout -> vendedor panel -> operadora feed
+let orders = [];
+
+// seed initial orders so panels aren't empty on load
+function seedOrders(){
+  orders = [
+    {id:"#4818", seller:"s1", buyer:"Marina Souza", items:[{name:"Cadeira estofada boucle bege", qty:1}], total:459.90, status:"pronto", time:"09:12", fulfill:"retirada"},
+    {id:"#4819", seller:"s2", buyer:"Rafael Lima", items:[{name:"Caixa de brigadeiros gourmet", qty:2}], total:129.80, status:"processando", time:"10:04", fulfill:"delivery"},
+    {id:"#4820", seller:"s4", buyer:"Juliana Alves", items:[{name:"Fone de ouvido bluetooth", qty:1}], total:179.90, status:"confirmado", time:"10:41", fulfill:"locker"},
+    {id:"#4817", seller:"s3", buyer:"Bruno Castro", items:[{name:"Kit skincare vitamina C", qty:1}], total:149.90, status:"novo", time:"11:02", fulfill:"delivery"},
+  ];
+}
+seedOrders();
+
+const STOCK = {
+  s1: [{name:"Mesa de centro rustica", price:389.90, qty:6},{name:"Luminaria de piso industrial", price:229.90, qty:11},{name:"Cadeira estofada boucle", price:459.90, qty:3}],
+  s2: [{name:"Caixa de brigadeiros gourmet", price:64.90, qty:22},{name:"Bolo de pote red velvet", price:22.90, qty:38}],
+  s3: [{name:"Kit skincare vitamina C", price:149.90, qty:9},{name:"Perfume contratipo 100ml", price:119.90, qty:2}],
+  s4: [{name:"Fone de ouvido bluetooth", price:179.90, qty:14},{name:"Suporte para notebook", price:99.90, qty:17}],
+};
+
+function brl(n){ return "R$ " + n.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+function imgFallback(el, seed){ el.onerror = null; el.src = "https://picsum.photos/seed/"+seed+"/500/375"; }
+
+/* ===================== TOAST ===================== */
+function showToast(msg, icon){
+  icon = icon || "fa-circle-check";
+  const c = document.getElementById("toastContainer");
+  const t = document.createElement("div");
+  t.className = "toast";
+  t.innerHTML = `<i class="fa-solid ${icon}"></i><span>${msg}</span><button class="toast-close"><i class="fa-solid fa-xmark"></i></button>`;
+  t.querySelector(".toast-close").addEventListener("click", ()=>removeToast(t));
+  c.appendChild(t);
+  setTimeout(()=>removeToast(t), 3400);
+}
+function removeToast(t){ t.classList.add("exit"); setTimeout(()=>t.remove(), 300); }
+
+/* ===================== SURFACE SWITCH ===================== */
+const heroCopy = {
+  cliente: {pill:'<i class="fa-solid fa-wand-magic-sparkles"></i> Demo interativo — visao do cliente', title:'Um carrinho <em>varios vendedores</em> um pagamento so', sub:'O cliente ve produtos de vendedores diferentes juntos. No checkout o valor total se divide sozinho entre cada vendedor e a comissao da plataforma via Pagar.me Marketplace.'},
+  vendedor: {pill:'<i class="fa-solid fa-wand-magic-sparkles"></i> Demo interativo — visao do vendedor', title:'Cada vendedor cuida do seu <em>proprio pedido</em>', sub:'Pedidos estoque e repasse ficam isolados por vendedor mesmo com checkout unificado no lado do cliente.'},
+  operadora: {pill:'<i class="fa-solid fa-wand-magic-sparkles"></i> Demo interativo — visao da operadora', title:'Visao central de <em>toda a plataforma</em>', sub:'A operadora acompanha vendedores pedidos e reconciliacao de repasses sem precisar entrar em cada loja.'},
+};
+function setHero(surface){
+  const h = heroCopy[surface];
+  document.getElementById("heroPill").innerHTML = h.pill;
+  document.getElementById("heroTitle").innerHTML = h.title;
+  document.getElementById("heroSub").textContent = h.sub;
+}
+document.getElementById("switch").addEventListener("click", e=>{
+  const btn = e.target.closest("button[data-surface]");
+  if(!btn) return;
+  const surface = btn.dataset.surface;
+  document.querySelectorAll("#switch button").forEach(b=>b.classList.toggle("active", b===btn));
+  ["cliente","vendedor","operadora"].forEach(s=>{
+    document.getElementById("surface-"+s).style.display = (s===surface) ? "" : "none";
+    document.getElementById("surface-"+s).classList.toggle("active", s===surface);
+  });
+  setHero(surface);
+  if(surface==="vendedor") renderVendedor();
+  if(surface==="operadora") renderOperadora();
+  window.scrollTo({top:0, behavior:"smooth"});
+});
+
+/* ===================== CLIENTE: PRODUCT GRID ===================== */
+function renderProducts(){
+  const grid = document.getElementById("productGrid");
+  grid.innerHTML = PRODUCTS.map((p,i) => `
+    <div class="product-card reveal" style="transition-delay:${i*45}ms">
+      <div class="card-img-wrap">
+        <img src="${p.img}" alt="${p.name}" onerror="imgFallback(this,'prod${p.id}')">
+      </div>
+      <div class="card-body">
+        <div class="card-seller-tag"><i class="fa-solid fa-store"></i> ${SELLERS[p.seller].name}</div>
+        <div class="card-name">${p.name}</div>
+        <div class="card-price-row">
+          <span class="card-price">${brl(p.price)}</span>
+          <button class="btn-add" data-add="${p.id}"><i class="fa-solid fa-plus"></i></button>
+        </div>
+      </div>
+    </div>`).join("");
+  observeReveal();
+}
+document.getElementById("productGrid").addEventListener("click", e=>{
+  const btn = e.target.closest("[data-add]");
+  if(!btn) return;
+  const id = parseInt(btn.dataset.add, 10);
+  addToCart(id);
+  btn.classList.add("added");
+  btn.innerHTML = '<i class="fa-solid fa-check"></i>';
+  setTimeout(()=>{ btn.classList.remove("added"); btn.innerHTML = '<i class="fa-solid fa-plus"></i>'; }, 700);
+});
+
+function addToCart(id){
+  const existing = cart.find(c=>c.id===id);
+  if(existing){ existing.qty++; }
+  else{ const p = PRODUCTS.find(x=>x.id===id); cart.push({...p, qty:1}); }
+  renderCart();
+  showToast("Produto adicionado ao carrinho", "fa-cart-plus");
+}
+function removeFromCart(id){
+  cart = cart.filter(c=>c.id!==id);
+  renderCart();
+}
+
+function cartTotals(){
+  const subtotal = cart.reduce((s,c)=>s + c.price*c.qty, 0);
+  const frete = cart.length ? 14.90 : 0;
+  return { subtotal, frete, total: subtotal + frete };
+}
+
+function renderCart(){
+  const empty = document.getElementById("cartEmpty");
+  const itemsWrap = document.getElementById("cartItems");
+  const totalsWrap = document.getElementById("cartTotals");
+  const btn = document.getElementById("btnCheckout");
+
+  if(cart.length===0){
+    empty.style.display = "block";
+    itemsWrap.innerHTML = "";
+    totalsWrap.style.display = "none";
+    btn.disabled = true;
+    return;
+  }
+  empty.style.display = "none";
+  totalsWrap.style.display = "flex";
+  btn.disabled = false;
+
+  itemsWrap.innerHTML = cart.map(c => `
+    <div class="cart-item">
+      <img src="${c.img}" onerror="imgFallback(this,'cart${c.id}')">
+      <div class="cart-item-info"><b>${c.name}</b><span>${SELLERS[c.seller].name} · qtd ${c.qty}</span></div>
+      <div class="cart-item-price">${brl(c.price*c.qty)}</div>
+      <button class="cart-remove" data-remove="${c.id}"><i class="fa-solid fa-trash"></i></button>
+    </div>`).join("");
+
+  const t = cartTotals();
+  document.getElementById("cartSubtotal").textContent = brl(t.subtotal);
+  document.getElementById("cartFrete").textContent = brl(t.frete);
+  document.getElementById("cartTotal").textContent = brl(t.total);
+}
+document.getElementById("cartItems").addEventListener("click", e=>{
+  const b = e.target.closest("[data-remove]");
+  if(!b) return;
+  removeFromCart(parseInt(b.dataset.remove,10));
+});
+
+/* ===================== CHECKOUT MODAL ===================== */
+document.getElementById("btnCheckout").addEventListener("click", ()=>{
+  if(cart.length===0) return;
+  document.getElementById("stepPay").classList.add("active");
+  document.getElementById("stepSplit").classList.remove("active");
+  document.getElementById("checkoutTitle").textContent = "Finalizar compra";
+  const t = cartTotals();
+  document.getElementById("payModalTotal").textContent = brl(t.total);
+  document.getElementById("checkoutBg").classList.add("open");
+  document.body.style.overflow = "hidden";
+});
+document.getElementById("checkoutClose").addEventListener("click", closeCheckout);
+function closeCheckout(){
+  document.getElementById("checkoutBg").classList.remove("open");
+  document.body.style.overflow = "";
+}
+
+document.getElementById("fulfillOpts").addEventListener("click", e=>{
+  const opt = e.target.closest(".fulfill-opt");
+  if(!opt) return;
+  document.querySelectorAll(".fulfill-opt").forEach(o=>o.classList.remove("sel"));
+  opt.classList.add("sel");
+  selectedFulfill = opt.dataset.f;
+});
+document.querySelector(".pay-btn-row").addEventListener("click", e=>{
+  const opt = e.target.closest(".pay-opt");
+  if(!opt) return;
+  document.querySelectorAll(".pay-opt").forEach(o=>o.classList.remove("sel"));
+  opt.classList.add("sel");
+  selectedPay = opt.dataset.p;
+});
+
+document.getElementById("btnConfirmPay").addEventListener("click", ()=>{
+  processSplitPayment();
+});
+
+function processSplitPayment(){
+  const t = cartTotals();
+  orderCounter++;
+  const orderId = "#" + orderCounter;
+
+  // group cart by seller
+  const bySeller = {};
+  cart.forEach(c=>{
+    if(!bySeller[c.seller]) bySeller[c.seller] = { items:[], subtotal:0 };
+    bySeller[c.seller].items.push(c);
+    bySeller[c.seller].subtotal += c.price*c.qty;
+  });
+
+  // build split rows: platform fee is proportional commission per seller
+  let totalComissao = 0;
+  const splitData = Object.keys(bySeller).map(sid=>{
+    const s = SELLERS[sid];
+    const subtotal = bySeller[sid].subtotal;
+    const comissao = subtotal * s.commission;
+    const recebe = subtotal - comissao;
+    totalComissao += comissao;
+    return { sid, name:s.name, initials:s.initials, subtotal, comissao, recebe };
+  });
+
+  // create order records per seller (for vendedor + operadora panels)
+  const now = new Date();
+  const timeStr = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
+  Object.keys(bySeller).forEach(sid=>{
+    orders.unshift({
+      id: orderId,
+      seller: sid,
+      buyer: "Cliente Demo",
+      items: bySeller[sid].items.map(i=>({name:i.name, qty:i.qty})),
+      total: bySeller[sid].subtotal,
+      status: "novo",
+      time: timeStr,
+      fulfill: selectedFulfill,
+    });
+  });
+
+  // render split step
+  document.getElementById("checkoutTitle").textContent = "Split de pagamento";
+  document.getElementById("splitTotalLine").textContent = brl(t.total);
+  document.getElementById("splitOrderId").textContent = orderId;
+
+  const rowsWrap = document.getElementById("splitRows");
+  let rowsHtml = splitData.map((s,i) => `
+    <div class="split-row" style="animation-delay:${i*180}ms">
+      <div class="sr-avatar">${s.initials}</div>
+      <div class="split-row-info">
+        <b>${s.name}</b>
+        <span>Subtotal ${brl(s.subtotal)} · comissao ${(SELLERS[s.sid].commission*100).toFixed(0)}% (${brl(s.comissao)})</span>
+        <div class="split-bar-track"><div class="split-bar-fill" style="width:${Math.round((s.recebe/t.total)*100)}%;animation-delay:${i*180+120}ms"></div></div>
+      </div>
+      <div class="split-row-amt recebe"><span style="font-size:.66rem;color:var(--n400)">recebe</span><b>${brl(s.recebe)}</b></div>
+    </div>`).join("");
+
+  const freteIdx = splitData.length;
+  rowsHtml += `
+    <div class="split-row plat" style="animation-delay:${freteIdx*180}ms">
+      <div class="sr-avatar"><i class="fa-solid fa-building-columns"></i></div>
+      <div class="split-row-info">
+        <b>Plataforma VendaJunto</b>
+        <span>Comissao total + frete (${brl(t.frete)})</span>
+        <div class="split-bar-track"><div class="split-bar-fill" style="width:${Math.round(((totalComissao+t.frete)/t.total)*100)}%;animation-delay:${freteIdx*180+120}ms"></div></div>
+      </div>
+      <div class="split-row-amt retem"><span style="font-size:.66rem;color:var(--n400)">retem</span><b>${brl(totalComissao + t.frete)}</b></div>
+    </div>`;
+
+  rowsWrap.innerHTML = rowsHtml;
+
+  document.getElementById("stepPay").classList.remove("active");
+  document.getElementById("stepSplit").classList.add("active");
+
+  showToast(`Pagamento de ${brl(t.total)} dividido entre ${splitData.length} vendedor(es)`, "fa-code-branch");
+}
+
+document.getElementById("btnSplitDone").addEventListener("click", ()=>{
+  closeCheckout();
+  showToast("Pedido enviado aos vendedores", "fa-paper-plane");
+  cart = [];
+  renderCart();
+  // if user is looking at vendedor/operadora panels, refresh them live
+  if(document.getElementById("surface-vendedor").classList.contains("active")) renderVendedor();
+  if(document.getElementById("surface-operadora").classList.contains("active")) renderOperadora();
+});
+
+/* ===================== VENDEDOR SURFACE ===================== */
+function populateVendedorSelect(){
+  const sel = document.getElementById("vendedorSelect");
+  sel.innerHTML = Object.keys(SELLERS).map(id => `<option value="${id}">${SELLERS[id].name}</option>`).join("");
+  sel.value = currentVendedor;
+}
+document.getElementById("vendedorSelect").addEventListener("change", e=>{
+  currentVendedor = e.target.value;
+  renderVendedor();
+});
+
+const STATUS_FLOW = ["novo","confirmado","processando","pronto"];
+const STATUS_LABEL = {novo:"Novo", confirmado:"Confirmado", processando:"Processando", pronto:"Pronto"};
+const FULFILL_LABEL = {retirada:"Retirada no vendedor", delivery:"Delivery local", locker:"Ponto de retirada"};
+
+function renderVendedor(){
+  const sid = currentVendedor;
+  const myOrders = orders.filter(o=>o.seller===sid);
+
+  document.getElementById("vkOrders").textContent = myOrders.length;
+  const stockList = STOCK[sid] || [];
+  document.getElementById("vkStock").textContent = stockList.reduce((s,i)=>s+i.qty,0);
+
+  const s = SELLERS[sid];
+  let pending = 0, received = 0;
+  myOrders.forEach(o=>{
+    const recebe = o.total * (1 - s.commission);
+    if(o.status==="pronto") received += recebe;
+    else pending += recebe;
+  });
+  document.getElementById("vkPending").textContent = brl(pending);
+  document.getElementById("vkReceived").textContent = brl(received);
+  document.getElementById("payoutPending").textContent = brl(pending);
+  document.getElementById("payoutReceived").textContent = brl(received);
+
+  const ordersWrap = document.getElementById("vendOrders");
+  if(myOrders.length===0){
+    ordersWrap.innerHTML = `<div class="order-empty"><i class="fa-solid fa-inbox"></i><span>Nenhum pedido ainda. Faca uma compra na visao Cliente.</span></div>`;
+  } else {
+    ordersWrap.innerHTML = myOrders.map(o => `
+      <div class="order-row">
+        <div class="order-row-info">
+          <b>${o.id} · ${o.buyer}</b>
+          <span>${o.items.map(i=>i.qty+"x "+i.name).join(", ")} · ${FULFILL_LABEL[o.fulfill]||o.fulfill} · ${o.time}</span>
+        </div>
+        <div class="order-amt">${brl(o.total)}</div>
+        <button class="status-pill ${o.status}" data-advance="${o.id}">${STATUS_LABEL[o.status]}</button>
+      </div>`).join("");
+  }
+
+  const stockWrap = document.getElementById("stockBody");
+  stockWrap.innerHTML = stockList.map((it, idx) => `
+    <tr>
+      <td>${it.name}</td>
+      <td>${brl(it.price)}</td>
+      <td>
+        <div class="stock-qty">
+          <button class="qty-btn" data-stock-dec="${idx}"><i class="fa-solid fa-minus"></i></button>
+          <span class="qty-val ${it.qty<=3?'qty-low':''}">${it.qty}</span>
+          <button class="qty-btn" data-stock-inc="${idx}"><i class="fa-solid fa-plus"></i></button>
+        </div>
+      </td>
+    </tr>`).join("");
+}
+
+document.getElementById("vendOrders").addEventListener("click", e=>{
+  const btn = e.target.closest("[data-advance]");
+  if(!btn) return;
+  const orderId = btn.dataset.advance;
+  const order = orders.find(o=>o.id===orderId && o.seller===currentVendedor);
+  if(!order) return;
+  const idx = STATUS_FLOW.indexOf(order.status);
+  if(idx < STATUS_FLOW.length - 1){
+    order.status = STATUS_FLOW[idx+1];
+    showToast(`Pedido ${orderId} agora esta ${STATUS_LABEL[order.status].toLowerCase()}`, "fa-arrow-right");
+  } else {
+    showToast(`Pedido ${orderId} ja esta pronto`, "fa-circle-check");
+  }
+  renderVendedor();
+});
+
+document.getElementById("stockBody").addEventListener("click", e=>{
+  const inc = e.target.closest("[data-stock-inc]");
+  const dec = e.target.closest("[data-stock-dec]");
+  const list = STOCK[currentVendedor];
+  if(inc){ list[parseInt(inc.dataset.stockInc,10)].qty++; renderVendedor(); }
+  if(dec){ const i = list[parseInt(dec.dataset.stockDec,10)]; if(i.qty>0) i.qty--; renderVendedor(); }
+});
+
+/* ===================== OPERADORA SURFACE ===================== */
+function countUpEl(el, target, isMoney){
+  const dur = 900;
+  const start = performance.now();
+  function tick(now){
+    const p = Math.min((now-start)/dur, 1);
+    const eased = 1 - Math.pow(1-p, 3);
+    const val = target * eased;
+    el.textContent = isMoney ? brl(val) : Math.round(val).toLocaleString('pt-BR');
+    if(p < 1) requestAnimationFrame(tick);
+    else el.textContent = isMoney ? brl(target) : Math.round(target).toLocaleString('pt-BR');
+  }
+  requestAnimationFrame(tick);
+}
+
+function renderOperadora(){
+  const totalSellers = Object.keys(SELLERS).length;
+  const gmv = orders.reduce((s,o)=>s+o.total, 0);
+  let comissao = 0;
+  orders.forEach(o=> comissao += o.total * SELLERS[o.seller].commission);
+
+  countUpEl(document.getElementById("opkSellers"), totalSellers, false);
+  countUpEl(document.getElementById("opkGmv"), gmv, true);
+  countUpEl(document.getElementById("opkComissao"), comissao, true);
+  countUpEl(document.getElementById("opkOrders"), orders.length, false);
+
+  const sellersWrap = document.getElementById("sellersList");
+  sellersWrap.innerHTML = Object.keys(SELLERS).map(sid=>{
+    const s = SELLERS[sid];
+    const sSales = orders.filter(o=>o.seller===sid).reduce((sum,o)=>sum+o.total,0);
+    return `
+    <div class="seller-row">
+      <div class="seller-avatar">${s.initials}</div>
+      <div class="seller-row-info"><b>${s.name}</b><span>Comissao ${(s.commission*100).toFixed(0)}% · ${orders.filter(o=>o.seller===sid).length} pedido(s)</span></div>
+      <span class="kyc-pill ${s.kyc}">${s.kyc==="aprovado" ? "KYC aprovado" : "KYC pendente"}</span>
+      <span class="seller-sales">${brl(sSales)}</span>
+    </div>`;
+  }).join("");
+
+  const feedWrap = document.getElementById("orderFeed");
+  const sortedOrders = [...orders].slice(0, 8);
+  if(sortedOrders.length===0){
+    feedWrap.innerHTML = `<div class="order-empty"><i class="fa-solid fa-inbox"></i><span>Nenhum pedido no periodo</span></div>`;
+  } else {
+    feedWrap.innerHTML = sortedOrders.map(o => `
+      <div class="feed-row">
+        <span class="feed-dot"></span>
+        <div class="feed-row-info"><b>${o.id} · ${SELLERS[o.seller].name}</b><span>${brl(o.total)} · ${STATUS_LABEL[o.status]}</span></div>
+        <span class="feed-time">${o.time}</span>
+      </div>`).join("");
+  }
+
+  const maxSales = Math.max(...Object.keys(SELLERS).map(sid=> orders.filter(o=>o.seller===sid).reduce((s,o)=>s+o.total,0)), 1);
+  document.getElementById("reportBars").innerHTML = Object.keys(SELLERS).map(sid=>{
+    const s = SELLERS[sid];
+    const sSales = orders.filter(o=>o.seller===sid).reduce((sum,o)=>sum+o.total,0);
+    const pct = Math.round((sSales/maxSales)*100);
+    return `
+    <div class="rbar-row">
+      <span class="rbar-label">${s.name}</span>
+      <div class="rbar-track"><div class="rbar-fill" style="width:${pct}%"></div></div>
+      <span class="rbar-val">${brl(sSales)}</span>
+    </div>`;
+  }).join("");
+
+  document.getElementById("reconRepassado").textContent = brl(gmv - comissao);
+  document.getElementById("reconRetido").textContent = brl(comissao);
+}
+
+/* ===================== SCROLL REVEAL ===================== */
+function observeReveal(){
+  const obs = new IntersectionObserver(entries=>{
+    entries.forEach(entry=>{
+      if(entry.isIntersecting){ entry.target.classList.add("visible"); obs.unobserve(entry.target); }
+    });
+  }, {threshold:.1});
+  document.querySelectorAll(".reveal:not(.visible)").forEach(el=>obs.observe(el));
+}
+
+/* ===================== RESTART ===================== */
+document.getElementById("restartBtn").addEventListener("click", ()=>{
+  cart = [];
+  orderCounter = 4821;
+  currentVendedor = "s1";
+  selectedFulfill = "retirada";
+  selectedPay = "pix";
+  seedOrders();
+  closeCheckout();
+  renderCart();
+  populateVendedorSelect();
+  renderVendedor();
+  renderOperadora();
+  document.querySelectorAll(".fulfill-opt").forEach(o=>o.classList.toggle("sel", o.dataset.f==="retirada"));
+  document.querySelectorAll(".pay-opt").forEach(o=>o.classList.toggle("sel", o.dataset.p==="pix"));
+  // reset to cliente surface
+  document.querySelectorAll("#switch button").forEach(b=>b.classList.toggle("active", b.dataset.surface==="cliente"));
+  document.getElementById("surface-cliente").style.display = "";
+  document.getElementById("surface-cliente").classList.add("active");
+  document.getElementById("surface-vendedor").style.display = "none";
+  document.getElementById("surface-vendedor").classList.remove("active");
+  document.getElementById("surface-operadora").style.display = "none";
+  document.getElementById("surface-operadora").classList.remove("active");
+  setHero("cliente");
+  window.scrollTo({top:0, behavior:"smooth"});
+  showToast("Demo reiniciada", "fa-rotate-left");
+});
+
+/* ===================== INIT ===================== */
+renderProducts();
+renderCart();
+populateVendedorSelect();
+renderVendedor();
+</script>
+</body>
+</html>
