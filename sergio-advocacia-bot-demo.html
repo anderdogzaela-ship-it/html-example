@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Secretario Virtual IA - Escritorio de Advocacia</title>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --gold:#f59e0b;--gold-dark:#d97706;--gold-pale:#fef3c7;
+    --bg:#0a0c10;--surface:#111318;--card:#161a22;--card2:#1c2130;
+    --border:#252c3a;--text:#f0f2f7;--mid:#8b95a8;--muted:#4a5568;
+    --green:#22c55e;--wa-green:#25d366;--wa-bg:#0b141a;--wa-bubble:#202c33;--wa-out:#005c4b;
+  }
+  body{font-family:'Lexend',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;
+    display:flex;flex-direction:column;align-items:center;padding:32px 16px 60px}
+  h1{font-size:22px;font-weight:700;margin-bottom:4px;text-align:center}
+  p.sub{color:var(--mid);font-size:14px;margin-bottom:28px;text-align:center;max-width:560px}
+  .stage{display:flex;gap:28px;flex-wrap:wrap;justify-content:center;align-items:flex-start;max-width:1100px}
+
+  /* Phone shell */
+  .phone{width:340px;height:640px;background:#000;border-radius:38px;padding:12px;
+    box-shadow:0 30px 60px rgba(0,0,0,.5);border:2px solid #2a2f38;flex-shrink:0}
+  .screen{width:100%;height:100%;background:var(--wa-bg);border-radius:28px;overflow:hidden;
+    display:flex;flex-direction:column;position:relative}
+  .wa-header{background:#1f2c34;padding:14px 16px;display:flex;align-items:center;gap:10px}
+  .wa-avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-dark));
+    display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px}
+  .wa-name{font-size:15px;font-weight:600}
+  .wa-status{font-size:11px;color:#8ba99b}
+  .wa-body{flex:1;overflow-y:auto;padding:14px 10px;display:flex;flex-direction:column;gap:8px;
+    background-image:radial-gradient(circle at 20% 20%, rgba(255,255,255,.02) 0, transparent 50%)}
+  .bubble{max-width:78%;padding:8px 11px;border-radius:9px;font-size:13.5px;line-height:1.4;
+    animation:pop .25s ease-out;position:relative}
+  @keyframes pop{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+  .bubble.in{background:var(--wa-bubble);align-self:flex-start;border-top-left-radius:2px}
+  .bubble.out{background:var(--wa-out);align-self:flex-end;border-top-right-radius:2px}
+  .bubble .tag{display:block;font-size:10px;color:var(--gold);font-weight:600;margin-bottom:3px}
+  .bubble time{display:block;font-size:9.5px;color:#8b98a3;text-align:right;margin-top:3px}
+  .quick{display:flex;gap:6px;flex-wrap:wrap;padding:8px 10px}
+  .qbtn{background:transparent;border:1px solid var(--gold);color:var(--gold);border-radius:16px;
+    padding:6px 12px;font-size:12px;cursor:pointer;font-family:inherit}
+  .qbtn:hover{background:var(--gold);color:#111}
+  .wa-input{background:#1f2c34;padding:10px 14px;display:flex;align-items:center;gap:8px}
+  .wa-input .box{flex:1;background:#2a3942;border-radius:20px;padding:9px 14px;color:#8b98a3;font-size:12.5px}
+  .wa-input .send{width:34px;height:34px;border-radius:50%;background:var(--wa-green);display:flex;
+    align-items:center;justify-content:center;flex-shrink:0}
+  .typing{align-self:flex-start;background:var(--wa-bubble);border-radius:9px;padding:9px 13px;display:flex;gap:4px}
+  .typing span{width:6px;height:6px;border-radius:50%;background:#8b98a3;animation:blink 1.2s infinite}
+  .typing span:nth-child(2){animation-delay:.2s}.typing span:nth-child(3){animation-delay:.4s}
+  @keyframes blink{0%,60%,100%{opacity:.3}30%{opacity:1}}
+
+  /* CRM panel */
+  .crm{width:400px;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;flex-shrink:0}
+  .crm-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+  .crm-title{font-size:14px;font-weight:700;color:var(--gold);letter-spacing:.5px;text-transform:uppercase}
+  .crm-badge{font-size:11px;background:var(--gold-pale);color:#7a4d05;padding:3px 9px;border-radius:10px;font-weight:600}
+  .lead-card{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px}
+  .lead-name{font-size:16px;font-weight:700;margin-bottom:2px}
+  .lead-phone{font-size:12px;color:var(--mid);margin-bottom:12px}
+  .field{display:flex;justify-content:space-between;padding:7px 0;border-top:1px solid var(--border);font-size:12.5px}
+  .field .k{color:var(--mid)}
+  .field .v{font-weight:600;text-align:right;max-width:60%}
+  .field .v.empty{color:var(--muted);font-style:italic;font-weight:400}
+  .pill{display:inline-block;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:8px;margin-top:2px}
+  .pill.stage1{background:rgba(139,149,168,.18);color:var(--mid)}
+  .pill.stage2{background:rgba(245,158,11,.18);color:var(--gold)}
+  .pill.stage3{background:rgba(34,197,94,.18);color:var(--green)}
+  .funnel{display:flex;gap:4px;margin-top:14px}
+  .funnel .step{flex:1;height:5px;border-radius:3px;background:var(--border)}
+  .funnel .step.on{background:var(--gold)}
+  .log{font-size:11.5px;color:var(--mid);margin-top:14px;padding-top:12px;border-top:1px dashed var(--border)}
+  .log b{color:var(--text)}
+
+  .controls{display:flex;gap:10px;margin-top:26px}
+  button.ctrl{background:var(--gold);color:#111;border:none;padding:11px 22px;border-radius:10px;
+    font-weight:700;font-size:13.5px;cursor:pointer;font-family:inherit}
+  button.ctrl.secondary{background:transparent;border:1px solid var(--border);color:var(--text)}
+  button.ctrl:disabled{opacity:.4;cursor:not-allowed}
+</style>
+</head>
+<body>
+  <h1>Secretario Virtual com IA - Fluxo de Qualificacao</h1>
+  <p class="sub">Simulacao do atendimento automatico: recepcao, classificacao de area, bot especializado e sincronizacao ao vivo com o Kommo CRM.</p>
+
+  <div class="stage">
+    <div class="phone">
+      <div class="screen">
+        <div class="wa-header">
+          <div class="wa-avatar">JS</div>
+          <div>
+            <div class="wa-name">Escritorio Sergio R.F.</div>
+            <div class="wa-status" id="waStatus">online</div>
+          </div>
+        </div>
+        <div class="wa-body" id="waBody"></div>
+        <div class="wa-input">
+          <div class="box">Escreva uma mensagem</div>
+          <div class="send">&#9658;</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="crm">
+      <div class="crm-head">
+        <span class="crm-title">Kommo CRM - Lead</span>
+        <span class="crm-badge" id="crmBadge">Aguardando</span>
+      </div>
+      <div class="lead-card">
+        <div class="lead-name" id="crmName">Novo contato</div>
+        <div class="lead-phone" id="crmPhone">+55 --- --------</div>
+        <div class="pill stage1" id="crmStagePill">Sem classificacao</div>
+
+        <div class="field"><span class="k">Area de interesse</span><span class="v empty" id="fArea">-</span></div>
+        <div class="field"><span class="k">Situacao atual</span><span class="v empty" id="fSituacao">-</span></div>
+        <div class="field"><span class="k">Valor envolvido</span><span class="v empty" id="fValor">-</span></div>
+        <div class="field"><span class="k">Urgencia</span><span class="v empty" id="fUrgencia">-</span></div>
+        <div class="field"><span class="k">Reuniao</span><span class="v empty" id="fReuniao">-</span></div>
+
+        <div class="funnel">
+          <div class="step" id="s1"></div><div class="step" id="s2"></div>
+          <div class="step" id="s3"></div><div class="step" id="s4"></div>
+        </div>
+      </div>
+      <div class="log" id="crmLog"><b>Log:</b> Aguardando primeiro contato do lead...</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="ctrl" id="nextBtn" onclick="nextStep()">Avancar conversa</button>
+    <button class="ctrl secondary" onclick="restart()">Reiniciar</button>
+  </div>
+
+<script>
+const waBody = document.getElementById('waBody');
+const nextBtn = document.getElementById('nextBtn');
+let step = 0;
+
+function bubble(text, side, tag){
+  const b = document.createElement('div');
+  b.className = 'bubble ' + side;
+  const now = new Date();
+  b.innerHTML = (tag ? '<span class="tag">'+tag+'</span>' : '') + text +
+    '<time>' + String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0') + '</time>';
+  waBody.appendChild(b);
+  waBody.scrollTop = waBody.scrollHeight;
+}
+
+function typing(cb, delay){
+  const t = document.createElement('div');
+  t.className = 'typing';
+  t.innerHTML = '<span></span><span></span><span></span>';
+  waBody.appendChild(t);
+  waBody.scrollTop = waBody.scrollHeight;
+  setTimeout(()=>{ t.remove(); cb(); }, delay || 900);
+}
+
+function quickReplies(options){
+  const wrap = document.createElement('div');
+  wrap.className = 'quick';
+  options.forEach(opt=>{
+    const btn = document.createElement('button');
+    btn.className = 'qbtn';
+    btn.textContent = opt;
+    btn.onclick = () => { wrap.remove(); bubble(opt, 'out'); setTimeout(nextStep, 500); };
+    wrap.appendChild(btn);
+  });
+  waBody.appendChild(wrap);
+  waBody.scrollTop = waBody.scrollHeight;
+}
+
+function setField(id, val){
+  const el = document.getElementById(id);
+  el.textContent = val;
+  el.classList.remove('empty');
+}
+
+function crmLog(msg){
+  document.getElementById('crmLog').innerHTML = '<b>Log:</b> ' + msg;
+}
+
+function setFunnel(n){
+  for(let i=1;i<=4;i++){
+    document.getElementById('s'+i).classList.toggle('on', i<=n);
+  }
+}
+
+const sequence = [
+  () => typing(()=>{
+    bubble('Ola! Sou o assistente virtual do escritorio Sergio R.F. Advocacia. Como posso te ajudar hoje?', 'in', 'Bot Recepcao');
+    setTimeout(()=> quickReplies(['Dividas bancarias','Credito rural / dividas rurais','Regularizacao de imovel / INCRA']), 300);
+  }, 900),
+
+  () => typing(()=>{
+    bubble('Perfeito, vou te conectar com o especialista em dividas bancarias. Um instante.', 'in', 'Bot Recepcao');
+    setField('crmName', 'Lead - WhatsApp #4471');
+    setField('crmPhone', '+55 44 9812-3xxx');
+    document.getElementById('crmStagePill').textContent = 'Classificado';
+    document.getElementById('crmStagePill').className = 'pill stage2';
+    setField('fArea', 'Dividas bancarias');
+    document.getElementById('crmBadge').textContent = 'Em atendimento';
+    setFunnel(1);
+    crmLog('Intent detectado -> lead roteado para bot especializado.');
+  }, 1100),
+
+  () => typing(()=>{
+    bubble('Aqui e o assistente especializado em dividas bancarias. Para te orientar melhor, sua divida esta em atraso, em negociacao ou ja foi protestada?', 'in', 'Bot Especialista');
+    setTimeout(()=> quickReplies(['Em atraso ha meses','Ja recebi acao judicial','Nome protestado / negativado']), 300);
+  }, 1000),
+
+  () => typing(()=>{
+    bubble('Entendido. E qual o valor aproximado envolvido nessa divida?', 'in', 'Bot Especialista');
+    setField('fSituacao', 'Acao judicial em curso');
+    setFunnel(2);
+    crmLog('Qualificacao em andamento: situacao registrada no Kommo.');
+    setTimeout(()=> quickReplies(['Ate R$ 20 mil','R$ 20 a 100 mil','Acima de R$ 100 mil']), 300);
+  }, 1000),
+
+  () => typing(()=>{
+    bubble('Ultima pergunta: isso e algo urgente, como um prazo de processo correndo, ou voce esta so avaliando as opcoes?', 'in', 'Bot Especialista');
+    setField('fValor', 'R$ 20 a 100 mil');
+    crmLog('Faixa de valor registrada. Lead pontuado como qualificado.');
+    setTimeout(()=> quickReplies(['Urgente, tenho prazo correndo','So avaliando por enquanto']), 300);
+  }, 1000),
+
+  () => typing(()=>{
+    bubble('Obrigado! Ja separei tudo para o Dr. Sergio. Posso te encaixar numa reuniao amanha as 10h ou prefere quinta as 15h?', 'in', 'Bot Especialista');
+    setField('fUrgencia', 'Alta - prazo processual');
+    document.getElementById('crmStagePill').textContent = 'Qualificado';
+    document.getElementById('crmStagePill').className = 'pill stage3';
+    setFunnel(3);
+    crmLog('Lead qualificado. Card sincronizado com historico completo da conversa.');
+    setTimeout(()=> quickReplies(['Amanha as 10h','Quinta as 15h']), 300);
+  }, 1000),
+
+  () => typing(()=>{
+    bubble('Reuniao confirmada e agendada na agenda do Dr. Sergio. Voce recebera um lembrete um dia antes. Ate la!', 'in', 'Bot Especialista');
+    setField('fReuniao', 'Confirmada');
+    document.getElementById('crmBadge').textContent = 'Reuniao agendada';
+    document.getElementById('waStatus').textContent = 'visto por ultimo agora';
+    setFunnel(4);
+    crmLog('Reuniao criada no calendario vinculado ao Kommo. Advogado notificado.');
+    nextBtn.disabled = true;
+    nextBtn.textContent = 'Fluxo concluido';
+  }, 1000),
+];
+
+function nextStep(){
+  if(step >= sequence.length) return;
+  nextBtn.disabled = true;
+  sequence[step]();
+  step++;
+  setTimeout(()=>{ if(step < sequence.length) nextBtn.disabled = false; }, 1200);
+}
+
+function restart(){
+  waBody.innerHTML = '';
+  step = 0;
+  nextBtn.disabled = false;
+  nextBtn.textContent = 'Avancar conversa';
+  document.getElementById('waStatus').textContent = 'online';
+  document.getElementById('crmBadge').textContent = 'Aguardando';
+  document.getElementById('crmStagePill').textContent = 'Sem classificacao';
+  document.getElementById('crmStagePill').className = 'pill stage1';
+  setField('crmName', 'Novo contato'); document.getElementById('crmName').classList.add('empty');
+  setField('crmPhone', '+55 --- --------');
+  ['fArea','fSituacao','fValor','fUrgencia','fReuniao'].forEach(id=>{
+    const el = document.getElementById(id); el.textContent = '-'; el.classList.add('empty');
+  });
+  setFunnel(0);
+  crmLog('Aguardando primeiro contato do lead...');
+}
+
+nextStep();
+</script>
+</body>
+</html>
