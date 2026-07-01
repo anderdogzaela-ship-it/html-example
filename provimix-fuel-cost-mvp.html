@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Provimix | Panel de Costos de Combustible</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+:root{
+  --gold-50:#FFFDF0; --gold-100:#FEF9DC; --gold-200:#FBF0A8; --gold-300:#F5D94A;
+  --gold-400:#EEC118; --gold-500:#C8960C; --gold-600:#A17208; --gold-700:#7A5406; --gold-800:#523803;
+  --sb:#13100A; --sb-hover:#1E1810; --sb-active:#2A2012; --sb-border:#261D0E; --sb-text:#997A50; --sb-text-active:#F5D94A;
+  --bg:#F7F2E8; --bg-alt:#EEE6D4; --card:#FFFFFF; --border:#E5D9BF; --border-light:#F0E8D4;
+  --t1:#1C140A; --t2:#5C4626; --t3:#8B6E44; --t4:#B09070;
+  --acc:#C8960C; --acc-lt:#EEC118; --acc-dk:#7A5406; --acc-bg:#FEF8DC;
+  --good:#2E7D32; --good-bg:#E8F5E9; --warn:#B45309; --warn-bg:#FEF3C7; --bad:#B91C1C; --bad-bg:#FEE2E2;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--t1);}
+.app{display:flex;min-height:100vh;}
+.sidebar{width:240px;background:var(--sb);color:var(--sb-text);flex-shrink:0;display:flex;flex-direction:column;padding:22px 0;}
+.sidebar .brand{display:flex;align-items:center;gap:10px;padding:0 20px 22px;border-bottom:1px solid var(--sb-border);margin-bottom:14px;}
+.sidebar .brand i{color:var(--acc-lt);font-size:22px;}
+.sidebar .brand span{color:#fff;font-weight:800;font-size:16px;}
+.nav-item{display:flex;align-items:center;gap:12px;padding:12px 20px;font-weight:600;font-size:14px;cursor:pointer;border-left:3px solid transparent;}
+.nav-item i{width:18px;text-align:center;}
+.nav-item:hover{background:var(--sb-hover);}
+.nav-item.active{background:var(--sb-active);color:var(--sb-text-active);border-left-color:var(--acc-lt);}
+.main{flex:1;min-width:0;}
+.topbar{background:var(--card);border-bottom:1px solid var(--border);padding:16px 28px;display:flex;justify-content:space-between;align-items:center;}
+.topbar h1{font-size:19px;font-weight:800;}
+.sync-pill{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;padding:8px 14px;border-radius:999px;background:var(--good-bg);color:var(--good);}
+.sync-pill.syncing{background:var(--acc-bg);color:var(--acc-dk);}
+.sync-pill i{font-size:12px;}
+.content{padding:26px 28px;max-width:1200px;}
+.section{opacity:0;transform:translateY(14px);transition:opacity .5s ease, transform .5s ease;}
+.section.show{opacity:1;transform:translateY(0);}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;}
+.kpi .label{font-size:12px;color:var(--t3);font-weight:700;text-transform:uppercase;letter-spacing:.4px;}
+.kpi .value{font-size:24px;font-weight:800;margin-top:6px;}
+.kpi .delta{font-size:12px;font-weight:700;margin-top:4px;}
+.delta.up{color:var(--bad);}
+.delta.down{color:var(--good);}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:22px;}
+.card h2{font-size:15px;font-weight:800;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;}
+.btn{background:var(--acc);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;}
+.btn:hover{background:var(--acc-dk);}
+.btn.ghost{background:transparent;color:var(--acc-dk);border:1px solid var(--border);}
+table{width:100%;border-collapse:collapse;font-size:13.5px;}
+th{text-align:left;color:var(--t3);font-weight:700;font-size:11.5px;text-transform:uppercase;padding:8px 10px;border-bottom:1px solid var(--border);}
+td{padding:10px;border-bottom:1px solid var(--border-light);}
+tr.veh-row{cursor:pointer;}
+tr.veh-row:hover{background:var(--bg-alt);}
+.badge{padding:3px 10px;border-radius:999px;font-size:11.5px;font-weight:700;}
+.badge.ok{background:var(--good-bg);color:var(--good);}
+.badge.alert{background:var(--bad-bg);color:var(--bad);}
+.alert-banner{display:none;align-items:center;gap:12px;background:var(--bad-bg);color:var(--bad);border:1px solid #F5C2C2;border-radius:12px;padding:14px 18px;margin-bottom:22px;font-weight:700;font-size:13.5px;}
+.alert-banner.show{display:flex;}
+.alert-banner i{font-size:18px;}
+.bars{display:flex;align-items:flex-end;gap:14px;height:150px;margin-top:10px;}
+.bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;}
+.bar{width:100%;background:linear-gradient(180deg,var(--gold-300),var(--acc));border-radius:6px 6px 0 0;transition:height .6s ease;}
+.bar-wrap span{font-size:11px;color:var(--t3);font-weight:700;}
+.modal-overlay{position:fixed;inset:0;background:rgba(28,20,10,.45);display:none;align-items:center;justify-content:center;z-index:50;}
+.modal-overlay.show{display:flex;}
+.modal{background:var(--card);border-radius:16px;width:520px;max-width:92vw;max-height:86vh;overflow-y:auto;padding:24px;}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+.modal-head h3{font-size:17px;font-weight:800;}
+.modal-close{background:var(--bg-alt);border:none;width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:14px;color:var(--t2);}
+.trip-row{display:flex;justify-content:space-between;font-size:13px;padding:9px 0;border-bottom:1px solid var(--border-light);}
+.trip-row .t3{color:var(--t3);}
+.restart-btn{position:fixed;bottom:22px;right:22px;background:var(--sb);color:#fff;border:none;padding:11px 18px;border-radius:999px;font-weight:700;font-size:13px;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.25);z-index:60;display:flex;align-items:center;gap:8px;}
+@media(max-width:900px){
+  .kpis{grid-template-columns:repeat(2,1fr);}
+  .sidebar{position:fixed;left:-240px;top:0;bottom:0;z-index:40;transition:left .3s ease;}
+  .sidebar.open{left:0;}
+  .menu-toggle{display:block;}
+}
+.menu-toggle{display:none;background:none;border:none;font-size:18px;color:var(--t1);cursor:pointer;}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand"><i class="fa-solid fa-gas-pump"></i><span>Provimix Fuel</span></div>
+    <div class="nav-item active"><i class="fa-solid fa-gauge"></i>Panel General</div>
+    <div class="nav-item"><i class="fa-solid fa-truck"></i>Vehiculos</div>
+    <div class="nav-item"><i class="fa-solid fa-route"></i>Viajes</div>
+    <div class="nav-item"><i class="fa-solid fa-chart-line"></i>Reportes de Eficiencia</div>
+    <div class="nav-item"><i class="fa-solid fa-plug"></i>Integracion API</div>
+  </aside>
+  <div class="main">
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')"><i class="fa-solid fa-bars"></i></button>
+        <h1>Panel de Costos de Combustible</h1>
+      </div>
+      <div class="sync-pill" id="syncPill"><i class="fa-solid fa-circle-check"></i><span id="syncLabel">Sincronizado hace 4 min</span></div>
+    </div>
+    <div class="content">
+      <div class="alert-banner" id="alertBanner">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <div>Alerta automatica: el vehiculo P-118 tiene un costo por kilometro 42 por ciento sobre el promedio de la flota.</div>
+      </div>
+
+      <div class="section" id="sec1">
+        <div class="kpis">
+          <div class="kpi"><div class="label">Vehiculos sincronizados</div><div class="value">18 / 18</div><div class="delta down">Al dia</div></div>
+          <div class="kpi"><div class="label">Costo combustible mes</div><div class="value">USD 9,420</div><div class="delta up">+6.2% vs mes anterior</div></div>
+          <div class="kpi"><div class="label">Costo promedio por km</div><div class="value">USD 0.31</div><div class="delta down">-3% vs mes anterior</div></div>
+          <div class="kpi"><div class="label">Viajes registrados</div><div class="value">246</div><div class="delta down">Ultimos 30 dias</div></div>
+        </div>
+      </div>
+
+      <div class="section" id="sec2">
+        <div class="card">
+          <h2>Vehiculos <button class="btn" id="syncBtn" onclick="runSync()"><i class="fa-solid fa-rotate"></i> Sincronizar ahora</button></h2>
+          <table>
+            <thead><tr><th>Vehiculo</th><th>Placa</th><th>Ultimo consumo</th><th>Costo / km</th><th>Estado</th></tr></thead>
+            <tbody id="vehTable"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="section" id="sec3">
+        <div class="card">
+          <h2>Tendencia de costo por kilometro <span style="font-size:12px;color:var(--t3);font-weight:600;">Ultimas 6 semanas</span></h2>
+          <div class="bars" id="chartBars"></div>
+        </div>
+      </div>
+
+      <div class="section" id="sec4">
+        <div class="card">
+          <h2><i class="fa-solid fa-plug" style="color:var(--acc);"></i>&nbsp; Estado de integracion API</h2>
+          <div class="trip-row"><span>Plataforma de flota</span><span class="t3">Por confirmar con el cliente</span></div>
+          <div class="trip-row"><span>Modo de sincronizacion</span><span class="t3">Programado cada 15 minutos</span></div>
+          <div class="trip-row"><span>Ultima sincronizacion exitosa</span><span class="t3" id="lastSyncTime">Hace 4 minutos</span></div>
+          <div class="trip-row" style="border-bottom:none;"><span>Reintentos automaticos</span><span class="t3">Activos con backoff progresivo</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modalTitle">Vehiculo</h3>
+      <button class="modal-close" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<button class="restart-btn" onclick="location.reload()"><i class="fa-solid fa-arrow-rotate-left"></i> Reiniciar demo</button>
+
+<script>
+const vehicles = [
+  {id:"P-101", plate:"AB-4021", fuel:"312 L", cost:0.27, status:"ok", trips:[
+    {route:"Ciudad de Panama - Colon", km:78, liters:22, cost:19.80},
+    {route:"Colon - David", km:412, liters:96, cost:86.40},
+  ]},
+  {id:"P-104", plate:"AB-4033", fuel:"288 L", cost:0.29, status:"ok", trips:[
+    {route:"Ciudad de Panama - Chitre", km:255, liters:60, cost:54.00},
+  ]},
+  {id:"P-118", plate:"AB-4090", fuel:"401 L", cost:0.44, status:"alert", trips:[
+    {route:"Ciudad de Panama - David", km:438, liters:118, cost:106.20},
+    {route:"David - Ciudad de Panama", km:438, liters:112, cost:100.80},
+  ]},
+  {id:"P-122", plate:"AB-4102", fuel:"260 L", cost:0.26, status:"ok", trips:[
+    {route:"Colon - Ciudad de Panama", km:78, liters:20, cost:18.00},
+  ]},
+  {id:"P-130", plate:"AB-4115", fuel:"340 L", cost:0.30, status:"ok", trips:[
+    {route:"Ciudad de Panama - Santiago", km:250, liters:58, cost:52.20},
+  ]},
+];
+
+function renderVehicles(){
+  const tbody = document.getElementById('vehTable');
+  tbody.innerHTML = vehicles.map(v => `
+    <tr class="veh-row" onclick="openVehicle('${v.id}')">
+      <td><strong>${v.id}</strong></td>
+      <td>${v.plate}</td>
+      <td>${v.fuel}</td>
+      <td>USD ${v.cost.toFixed(2)}</td>
+      <td><span class="badge ${v.status === 'alert' ? 'alert' : 'ok'}">${v.status === 'alert' ? 'Costo alto' : 'Normal'}</span></td>
+    </tr>
+  `).join('');
+}
+
+function openVehicle(id){
+  const v = vehicles.find(x => x.id === id);
+  document.getElementById('modalTitle').textContent = `Vehiculo ${v.id} - ${v.plate}`;
+  document.getElementById('modalBody').innerHTML = `
+    <div class="trip-row"><span>Consumo del mes</span><span class="t3">${v.fuel}</span></div>
+    <div class="trip-row"><span>Costo por kilometro</span><span class="t3">USD ${v.cost.toFixed(2)}</span></div>
+    <h3 style="font-size:13px;margin:16px 0 6px;color:var(--t2);">Historial de viajes</h3>
+    ${v.trips.map(t => `
+      <div class="trip-row">
+        <span>${t.route}</span>
+        <span class="t3">${t.km} km &middot; ${t.liters} L &middot; USD ${t.cost.toFixed(2)}</span>
+      </div>
+    `).join('')}
+  `;
+  document.getElementById('modalOverlay').classList.add('show');
+}
+function closeModal(){ document.getElementById('modalOverlay').classList.remove('show'); }
+
+function renderChart(){
+  const weeks = [{l:"Sem 1", v:0.27},{l:"Sem 2", v:0.28},{l:"Sem 3", v:0.29},{l:"Sem 4", v:0.30},{l:"Sem 5", v:0.31},{l:"Sem 6", v:0.31}];
+  const max = 0.4;
+  document.getElementById('chartBars').innerHTML = weeks.map(w => `
+    <div class="bar-wrap">
+      <div class="bar" style="height:${(w.v/max*100).toFixed(0)}%"></div>
+      <span>${w.l}<br>$${w.v.toFixed(2)}</span>
+    </div>
+  `).join('');
+}
+
+let syncing = false;
+function runSync(){
+  if (syncing) return;
+  syncing = true;
+  const pill = document.getElementById('syncPill');
+  const label = document.getElementById('syncLabel');
+  pill.classList.add('syncing');
+  label.textContent = "Sincronizando con la API...";
+  document.getElementById('syncBtn').innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sincronizando';
+  setTimeout(() => {
+    pill.classList.remove('syncing');
+    label.textContent = "Sincronizado hace unos segundos";
+    document.getElementById('lastSyncTime').textContent = "Hace unos segundos";
+    document.getElementById('syncBtn').innerHTML = '<i class="fa-solid fa-rotate"></i> Sincronizar ahora';
+    syncing = false;
+  }, 1800);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  renderVehicles();
+  renderChart();
+  const sections = document.querySelectorAll('.section');
+  sections.forEach((s, i) => setTimeout(() => s.classList.add('show'), 150 + i * 140));
+  setTimeout(() => document.getElementById('alertBanner').classList.add('show'), 900);
+});
+</script>
+</body>
+</html>
