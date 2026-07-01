@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ProfileGuard - Gerenciador de Perfis Isolados</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700;800&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+  :root{
+    --gold:#b8860b;
+    --gold-light:#f5c451;
+    --gold-dark:#8a640a;
+    --bg:#fbf8f2;
+    --panel:#ffffff;
+    --ink:#2b2416;
+    --muted:#7a6f5c;
+    --border:#e9e0cc;
+    --success:#2e7d4f;
+    --danger:#b03a2e;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--ink);line-height:1.5;}
+  h1,h2,h3,.brand{font-family:'Lexend',sans-serif;}
+  .app{max-width:1200px;margin:0 auto;padding:0 20px;}
+
+  header.top{background:linear-gradient(135deg,#1f1a10,#3a2f16);color:#fff;padding:16px 0;position:sticky;top:0;z-index:50;box-shadow:0 4px 20px rgba(0,0,0,.15);}
+  header.top .app{display:flex;align-items:center;justify-content:space-between;}
+  .brand{font-weight:800;font-size:1.3rem;display:flex;align-items:center;gap:10px;}
+  .brand i{color:var(--gold-light);}
+  .top-actions{display:flex;gap:10px;align-items:center;}
+  .os-pill{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);padding:6px 12px;border-radius:20px;font-size:.78rem;font-weight:600;}
+  .restart-btn{background:transparent;border:1px solid rgba(255,255,255,.35);color:#fff;padding:8px 16px;border-radius:8px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:600;font-size:.85rem;transition:.2s;}
+  .restart-btn:hover{background:rgba(255,255,255,.12);}
+
+  .reveal{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s ease;}
+  .reveal.in{opacity:1;transform:translateY(0);}
+
+  .toolbar{display:flex;justify-content:space-between;align-items:center;padding:26px 0 18px;flex-wrap:wrap;gap:14px;}
+  .toolbar h2{font-size:1.4rem;}
+  .toolbar .sub{color:var(--muted);font-size:.9rem;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;}
+  .btn{border:none;padding:11px 18px;border-radius:10px;font-weight:700;font-family:'Lexend',sans-serif;cursor:pointer;font-size:.9rem;transition:.2s;}
+  .btn i{margin-right:7px;}
+  .btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:#fff;}
+  .btn-gold:hover{filter:brightness(1.07);transform:translateY(-1px);}
+  .btn-ghost{background:#fff;border:1px solid var(--border);color:var(--ink);}
+  .btn-ghost:hover{background:#fdfbf5;}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}
+  @media(max-width:800px){.stats{grid-template-columns:1fr 1fr;}}
+  .stat{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:18px;text-align:center;box-shadow:0 6px 18px rgba(80,60,10,.05);}
+  .stat .num{font-family:'Lexend',sans-serif;font-size:1.6rem;font-weight:800;color:var(--gold-dark);}
+  .stat .lbl{font-size:.78rem;color:var(--muted);margin-top:4px;}
+
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;padding-bottom:60px;}
+  @media(max-width:960px){.grid{grid-template-columns:1fr 1fr;}}
+  @media(max-width:640px){.grid{grid-template-columns:1fr;}}
+
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:22px;box-shadow:0 10px 30px rgba(80,60,10,.06);transition:.2s;}
+  .card:hover{transform:translateY(-3px);box-shadow:0 14px 36px rgba(80,60,10,.1);}
+  .card .head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;}
+  .card .name{font-family:'Lexend',sans-serif;font-weight:700;font-size:1.05rem;}
+  .card .status{font-size:.72rem;font-weight:700;padding:4px 10px;border-radius:20px;background:#e9f7ee;color:var(--success);}
+  .card .status.off{background:#f4ebe7;color:var(--danger);}
+  .card .row{display:flex;justify-content:space-between;font-size:.82rem;color:var(--muted);margin-bottom:6px;}
+  .card .row b{color:var(--ink);}
+  .card .fp-tag{font-family:monospace;font-size:.72rem;background:#fdfbf5;border:1px dashed var(--border);border-radius:8px;padding:6px 8px;margin:10px 0;word-break:break-all;color:var(--gold-dark);}
+  .card .actions{display:flex;gap:8px;margin-top:12px;}
+  .card .actions .btn{flex:1;padding:9px 10px;font-size:.8rem;}
+
+  .modal-bg{display:none;position:fixed;inset:0;background:rgba(20,16,8,.55);z-index:100;align-items:center;justify-content:center;}
+  .modal-bg.active{display:flex;}
+  .modal{background:#fff;border-radius:18px;padding:30px;width:440px;max-width:92vw;box-shadow:0 24px 60px rgba(0,0,0,.25);}
+  .modal h3{margin-bottom:4px;}
+  .modal .sub{color:var(--muted);font-size:.85rem;margin-bottom:18px;}
+  label{display:block;font-weight:600;font-size:.82rem;margin:12px 0 5px;}
+  label:first-of-type{margin-top:0;}
+  input,select{width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--border);font-family:'Nunito',sans-serif;font-size:.92rem;background:#fffdf8;}
+  input:focus,select:focus{outline:2px solid var(--gold-light);border-color:var(--gold);}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .modal-actions{display:flex;gap:10px;margin-top:22px;}
+  .modal-actions .btn{flex:1;}
+
+  .launch-bg{display:none;position:fixed;inset:0;background:rgba(15,12,6,.7);z-index:110;align-items:center;justify-content:center;}
+  .launch-bg.active{display:flex;}
+  .browser-win{background:#f1ede4;border-radius:14px;width:640px;max-width:94vw;box-shadow:0 30px 70px rgba(0,0,0,.4);overflow:hidden;}
+  .browser-chrome{background:#e2ddd1;padding:10px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #cfc8b6;}
+  .dot{width:11px;height:11px;border-radius:50%;}
+  .dot.r{background:#e0605a;} .dot.y{background:#e6b84b;} .dot.g{background:#5cb570;}
+  .addr{flex:1;background:#fff;border-radius:8px;padding:6px 12px;font-size:.78rem;color:var(--muted);margin-left:8px;display:flex;align-items:center;gap:6px;}
+  .browser-body{padding:24px;background:#fff;}
+  .fp-row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);font-size:.85rem;}
+  .fp-row b{color:var(--gold-dark);font-family:monospace;}
+  .fp-verdict{margin-top:16px;background:#e9f7ee;border:1px solid #bfe3cc;color:var(--success);border-radius:10px;padding:12px 16px;font-weight:700;font-size:.85rem;display:flex;align-items:center;gap:8px;}
+  .close-launch{width:100%;margin-top:16px;}
+
+  .footer-note{text-align:center;color:var(--muted);font-size:.8rem;padding:20px 0 40px;}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="app">
+    <div class="brand"><i class="fa-solid fa-fingerprint"></i>ProfileGuard</div>
+    <div class="top-actions">
+      <span class="os-pill" id="osPill"><i class="fa-brands fa-windows"></i> Windows build</span>
+      <button class="restart-btn" onclick="resetDemo()"><i class="fa-solid fa-rotate-left"></i> Reiniciar</button>
+    </div>
+  </div>
+</header>
+
+<div class="app">
+
+  <div class="toolbar reveal">
+    <div>
+      <h2>Perfis de navegacao</h2>
+      <div class="sub">Cada perfil roda isolado com fingerprint proprio e proxy dedicado</div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="importProfiles()"><i class="fa-solid fa-file-import"></i> Importar</button>
+      <button class="btn btn-ghost" onclick="exportProfiles()"><i class="fa-solid fa-file-export"></i> Exportar</button>
+      <button class="btn btn-gold" onclick="openModal()"><i class="fa-solid fa-plus"></i> Novo perfil</button>
+    </div>
+  </div>
+
+  <div class="stats reveal">
+    <div class="stat"><div class="num" id="statTotal">4</div><div class="lbl">Perfis ativos</div></div>
+    <div class="stat"><div class="num" id="statProxy">4</div><div class="lbl">Proxies conectados</div></div>
+    <div class="stat"><div class="num">100%</div><div class="lbl">Fingerprint isolado</div></div>
+    <div class="stat"><div class="num">0</div><div class="lbl">Vazamento WebRTC</div></div>
+  </div>
+
+  <div class="grid reveal" id="profileGrid"></div>
+
+</div>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h3>Criar novo perfil</h3>
+    <div class="sub">Isolamento completo de cookies cache e fingerprint</div>
+    <label>Nome do perfil</label>
+    <input id="pName" placeholder="Ex. Conta Ads 07">
+    <div class="two-col">
+      <div>
+        <label>Tipo de proxy</label>
+        <select id="pProxyType">
+          <option>SOCKS5</option>
+          <option>HTTP</option>
+          <option>HTTPS</option>
+        </select>
+      </div>
+      <div>
+        <label>Sistema simulado</label>
+        <select id="pOs">
+          <option>Windows 11</option>
+          <option>macOS Sonoma</option>
+          <option>Windows 10</option>
+        </select>
+      </div>
+    </div>
+    <label>Host do proxy</label>
+    <input id="pHost" placeholder="Ex. 191.24.88.12 porta 1080">
+    <label style="display:flex;align-items:center;gap:8px;margin-top:14px;">
+      <input type="checkbox" id="pTz" checked style="width:auto;"> Ajustar timezone e idioma pela geolocalizacao do proxy
+    </label>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-gold" onclick="createProfile()"><i class="fa-solid fa-shield-halved"></i> Criar perfil isolado</button>
+    </div>
+  </div>
+</div>
+
+<div class="launch-bg" id="launchBg">
+  <div class="browser-win">
+    <div class="browser-chrome">
+      <div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
+      <div class="addr"><i class="fa-solid fa-lock"></i> <span id="launchAddr">whoer.net</span></div>
+    </div>
+    <div class="browser-body">
+      <div class="fp-row"><span>Canvas fingerprint</span><b id="fpCanvas"></b></div>
+      <div class="fp-row"><span>WebGL renderer</span><b id="fpWebgl"></b></div>
+      <div class="fp-row"><span>IP publico</span><b id="fpIp"></b></div>
+      <div class="fp-row"><span>Timezone</span><b id="fpTz"></b></div>
+      <div class="fp-row"><span>WebRTC local IP</span><b id="fpRtc">bloqueado</b></div>
+      <div class="fp-verdict"><i class="fa-solid fa-circle-check"></i> Este perfil aparenta ser uma maquina fisica diferente a cada verificacao externa</div>
+      <button class="btn btn-ghost close-launch" onclick="closeLaunch()">Fechar janela</button>
+    </div>
+  </div>
+</div>
+
+<div class="footer-note">Demonstracao ilustrativa do painel ProfileGuard. Dados e fingerprints gerados localmente para fins de validacao de fluxo.</div>
+
+<script>
+let profiles = [
+  {name:'Conta Ads 01', proxy:'SOCKS5', host:'187.44.12.5:1080', os:'Windows 11', tz:'America/Sao_Paulo'},
+  {name:'Conta Ads 02', proxy:'HTTP', host:'201.9.77.30:8080', os:'macOS Sonoma', tz:'America/New_York'},
+  {name:'Marketplace 03', proxy:'SOCKS5', host:'45.88.201.9:1080', os:'Windows 10', tz:'Europe/Lisbon'},
+  {name:'Social 04', proxy:'HTTPS', host:'93.115.4.201:443', os:'Windows 11', tz:'America/Mexico_City'}
+];
+
+function hashOf(str){
+  let h = 0;
+  for(let i=0;i<str.length;i++){ h = (h*31 + str.charCodeAt(i)) >>> 0; }
+  return h.toString(16).padStart(8,'0');
+}
+
+function renderGrid(){
+  const grid = document.getElementById('profileGrid');
+  grid.innerHTML = '';
+  profiles.forEach((p, idx) => {
+    const fp = hashOf(p.name + p.host);
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="head">
+        <div class="name">${p.name}</div>
+        <div class="status">Isolado</div>
+      </div>
+      <div class="row"><span>Proxy</span><b>${p.proxy}</b></div>
+      <div class="row"><span>Endereco</span><b>${p.host}</b></div>
+      <div class="row"><span>Sistema</span><b>${p.os}</b></div>
+      <div class="row"><span>Timezone</span><b>${p.tz}</b></div>
+      <div class="fp-tag">fp_${fp}</div>
+      <div class="actions">
+        <button class="btn btn-gold" onclick="launchProfile(${idx})"><i class="fa-solid fa-play"></i> Abrir</button>
+        <button class="btn btn-ghost" onclick="deleteProfile(${idx})"><i class="fa-solid fa-trash"></i></button>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+  document.getElementById('statTotal').textContent = profiles.length;
+  document.getElementById('statProxy').textContent = profiles.length;
+}
+
+function openModal(){ document.getElementById('modalBg').classList.add('active'); }
+function closeModal(){ document.getElementById('modalBg').classList.remove('active'); }
+
+function createProfile(){
+  const name = document.getElementById('pName').value.trim() || ('Perfil ' + (profiles.length+1));
+  const proxy = document.getElementById('pProxyType').value;
+  const os = document.getElementById('pOs').value;
+  const host = document.getElementById('pHost').value.trim() || '104.28.' + (10+profiles.length) + '.55:1080';
+  const tz = document.getElementById('pTz').checked ? 'Auto pela geolocalizacao' : 'Sistema padrao';
+  profiles.push({name, proxy, host, os, tz});
+  renderGrid();
+  closeModal();
+  document.getElementById('pName').value='';
+  document.getElementById('pHost').value='';
+}
+
+function deleteProfile(idx){
+  profiles.splice(idx,1);
+  renderGrid();
+}
+
+function launchProfile(idx){
+  const p = profiles[idx];
+  const fp = hashOf(p.name + p.host);
+  document.getElementById('fpCanvas').textContent = 'a3f9' + fp.slice(0,4);
+  document.getElementById('fpWebgl').textContent = p.os.includes('mac') ? 'Apple GPU' : 'ANGLE Direct3D11';
+  document.getElementById('fpIp').textContent = p.host.split(':')[0];
+  document.getElementById('fpTz').textContent = p.tz.includes('Auto') ? p.tz : p.tz;
+  document.getElementById('launchAddr').textContent = p.name.toLowerCase().replace(/ /g,'-') + '.session';
+  document.getElementById('launchBg').classList.add('active');
+}
+function closeLaunch(){ document.getElementById('launchBg').classList.remove('active'); }
+
+function importProfiles(){
+  profiles.push({name:'Importado 05', proxy:'SOCKS5', host:'88.212.4.19:1080', os:'Windows 11', tz:'America/Sao_Paulo'});
+  renderGrid();
+}
+function exportProfiles(){
+  alert('Arquivo profiles_export.json gerado com ' + profiles.length + ' perfis. No app real isso baixa um arquivo criptografado.');
+}
+
+function resetDemo(){
+  profiles = [
+    {name:'Conta Ads 01', proxy:'SOCKS5', host:'187.44.12.5:1080', os:'Windows 11', tz:'America/Sao_Paulo'},
+    {name:'Conta Ads 02', proxy:'HTTP', host:'201.9.77.30:8080', os:'macOS Sonoma', tz:'America/New_York'},
+    {name:'Marketplace 03', proxy:'SOCKS5', host:'45.88.201.9:1080', os:'Windows 10', tz:'Europe/Lisbon'},
+    {name:'Social 04', proxy:'HTTPS', host:'93.115.4.201:443', os:'Windows 11', tz:'America/Mexico_City'}
+  ];
+  renderGrid();
+  closeModal();
+  closeLaunch();
+}
+
+renderGrid();
+
+const observer = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('in'); });
+},{threshold:0.1});
+document.querySelectorAll('.reveal').forEach(el=>observer.observe(el));
+document.querySelectorAll('.reveal').forEach(el=>el.classList.add('in'));
+</script>
+
+</body>
+</html>
