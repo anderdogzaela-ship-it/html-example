@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Demo, Atendimento WhatsApp para Entregas</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --gold: #d4a017;
+    --gold-dark: #a67c0a;
+    --gold-light: #f2c94c;
+    --gold-pale: #fff7e0;
+    --bg: #fbf7ee;
+    --surface: #ffffff;
+    --card: #fffaf0;
+    --border: #ecdfc0;
+    --text: #2e2a1f;
+    --mid: #6b634f;
+    --muted: #a89b7d;
+    --wa-green: #25d366;
+    --wa-teal: #128c7e;
+    --wa-dark: #075e54;
+    --wa-bg: #e5ddd3;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 24px 16px 60px;
+  }
+
+  .page-header {
+    max-width: 1100px;
+    margin: 0 auto 28px;
+    text-align: center;
+  }
+
+  .page-header .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--gold-pale);
+    border: 1px solid var(--gold-light);
+    color: var(--gold-dark);
+    font-size: 12px;
+    font-weight: 700;
+    padding: 6px 14px;
+    border-radius: 20px;
+    margin-bottom: 14px;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+  }
+
+  .page-header h1 {
+    font-size: clamp(24px, 3.4vw, 34px);
+    font-weight: 900;
+    letter-spacing: -.5px;
+    margin-bottom: 8px;
+  }
+
+  .page-header p {
+    color: var(--mid);
+    font-size: 15px;
+    max-width: 620px;
+    margin: 0 auto;
+  }
+
+  .tabs {
+    max-width: 1100px;
+    margin: 24px auto 20px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .tab-btn {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--mid);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all .2s;
+  }
+
+  .tab-btn i { font-size: 14px; }
+
+  .tab-btn.active {
+    background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 6px 16px rgba(212,160,23,.28);
+  }
+
+  .stage {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: none;
+  }
+
+  .stage.active { display: block; }
+
+  /* ============ PHONE SHELL ============ */
+  .phone-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .phone {
+    width: 360px;
+    max-width: 92vw;
+    height: 700px;
+    max-height: 78vh;
+    background: #111;
+    border-radius: 44px;
+    padding: 14px;
+    box-shadow: 0 30px 60px -20px rgba(46,42,31,.35), 0 0 0 2px #000;
+    position: relative;
+  }
+
+  .phone-notch {
+    position: absolute;
+    top: 14px; left: 50%;
+    transform: translateX(-50%);
+    width: 130px;
+    height: 22px;
+    background: #111;
+    border-radius: 0 0 16px 16px;
+    z-index: 5;
+  }
+
+  .phone-screen {
+    width: 100%;
+    height: 100%;
+    background: var(--wa-bg);
+    border-radius: 32px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+
+  .status-bar {
+    height: 30px;
+    background: var(--wa-dark);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 22px;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .wa-header {
+    background: var(--wa-dark);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    flex-shrink: 0;
+  }
+
+  .wa-avatar {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--wa-green), var(--wa-teal));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .wa-header-info { flex: 1; min-width: 0; }
+  .wa-header-info .name { font-size: 15px; font-weight: 700; }
+  .wa-header-info .status { font-size: 11.5px; opacity: .85; }
+  .wa-header i { font-size: 16px; opacity: .9; margin-left: 10px; }
+
+  .wa-chat {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background-image: radial-gradient(rgba(0,0,0,.03) 1px, transparent 1px);
+    background-size: 14px 14px;
+  }
+
+  .bubble-row { display: flex; }
+  .bubble-row.in { justify-content: flex-start; }
+  .bubble-row.out { justify-content: flex-end; }
+
+  .bubble {
+    max-width: 78%;
+    padding: 8px 10px 6px;
+    border-radius: 9px;
+    font-size: 13.5px;
+    line-height: 1.4;
+    box-shadow: 0 1px 1px rgba(0,0,0,.08);
+    animation: pop .22s ease;
+    white-space: pre-line;
+  }
+
+  @keyframes pop {
+    from { opacity: 0; transform: translateY(6px) scale(.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .bubble.in { background: #fff; border-top-left-radius: 2px; }
+  .bubble.out {
+    background: #dcf8c6;
+    border-top-right-radius: 2px;
+  }
+
+  .bubble .meta-time {
+    display: block;
+    text-align: right;
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 3px;
+  }
+
+  .typing-row { display: flex; justify-content: flex-start; }
+  .typing-bubble {
+    background: #fff;
+    padding: 10px 14px;
+    border-radius: 9px;
+    border-top-left-radius: 2px;
+    display: flex;
+    gap: 4px;
+    box-shadow: 0 1px 1px rgba(0,0,0,.08);
+  }
+  .typing-bubble span {
+    width: 6px; height: 6px;
+    background: var(--muted);
+    border-radius: 50%;
+    display: inline-block;
+    animation: bounce 1s infinite ease-in-out;
+  }
+  .typing-bubble span:nth-child(2) { animation-delay: .15s; }
+  .typing-bubble span:nth-child(3) { animation-delay: .3s; }
+  @keyframes bounce {
+    0%, 60%, 100% { transform: translateY(0); opacity: .5; }
+    30% { transform: translateY(-4px); opacity: 1; }
+  }
+
+  .wa-input-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    background: #f0f0f0;
+    flex-shrink: 0;
+  }
+  .wa-input-bar .fake-input {
+    flex: 1;
+    background: #fff;
+    border-radius: 20px;
+    padding: 9px 14px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .wa-input-bar .mic {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: var(--wa-teal);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .order-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--wa-green);
+    color: #fff;
+    font-weight: 800;
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 8px;
+    margin-top: 4px;
+  }
+
+  /* ============ CONTROLS ============ */
+  .controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .step-indicator {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--mid);
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 7px 14px;
+    border-radius: 20px;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 22px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    font-family: 'Nunito', sans-serif;
+    cursor: pointer;
+    border: none;
+    transition: all .2s;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--wa-green), var(--wa-teal));
+    color: #fff;
+    box-shadow: 0 6px 16px rgba(18,140,126,.28);
+  }
+  .btn-primary:hover { transform: translateY(-1px); }
+  .btn-primary:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .btn-ghost {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--mid);
+  }
+  .btn-ghost:hover { border-color: var(--gold); color: var(--gold-dark); }
+
+  .hint {
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+    max-width: 380px;
+    margin: 4px auto 0;
+  }
+
+  /* ============ ADMIN PANEL ============ */
+  .browser-shell {
+    background: var(--surface);
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    box-shadow: 0 20px 50px -24px rgba(46,42,31,.3);
+    overflow: hidden;
+  }
+
+  .browser-topbar {
+    background: #efe6ce;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .browser-dot {
+    width: 11px; height: 11px;
+    border-radius: 50%;
+  }
+  .browser-dot.red { background: #ff5f57; }
+  .browser-dot.yellow { background: #febc2e; }
+  .browser-dot.green { background: #28c840; }
+  .browser-url {
+    flex: 1;
+    background: #fff;
+    border-radius: 6px;
+    padding: 5px 12px;
+    font-size: 12px;
+    color: var(--mid);
+    margin-left: 6px;
+  }
+
+  .panel-body { padding: 22px; }
+
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  .panel-header h2 {
+    font-size: 20px;
+    font-weight: 800;
+  }
+
+  .panel-header .count-badge {
+    background: var(--gold-pale);
+    color: var(--gold-dark);
+    font-weight: 800;
+    font-size: 13px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--gold-light);
+  }
+
+  table.orders {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+
+  table.orders th {
+    text-align: left;
+    font-size: 11.5px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: var(--muted);
+    padding: 8px 10px;
+    border-bottom: 2px solid var(--border);
+  }
+
+  table.orders td {
+    padding: 12px 10px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+
+  table.orders tr:last-child td { border-bottom: none; }
+
+  .order-num { font-weight: 800; color: var(--gold-dark); }
+
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: rgba(37,211,102,.14);
+    color: var(--wa-dark);
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 50px 20px;
+    color: var(--muted);
+  }
+  .empty-state i {
+    font-size: 34px;
+    color: var(--gold-light);
+    margin-bottom: 12px;
+    display: block;
+  }
+
+  .scope-note {
+    margin-top: 18px;
+    background: var(--gold-pale);
+    border: 1px solid var(--gold-light);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: var(--mid);
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .scope-note i { color: var(--gold-dark); margin-top: 2px; }
+
+  @media (max-width: 600px) {
+    .phone { height: 640px; }
+    table.orders { font-size: 12.5px; }
+    table.orders th:nth-child(3), table.orders td:nth-child(3) { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <span class="eyebrow"><i class="fa-solid fa-truck-fast"></i> Demo interativa</span>
+  <h1>Atendimento automatico no WhatsApp para entregas</h1>
+  <p>Simulacao de como o cliente conversa com o bot para pedir uma entrega, e como o pedido aparece para o dono do negocio logo em seguida.</p>
+</div>
+
+<div class="tabs">
+  <button class="tab-btn active" data-tab="chat" onclick="switchTab('chat')"><i class="fa-solid fa-comment-dots"></i> Conversa no WhatsApp</button>
+  <button class="tab-btn" data-tab="admin" onclick="switchTab('admin')"><i class="fa-solid fa-table-list"></i> Painel de pedidos</button>
+</div>
+
+<!-- ===================== CHAT STAGE ===================== -->
+<section class="stage active" id="stage-chat">
+  <div class="phone-wrap">
+    <div class="phone">
+      <div class="phone-notch"></div>
+      <div class="phone-screen">
+        <div class="status-bar">
+          <span>9:41</span>
+          <span><i class="fa-solid fa-signal"></i> <i class="fa-solid fa-wifi"></i> <i class="fa-solid fa-battery-three-quarters"></i></span>
+        </div>
+        <div class="wa-header">
+          <div class="wa-avatar"><i class="fa-solid fa-truck-fast"></i></div>
+          <div class="wa-header-info">
+            <div class="name">Rapido Entregas</div>
+            <div class="status" id="wa-status">online</div>
+          </div>
+          <i class="fa-solid fa-video"></i>
+          <i class="fa-solid fa-phone"></i>
+        </div>
+        <div class="wa-chat" id="wa-chat"></div>
+        <div class="wa-input-bar">
+          <div class="fake-input">Mensagem</div>
+          <div class="mic"><i class="fa-solid fa-microphone"></i></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="btn btn-ghost" onclick="restartDemo()"><i class="fa-solid fa-rotate-left"></i> Reiniciar</button>
+      <span class="step-indicator" id="step-indicator">Passo 1 de 8</span>
+      <button class="btn btn-primary" id="next-btn" onclick="advanceStep()">Avancar <i class="fa-solid fa-arrow-right"></i></button>
+    </div>
+    <p class="hint" id="hint-text">Clique em Avancar para simular a primeira mensagem do cliente.</p>
+  </div>
+</section>
+
+<!-- ===================== ADMIN STAGE ===================== -->
+<section class="stage" id="stage-admin">
+  <div class="browser-shell">
+    <div class="browser-topbar">
+      <span class="browser-dot red"></span>
+      <span class="browser-dot yellow"></span>
+      <span class="browser-dot green"></span>
+      <div class="browser-url"><i class="fa-solid fa-lock"></i>&nbsp; painel.rapidoentregas.com.br/pedidos</div>
+    </div>
+    <div class="panel-body">
+      <div class="panel-header">
+        <h2><i class="fa-solid fa-table-list"></i> Pedidos recebidos</h2>
+        <span class="count-badge" id="order-count">0 pedidos hoje</span>
+      </div>
+
+      <div id="admin-empty" class="empty-state">
+        <i class="fa-solid fa-inbox"></i>
+        Nenhum pedido ainda. Volte para a aba de conversa e avance o atendimento ate a confirmacao.
+      </div>
+
+      <table class="orders" id="admin-table" style="display:none">
+        <thead>
+          <tr>
+            <th>Pedido</th>
+            <th>Cliente</th>
+            <th>Item</th>
+            <th>Endereco</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="admin-tbody"></tbody>
+      </table>
+
+      <div class="scope-note">
+        <i class="fa-solid fa-circle-info"></i>
+        <div>Nesta fase o painel mostra apenas a lista simples de pedidos recebidos. Atribuicao de entregador e rastreio ao vivo entram em uma fase seguinte, fora do escopo deste MVP.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  const steps = [
+    { type: 'in', text: 'Ola! Voces entregam hoje ainda?', delay: 900 },
+    { type: 'out', text: 'Oi! Tudo bem? Sim, ainda estamos entregando hoje ate as 20h. Quer fazer um pedido agora?', delay: 1100 },
+    { type: 'in', text: 'Quero sim, pode ser', delay: 700 },
+    { type: 'out', text: 'Otimo! Me conta o item que voce quer enviar ou receber.', delay: 900 },
+    { type: 'in', text: 'Uma caixa de documentos, tamanho pequeno', delay: 800 },
+    { type: 'out', text: 'Perfeito. Agora me manda o endereco de entrega, com bairro.', delay: 900 },
+    { type: 'in', text: 'Rua das Flores, 245, bairro Centro', delay: 800 },
+    { type: 'out', text: 'Fechado. So confirmando, 1 caixa pequena de documentos para Rua das Flores, 245, Centro. Esta certo?', delay: 1000 },
+    { type: 'in', text: 'Sim, esta certo', delay: 700 },
+    { type: 'out', text: 'Pedido #1042 confirmado! Voce recebe uma mensagem assim que o entregador estiver a caminho.', delay: 1100, badge: 'Pedido #1042 confirmado' },
+  ];
+
+  let stepIndex = 0;
+  const chatEl = document.getElementById('wa-chat');
+  const nextBtn = document.getElementById('next-btn');
+  const stepIndicator = document.getElementById('step-indicator');
+  const hintText = document.getElementById('hint-text');
+  const waStatus = document.getElementById('wa-status');
+
+  const hints = [
+    'Clique em Avancar para simular a primeira mensagem do cliente.',
+    'O bot responde na hora, sem o dono precisar digitar nada.',
+    'Cliente decide fazer um pedido pelo proprio chat.',
+    'Bot inicia o fluxo estruturado de pedido, pergunta por pergunta.',
+    'Cliente informa o item que quer entregar.',
+    'Bot pede o endereco de entrega.',
+    'Cliente informa o endereco completo.',
+    'Bot resume o pedido antes de confirmar, evitando erros.',
+    'Cliente confirma os dados do pedido.',
+    'Pedido confirmado com numero automatico, e enviado ao painel do dono.'
+  ];
+
+  function timeNow() {
+    return new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function scrollChatToBottom() {
+    chatEl.scrollTop = chatEl.scrollHeight;
+  }
+
+  function showTyping(cb) {
+    waStatus.textContent = 'digitando...';
+    const row = document.createElement('div');
+    row.className = 'typing-row';
+    row.id = 'typing-row';
+    row.innerHTML = '<div class="typing-bubble"><span></span><span></span><span></span></div>';
+    chatEl.appendChild(row);
+    scrollChatToBottom();
+    setTimeout(() => {
+      const t = document.getElementById('typing-row');
+      if (t) t.remove();
+      waStatus.textContent = 'online';
+      cb();
+    }, 700);
+  }
+
+  function renderBubble(step) {
+    const row = document.createElement('div');
+    row.className = 'bubble-row ' + step.type;
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble ' + step.type;
+    let inner = step.text.replace(/\n/g, '<br>');
+    if (step.badge) {
+      inner += '<br><span class="order-badge"><i class="fa-solid fa-circle-check"></i> ' + step.badge + '</span>';
+    }
+    inner += '<span class="meta-time">' + timeNow() + (step.type === 'out' ? ' <i class="fa-solid fa-check-double" style="color:#4fc3f7"></i>' : '') + '</span>';
+    bubble.innerHTML = inner;
+    row.appendChild(bubble);
+    chatEl.appendChild(row);
+    scrollChatToBottom();
+  }
+
+  function advanceStep() {
+    if (stepIndex >= steps.length) return;
+    nextBtn.disabled = true;
+    const step = steps[stepIndex];
+
+    const doRender = () => {
+      renderBubble(step);
+      stepIndex++;
+      updateControls();
+      if (step.badge) {
+        addOrderToAdmin();
+      }
+      nextBtn.disabled = stepIndex >= steps.length;
+    };
+
+    if (step.type === 'out') {
+      showTyping(doRender);
+    } else {
+      setTimeout(doRender, 250);
+    }
+  }
+
+  function updateControls() {
+    const total = steps.length;
+    stepIndicator.textContent = 'Passo ' + Math.min(stepIndex + 1, total) + ' de ' + total;
+    hintText.textContent = hints[Math.min(stepIndex, hints.length - 1)];
+    if (stepIndex >= total) {
+      nextBtn.innerHTML = '<i class="fa-solid fa-check"></i> Demonstracao concluida';
+      nextBtn.disabled = true;
+      stepIndicator.textContent = 'Concluido, ' + total + ' de ' + total;
+      hintText.textContent = 'Confira a aba Painel de pedidos para ver o pedido chegando para o dono do negocio.';
+    }
+  }
+
+  function addOrderToAdmin() {
+    const tbody = document.getElementById('admin-tbody');
+    const table = document.getElementById('admin-table');
+    const empty = document.getElementById('admin-empty');
+    const countBadge = document.getElementById('order-count');
+
+    empty.style.display = 'none';
+    table.style.display = 'table';
+
+    const tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td class="order-num">#1042</td>' +
+      '<td>Cliente WhatsApp</td>' +
+      '<td>Caixa de documentos, pequena</td>' +
+      '<td>Rua das Flores, 245, Centro</td>' +
+      '<td><span class="status-pill"><i class="fa-solid fa-circle-check"></i> Confirmado</span></td>';
+    tbody.appendChild(tr);
+
+    countBadge.textContent = '1 pedido hoje';
+  }
+
+  function restartDemo() {
+    stepIndex = 0;
+    chatEl.innerHTML = '';
+    nextBtn.disabled = false;
+    nextBtn.innerHTML = 'Avancar <i class="fa-solid fa-arrow-right"></i>';
+    waStatus.textContent = 'online';
+    updateControls();
+
+    document.getElementById('admin-tbody').innerHTML = '';
+    document.getElementById('admin-table').style.display = 'none';
+    document.getElementById('admin-empty').style.display = 'block';
+    document.getElementById('order-count').textContent = '0 pedidos hoje';
+  }
+
+  function switchTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+    document.getElementById('stage-chat').classList.toggle('active', tab === 'chat');
+    document.getElementById('stage-admin').classList.toggle('active', tab === 'admin');
+  }
+
+  updateControls();
+</script>
+
+</body>
+</html>
