@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BellezaConecta — MVP App Profesionales de Belleza y Salones</title>
+<meta name="description" content="MVP mobile app that connects beauty professionals with salons through rule-based matching, mutual-match gated chat, and an admin panel with manual match mode.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  :root{
+    --gold:#f59e0b; --gold-dark:#d97706; --gold-darker:#b45309; --gold-light:#fbbf24; --gold-faint:rgba(245,158,11,0.12);
+    --rose:#e11d8f; --rose-faint:rgba(225,29,143,0.14);
+    --bg:#0a0f1e; --surface:#111827; --surface2:#1a2235; --surface3:#1f2d45;
+    --text:#f1f5f9; --text-muted:#94a3b8; --text-dim:#64748b;
+    --border:rgba(245,158,11,0.15);
+    --shadow:0 8px 32px rgba(0,0,0,0.5);
+    --radius:16px; --radius-sm:10px;
+    --ease-spring:cubic-bezier(.34,1.56,.64,1); --ease-out:cubic-bezier(.22,.68,0,1.2);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased;position:relative;overflow-x:hidden}
+  a{color:inherit;text-decoration:none}
+  button{font-family:inherit;cursor:pointer}
+  .bg-orb{position:fixed;border-radius:50%;filter:blur(90px);opacity:.25;z-index:0;pointer-events:none;animation:float 9s ease-in-out infinite}
+  .bg-orb.o1{width:420px;height:420px;background:var(--gold);top:-120px;left:-140px}
+  .bg-orb.o2{width:360px;height:360px;background:var(--rose);bottom:-100px;right:-120px;animation-delay:2s}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-26px)}}
+
+  .topbar{position:sticky;top:0;z-index:80;background:rgba(10,15,30,0.85);backdrop-filter:blur(16px);border-bottom:1px solid var(--border)}
+  .topbar-inner{max-width:1180px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 22px}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:900;font-size:17px}
+  .brand .logo{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--gold),var(--rose));display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(245,158,11,0.35);font-size:15px;color:#1a0f00}
+  .brand small{display:block;font-size:10.5px;color:var(--text-dim);font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-top:-2px}
+  .surface-switch{display:flex;gap:4px;background:var(--surface2);border:1px solid var(--border);border-radius:100px;padding:4px}
+  .surface-switch button{border:0;background:transparent;color:var(--text-muted);padding:9px 16px;border-radius:100px;font-size:12.5px;font-weight:700;transition:.2s var(--ease-spring);display:flex;align-items:center;gap:7px}
+  .surface-switch button.active{background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:#1a0f00;box-shadow:0 4px 14px rgba(245,158,11,0.35)}
+  .demo-tag{font-size:11px;color:var(--text-dim);border:1px solid var(--border);padding:5px 11px;border-radius:100px;display:flex;align-items:center;gap:6px}
+  @media(max-width:840px){.demo-tag{display:none}.brand small{display:none}.surface-switch button span.lbl{display:none}.surface-switch button{padding:9px 12px}}
+
+  main{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:0 22px 70px}
+  .hero-copy{text-align:center;padding:38px 0 8px;max-width:640px;margin:0 auto}
+  .hero-copy .pill{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;color:var(--gold-light);background:var(--gold-faint);border:1px solid var(--border);padding:6px 14px;border-radius:100px}
+  .hero-copy h1{font-size:clamp(22px,4vw,30px);font-weight:900;margin-top:14px;line-height:1.25}
+  .hero-copy p{color:var(--text-muted);font-size:14.5px;margin-top:10px;line-height:1.6}
+
+  .role-toggle{display:flex;justify-content:center;gap:10px;margin-top:22px}
+  .role-btn{display:flex;align-items:center;gap:9px;padding:11px 20px;border-radius:14px;border:1.5px solid var(--border);background:var(--surface);color:var(--text-muted);font-weight:800;font-size:13.5px;transition:.2s var(--ease-spring)}
+  .role-btn i{font-size:15px}
+  .role-btn.active{border-color:var(--gold);color:var(--gold-light);background:var(--gold-faint);transform:translateY(-2px)}
+
+  .demo-area{display:flex;flex-direction:column;align-items:center;padding:30px 0 10px}
+  .phone-wrapper{position:relative;width:375px;max-width:100%}
+  .phone-shell{background:#0d0d0d;border-radius:44px;border:2px solid #2a2a2a;box-shadow:0 0 0 1px #111,0 40px 80px rgba(0,0,0,.7),0 0 120px rgba(245,158,11,.08);overflow:hidden;position:relative}
+  .phone-notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:120px;height:30px;background:#0d0d0d;border-radius:0 0 20px 20px;z-index:50}
+  .phone-notch::after{content:"";position:absolute;top:8px;left:50%;transform:translateX(-50%);width:56px;height:5px;background:#1a1a1a;border-radius:99px}
+  .phone-screen{height:720px;overflow:hidden;position:relative;background:var(--bg);padding-top:44px}
+  .status-bar{position:absolute;top:0;left:0;right:0;height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;z-index:40;background:linear-gradient(to bottom,rgba(10,15,30,.95),rgba(10,15,30,0))}
+  .status-time{font-size:13px;font-weight:800}
+  .status-icons{display:flex;gap:5px;font-size:11px}
+
+  .screen{position:absolute;inset:44px 0 62px;overflow-y:auto;overflow-x:hidden;display:none;flex-direction:column;scrollbar-width:none}
+  .screen::-webkit-scrollbar{display:none}
+  .screen.active{display:flex;animation:fadeSlideIn .35s var(--ease-out)}
+  @keyframes fadeSlideIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+
+  .bottom-nav{position:absolute;bottom:0;left:0;right:0;height:62px;background:rgba(17,24,39,.95);backdrop-filter:blur(20px);border-top:1px solid var(--border);display:flex;align-items:center;z-index:40}
+  .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 0;color:var(--text-dim);font-size:9.5px;font-weight:700;transition:.2s var(--ease-spring)}
+  .nav-item i{font-size:17px}
+  .nav-item.active{color:var(--gold);transform:translateY(-2px)}
+  .nav-item:disabled{opacity:.35;cursor:not-allowed}
+
+  .s-pad{padding:16px 18px}
+  .s-title{font-size:19px;font-weight:900}
+  .s-sub{font-size:12.5px;color:var(--text-muted);margin-top:3px;font-weight:600}
+  .s-label{font-size:11px;color:var(--text-dim);font-weight:800;text-transform:uppercase;letter-spacing:.04em;margin:16px 0 8px}
+
+  /* onboarding */
+  .onb-hero{padding:26px 22px;text-align:center}
+  .onb-icon{width:70px;height:70px;border-radius:20px;background:linear-gradient(135deg,var(--gold),var(--rose));display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 16px;box-shadow:0 10px 30px rgba(245,158,11,.35)}
+  .onb-hero h2{font-size:19px;font-weight:900}
+  .onb-hero p{font-size:12.5px;color:var(--text-muted);margin-top:8px;line-height:1.55}
+  .onb-card{margin:10px 18px;padding:16px;background:var(--surface);border:1px solid var(--border);border-radius:16px;display:flex;align-items:center;gap:13px;transition:.2s var(--ease-spring)}
+  .onb-card:active{transform:scale(.97)}
+  .onb-card .oi{width:46px;height:46px;border-radius:13px;background:var(--gold-faint);color:var(--gold-light);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
+  .onb-card b{font-size:14.5px;font-weight:800;display:block}
+  .onb-card span{font-size:11.5px;color:var(--text-muted)}
+
+  /* form / field */
+  .field{margin-bottom:12px}
+  .field label{display:block;font-size:11.5px;color:var(--text-muted);font-weight:700;margin-bottom:6px}
+  .field input,.field select,.field textarea{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:11px 13px;color:var(--text);font-size:13.5px;font-family:inherit}
+  .chip-row{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{border:1.5px solid var(--border);background:var(--surface2);color:var(--text-muted);padding:7px 12px;border-radius:100px;font-size:12px;font-weight:700;transition:.18s}
+  .chip.on{background:var(--gold-faint);border-color:var(--gold);color:var(--gold-light)}
+  .avail-row{display:flex;gap:7px;flex-wrap:wrap}
+  .avail{width:38px;height:38px;border-radius:10px;background:var(--surface2);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:800;color:var(--text-dim)}
+  .avail.on{background:var(--gold);border-color:var(--gold);color:#1a0f00}
+
+  .btn{display:block;width:100%;text-align:center;padding:13px;border-radius:13px;font-weight:800;font-size:13.5px;border:0;transition:.2s var(--ease-spring)}
+  .btn-primary{background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:#1a0f00;box-shadow:0 8px 22px rgba(245,158,11,.32)}
+  .btn-primary:active{transform:scale(.97)}
+  .btn-ghost{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+
+  /* job / candidate cards */
+  .job-card,.cand-card{margin:0 18px 12px;padding:14px;background:var(--surface);border:1px solid var(--border);border-radius:16px;transition:.2s var(--ease-spring)}
+  .job-card:active,.cand-card:active{transform:scale(.98)}
+  .jc-top{display:flex;gap:12px;align-items:center}
+  .jc-avatar{width:48px;height:48px;border-radius:13px;overflow:hidden;flex-shrink:0;border:2px solid var(--border)}
+  .jc-avatar img{width:100%;height:100%;object-fit:cover}
+  .jc-name{font-size:14px;font-weight:800}
+  .jc-meta{font-size:11.5px;color:var(--text-muted);font-weight:600;margin-top:2px}
+  .jc-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
+  .tag{font-size:10px;font-weight:700;padding:3px 9px;border-radius:100px;background:var(--gold-faint);color:var(--gold-light);border:1px solid rgba(245,158,11,.2)}
+  .jc-foot{display:flex;align-items:center;justify-content:space-between;margin-top:11px}
+  .match-score{font-size:11px;font-weight:800;color:#22c55e;display:flex;align-items:center;gap:5px}
+  .btn-mini{padding:8px 14px;border-radius:10px;font-size:11.5px;font-weight:800;border:0;background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:#1a0f00}
+
+  /* match overlay */
+  .match-overlay{position:absolute;inset:0;background:linear-gradient(160deg,rgba(20,10,0,.97),rgba(30,5,20,.97));z-index:60;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px}
+  .match-overlay.show{display:flex;animation:fadeSlideIn .4s var(--ease-out)}
+  .match-avatars{display:flex;align-items:center;gap:-10px;margin-bottom:18px}
+  .match-avatars img{width:76px;height:76px;border-radius:50%;border:3px solid var(--gold);object-fit:cover;margin:0 -12px;box-shadow:0 0 30px rgba(245,158,11,.4)}
+  .match-overlay h2{font-size:24px;font-weight:900;background:linear-gradient(135deg,var(--gold-light),var(--rose));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .match-overlay p{font-size:12.5px;color:var(--text-muted);margin:8px 0 24px;line-height:1.5}
+
+  /* chat */
+  .chat-head{display:flex;align-items:center;gap:11px;padding:12px 16px;border-bottom:1px solid var(--border)}
+  .chat-head img{width:38px;height:38px;border-radius:11px;object-fit:cover}
+  .chat-head b{font-size:13.5px;font-weight:800;display:block}
+  .chat-head span{font-size:10.5px;color:#22c55e;font-weight:700}
+  .chat-body{flex:1;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+  .msg{max-width:76%;padding:10px 13px;border-radius:14px;font-size:12.5px;line-height:1.4}
+  .msg.in{align-self:flex-start;background:var(--surface2);border-bottom-left-radius:4px}
+  .msg.out{align-self:flex-end;background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:#1a0f00;border-bottom-right-radius:4px;font-weight:600}
+  .chat-input{display:flex;gap:8px;padding:10px 14px;border-top:1px solid var(--border)}
+  .chat-input input{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:100px;padding:10px 14px;color:var(--text);font-size:12.5px;font-family:inherit}
+  .chat-send{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:#1a0f00;border:0;flex-shrink:0}
+  .chat-locked{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px;gap:10px}
+  .chat-locked i{font-size:34px;color:var(--text-dim)}
+  .chat-locked b{font-size:14px}
+  .chat-locked span{font-size:12px;color:var(--text-muted);line-height:1.5}
+
+  /* notif */
+  .notif-card{margin:0 18px 10px;padding:13px;background:var(--surface);border:1px solid var(--border);border-radius:14px;display:flex;gap:11px;align-items:center}
+  .notif-card img{width:42px;height:42px;border-radius:11px;object-fit:cover}
+  .notif-card b{font-size:13px;font-weight:800;display:block}
+  .notif-card span{font-size:11px;color:var(--text-muted)}
+  .notif-dot{width:8px;height:8px;border-radius:50%;background:var(--rose);flex-shrink:0}
+
+  /* ---- panel legend ---- */
+  .flow-legend{display:flex;justify-content:center;gap:22px;margin-top:22px;flex-wrap:wrap}
+  .flow-legend div{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text-muted);font-weight:700}
+  .flow-legend i{color:var(--gold)}
+
+  /* ---- ADMIN SURFACE ---- */
+  .admin-wrap{padding-top:26px}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:16px}
+  @media(max-width:760px){.kpis{grid-template-columns:repeat(2,1fr)}}
+  .kpi{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px}
+  .kpi .lbl{font-size:11px;color:var(--text-dim);font-weight:800;text-transform:uppercase;letter-spacing:.04em}
+  .kpi .val{font-size:26px;font-weight:900;margin-top:6px}
+  .kpi .val.gold{color:var(--gold-light)}.kpi .val.rose{color:var(--rose)}.kpi .val.green{color:#22c55e}
+  .kpi .delta{font-size:11px;color:var(--text-dim);margin-top:4px}
+
+  .panel-card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:20px;margin-top:18px}
+  .panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+  .panel-head h3{font-size:15.5px;font-weight:800}
+  .panel-head p{font-size:12px;color:var(--text-muted);margin-top:2px}
+
+  .manual-toggle{display:flex;align-items:center;justify-content:space-between;gap:14px;background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:14px 16px}
+  .manual-toggle .mt-l b{font-size:13.5px;display:block}
+  .manual-toggle .mt-l span{font-size:11.5px;color:var(--text-muted)}
+  .toggle{position:relative;width:46px;height:26px;border-radius:100px;background:var(--surface3);border:1px solid var(--border);cursor:pointer;flex-shrink:0;transition:.2s}
+  .toggle::after{content:"";position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.2s}
+  .toggle.on{background:#22c55e}
+  .toggle.on::after{left:22px}
+
+  .tbl-wrap{overflow-x:auto;margin-top:14px}
+  .tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+  .tbl th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-dim);padding:9px 10px;border-bottom:1px solid var(--border);font-weight:800}
+  .tbl td{padding:11px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
+  .tbl tr:last-child td{border-bottom:0}
+  .who{display:flex;align-items:center;gap:9px}
+  .who img{width:30px;height:30px;border-radius:8px;object-fit:cover}
+  .status-pill{font-size:10.5px;font-weight:800;padding:3px 9px;border-radius:100px}
+  .status-pill.matched{background:rgba(34,197,94,.15);color:#22c55e}
+  .status-pill.pending{background:rgba(245,158,11,.15);color:var(--gold-light)}
+  .btn-sm{padding:7px 12px;border-radius:9px;font-size:11px;font-weight:800;border:1px solid var(--border);background:var(--surface2);color:var(--text)}
+
+  .toast-wrap{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:200;display:flex;flex-direction:column;gap:9px;align-items:center;pointer-events:none;width:calc(100% - 36px);max-width:420px}
+  .toast{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px 16px;font-size:13px;display:flex;align-items:center;gap:11px;box-shadow:0 14px 40px rgba(0,0,0,.5);animation:toastin .3s var(--ease-out);width:100%}
+  @keyframes toastin{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  .toast .ico{width:22px;height:22px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px}
+  .toast.ok .ico{background:rgba(34,197,94,.16);color:#22c55e}
+  .toast.info .ico{background:var(--gold-faint);color:var(--gold-light)}
+  .toast b{font-weight:800}
+
+  .footer-note{margin-top:34px;text-align:center;color:var(--text-dim);font-size:12px;border-top:1px solid var(--border);padding-top:22px}
+
+  .restart-btn{position:fixed;top:16px;right:16px;z-index:90;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:9px 15px;border-radius:100px;font-size:12px;font-weight:700;display:flex;align-items:center;gap:7px}
+  @media(max-width:840px){.restart-btn{position:static;margin:12px auto 0;display:flex;width:fit-content}}
+</style>
+</head>
+<body>
+
+<div class="bg-orb o1"></div>
+<div class="bg-orb o2"></div>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <span class="logo"><i class="fa-solid fa-scissors"></i></span>
+      <span>BellezaConecta<small>Match para el sector belleza</small></span>
+    </div>
+    <div class="surface-switch" id="switch">
+      <button data-surface="app" class="active"><i class="fa-solid fa-mobile-screen-button"></i> <span class="lbl">App</span></button>
+      <button data-surface="admin"><i class="fa-solid fa-gauge"></i> <span class="lbl">Panel Admin</span></button>
+    </div>
+    <div class="demo-tag"><i class="fa-solid fa-circle-dot" style="color:#22c55e"></i> Demo interactivo</div>
+  </div>
+</header>
+
+<main>
+
+<!-- ===================== SURFACE: APP ===================== -->
+<section class="surface" id="surface-app">
+  <div class="hero-copy">
+    <span class="pill"><i class="fa-solid fa-wand-magic-sparkles"></i> MVP mobile — Profesionales x Salones</span>
+    <h1>Registro perfiles matching y chat habilitado solo tras conexion mutua</h1>
+    <p>Elegi un rol para ver el flujo completo. El motor de match arranca con reglas de ubicacion especialidad y disponibilidad. Nada de caja negra desde el dia uno.</p>
+  </div>
+
+  <div class="role-toggle">
+    <button class="role-btn active" id="roleProBtn"><i class="fa-solid fa-hand-sparkles"></i> Soy Profesional</button>
+    <button class="role-btn" id="roleSalonBtn"><i class="fa-solid fa-store"></i> Soy Salon</button>
+  </div>
+
+  <div class="demo-area">
+    <div class="phone-wrapper">
+      <div class="phone-shell">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="status-bar"><span class="status-time">9:41</span><span class="status-icons"><i class="fa-solid fa-signal"></i><i class="fa-solid fa-wifi"></i><i class="fa-solid fa-battery-three-quarters"></i></span></div>
+
+          <!-- ONBOARDING -->
+          <div class="screen active" id="scr-onboarding">
+            <div class="onb-hero">
+              <div class="onb-icon"><i class="fa-solid fa-sparkles"></i></div>
+              <h2 id="onbTitle">Arma tu perfil profesional</h2>
+              <p id="onbSub">Fotos especialidades ubicacion y disponibilidad. Los salones te encuentran por eso.</p>
+            </div>
+            <div class="s-pad" style="padding-top:0">
+              <button class="btn btn-primary" id="onbStart">Empezar registro</button>
+            </div>
+          </div>
+
+          <!-- PROFILE FORM -->
+          <div class="screen" id="scr-profile">
+            <div class="s-pad">
+              <div class="s-title" id="profTitle">Tu perfil</div>
+              <div class="s-sub" id="profSub">Esto es lo que ven los salones al buscar</div>
+              <div class="s-label">Nombre</div>
+              <div class="field"><input type="text" value="Camila Rojas" id="profName"></div>
+              <div class="s-label">Especialidad</div>
+              <div class="chip-row" id="specChips">
+                <span class="chip on" data-c>Manicura</span><span class="chip" data-c>Peluqueria</span><span class="chip" data-c>Lashista</span><span class="chip" data-c>Barberia</span>
+              </div>
+              <div class="s-label">Zona</div>
+              <div class="field"><select id="profZone"><option>Palermo CABA</option><option>Belgrano CABA</option><option>Recoleta CABA</option><option>Rosario Centro</option></select></div>
+              <div class="s-label">Disponibilidad</div>
+              <div class="avail-row" id="availRow">
+                <span class="avail on">L</span><span class="avail on">M</span><span class="avail">X</span><span class="avail on">J</span><span class="avail on">V</span><span class="avail">S</span><span class="avail">D</span>
+              </div>
+              <button class="btn btn-primary" style="margin-top:18px" id="profSave">Guardar y ver busquedas</button>
+            </div>
+          </div>
+
+          <!-- BROWSE (jobs for pro / candidates for salon) -->
+          <div class="screen" id="scr-browse">
+            <div class="s-pad" style="padding-bottom:6px">
+              <div class="s-title" id="browseTitle">Busquedas activas</div>
+              <div class="s-sub" id="browseSub">Ordenadas por compatibilidad de reglas</div>
+            </div>
+            <div id="browseList"></div>
+          </div>
+
+          <!-- NOTIFICATIONS -->
+          <div class="screen" id="scr-notif">
+            <div class="s-pad">
+              <div class="s-title">Notificaciones</div>
+              <div class="s-sub">Match confirmado cuando hay interes mutuo</div>
+            </div>
+            <div id="notifList"></div>
+          </div>
+
+          <!-- CHAT -->
+          <div class="screen" id="scr-chat">
+            <div id="chatWrap" style="display:flex;flex-direction:column;height:100%"></div>
+          </div>
+
+          <!-- MATCH OVERLAY -->
+          <div class="match-overlay" id="matchOverlay">
+            <div class="match-avatars">
+              <img src="https://images.unsplash.com/photo-1595959183082-7b570b7e08e2?w=200&q=60" onerror="this.src='https://picsum.photos/seed/pro1/200/200'">
+              <img src="https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?w=200&q=60" onerror="this.src='https://picsum.photos/seed/salon1/200/200'">
+            </div>
+            <h2>Es un match!</h2>
+            <p id="matchText">Ubicacion especialidad y disponibilidad coinciden. El chat ya esta habilitado.</p>
+            <button class="btn btn-primary" style="width:200px" id="matchChatBtn">Abrir chat</button>
+            <button class="btn btn-ghost" style="width:200px;margin-top:10px" id="matchCloseBtn">Seguir viendo</button>
+          </div>
+
+          <!-- BOTTOM NAV -->
+          <div class="bottom-nav" id="bottomNav">
+            <button class="nav-item active" data-scr="profile"><i class="fa-solid fa-user"></i>Perfil</button>
+            <button class="nav-item" data-scr="browse"><i class="fa-solid fa-magnifying-glass"></i>Buscar</button>
+            <button class="nav-item" data-scr="notif"><i class="fa-solid fa-bell"></i>Matches</button>
+            <button class="nav-item" data-scr="chat" id="navChat" disabled><i class="fa-solid fa-comment-dots"></i>Chat</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flow-legend">
+      <div><i class="fa-solid fa-user-check"></i> Perfil y disponibilidad</div>
+      <div><i class="fa-solid fa-diagram-project"></i> Match por reglas</div>
+      <div><i class="fa-solid fa-lock"></i> Chat solo tras match</div>
+      <div><i class="fa-solid fa-gauge"></i> Admin con modo manual</div>
+    </div>
+
+    <button class="restart-btn" id="restartApp"><i class="fa-solid fa-rotate-left"></i> Reiniciar demo</button>
+  </div>
+</section>
+
+<!-- ===================== SURFACE: ADMIN ===================== -->
+<section class="surface" id="surface-admin" style="display:none">
+  <div class="admin-wrap">
+    <div class="hero-copy" style="text-align:left;max-width:none;padding:0">
+      <span class="pill"><i class="fa-solid fa-gauge"></i> Panel administrativo</span>
+      <h1 style="margin-top:12px">Gestion de la plataforma y modo de match manual</h1>
+      <p>Mientras el motor de reglas junta datos de uso el admin puede asegurar las primeras conexiones de calidad a mano. Esto va incluido sin costo extra en el MVP.</p>
+    </div>
+
+    <div class="kpis">
+      <div class="kpi"><div class="lbl">Profesionales activos</div><div class="val gold" id="kpiPro">0</div><div class="delta">perfiles completos</div></div>
+      <div class="kpi"><div class="lbl">Salones activos</div><div class="val rose" id="kpiSalon">0</div><div class="delta">con busquedas abiertas</div></div>
+      <div class="kpi"><div class="lbl">Matches esta semana</div><div class="val green" id="kpiMatch">0</div><div class="delta">interes mutuo confirmado</div></div>
+      <div class="kpi"><div class="lbl">Chats activos</div><div class="val" id="kpiChat">0</div><div class="delta">conversaciones abiertas</div></div>
+    </div>
+
+    <div class="panel-card">
+      <div class="panel-head">
+        <div><h3>Modo de match manual</h3><p>Antes de tener datos suficientes el admin puede proponer conexiones a mano desde aca</p></div>
+      </div>
+      <div class="manual-toggle">
+        <div class="mt-l"><b>Match manual activo</b><span>El admin puede sugerir conexiones ademas del motor de reglas</span></div>
+        <div class="toggle on" id="manualToggle"></div>
+      </div>
+    </div>
+
+    <div class="panel-card">
+      <div class="panel-head">
+        <div><h3>Conexiones recientes</h3><p>Profesionales y salones con match confirmado o pendiente</p></div>
+      </div>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr><th>Profesional</th><th>Salon</th><th>Especialidad</th><th>Estado</th><th></th></tr></thead>
+          <tbody id="adminTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<div class="toast-wrap" id="toasts"></div>
+
+<div class="footer-note">Demo funcional en HTML CSS y JS. Arquitectura de produccion Flutter mas API REST y base de datos relacional. El motor de matching mostrado es por reglas ubicacion especialidad y disponibilidad segun lo descrito en el MVP.</div>
+
+<script>
+"use strict";
+const state = { role:"pro", pending:null };
+
+const PROS = [
+  {name:"Camila Rojas", spec:"Manicura", img:"https://images.unsplash.com/photo-1595959183082-7b570b7e08e2?w=200&q=60", zone:"Palermo CABA"},
+  {name:"Julieta Fernandez", spec:"Lashista", img:"https://images.unsplash.com/photo-1580618672591-eb180b1a973f?w=200&q=60", zone:"Belgrano CABA"},
+];
+const SALONS = [
+  {name:"Salon Aurora", spec:"Manicura", img:"https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?w=200&q=60", zone:"Palermo CABA", tag:"Turno tarde"},
+  {name:"Studio Bella", spec:"Peluqueria", img:"https://images.unsplash.com/photo-1633681926022-84c23e8cb2d6?w=200&q=60", zone:"Recoleta CABA", tag:"Full time"},
+  {name:"Nail Bar Rosario", spec:"Manicura", img:"https://images.unsplash.com/photo-1600948836101-f9ffda59d250?w=200&q=60", zone:"Rosario Centro", tag:"Freelance"},
+];
+
+function imgFallback(el, seed){ el.onerror = null; el.src = "https://picsum.photos/seed/"+seed+"/200/200"; }
+
+/* ---------- toast ---------- */
+function toast(type, title, sub){
+  const wrap = document.getElementById("toasts");
+  const el = document.createElement("div");
+  el.className = "toast " + type;
+  el.innerHTML = `<span class="ico"><i class="fa-solid ${type==='ok'?'fa-check':'fa-circle-info'}"></i></span><div><b>${title}</b>${sub?`<div style="font-size:11.5px;color:var(--text-muted);margin-top:2px">${sub}</div>`:""}</div>`;
+  wrap.appendChild(el);
+  setTimeout(()=>{ el.style.transition=".3s"; el.style.opacity="0"; el.style.transform="translateY(10px)"; setTimeout(()=>el.remove(),300); }, 3000);
+}
+
+/* ---------- surface switch ---------- */
+document.getElementById("switch").addEventListener("click", e=>{
+  const btn = e.target.closest("button[data-surface]");
+  if(!btn) return;
+  document.querySelectorAll("#switch button").forEach(b=>b.classList.toggle("active", b===btn));
+  document.getElementById("surface-app").style.display = btn.dataset.surface==="app" ? "" : "none";
+  document.getElementById("surface-admin").style.display = btn.dataset.surface==="admin" ? "" : "none";
+  window.scrollTo({top:0,behavior:"smooth"});
+});
+
+/* ---------- role toggle ---------- */
+document.getElementById("roleProBtn").addEventListener("click", ()=>setRole("pro"));
+document.getElementById("roleSalonBtn").addEventListener("click", ()=>setRole("salon"));
+function setRole(r){
+  state.role = r;
+  document.getElementById("roleProBtn").classList.toggle("active", r==="pro");
+  document.getElementById("roleSalonBtn").classList.toggle("active", r==="salon");
+  document.getElementById("onbTitle").textContent = r==="pro" ? "Arma tu perfil profesional" : "Publica tu primera busqueda";
+  document.getElementById("onbSub").textContent = r==="pro" ? "Fotos especialidades ubicacion y disponibilidad. Los salones te encuentran por eso." : "Especialidad zona y disponibilidad que necesitas. El match empieza apenas publicas.";
+  document.getElementById("profTitle").textContent = r==="pro" ? "Tu perfil" : "Tu busqueda";
+  document.getElementById("profSub").textContent = r==="pro" ? "Esto es lo que ven los salones al buscar" : "Esto es lo que ven los profesionales disponibles";
+  document.getElementById("browseTitle").textContent = r==="pro" ? "Busquedas activas" : "Profesionales disponibles";
+  document.getElementById("browseSub").textContent = "Ordenadas por compatibilidad de reglas";
+  goScreen("onboarding");
+}
+
+/* ---------- screens ---------- */
+function goScreen(id){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("active", s.id==="scr-"+id));
+  document.querySelectorAll(".nav-item[data-scr]").forEach(n=>n.classList.toggle("active", n.dataset.scr===id));
+  document.getElementById("bottomNav").style.display = id==="onboarding" ? "none" : "flex";
+}
+document.getElementById("onbStart").addEventListener("click", ()=>goScreen("profile"));
+document.querySelectorAll(".nav-item[data-scr]").forEach(n=>n.addEventListener("click", ()=>{
+  if(n.disabled) return;
+  goScreen(n.dataset.scr);
+  if(n.dataset.scr==="browse") renderBrowse();
+  if(n.dataset.scr==="notif") renderNotif();
+}));
+
+/* ---------- profile chips/avail ---------- */
+document.getElementById("specChips").addEventListener("click", e=>{
+  const c = e.target.closest(".chip"); if(!c) return;
+  document.querySelectorAll("#specChips .chip").forEach(x=>x.classList.remove("on"));
+  c.classList.add("on");
+});
+document.getElementById("availRow").addEventListener("click", e=>{
+  const c = e.target.closest(".avail"); if(!c) return;
+  c.classList.toggle("on");
+});
+document.getElementById("profSave").addEventListener("click", ()=>{
+  toast("ok","Perfil guardado", state.role==="pro" ? "Ya apareces en las busquedas compatibles" : "Tu busqueda ya es visible para profesionales compatibles");
+  goScreen("browse");
+  renderBrowse();
+});
+
+/* ---------- browse list ---------- */
+function renderBrowse(){
+  const list = state.role==="pro" ? SALONS : PROS;
+  const wrap = document.getElementById("browseList");
+  wrap.innerHTML = list.map((it,i)=>{
+    const score = 78 + (i*7)%20;
+    return `
+    <div class="job-card" data-i="${i}">
+      <div class="jc-top">
+        <div class="jc-avatar"><img src="${it.img}" onerror="imgFallback(this,'${it.name.replace(/\s+/g,'')}')"></div>
+        <div><div class="jc-name">${it.name}</div><div class="jc-meta"><i class="fa-solid fa-location-dot"></i> ${it.zone}</div></div>
+      </div>
+      <div class="jc-tags"><span class="tag">${it.spec}</span>${it.tag?`<span class="tag">${it.tag}</span>`:""}</div>
+      <div class="jc-foot">
+        <span class="match-score"><i class="fa-solid fa-diagram-project"></i> ${score}% compatible</span>
+        <button class="btn-mini" data-match="${i}">Conectar</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+document.getElementById("browseList").addEventListener("click", e=>{
+  const b = e.target.closest("[data-match]"); if(!b) return;
+  const i = parseInt(b.dataset.match,10);
+  const item = (state.role==="pro" ? SALONS : PROS)[i];
+  state.pending = item;
+  document.getElementById("matchText").textContent = `${item.spec} en ${item.zone}. Ubicacion especialidad y disponibilidad coinciden.`;
+  document.getElementById("matchOverlay").classList.add("show");
+  toast("ok","Interes enviado", "Avisamos al otro lado. Si tambien le interesa se confirma el match.");
+});
+document.getElementById("matchCloseBtn").addEventListener("click", ()=>{
+  document.getElementById("matchOverlay").classList.remove("show");
+});
+document.getElementById("matchChatBtn").addEventListener("click", ()=>{
+  document.getElementById("matchOverlay").classList.remove("show");
+  document.getElementById("navChat").disabled = false;
+  openChat(state.pending);
+  goScreen("chat");
+});
+
+/* ---------- notifications ---------- */
+function renderNotif(){
+  const wrap = document.getElementById("notifList");
+  const item = state.pending || (state.role==="pro" ? SALONS[0] : PROS[0]);
+  wrap.innerHTML = `
+    <div class="notif-card">
+      <img src="${item.img}" onerror="imgFallback(this,'${item.name.replace(/\s+/g,'')}')">
+      <div style="flex:1"><b>Nuevo match con ${item.name}</b><span>Chat habilitado ahora</span></div>
+      <span class="notif-dot"></span>
+    </div>
+    <div class="notif-card" style="opacity:.55">
+      <img src="https://images.unsplash.com/photo-1560066984-138dadb4c035?w=200&q=60" onerror="imgFallback(this,'pending2')">
+      <div style="flex:1"><b>Interes enviado</b><span>Esperando confirmacion del otro lado</span></div>
+    </div>`;
+}
+
+/* ---------- chat ---------- */
+function openChat(item){
+  const wrap = document.getElementById("chatWrap");
+  wrap.innerHTML = `
+    <div class="chat-head"><img src="${item.img}" onerror="imgFallback(this,'chat1')"><div><b>${item.name}</b><span>Match confirmado</span></div></div>
+    <div class="chat-body">
+      <div class="msg in">Hola! Vimos tu perfil y encaja con lo que buscamos.</div>
+      <div class="msg out">Genial hablemos de horarios entonces.</div>
+      <div class="msg in">Podes esta semana o preferis la que viene?</div>
+    </div>
+    <div class="chat-input"><input type="text" placeholder="Escribi un mensaje" id="chatInputBox"><button class="chat-send" id="chatSendBtn"><i class="fa-solid fa-paper-plane"></i></button></div>`;
+  document.getElementById("chatSendBtn").addEventListener("click", sendMsg);
+  document.getElementById("chatInputBox").addEventListener("keydown", e=>{ if(e.key==="Enter") sendMsg(); });
+}
+function sendMsg(){
+  const inp = document.getElementById("chatInputBox");
+  if(!inp.value.trim()) return;
+  const body = document.querySelector(".chat-body");
+  const m = document.createElement("div"); m.className="msg out"; m.textContent = inp.value.trim();
+  body.appendChild(m); inp.value=""; body.scrollTop = body.scrollHeight;
+}
+
+/* ---------- restart ---------- */
+document.getElementById("restartApp").addEventListener("click", ()=>{
+  state.pending = null;
+  document.getElementById("navChat").disabled = true;
+  document.getElementById("matchOverlay").classList.remove("show");
+  setRole("pro");
+  toast("ok","Demo reiniciada","Listo para ver el flujo de nuevo");
+});
+
+/* ---------- admin ---------- */
+const ADMIN_ROWS = [
+  {pro:"Camila Rojas", salon:"Salon Aurora", spec:"Manicura", status:"matched"},
+  {pro:"Julieta Fernandez", salon:"Studio Bella", spec:"Lashista", status:"pending"},
+  {pro:"Nicolas Perez", salon:"Nail Bar Rosario", spec:"Barberia", status:"matched"},
+];
+function renderAdmin(){
+  document.getElementById("kpiPro").textContent = "128";
+  document.getElementById("kpiSalon").textContent = "34";
+  document.getElementById("kpiMatch").textContent = "19";
+  document.getElementById("kpiChat").textContent = "12";
+  document.getElementById("adminTbody").innerHTML = ADMIN_ROWS.map(r=>`
+    <tr>
+      <td class="who">${r.pro}</td>
+      <td>${r.salon}</td>
+      <td>${r.spec}</td>
+      <td><span class="status-pill ${r.status}">${r.status==="matched"?"Match confirmado":"Pendiente"}</span></td>
+      <td style="text-align:right"><button class="btn-sm">Ver</button></td>
+    </tr>`).join("");
+}
+document.getElementById("manualToggle").addEventListener("click", function(){
+  this.classList.toggle("on");
+  toast("ok", this.classList.contains("on") ? "Match manual activado" : "Match manual desactivado", "El admin puede curar conexiones mientras se junta data de uso");
+});
+
+renderAdmin();
+setRole("pro");
+</script>
+</body>
+</html>
