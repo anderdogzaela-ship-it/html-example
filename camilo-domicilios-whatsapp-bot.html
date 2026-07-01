@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bot WhatsApp Pedidos a Domicilio Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --wa-dark: #111B21;
+  --wa-panel: #202C33;
+  --wa-input: #2A3942;
+  --wa-green: #00A884;
+  --wa-green-dark: #075E54;
+  --wa-sent: #005C4B;
+  --wa-recv: #202C33;
+  --dash-bg: #14100A;
+  --dash-card: #1E170D;
+  --dash-border: rgba(217,119,6,0.22);
+  --accent: #F59E0B;
+  --accent-dim: rgba(245,158,11,0.14);
+  --ok: #22C55E;
+  --ok-dim: rgba(34,197,94,0.14);
+}
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background: var(--dash-bg);
+  color: #f0e9de;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  -webkit-font-smoothing: antialiased;
+}
+
+.header {
+  background: var(--dash-card);
+  border-bottom: 1px solid var(--dash-border);
+  padding: 14px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.brand { display: flex; align-items: center; gap: 12px; }
+
+.brand-icon {
+  width: 38px; height: 38px;
+  background: linear-gradient(135deg, var(--accent), #92400E);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; color: white;
+}
+
+.brand-text h1 { font-size: 15px; font-weight: 800; }
+.brand-text p  { font-size: 11px; color: #a89a86; }
+
+.status-badge {
+  background: var(--accent-dim);
+  border: 1px solid var(--dash-border);
+  color: var(--accent);
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex; align-items: center; gap: 6px;
+}
+
+.status-dot { width: 6px; height: 6px; background: var(--accent); border-radius: 50%; animation: pulse 2s infinite; }
+
+@keyframes pulse {
+  0%,100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.5; transform: scale(0.8); }
+}
+
+.main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  padding: 28px 32px;
+  max-width: 1100px;
+  margin: 0 auto;
+  width: 100%;
+  align-items: start;
+}
+
+.phone-wrap { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+
+.section-label { font-size: 11px; font-weight: 700; color: #a89a86; text-transform: uppercase; letter-spacing: 1.2px; }
+
+.phone-shell {
+  width: 300px; height: 620px;
+  background: #181818;
+  border-radius: 38px;
+  border: 7px solid #252525;
+  box-shadow: 0 0 0 1px #111, 0 32px 64px rgba(0,0,0,0.7), inset 0 2px 4px rgba(255,255,255,0.04);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+
+.phone-notch { background: #181818; height: 22px; display: flex; align-items: center; justify-content: center; gap: 6px; flex-shrink: 0; }
+.notch-camera { width: 7px; height: 7px; background: #2e2e2e; border-radius: 50%; }
+.notch-bar { width: 38px; height: 4px; background: #2e2e2e; border-radius: 3px; }
+
+.wa-header { background: var(--wa-green-dark); padding: 9px 12px; display: flex; align-items: center; gap: 9px; flex-shrink: 0; }
+.wa-avatar { width: 34px; height: 34px; background: linear-gradient(135deg, #00A884, #025144); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; color: white; flex-shrink: 0; }
+.wa-info h3 { font-size: 12px; font-weight: 700; color: white; }
+.wa-info p  { font-size: 10px; color: rgba(255,255,255,0.7); }
+
+.ai-tag { font-size: 8px; background: rgba(0,168,132,0.25); color: #4eecc0; border-radius: 3px; padding: 1px 4px; font-weight: 800; margin-left: 3px; }
+
+.wa-icons { margin-left: auto; color: rgba(255,255,255,0.75); display: flex; gap: 12px; font-size: 14px; }
+
+.wa-body {
+  flex: 1; background: var(--wa-dark); padding: 8px 8px 6px; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 5px;
+  background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.015' fill-rule='evenodd'%3E%3Cpath d='M0 40L40 0H20L0 20M40 40V20L20 40'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+.date-div { text-align: center; font-size: 10px; color: #8696a0; background: rgba(17,27,33,0.9); border-radius: 7px; padding: 3px 10px; margin: 2px auto; width: fit-content; flex-shrink: 0; }
+
+.sys-div {
+  text-align: center; font-size: 9.5px; color: #ffd699; background: rgba(245,158,11,0.16);
+  border: 1px solid rgba(245,158,11,0.3); border-radius: 7px; padding: 4px 12px; margin: 4px auto;
+  width: fit-content; flex-shrink: 0; opacity: 0; transform: translateY(4px);
+  transition: opacity 0.35s ease, transform 0.35s ease; max-width: 90%;
+}
+.sys-div.visible { opacity: 1; transform: translateY(0); }
+
+.msg { max-width: 82%; padding: 6px 9px 16px; border-radius: 8px; font-size: 11.5px; line-height: 1.4; color: #d1d7db; position: relative; opacity: 0; transform: translateY(5px); transition: opacity 0.3s ease, transform 0.3s ease; word-break: break-word; white-space: pre-line; }
+.msg.visible { opacity: 1; transform: translateY(0); }
+.msg.sent { background: var(--wa-sent); align-self: flex-end; border-radius: 8px 8px 0 8px; }
+.msg.recv { background: var(--wa-recv); align-self: flex-start; border-radius: 8px 8px 8px 0; }
+.msg-time { position: absolute; bottom: 3px; right: 7px; font-size: 9px; color: rgba(255,255,255,0.4); white-space: nowrap; }
+
+.typing-indicator { background: var(--wa-recv); padding: 10px 14px; border-radius: 8px 8px 8px 0; align-self: flex-start; opacity: 0; transition: opacity 0.3s; display: flex; gap: 4px; flex-shrink: 0; }
+.typing-indicator.show { opacity: 1; }
+.dot { width: 6px; height: 6px; background: #8696a0; border-radius: 50%; animation: bop 1.2s infinite; }
+.dot:nth-child(2) { animation-delay: 0.2s; }
+.dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes bop { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+
+.wa-footer { background: var(--wa-panel); padding: 7px 9px; display: flex; align-items: center; gap: 7px; flex-shrink: 0; }
+.wa-input { flex: 1; background: var(--wa-input); border-radius: 18px; padding: 7px 12px; font-size: 11px; color: #8696a0; font-family: 'Nunito', sans-serif; min-height: 30px; display: flex; align-items: center; transition: color 0.2s; }
+.wa-send { width: 32px; height: 32px; background: var(--wa-green); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; color: white; flex-shrink: 0; }
+
+.restart-btn {
+  background: transparent; border: 1px solid rgba(255,255,255,0.1); color: #a89a86;
+  border-radius: 8px; padding: 9px 22px; font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 700;
+  cursor: pointer; display: flex; align-items: center; gap: 7px; transition: all 0.2s;
+}
+.restart-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+.dash-section { display: flex; flex-direction: column; gap: 14px; }
+
+.metrics-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.metric-card { background: var(--dash-card); border: 1px solid var(--dash-border); border-radius: 12px; padding: 14px; }
+.metric-label { font-size: 10px; color: #a89a86; font-weight: 700; margin-bottom: 4px; }
+.metric-value { font-size: 24px; font-weight: 900; color: var(--accent); line-height: 1; transition: all 0.4s; }
+.metric-sub { font-size: 10px; color: #a89a86; margin-top: 2px; }
+
+.cart-card { background: var(--dash-card); border: 1px solid var(--dash-border); border-radius: 12px; padding: 14px; }
+.card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.card-title { font-size: 11px; font-weight: 700; color: #a89a86; text-transform: uppercase; letter-spacing: 0.8px; }
+.live-tag { font-size: 10px; background: var(--accent-dim); color: var(--accent); border-radius: 10px; padding: 2px 8px; font-weight: 700; display: flex; align-items: center; gap: 4px; }
+.live-dot { width: 5px; height: 5px; background: var(--accent); border-radius: 50%; animation: pulse 1.5s infinite; }
+
+.cart-items { display: flex; flex-direction: column; gap: 6px; min-height: 20px; }
+.cart-row { display: flex; justify-content: space-between; font-size: 11.5px; color: #e9dfce; padding: 3px 0; border-bottom: 1px dashed rgba(255,255,255,0.06); opacity: 0; transform: translateY(4px); transition: opacity 0.3s, transform 0.3s; }
+.cart-row.visible { opacity: 1; transform: translateY(0); }
+.cart-empty { font-size: 11px; color: #6b5f4f; }
+.cart-total-row { display: flex; justify-content: space-between; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--dash-border); font-size: 13px; font-weight: 800; color: var(--accent); }
+
+.order-card { background: var(--dash-card); border: 1px solid var(--dash-border); border-radius: 12px; padding: 14px; display: none; }
+.order-card.show { display: block; }
+.order-id { font-size: 12px; font-weight: 800; color: #e9dfce; margin-bottom: 10px; }
+.order-id span { color: var(--accent); }
+
+.steps { display: flex; justify-content: space-between; position: relative; margin-top: 6px; }
+.steps::before { content: ''; position: absolute; top: 13px; left: 6%; right: 6%; height: 2px; background: rgba(255,255,255,0.08); z-index: 0; }
+.steps::after { content: ''; position: absolute; top: 13px; left: 6%; height: 2px; background: var(--accent); z-index: 1; width: 0%; transition: width 0.6s ease; }
+.step { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 1; }
+.step-dot { width: 26px; height: 26px; border-radius: 50%; background: #2a2115; border: 2px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-size: 10px; color: #6b5f4f; transition: all 0.4s; }
+.step.active .step-dot { background: var(--accent); border-color: var(--accent); color: #1a1206; }
+.step.done .step-dot { background: var(--ok); border-color: var(--ok); color: #06210f; }
+.step-label { font-size: 8.5px; color: #a89a86; text-align: center; }
+.step.active .step-label, .step.done .step-label { color: #e9dfce; font-weight: 700; }
+
+.queue-card { background: var(--dash-card); border: 1px solid var(--dash-border); border-radius: 12px; padding: 12px; max-height: 150px; overflow-y: auto; }
+.queue-row { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 10.5px; opacity: 0; transition: opacity 0.35s; }
+.queue-row.visible { opacity: 1; }
+.queue-left { color: #e9dfce; }
+.queue-left small { display: block; color: #a89a86; font-size: 9px; }
+.badge { font-size: 9px; font-weight: 800; padding: 3px 8px; border-radius: 10px; }
+.badge.pend { background: rgba(245,158,11,0.16); color: var(--accent); }
+.badge.prep { background: rgba(96,165,250,0.16); color: #60a5fa; }
+.badge.camino { background: rgba(168,85,247,0.16); color: #a855f7; }
+.badge.done { background: var(--ok-dim); color: var(--ok); }
+
+@media (max-width: 720px) {
+  .main { grid-template-columns: 1fr; padding: 16px; }
+  .phone-shell { width: 280px; height: 560px; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="brand">
+    <div class="brand-icon"><i class="fa-brands fa-whatsapp"></i></div>
+    <div class="brand-text">
+      <h1>Bot de Pedidos a Domicilio</h1>
+      <p>WhatsApp Business API · Catalogo dinamico · Panel de estados en vivo</p>
+    </div>
+  </div>
+  <div class="status-badge">
+    <div class="status-dot"></div>
+    En vivo
+  </div>
+</div>
+
+<div class="main">
+
+  <div class="phone-wrap">
+    <div class="section-label">Conversacion con el Cliente</div>
+
+    <div class="phone-shell">
+      <div class="phone-notch">
+        <div class="notch-camera"></div>
+        <div class="notch-bar"></div>
+      </div>
+
+      <div class="wa-header">
+        <div class="wa-avatar"><i class="fa-solid fa-utensils"></i></div>
+        <div class="wa-info">
+          <h3>Sazon Express <span class="ai-tag">IA</span></h3>
+          <p>en linea · Agente de pedidos activo</p>
+        </div>
+        <div class="wa-icons">
+          <i class="fa-solid fa-video"></i>
+          <i class="fa-solid fa-phone"></i>
+          <i class="fa-solid fa-ellipsis-vertical"></i>
+        </div>
+      </div>
+
+      <div class="wa-body" id="waBody">
+        <div class="date-div">Hoy</div>
+        <div class="typing-indicator" id="typing">
+          <div class="dot"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+        </div>
+      </div>
+
+      <div class="wa-footer">
+        <div class="wa-input" id="inputBox">Escribe un mensaje</div>
+        <div class="wa-send"><i class="fa-solid fa-paper-plane" style="font-size:11px"></i></div>
+      </div>
+    </div>
+
+    <button class="restart-btn" onclick="restart()">
+      <i class="fa-solid fa-rotate-right"></i> Reiniciar Demo
+    </button>
+  </div>
+
+  <div class="dash-section">
+    <div class="section-label">Panel de Pedidos</div>
+
+    <div class="metrics-row">
+      <div class="metric-card">
+        <div class="metric-label">Pedidos Hoy</div>
+        <div class="metric-value" id="mCount">3</div>
+        <div class="metric-sub">activos y entregados</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Ticket Promedio</div>
+        <div class="metric-value" id="mTicket">$38.400</div>
+        <div class="metric-sub">COP por pedido</div>
+      </div>
+    </div>
+
+    <div class="cart-card">
+      <div class="card-header">
+        <div class="card-title">Pedido en Curso</div>
+        <div class="live-tag"><div class="live-dot"></div>En vivo</div>
+      </div>
+      <div class="cart-items" id="cartItems">
+        <div class="cart-empty">Esperando seleccion del cliente...</div>
+      </div>
+      <div class="cart-total-row" id="cartTotalRow" style="display:none">
+        <span>Total</span>
+        <span id="cartTotal">$0</span>
+      </div>
+    </div>
+
+    <div class="order-card" id="orderCard">
+      <div class="order-id">Pedido <span id="orderNum">#1042</span> · <span id="orderTotal">$0</span></div>
+      <div class="steps" id="steps">
+        <div class="step" id="s1"><div class="step-dot"><i class="fa-solid fa-receipt"></i></div><div class="step-label">Pendiente</div></div>
+        <div class="step" id="s2"><div class="step-dot"><i class="fa-solid fa-fire-burner"></i></div><div class="step-label">Preparacion</div></div>
+        <div class="step" id="s3"><div class="step-dot"><i class="fa-solid fa-motorcycle"></i></div><div class="step-label">En camino</div></div>
+        <div class="step" id="s4"><div class="step-dot"><i class="fa-solid fa-circle-check"></i></div><div class="step-label">Entregado</div></div>
+      </div>
+    </div>
+
+    <div class="queue-card" id="queueCard">
+      <div class="queue-row visible">
+        <div class="queue-left">Pedido #1039<small>Barrio Laureles</small></div>
+        <div class="badge camino">En camino</div>
+      </div>
+      <div class="queue-row visible">
+        <div class="queue-left">Pedido #1040<small>Barrio Robledo</small></div>
+        <div class="badge prep">Preparacion</div>
+      </div>
+      <div class="queue-row visible">
+        <div class="queue-left">Pedido #1041<small>Centro</small></div>
+        <div class="badge done">Entregado</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const SCRIPT = [
+  { role: 'user', text: 'Hola buenas quiero hacer un pedido', abs: 1300 },
+  { role: 'bot', text: 'Hola bienvenido a Sazon Express\nMenu de hoy\nHamburguesa Clasica 18.000\nPerro Caliente Especial 14.000\nPapas Fritas 8.000\nGaseosa 5.000\nQue se te antoja', abs: 3400 },
+  { role: 'user', text: '2 hamburguesas clasicas y una gaseosa', abs: 6200,
+    cart: [ {n:'2x Hamburguesa Clasica', p:'$36.000'}, {n:'1x Gaseosa', p:'$5.000'} ], total: '$41.000' },
+  { role: 'bot', text: 'Listo agregue 2 Hamburguesa Clasica y 1 Gaseosa\nTu total por ahora es 41.000\nQuieres agregar algo mas', abs: 9000 },
+  { role: 'user', text: 'Si una papas fritas tambien', abs: 11600,
+    cart: [ {n:'2x Hamburguesa Clasica', p:'$36.000'}, {n:'1x Gaseosa', p:'$5.000'}, {n:'1x Papas Fritas', p:'$8.000'} ], total: '$49.000' },
+  { role: 'bot', text: 'Agregado\nTotal actualizado 49.000\nCual es la direccion de entrega', abs: 14200 },
+  { role: 'user', text: 'Calle 45 numero 23 45 barrio San Fernando', abs: 17000 },
+  { role: 'bot', text: 'Perfecto tu pedido quedo confirmado\nNumero de pedido 1042\nTotal 49.000\nTiempo estimado 35 a 45 minutos', abs: 19800,
+    showOrder: true, orderNum: '#1042', orderTotal: '$49.000', step: 1 },
+  { role: 'system', text: 'Pedido #1042 registrado en cocina', abs: 21600, step: 1 },
+  { role: 'system', text: 'Tu pedido esta en preparacion', abs: 24600, step: 2 },
+  { role: 'system', text: 'Tu pedido salio y va en camino', abs: 27600, step: 3 },
+  { role: 'system', text: 'Tu pedido fue entregado. Gracias por tu compra', abs: 30600, step: 4 }
+];
+
+let timers = [];
+
+function now() {
+  const d = new Date();
+  return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+
+function addMsg(role, text) {
+  const body = document.getElementById('waBody');
+  const typing = document.getElementById('typing');
+
+  if (role === 'system') {
+    const div = document.createElement('div');
+    div.className = 'sys-div';
+    div.textContent = text;
+    body.insertBefore(div, typing);
+    requestAnimationFrame(() => { requestAnimationFrame(() => { div.classList.add('visible'); }); });
+    body.scrollTop = body.scrollHeight;
+    return;
+  }
+
+  const div = document.createElement('div');
+  div.className = 'msg ' + (role === 'user' ? 'sent' : 'recv');
+  const tick = role === 'user' ? ' <i class="fa-solid fa-check-double" style="color:#00A884;font-size:8px"></i>' : '';
+  div.innerHTML = text + '<div class="msg-time">' + now() + tick + '</div>';
+  body.insertBefore(div, typing);
+  requestAnimationFrame(() => { requestAnimationFrame(() => { div.classList.add('visible'); }); });
+  body.scrollTop = body.scrollHeight;
+}
+
+function showTyping() {
+  document.getElementById('typing').classList.add('show');
+  document.getElementById('waBody').scrollTop = 99999;
+}
+function hideTyping() { document.getElementById('typing').classList.remove('show'); }
+
+function setInput(txt, active) {
+  const el = document.getElementById('inputBox');
+  el.textContent = txt;
+  el.style.color = active ? '#e6edf3' : '#666';
+}
+
+function updateCart(s) {
+  if (!s.cart) return;
+  const wrap = document.getElementById('cartItems');
+  wrap.innerHTML = '';
+  s.cart.forEach((item, i) => {
+    const row = document.createElement('div');
+    row.className = 'cart-row';
+    row.innerHTML = '<span>' + item.n + '</span><span>' + item.p + '</span>';
+    wrap.appendChild(row);
+    setTimeout(() => row.classList.add('visible'), i * 80);
+  });
+  document.getElementById('cartTotalRow').style.display = 'flex';
+  document.getElementById('cartTotal').textContent = s.total;
+}
+
+function updateOrder(s) {
+  if (s.showOrder) {
+    document.getElementById('orderCard').classList.add('show');
+    document.getElementById('orderNum').textContent = s.orderNum;
+    document.getElementById('orderTotal').textContent = s.orderTotal;
+  }
+  if (s.step) {
+    const pct = ((s.step - 1) / 3) * 100;
+    const stepsEl = document.getElementById('steps');
+    stepsEl.querySelectorAll('.step').forEach((el, i) => {
+      el.classList.remove('active', 'done');
+      if (i + 1 < s.step) el.classList.add('done');
+      else if (i + 1 === s.step) el.classList.add('active');
+    });
+    const styleTag = document.getElementById('stepProgressStyle') || (() => {
+      const t = document.createElement('style');
+      t.id = 'stepProgressStyle';
+      document.head.appendChild(t);
+      return t;
+    })();
+    styleTag.textContent = '.steps::after { width: ' + pct + '%; }';
+  }
+}
+
+function start() {
+  SCRIPT.forEach((s, i) => {
+    const delay = s.abs;
+
+    if (s.role === 'user') {
+      timers.push(setTimeout(() => { setInput(s.text, true); }, delay - 400));
+      timers.push(setTimeout(() => {
+        addMsg('user', s.text);
+        setInput('Escribe un mensaje', false);
+        updateCart(s);
+        if (i + 1 < SCRIPT.length && SCRIPT[i+1].role === 'bot') showTyping();
+      }, delay));
+    } else if (s.role === 'system') {
+      timers.push(setTimeout(() => {
+        addMsg('system', s.text);
+        updateOrder(s);
+      }, delay));
+    } else {
+      timers.push(setTimeout(() => {
+        hideTyping();
+        addMsg('bot', s.text);
+        updateOrder(s);
+      }, delay));
+    }
+  });
+}
+
+function restart() {
+  timers.forEach(clearTimeout);
+  timers = [];
+
+  document.getElementById('waBody').innerHTML = `
+    <div class="date-div">Hoy</div>
+    <div class="typing-indicator" id="typing">
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+  `;
+  setInput('Escribe un mensaje', false);
+
+  document.getElementById('cartItems').innerHTML = '<div class="cart-empty">Esperando seleccion del cliente...</div>';
+  document.getElementById('cartTotalRow').style.display = 'none';
+  document.getElementById('orderCard').classList.remove('show');
+  document.querySelectorAll('#steps .step').forEach(el => el.classList.remove('active', 'done'));
+  const styleTag = document.getElementById('stepProgressStyle');
+  if (styleTag) styleTag.textContent = '.steps::after { width: 0%; }';
+
+  setTimeout(start, 500);
+}
+
+setTimeout(start, 900);
+</script>
+</body>
+</html>
