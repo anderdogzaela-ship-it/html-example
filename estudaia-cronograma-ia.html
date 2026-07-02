@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Estudaia - Cronograma de Estudos Adaptativo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  :root{
+    --g50:#fffbeb; --g100:#fef3c7; --g200:#fde68a; --g300:#fcd34d; --g400:#fbbf24;
+    --g500:#f59e0b; --g600:#d97706; --g700:#b45309; --g800:#92400e; --g900:#78350f;
+    --n50:#fafaf9; --n100:#f5f5f4; --n200:#e7e5e4; --n300:#d6d3d1; --n400:#a8a29e;
+    --n500:#78716c; --n600:#57534e; --n700:#292420; --n800:#1c1815; --n900:#120e0b;
+    --radius:16px; --shadow:0 10px 30px rgba(0,0,0,.35);
+    --ease:cubic-bezier(.34,1.56,.64,1);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{
+    font-family:'Lexend',sans-serif;
+    background:var(--n900);
+    color:var(--n100);
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  a{text-decoration:none;color:inherit;}
+  img{display:block;max-width:100%;}
+  .grid-overlay{
+    position:absolute; inset:0;
+    background-image:linear-gradient(rgba(245,158,11,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(245,158,11,.05) 1px,transparent 1px);
+    background-size:42px 42px;
+    pointer-events:none;
+  }
+
+  /* NAV */
+  nav{
+    position:fixed; top:0; left:0; right:0; z-index:100;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 6vw;
+    transition:.35s;
+  }
+  nav.scrolled{
+    background:rgba(18,14,11,.7);
+    backdrop-filter:blur(14px);
+    border-bottom:1px solid rgba(245,158,11,.15);
+  }
+  .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:20px;}
+  .brand-icon{
+    width:36px;height:36px;border-radius:10px;
+    background:linear-gradient(135deg,var(--g400),var(--g700));
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 0 18px rgba(245,158,11,.5);
+    animation:pulseLogo 3.2s ease-in-out infinite;
+  }
+  @keyframes pulseLogo{0%,100%{box-shadow:0 0 12px rgba(245,158,11,.4);}50%{box-shadow:0 0 24px rgba(245,158,11,.75);}}
+  nav .cta-btn{
+    background:linear-gradient(135deg,var(--g400),var(--g600));
+    color:var(--n900); font-weight:700; padding:10px 22px; border-radius:999px;
+    font-size:14px; box-shadow:0 6px 18px rgba(245,158,11,.35);
+    transition:.25s var(--ease);
+  }
+  nav .cta-btn:hover{transform:translateY(-2px) scale(1.03);}
+
+  /* HERO */
+  .hero{
+    position:relative; min-height:92vh;
+    display:flex; align-items:center; justify-content:center;
+    padding:140px 6vw 80px;
+    background:radial-gradient(circle at 20% 20%,rgba(245,158,11,.12),transparent 45%),
+               radial-gradient(circle at 80% 70%,rgba(217,119,6,.14),transparent 50%),var(--n900);
+  }
+  .orb{position:absolute;border-radius:50%;filter:blur(60px);opacity:.5;animation:floaty 9s ease-in-out infinite;}
+  .orb1{width:280px;height:280px;background:var(--g500);top:8%;left:6%;}
+  .orb2{width:340px;height:340px;background:var(--g700);bottom:4%;right:8%;animation-delay:-3s;}
+  @keyframes floaty{0%,100%{transform:translateY(0px) translateX(0px);}50%{transform:translateY(-28px) translateX(18px);}}
+  .hero-inner{position:relative;z-index:2;max-width:780px;text-align:center;}
+  .hero-badge{
+    display:inline-flex;align-items:center;gap:8px;
+    background:rgba(245,158,11,.12); border:1px solid rgba(245,158,11,.3);
+    padding:8px 18px;border-radius:999px;font-size:13px;font-weight:600;color:var(--g300);
+    margin-bottom:22px;
+  }
+  .hero h1{
+    font-size:clamp(32px,5.4vw,58px); font-weight:800; line-height:1.12;
+    background:linear-gradient(135deg,#fff 30%,var(--g300));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    margin-bottom:20px;
+  }
+  .hero p{font-size:clamp(15px,1.6vw,18px);color:var(--n300);line-height:1.65;max-width:600px;margin:0 auto 34px;}
+  .hero-actions{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;}
+  .btn-primary{
+    background:linear-gradient(135deg,var(--g400),var(--g600)); color:var(--n900);
+    font-weight:700; padding:15px 32px; border-radius:999px; font-size:15px;
+    box-shadow:0 8px 24px rgba(245,158,11,.4); transition:.25s var(--ease); border:none; cursor:pointer;
+  }
+  .btn-primary:hover{transform:translateY(-3px) scale(1.03);}
+  .btn-ghost{
+    border:1px solid rgba(255,255,255,.2); color:var(--n100); padding:15px 30px;
+    border-radius:999px; font-weight:600; font-size:15px; transition:.25s;
+  }
+  .btn-ghost:hover{background:rgba(255,255,255,.06);}
+  .hero-stats{display:flex;gap:48px;justify-content:center;margin-top:56px;flex-wrap:wrap;}
+  .stat{text-align:center;}
+  .stat-num{font-size:32px;font-weight:800;color:var(--g300);}
+  .stat-label{font-size:13px;color:var(--n400);margin-top:4px;}
+
+  /* SECTION SHARED */
+  section{padding:90px 6vw;position:relative;}
+  .section-head{text-align:center;max-width:640px;margin:0 auto 52px;}
+  .eyebrow{color:var(--g400);font-weight:700;font-size:13px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;}
+  .section-head h2{font-size:clamp(24px,3.4vw,36px);font-weight:800;color:#fff;margin-bottom:14px;}
+  .section-head p{color:var(--n400);font-size:15px;line-height:1.6;}
+  .reveal{opacity:0;transform:translateY(26px);transition:.7s var(--ease);}
+  .reveal.in{opacity:1;transform:translateY(0);}
+
+  /* FEATURE CARDS */
+  .feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:22px;max-width:1080px;margin:0 auto;}
+  .feature-card{
+    background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.08);
+    border-radius:var(--radius); padding:28px 24px; transition:.3s var(--ease);
+  }
+  .feature-card:hover{transform:translateY(-6px);border-color:rgba(245,158,11,.4);box-shadow:0 14px 30px rgba(0,0,0,.35);}
+  .feature-icon{
+    width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,var(--g400),var(--g700));
+    display:flex;align-items:center;justify-content:center;color:var(--n900);font-size:19px;margin-bottom:16px;
+  }
+  .feature-card h3{font-size:16px;font-weight:700;margin-bottom:8px;color:#fff;}
+  .feature-card p{font-size:13.5px;color:var(--n400);line-height:1.55;}
+
+  /* APP DEMO SHELL */
+  .demo-shell{
+    max-width:980px;margin:0 auto;border-radius:20px;overflow:hidden;
+    background:var(--n800); border:1px solid rgba(255,255,255,.08); box-shadow:var(--shadow);
+  }
+  .browser-bar{
+    display:flex;align-items:center;gap:8px;padding:14px 18px;background:var(--n700);border-bottom:1px solid rgba(255,255,255,.06);
+  }
+  .dot{width:11px;height:11px;border-radius:50%;}
+  .dot.r{background:#f87171;} .dot.y{background:#fbbf24;} .dot.g{background:#34d399;}
+  .browser-url{
+    margin-left:14px;background:rgba(255,255,255,.06);padding:6px 16px;border-radius:8px;font-size:12px;color:var(--n300);
+    display:flex;align-items:center;gap:8px;
+  }
+  .app-tabs{display:flex;gap:6px;padding:14px 22px 0;background:var(--n800);border-bottom:1px solid rgba(255,255,255,.06);}
+  .app-tab{
+    padding:11px 18px;font-size:13px;font-weight:600;color:var(--n400);border-bottom:2px solid transparent;cursor:pointer;transition:.2s;
+    display:flex;align-items:center;gap:7px;
+  }
+  .app-tab.active{color:var(--g300);border-bottom-color:var(--g400);}
+  .app-body{padding:32px;min-height:520px;}
+  .app-page{display:none;animation:pageIn .45s var(--ease);}
+  .app-page.active{display:block;}
+  @keyframes pageIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+
+  /* FORM STEP */
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:22px;}
+  .field label{display:block;font-size:12.5px;font-weight:600;color:var(--n400);margin-bottom:7px;text-transform:uppercase;letter-spacing:.04em;}
+  .field input,.field select{
+    width:100%;padding:12px 14px;border-radius:10px;background:rgba(255,255,255,.05);
+    border:1px solid rgba(255,255,255,.1);color:#fff;font-family:inherit;font-size:14px;
+  }
+  .field input:focus,.field select:focus{outline:none;border-color:var(--g400);}
+  .subject-chip-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px;}
+  .chip{
+    padding:8px 16px;border-radius:999px;font-size:13px;font-weight:600;
+    background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.35);color:var(--g300);
+    display:flex;align-items:center;gap:8px;
+  }
+  .chip i{cursor:pointer;font-size:11px;opacity:.7;}
+  .quiz-q{margin-bottom:20px;}
+  .quiz-q p{font-size:14px;font-weight:600;margin-bottom:10px;color:#fff;}
+  .quiz-opts{display:flex;gap:10px;flex-wrap:wrap;}
+  .quiz-opt{
+    padding:11px 18px;border-radius:10px;font-size:13.5px;font-weight:600;cursor:pointer;
+    background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);color:var(--n300);transition:.2s;
+  }
+  .quiz-opt.selected{background:rgba(245,158,11,.16);border-color:var(--g400);color:var(--g300);}
+
+  /* SCHEDULE */
+  .sched-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;}
+  .sched-meta .countdown{
+    background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.3);color:#fca5a5;
+    padding:8px 16px;border-radius:999px;font-size:12.5px;font-weight:700;
+  }
+  .week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;}
+  .day-col{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px 10px;min-height:200px;transition:.4s var(--ease);}
+  .day-col.recalc-flash{animation:flash 1s ease;}
+  @keyframes flash{0%{background:rgba(245,158,11,.25);}100%{background:rgba(255,255,255,.03);}}
+  .day-col h4{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--n400);margin-bottom:4px;text-align:center;}
+  .day-hours{font-size:11px;text-align:center;color:var(--g400);font-weight:700;margin-bottom:10px;}
+  .block{
+    font-size:10.5px;font-weight:600;padding:7px 6px;border-radius:7px;margin-bottom:6px;line-height:1.3;
+    border-left:3px solid var(--g500);background:rgba(245,158,11,.1);color:var(--n100);
+  }
+  .block.new{animation:blockIn .5s var(--ease);border-left-color:#34d399;background:rgba(52,211,153,.12);}
+  @keyframes blockIn{from{opacity:0;transform:scale(.85);}to{opacity:1;transform:scale(1);}}
+  .day-col.missed{opacity:.4;}
+  .day-col.missed .block{text-decoration:line-through;}
+  .miss-btn{
+    margin-top:8px;width:100%;padding:6px;border-radius:7px;font-size:10px;font-weight:700;
+    background:rgba(248,113,113,.15);border:1px solid rgba(248,113,113,.3);color:#fca5a5;cursor:pointer;
+  }
+  .miss-btn:disabled{opacity:.35;cursor:default;}
+
+  .toast{
+    position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(120%);
+    background:var(--n800);border:1px solid rgba(245,158,11,.35);color:#fff;
+    padding:14px 26px;border-radius:12px;font-size:13.5px;font-weight:600;box-shadow:var(--shadow);
+    display:flex;align-items:center;gap:10px;z-index:200;transition:transform .5s cubic-bezier(.34,1.56,.64,1);
+  }
+  .toast.show{transform:translateX(-50%) translateY(0);}
+  .toast i{color:var(--g400);}
+
+  .step-actions{display:flex;justify-content:space-between;margin-top:26px;}
+  .btn-sm{padding:11px 24px;border-radius:10px;font-size:13.5px;font-weight:700;cursor:pointer;border:none;}
+  .btn-sm.primary{background:linear-gradient(135deg,var(--g400),var(--g600));color:var(--n900);}
+  .btn-sm.ghost{background:transparent;border:1px solid rgba(255,255,255,.15);color:var(--n300);}
+
+  .restart-row{text-align:center;margin-top:26px;}
+  .restart-row button{
+    background:none;border:1px solid rgba(255,255,255,.15);color:var(--n400);padding:10px 22px;
+    border-radius:999px;font-size:13px;font-weight:600;cursor:pointer;transition:.2s;
+  }
+  .restart-row button:hover{color:var(--g300);border-color:var(--g400);}
+
+  footer{text-align:center;padding:34px 6vw;color:var(--n500);font-size:12.5px;border-top:1px solid rgba(255,255,255,.06);}
+
+  @media (max-width:760px){
+    .form-grid{grid-template-columns:1fr;}
+    .week-grid{grid-template-columns:repeat(2,1fr);}
+    .app-body{padding:20px;}
+    .hero-stats{gap:28px;}
+  }
+</style>
+</head>
+<body>
+
+<nav id="nav">
+  <div class="brand"><div class="brand-icon"><i class="fa-solid fa-brain" style="color:#120e0b"></i></div>Estudaia</div>
+  <a href="#demo" class="cta-btn">Ver demo interativo</a>
+</nav>
+
+<section class="hero">
+  <div class="grid-overlay"></div>
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="hero-inner">
+    <div class="hero-badge"><i class="fa-solid fa-wand-magic-sparkles"></i> Assistente de IA para estudos</div>
+    <h1>Um cronograma de estudos que se recalcula sozinho quando a semana sai do plano.</h1>
+    <p>Diferente de uma planilha fixa. O estudante informa materias prazo e horas livres. A IA monta a semana e reorganiza tudo automaticamente sempre que uma meta nao e cumprida.</p>
+    <div class="hero-actions">
+      <a href="#demo" class="btn-primary"><i class="fa-solid fa-play"></i> Testar o fluxo completo</a>
+      <a href="#como-funciona" class="btn-ghost">Como funciona</a>
+    </div>
+    <div class="hero-stats">
+      <div class="stat"><div class="stat-num" data-count="100">0</div><div class="stat-label">porcento adaptativo</div></div>
+      <div class="stat"><div class="stat-num" data-count="7">0</div><div class="stat-label">dias recalculados em tempo real</div></div>
+      <div class="stat"><div class="stat-num" data-count="0">0</div><div class="stat-label">planilhas manuais</div></div>
+    </div>
+  </div>
+</section>
+
+<section id="como-funciona">
+  <div class="section-head reveal">
+    <div class="eyebrow">Como funciona</div>
+    <h2>Tres passos entre a prova marcada e o plano da semana pronto</h2>
+    <p>O estudante nao escreve prompt nenhum. Responde perguntas curtas e recebe um cronograma validado.</p>
+  </div>
+  <div class="feature-grid">
+    <div class="feature-card reveal"><div class="feature-icon"><i class="fa-solid fa-list-check"></i></div><h3>Materias e prazos</h3><p>Materias data da prova e horas livres por dia. A base do calculo.</p></div>
+    <div class="feature-card reveal"><div class="feature-icon"><i class="fa-solid fa-user-clock"></i></div><h3>Perfil de estudo</h3><p>Perguntas rapidas sobre horario de rendimento e preferencia por Pomodoro.</p></div>
+    <div class="feature-card reveal"><div class="feature-icon"><i class="fa-solid fa-calendar-week"></i></div><h3>Cronograma gerado</h3><p>Semana distribuida por materia com o total de horas sempre validado.</p></div>
+    <div class="feature-card reveal"><div class="feature-icon"><i class="fa-solid fa-arrows-rotate"></i></div><h3>Recalculo automatico</h3><p>Meta perdida numa terca redistribui a carga no resto da semana sem passar do prazo.</p></div>
+  </div>
+</section>
+
+<section id="demo">
+  <div class="section-head reveal">
+    <div class="eyebrow">Demo interativo</div>
+    <h2>Marque um dia como nao cumprido e veja o cronograma se ajustar</h2>
+    <p>Exatamente o fluxo que o usuario final vai ver. Cadastro perfil cronograma e recalculo em tempo real.</p>
+  </div>
+
+  <div class="demo-shell reveal">
+    <div class="browser-bar">
+      <div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
+      <div class="browser-url"><i class="fa-solid fa-lock" style="font-size:10px"></i> app.estudaia.com.br</div>
+    </div>
+    <div class="app-tabs">
+      <div class="app-tab active" data-page="page-cadastro"><i class="fa-solid fa-pen"></i> Cadastro</div>
+      <div class="app-tab" data-page="page-perfil"><i class="fa-solid fa-user"></i> Perfil</div>
+      <div class="app-tab" data-page="page-cronograma"><i class="fa-solid fa-calendar-days"></i> Cronograma</div>
+    </div>
+
+    <div class="app-body">
+
+      <!-- STEP 1 -->
+      <div class="app-page active" id="page-cadastro">
+        <div class="form-grid">
+          <div class="field"><label>Materia</label><input id="subjectInput" placeholder="Ex. Calculo I" value="Calculo I"></div>
+          <div class="field"><label>Data da prova</label><input type="date" value="2026-07-09"></div>
+        </div>
+        <div class="subject-chip-row" id="chipRow">
+          <div class="chip">Calculo I <i class="fa-solid fa-xmark"></i></div>
+          <div class="chip">Fisica II <i class="fa-solid fa-xmark"></i></div>
+          <div class="chip">Programacao Web <i class="fa-solid fa-xmark"></i></div>
+        </div>
+        <div class="form-grid">
+          <div class="field"><label>Horas livres por dia util</label><input value="2 horas"></div>
+          <div class="field"><label>Horas livres no fim de semana</label><input value="4 horas"></div>
+        </div>
+        <div class="step-actions">
+          <span></span>
+          <button class="btn-sm primary" onclick="goTo('page-perfil')">Continuar <i class="fa-solid fa-arrow-right"></i></button>
+        </div>
+      </div>
+
+      <!-- STEP 2 -->
+      <div class="app-page" id="page-perfil">
+        <div class="quiz-q">
+          <p>Voce rende mais em qual horario</p>
+          <div class="quiz-opts">
+            <div class="quiz-opt selected">Manha</div>
+            <div class="quiz-opt">Tarde</div>
+            <div class="quiz-opt">Noite</div>
+          </div>
+        </div>
+        <div class="quiz-q">
+          <p>Prefere estudar em blocos curtos com pausa tipo Pomodoro</p>
+          <div class="quiz-opts">
+            <div class="quiz-opt selected">Sim 25 minutos</div>
+            <div class="quiz-opt">Nao prefiro blocos longos</div>
+          </div>
+        </div>
+        <div class="quiz-q">
+          <p>Materia que voce considera mais dificil agora</p>
+          <div class="quiz-opts">
+            <div class="quiz-opt selected">Calculo I</div>
+            <div class="quiz-opt">Fisica II</div>
+            <div class="quiz-opt">Programacao Web</div>
+          </div>
+        </div>
+        <div class="step-actions">
+          <button class="btn-sm ghost" onclick="goTo('page-cadastro')"><i class="fa-solid fa-arrow-left"></i> Voltar</button>
+          <button class="btn-sm primary" onclick="goTo('page-cronograma')">Gerar cronograma <i class="fa-solid fa-wand-magic-sparkles"></i></button>
+        </div>
+      </div>
+
+      <!-- STEP 3 -->
+      <div class="app-page" id="page-cronograma">
+        <div class="sched-meta">
+          <div><strong style="color:#fff">Semana de estudo gerada</strong><div style="font-size:12px;color:var(--n400);margin-top:3px">Carga validada por materia e por dia disponivel</div></div>
+          <div class="countdown" id="countdown"><i class="fa-solid fa-clock"></i> Prova de Calculo em 7 dias</div>
+        </div>
+        <div class="week-grid" id="weekGrid"></div>
+        <div class="restart-row">
+          <button onclick="resetDemo()"><i class="fa-solid fa-rotate-left"></i> Reiniciar demo</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<footer>Mockup de demonstracao construido para avaliacao do escopo. Dados fictícios geradas apenas para ilustrar o fluxo do produto final.</footer>
+
+<div class="toast" id="toast"><i class="fa-solid fa-arrows-rotate fa-spin"></i> <span id="toastText">Recalculando a semana</span></div>
+
+<script>
+  const nav = document.getElementById('nav');
+  window.addEventListener('scroll',()=>nav.classList.toggle('scrolled',window.scrollY>40));
+
+  // tabs
+  function goTo(id){
+    document.querySelectorAll('.app-page').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('.app-tab').forEach(t=>t.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    document.querySelector('.app-tab[data-page="'+id+'"]').classList.add('active');
+  }
+  document.querySelectorAll('.app-tab').forEach(t=>t.addEventListener('click',()=>goTo(t.dataset.page)));
+
+  document.querySelectorAll('.quiz-opts').forEach(group=>{
+    group.querySelectorAll('.quiz-opt').forEach(opt=>{
+      opt.addEventListener('click',()=>{
+        group.querySelectorAll('.quiz-opt').forEach(o=>o.classList.remove('selected'));
+        opt.classList.add('selected');
+      });
+    });
+  });
+
+  document.querySelectorAll('.chip i').forEach(x=>x.addEventListener('click',e=>e.target.closest('.chip').remove()));
+
+  // schedule data
+  const days = ['SEG','TER','QUA','QUI','SEX','SAB','DOM'];
+  const baseSchedule = [
+    [{s:'Calculo I',h:'1h'},{s:'Fisica II',h:'1h'}],
+    [{s:'Programacao Web',h:'1h30'},{s:'Calculo I',h:'0h30'}],
+    [{s:'Calculo I',h:'1h'},{s:'Fisica II',h:'1h'}],
+    [{s:'Fisica II',h:'1h'},{s:'Programacao Web',h:'1h'}],
+    [{s:'Calculo I',h:'2h'}],
+    [{s:'Calculo I',h:'2h'},{s:'Fisica II',h:'2h'}],
+    [{s:'Revisao geral',h:'2h'},{s:'Programacao Web',h:'2h'}]
+  ];
+  const hoursLabel = ['2h disponiveis','2h disponiveis','2h disponiveis','2h disponiveis','2h disponiveis','4h disponiveis','4h disponiveis'];
+
+  function renderWeek(){
+    const grid = document.getElementById('weekGrid');
+    grid.innerHTML = '';
+    days.forEach((d,i)=>{
+      const col = document.createElement('div');
+      col.className = 'day-col';
+      col.id = 'day-'+i;
+      const blocksHtml = baseSchedule[i].map(b=>'<div class="block">'+b.s+' - '+b.h+'</div>').join('');
+      const disabled = i<2 ? '' : '';
+      col.innerHTML = '<h4>'+d+'</h4><div class="day-hours">'+hoursLabel[i]+'</div><div class="blocks">'+blocksHtml+'</div>'+
+        (i===1 ? '<button class="miss-btn" id="missBtn" onclick="simulateMiss()">Marquei mas nao cumpri</button>' : '');
+      grid.appendChild(col);
+    });
+  }
+  renderWeek();
+
+  function showToast(text){
+    const t = document.getElementById('toast');
+    document.getElementById('toastText').textContent = text;
+    t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'),2600);
+  }
+
+  function simulateMiss(){
+    const btn = document.getElementById('missBtn');
+    if(btn) btn.disabled = true;
+    document.getElementById('day-1').classList.add('missed');
+    showToast('Terca nao cumprida. Recalculando o resto da semana');
+
+    setTimeout(()=>{
+      // redistribute the missed hour into wed thu and saturday
+      baseSchedule[2].push({s:'Programacao Web',h:'0h30 extra'});
+      baseSchedule[3].push({s:'Calculo I',h:'0h30 extra'});
+      baseSchedule[5].push({s:'Calculo I',h:'1h extra'});
+
+      [2,3,5].forEach(i=>{
+        const col = document.getElementById('day-'+i);
+        col.classList.add('recalc-flash');
+        const blocksDiv = col.querySelector('.blocks');
+        const extra = baseSchedule[i][baseSchedule[i].length-1];
+        const el = document.createElement('div');
+        el.className = 'block new';
+        el.textContent = extra.s+' - '+extra.h;
+        blocksDiv.appendChild(el);
+      });
+      document.getElementById('countdown').innerHTML = '<i class="fa-solid fa-check"></i> Semana redistribuida sem passar da prova';
+      showToast('Cronograma reorganizado. Nenhuma hora perdida ate a prova');
+    },1500);
+  }
+
+  function resetDemo(){
+    goTo('page-cadastro');
+    location.reload();
+  }
+
+  // scroll reveal
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach((e,idx)=>{
+      if(e.isIntersecting){
+        setTimeout(()=>e.target.classList.add('in'),idx*55);
+        io.unobserve(e.target);
+      }
+    });
+  },{threshold:.15});
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+  // count up
+  const counters = document.querySelectorAll('[data-count]');
+  const cio = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){
+        const target = +e.target.dataset.count;
+        let cur = 0;
+        const step = Math.max(target/30,1);
+        const tick = ()=>{
+          cur += step;
+          if(cur>=target){e.target.textContent = target;}
+          else{e.target.textContent = Math.floor(cur);requestAnimationFrame(tick);}
+        };
+        tick();
+        cio.unobserve(e.target);
+      }
+    });
+  },{threshold:.5});
+  counters.forEach(c=>cio.observe(c));
+</script>
+</body>
+</html>
