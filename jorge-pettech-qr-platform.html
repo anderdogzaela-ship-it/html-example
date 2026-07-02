@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pet Tech QR Platform - Demo Interactivo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --t900:#0b2a36; --t800:#0e3c4d; --t700:#12556b; --t600:#1a7a94; --t500:#2296b3;
+  --am:#f97316; --am2:#ea580c;
+  --bg:#f3f9fb; --card:#ffffff; --border:#dde9ed; --text:#0b2a36; --muted:#5f7b85;
+  --warn:#f59e0b; --danger:#ef4444; --ok:#16a34a;
+  --shadow:0 10px 30px rgba(11,42,54,0.12);
+}
+body{
+  font-family:'Nunito',sans-serif;
+  background:linear-gradient(160deg,#eaf5f8 0%,#f3f9fb 50%,#e7f2f5 100%);
+  min-height:100vh;
+  padding:32px 16px 60px;
+  -webkit-font-smoothing:antialiased;
+  color:var(--text);
+}
+.wrap{max-width:1180px;margin:0 auto}
+.demo-header{text-align:center;margin-bottom:22px}
+.demo-header h2{font-size:21px;font-weight:900;color:var(--t900);margin-bottom:4px}
+.demo-header p{font-size:13px;color:var(--muted)}
+.demo-header span{
+  display:inline-block;background:var(--t700);color:#fff;font-size:11px;font-weight:700;
+  padding:4px 12px;border-radius:20px;margin-top:8px;letter-spacing:.4px;
+}
+
+.toggle-bar{display:flex;justify-content:center;gap:8px;margin-bottom:26px}
+.toggle-btn{
+  padding:10px 20px;border-radius:12px;border:1.5px solid var(--border);background:var(--card);
+  font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;color:var(--muted);cursor:pointer;
+  display:flex;align-items:center;gap:8px;transition:all .15s;
+}
+.toggle-btn.active{background:var(--t800);color:#fff;border-color:var(--t800);box-shadow:0 6px 18px rgba(14,60,77,.25)}
+
+.view{display:none}
+.view.active{display:block}
+
+/* ===== ADMIN VIEW ===== */
+.admin-shell{
+  background:var(--card);border:1px solid var(--border);border-radius:20px;
+  box-shadow:var(--shadow);overflow:hidden;max-width:840px;margin:0 auto;
+}
+.admin-topbar{background:var(--t900);color:#fff;padding:16px 22px;display:flex;align-items:center;justify-content:space-between}
+.admin-topbar h3{font-size:15px;font-weight:800;display:flex;align-items:center;gap:9px}
+.admin-topbar .dot{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok)}
+.tabs{display:flex;border-bottom:1.5px solid var(--border);background:#fafdfe}
+.tab{flex:1;text-align:center;padding:13px 8px;font-size:12.5px;font-weight:800;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;transition:all .15s}
+.tab.active{color:var(--t700);border-color:var(--am)}
+.tab-panel{display:none;padding:22px}
+.tab-panel.active{display:block;animation:fadeSlideIn .28s cubic-bezier(.4,0,.2,1)}
+@keyframes fadeSlideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* Generator */
+.gen-row{display:flex;gap:10px;align-items:flex-end;margin-bottom:18px;flex-wrap:wrap}
+.field{flex:1;min-width:160px}
+.field label{font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:6px}
+.field input{width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:10px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;color:var(--text)}
+.field input:focus{outline:none;border-color:var(--t600)}
+.gen-btn{
+  background:linear-gradient(135deg,var(--am),var(--am2));color:#fff;border:none;padding:12px 20px;
+  border-radius:10px;font-weight:800;font-size:13.5px;cursor:pointer;display:flex;align-items:center;gap:8px;
+  font-family:'Nunito',sans-serif;box-shadow:0 6px 16px rgba(249,115,22,.3);white-space:nowrap;
+}
+.gen-btn:hover{filter:brightness(1.05)}
+.gen-progress{height:8px;background:var(--border);border-radius:8px;overflow:hidden;margin-bottom:16px;display:none}
+.gen-progress.show{display:block}
+.gen-progress-bar{height:100%;background:linear-gradient(90deg,var(--t600),var(--am));width:0%;transition:width 1.1s cubic-bezier(.4,0,.2,1)}
+.gen-result{display:none}
+.gen-result.show{display:block;animation:fadeSlideIn .3s}
+.gen-summary{display:flex;align-items:center;gap:10px;background:#ecfbf3;border:1.5px solid #bdeed1;color:var(--ok);padding:10px 14px;border-radius:10px;font-size:13px;font-weight:700;margin-bottom:14px}
+.qr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px;margin-bottom:16px;max-height:180px;overflow-y:auto;padding:2px}
+.qr-thumb{
+  aspect-ratio:1;border-radius:8px;background:#fff;border:1.5px solid var(--border);
+  display:grid;grid-template-columns:repeat(5,1fr);grid-template-rows:repeat(5,1fr);gap:1.5px;padding:5px;position:relative;
+}
+.qr-thumb i{background:var(--t900);border-radius:1px}
+.qr-thumb i.o{background:transparent}
+.qr-thumb .plate-no{position:absolute;bottom:-14px;left:0;right:0;text-align:center;font-size:8.5px;font-weight:800;color:var(--muted)}
+.zip-btn{
+  width:100%;padding:13px;background:var(--t800);color:#fff;border:none;border-radius:10px;
+  font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;
+  font-family:'Nunito',sans-serif;
+}
+.zip-btn:hover{background:var(--t700)}
+.hint{font-size:11.5px;color:var(--muted);margin-top:10px;text-align:center}
+
+/* Search/editor */
+.search-row{display:flex;gap:10px;margin-bottom:16px}
+.search-row input{flex:1;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-family:'Nunito',sans-serif;font-size:13.5px}
+.search-row input:focus{outline:none;border-color:var(--t600)}
+.plate-list{display:flex;flex-direction:column;gap:8px}
+.plate-row{
+  display:flex;align-items:center;gap:12px;padding:11px 13px;border:1.5px solid var(--border);border-radius:12px;background:#fafdfe;
+}
+.plate-badge{
+  width:44px;height:44px;border-radius:10px;background:var(--t900);color:#fff;display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:11px;flex-shrink:0;
+}
+.plate-info{flex:1;min-width:0}
+.plate-info .pname{font-size:13.5px;font-weight:800;color:var(--text)}
+.plate-info .pdest{font-size:11px;color:var(--muted);font-family:monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.plate-info input{
+  border:1.5px solid var(--t600);border-radius:6px;padding:5px 8px;font-size:11px;font-family:monospace;width:100%;margin-top:3px;display:none;
+}
+.plate-info.editing .pdest{display:none}
+.plate-info.editing input{display:block}
+.plate-status{font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px;flex-shrink:0}
+.plate-status.active{background:#ecfbf3;color:var(--ok)}
+.plate-status.pending{background:#fef3e2;color:var(--warn)}
+.edit-btn{
+  width:34px;height:34px;border-radius:8px;background:var(--card);border:1.5px solid var(--border);color:var(--t700);
+  cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.edit-btn:hover{background:var(--t800);color:#fff;border-color:var(--t800)}
+
+/* Catalog admin */
+.cat-admin-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+.cat-admin-card{border:1.5px solid var(--border);border-radius:14px;overflow:hidden;background:#fafdfe}
+.cat-admin-card img{width:100%;height:100px;object-fit:cover;display:block}
+.cat-admin-body{padding:11px 12px}
+.cat-admin-body .cname{font-size:12.5px;font-weight:800;color:var(--text);margin-bottom:6px}
+.price-edit{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.price-edit span{font-size:11px;color:var(--muted);font-weight:700}
+.price-edit input{width:64px;padding:5px 7px;border:1.5px solid var(--border);border-radius:6px;font-size:12px;font-weight:800;font-family:'Nunito',sans-serif}
+.promo-toggle{display:flex;align-items:center;justify-content:space-between}
+.promo-toggle span{font-size:10.5px;font-weight:700;color:var(--muted)}
+.switch{width:34px;height:19px;border-radius:20px;background:var(--border);position:relative;cursor:pointer;transition:background .2s}
+.switch.on{background:var(--am)}
+.switch::after{content:'';position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;background:#fff;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.switch.on::after{transform:translateX(15px)}
+
+/* ===== PUBLIC VIEW ===== */
+.public-wrap{display:flex;justify-content:center;gap:40px;flex-wrap:wrap}
+.phone-block{text-align:center}
+.phone-label{font-size:12px;font-weight:800;color:var(--t700);margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px}
+.phone-frame{
+  width:300px;height:600px;background:var(--bg);border-radius:40px;
+  box-shadow:0 0 0 8px #0b2a36,0 0 0 11px #133b4a,0 30px 80px rgba(11,42,54,0.3);
+  overflow:hidden;position:relative;border:2px solid #164457;
+}
+.status-bar{
+  height:30px;background:var(--t900);display:flex;align-items:center;justify-content:space-between;
+  padding:0 20px;font-size:10.5px;font-weight:700;color:#fff;flex-shrink:0;
+}
+.status-right{display:flex;gap:6px;align-items:center;font-size:9.5px}
+.pscreen{height:calc(100% - 30px);overflow-y:auto;background:var(--bg)}
+.pscreen::-webkit-scrollbar{width:0}
+
+/* Ficha mascota */
+.pet-hero{position:relative;height:190px}
+.pet-hero img{width:100%;height:100%;object-fit:cover}
+.pet-hero-grad{position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,42,54,0) 40%,rgba(11,42,54,.75) 100%)}
+.pet-hero-name{position:absolute;bottom:12px;left:16px;color:#fff}
+.pet-hero-name h4{font-size:20px;font-weight:900}
+.pet-hero-name p{font-size:11px;opacity:.85;margin-top:2px}
+.alert-banner{
+  margin:12px 14px;background:#fef2f2;border:1.5px solid #fecaca;border-radius:12px;padding:11px 13px;
+  display:flex;align-items:flex-start;gap:10px;
+}
+.alert-banner i{color:var(--danger);font-size:16px;margin-top:1px}
+.alert-banner b{font-size:11.5px;color:#991b1b;display:block;margin-bottom:2px}
+.alert-banner span{font-size:11px;color:#b91c1c}
+.pet-detail-grid{padding:0 14px;display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.pet-detail-card{background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:9px 10px}
+.pet-detail-card .lbl{font-size:9px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.3px}
+.pet-detail-card .val{font-size:12.5px;font-weight:800;color:var(--text);margin-top:2px}
+.pet-actions{padding:6px 14px 18px;display:flex;flex-direction:column;gap:9px}
+.pet-btn{
+  padding:13px;border-radius:12px;font-weight:800;font-size:13.5px;display:flex;align-items:center;justify-content:center;gap:9px;
+  border:none;cursor:pointer;font-family:'Nunito',sans-serif;
+}
+.pet-btn.call{background:var(--t800);color:#fff}
+.pet-btn.wa{background:#25d366;color:#fff}
+.pet-footer-note{text-align:center;font-size:9.5px;color:var(--muted);padding:0 20px 14px}
+
+/* Catalogo publico */
+.cat-header{background:var(--t900);color:#fff;padding:16px 16px 14px}
+.cat-header h1{font-size:16px;font-weight:800;display:flex;align-items:center;gap:8px}
+.cat-header p{font-size:10.5px;opacity:.8;margin-top:3px}
+.cat-list{padding:12px 14px}
+.cat-item{background:var(--card);border:1.5px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:12px;box-shadow:0 1px 4px rgba(11,42,54,.05)}
+.cat-item img{width:100%;height:100px;object-fit:cover;display:block}
+.cat-item-body{padding:11px 12px}
+.cat-item-body .iname{font-size:13px;font-weight:800;color:var(--text)}
+.cat-item-body .idesc{font-size:10.5px;color:var(--muted);margin:3px 0 8px;line-height:1.4}
+.price-row{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+.price-now{font-size:15px;font-weight:900;color:var(--am2)}
+.price-old{font-size:11.5px;color:var(--muted);text-decoration:line-through}
+.promo-chip{background:#fff1e8;color:var(--am2);font-size:9px;font-weight:800;padding:2px 7px;border-radius:8px}
+.wa-buy-btn{
+  width:100%;padding:10px;background:#25d366;color:#fff;border:none;border-radius:9px;font-weight:800;font-size:12px;
+  display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;font-family:'Nunito',sans-serif;
+}
+
+.pswitch{display:flex;gap:6px;justify-content:center;margin-top:14px}
+.pswitch button{
+  padding:7px 14px;border-radius:20px;border:1.5px solid var(--border);background:var(--card);
+  font-size:11px;font-weight:800;color:var(--muted);cursor:pointer;font-family:'Nunito',sans-serif;
+}
+.pswitch button.on{background:var(--t800);color:#fff;border-color:var(--t800)}
+
+/* Toast */
+.toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(16px);
+  background:var(--t900);color:#fff;padding:12px 20px;border-radius:20px;font-size:13px;font-weight:700;
+  white-space:nowrap;opacity:0;transition:all .25s;pointer-events:none;z-index:99;display:flex;align-items:center;gap:9px;
+  box-shadow:0 4px 20px rgba(0,0,0,.3);
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+@media(max-width:640px){
+  .public-wrap{gap:24px}
+  .phone-frame{width:260px;height:540px}
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="demo-header">
+    <h2><i class="fa-solid fa-paw"></i> Pet Tech Platform &middot; Placas QR Dinamicas</h2>
+    <p>Demo interactivo &mdash; panel administrativo y experiencia publica</p>
+    <span>Catalogo + QR masivo + ficha de mascota</span>
+  </div>
+
+  <div class="toggle-bar">
+    <button class="toggle-btn active" id="btnAdmin" onclick="showView('admin')"><i class="fa-solid fa-gauge"></i> Panel Admin</button>
+    <button class="toggle-btn" id="btnPublic" onclick="showView('public')"><i class="fa-solid fa-mobile-screen-button"></i> Vista Publica</button>
+  </div>
+
+  <!-- ================= ADMIN VIEW ================= -->
+  <div class="view active" id="viewAdmin">
+    <div class="admin-shell">
+      <div class="admin-topbar">
+        <h3><i class="fa-solid fa-paw"></i> Pet Tech &middot; Panel Administrativo</h3>
+        <span class="dot"></span>
+      </div>
+      <div class="tabs">
+        <div class="tab active" data-tab="gen" onclick="showTab('gen')">Generador QR</div>
+        <div class="tab" data-tab="search" onclick="showTab('search')">Buscador y Editor</div>
+        <div class="tab" data-tab="cat" onclick="showTab('cat')">Catalogo</div>
+      </div>
+
+      <!-- Tab: Generador -->
+      <div class="tab-panel active" id="tabGen">
+        <div class="gen-row">
+          <div class="field">
+            <label>Cantidad de placas a generar</label>
+            <input type="number" id="genQty" value="100" min="1" max="500">
+          </div>
+          <button class="gen-btn" onclick="generateQR()"><i class="fa-solid fa-bolt"></i> Generar placas</button>
+        </div>
+        <div class="gen-progress" id="genProgress"><div class="gen-progress-bar" id="genProgressBar"></div></div>
+        <div class="gen-result" id="genResult">
+          <div class="gen-summary"><i class="fa-solid fa-circle-check"></i> <span id="genSummaryTxt"></span></div>
+          <div class="qr-grid" id="qrGrid"></div>
+          <button class="zip-btn" onclick="downloadZip()"><i class="fa-solid fa-file-zipper"></i> Descargar ZIP para grabado laser</button>
+          <div class="hint">Cada codigo apunta a un enlace publico unico y no adivinable. El numero interno queda solo en tu base de datos.</div>
+        </div>
+      </div>
+
+      <!-- Tab: Buscador -->
+      <div class="tab-panel" id="tabSearch">
+        <div class="search-row">
+          <input type="text" id="searchInput" placeholder="Buscar por numero de placa, ej. 004" oninput="filterPlates()">
+        </div>
+        <div class="plate-list" id="plateList"></div>
+      </div>
+
+      <!-- Tab: Catalogo -->
+      <div class="tab-panel" id="tabCat">
+        <div class="cat-admin-grid" id="catAdminGrid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= PUBLIC VIEW ================= -->
+  <div class="view" id="viewPublic">
+    <div class="public-wrap">
+      <div class="phone-block">
+        <div class="phone-label">Ficha publica de la mascota</div>
+        <div class="phone-frame">
+          <div class="status-bar"><span>9:41</span><div class="status-right"><i class="fa-solid fa-signal"></i><i class="fa-solid fa-wifi"></i><i class="fa-solid fa-battery-three-quarters"></i></div></div>
+          <div class="pscreen">
+            <div class="pet-hero">
+              <img src="https://images.unsplash.com/photo-1552053831-71594a27632d?w=500&q=80" alt="Rocky">
+              <div class="pet-hero-grad"></div>
+              <div class="pet-hero-name"><h4>Rocky</h4><p>Placa PT-00842 &middot; activa</p></div>
+            </div>
+            <div class="alert-banner">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              <div><b>ALERGICO A PENICILINA</b><span>Avisar a la veterinaria antes de cualquier tratamiento</span></div>
+            </div>
+            <div class="pet-detail-grid">
+              <div class="pet-detail-card"><div class="lbl">Raza</div><div class="val">Golden Retriever</div></div>
+              <div class="pet-detail-card"><div class="lbl">Edad</div><div class="val">3 anos</div></div>
+              <div class="pet-detail-card"><div class="lbl">Peso</div><div class="val">28 kg</div></div>
+              <div class="pet-detail-card"><div class="lbl">Dueno</div><div class="val">Familia Castro</div></div>
+            </div>
+            <div class="pet-actions">
+              <button class="pet-btn call" onclick="ping('Marcando al dueno...')"><i class="fa-solid fa-phone"></i> Llamar al Dueno</button>
+              <button class="pet-btn wa" onclick="ping('Abriendo WhatsApp con mensaje precargado...')"><i class="fa-brands fa-whatsapp"></i> Enviar WhatsApp</button>
+            </div>
+            <div class="pet-footer-note">Sin marcas de agua ni publicidad externa</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="phone-block">
+        <div class="phone-label">Catalogo publico</div>
+        <div class="phone-frame">
+          <div class="status-bar"><span>9:41</span><div class="status-right"><i class="fa-solid fa-signal"></i><i class="fa-solid fa-wifi"></i><i class="fa-solid fa-battery-three-quarters"></i></div></div>
+          <div class="pscreen">
+            <div class="cat-header">
+              <h1><i class="fa-solid fa-store"></i> Catalogo Pet Tech</h1>
+              <p>Placas, bebederos y localizadores para tu mascota</p>
+            </div>
+            <div class="cat-list" id="catPublicList"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><i id="toastIco" class="fa-solid fa-circle-check"></i><span id="toastTxt"></span></div>
+
+<script>
+function showView(v){
+  document.getElementById('viewAdmin').classList.toggle('active', v==='admin');
+  document.getElementById('viewPublic').classList.toggle('active', v==='public');
+  document.getElementById('btnAdmin').classList.toggle('active', v==='admin');
+  document.getElementById('btnPublic').classList.toggle('active', v==='public');
+}
+function showTab(t){
+  document.querySelectorAll('.tab').forEach(el=>el.classList.toggle('active', el.dataset.tab===t));
+  document.getElementById('tabGen').classList.toggle('active', t==='gen');
+  document.getElementById('tabSearch').classList.toggle('active', t==='search');
+  document.getElementById('tabCat').classList.toggle('active', t==='cat');
+  if(t==='search' && !plateList.length) renderPlates();
+  if(t==='cat' && !document.getElementById('catAdminGrid').children.length) renderCatAdmin();
+}
+
+function ping(msg){
+  const t=document.getElementById('toast');
+  document.getElementById('toastIco').className='fa-solid fa-circle-check';
+  document.getElementById('toastTxt').textContent=msg;
+  t.classList.add('show');
+  clearTimeout(t._tid);
+  t._tid=setTimeout(()=>t.classList.remove('show'),2400);
+}
+
+/* ---- Generador QR ---- */
+function qrThumbHTML(){
+  const cells=[];
+  for(let i=0;i<25;i++) cells.push(Math.random()>0.42 ? '<i></i>' : '<i class="o"></i>');
+  return cells.join('');
+}
+function randToken(){
+  const chars='abcdefghjkmnpqrstuvwxyz23456789';
+  let s='';
+  for(let i=0;i<7;i++) s+=chars[Math.floor(Math.random()*chars.length)];
+  return s;
+}
+function generateQR(){
+  const qty=Math.max(1, Math.min(500, parseInt(document.getElementById('genQty').value)||100));
+  const bar=document.getElementById('genProgressBar');
+  document.getElementById('genProgress').classList.add('show');
+  document.getElementById('genResult').classList.remove('show');
+  bar.style.width='0%';
+  setTimeout(()=>{ bar.style.width='100%'; },50);
+  setTimeout(()=>{
+    document.getElementById('genProgress').classList.remove('show');
+    document.getElementById('genResult').classList.add('show');
+    document.getElementById('genSummaryTxt').textContent = qty+' placas generadas con enlaces publicos unicos, numeracion interna 001 a '+String(qty).padStart(3,'0');
+    const grid=document.getElementById('qrGrid');
+    grid.innerHTML='';
+    const show=Math.min(qty,30);
+    for(let i=1;i<=show;i++){
+      grid.innerHTML+='<div class="qr-thumb">'+qrThumbHTML()+'<div class="plate-no">'+String(i).padStart(3,'0')+'</div></div>';
+    }
+    ping(qty+' placas listas para exportar');
+  },1250);
+}
+function downloadZip(){
+  ping('placas_qr_lote.zip descargado');
+}
+
+/* ---- Buscador / editor ---- */
+let plateList=[
+  {no:'001', token:randToken(), dest:'pettech.pe/m/'+randToken(), status:'active'},
+  {no:'002', token:randToken(), dest:'pettech.pe/m/'+randToken(), status:'active'},
+  {no:'003', token:randToken(), dest:'sin asignar', status:'pending'},
+  {no:'004', token:randToken(), dest:'pettech.pe/m/'+randToken(), status:'active'},
+  {no:'005', token:randToken(), dest:'sin asignar', status:'pending'},
+];
+function renderPlates(list){
+  const data=list||plateList;
+  const wrap=document.getElementById('plateList');
+  wrap.innerHTML='';
+  data.forEach((p,idx)=>{
+    wrap.innerHTML+='<div class="plate-row">'+
+      '<div class="plate-badge">PT-'+p.no+'</div>'+
+      '<div class="plate-info" id="pinfo'+idx+'">'+
+        '<div class="pname">Placa interna '+p.no+'</div>'+
+        '<div class="pdest">'+p.dest+'</div>'+
+        '<input type="text" value="'+p.dest+'" id="pinput'+idx+'">'+
+      '</div>'+
+      '<span class="plate-status '+p.status+'">'+(p.status==='active'?'Activa':'Pendiente')+'</span>'+
+      '<button class="edit-btn" onclick="toggleEdit('+idx+')" id="pbtn'+idx+'"><i class="fa-solid fa-pen"></i></button>'+
+    '</div>';
+  });
+}
+function toggleEdit(idx){
+  const info=document.getElementById('pinfo'+idx);
+  const btn=document.getElementById('pbtn'+idx);
+  if(info.classList.contains('editing')){
+    const val=document.getElementById('pinput'+idx).value;
+    plateList[idx].dest=val;
+    plateList[idx].status='active';
+    info.querySelector('.pdest').textContent=val;
+    info.classList.remove('editing');
+    btn.innerHTML='<i class="fa-solid fa-pen"></i>';
+    renderPlates();
+    ping('Destino actualizado para la placa '+plateList[idx].no);
+  } else {
+    document.querySelectorAll('.plate-info.editing').forEach(el=>el.classList.remove('editing'));
+    info.classList.add('editing');
+    btn.innerHTML='<i class="fa-solid fa-check"></i>';
+  }
+}
+function filterPlates(){
+  const q=document.getElementById('searchInput').value.trim().toLowerCase();
+  const filtered=plateList.filter(p=>p.no.includes(q));
+  renderPlates(filtered);
+}
+
+/* ---- Catalogo admin ---- */
+const products=[
+  {name:'Placa QR Grabado Laser', img:'https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=300&q=80', price:35, oldPrice:45, promo:true, desc:'Placa resistente con QR dinamico y ficha medica.'},
+  {name:'Bebedero Automatico USB', img:'https://images.unsplash.com/photo-1601979031925-424e53b6caaa?w=300&q=80', price:79, oldPrice:0, promo:false, desc:'Bebedero inalambrico con sensor de nivel.'},
+  {name:'Localizador Tag GPS', img:'https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=300&q=80', price:99, oldPrice:120, promo:true, desc:'Ubicacion en tiempo real desde tu celular.'},
+  {name:'Collar Ajustable Premium', img:'https://images.unsplash.com/photo-1605897472359-85e4b94d685d?w=300&q=80', price:28, oldPrice:0, promo:false, desc:'Collar reflectivo resistente al agua.'},
+];
+function renderCatAdmin(){
+  const grid=document.getElementById('catAdminGrid');
+  grid.innerHTML='';
+  products.forEach((p,idx)=>{
+    grid.innerHTML+='<div class="cat-admin-card">'+
+      '<img src="'+p.img+'" alt="'+p.name+'">'+
+      '<div class="cat-admin-body">'+
+        '<div class="cname">'+p.name+'</div>'+
+        '<div class="price-edit"><span>S/</span><input type="number" value="'+p.price+'" onchange="updatePrice('+idx+',this.value)"></div>'+
+        '<div class="promo-toggle"><span>Oferta activa</span><div class="switch'+(p.promo?' on':'')+'" onclick="togglePromo(this,'+idx+')"></div></div>'+
+      '</div>'+
+    '</div>';
+  });
+}
+function updatePrice(idx,val){
+  products[idx].price=parseFloat(val)||0;
+  ping('Precio actualizado: '+products[idx].name);
+  renderCatPublic();
+}
+function togglePromo(el,idx){
+  el.classList.toggle('on');
+  products[idx].promo=el.classList.contains('on');
+  ping((products[idx].promo?'Oferta activada: ':'Oferta desactivada: ')+products[idx].name);
+  renderCatPublic();
+}
+
+/* ---- Catalogo publico ---- */
+function renderCatPublic(){
+  const wrap=document.getElementById('catPublicList');
+  wrap.innerHTML='';
+  products.forEach(p=>{
+    wrap.innerHTML+='<div class="cat-item">'+
+      '<img src="'+p.img+'" alt="'+p.name+'">'+
+      '<div class="cat-item-body">'+
+        '<div class="iname">'+p.name+'</div>'+
+        '<div class="idesc">'+p.desc+'</div>'+
+        '<div class="price-row">'+
+          '<span class="price-now">S/ '+p.price+'</span>'+
+          (p.promo && p.oldPrice ? '<span class="price-old">S/ '+p.oldPrice+'</span><span class="promo-chip">OFERTA</span>' : '')+
+        '</div>'+
+        '<button class="wa-buy-btn" onclick="ping(\'Abriendo WhatsApp para comprar '+p.name.replace(/'/g,"")+'...\')"><i class="fa-brands fa-whatsapp"></i> Comprar por WhatsApp</button>'+
+      '</div>'+
+    '</div>';
+  });
+}
+
+renderPlates();
+renderCatAdmin();
+renderCatPublic();
+</script>
+
+</body>
+</html>
