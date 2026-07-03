@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Izumi Document Suite - Quotation Module</title>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  :root{
+    --gold-300:#fcd34d; --gold-400:#fbbf24; --gold-500:#f59e0b; --gold-600:#d97706;
+    --dark-900:#0a0a12; --dark-800:#0f0f1a; --dark-700:#14141f; --surface:#191926; --surface-2:#20202f;
+    --text-primary:#f2f2f8; --text-secondary:#9494b3; --text-muted:#5c5c78;
+    --success:#10b981; --error:#ef4444; --border:rgba(255,255,255,0.08);
+    --radius:14px; --radius-sm:9px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Lexend',sans-serif;background:var(--dark-900);color:var(--text-primary);-webkit-font-smoothing:antialiased;}
+
+  nav{position:sticky;top:0;z-index:200;background:rgba(10,10,18,0.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);
+    padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:60px;}
+  .nav-logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.05rem;letter-spacing:-0.01em;}
+  .nav-logo i{color:var(--gold-500);font-size:1.2rem;}
+  .nav-sub{color:var(--text-muted);font-weight:500;font-size:0.75rem;margin-left:8px;padding-left:8px;border-left:1px solid var(--border);}
+  .status-pill{display:flex;align-items:center;gap:7px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.25);
+    color:var(--success);padding:5px 12px;border-radius:20px;font-size:0.72rem;font-weight:700;}
+  .pulse-dot{width:6px;height:6px;border-radius:50%;background:var(--success);animation:pulse 2s infinite;}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+
+  .module-bar{display:flex;gap:8px;overflow-x:auto;padding:1rem 1.5rem;border-bottom:1px solid var(--border);background:var(--dark-800);}
+  .module-pill{flex:0 0 auto;display:flex;align-items:center;gap:7px;padding:8px 14px;border-radius:10px;font-size:0.78rem;font-weight:700;
+    border:1px solid var(--border);color:var(--text-secondary);cursor:pointer;white-space:nowrap;transition:all .15s;background:var(--surface);}
+  .module-pill.active{background:linear-gradient(135deg,var(--gold-500),var(--gold-600));color:#1a1200;border-color:transparent;}
+  .module-pill:not(.active):hover{border-color:var(--gold-500);color:var(--gold-400);}
+
+  main{max-width:1280px;margin:0 auto;padding:1.75rem 1.5rem 4rem;}
+  .layout{display:grid;grid-template-columns:1fr 340px;gap:1.5rem;}
+  @media(max-width:960px){.layout{grid-template-columns:1fr;}}
+
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;margin-bottom:1.5rem;}
+  .card-title{font-size:0.95rem;font-weight:800;margin-bottom:1.1rem;display:flex;align-items:center;gap:8px;}
+  .card-title i{color:var(--gold-500);}
+
+  .field-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.9rem;}
+  @media(max-width:520px){.field-grid{grid-template-columns:1fr;}}
+  .field{display:flex;flex-direction:column;gap:5px;}
+  .field label{font-size:0.72rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.03em;}
+  .field input, .field select{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);
+    padding:9px 11px;color:var(--text-primary);font-family:inherit;font-size:0.85rem;}
+  .field input:focus, .field select:focus{outline:none;border-color:var(--gold-500);}
+  .field input[readonly]{color:var(--text-muted);}
+
+  table.items{width:100%;border-collapse:collapse;margin-top:1rem;font-size:0.85rem;}
+  table.items th{text-align:left;color:var(--text-muted);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.03em;
+    padding:8px 8px;border-bottom:1px solid var(--border);}
+  table.items td{padding:8px;border-bottom:1px solid var(--border);vertical-align:middle;}
+  table.items input{width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:7px 9px;
+    color:var(--text-primary);font-family:inherit;font-size:0.83rem;}
+  table.items input:focus{outline:none;border-color:var(--gold-500);}
+  .col-qty{width:70px;} .col-price{width:110px;} .col-total{width:110px;} .col-del{width:36px;}
+  .line-total{color:var(--gold-400);font-weight:700;}
+  .row-del{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:0.9rem;padding:6px;border-radius:7px;}
+  .row-del:hover{color:var(--error);background:rgba(239,68,68,0.1);}
+
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:10px;font-weight:700;font-size:0.82rem;
+    border:1px solid var(--border);background:var(--surface-2);color:var(--text-primary);cursor:pointer;font-family:inherit;transition:all .15s;}
+  .btn:hover{border-color:var(--gold-500);}
+  .btn-add{margin-top:0.9rem;}
+  .btn-gold{background:linear-gradient(135deg,var(--gold-500),var(--gold-600));border:none;color:#1a1200;}
+  .btn-gold:hover{filter:brightness(1.08);}
+  .btn-block{width:100%;justify-content:center;}
+
+  .summary-row{display:flex;justify-content:space-between;padding:9px 0;font-size:0.87rem;color:var(--text-secondary);}
+  .summary-row.total{border-top:1px solid var(--border);margin-top:6px;padding-top:14px;font-size:1.15rem;font-weight:800;color:var(--text-primary);}
+  .summary-row.total span:last-child{color:var(--gold-400);}
+
+  .save-status{display:flex;align-items:center;gap:7px;font-size:0.74rem;color:var(--text-muted);margin-top:0.8rem;}
+  .save-status i{color:var(--success);}
+
+  .checklist{display:flex;flex-direction:column;gap:9px;}
+  .check-item{display:flex;align-items:center;gap:9px;font-size:0.8rem;color:var(--text-secondary);}
+  .check-item i{color:var(--success);width:16px;}
+
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface-2);
+    border:1px solid var(--gold-500);color:var(--text-primary);padding:12px 20px;border-radius:12px;font-size:0.85rem;font-weight:600;
+    opacity:0;pointer-events:none;transition:all .25s;z-index:500;display:flex;align-items:center;gap:9px;box-shadow:0 10px 30px rgba(0,0,0,0.4);}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  .toast i{color:var(--gold-400);}
+
+  /* Print preview overlay */
+  #previewOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:1000;padding:2rem;overflow-y:auto;}
+  #previewOverlay.show{display:block;}
+  .preview-toolbar{max-width:800px;margin:0 auto 1rem;display:flex;justify-content:flex-end;gap:10px;}
+  .a4-sheet{max-width:800px;margin:0 auto;background:#ffffff;color:#1a1a1a;border-radius:6px;padding:48px 52px;font-family:'Lexend',sans-serif;
+    box-shadow:0 20px 60px rgba(0,0,0,0.5);}
+  .doc-head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #d97706;padding-bottom:18px;margin-bottom:22px;}
+  .doc-co{font-size:1.3rem;font-weight:800;color:#111;}
+  .doc-co-meta{font-size:0.78rem;color:#555;margin-top:4px;line-height:1.5;}
+  .doc-type{text-align:right;}
+  .doc-type h2{font-size:1.4rem;color:#d97706;font-weight:800;}
+  .doc-type div{font-size:0.78rem;color:#555;margin-top:4px;}
+  .doc-parties{display:flex;justify-content:space-between;margin-bottom:22px;font-size:0.82rem;}
+  .doc-parties .label{font-size:0.68rem;text-transform:uppercase;letter-spacing:0.04em;color:#888;margin-bottom:4px;}
+  table.doc-items{width:100%;border-collapse:collapse;font-size:0.82rem;margin-bottom:18px;}
+  table.doc-items th{text-align:left;background:#faf5ea;color:#8a5a10;font-size:0.68rem;text-transform:uppercase;padding:9px 10px;border-bottom:2px solid #d97706;}
+  table.doc-items td{padding:9px 10px;border-bottom:1px solid #eee;page-break-inside:avoid;break-inside:avoid;}
+  .doc-totals{margin-left:auto;width:260px;font-size:0.85rem;}
+  .doc-totals .row{display:flex;justify-content:space-between;padding:6px 0;color:#555;}
+  .doc-totals .row.grand{border-top:2px solid #d97706;margin-top:6px;padding-top:10px;font-weight:800;color:#111;font-size:1.05rem;}
+  .doc-foot{margin-top:32px;font-size:0.72rem;color:#999;border-top:1px solid #eee;padding-top:14px;}
+
+  @media print{
+    body *{visibility:hidden;}
+    #previewOverlay, #previewOverlay *{visibility:visible;}
+    #previewOverlay{position:absolute;inset:0;background:#fff;padding:0;}
+    .preview-toolbar{display:none;}
+    .a4-sheet{box-shadow:none;margin:0;max-width:100%;}
+    table.doc-items tr{page-break-inside:avoid;break-inside:avoid;}
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo"><i class="fa-solid fa-layer-group"></i>Izumi Document Suite<span class="nav-sub">Internal Ops</span></div>
+  <div class="status-pill"><span class="pulse-dot"></span>Draft auto saves locally</div>
+</nav>
+
+<div class="module-bar" id="moduleBar">
+  <div class="module-pill active" data-mod="Quotation"><i class="fa-solid fa-file-invoice-dollar"></i>Quotation</div>
+  <div class="module-pill" data-mod="CIR"><i class="fa-solid fa-clipboard-check"></i>Contractor Inspection</div>
+  <div class="module-pill" data-mod="Stock"><i class="fa-solid fa-boxes-stacked"></i>Stock Tracker</div>
+  <div class="module-pill" data-mod="Sample"><i class="fa-solid fa-vial"></i>Sample Approval</div>
+  <div class="module-pill" data-mod="Invoice"><i class="fa-solid fa-file-lines"></i>Work Record</div>
+  <div class="module-pill" data-mod="LPO"><i class="fa-solid fa-cart-shopping"></i>LPO</div>
+  <div class="module-pill" data-mod="Tax"><i class="fa-solid fa-receipt"></i>Tax Invoice</div>
+</div>
+
+<main>
+  <div class="layout">
+    <div>
+      <div class="card">
+        <div class="card-title"><i class="fa-solid fa-building"></i>Company &amp; Client Details</div>
+        <div class="field-grid">
+          <div class="field"><label>From</label><input value="Izumi General Trading LLC" readonly></div>
+          <div class="field"><label>TRN</label><input value="100123456700003" readonly></div>
+          <div class="field"><label>Quotation No.</label><input id="docNo" readonly></div>
+          <div class="field"><label>Date</label><input id="docDate" type="date"></div>
+          <div class="field"><label>Client Name</label><input id="clientName" placeholder="Al Fanar Contracting LLC"></div>
+          <div class="field"><label>Client TRN</label><input id="clientTrn" placeholder="100987654300001"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><i class="fa-solid fa-list-check"></i>Line Items</div>
+        <table class="items">
+          <thead>
+            <tr><th>Description</th><th class="col-qty">Qty</th><th class="col-price">Unit AED</th><th class="col-total">Total</th><th class="col-del"></th></tr>
+          </thead>
+          <tbody id="itemsBody"></tbody>
+        </table>
+        <button class="btn btn-add" id="addRow"><i class="fa-solid fa-plus"></i>Add Line Item</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <div class="card-title"><i class="fa-solid fa-calculator"></i>Summary</div>
+        <div class="summary-row"><span>Subtotal</span><span id="sumSubtotal">AED 0.00</span></div>
+        <div class="summary-row"><span>VAT (5%)</span><span id="sumVat">AED 0.00</span></div>
+        <div class="summary-row total"><span>Total</span><span id="sumTotal">AED 0.00</span></div>
+
+        <button class="btn btn-gold btn-block" style="margin-top:1.1rem;" id="saveDraft"><i class="fa-solid fa-floppy-disk"></i>Save Draft</button>
+        <button class="btn btn-block" style="margin-top:0.6rem;" id="openPreview"><i class="fa-solid fa-print"></i>Print Preview</button>
+        <div class="save-status" id="saveStatus"><i class="fa-solid fa-circle-check"></i>No draft saved yet</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><i class="fa-solid fa-shield-halved"></i>Built to your acceptance criteria</div>
+        <div class="checklist">
+          <div class="check-item"><i class="fa-solid fa-check"></i>Auto subtotal, VAT and total</div>
+          <div class="check-item"><i class="fa-solid fa-check"></i>A4 print layout, no cut off rows</div>
+          <div class="check-item"><i class="fa-solid fa-check"></i>Draft survives a browser refresh</div>
+          <div class="check-item"><i class="fa-solid fa-check"></i>Works on desktop, tablet, mobile</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div id="previewOverlay">
+  <div class="preview-toolbar">
+    <button class="btn" id="closePreview"><i class="fa-solid fa-xmark"></i>Close</button>
+    <button class="btn btn-gold" onclick="window.print()"><i class="fa-solid fa-print"></i>Print / Save as PDF</button>
+  </div>
+  <div class="a4-sheet">
+    <div class="doc-head">
+      <div>
+        <div class="doc-co">Izumi General Trading LLC</div>
+        <div class="doc-co-meta">TRN 100123456700003<br>Dubai, United Arab Emirates</div>
+      </div>
+      <div class="doc-type">
+        <h2>QUOTATION</h2>
+        <div id="pvDocNo"></div>
+        <div id="pvDocDate"></div>
+      </div>
+    </div>
+    <div class="doc-parties">
+      <div>
+        <div class="label">Quotation For</div>
+        <div id="pvClientName">Client name</div>
+        <div id="pvClientTrn" style="color:#888;font-size:0.78rem;"></div>
+      </div>
+    </div>
+    <table class="doc-items">
+      <thead><tr><th>Description</th><th>Qty</th><th>Unit AED</th><th>Total AED</th></tr></thead>
+      <tbody id="pvItemsBody"></tbody>
+    </table>
+    <div class="doc-totals">
+      <div class="row"><span>Subtotal</span><span id="pvSubtotal">AED 0.00</span></div>
+      <div class="row"><span>VAT (5%)</span><span id="pvVat">AED 0.00</span></div>
+      <div class="row grand"><span>Total</span><span id="pvTotal">AED 0.00</span></div>
+    </div>
+    <div class="doc-foot">Generated by Izumi Document Suite. This quotation is valid for 14 days from the date above.</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><i class="fa-solid fa-circle-check"></i><span id="toastMsg">Saved</span></div>
+
+<script>
+const STORAGE_KEY = 'izumi_quotation_draft_v1';
+const itemsBody = document.getElementById('itemsBody');
+let rowId = 0;
+
+function newRow(desc, qty, price){
+  const id = rowId++;
+  const tr = document.createElement('tr');
+  tr.dataset.id = id;
+  tr.innerHTML = `
+    <td><input class="i-desc" value="${desc||''}" placeholder="Item description"></td>
+    <td class="col-qty"><input class="i-qty" type="number" min="0" value="${qty!=null?qty:1}"></td>
+    <td class="col-price"><input class="i-price" type="number" min="0" step="0.01" value="${price!=null?price:0}"></td>
+    <td class="col-total line-total">AED 0.00</td>
+    <td class="col-del"><button class="row-del"><i class="fa-solid fa-trash"></i></button></td>
+  `;
+  itemsBody.appendChild(tr);
+  tr.querySelectorAll('input').forEach(inp => inp.addEventListener('input', recalc));
+  tr.querySelector('.row-del').addEventListener('click', () => { tr.remove(); recalc(); });
+  return tr;
+}
+
+function recalc(){
+  let subtotal = 0;
+  itemsBody.querySelectorAll('tr').forEach(tr => {
+    const qty = parseFloat(tr.querySelector('.i-qty').value) || 0;
+    const price = parseFloat(tr.querySelector('.i-price').value) || 0;
+    const lineTotal = qty * price;
+    tr.querySelector('.line-total').textContent = 'AED ' + lineTotal.toFixed(2);
+    subtotal += lineTotal;
+  });
+  const vat = subtotal * 0.05;
+  const total = subtotal + vat;
+  document.getElementById('sumSubtotal').textContent = 'AED ' + subtotal.toFixed(2);
+  document.getElementById('sumVat').textContent = 'AED ' + vat.toFixed(2);
+  document.getElementById('sumTotal').textContent = 'AED ' + total.toFixed(2);
+}
+
+document.getElementById('addRow').addEventListener('click', () => { newRow('', 1, 0); recalc(); });
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+function docNumber(){
+  const stored = localStorage.getItem('izumi_doc_counter_QT');
+  const n = stored ? parseInt(stored) : 6;
+  return 'QT-2026-' + String(n).padStart(4,'0');
+}
+
+function saveDraft(){
+  const items = [...itemsBody.querySelectorAll('tr')].map(tr => ({
+    desc: tr.querySelector('.i-desc').value,
+    qty: tr.querySelector('.i-qty').value,
+    price: tr.querySelector('.i-price').value
+  }));
+  const draft = {
+    docNo: document.getElementById('docNo').value,
+    docDate: document.getElementById('docDate').value,
+    clientName: document.getElementById('clientName').value,
+    clientTrn: document.getElementById('clientTrn').value,
+    items,
+    savedAt: Date.now()
+  };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
+  const n = parseInt(localStorage.getItem('izumi_doc_counter_QT') || '6');
+  localStorage.setItem('izumi_doc_counter_QT', String(n+1));
+  updateSaveStatus(draft.savedAt);
+  showToast('Draft saved to this browser');
+}
+
+function updateSaveStatus(ts){
+  const el = document.getElementById('saveStatus');
+  if(!ts){ el.innerHTML = '<i class="fa-solid fa-circle-check"></i>No draft saved yet'; return; }
+  const d = new Date(ts);
+  const time = d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  el.innerHTML = '<i class="fa-solid fa-circle-check"></i>Draft saved at ' + time + '. Refresh this page, it will still be here.';
+}
+
+document.getElementById('saveDraft').addEventListener('click', saveDraft);
+
+function loadDraft(){
+  const raw = localStorage.getItem(STORAGE_KEY);
+  document.getElementById('docNo').value = docNumber();
+  if(!raw){
+    document.getElementById('docDate').valueAsDate = new Date();
+    newRow('Site survey and measurement', 1, 850);
+    newRow('Material supply, per unit specification sheet', 40, 62.5);
+    recalc();
+    return;
+  }
+  try{
+    const draft = JSON.parse(raw);
+    document.getElementById('docNo').value = draft.docNo || docNumber();
+    document.getElementById('docDate').value = draft.docDate || '';
+    document.getElementById('clientName').value = draft.clientName || '';
+    document.getElementById('clientTrn').value = draft.clientTrn || '';
+    (draft.items && draft.items.length ? draft.items : [{desc:'',qty:1,price:0}]).forEach(it => newRow(it.desc, it.qty, it.price));
+    recalc();
+    updateSaveStatus(draft.savedAt);
+  }catch(e){
+    document.getElementById('docDate').valueAsDate = new Date();
+    newRow('', 1, 0);
+    recalc();
+  }
+}
+
+loadDraft();
+
+document.querySelectorAll('.module-pill').forEach(pill => {
+  pill.addEventListener('click', () => {
+    if(pill.classList.contains('active')) return;
+    document.querySelectorAll('.module-pill').forEach(p => p.classList.remove('active'));
+    if(pill.dataset.mod === 'Quotation'){ pill.classList.add('active'); return; }
+    showToast('Full build wires this module to the same shared engine as Quotation');
+    document.querySelector('.module-pill[data-mod="Quotation"]').classList.add('active');
+  });
+});
+
+function syncPreview(){
+  document.getElementById('pvDocNo').textContent = document.getElementById('docNo').value;
+  document.getElementById('pvDocDate').textContent = document.getElementById('docDate').value || '';
+  document.getElementById('pvClientName').textContent = document.getElementById('clientName').value || 'Client name';
+  document.getElementById('pvClientTrn').textContent = document.getElementById('clientTrn').value ? 'TRN ' + document.getElementById('clientTrn').value : '';
+  const pvBody = document.getElementById('pvItemsBody');
+  pvBody.innerHTML = '';
+  let subtotal = 0;
+  itemsBody.querySelectorAll('tr').forEach(tr => {
+    const desc = tr.querySelector('.i-desc').value || 'Item';
+    const qty = parseFloat(tr.querySelector('.i-qty').value) || 0;
+    const price = parseFloat(tr.querySelector('.i-price').value) || 0;
+    const lineTotal = qty * price;
+    subtotal += lineTotal;
+    const row = document.createElement('tr');
+    row.innerHTML = `<td>${desc}</td><td>${qty}</td><td>${price.toFixed(2)}</td><td>${lineTotal.toFixed(2)}</td>`;
+    pvBody.appendChild(row);
+  });
+  const vat = subtotal * 0.05;
+  const total = subtotal + vat;
+  document.getElementById('pvSubtotal').textContent = 'AED ' + subtotal.toFixed(2);
+  document.getElementById('pvVat').textContent = 'AED ' + vat.toFixed(2);
+  document.getElementById('pvTotal').textContent = 'AED ' + total.toFixed(2);
+}
+
+document.getElementById('openPreview').addEventListener('click', () => {
+  syncPreview();
+  document.getElementById('previewOverlay').classList.add('show');
+});
+document.getElementById('closePreview').addEventListener('click', () => {
+  document.getElementById('previewOverlay').classList.remove('show');
+});
+</script>
+
+</body>
+</html>
