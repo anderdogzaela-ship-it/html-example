@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LiftFlow &middot; Forklift Task Dispatch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+:root{
+  --bg:#0f1214; --panel:#171b1e; --panel2:#1e2327; --border:#2a3035;
+  --amber:#f59e0b; --amber-dark:#d97706; --amber-glow:rgba(245,158,11,0.18);
+  --red:#ef4444; --red-glow:rgba(239,68,68,0.15);
+  --green:#22c55e; --green-glow:rgba(34,197,94,0.15);
+  --text:#f4f5f6; --text-dim:#9aa3ab; --text-faint:#5f6b73;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  font-family:'Lexend',sans-serif; background:var(--bg); color:var(--text);
+  -webkit-font-smoothing:antialiased; overflow-x:hidden;
+}
+a{color:inherit;text-decoration:none;}
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-thumb{background:#333;border-radius:10px;}
+
+/* ---------- Intro ---------- */
+.intro{
+  position:relative; padding:70px 24px 50px; text-align:center; overflow:hidden;
+  background:
+    linear-gradient(180deg, rgba(15,18,20,0.75) 0%, rgba(15,18,20,0.96) 85%, var(--bg) 100%),
+    url('https://images.unsplash.com/photo-1553413077-190dd305871c?auto=format&fit=crop&w=1600&q=60') center/cover;
+  border-bottom:1px solid var(--border);
+}
+.intro-badge{
+  display:inline-flex; align-items:center; gap:8px; background:var(--amber-glow); color:var(--amber);
+  border:1px solid rgba(245,158,11,0.35); padding:6px 16px; border-radius:100px; font-size:12.5px; font-weight:600;
+  letter-spacing:0.3px; margin-bottom:22px;
+}
+.intro h1{font-size:clamp(28px,4.5vw,46px); font-weight:800; letter-spacing:-0.5px; margin-bottom:14px;}
+.intro h1 span{color:var(--amber);}
+.intro p{color:var(--text-dim); font-size:16px; max-width:620px; margin:0 auto 34px; line-height:1.6;}
+.intro-meta{display:flex; justify-content:center; gap:28px; flex-wrap:wrap; color:var(--text-faint); font-size:13px;}
+.intro-meta span{display:flex; align-items:center; gap:7px;}
+.intro-meta i{color:var(--amber);}
+
+/* ---------- Toggle Bar ---------- */
+.toggle-wrap{display:flex; justify-content:center; margin:38px 0 8px; padding:0 16px;}
+.toggle-bar{
+  display:inline-flex; gap:4px; background:var(--panel); border:1px solid var(--border);
+  border-radius:14px; padding:5px; flex-wrap:wrap; justify-content:center;
+}
+.toggle-btn{
+  display:flex; align-items:center; gap:8px; padding:11px 20px; border-radius:10px; border:none;
+  background:transparent; color:var(--text-dim); font-family:inherit; font-size:14px; font-weight:600;
+  cursor:pointer; transition:all .25s ease; white-space:nowrap;
+}
+.toggle-btn:hover{color:var(--text);}
+.toggle-btn.active{background:var(--amber); color:#191203; box-shadow:0 4px 18px rgba(245,158,11,0.35);}
+
+.view{display:none; padding:44px 20px 90px; max-width:1360px; margin:0 auto; animation:fadeIn .5s ease;}
+.view.active{display:block;}
+@keyframes fadeIn{from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);}}
+
+.view-head{text-align:center; margin-bottom:38px;}
+.view-head h2{font-size:24px; font-weight:700; margin-bottom:8px;}
+.view-head p{color:var(--text-dim); font-size:14.5px; max-width:560px; margin:0 auto;}
+
+/* ---------- Reveal ---------- */
+.reveal{opacity:0; transform:translateY(18px); transition:opacity .6s ease, transform .6s ease;}
+.reveal.visible{opacity:1; transform:translateY(0);}
+
+/* ================= ADMIN VIEW ================= */
+.admin-shell{
+  display:grid; grid-template-columns:230px 1fr; gap:0; background:var(--panel);
+  border:1px solid var(--border); border-radius:18px; overflow:hidden; min-height:760px;
+  box-shadow:0 30px 80px rgba(0,0,0,0.35);
+}
+.admin-sidebar{background:var(--panel2); border-right:1px solid var(--border); padding:22px 16px; display:flex; flex-direction:column;}
+.brand{display:flex; align-items:center; gap:10px; padding:0 8px 24px; font-weight:800; font-size:17px;}
+.brand i{color:var(--amber);}
+.nav-item{
+  display:flex; align-items:center; gap:12px; padding:11px 12px; border-radius:10px; color:var(--text-dim);
+  font-size:13.5px; font-weight:600; margin-bottom:2px; cursor:pointer; transition:all .2s;
+}
+.nav-item i{width:18px; text-align:center;}
+.nav-item:hover{background:rgba(255,255,255,0.04); color:var(--text);}
+.nav-item.active{background:var(--amber-glow); color:var(--amber);}
+.nav-badge{margin-left:auto; background:var(--red); color:#fff; font-size:10.5px; font-weight:700; padding:1px 7px; border-radius:100px;}
+.sidebar-foot{margin-top:auto; display:flex; align-items:center; gap:10px; padding:12px 8px; border-top:1px solid var(--border); margin-top:16px;}
+.sidebar-foot img{width:34px;height:34px;border-radius:50%; object-fit:cover;}
+.sidebar-foot .name{font-size:13px; font-weight:600;}
+.sidebar-foot .role{font-size:11px; color:var(--text-faint);}
+
+.admin-main{padding:26px 30px; overflow-y:auto;}
+.admin-topbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:26px;}
+.admin-topbar h3{font-size:20px; font-weight:700;}
+.admin-topbar .sub{font-size:12.5px; color:var(--text-faint); margin-top:3px;}
+.bell{position:relative; width:38px; height:38px; border-radius:10px; background:var(--panel2); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; color:var(--text-dim);}
+.bell .dot{position:absolute; top:7px; right:8px; width:7px; height:7px; background:var(--red); border-radius:50%;}
+
+.kpi-row{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:24px;}
+.kpi-card{background:var(--panel2); border:1px solid var(--border); border-radius:14px; padding:16px 18px; position:relative; overflow:hidden;}
+.kpi-card i{color:var(--amber); font-size:14px; margin-bottom:10px; display:block;}
+.kpi-card .val{font-size:26px; font-weight:800; letter-spacing:-0.5px;}
+.kpi-card .label{font-size:12px; color:var(--text-faint); margin-top:2px;}
+.kpi-card .trend{position:absolute; top:16px; right:16px; font-size:11px; font-weight:700; padding:2px 8px; border-radius:100px;}
+.trend.up{color:var(--green); background:var(--green-glow);}
+.trend.warn{color:var(--amber); background:var(--amber-glow);}
+
+.board-grid{display:grid; grid-template-columns:1.6fr 1fr; gap:16px;}
+.panel-card{background:var(--panel2); border:1px solid var(--border); border-radius:14px; padding:18px;}
+.panel-card h4{font-size:14.5px; font-weight:700; margin-bottom:14px; display:flex; align-items:center; justify-content:space-between;}
+.panel-card h4 .count{font-size:11.5px; font-weight:600; color:var(--text-faint);}
+.filter-tabs{display:flex; gap:6px; margin-bottom:14px;}
+.filter-tab{font-size:11.5px; font-weight:600; padding:5px 12px; border-radius:100px; background:var(--panel); border:1px solid var(--border); color:var(--text-dim); cursor:pointer;}
+.filter-tab.on{background:var(--amber); color:#191203; border-color:var(--amber);}
+
+.task-row{display:grid; grid-template-columns:10px 1.6fr 1fr 1fr 0.7fr; gap:12px; align-items:center; padding:12px 10px; border-radius:10px; margin-bottom:6px; background:var(--panel);}
+.task-row:hover{background:#22272b;}
+.prio-dot{width:9px; height:9px; border-radius:50%;}
+.prio-dot.crit{background:var(--red); box-shadow:0 0 0 4px var(--red-glow);}
+.prio-dot.high{background:var(--amber); box-shadow:0 0 0 4px var(--amber-glow);}
+.prio-dot.norm{background:var(--green); box-shadow:0 0 0 4px var(--green-glow);}
+.task-title{font-size:13px; font-weight:600;}
+.task-meta{font-size:11.5px; color:var(--text-faint); margin-top:2px;}
+.task-col{font-size:12px; color:var(--text-dim);}
+.status-pill{font-size:10.5px; font-weight:700; padding:3px 9px; border-radius:100px; text-align:center;}
+.status-pill.assigned{background:rgba(245,158,11,0.15); color:var(--amber);}
+.status-pill.progress{background:rgba(59,130,246,0.15); color:#60a5fa;}
+.status-pill.done{background:var(--green-glow); color:var(--green);}
+
+.req-card{background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:14px; margin-bottom:10px;}
+.req-top{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;}
+.req-title{font-size:13px; font-weight:700;}
+.req-badge{font-size:10px; font-weight:700; padding:2px 8px; border-radius:100px;}
+.req-badge.critical{background:var(--red-glow); color:var(--red);}
+.req-badge.urgent{background:var(--amber-glow); color:var(--amber);}
+.req-meta{font-size:11.5px; color:var(--text-faint); margin-bottom:10px; line-height:1.5;}
+.ai-suggest{
+  display:flex; align-items:center; gap:8px; background:linear-gradient(90deg, rgba(245,158,11,0.1), rgba(245,158,11,0.02));
+  border:1px dashed rgba(245,158,11,0.4); border-radius:9px; padding:8px 10px; font-size:11px; color:var(--amber); margin-bottom:10px;
+}
+.req-actions{display:flex; gap:8px;}
+.btn-mini{flex:1; text-align:center; font-size:11.5px; font-weight:700; padding:8px; border-radius:8px; cursor:pointer; border:1px solid var(--border);}
+.btn-mini.primary{background:var(--amber); color:#191203; border-color:var(--amber);}
+.btn-mini.ghost{color:var(--text-dim); background:transparent;}
+
+.driver-strip{display:flex; gap:12px; margin-top:20px; overflow-x:auto; padding-bottom:6px;}
+.driver-chip{
+  flex:0 0 auto; display:flex; align-items:center; gap:10px; background:var(--panel2); border:1px solid var(--border);
+  border-radius:100px; padding:8px 16px 8px 8px; min-width:210px;
+}
+.driver-chip img{width:32px;height:32px;border-radius:50%; object-fit:cover;}
+.d-status{width:8px; height:8px; border-radius:50%; margin-left:auto;}
+.d-status.avail{background:var(--green);} .d-status.task{background:var(--amber);} .d-status.break{background:var(--text-faint);}
+.driver-chip .dn{font-size:12.5px; font-weight:700;}
+.driver-chip .dt{font-size:10.5px; color:var(--text-faint);}
+
+/* ================= PHONE FRAME ================= */
+.phone-stage{display:flex; justify-content:center; gap:40px; flex-wrap:wrap;}
+.phone-frame{
+  width:310px; height:640px; background:#000; border-radius:42px; padding:12px;
+  box-shadow:0 0 0 2px #2a2a2a, 0 40px 90px rgba(0,0,0,0.5); position:relative;
+}
+.phone-screen{
+  width:100%; height:100%; background:var(--bg); border-radius:32px; overflow:hidden; position:relative; display:flex; flex-direction:column;
+}
+.status-bar{height:30px; display:flex; align-items:center; justify-content:space-between; padding:0 22px; font-size:11px; font-weight:700; flex-shrink:0; background:var(--bg);}
+.status-right{display:flex; gap:6px; font-size:10px;}
+.pscreen{flex:1; overflow-y:auto; padding:16px; -webkit-overflow-scrolling:touch;}
+.pscreen::-webkit-scrollbar{display:none;}
+
+/* ---- External request form ---- */
+.ext-logo{text-align:center; margin:6px 0 18px;}
+.ext-logo i{color:var(--amber); font-size:22px;}
+.ext-logo .t{font-size:14px; font-weight:800; margin-top:6px;}
+.ext-logo .s{font-size:11px; color:var(--text-faint);}
+.field{margin-bottom:14px;}
+.field label{font-size:11.5px; font-weight:600; color:var(--text-dim); display:block; margin-bottom:6px;}
+.field input, .field select, .field textarea{
+  width:100%; background:var(--panel2); border:1px solid var(--border); border-radius:10px; padding:11px 12px;
+  color:var(--text); font-family:inherit; font-size:12.5px; resize:none;
+}
+.field textarea{height:64px;}
+.urgency-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:16px;}
+.urg-opt{
+  border:1.5px solid var(--border); border-radius:11px; padding:12px 6px; text-align:center; cursor:pointer; transition:all .2s;
+}
+.urg-opt i{display:block; font-size:16px; margin-bottom:6px;}
+.urg-opt .l{font-size:10.5px; font-weight:700;}
+.urg-opt.routine{color:var(--green);} .urg-opt.urgent{color:var(--amber);} .urg-opt.critical{color:var(--red);}
+.urg-opt.selected{background:currentColor; box-shadow:0 0 0 1.5px currentColor inset;}
+.urg-opt.selected i, .urg-opt.selected .l{color:#0f1214 !important;}
+.btn-submit{
+  width:100%; background:var(--amber); color:#191203; border:none; border-radius:12px; padding:14px; font-weight:800;
+  font-size:13.5px; font-family:inherit; cursor:pointer; margin-top:6px;
+}
+.confirm-box{text-align:center; padding:50px 10px;}
+.confirm-check{
+  width:64px; height:64px; border-radius:50%; background:var(--green-glow); color:var(--green);
+  display:flex; align-items:center; justify-content:center; font-size:26px; margin:0 auto 18px;
+}
+.confirm-box h3{font-size:16px; margin-bottom:8px;}
+.confirm-box p{font-size:12px; color:var(--text-faint); line-height:1.6;}
+.confirm-ref{display:inline-block; margin-top:14px; background:var(--panel2); border:1px solid var(--border); border-radius:100px; padding:6px 16px; font-size:11.5px; color:var(--amber); font-weight:700;}
+
+/* ---- Driver app ---- */
+.d-hello{display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;}
+.d-hello .name{font-size:16px; font-weight:800;}
+.d-hello .status{font-size:11px; color:var(--green); display:flex; align-items:center; gap:5px;}
+.d-hello .status i{font-size:7px;}
+.alert-banner{
+  background:linear-gradient(90deg, rgba(239,68,68,0.18), rgba(239,68,68,0.05)); border:1px solid rgba(239,68,68,0.4);
+  border-radius:12px; padding:10px 12px; display:flex; align-items:center; gap:10px; font-size:11.5px; font-weight:700;
+  color:#fca5a5; margin-bottom:16px; animation:pulseAlert 2s infinite;
+}
+@keyframes pulseAlert{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,0.25);} 50%{box-shadow:0 0 0 6px rgba(239,68,68,0);}}
+.d-card{border-radius:13px; padding:13px 14px; margin-bottom:10px; background:var(--panel2); border-left:4px solid var(--border); position:relative;}
+.d-card.crit{border-left-color:var(--red);}
+.d-card.high{border-left-color:var(--amber);}
+.d-card.norm{border-left-color:var(--green);}
+.d-card .top{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;}
+.d-card .title{font-size:12.5px; font-weight:700; line-height:1.35; max-width:75%;}
+.d-badge{font-size:9.5px; font-weight:800; padding:2px 8px; border-radius:100px; white-space:nowrap;}
+.d-badge.crit{background:var(--red-glow); color:var(--red);}
+.d-badge.high{background:var(--amber-glow); color:var(--amber);}
+.d-badge.norm{background:var(--green-glow); color:var(--green);}
+.d-card .meta{font-size:10.5px; color:var(--text-faint); display:flex; flex-wrap:wrap; gap:10px; margin-bottom:10px;}
+.d-card .meta span{display:flex; align-items:center; gap:4px;}
+.d-btn{width:100%; padding:8px; border-radius:8px; font-size:11px; font-weight:700; text-align:center; border:1px solid var(--border); color:var(--text-dim);}
+.d-btn.start{background:var(--amber); color:#191203; border-color:var(--amber);}
+.bottom-nav{display:flex; border-top:1px solid var(--border); flex-shrink:0;}
+.bn-item{flex:1; text-align:center; padding:10px 0; font-size:9.5px; color:var(--text-faint); font-weight:600;}
+.bn-item i{display:block; font-size:15px; margin-bottom:3px;}
+.bn-item.active{color:var(--amber);}
+
+.phone-caption{max-width:310px; text-align:center; margin-top:16px;}
+.phone-caption h5{font-size:13.5px; font-weight:700; margin-bottom:5px;}
+.phone-caption p{font-size:12px; color:var(--text-faint); line-height:1.6;}
+
+@media (max-width:980px){
+  .admin-shell{grid-template-columns:1fr;}
+  .admin-sidebar{display:none;}
+  .kpi-row{grid-template-columns:repeat(2,1fr);}
+  .board-grid{grid-template-columns:1fr;}
+}
+@media (max-width:520px){
+  .kpi-row{grid-template-columns:1fr 1fr;}
+  .task-row{grid-template-columns:8px 1fr; row-gap:4px;}
+  .task-col:nth-child(3), .task-col:nth-child(4){display:none;}
+}
+</style>
+</head>
+<body>
+
+<div class="intro reveal">
+  <span class="intro-badge"><i class="fa-solid fa-truck-ramp-box"></i> Product Demo</span>
+  <h1>LiftFlow <span>&middot;</span> Forklift Task Dispatch</h1>
+  <p>A working preview of the three interfaces for Anchorpoint Manufacturing: dispatch control for admins, a zero-login request form for production staff, and a prioritized task feed for licensed operators.</p>
+  <div class="intro-meta">
+    <span><i class="fa-solid fa-mobile-screen-button"></i> Android + iOS from one codebase</span>
+    <span><i class="fa-solid fa-qrcode"></i> No-login external requests</span>
+    <span><i class="fa-solid fa-bolt"></i> Real-time priority sync</span>
+  </div>
+</div>
+
+<div class="toggle-wrap">
+  <div class="toggle-bar">
+    <button class="toggle-btn active" id="btnAdmin" onclick="showView('admin')"><i class="fa-solid fa-gauge-high"></i> Admin Dashboard</button>
+    <button class="toggle-btn" id="btnExt" onclick="showView('ext')"><i class="fa-solid fa-square-plus"></i> External Request</button>
+    <button class="toggle-btn" id="btnDriver" onclick="showView('driver')"><i class="fa-solid fa-truck-front"></i> Driver App</button>
+  </div>
+</div>
+
+<!-- ================= ADMIN VIEW ================= -->
+<div class="view active" id="view-admin">
+  <div class="view-head reveal">
+    <h2>Admin &middot; Dispatch Control Center</h2>
+    <p>Everything a dispatcher needs on one screen: what's assigned, what's waiting, and who's free right now.</p>
+  </div>
+
+  <div class="admin-shell reveal">
+    <div class="admin-sidebar">
+      <div class="brand"><i class="fa-solid fa-truck-ramp-box"></i> LiftFlow</div>
+      <div class="nav-item active"><i class="fa-solid fa-gauge-high"></i> Dashboard</div>
+      <div class="nav-item"><i class="fa-solid fa-list-check"></i> Task Board</div>
+      <div class="nav-item"><i class="fa-solid fa-inbox"></i> External Requests <span class="nav-badge">5</span></div>
+      <div class="nav-item"><i class="fa-solid fa-id-badge"></i> Drivers</div>
+      <div class="nav-item"><i class="fa-solid fa-chart-line"></i> Reports</div>
+      <div class="nav-item"><i class="fa-solid fa-gear"></i> Settings</div>
+      <div class="sidebar-foot">
+        <img src="https://i.pravatar.cc/80?img=12" alt="admin">
+        <div><div class="name">Farid Haidari</div><div class="role">Operations Admin</div></div>
+      </div>
+    </div>
+    <div class="admin-main">
+      <div class="admin-topbar">
+        <div><h3>Good afternoon, Farid</h3><div class="sub">Shift B &middot; 8 operators on duty &middot; Wed, 2:14 PM</div></div>
+        <div class="bell"><i class="fa-solid fa-bell"></i><span class="dot"></span></div>
+      </div>
+
+      <div class="kpi-row">
+        <div class="kpi-card"><i class="fa-solid fa-list-check"></i><div class="val">12</div><div class="label">Active Tasks</div></div>
+        <div class="kpi-card"><i class="fa-solid fa-inbox"></i><div class="val">5</div><div class="label">Pending Requests</div><span class="trend warn">+2 today</span></div>
+        <div class="kpi-card"><i class="fa-solid fa-stopwatch"></i><div class="val">6.2m</div><div class="label">Avg. Response Time</div><span class="trend up">-38%</span></div>
+        <div class="kpi-card"><i class="fa-solid fa-id-badge"></i><div class="val">8/10</div><div class="label">Operators On Duty</div></div>
+      </div>
+
+      <div class="board-grid">
+        <div class="panel-card">
+          <h4>Task Board <span class="count">12 active</span></h4>
+          <div class="filter-tabs">
+            <div class="filter-tab on">All</div>
+            <div class="filter-tab">Critical</div>
+            <div class="filter-tab">High</div>
+            <div class="filter-tab">Normal</div>
+          </div>
+
+          <div class="task-row">
+            <div class="prio-dot crit"></div>
+            <div><div class="task-title">Conveyor jam &ndash; forklift needed</div><div class="task-meta">Requested by Sara T. &middot; 2 min ago</div></div>
+            <div class="task-col">Assembly Line A</div>
+            <div class="task-col">Miguel R.</div>
+            <div class="status-pill progress">In Progress</div>
+          </div>
+          <div class="task-row">
+            <div class="prio-dot high"></div>
+            <div><div class="task-title">Move pallets to Shipping Bay 2</div><div class="task-meta">Requested by Warehouse Team &middot; 14 min ago</div></div>
+            <div class="task-col">Shipping Bay 2</div>
+            <div class="task-col">Ana P.</div>
+            <div class="status-pill assigned">Assigned</div>
+          </div>
+          <div class="task-row">
+            <div class="prio-dot norm"></div>
+            <div><div class="task-title">Restock raw material &ndash; Bay 4</div><div class="task-meta">Scheduled by Admin &middot; 3:00 PM</div></div>
+            <div class="task-col">Warehouse B</div>
+            <div class="task-col">Jorge L.</div>
+            <div class="status-pill assigned">Assigned</div>
+          </div>
+          <div class="task-row">
+            <div class="prio-dot high"></div>
+            <div><div class="task-title">Clear loading dock 3, truck arriving</div><div class="task-meta">Requested by Dispatch Desk &middot; 21 min ago</div></div>
+            <div class="task-col">Dock 3</div>
+            <div class="task-col">Carlos M.</div>
+            <div class="status-pill progress">In Progress</div>
+          </div>
+          <div class="task-row">
+            <div class="prio-dot norm"></div>
+            <div><div class="task-title">Relocate empty crates to yard</div><div class="task-meta">Scheduled by Admin &middot; done 1:40 PM</div></div>
+            <div class="task-col">Yard C</div>
+            <div class="task-col">Miguel R.</div>
+            <div class="status-pill done">Completed</div>
+          </div>
+        </div>
+
+        <div class="panel-card">
+          <h4>External Requests <span class="count">5 waiting</span></h4>
+
+          <div class="req-card">
+            <div class="req-top"><div class="req-title">Forklift stuck, blocking Bay 1 exit</div><span class="req-badge critical">Critical</span></div>
+            <div class="req-meta"><i class="fa-solid fa-location-dot"></i> Warehouse B &middot; by David K. (Line Lead) &middot; just now</div>
+            <div class="ai-suggest"><i class="fa-solid fa-wand-magic-sparkles"></i> Suggested: Carlos M. &ndash; closest, idle 4 min</div>
+            <div class="req-actions"><div class="btn-mini primary">Assign</div><div class="btn-mini ghost">View</div></div>
+          </div>
+
+          <div class="req-card">
+            <div class="req-top"><div class="req-title">Pallet drop-off for outbound truck</div><span class="req-badge urgent">Urgent</span></div>
+            <div class="req-meta"><i class="fa-solid fa-location-dot"></i> Dock 3 &middot; by Priya S. (Shipping) &middot; 6 min ago</div>
+            <div class="req-actions"><div class="btn-mini primary">Assign</div><div class="btn-mini ghost">View</div></div>
+          </div>
+
+          <div class="req-card">
+            <div class="req-top"><div class="req-title">Move scrap bins before shift change</div><span class="req-badge urgent">Urgent</span></div>
+            <div class="req-meta"><i class="fa-solid fa-location-dot"></i> Assembly Line B &middot; by Tomás V. &middot; 11 min ago</div>
+            <div class="req-actions"><div class="btn-mini primary">Assign</div><div class="btn-mini ghost">View</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-card" style="margin-top:16px;">
+        <h4>Operators On Duty</h4>
+        <div class="driver-strip">
+          <div class="driver-chip"><img src="https://i.pravatar.cc/60?img=33"><div><div class="dn">Miguel R.</div><div class="dt">On task &middot; Line A</div></div><span class="d-status task"></span></div>
+          <div class="driver-chip"><img src="https://i.pravatar.cc/60?img=45"><div><div class="dn">Ana P.</div><div class="dt">On task &middot; Bay 2</div></div><span class="d-status task"></span></div>
+          <div class="driver-chip"><img src="https://i.pravatar.cc/60?img=51"><div><div class="dn">Jorge L.</div><div class="dt">Available</div></div><span class="d-status avail"></span></div>
+          <div class="driver-chip"><img src="https://i.pravatar.cc/60?img=15"><div><div class="dn">Carlos M.</div><div class="dt">Available &middot; idle 4m</div></div><span class="d-status avail"></span></div>
+          <div class="driver-chip"><img src="https://i.pravatar.cc/60?img=22"><div><div class="dn">Reza F.</div><div class="dt">On break</div></div><span class="d-status break"></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= EXTERNAL REQUEST VIEW ================= -->
+<div class="view" id="view-ext">
+  <div class="view-head reveal">
+    <h2>External Request &middot; No Login Required</h2>
+    <p>Reachable by scanning a QR code posted at each station &mdash; a production worker sends a request in under 15 seconds, no account, no app install.</p>
+  </div>
+  <div class="phone-stage reveal">
+    <div>
+      <div class="phone-frame">
+        <div class="phone-screen">
+          <div class="status-bar"><span>2:14</span><div class="status-right"><i class="fa-solid fa-signal"></i><i class="fa-solid fa-wifi"></i><i class="fa-solid fa-battery-three-quarters"></i></div></div>
+          <div class="pscreen">
+            <div class="ext-logo">
+              <i class="fa-solid fa-truck-ramp-box"></i>
+              <div class="t">Anchorpoint Manufacturing</div>
+              <div class="s">Request forklift assistance</div>
+            </div>
+            <div class="field">
+              <label>Your name / department</label>
+              <input type="text" value="Sara T. - Line Supervisor" readonly>
+            </div>
+            <div class="field">
+              <label>Location</label>
+              <select><option>Assembly Line A</option></select>
+            </div>
+            <div class="field">
+              <label>What do you need?</label>
+              <textarea readonly>Conveyor jam on Line A, pallet blocking the belt. Need immediate clearance.</textarea>
+            </div>
+            <div class="field">
+              <label>Urgency</label>
+              <div class="urgency-grid">
+                <div class="urg-opt routine"><i class="fa-solid fa-clock"></i><div class="l">Routine</div></div>
+                <div class="urg-opt urgent"><i class="fa-solid fa-triangle-exclamation"></i><div class="l">Urgent</div></div>
+                <div class="urg-opt critical selected"><i class="fa-solid fa-fire"></i><div class="l">Critical</div></div>
+              </div>
+            </div>
+            <button class="btn-submit">Send Request</button>
+          </div>
+        </div>
+      </div>
+      <div class="phone-caption">
+        <h5>Request form</h5>
+        <p>Name field is a light identifier only, not an account &mdash; keeps every request traceable without login friction.</p>
+      </div>
+    </div>
+
+    <div>
+      <div class="phone-frame">
+        <div class="phone-screen">
+          <div class="status-bar"><span>2:14</span><div class="status-right"><i class="fa-solid fa-signal"></i><i class="fa-solid fa-wifi"></i><i class="fa-solid fa-battery-three-quarters"></i></div></div>
+          <div class="pscreen">
+            <div class="confirm-box">
+              <div class="confirm-check"><i class="fa-solid fa-check"></i></div>
+              <h3>Request sent to dispatch</h3>
+              <p>Farid's team has been notified. Critical requests are routed to the nearest available operator automatically.</p>
+              <div class="confirm-ref">Request #482</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-caption">
+        <h5>Confirmation</h5>
+        <p>Gives the requester a reference number and sets the expectation &mdash; no need to call the office to check status.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= DRIVER VIEW ================= -->
+<div class="view" id="view-driver">
+  <div class="view-head reveal">
+    <h2>Driver App &middot; Prioritized Task Feed</h2>
+    <p>Color-coded by urgency so an operator knows what to do next in one glance, even mid-shift with a load in hand.</p>
+  </div>
+  <div class="phone-stage reveal">
+    <div>
+      <div class="phone-frame">
+        <div class="phone-screen">
+          <div class="status-bar"><span>2:14</span><div class="status-right"><i class="fa-solid fa-signal"></i><i class="fa-solid fa-wifi"></i><i class="fa-solid fa-battery-three-quarters"></i></div></div>
+          <div class="pscreen">
+            <div class="d-hello">
+              <div><div class="name">Hi, Miguel</div><div class="status"><i class="fa-solid fa-circle"></i> On duty &middot; Forklift #4</div></div>
+            </div>
+            <div class="alert-banner"><i class="fa-solid fa-bell"></i> New critical task assigned to you</div>
+
+            <div class="d-card crit">
+              <div class="top"><div class="title">Conveyor jam &ndash; forklift needed</div><span class="d-badge crit">Critical</span></div>
+              <div class="meta">
+                <span><i class="fa-solid fa-location-dot"></i> Assembly Line A</span>
+                <span><i class="fa-solid fa-user"></i> Sara T.</span>
+                <span><i class="fa-solid fa-clock"></i> 2 min ago</span>
+              </div>
+              <div class="d-btn start">Start Task</div>
+            </div>
+
+            <div class="d-card high">
+              <div class="top"><div class="title">Move pallets to Shipping Bay 2</div><span class="d-badge high">Urgent</span></div>
+              <div class="meta">
+                <span><i class="fa-solid fa-location-dot"></i> Shipping Bay 2</span>
+                <span><i class="fa-solid fa-user"></i> Warehouse Team</span>
+                <span><i class="fa-solid fa-clock"></i> 14 min ago</span>
+              </div>
+              <div class="d-btn">View Details</div>
+            </div>
+
+            <div class="d-card norm">
+              <div class="top"><div class="title">Restock raw material &ndash; Bay 4</div><span class="d-badge norm">Normal</span></div>
+              <div class="meta">
+                <span><i class="fa-solid fa-location-dot"></i> Warehouse B</span>
+                <span><i class="fa-solid fa-user"></i> Admin</span>
+                <span><i class="fa-solid fa-clock"></i> Scheduled 3:00 PM</span>
+              </div>
+              <div class="d-btn">View Details</div>
+            </div>
+          </div>
+          <div class="bottom-nav">
+            <div class="bn-item active"><i class="fa-solid fa-list-check"></i>Tasks</div>
+            <div class="bn-item"><i class="fa-solid fa-clock-rotate-left"></i>History</div>
+            <div class="bn-item"><i class="fa-solid fa-user"></i>Profile</div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-caption">
+        <h5>Task feed</h5>
+        <p>Sorted by priority first, time second &mdash; the top card is always the one that matters most right now.</p>
+      </div>
+    </div>
+
+    <div>
+      <div class="phone-frame">
+        <div class="phone-screen">
+          <div class="status-bar"><span>2:15</span><div class="status-right"><i class="fa-solid fa-signal"></i><i class="fa-solid fa-wifi"></i><i class="fa-solid fa-battery-three-quarters"></i></div></div>
+          <div class="pscreen">
+            <div class="d-hello"><div><div class="name">Task Detail</div></div></div>
+            <div class="d-card crit" style="border-left-width:4px;">
+              <div class="top"><div class="title">Conveyor jam &ndash; forklift needed</div><span class="d-badge crit">Critical</span></div>
+              <div class="meta">
+                <span><i class="fa-solid fa-location-dot"></i> Assembly Line A, Station 3</span>
+              </div>
+              <div class="meta">
+                <span><i class="fa-solid fa-user"></i> Requested by Sara T., Line Supervisor</span>
+              </div>
+              <div class="meta">
+                <span><i class="fa-solid fa-clock"></i> Requested 2 min ago &middot; ETA 3 min</span>
+              </div>
+            </div>
+            <div class="field">
+              <label>Notes from requester</label>
+              <textarea readonly>Pallet jammed against the belt guard, line is stopped. Bring the standard forks, not the clamp attachment.</textarea>
+            </div>
+            <button class="btn-submit"><i class="fa-solid fa-check"></i>&nbsp; Mark Task Complete</button>
+          </div>
+          <div class="bottom-nav">
+            <div class="bn-item"><i class="fa-solid fa-list-check"></i>Tasks</div>
+            <div class="bn-item"><i class="fa-solid fa-clock-rotate-left"></i>History</div>
+            <div class="bn-item"><i class="fa-solid fa-user"></i>Profile</div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-caption">
+        <h5>Task detail + completion</h5>
+        <p>Everything needed to act &mdash; location, requester, notes &mdash; with a single tap to close the loop and update the admin board live.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function showView(v){
+  document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.toggle-btn').forEach(el=>el.classList.remove('active'));
+  document.getElementById('view-'+v).classList.add('active');
+  document.getElementById('btn'+v.charAt(0).toUpperCase()+v.slice(1)).classList.add('active');
+  window.scrollTo({top: document.querySelector('.toggle-wrap').offsetTop - 10, behavior:'smooth'});
+  revealCheck();
+}
+const observer = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('visible'); });
+},{threshold:0.1});
+function revealCheck(){
+  document.querySelectorAll('.reveal').forEach(el=>observer.observe(el));
+}
+revealCheck();
+</script>
+
+</body>
+</html>
