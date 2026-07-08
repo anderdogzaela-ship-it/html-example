@@ -1047,14 +1047,14 @@
     </div>
 
     <div class="portal-result" id="portalResult">
-      <div class="portal-status-badge"><i class="fa-solid fa-circle" style="color:var(--success);font-size:.5rem"></i> Equipe a caminho</div>
+      <div class="portal-status-badge" id="portalStatusBadge"><i class="fa-solid fa-circle" style="color:var(--success);font-size:.5rem"></i> Equipe a caminho</div>
       <div class="portal-grid">
-        <div class="portal-map">
+        <div class="portal-map" id="portalMapBlock">
           <img src="https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=600&fit=crop" alt="Rodovia">
           <div class="portal-pin">
             <div class="pin-dot"><i class="fa-solid fa-truck-medical"></i></div>
           </div>
-          <div class="portal-eta"><i class="fa-solid fa-clock"></i> Chegada em 18 min</div>
+          <div class="portal-eta" id="portalEta"><i class="fa-solid fa-clock"></i> Chegada em 18 min</div>
         </div>
         <div class="portal-team-card">
           <div class="portal-avatar-row">
@@ -1072,15 +1072,20 @@
         </div>
       </div>
       <div class="portal-timeline">
-        <div class="pt-step done">Chamado recebido</div>
-        <div class="pt-step done">Equipe designada</div>
-        <div class="pt-step active">Equipe a caminho</div>
-        <div class="pt-step">Chegada no local</div>
+        <div class="pt-step" id="ptStep0">Chamado recebido</div>
+        <div class="pt-step" id="ptStep1">Equipe designada</div>
+        <div class="pt-step" id="ptStep2">Equipe a caminho</div>
+        <div class="pt-step" id="ptStep3">Chegada no local</div>
       </div>
-      <div class="portal-note">
+      <div class="portal-note" id="portalNote">
         <i class="fa-solid fa-circle-info"></i>
         O rastreamento fica disponível apenas entre o aceite do chamado e a chegada da equipe. Após a chegada, o status muda para atendimento presencial, sem exposição contínua de localização.
       </div>
+    </div>
+
+    <div class="portal-result" id="portalNotFound" style="text-align:center;padding:24px 0;color:var(--muted);font-size:.85rem">
+      <i class="fa-solid fa-circle-question" style="font-size:1.6rem;display:block;margin-bottom:8px"></i>
+      Nenhuma OS ativa para esta placa no momento.
     </div>
 
   </div>
@@ -1246,6 +1251,7 @@
     updateNavBtns();
     updateAppHeader();
     if (idx === 7) renderSyncQueue();
+    syncAdminRow(currentScreen);
   }
 
   function nextScreen() {
@@ -1367,14 +1373,59 @@
     document.getElementById('view-' + name).classList.add('active');
     document.querySelectorAll('.view-tab').forEach(t => t.classList.toggle('active', t.dataset.view === name));
     setTimeout(checkReveal, 50);
+    // Same OS, same state — whichever screen you land on shows what actually happened on the others
+    if (name === 'cliente') renderPortal(currentScreen);
+    if (name === 'admin') syncAdminRow(currentScreen);
   }
 
-  // Customer portal search
+  // Customer portal search — only the plate tied to the live OS returns a result
   function trackPlate() {
+    const plate = document.getElementById('plateInput').value.trim().toUpperCase();
     const result = document.getElementById('portalResult');
+    const notFound = document.getElementById('portalNotFound');
+    if (plate !== 'MHR-2847') {
+      result.classList.remove('visible');
+      if (notFound) notFound.classList.add('visible');
+      return;
+    }
+    if (notFound) notFound.classList.remove('visible');
     result.classList.remove('visible');
     void result.offsetWidth;
     result.classList.add('visible');
+    renderPortal(currentScreen);
+  }
+
+  // Portal state mirrors exactly where the mechanic actually is in the flow —
+  // this is one OS, not three separate slideshows
+  function renderPortal(stage) {
+    const badge = document.getElementById('portalStatusBadge');
+    const mapBlock = document.getElementById('portalMapBlock');
+    const note = document.getElementById('portalNote');
+    const steps = [0,1,2,3].map(i => document.getElementById('ptStep' + i));
+    steps.forEach(s => s.classList.remove('done','active'));
+
+    if (stage <= 1) {
+      badge.innerHTML = '<i class="fa-solid fa-circle" style="color:var(--warning);font-size:.5rem"></i> Aguardando confirmação da equipe';
+      mapBlock.innerHTML = '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;color:var(--muted);font-size:.78rem;font-weight:700"><i class="fa-solid fa-satellite-dish" style="font-size:1.4rem"></i>Localizando equipe mais próxima</div>';
+      steps[0].classList.toggle('active', stage === 1);
+      note.innerHTML = '<i class="fa-solid fa-circle-info"></i> O chamado chegou pelo WhatsApp e está aguardando um mecânico aceitar. O mapa aparece assim que a equipe sai para o atendimento.';
+    } else if (stage <= 3) {
+      badge.innerHTML = '<i class="fa-solid fa-circle" style="color:var(--success);font-size:.5rem"></i> Equipe a caminho';
+      mapBlock.innerHTML = '<img src="https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=600&fit=crop" alt="Rodovia"><div class="portal-pin"><div class="pin-dot"><i class="fa-solid fa-truck-medical"></i></div></div><div class="portal-eta" id="portalEta"><i class="fa-solid fa-clock"></i> Chegada em ' + (stage === 2 ? '18' : '6') + ' min</div>';
+      steps[0].classList.add('done'); steps[1].classList.add('done'); steps[2].classList.add('active');
+      note.innerHTML = '<i class="fa-solid fa-circle-info"></i> O rastreamento fica disponível apenas entre o aceite do chamado e a chegada da equipe. Após a chegada, o status muda para atendimento presencial, sem exposição contínua de localização.';
+    } else if (stage <= 7) {
+      badge.innerHTML = '<i class="fa-solid fa-circle" style="color:var(--amber);font-size:.5rem"></i> Equipe no local';
+      mapBlock.innerHTML = '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;color:var(--muted);font-size:.78rem;font-weight:700;text-align:center;padding:0 20px"><i class="fa-solid fa-location-crosshairs" style="font-size:1.4rem;color:var(--amber)"></i>Equipe realizando o atendimento no local<br><span style="font-size:.65rem;font-weight:600">Posição em tempo real encerrada por segurança</span></div>';
+      steps.forEach((s,i) => { if (i < 3) s.classList.add('done'); });
+      steps[3].classList.add('active');
+      note.innerHTML = '<i class="fa-solid fa-circle-info"></i> A equipe chegou ao local. O mapa ao vivo é desligado automaticamente e o status passa a ser textual, sem expor a posição contínua do mecânico.';
+    } else {
+      badge.innerHTML = '<i class="fa-solid fa-circle" style="color:var(--success);font-size:.5rem"></i> Atendimento concluído';
+      mapBlock.innerHTML = '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;color:var(--success);font-size:.78rem;font-weight:700;text-align:center;padding:0 20px"><i class="fa-solid fa-circle-check" style="font-size:1.4rem"></i>Serviço concluído. Laudo enviado ao WhatsApp e e-mail cadastrados.</div>';
+      steps.forEach(s => s.classList.add('done'));
+      note.innerHTML = '<i class="fa-solid fa-circle-info"></i> A OS foi encerrada. O laudo com fotos, checklist e cálculo de faturamento já chegou aos canais cadastrados do cliente.';
+    }
   }
 
   // Admin audit queue
@@ -1413,9 +1464,9 @@
       ]
     }
   };
-  const badgeLabel = { progress: 'Em andamento', done: 'Concluída', audit: 'Em auditoria' };
+  let currentTenant = 'rn';
 
-  function switchTenant(name) {
+  function renderTenantView(name) {
     const t = tenants[name];
     if (!t) return;
 
@@ -1442,8 +1493,27 @@
     `).join('');
   }
 
+  function switchTenant(name) {
+    if (!tenants[name]) return;
+    currentTenant = name;
+    renderTenantView(name);
+  }
+
+  // The mechanic's own OS (2024061001 / MHR-2847) lives in the RN board —
+  // its row reflects wherever the mechanic actually is in the flow
+  function syncAdminRow(stage) {
+    const row = tenants.rn.rows[0];
+    if (stage >= 8) {
+      row[3] = 'done'; row[4] = 'Concluída'; row[5] = '1:23';
+    } else {
+      row[3] = 'progress'; row[4] = 'Em andamento'; row[5] = '0:42';
+    }
+    if (currentTenant === 'rn') renderTenantView('rn');
+  }
+
   updateDots(0);
   updateNavBtns();
+  renderPortal(0);
 </script>
 </body>
 </html>
