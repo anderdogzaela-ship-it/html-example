@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PuntoSeguro - MVP Plataforma de Emergencias con Geolocalizacion en Tiempo Real</title>
+<meta name="description" content="MVP interactivo: app de usuario con boton de panico y marketplace de servicios, app de operativo con reporte de ubicacion optimizado para bateria, y centro de control con mapa en tiempo real y asignacion asistida por IA.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+:root{
+  --gold:#f59e0b; --gold-dark:#d97706; --gold-light:#fbbf24; --gold-faint:rgba(245,158,11,0.12);
+  --danger:#ef4444; --danger-dark:#dc2626; --danger-light:#f87171; --danger-faint:rgba(239,68,68,0.14);
+  --ok:#22c55e; --ok-faint:rgba(34,197,94,0.14);
+  --bg:#0a0f1e; --surface:#111827; --surface2:#1a2235; --surface3:#1f2d45;
+  --text:#f1f5f9; --text-muted:#94a3b8; --text-dim:#64748b;
+  --border:rgba(245,158,11,0.15); --border-danger:rgba(239,68,68,0.3);
+  --shadow:0 8px 32px rgba(0,0,0,0.5);
+  --radius:16px; --radius-sm:10px;
+  --ease-spring:cubic-bezier(.34,1.56,.64,1); --ease-out:cubic-bezier(.22,.68,0,1.2);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased;position:relative;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer}
+.bg-orb{position:fixed;border-radius:50%;filter:blur(90px);opacity:.22;z-index:0;pointer-events:none;animation:float 9s ease-in-out infinite}
+.bg-orb.o1{width:420px;height:420px;background:var(--gold);top:-120px;left:-140px}
+.bg-orb.o2{width:360px;height:360px;background:var(--danger);bottom:-100px;right:-120px;animation-delay:2s}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-26px)}}
+
+.topbar{position:sticky;top:0;z-index:80;background:rgba(10,15,30,0.88);backdrop-filter:blur(16px);border-bottom:1px solid var(--border)}
+.topbar-inner{max-width:1220px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 22px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:900;font-size:17px}
+.brand .logo{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--gold),var(--danger));display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(239,68,68,0.3);font-size:15px;color:#1a0f00}
+.brand small{display:block;font-size:10.5px;color:var(--text-dim);font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-top:-2px}
+.surface-switch{display:flex;gap:4px;background:var(--surface2);border:1px solid var(--border);border-radius:100px;padding:4px}
+.surface-switch button{border:0;background:transparent;color:var(--text-muted);padding:9px 15px;border-radius:100px;font-size:12px;font-weight:700;transition:.2s var(--ease-spring);display:flex;align-items:center;gap:6px;white-space:nowrap}
+.surface-switch button.active{background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:#1a0f00;box-shadow:0 4px 14px rgba(245,158,11,0.35)}
+.demo-tag{font-size:11px;color:var(--text-dim);border:1px solid var(--border);padding:5px 11px;border-radius:100px;display:flex;align-items:center;gap:6px;flex-shrink:0}
+@media(max-width:900px){.demo-tag{display:none}.brand small{display:none}.surface-switch button span.lbl{display:none}.surface-switch button{padding:9px 12px}}
+
+main{position:relative;z-index:1;max-width:1220px;margin:0 auto;padding:0 22px 70px}
+.hero-copy{text-align:center;padding:34px 0 6px;max-width:660px;margin:0 auto}
+.hero-copy .pill{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;color:var(--gold-light);background:var(--gold-faint);border:1px solid var(--border);padding:6px 14px;border-radius:100px}
+.hero-copy h1{font-size:clamp(21px,3.6vw,29px);font-weight:900;margin-top:14px;line-height:1.28}
+.hero-copy p{color:var(--text-muted);font-size:14px;margin-top:9px;line-height:1.6}
+
+.demo-area{display:flex;flex-direction:column;align-items:center;padding:26px 0 10px}
+.phone-wrapper{position:relative;width:375px;max-width:100%}
+.phone-shell{background:#0d0d0d;border-radius:44px;border:2px solid #2a2a2a;box-shadow:0 0 0 1px #111,0 40px 80px rgba(0,0,0,.7),0 0 120px rgba(245,158,11,.08);overflow:hidden;position:relative}
+.phone-notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:120px;height:30px;background:#0d0d0d;border-radius:0 0 20px 20px;z-index:50}
+.phone-notch::after{content:"";position:absolute;top:8px;left:50%;transform:translateX(-50%);width:56px;height:5px;background:#1a1a1a;border-radius:99px}
+.phone-screen{height:730px;overflow:hidden;position:relative;background:var(--bg);padding-top:44px}
+.status-bar{position:absolute;top:0;left:0;right:0;height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;z-index:40;background:linear-gradient(to bottom,rgba(10,15,30,.95),rgba(10,15,30,0))}
+.status-time{font-size:13px;font-weight:800}
+.status-icons{display:flex;gap:5px;font-size:11px}
+
+.screen{position:absolute;inset:44px 0 62px;overflow-y:auto;overflow-x:hidden;display:none;flex-direction:column;scrollbar-width:none}
+.screen::-webkit-scrollbar{display:none}
+.screen.active{display:flex;animation:fadeSlideIn .35s var(--ease-out)}
+@keyframes fadeSlideIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+
+.bottom-nav{position:absolute;bottom:0;left:0;right:0;height:62px;background:rgba(17,24,39,.95);backdrop-filter:blur(20px);border-top:1px solid var(--border);display:flex;align-items:center;z-index:40}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 0;color:var(--text-dim);font-size:9.5px;font-weight:700;transition:.2s var(--ease-spring);background:none;border:0}
+.nav-item i{font-size:17px}
+.nav-item.active{color:var(--gold);transform:translateY(-2px)}
+.nav-item:disabled{opacity:.35;cursor:not-allowed}
+
+.s-pad{padding:16px 18px}
+.s-title{font-size:19px;font-weight:900}
+.s-sub{font-size:12.5px;color:var(--text-muted);margin-top:3px;font-weight:600}
+.s-label{font-size:11px;color:var(--text-dim);font-weight:800;text-transform:uppercase;letter-spacing:.04em;margin:16px 0 8px}
+
+/* ---- home / greeting ---- */
+.greet{padding:18px 18px 6px}
+.greet b{font-size:17px;font-weight:900;display:block}
+.greet span{font-size:12px;color:var(--text-muted)}
+
+/* ---- panic button ---- */
+.panic-wrap{display:flex;flex-direction:column;align-items:center;padding:22px 18px 10px}
+.panic-ring{position:relative;width:172px;height:172px;display:flex;align-items:center;justify-content:center}
+.panic-ring svg{position:absolute;inset:0;transform:rotate(-90deg)}
+.panic-ring circle{fill:none;stroke-width:5}
+.panic-ring .track{stroke:var(--surface2)}
+.panic-ring .fill{stroke:var(--danger);stroke-linecap:round;stroke-dasharray:483;stroke-dashoffset:483;transition:stroke-dashoffset .05s linear}
+.panic-btn{position:relative;z-index:2;width:136px;height:136px;border-radius:50%;background:radial-gradient(circle at 35% 30%,var(--danger-light),var(--danger) 60%,var(--danger-dark));border:0;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;box-shadow:0 0 0 8px rgba(239,68,68,.12),0 14px 40px rgba(239,68,68,.4);transition:.15s;user-select:none;-webkit-user-select:none}
+.panic-btn i{font-size:30px}
+.panic-btn b{font-size:15px;font-weight:900;letter-spacing:.03em}
+.panic-btn:active,.panic-btn.pressing{transform:scale(.96)}
+.panic-hint{margin-top:16px;font-size:12px;color:var(--text-muted);text-align:center;line-height:1.5}
+.panic-hint b{color:var(--danger-light)}
+
+.qs-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:4px 18px 6px}
+.qs-item{display:flex;flex-direction:column;align-items:center;gap:7px;padding:12px 4px;background:var(--surface);border:1px solid var(--border);border-radius:14px;transition:.2s var(--ease-spring)}
+.qs-item:active{transform:scale(.95)}
+.qs-item .qi{width:38px;height:38px;border-radius:11px;background:var(--gold-faint);color:var(--gold-light);display:flex;align-items:center;justify-content:center;font-size:16px}
+.qs-item span{font-size:9.5px;font-weight:700;color:var(--text-muted);text-align:center;line-height:1.25}
+
+/* ---- service cards (marketplace) ---- */
+.svc-card{margin:0 18px 12px;padding:14px;background:var(--surface);border:1px solid var(--border);border-radius:16px;display:flex;gap:12px;align-items:center;transition:.2s var(--ease-spring)}
+.svc-card:active{transform:scale(.98)}
+.svc-ic{width:46px;height:46px;border-radius:13px;background:var(--gold-faint);color:var(--gold-light);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.svc-name{font-size:14px;font-weight:800}
+.svc-meta{font-size:11.5px;color:var(--text-muted);margin-top:2px}
+.svc-eta{font-size:10.5px;color:var(--ok);font-weight:800;margin-top:5px}
+.btn-mini{padding:8px 13px;border-radius:10px;font-size:11px;font-weight:800;border:0;background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:#1a0f00;flex-shrink:0}
+
+/* ---- tracking card ---- */
+.track-card{margin:0 18px 16px;padding:16px;background:var(--surface);border:1px solid var(--border-danger);border-radius:18px}
+.track-top{display:flex;align-items:center;gap:10px}
+.track-dot{width:10px;height:10px;border-radius:50%;background:var(--danger);animation:blip 1s infinite}
+@keyframes blip{0%,100%{opacity:1}50%{opacity:.3}}
+.track-top b{font-size:14px;font-weight:900}
+.timeline{margin-top:14px;display:flex;flex-direction:column;gap:0}
+.tl-step{display:flex;gap:10px;position:relative;padding-bottom:16px}
+.tl-step:last-child{padding-bottom:0}
+.tl-step::before{content:"";position:absolute;left:9px;top:20px;bottom:0;width:2px;background:var(--surface3)}
+.tl-step:last-child::before{display:none}
+.tl-dot{width:20px;height:20px;border-radius:50%;background:var(--surface2);border:2px solid var(--surface3);display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--text-dim);flex-shrink:0;z-index:1}
+.tl-step.done .tl-dot{background:var(--ok-faint);border-color:var(--ok);color:var(--ok)}
+.tl-step.now .tl-dot{background:var(--danger-faint);border-color:var(--danger);color:var(--danger-light);animation:blip 1s infinite}
+.tl-txt b{font-size:12.5px;font-weight:800;display:block}
+.tl-txt span{font-size:11px;color:var(--text-dim)}
+.op-card{margin-top:14px;padding:12px;background:var(--surface2);border:1px solid var(--border);border-radius:14px;display:flex;gap:11px;align-items:center}
+.op-card img{width:44px;height:44px;border-radius:12px;object-fit:cover;flex-shrink:0}
+.op-card b{font-size:13.5px;font-weight:800;display:block}
+.op-card span{font-size:11px;color:var(--text-muted)}
+.op-eta{margin-left:auto;text-align:right}
+.op-eta b{color:var(--gold-light);font-size:16px}
+.op-eta span{font-size:9.5px;color:var(--text-dim);display:block}
+.track-actions{display:flex;gap:8px;margin-top:14px}
+.btn-quick{flex:1;padding:9px;border-radius:11px;font-size:11px;font-weight:800;background:var(--surface2);border:1px solid var(--border);color:var(--text)}
+
+.btn{display:block;width:100%;text-align:center;padding:13px;border-radius:13px;font-weight:800;font-size:13.5px;border:0;transition:.2s var(--ease-spring)}
+.btn-primary{background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:#1a0f00;box-shadow:0 8px 22px rgba(245,158,11,.32)}
+.btn-primary:active{transform:scale(.97)}
+.btn-ghost{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+.btn-danger{background:linear-gradient(135deg,var(--danger-light),var(--danger-dark));color:#fff;box-shadow:0 8px 22px rgba(239,68,68,.32)}
+
+/* ---- history ---- */
+.hist-card{margin:0 18px 10px;padding:13px;background:var(--surface);border:1px solid var(--border);border-radius:14px;display:flex;gap:11px;align-items:center}
+.hist-ic{width:38px;height:38px;border-radius:11px;background:var(--surface2);color:var(--text-muted);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.hist-ic.ok{background:var(--ok-faint);color:var(--ok)}
+.hist-b{flex:1}
+.hist-b b{font-size:13px;font-weight:800;display:block}
+.hist-b span{font-size:11px;color:var(--text-muted)}
+.hist-pill{font-size:10px;font-weight:800;padding:3px 9px;border-radius:100px;background:var(--ok-faint);color:var(--ok)}
+
+/* ---- profile ---- */
+.prof-card{margin:0 18px 14px;padding:18px;background:var(--surface);border:1px solid var(--border);border-radius:18px;text-align:center}
+.prof-card img{width:64px;height:64px;border-radius:18px;object-fit:cover;margin:0 auto 10px}
+.prof-card b{font-size:15px;font-weight:900;display:block}
+.prof-card span{font-size:11.5px;color:var(--text-muted)}
+.plan-badge{display:inline-flex;align-items:center;gap:6px;margin-top:10px;font-size:11px;font-weight:800;color:var(--gold-light);background:var(--gold-faint);border:1px solid var(--border);padding:5px 12px;border-radius:100px}
+.contact-row{margin:0 18px 8px;padding:12px 14px;background:var(--surface);border:1px solid var(--border);border-radius:13px;display:flex;align-items:center;gap:11px}
+.contact-row i{color:var(--gold-light);width:16px}
+.contact-row b{font-size:13px;font-weight:800;display:block}
+.contact-row span{font-size:10.5px;color:var(--text-dim)}
+.set-row{margin:0 18px 8px;padding:13px 14px;background:var(--surface);border:1px solid var(--border);border-radius:13px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.set-row b{font-size:12.5px;display:block}
+.set-row span{font-size:10.5px;color:var(--text-muted)}
+.toggle{position:relative;width:44px;height:25px;border-radius:100px;background:var(--surface3);border:1px solid var(--border);cursor:pointer;flex-shrink:0;transition:.2s}
+.toggle::after{content:"";position:absolute;top:2px;left:2px;width:19px;height:19px;border-radius:50%;background:#fff;transition:.2s}
+.toggle.on{background:var(--ok)}
+.toggle.on::after{left:21px}
+.toggle.danger.on{background:var(--danger)}
+
+/* ---- operative: status card ---- */
+.status-card{margin:0 18px 14px;padding:18px;background:var(--surface);border:1px solid var(--border);border-radius:18px}
+.status-row{display:flex;align-items:center;justify-content:space-between;gap:14px}
+.status-l b{font-size:15px;font-weight:900;display:block}
+.status-l span{font-size:11.5px;color:var(--text-muted)}
+.big-toggle{position:relative;width:56px;height:32px;border-radius:100px;background:var(--surface3);border:1px solid var(--border);cursor:pointer;flex-shrink:0}
+.big-toggle::after{content:"";position:absolute;top:2px;left:2px;width:26px;height:26px;border-radius:50%;background:#fff;transition:.2s var(--ease-spring)}
+.big-toggle.on{background:var(--ok)}
+.big-toggle.on::after{left:26px}
+.batt-row{margin-top:16px;display:flex;align-items:center;gap:10px}
+.batt-bar{flex:1;height:8px;border-radius:100px;background:var(--surface2);overflow:hidden}
+.batt-fill{height:100%;border-radius:100px;background:linear-gradient(90deg,var(--ok),var(--gold))}
+.batt-txt{font-size:11.5px;font-weight:800;color:var(--text-muted);white-space:nowrap}
+.mode-note{margin-top:10px;font-size:11px;color:var(--text-dim);line-height:1.5;display:flex;gap:7px;align-items:flex-start}
+.mode-note i{color:var(--gold-light);margin-top:2px}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 18px 14px}
+.stat-box{padding:14px;background:var(--surface);border:1px solid var(--border);border-radius:14px}
+.stat-box .v{font-size:20px;font-weight:900}
+.stat-box .l{font-size:10.5px;color:var(--text-dim);font-weight:700;margin-top:2px}
+
+/* ---- incoming alert overlay ---- */
+.alert-overlay{position:absolute;inset:0;background:linear-gradient(160deg,rgba(30,5,5,.97),rgba(15,5,10,.98));z-index:60;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:26px}
+.alert-overlay.show{display:flex;animation:fadeSlideIn .35s var(--ease-out)}
+.alert-ring{width:90px;height:90px;border-radius:50%;background:var(--danger-faint);border:2px solid var(--danger);display:flex;align-items:center;justify-content:center;font-size:34px;color:var(--danger-light);animation:blip 1s infinite;margin-bottom:16px}
+.alert-overlay h2{font-size:21px;font-weight:900;color:#fff}
+.alert-overlay p{font-size:12.5px;color:var(--text-muted);margin:8px 0 20px;line-height:1.55}
+.alert-meta{display:flex;gap:18px;margin-bottom:22px}
+.alert-meta div{text-align:center}
+.alert-meta b{font-size:15px;font-weight:900;display:block}
+.alert-meta span{font-size:10px;color:var(--text-dim)}
+.alert-actions{display:flex;gap:10px;width:100%;max-width:260px}
+
+/* ---- operative active service ---- */
+.nav-map{margin:0 18px 14px;height:150px;border-radius:16px;overflow:hidden;position:relative}
+.eta-strip{margin:0 18px 14px;padding:13px 15px;background:var(--surface);border:1px solid var(--border);border-radius:14px;display:flex;align-items:center;gap:12px}
+.eta-strip i{font-size:20px;color:var(--gold-light)}
+.eta-strip b{font-size:16px;font-weight:900;display:block}
+.eta-strip span{font-size:10.5px;color:var(--text-dim)}
+.user-req-card{margin:0 18px 14px;padding:14px;background:var(--surface);border:1px solid var(--border);border-radius:16px;display:flex;gap:11px;align-items:center}
+.user-req-card img{width:44px;height:44px;border-radius:12px;object-fit:cover}
+.user-req-card b{font-size:13.5px;font-weight:800;display:block}
+.user-req-card span{font-size:11px;color:var(--text-muted)}
+
+.flow-legend{display:flex;justify-content:center;gap:18px;margin-top:20px;flex-wrap:wrap}
+.flow-legend div{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--text-muted);font-weight:700}
+.flow-legend i{color:var(--gold)}
+
+/* ---- CONTROL CENTER (web) ---- */
+.cc-wrap{padding-top:24px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:16px}
+@media(max-width:800px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px}
+.kpi .lbl{font-size:11px;color:var(--text-dim);font-weight:800;text-transform:uppercase;letter-spacing:.04em}
+.kpi .val{font-size:26px;font-weight:900;margin-top:6px}
+.kpi .val.danger{color:var(--danger-light)}.kpi .val.gold{color:var(--gold-light)}.kpi .val.green{color:var(--ok)}
+.kpi .delta{font-size:11px;color:var(--text-dim);margin-top:4px}
+
+.cc-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:18px;margin-top:18px}
+@media(max-width:960px){.cc-grid{grid-template-columns:1fr}}
+.panel-card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:20px}
+.panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.panel-head h3{font-size:15px;font-weight:800}
+.panel-head p{font-size:11.5px;color:var(--text-muted);margin-top:2px}
+
+.map-canvas{position:relative;height:320px;border-radius:16px;overflow:hidden;background:
+  linear-gradient(160deg,#0d1526,#0a1120);
+  background-image:linear-gradient(rgba(148,163,184,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(148,163,184,.07) 1px,transparent 1px);
+  background-size:26px 26px;border:1px solid var(--border)}
+.map-canvas::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 30% 20%,rgba(245,158,11,.08),transparent 55%)}
+.map-pin{position:absolute;transform:translate(-50%,-50%);width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;border:2px solid rgba(255,255,255,.25);cursor:default;z-index:2}
+.map-pin.ok{background:var(--ok)}
+.map-pin.busy{background:var(--gold-dark)}
+.map-pin.off{background:var(--surface3);color:var(--text-dim);opacity:.55}
+.map-pin.alert{background:var(--danger);animation:pulse 1.6s infinite;width:34px;height:34px;font-size:14px}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(239,68,68,.55)}70%{box-shadow:0 0 0 18px rgba(239,68,68,0)}100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}}
+.map-label{position:absolute;transform:translate(-50%,4px);font-size:9.5px;font-weight:800;color:var(--text-muted);white-space:nowrap;top:100%;left:50%}
+.map-legend{display:flex;gap:16px;margin-top:12px;flex-wrap:wrap}
+.map-legend div{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-muted);font-weight:700}
+.map-legend .sw{width:9px;height:9px;border-radius:50%}
+
+.inc-empty{padding:30px 10px;text-align:center;color:var(--text-dim)}
+.inc-empty i{font-size:26px;margin-bottom:8px;display:block}
+.inc-card{border:1px solid var(--border-danger);background:var(--danger-faint);border-radius:16px;padding:16px}
+.inc-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.inc-top b{font-size:14px;font-weight:900}
+.inc-timer{font-size:12px;font-weight:800;color:var(--danger-light);display:flex;align-items:center;gap:5px}
+.inc-meta{font-size:11.5px;color:var(--text-muted);margin-top:5px}
+.reco-box{margin-top:12px;padding:11px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:12px}
+.reco-tag{font-size:10px;font-weight:900;color:var(--gold-light);display:flex;align-items:center;gap:5px;margin-bottom:4px}
+.reco-name{font-size:12.5px;font-weight:800}
+.reco-why{font-size:11px;color:var(--text-dim);margin-top:2px}
+.inc-actions{display:flex;gap:8px;margin-top:12px}
+.resolved-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--border)}
+.resolved-row i{color:var(--ok);width:16px}
+.resolved-row b{font-size:12.5px;font-weight:800;display:block}
+.resolved-row span{font-size:10.5px;color:var(--text-dim)}
+.resolved-row .rr-time{margin-left:auto;font-size:11px;color:var(--text-muted);font-weight:700}
+
+.tbl-wrap{overflow-x:auto;margin-top:14px}
+.tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+.tbl th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-dim);padding:9px 10px;border-bottom:1px solid var(--border);font-weight:800}
+.tbl td{padding:11px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:0}
+.who{display:flex;align-items:center;gap:9px}
+.who img{width:30px;height:30px;border-radius:8px;object-fit:cover}
+.status-pill{font-size:10.5px;font-weight:800;padding:3px 9px;border-radius:100px;white-space:nowrap}
+.status-pill.ok{background:var(--ok-faint);color:var(--ok)}
+.status-pill.busy{background:var(--gold-faint);color:var(--gold-light)}
+.status-pill.off{background:rgba(100,116,139,.15);color:var(--text-dim)}
+.mini-batt{display:flex;align-items:center;gap:6px;width:74px}
+.mini-batt .bar{flex:1;height:6px;border-radius:100px;background:var(--surface3);overflow:hidden}
+.mini-batt .fill{height:100%;background:linear-gradient(90deg,var(--ok),var(--gold))}
+.mini-batt span{font-size:10.5px;color:var(--text-dim);width:26px}
+
+.toast-wrap{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:200;display:flex;flex-direction:column;gap:9px;align-items:center;pointer-events:none;width:calc(100% - 36px);max-width:420px}
+.toast{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px 16px;font-size:13px;display:flex;align-items:center;gap:11px;box-shadow:0 14px 40px rgba(0,0,0,.5);animation:toastin .3s var(--ease-out);width:100%}
+@keyframes toastin{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.toast .ico{width:22px;height:22px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px}
+.toast.ok .ico{background:rgba(34,197,94,.16);color:#22c55e}
+.toast.info .ico{background:var(--gold-faint);color:var(--gold-light)}
+.toast.danger .ico{background:var(--danger-faint);color:var(--danger-light)}
+.toast b{font-weight:800}
+
+.footer-note{margin-top:34px;text-align:center;color:var(--text-dim);font-size:12px;border-top:1px solid var(--border);padding-top:22px;line-height:1.6}
+.restart-btn{position:fixed;top:16px;right:16px;z-index:90;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:9px 15px;border-radius:100px;font-size:12px;font-weight:700;display:flex;align-items:center;gap:7px}
+@media(max-width:900px){.restart-btn{position:static;margin:12px auto 0;display:flex;width:fit-content}}
+</style>
+</head>
+<body>
+
+<div class="bg-orb o1"></div>
+<div class="bg-orb o2"></div>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <span class="logo"><i class="fa-solid fa-tower-broadcast"></i></span>
+      <span>PuntoSeguro<small>Respuesta en tiempo real</small></span>
+    </div>
+    <div class="surface-switch" id="switch">
+      <button data-surface="user" class="active"><i class="fa-solid fa-mobile-screen-button"></i> <span class="lbl">Usuario</span></button>
+      <button data-surface="op"><i class="fa-solid fa-truck-medical"></i> <span class="lbl">Operativo</span></button>
+      <button data-surface="cc"><i class="fa-solid fa-gauge"></i> <span class="lbl">Centro de Control</span></button>
+    </div>
+    <div class="demo-tag"><i class="fa-solid fa-circle-dot" style="color:#22c55e"></i> Demo interactivo</div>
+  </div>
+</header>
+
+<main>
+
+<!-- ===================== SURFACE: USUARIO ===================== -->
+<section class="surface" id="surface-user">
+  <div class="hero-copy">
+    <span class="pill"><i class="fa-solid fa-wand-magic-sparkles"></i> MVP app Usuario final</span>
+    <h1>Boton de panico con geolocalizacion inmediata y marketplace de servicios</h1>
+    <p>Manten presionado el boton de panico para simular una alerta real. El estado se actualiza solo y el mismo incidente aparece en la app de Operativo y en el Centro de Control.</p>
+  </div>
+
+  <div class="demo-area">
+    <div class="phone-wrapper">
+      <div class="phone-shell">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="status-bar"><span class="status-time">9:41</span><span class="status-icons"><i class="fa-solid fa-signal"></i><i class="fa-solid fa-wifi"></i><i class="fa-solid fa-battery-three-quarters"></i></span></div>
+
+          <!-- HOME -->
+          <div class="screen active" id="scr-u-home">
+            <div class="greet"><b>Hola, Renata</b><span>Ubicacion activa - Ciudad de Mexico</span></div>
+            <div class="panic-wrap">
+              <div class="panic-ring">
+                <svg width="172" height="172"><circle class="track" cx="86" cy="86" r="77"/><circle class="fill" id="panicFillRing" cx="86" cy="86" r="77"/></svg>
+                <button class="panic-btn" id="panicBtn"><i class="fa-solid fa-triangle-exclamation"></i><b>SOS</b></button>
+              </div>
+              <div class="panic-hint">Mantene presionado <b>1.5 segundos</b> para enviar tu ubicacion en tiempo real al centro de control.</div>
+            </div>
+            <div class="s-label" style="padding:0 18px">Servicios rapidos</div>
+            <div class="qs-grid" id="qsGrid"></div>
+          </div>
+
+          <!-- SERVICIOS / MARKETPLACE -->
+          <div class="screen" id="scr-u-servicios">
+            <div class="s-pad" style="padding-bottom:6px">
+              <div class="s-title">Servicios</div>
+              <div class="s-sub">Proveedores verificados cerca de tu ubicacion</div>
+            </div>
+            <div id="svcList"></div>
+          </div>
+
+          <!-- ALERTAS / TRACKING + HISTORIAL -->
+          <div class="screen" id="scr-u-alertas">
+            <div class="s-pad" style="padding-bottom:6px">
+              <div class="s-title">Alertas</div>
+              <div class="s-sub">Seguimiento en vivo y actividad reciente</div>
+            </div>
+            <div id="uTrackWrap"></div>
+            <div class="s-label" style="padding:0 18px">Actividad reciente</div>
+            <div id="uHistList"></div>
+          </div>
+
+          <!-- PERFIL -->
+          <div class="screen" id="scr-u-perfil">
+            <div class="s-pad" style="padding-bottom:10px">
+              <div class="s-title">Perfil</div>
+            </div>
+            <div class="prof-card">
+              <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&q=60" onerror="imgFallback(this,'renata')">
+              <b>Renata Alvarez</b><span>renata.alvarez@correo.com</span>
+              <div class="plan-badge"><i class="fa-solid fa-shield-heart"></i> Plan Familiar activo</div>
+            </div>
+            <div class="s-label" style="padding:0 18px">Contactos de emergencia</div>
+            <div class="contact-row"><i class="fa-solid fa-user"></i><div><b>Jorge Alvarez</b><span>Hermano - se notifica al enviar SOS</span></div></div>
+            <div class="contact-row"><i class="fa-solid fa-user"></i><div><b>Paola Reyes</b><span>Vecina - contacto secundario</span></div></div>
+            <div class="s-label" style="padding:0 18px">Privacidad de ubicacion</div>
+            <div class="set-row"><div><b>Compartir solo en emergencia</b><span>Recomendado - ahorra bateria</span></div><div class="toggle on" id="privToggle"></div></div>
+          </div>
+
+          <!-- BOTTOM NAV -->
+          <div class="bottom-nav" id="uBottomNav">
+            <button class="nav-item active" data-scr="home"><i class="fa-solid fa-house"></i>Inicio</button>
+            <button class="nav-item" data-scr="servicios"><i class="fa-solid fa-store"></i>Servicios</button>
+            <button class="nav-item" data-scr="alertas"><i class="fa-solid fa-bell"></i>Alertas</button>
+            <button class="nav-item" data-scr="perfil"><i class="fa-solid fa-user"></i>Perfil</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flow-legend">
+      <div><i class="fa-solid fa-location-crosshairs"></i> Geolocalizacion inmediata</div>
+      <div><i class="fa-solid fa-list-check"></i> Timeline de estado en vivo</div>
+      <div><i class="fa-solid fa-store"></i> Marketplace de servicios</div>
+    </div>
+    <button class="restart-btn" id="restartDemo"><i class="fa-solid fa-rotate-left"></i> Reiniciar demo</button>
+  </div>
+</section>
+
+<!-- ===================== SURFACE: OPERATIVO ===================== -->
+<section class="surface" id="surface-op" style="display:none">
+  <div class="hero-copy">
+    <span class="pill"><i class="fa-solid fa-truck-medical"></i> MVP app Operativo / Proveedor</span>
+    <h1>Reporte de ubicacion adaptativo y recepcion de alertas en tiempo real</h1>
+    <p>Activa el estado "En servicio" para representar a Miguel Torres. Si hay una alerta activa, la recibe aqui igual que en produccion via notificacion push.</p>
+  </div>
+
+  <div class="demo-area">
+    <div class="phone-wrapper">
+      <div class="phone-shell">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="status-bar"><span class="status-time">9:41</span><span class="status-icons"><i class="fa-solid fa-signal"></i><i class="fa-solid fa-wifi"></i><i class="fa-solid fa-battery-half"></i></span></div>
+
+          <!-- ESTADO -->
+          <div class="screen active" id="scr-o-home">
+            <div class="s-pad" style="padding-bottom:6px"><div class="s-title">Estado</div><div class="s-sub">Miguel Torres - Seguridad privada</div></div>
+            <div class="status-card">
+              <div class="status-row">
+                <div class="status-l"><b id="opStatusLabel">Fuera de servicio</b><span>Los monitoristas no te ven disponible</span></div>
+                <div class="big-toggle" id="opBigToggle"></div>
+              </div>
+              <div class="batt-row"><i class="fa-solid fa-battery-three-quarters" style="color:var(--gold-light)"></i><div class="batt-bar"><div class="batt-fill" style="width:82%"></div></div><span class="batt-txt">82%</span></div>
+              <div class="mode-note" id="opModeNote"><i class="fa-solid fa-circle-info"></i><span>Fuera de servicio: sin reporte de ubicacion.</span></div>
+            </div>
+            <div class="stat-grid">
+              <div class="stat-box"><div class="v">14</div><div class="l">Servicios este mes</div></div>
+              <div class="stat-box"><div class="v">4.9</div><div class="l">Calificacion promedio</div></div>
+            </div>
+          </div>
+
+          <!-- ACTIVO -->
+          <div class="screen" id="scr-o-activo">
+            <div class="s-pad" style="padding-bottom:6px"><div class="s-title">Servicio activo</div><div class="s-sub" id="opActivoSub">Ruta hacia el usuario</div></div>
+            <div class="nav-map" id="opNavMap"></div>
+            <div class="eta-strip"><i class="fa-solid fa-clock"></i><div><b id="opEtaVal">6 min</b><span>Tiempo estimado de llegada</span></div></div>
+            <div class="user-req-card">
+              <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&q=60" onerror="imgFallback(this,'renata')">
+              <div><b>Renata Alvarez</b><span id="opReqType">Boton de panico</span></div>
+            </div>
+            <div class="s-pad" style="padding-top:0">
+              <button class="btn btn-primary" id="opArriveBtn">Marcar llegada</button>
+              <button class="btn btn-ghost" style="margin-top:10px;display:none" id="opResolveBtn">Marcar servicio resuelto</button>
+            </div>
+          </div>
+
+          <!-- HISTORIAL -->
+          <div class="screen" id="scr-o-historial">
+            <div class="s-pad" style="padding-bottom:6px"><div class="s-title">Historial</div><div class="s-sub">Servicios completados</div></div>
+            <div id="opHistList"></div>
+          </div>
+
+          <!-- PERFIL -->
+          <div class="screen" id="scr-o-perfil">
+            <div class="s-pad" style="padding-bottom:10px"><div class="s-title">Perfil</div></div>
+            <div class="prof-card">
+              <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&q=60" onerror="imgFallback(this,'miguel')">
+              <b>Miguel Torres</b><span>Unidad 07 - Seguridad privada</span>
+              <div class="plan-badge"><i class="fa-solid fa-star"></i> 4.9 de calificacion</div>
+            </div>
+          </div>
+
+          <!-- INCOMING ALERT OVERLAY -->
+          <div class="alert-overlay" id="opAlertOverlay">
+            <div class="alert-ring"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <h2>Nueva alerta</h2>
+            <p id="opAlertText">Boton de panico activado. Ubicacion recibida en tiempo real.</p>
+            <div class="alert-meta">
+              <div><b id="opAlertDist">0.8 km</b><span>DISTANCIA</span></div>
+              <div><b id="opAlertEta">6 min</b><span>ETA</span></div>
+            </div>
+            <div class="alert-actions">
+              <button class="btn btn-ghost" id="opRejectBtn">Rechazar</button>
+              <button class="btn btn-danger" id="opAcceptBtn">Aceptar</button>
+            </div>
+          </div>
+
+          <!-- BOTTOM NAV -->
+          <div class="bottom-nav" id="opBottomNav">
+            <button class="nav-item active" data-scr="home"><i class="fa-solid fa-signal"></i>Estado</button>
+            <button class="nav-item" data-scr="activo" id="opNavActivo" disabled><i class="fa-solid fa-route"></i>Activo</button>
+            <button class="nav-item" data-scr="historial"><i class="fa-solid fa-clock-rotate-left"></i>Historial</button>
+            <button class="nav-item" data-scr="perfil"><i class="fa-solid fa-user"></i>Perfil</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flow-legend">
+      <div><i class="fa-solid fa-battery-full"></i> Reporte adaptativo por bateria</div>
+      <div><i class="fa-solid fa-bell"></i> Alerta push en segundo plano</div>
+      <div><i class="fa-solid fa-route"></i> Navegacion y cierre de servicio</div>
+    </div>
+    <button class="restart-btn" id="restartDemo2"><i class="fa-solid fa-rotate-left"></i> Reiniciar demo</button>
+  </div>
+</section>
+
+<!-- ===================== SURFACE: CENTRO DE CONTROL ===================== -->
+<section class="surface" id="surface-cc" style="display:none">
+  <div class="cc-wrap">
+    <div class="hero-copy" style="text-align:left;max-width:none;padding:0 0 6px">
+      <span class="pill"><i class="fa-solid fa-gauge"></i> Plataforma web - Administrador y Monitoristas</span>
+      <h1 style="margin-top:12px">Centro de control: mapa en vivo, cola de incidentes y asignacion asistida por IA</h1>
+      <p>El mismo incidente que se ve aqui es el que dispara la alerta en la app de Operativo. Incluyo tambien una recomendacion automatica del operativo mas apto, calculada por distancia y nivel de bateria, no solo por cercania.</p>
+    </div>
+
+    <div class="kpis">
+      <div class="kpi"><div class="lbl">Alertas activas</div><div class="val danger" id="kpiActive">0</div><div class="delta">en este momento</div></div>
+      <div class="kpi"><div class="lbl">Operativos en linea</div><div class="val gold" id="kpiOnline">0</div><div class="delta">de 5 registrados</div></div>
+      <div class="kpi"><div class="lbl">Tiempo respuesta prom.</div><div class="val" id="kpiResp">6m 40s</div><div class="delta">ultimos 7 dias</div></div>
+      <div class="kpi"><div class="lbl">Resueltos hoy</div><div class="val green" id="kpiResolved">3</div><div class="delta">sin incidentes perdidos</div></div>
+    </div>
+
+    <div class="cc-grid">
+      <div class="panel-card">
+        <div class="panel-head"><div><h3>Mapa en tiempo real</h3><p>Operativos y alertas activas por ubicacion</p></div></div>
+        <div class="map-canvas" id="mapCanvas"></div>
+        <div class="map-legend">
+          <div><span class="sw" style="background:var(--ok)"></span> Disponible</div>
+          <div><span class="sw" style="background:var(--gold-dark)"></span> En servicio</div>
+          <div><span class="sw" style="background:var(--surface3)"></span> Fuera de linea</div>
+          <div><span class="sw" style="background:var(--danger)"></span> Alerta activa</div>
+        </div>
+      </div>
+
+      <div class="panel-card">
+        <div class="panel-head"><div><h3>Cola de incidentes</h3><p>Alertas nuevas y resueltas recientes</p></div></div>
+        <div id="incQueue"></div>
+      </div>
+    </div>
+
+    <div class="panel-card" style="margin-top:18px">
+      <div class="panel-head"><div><h3>Roster de operativos</h3><p>Estado, bateria y ultima actualizacion de ubicacion</p></div></div>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr><th>Operativo</th><th>Rol</th><th>Estado</th><th>Bateria</th><th>Ultima actualizacion</th><th>Asignacion</th></tr></thead>
+          <tbody id="rosterTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<div class="toast-wrap" id="toasts"></div>
+
+<div class="footer-note">Demo funcional en HTML CSS y JS para validar los tres flujos del MVP. Arquitectura de produccion: Flutter o React Native (apps), backend Node.js/Python orientado a eventos, mapa y ubicacion via SDK nativo con reporte adaptativo por bateria.</div>
+
+<script>
+"use strict";
+
+/* ================= shared state ================= */
+const state = {
+  surface: "user",
+  privShare: true,
+  liveIncident: null,   // {status:'nueva'|'asignada'|'en_sitio'|'resuelta', started, type, opId, eta}
+  opOnline: false,
+  resolvedToday: 3,
+  uHistory: [
+    {icon:"fa-truck-pickup", ok:true, name:"Grua 24/7", meta:"Resuelto - 14 min de respuesta", time:"Ayer, 18:20"},
+    {icon:"fa-key", ok:true, name:"Cerrajeria de emergencia", meta:"Resuelto - 9 min de respuesta", time:"Hace 4 dias"},
+  ],
+  opHistory: [
+    {name:"Boton de panico - Zona Roma", meta:"Resuelto en 11 min", time:"Ayer, 20:05"},
+    {name:"Seguridad - Ronda programada", meta:"Resuelto en 32 min", time:"Hace 3 dias"},
+  ],
+};
+
+const SERVICES = [
+  {icon:"fa-truck-pickup", name:"Grua 24/7", desc:"Asistencia vial y remolque", eta:"12-18 min"},
+  {icon:"fa-user-shield", name:"Seguridad privada", desc:"Custodia y acompanamiento", eta:"15-25 min"},
+  {icon:"fa-truck-medical", name:"Ambulancia privada", desc:"Traslado y atencion medica", eta:"8-14 min"},
+  {icon:"fa-key", name:"Cerrajeria de emergencia", desc:"Apertura y cambio de chapa", eta:"10-20 min"},
+];
+const QUICK = SERVICES.map(s=>({icon:s.icon, label:s.name.split(" ")[0]}));
+
+const ROSTER = [
+  {id:1, name:"Miguel Torres", role:"Seguridad", status:"offline", battery:82, distanceKm:0.8, rating:4.9, img:"https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&q=60", updated:"hace 6s", mapX:38, mapY:62},
+  {id:2, name:"Laura Jimenez", role:"Ambulancia", status:"disponible", battery:64, distanceKm:2.1, rating:4.8, img:"https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=200&q=60", updated:"hace 11s", mapX:66, mapY:30},
+  {id:3, name:"Carlos Nunez", role:"Grua", status:"en_servicio", battery:45, distanceKm:3.4, rating:4.6, img:"https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200&q=60", updated:"hace 4s", mapX:20, mapY:28},
+  {id:4, name:"Sofia Delgado", role:"Seguridad", status:"disponible", battery:91, distanceKm:1.6, rating:5.0, img:"https://images.unsplash.com/photo-1580489944761-15a19d654956?w=200&q=60", updated:"hace 9s", mapX:78, mapY:70},
+  {id:5, name:"Roberto Paz", role:"Cerrajeria", status:"offline", battery:20, distanceKm:5.0, rating:4.7, img:"https://images.unsplash.com/photo-1519345182560-3f2917c472ef?w=200&q=60", updated:"hace 3m", mapX:50, mapY:82},
+];
+const INCIDENT_PIN = {mapX:47, mapY:48};
+
+function imgFallback(el, seed){ el.onerror = null; el.src = "https://picsum.photos/seed/"+seed+"/200/200"; }
+
+/* ================= toast ================= */
+function toast(type, title, sub){
+  const wrap = document.getElementById("toasts");
+  const el = document.createElement("div");
+  el.className = "toast " + type;
+  const ic = type==="ok" ? "fa-check" : type==="danger" ? "fa-triangle-exclamation" : "fa-circle-info";
+  el.innerHTML = `<span class="ico"><i class="fa-solid ${ic}"></i></span><div><b>${title}</b>${sub?`<div style="font-size:11.5px;color:var(--text-muted);margin-top:2px">${sub}</div>`:""}</div>`;
+  wrap.appendChild(el);
+  setTimeout(()=>{ el.style.transition=".3s"; el.style.opacity="0"; el.style.transform="translateY(10px)"; setTimeout(()=>el.remove(),300); }, 3400);
+}
+
+/* ================= surface switch ================= */
+document.getElementById("switch").addEventListener("click", e=>{
+  const btn = e.target.closest("button[data-surface]");
+  if(!btn) return;
+  state.surface = btn.dataset.surface;
+  document.querySelectorAll("#switch button").forEach(b=>b.classList.toggle("active", b===btn));
+  document.getElementById("surface-user").style.display = state.surface==="user" ? "" : "none";
+  document.getElementById("surface-op").style.display = state.surface==="op" ? "" : "none";
+  document.getElementById("surface-cc").style.display = state.surface==="cc" ? "" : "none";
+  window.scrollTo({top:0,behavior:"smooth"});
+  renderAll();
+});
+
+/* ================= user: nav ================= */
+function uGoScreen(id){
+  document.querySelectorAll("#surface-user .screen").forEach(s=>s.classList.toggle("active", s.id==="scr-u-"+id));
+  document.querySelectorAll("#uBottomNav .nav-item").forEach(n=>n.classList.toggle("active", n.dataset.scr===id));
+}
+document.querySelectorAll("#uBottomNav .nav-item").forEach(n=>n.addEventListener("click", ()=>uGoScreen(n.dataset.scr)));
+
+document.getElementById("privToggle").addEventListener("click", function(){
+  this.classList.toggle("on");
+  state.privShare = this.classList.contains("on");
+  toast("info", state.privShare ? "Compartir solo en emergencia activado" : "Compartir siempre activado", "Ajusta el consumo de bateria del reporte de ubicacion");
+});
+
+function renderQuick(){
+  document.getElementById("qsGrid").innerHTML = QUICK.map(q=>`
+    <div class="qs-item" data-svc="${q.label}"><div class="qi"><i class="fa-solid ${q.icon}"></i></div><span>${q.label}</span></div>`).join("");
+}
+document.getElementById("qsGrid").addEventListener("click", e=>{
+  const it = e.target.closest(".qs-item"); if(!it) return;
+  uGoScreen("servicios");
+});
+
+function renderServices(){
+  document.getElementById("svcList").innerHTML = SERVICES.map((s,i)=>`
+    <div class="svc-card" data-i="${i}">
+      <div class="svc-ic"><i class="fa-solid ${s.icon}"></i></div>
+      <div style="flex:1"><div class="svc-name">${s.name}</div><div class="svc-meta">${s.desc}</div><div class="svc-eta"><i class="fa-solid fa-circle-dot" style="font-size:7px"></i> ${s.eta} - Disponible ahora</div></div>
+      <button class="btn-mini" data-req="${i}">Solicitar</button>
+    </div>`).join("");
+}
+document.getElementById("svcList").addEventListener("click", e=>{
+  const b = e.target.closest("[data-req]"); if(!b) return;
+  const s = SERVICES[parseInt(b.dataset.req,10)];
+  state.uHistory.unshift({icon:s.icon, ok:false, name:s.name, meta:"Solicitado - buscando proveedor cercano", time:"Ahora"});
+  toast("ok","Servicio solicitado", "El centro de control esta asignando un proveedor cercano");
+  uGoScreen("alertas");
+  renderAll();
+  setTimeout(()=>{ if(state.uHistory[0] && state.uHistory[0].name===s.name){ state.uHistory[0].ok=true; state.uHistory[0].meta="Proveedor asignado - en camino"; renderAll(); toast("info","Proveedor asignado","Ya viene en camino a tu ubicacion"); } }, 2600);
+});
+
+/* ================= panic button (press and hold) ================= */
+let pressTimer=null, pressStart=0;
+const RING_LEN = 2*Math.PI*77;
+document.getElementById("panicFillRing").style.strokeDasharray = RING_LEN;
+document.getElementById("panicFillRing").style.strokeDashoffset = RING_LEN;
+function fillRing(pct){ document.getElementById("panicFillRing").style.strokeDashoffset = RING_LEN * (1-pct); }
+function startPress(e){
+  e.preventDefault();
+  if(state.liveIncident) return;
+  document.getElementById("panicBtn").classList.add("pressing");
+  pressStart = Date.now();
+  pressTimer = setInterval(()=>{
+    const pct = Math.min(1, (Date.now()-pressStart)/1500);
+    fillRing(pct);
+    if(pct>=1){ clearInterval(pressTimer); pressTimer=null; fillRing(0); document.getElementById("panicBtn").classList.remove("pressing"); triggerPanic(); }
+  }, 30);
+}
+function cancelPress(){
+  document.getElementById("panicBtn").classList.remove("pressing");
+  if(pressTimer){ clearInterval(pressTimer); pressTimer=null; fillRing(0); }
+}
+const panicBtn = document.getElementById("panicBtn");
+panicBtn.addEventListener("mousedown", startPress);
+panicBtn.addEventListener("touchstart", startPress, {passive:false});
+["mouseup","mouseleave","touchend","touchcancel"].forEach(ev=>panicBtn.addEventListener(ev, cancelPress));
+
+function triggerPanic(){
+  state.liveIncident = {status:"nueva", started:Date.now(), type:"Boton de panico", opId:null, eta:6};
+  toast("danger","Alerta SOS enviada","Tu ubicacion en tiempo real ya llega al centro de control");
+  uGoScreen("alertas");
+  renderAll();
+}
+
+/* ================= tracking (user side) ================= */
+function renderUserTracking(){
+  const wrap = document.getElementById("uTrackWrap");
+  const inc = state.liveIncident;
+  if(!inc){ wrap.innerHTML=""; return; }
+  const op = inc.opId ? ROSTER.find(r=>r.id===inc.opId) : null;
+  const steps = [
+    {key:"nueva", label:"Alerta enviada", sub:"Ubicacion en tiempo real recibida"},
+    {key:"asignada", label:"Operativo asignado", sub: op ? op.name+" viene en camino" : "Buscando el mas cercano disponible"},
+    {key:"en_sitio", label:"Operativo en sitio", sub:"Confirmado en tu ubicacion"},
+    {key:"resuelta", label:"Incidente resuelto", sub:"Cerrado por el operativo"},
+  ];
+  const order = ["nueva","asignada","en_sitio","resuelta"];
+  const curIdx = order.indexOf(inc.status);
+  wrap.innerHTML = `
+    <div class="track-card">
+      <div class="track-top"><span class="track-dot"></span><b>${inc.type} - en curso</b></div>
+      <div class="timeline">
+        ${steps.map((s,i)=>{
+          const cls = i<curIdx ? "done" : i===curIdx ? "now" : "";
+          const ic = i<curIdx ? "fa-check" : i===curIdx ? "fa-circle-dot" : "fa-circle";
+          return `<div class="tl-step ${cls}"><div class="tl-dot"><i class="fa-solid ${ic}" style="font-size:${i===curIdx?'8px':'7px'}"></i></div><div class="tl-txt"><b>${s.label}</b><span>${s.sub}</span></div></div>`;
+        }).join("")}
+      </div>
+      ${op ? `<div class="op-card"><img src="${op.img}" onerror="imgFallback(this,'op${op.id}')"><div><b>${op.name}</b><span>${op.role} - ${op.rating} <i class="fa-solid fa-star" style="color:var(--gold-light)"></i></span></div><div class="op-eta"><b>${inc.eta>0?inc.eta:0} min</b><span>ETA</span></div></div>` : ""}
+      <div class="track-actions">
+        <button class="btn-quick" id="uPingBtn"><i class="fa-solid fa-comment-dots"></i> Avisar "sigo bien"</button>
+        ${inc.status!=="resuelta" ? `<button class="btn-quick" id="uCancelBtn"><i class="fa-solid fa-xmark"></i> Falsa alarma</button>` : ""}
+      </div>
+    </div>`;
+  const ping = document.getElementById("uPingBtn"); if(ping) ping.onclick = ()=>toast("ok","Mensaje enviado al monitorista","\"Sigo bien\" - se registra en el incidente");
+  const cancel = document.getElementById("uCancelBtn"); if(cancel) cancel.onclick = ()=>{ state.liveIncident=null; renderAll(); toast("info","Alerta cancelada","Se notifico al centro de control como falsa alarma"); };
+}
+
+function renderUserHistory(){
+  document.getElementById("uHistList").innerHTML = state.uHistory.map(h=>`
+    <div class="hist-card">
+      <div class="hist-ic ${h.ok?'ok':''}"><i class="fa-solid ${h.icon}"></i></div>
+      <div class="hist-b"><b>${h.name}</b><span>${h.meta}</span></div>
+      ${h.ok? `<span class="hist-pill">${h.time}</span>` : `<span class="hist-pill" style="background:var(--gold-faint);color:var(--gold-light)">${h.time}</span>`}
+    </div>`).join("");
+}
+
+/* ================= operative ================= */
+document.querySelectorAll("#opBottomNav .nav-item").forEach(n=>n.addEventListener("click", function(){
+  if(this.disabled) return;
+  document.querySelectorAll("#surface-op .screen").forEach(s=>s.classList.toggle("active", s.id==="scr-o-"+this.dataset.scr));
+  document.querySelectorAll("#opBottomNav .nav-item").forEach(x=>x.classList.toggle("active", x===this));
+}));
+
+document.getElementById("opBigToggle").addEventListener("click", function(){
+  state.opOnline = !state.opOnline;
+  this.classList.toggle("on", state.opOnline);
+  const miguel = ROSTER.find(r=>r.id===1);
+  miguel.status = state.opOnline ? "disponible" : "offline";
+  miguel.updated = "hace 2s";
+  toast(state.opOnline?"ok":"info", state.opOnline ? "En servicio" : "Fuera de servicio", state.opOnline ? "El centro de control ya te ve disponible" : "Se detiene el reporte de ubicacion");
+  renderAll();
+});
+
+document.getElementById("opAcceptBtn").addEventListener("click", ()=>{
+  if(!state.liveIncident) return;
+  state.liveIncident.status = "asignada";
+  state.liveIncident.opId = 1;
+  document.getElementById("opAlertOverlay").classList.remove("show");
+  document.getElementById("opNavActivo").disabled = false;
+  document.querySelectorAll("#opBottomNav .nav-item").forEach(x=>x.classList.toggle("active", x.dataset.scr==="activo"));
+  document.querySelectorAll("#surface-op .screen").forEach(s=>s.classList.toggle("active", s.id==="scr-o-activo"));
+  toast("ok","Servicio aceptado","Reporte de ubicacion en modo activo hasta cerrar el servicio");
+  renderAll();
+});
+document.getElementById("opRejectBtn").addEventListener("click", ()=>{
+  document.getElementById("opAlertOverlay").classList.remove("show");
+  toast("info","Alerta rechazada","El centro de control buscara otro operativo disponible");
+});
+document.getElementById("opArriveBtn").addEventListener("click", function(){
+  if(!state.liveIncident) return;
+  state.liveIncident.status = "en_sitio";
+  this.style.display="none";
+  document.getElementById("opResolveBtn").style.display="block";
+  toast("ok","Llegada confirmada","Se registro tu llegada al punto de la alerta");
+  renderAll();
+});
+document.getElementById("opResolveBtn").addEventListener("click", ()=>{
+  if(!state.liveIncident) return;
+  state.liveIncident.status = "resuelta";
+  renderAll();
+  toast("ok","Servicio resuelto","El incidente se cierra y queda en el historial");
+  setTimeout(()=>{
+    state.opHistory.unshift({name:state.liveIncident.type+" - Renata Alvarez", meta:"Resuelto en 7 min", time:"Ahora"});
+    state.uHistory.unshift({icon:"fa-triangle-exclamation", ok:true, name:"Boton de panico", meta:"Resuelto - 7 min de respuesta", time:"Ahora"});
+    state.resolvedToday += 1;
+    state.liveIncident = null;
+    document.getElementById("opNavActivo").disabled = true;
+    document.getElementById("opArriveBtn").style.display="block";
+    document.getElementById("opResolveBtn").style.display="none";
+    document.querySelectorAll("#opBottomNav .nav-item").forEach(x=>x.classList.toggle("active", x.dataset.scr==="home"));
+    document.querySelectorAll("#surface-op .screen").forEach(s=>s.classList.toggle("active", s.id==="scr-o-home"));
+    renderAll();
+  }, 1800);
+});
+
+function renderOpStatus(){
+  document.getElementById("opStatusLabel").textContent = state.opOnline ? "En servicio" : "Fuera de servicio";
+  const note = document.getElementById("opModeNote");
+  note.innerHTML = state.opOnline
+    ? `<i class="fa-solid fa-circle-info"></i><span>Modo activo: reporte cada 8-10s mientras hay un servicio asignado. En reposo, intervalos adaptativos cada 45s para cuidar la bateria.</span>`
+    : `<i class="fa-solid fa-circle-info"></i><span>Fuera de servicio: sin reporte de ubicacion.</span>`;
+}
+
+function renderOpAlert(){
+  const overlay = document.getElementById("opAlertOverlay");
+  const inc = state.liveIncident;
+  if(inc && inc.status==="nueva" && state.opOnline){
+    overlay.classList.add("show");
+  } else {
+    overlay.classList.remove("show");
+  }
+}
+
+function renderOpHistory(){
+  document.getElementById("opHistList").innerHTML = state.opHistory.map(h=>`
+    <div class="hist-card"><div class="hist-ic ok"><i class="fa-solid fa-check"></i></div><div class="hist-b"><b>${h.name}</b><span>${h.meta}</span></div><span class="hist-pill">${h.time}</span></div>`).join("");
+}
+
+function renderOpNavMap(){
+  document.getElementById("opNavMap").innerHTML = buildMapHtml([
+    {x:INCIDENT_PIN.mapX, y:INCIDENT_PIN.mapY, cls:"alert", icon:"fa-triangle-exclamation", label:""},
+    {x:ROSTER[0].mapX, y:ROSTER[0].mapY, cls:"ok", icon:"fa-car", label:""},
+  ]);
+}
+
+/* ================= control center ================= */
+function buildMapHtml(pins){
+  return pins.map(p=>`<div class="map-pin ${p.cls}" style="left:${p.x}%;top:${p.y}%"><i class="fa-solid ${p.icon}"></i>${p.label?`<span class="map-label">${p.label}</span>`:""}</div>`).join("");
+}
+function renderMap(){
+  const pins = ROSTER.map(r=>({
+    x:r.mapX, y:r.mapY,
+    cls: r.status==="disponible" ? "ok" : r.status==="en_servicio" ? "busy" : "off",
+    icon: r.role==="Ambulancia" ? "fa-truck-medical" : r.role==="Grua" ? "fa-truck-pickup" : r.role==="Cerrajeria" ? "fa-key" : "fa-user-shield",
+    label: r.name.split(" ")[0],
+  }));
+  if(state.liveIncident && state.liveIncident.status!=="resuelta"){
+    pins.push({x:INCIDENT_PIN.mapX, y:INCIDENT_PIN.mapY, cls:"alert", icon:"fa-triangle-exclamation", label:"Alerta"});
+  }
+  document.getElementById("mapCanvas").innerHTML = buildMapHtml(pins);
+}
+
+function bestCandidate(){
+  const cands = ROSTER.filter(r=>r.status==="disponible");
+  if(!cands.length) return null;
+  return cands.slice().sort((a,b)=>(a.distanceKm*10-a.battery*0.2)-(b.distanceKm*10-b.battery*0.2))[0];
+}
+
+function renderIncQueue(){
+  const wrap = document.getElementById("incQueue");
+  const inc = state.liveIncident;
+  let html = "";
+  if(inc && inc.status!=="resuelta"){
+    const elapsedS = Math.max(0, Math.floor((Date.now()-inc.started)/1000));
+    const assigned = inc.opId ? ROSTER.find(r=>r.id===inc.opId) : null;
+    const reco = !assigned ? bestCandidate() : null;
+    html += `
+    <div class="inc-card">
+      <div class="inc-top"><b>${inc.type} - Renata Alvarez</b><span class="inc-timer"><i class="fa-solid fa-stopwatch"></i> ${elapsedS}s</span></div>
+      <div class="inc-meta">Zona Roma, CDMX - Estado: ${assigned ? "Asignado a "+assigned.name : "Sin asignar"}</div>
+      ${!assigned && reco ? `
+        <div class="reco-box">
+          <div class="reco-tag"><i class="fa-solid fa-sparkles"></i> RECOMENDADO POR IA</div>
+          <div class="reco-name">${reco.name} - ${reco.distanceKm} km</div>
+          <div class="reco-why">Mas cercano disponible y con ${reco.battery}% de bateria, mejor opcion que forzar a un operativo lejano o con poca carga.</div>
+        </div>
+        <div class="inc-actions"><button class="btn-mini" style="flex:1" id="ccAssignBtn">Asignar a ${reco.name}</button></div>
+      ` : assigned ? `<div class="inc-actions"><span class="status-pill busy" style="padding:6px 12px">En atencion - ${inc.status==="asignada"?"en camino":inc.status==="en_sitio"?"en sitio":"activo"}</span></div>` : ""}
+    </div>`;
+  } else {
+    html += `<div class="inc-empty"><i class="fa-solid fa-shield-halved"></i>Sin alertas activas en este momento</div>`;
+  }
+  html += `
+    <div class="resolved-row"><i class="fa-solid fa-check"></i><div><b>Cerrajeria de emergencia - Palacios</b><span>Resuelto por Roberto Paz</span></div><span class="rr-time">10:14</span></div>
+    <div class="resolved-row"><i class="fa-solid fa-check"></i><div><b>Ambulancia privada - Reforma</b><span>Resuelto por Laura Jimenez</span></div><span class="rr-time">08:52</span></div>`;
+  wrap.innerHTML = html;
+  const assignBtn = document.getElementById("ccAssignBtn");
+  if(assignBtn) assignBtn.addEventListener("click", ()=>{
+    const reco = bestCandidate();
+    if(!reco || !state.liveIncident) return;
+    state.liveIncident.status = "asignada";
+    state.liveIncident.opId = reco.id;
+    reco.status = "en_servicio";
+    toast("ok","Operativo asignado", reco.name+" fue asignado manualmente desde el centro de control");
+    renderAll();
+  });
+}
+
+function renderRoster(){
+  document.getElementById("rosterTbody").innerHTML = ROSTER.map(r=>{
+    const pill = r.status==="disponible" ? '<span class="status-pill ok">Disponible</span>' : r.status==="en_servicio" ? '<span class="status-pill busy">En servicio</span>' : '<span class="status-pill off">Fuera de linea</span>';
+    const assign = (state.liveIncident && state.liveIncident.opId===r.id && state.liveIncident.status!=="resuelta") ? "Alerta activa" : r.status==="en_servicio" ? "Servicio en curso" : "-";
+    return `<tr>
+      <td class="who"><img src="${r.img}" onerror="imgFallback(this,'op${r.id}')">${r.name}</td>
+      <td>${r.role}</td>
+      <td>${pill}</td>
+      <td><div class="mini-batt"><div class="bar"><div class="fill" style="width:${r.battery}%"></div></div><span>${r.battery}%</span></div></td>
+      <td>${r.updated}</td>
+      <td>${assign}</td>
+    </tr>`;
+  }).join("");
+}
+
+function renderKpis(){
+  document.getElementById("kpiActive").textContent = (state.liveIncident && state.liveIncident.status!=="resuelta") ? "1" : "0";
+  document.getElementById("kpiOnline").textContent = ROSTER.filter(r=>r.status!=="offline").length;
+  document.getElementById("kpiResolved").textContent = state.resolvedToday;
+}
+
+/* ================= tick: elapsed timers + eta ================= */
+setInterval(()=>{
+  if(state.liveIncident && state.liveIncident.status!=="resuelta"){
+    if(state.liveIncident.eta>0 && (state.liveIncident.status==="asignada")) state.liveIncident.eta = Math.max(0, state.liveIncident.eta - 0.34);
+    if(state.surface==="cc") renderIncQueue();
+    if(state.surface==="user") renderUserTracking();
+  }
+}, 1000);
+
+/* ================= render all ================= */
+function renderAll(){
+  renderUserTracking();
+  renderUserHistory();
+  renderOpStatus();
+  renderOpAlert();
+  renderOpHistory();
+  renderOpNavMap();
+  renderMap();
+  renderIncQueue();
+  renderRoster();
+  renderKpis();
+}
+
+/* ================= restart ================= */
+function restartDemo(){
+  state.liveIncident = null;
+  state.opOnline = false;
+  ROSTER[0].status = "offline";
+  document.getElementById("opBigToggle").classList.remove("on");
+  document.getElementById("opNavActivo").disabled = true;
+  document.getElementById("opArriveBtn").style.display="block";
+  document.getElementById("opResolveBtn").style.display="none";
+  uGoScreen("home");
+  document.querySelectorAll("#opBottomNav .nav-item").forEach(x=>x.classList.toggle("active", x.dataset.scr==="home"));
+  document.querySelectorAll("#surface-op .screen").forEach(s=>s.classList.toggle("active", s.id==="scr-o-home"));
+  renderAll();
+  toast("ok","Demo reiniciada","Listo para simular el flujo de nuevo");
+}
+document.getElementById("restartDemo").addEventListener("click", restartDemo);
+document.getElementById("restartDemo2").addEventListener("click", restartDemo);
+
+/* ================= init ================= */
+renderQuick();
+renderServices();
+renderAll();
+</script>
+</body>
+</html>
