@@ -1,0 +1,877 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Villa Serena · Reservas + Panel CRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+:root{
+  --gold:#c9932c;
+  --gold-dark:#a8781f;
+  --gold-light:#f3e4c3;
+  --cream:#fbf7ef;
+  --cream-2:#f5efe0;
+  --ink:#2a2419;
+  --ink-soft:#6b6250;
+  --ink-mute:#948c78;
+  --line:#e6ddc9;
+  --white:#ffffff;
+  --radius-sm:8px;
+  --radius:14px;
+  --radius-lg:22px;
+  --shadow-sm:0 2px 8px rgba(42,36,25,0.06);
+  --shadow:0 12px 32px rgba(42,36,25,0.10);
+  --shadow-lg:0 24px 60px rgba(42,36,25,0.16);
+  --ch-airbnb:#2a78d6;
+  --ch-hl:#1baf7a;
+  --ch-sh:#eda100;
+  --ch-direct:#008300;
+  --pay-deposit:#4a3aa7;
+  --pay-balance:#e34948;
+  --pay-bond:#e87ba4;
+  --good:#0ca30c;
+  --warn:#c98500;
+  --crit:#d03b3b;
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:'Nunito',sans-serif; background:var(--cream); color:var(--ink); line-height:1.5; overflow-x:hidden;}
+img{max-width:100%; display:block;}
+a{color:inherit; text-decoration:none;}
+button{font-family:inherit; cursor:pointer; border:none;}
+.container{max-width:1200px; margin:0 auto; padding:0 24px;}
+.reveal{opacity:0; transform:translateY(24px); transition:opacity .7s ease, transform .7s ease;}
+.reveal.in{opacity:1; transform:translateY(0);}
+
+/* ===== MODE SWITCH ===== */
+.mode-switch{position:fixed; top:14px; right:16px; z-index:900; background:var(--white); border-radius:999px; padding:4px; box-shadow:var(--shadow); display:flex; gap:2px;}
+.mode-switch button{padding:8px 16px; border-radius:999px; font-weight:700; font-size:.82rem; color:var(--ink-soft); background:transparent; transition:all .2s;}
+.mode-switch button.active{background:var(--ink); color:#fff;}
+.mode-switch button i{margin-right:6px;}
+
+body.mode-crm .site-view{display:none;}
+body:not(.mode-crm) .crm-view{display:none;}
+
+/* ===== SITE NAV ===== */
+.site-nav{position:sticky; top:0; z-index:100; background:rgba(251,247,239,0.92); backdrop-filter:blur(10px); border-bottom:1px solid var(--line);}
+.site-nav-inner{display:flex; align-items:center; justify-content:space-between; padding:16px 24px; max-width:1200px; margin:0 auto;}
+.logo{display:flex; align-items:center; gap:10px; font-weight:900; font-size:1.25rem; letter-spacing:.2px;}
+.logo i{color:var(--gold);}
+.nav-links{display:flex; gap:30px; font-weight:700; font-size:.92rem;}
+.nav-links a{color:var(--ink-soft); transition:color .2s;}
+.nav-links a:hover{color:var(--gold-dark);}
+.nav-right{display:flex; align-items:center; gap:16px;}
+.lang-switch{display:flex; gap:4px; background:var(--cream-2); border-radius:999px; padding:3px;}
+.lang-switch button{padding:6px 11px; border-radius:999px; font-weight:800; font-size:.72rem; color:var(--ink-mute); background:transparent;}
+.lang-switch button.active{background:var(--ink); color:#fff;}
+.btn{display:inline-flex; align-items:center; gap:8px; padding:12px 22px; border-radius:999px; font-weight:800; font-size:.88rem; transition:all .2s;}
+.btn-gold{background:var(--gold); color:#fff; box-shadow:0 8px 20px rgba(201,147,44,0.35);}
+.btn-gold:hover{background:var(--gold-dark); transform:translateY(-1px);}
+.btn-ghost{background:var(--white); color:var(--ink); border:1px solid var(--line);}
+.burger{display:none; font-size:1.3rem;}
+
+/* ===== HERO ===== */
+.hero{position:relative; min-height:88vh; display:flex; align-items:flex-end; background:url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1800&q=80') center/cover no-repeat;}
+.hero::after{content:''; position:absolute; inset:0; background:linear-gradient(180deg, rgba(20,16,8,0.15) 0%, rgba(20,16,8,0.72) 100%);}
+.hero-inner{position:relative; z-index:2; padding:0 24px 64px; max-width:1200px; margin:0 auto; width:100%; color:#fff;}
+.hero-tag{display:inline-flex; align-items:center; gap:8px; background:rgba(255,255,255,0.14); border:1px solid rgba(255,255,255,0.25); padding:7px 14px; border-radius:999px; font-size:.78rem; font-weight:700; margin-bottom:18px;}
+.hero h1{font-size:clamp(2.2rem,5vw,3.8rem); font-weight:900; line-height:1.06; max-width:780px; margin-bottom:16px;}
+.hero p{font-size:1.1rem; max-width:560px; color:rgba(255,255,255,0.88); margin-bottom:32px;}
+.search-widget{background:#fff; border-radius:var(--radius-lg); padding:18px; display:grid; grid-template-columns:1fr 1fr 1fr auto; gap:12px; box-shadow:var(--shadow-lg); max-width:820px;}
+.search-field{padding:10px 4px; border-right:1px solid var(--line);}
+.search-field:last-of-type{border-right:none;}
+.search-field label{display:block; font-size:.72rem; font-weight:800; color:var(--ink-mute); text-transform:uppercase; letter-spacing:.4px; margin-bottom:4px;}
+.search-field input{border:none; font-family:inherit; font-size:.95rem; font-weight:700; color:var(--ink); width:100%; background:transparent;}
+.search-field input:focus{outline:none;}
+.search-widget .btn-gold{padding:14px 26px; white-space:nowrap;}
+
+/* ===== TRUST STRIP ===== */
+.trust-strip{background:var(--ink); color:#fff; padding:22px 0;}
+.trust-row{display:flex; justify-content:center; gap:56px; flex-wrap:wrap; font-weight:700; font-size:.92rem;}
+.trust-row i{color:var(--gold); margin-right:8px;}
+
+/* ===== SECTION HEAD ===== */
+.section{padding:88px 0;}
+.section-head{max-width:640px; margin:0 auto 48px; text-align:center;}
+.eyebrow{color:var(--gold-dark); font-weight:800; font-size:.8rem; letter-spacing:1.2px; text-transform:uppercase; margin-bottom:10px;}
+.section-head h2{font-size:clamp(1.7rem,3.4vw,2.5rem); font-weight:900; margin-bottom:12px;}
+.section-head p{color:var(--ink-soft); font-size:1.02rem;}
+
+/* ===== GALLERY / AMENITIES ===== */
+.gallery-grid{display:grid; grid-template-columns:1.4fr 1fr 1fr; grid-template-rows:1fr 1fr; gap:14px; height:520px; margin-bottom:44px;}
+.gallery-grid img{width:100%; height:100%; object-fit:cover; border-radius:var(--radius);}
+.gallery-grid .g1{grid-row:1/3;}
+.amenities-row{display:grid; grid-template-columns:repeat(6,1fr); gap:14px;}
+.amenity-card{background:var(--white); border:1px solid var(--line); border-radius:var(--radius); padding:20px 12px; text-align:center; transition:transform .2s, box-shadow .2s;}
+.amenity-card:hover{transform:translateY(-4px); box-shadow:var(--shadow-sm);}
+.amenity-card i{font-size:1.5rem; color:var(--gold); margin-bottom:10px;}
+.amenity-card span{display:block; font-weight:700; font-size:.8rem; color:var(--ink-soft);}
+
+/* ===== AVAILABILITY / SYNC ===== */
+.sync-row{display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:36px;}
+.sync-card{background:var(--white); border:1px solid var(--line); border-radius:var(--radius); padding:18px 20px; display:flex; align-items:center; gap:14px;}
+.sync-dot{width:10px; height:10px; border-radius:50%; background:var(--good); flex-shrink:0; box-shadow:0 0 0 4px rgba(12,163,12,0.14);}
+.sync-card b{display:block; font-size:.92rem;}
+.sync-card small{color:var(--ink-mute); font-size:.76rem;}
+.cal-legend{display:flex; gap:18px; flex-wrap:wrap; justify-content:center; margin-bottom:22px; font-size:.8rem; font-weight:700; color:var(--ink-soft);}
+.cal-legend span{display:inline-flex; align-items:center; gap:7px;}
+.cal-legend i{width:11px; height:11px; border-radius:3px; display:inline-block;}
+.calendar{background:var(--white); border:1px solid var(--line); border-radius:var(--radius-lg); padding:26px; box-shadow:var(--shadow-sm);}
+.cal-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;}
+.cal-head h4{font-size:1.15rem; font-weight:900;}
+.cal-nav{display:flex; gap:8px;}
+.cal-nav button{width:34px; height:34px; border-radius:50%; background:var(--cream-2); color:var(--ink);}
+.cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:8px;}
+.cal-dow{text-align:center; font-size:.7rem; font-weight:800; color:var(--ink-mute); text-transform:uppercase; padding-bottom:6px;}
+.cal-day{aspect-ratio:1; border-radius:9px; display:flex; flex-direction:column; align-items:center; justify-content:center; font-weight:800; font-size:.85rem; color:var(--ink); background:var(--cream-2); position:relative;}
+.cal-day.empty{background:transparent;}
+.cal-day.available{background:#f2f8ef; color:#3a6b2e;}
+.cal-day.airbnb{background:var(--ch-airbnb); color:#fff;}
+.cal-day.hl{background:var(--ch-hl); color:#fff;}
+.cal-day.sh{background:var(--ch-sh); color:#fff;}
+.cal-day.direct{background:var(--ch-direct); color:#fff;}
+.cal-day .dot{position:absolute; bottom:5px; width:4px; height:4px; border-radius:50%; background:currentColor; opacity:.7;}
+
+/* ===== BOOKING FLOW ===== */
+.booking-wrap{display:grid; grid-template-columns:1fr 400px; gap:36px; align-items:start;}
+.stepper{display:flex; gap:10px; margin-bottom:28px;}
+.step{flex:1; text-align:center; padding:12px 8px; border-radius:var(--radius-sm); background:var(--cream-2); font-weight:800; font-size:.8rem; color:var(--ink-mute); position:relative;}
+.step.done{background:var(--gold-light); color:var(--gold-dark);}
+.step.active{background:var(--ink); color:#fff;}
+.form-card{background:var(--white); border:1px solid var(--line); border-radius:var(--radius-lg); padding:30px;}
+.form-card h4{font-size:1.15rem; font-weight:900; margin-bottom:20px;}
+.form-grid{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px;}
+.field label{display:block; font-size:.76rem; font-weight:800; color:var(--ink-mute); margin-bottom:6px; text-transform:uppercase; letter-spacing:.3px;}
+.field input{width:100%; padding:12px 14px; border:1px solid var(--line); border-radius:var(--radius-sm); font-family:inherit; font-size:.92rem; background:var(--cream);}
+.field input:focus{outline:2px solid var(--gold); outline-offset:1px;}
+.consent-box{background:var(--cream-2); border-radius:var(--radius-sm); padding:16px 18px; margin-bottom:12px; display:flex; gap:12px; align-items:flex-start;}
+.consent-box input{margin-top:3px; width:18px; height:18px; accent-color:var(--gold);}
+.consent-box p{font-size:.83rem; color:var(--ink-soft); line-height:1.45;}
+.consent-box.optional{background:#fbf3e4; border:1px dashed var(--gold);}
+.consent-box .tag{display:inline-block; font-size:.66rem; font-weight:800; color:var(--gold-dark); text-transform:uppercase; margin-bottom:4px; letter-spacing:.4px;}
+
+.cart-card{background:var(--ink); color:#fff; border-radius:var(--radius-lg); padding:28px; position:sticky; top:100px;}
+.cart-card h4{font-size:1.05rem; font-weight:900; margin-bottom:4px;}
+.cart-card .cart-sub{color:rgba(255,255,255,0.6); font-size:.82rem; margin-bottom:22px;}
+.cart-line{display:flex; justify-content:space-between; align-items:flex-start; padding:14px 0; border-bottom:1px solid rgba(255,255,255,0.12);}
+.cart-line .lbl b{display:block; font-size:.9rem; font-weight:800;}
+.cart-line .lbl small{color:rgba(255,255,255,0.55); font-size:.74rem;}
+.cart-line .amt{font-weight:900; font-size:.98rem; white-space:nowrap; margin-left:10px;}
+.cart-total{display:flex; justify-content:space-between; padding-top:18px; font-size:1.2rem; font-weight:900;}
+.cart-card .btn-gold{width:100%; justify-content:center; margin-top:22px; padding:15px;}
+.pay-icons{display:flex; gap:10px; margin-top:14px; opacity:.75; font-size:1.3rem;}
+
+/* ===== TESTIMONIALS ===== */
+.test-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:22px;}
+.test-card{background:var(--white); border:1px solid var(--line); border-radius:var(--radius); padding:26px;}
+.test-stars{color:var(--gold); margin-bottom:12px; font-size:.85rem;}
+.test-card p{font-size:.9rem; color:var(--ink-soft); margin-bottom:18px; line-height:1.55;}
+.test-who{display:flex; align-items:center; gap:12px;}
+.test-who img{width:42px; height:42px; border-radius:50%; object-fit:cover;}
+.test-who b{display:block; font-size:.88rem;}
+.test-who small{color:var(--ink-mute); font-size:.76rem;}
+
+/* ===== FOOTER ===== */
+.site-footer{background:var(--ink); color:rgba(255,255,255,0.7); padding:56px 0 26px;}
+.footer-grid{display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:36px; margin-bottom:36px;}
+.footer-grid h5{color:#fff; font-weight:800; font-size:.85rem; margin-bottom:14px; text-transform:uppercase; letter-spacing:.4px;}
+.footer-grid a{display:block; color:rgba(255,255,255,0.6); font-size:.86rem; margin-bottom:9px;}
+.footer-bottom{border-top:1px solid rgba(255,255,255,0.12); padding-top:20px; display:flex; justify-content:space-between; font-size:.78rem; flex-wrap:wrap; gap:10px;}
+
+/* ===================== CRM ===================== */
+.crm-shell{display:grid; grid-template-columns:250px 1fr; min-height:100vh;}
+.crm-sidebar{background:var(--ink); color:#fff; padding:26px 18px; position:sticky; top:0; height:100vh; overflow-y:auto;}
+.crm-brand{display:flex; align-items:center; gap:10px; font-weight:900; font-size:1.1rem; padding:0 8px 26px;}
+.crm-brand i{color:var(--gold);}
+.crm-nav-label{font-size:.68rem; font-weight:800; color:rgba(255,255,255,0.35); text-transform:uppercase; letter-spacing:.6px; margin:18px 12px 8px;}
+.crm-nav-item{display:flex; align-items:center; gap:12px; padding:11px 12px; border-radius:10px; font-weight:700; font-size:.87rem; color:rgba(255,255,255,0.72); margin-bottom:2px; transition:all .15s;}
+.crm-nav-item i{width:18px; text-align:center; opacity:.85;}
+.crm-nav-item:hover{background:rgba(255,255,255,0.06); color:#fff;}
+.crm-nav-item.active{background:var(--gold); color:#1c1305;}
+.crm-main{padding:30px 34px; max-width:1400px;}
+.crm-topbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:28px;}
+.crm-topbar h2{font-size:1.5rem; font-weight:900;}
+.crm-topbar p{color:var(--ink-soft); font-size:.88rem;}
+.crm-panel{display:none;}
+.crm-panel.active{display:block;}
+
+.stat-row{display:grid; grid-template-columns:repeat(4,1fr); gap:18px; margin-bottom:26px;}
+.stat-tile{background:var(--white); border:1px solid var(--line); border-radius:var(--radius); padding:20px 22px; box-shadow:var(--shadow-sm);}
+.stat-tile .stat-top{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px;}
+.stat-tile i{color:var(--gold); font-size:1.1rem;}
+.stat-tile .stat-val{font-size:1.9rem; font-weight:900; line-height:1;}
+.stat-tile .stat-lbl{color:var(--ink-mute); font-size:.78rem; font-weight:700; margin-top:6px;}
+.stat-tile .stat-delta{font-size:.74rem; font-weight:800; margin-top:8px;}
+.stat-tile .stat-delta.good{color:var(--good);}
+.stat-tile .stat-delta.warn{color:var(--warn);}
+
+.crm-grid-2{display:grid; grid-template-columns:1.4fr 1fr; gap:20px; margin-bottom:20px;}
+.card{background:var(--white); border:1px solid var(--line); border-radius:var(--radius); padding:22px; box-shadow:var(--shadow-sm);}
+.card-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;}
+.card-head h4{font-size:.98rem; font-weight:900;}
+.card-head a{font-size:.78rem; font-weight:800; color:var(--gold-dark);}
+
+.arrival-row{display:flex; align-items:center; gap:12px; padding:11px 0; border-bottom:1px solid var(--line);}
+.arrival-row:last-child{border-bottom:none;}
+.arrival-row .av{width:36px; height:36px; border-radius:50%; object-fit:cover;}
+.arrival-row .info b{display:block; font-size:.86rem;}
+.arrival-row .info small{color:var(--ink-mute); font-size:.74rem;}
+.badge{display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:999px; font-size:.68rem; font-weight:800; text-transform:uppercase; letter-spacing:.3px;}
+.badge.airbnb{background:rgba(42,120,214,0.12); color:var(--ch-airbnb);}
+.badge.hl{background:rgba(27,175,122,0.14); color:var(--ch-hl);}
+.badge.sh{background:rgba(237,161,0,0.16); color:#9a6c00;}
+.badge.direct{background:rgba(0,131,0,0.12); color:var(--ch-direct);}
+.badge.good{background:rgba(12,163,12,0.12); color:var(--good);}
+.badge.warn{background:rgba(201,133,0,0.14); color:var(--warn);}
+.badge.crit{background:rgba(208,59,59,0.12); color:var(--crit);}
+
+.chan-sync{display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--line); font-size:.84rem;}
+.chan-sync:last-child{border-bottom:none;}
+.chan-sync .l{display:flex; align-items:center; gap:10px; font-weight:800;}
+.chan-sync .l i{width:9px; height:9px; border-radius:50%; display:inline-block;}
+.chan-sync button{font-size:.72rem; font-weight:800; color:var(--gold-dark); background:var(--cream-2); padding:6px 10px; border-radius:999px;}
+
+.bar-chart .bar-row{margin-bottom:14px;}
+.bar-chart .bar-row .bar-label{display:flex; justify-content:space-between; font-size:.8rem; font-weight:800; margin-bottom:6px;}
+.bar-track{background:var(--cream-2); border-radius:999px; height:12px; overflow:hidden;}
+.bar-fill{height:100%; border-radius:999px;}
+
+.donut-wrap{display:flex; align-items:center; gap:22px;}
+.donut{width:130px; height:130px; border-radius:50%; flex-shrink:0;}
+.donut-legend{flex:1; font-size:.82rem;}
+.donut-legend .dl-row{display:flex; align-items:center; justify-content:space-between; margin-bottom:9px;}
+.donut-legend .dl-row .l{display:flex; align-items:center; gap:8px; font-weight:700;}
+.donut-legend i{width:10px; height:10px; border-radius:3px; display:inline-block;}
+
+table.crm-table{width:100%; border-collapse:collapse; font-size:.85rem;}
+table.crm-table th{text-align:left; padding:10px 12px; color:var(--ink-mute); font-size:.7rem; text-transform:uppercase; letter-spacing:.4px; border-bottom:2px solid var(--line);}
+table.crm-table td{padding:13px 12px; border-bottom:1px solid var(--line);}
+table.crm-table tr.clickable{cursor:pointer; transition:background .15s;}
+table.crm-table tr.clickable:hover{background:var(--cream-2);}
+.filter-row{display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap;}
+.filter-row select, .filter-row input{padding:9px 14px; border:1px solid var(--line); border-radius:var(--radius-sm); font-family:inherit; font-size:.82rem; background:var(--white);}
+
+.crm-two-col{display:grid; grid-template-columns:1fr 380px; gap:20px; align-items:start;}
+.guest-detail{position:sticky; top:20px;}
+.guest-detail .gd-head{display:flex; align-items:center; gap:14px; margin-bottom:18px;}
+.guest-detail .gd-head img{width:52px; height:52px; border-radius:50%; object-fit:cover;}
+.guest-detail .gd-head b{font-size:1.05rem;}
+.guest-detail .gd-head small{color:var(--ink-mute); font-size:.78rem;}
+.tag-row{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px;}
+.tag-pill{padding:5px 11px; border-radius:999px; font-size:.72rem; font-weight:800;}
+.tag-pill.high{background:rgba(208,59,59,0.1); color:var(--crit);}
+.tag-pill.med{background:rgba(201,133,0,0.12); color:var(--warn);}
+.tag-pill.low{background:rgba(137,135,129,0.14); color:var(--ink-mute);}
+.tag-pill.neutral{background:var(--cream-2); color:var(--ink-soft);}
+.timeline{position:relative; padding-left:24px;}
+.timeline::before{content:''; position:absolute; left:6px; top:4px; bottom:4px; width:2px; background:var(--line);}
+.tl-item{position:relative; padding-bottom:20px;}
+.tl-item::before{content:''; position:absolute; left:-24px; top:2px; width:14px; height:14px; border-radius:50%; background:var(--good); border:3px solid var(--white); box-shadow:0 0 0 1px var(--line);}
+.tl-item.pending::before{background:var(--line);}
+.tl-item b{display:block; font-size:.84rem;}
+.tl-item small{color:var(--ink-mute); font-size:.74rem;}
+.consent-row{display:flex; justify-content:space-between; align-items:center; padding:11px 0; border-top:1px solid var(--line); font-size:.83rem;}
+.consent-row:first-of-type{border-top:none;}
+
+.roadmap-card{background:linear-gradient(135deg, #1c1305 0%, #2a2419 100%); color:#fff; border-radius:var(--radius-lg); padding:40px; position:relative; overflow:hidden;}
+.roadmap-card .rm-tag{display:inline-flex; align-items:center; gap:8px; background:rgba(201,147,44,0.18); border:1px solid rgba(201,147,44,0.4); color:var(--gold-light); padding:6px 14px; border-radius:999px; font-size:.72rem; font-weight:800; margin-bottom:18px;}
+.roadmap-card h3{font-size:1.6rem; font-weight:900; margin-bottom:10px;}
+.roadmap-card p.rm-desc{color:rgba(255,255,255,0.65); max-width:560px; margin-bottom:28px; font-size:.92rem;}
+.rm-features{display:grid; grid-template-columns:repeat(3,1fr); gap:16px;}
+.rm-feature{background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:var(--radius); padding:18px;}
+.rm-feature i{color:var(--gold); font-size:1.2rem; margin-bottom:10px;}
+.rm-feature b{display:block; font-size:.86rem; margin-bottom:5px;}
+.rm-feature span{font-size:.78rem; color:rgba(255,255,255,0.55);}
+.rm-cta{margin-top:28px; display:inline-flex; align-items:center; gap:9px; padding:12px 22px; border-radius:999px; background:var(--gold); color:#1c1305; font-weight:800; font-size:.85rem;}
+
+@media (max-width:900px){
+  .nav-links{display:none;}
+  .burger{display:block;}
+  .search-widget{grid-template-columns:1fr 1fr; }
+  .search-widget .btn-gold{grid-column:1/3;}
+  .gallery-grid{grid-template-columns:1fr 1fr; grid-template-rows:auto; height:auto;}
+  .gallery-grid .g1{grid-row:auto; grid-column:1/3; height:260px;}
+  .gallery-grid img{height:180px;}
+  .amenities-row{grid-template-columns:repeat(3,1fr);}
+  .booking-wrap{grid-template-columns:1fr;}
+  .cart-card{position:relative; top:0;}
+  .test-grid{grid-template-columns:1fr;}
+  .footer-grid{grid-template-columns:1fr 1fr;}
+  .crm-shell{grid-template-columns:1fr;}
+  .crm-sidebar{position:relative; height:auto; display:flex; overflow-x:auto; gap:6px; padding:14px;}
+  .crm-brand{display:none;}
+  .crm-nav-label{display:none;}
+  .crm-nav-item{white-space:nowrap; margin-bottom:0;}
+  .stat-row{grid-template-columns:1fr 1fr;}
+  .crm-grid-2{grid-template-columns:1fr;}
+  .crm-two-col{grid-template-columns:1fr;}
+  .rm-features{grid-template-columns:1fr;}
+  .sync-row{grid-template-columns:1fr;}
+}
+@media (max-width:480px){
+  .stat-row{grid-template-columns:1fr;}
+  .amenities-row{grid-template-columns:repeat(2,1fr);}
+  .cal-grid{gap:4px;}
+  .cal-day{font-size:.68rem;}
+}
+</style>
+</head>
+<body>
+
+<div class="mode-switch">
+  <button id="btnModeSite" class="active" onclick="setMode('site')"><i class="fa-solid fa-globe"></i>Sitio Web</button>
+  <button id="btnModeCrm" onclick="setMode('crm')"><i class="fa-solid fa-chart-line"></i>Panel CRM</button>
+</div>
+
+<!-- ============ SITE VIEW ============ -->
+<div class="site-view">
+
+<nav class="site-nav">
+  <div class="site-nav-inner">
+    <div class="logo"><i class="fa-solid fa-sun"></i>Villa Serena</div>
+    <div class="nav-links">
+      <a href="#inicio" data-i18n="nav_inicio">Inicio</a>
+      <a href="#alojamiento" data-i18n="nav_alojamiento">Alojamiento</a>
+      <a href="#disponibilidad" data-i18n="nav_disponibilidad">Disponibilidad</a>
+      <a href="#reserva" data-i18n="nav_contacto">Reservar</a>
+    </div>
+    <div class="nav-right">
+      <div class="lang-switch">
+        <button class="active" onclick="setLang('es')">ES</button>
+        <button onclick="setLang('ca')">CA</button>
+        <button onclick="setLang('en')">EN</button>
+        <button onclick="setLang('fr')">FR</button>
+      </div>
+      <a href="#reserva" class="btn btn-gold" data-i18n="cta_reservar"><i class="fa-solid fa-calendar-check"></i>Reservar ahora</a>
+      <i class="fa-solid fa-bars burger"></i>
+    </div>
+  </div>
+</nav>
+
+<section class="hero" id="inicio">
+  <div class="hero-inner">
+    <div class="hero-tag"><i class="fa-solid fa-star"></i> <span data-i18n="hero_tag">Costa Brava, Espana</span></div>
+    <h1 data-i18n="hero_title">Tu proxima estancia frente al Mediterraneo</h1>
+    <p data-i18n="hero_subtitle">Villa privada con piscina, disponibilidad en tiempo real y reserva en 4 idiomas. Fianza y pago fraccionado sin sorpresas.</p>
+    <div class="search-widget reveal">
+      <div class="search-field"><label data-i18n="search_checkin">Entrada</label><input type="text" value="15 Ago 2026" readonly></div>
+      <div class="search-field"><label data-i18n="search_checkout">Salida</label><input type="text" value="22 Ago 2026" readonly></div>
+      <div class="search-field"><label data-i18n="search_guests">Huespedes</label><input type="text" value="4 adultos" readonly></div>
+      <button class="btn btn-gold" onclick="document.getElementById('disponibilidad').scrollIntoView({behavior:'smooth'})" data-i18n="search_button">Ver disponibilidad</button>
+    </div>
+  </div>
+</section>
+
+<div class="trust-strip">
+  <div class="container trust-row">
+    <div><i class="fa-solid fa-star"></i><span data-i18n="trust_1">4.9/5 en 82 estancias</span></div>
+    <div><i class="fa-solid fa-shield-halved"></i><span data-i18n="trust_2">Pago seguro fraccionado</span></div>
+    <div><i class="fa-solid fa-rotate"></i><span data-i18n="trust_3">Cancelacion flexible</span></div>
+    <div><i class="fa-solid fa-language"></i><span data-i18n="trust_4">Atencion en 4 idiomas</span></div>
+  </div>
+</div>
+
+<section class="section" id="alojamiento">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="eyebrow" data-i18n="gallery_eyebrow">La villa</div>
+      <h2 data-i18n="gallery_title">Espacios pensados para desconectar</h2>
+      <p data-i18n="gallery_subtitle">Cuatro habitaciones, terraza con vistas al mar y piscina privada climatizada.</p>
+    </div>
+    <div class="gallery-grid reveal">
+      <img class="g1" src="https://images.unsplash.com/photo-1568084680786-a84f91d1153c?w=900&q=80" alt="Piscina Villa Serena">
+      <img src="https://images.unsplash.com/photo-1445019980597-93fa8acb246c?w=600&q=80" alt="Suite principal">
+      <img src="https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?w=600&q=80" alt="Terraza vistas al mar">
+      <img src="https://images.unsplash.com/photo-1582719508461-905c673771fd?w=600&q=80" alt="Detalle piscina">
+      <img src="https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=600&q=80" alt="Dormitorio">
+    </div>
+    <div class="amenities-row reveal">
+      <div class="amenity-card"><i class="fa-solid fa-water-ladder"></i><span data-i18n="am_pool">Piscina privada</span></div>
+      <div class="amenity-card"><i class="fa-solid fa-wifi"></i><span data-i18n="am_wifi">WiFi alta velocidad</span></div>
+      <div class="amenity-card"><i class="fa-solid fa-snowflake"></i><span data-i18n="am_ac">Aire acondicionado</span></div>
+      <div class="amenity-card"><i class="fa-solid fa-kitchen-set"></i><span data-i18n="am_kitchen">Cocina equipada</span></div>
+      <div class="amenity-card"><i class="fa-solid fa-square-parking"></i><span data-i18n="am_parking">Parking privado</span></div>
+      <div class="amenity-card"><i class="fa-solid fa-umbrella-beach"></i><span data-i18n="am_beach">Playa a 5 min</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="disponibilidad" style="background:var(--cream-2);">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="eyebrow" data-i18n="avail_eyebrow">Disponibilidad</div>
+      <h2 data-i18n="avail_title">Un solo calendario, tres plataformas sincronizadas</h2>
+      <p data-i18n="avail_subtitle">La disponibilidad se actualiza automaticamente desde Airbnb, HolidayLettings y SpainHoliday para evitar reservas duplicadas.</p>
+    </div>
+    <div class="sync-row reveal">
+      <div class="sync-card"><span class="sync-dot"></span><div><b>Airbnb</b><small data-i18n="sync_note">Sincronizado hace 6 min · iCal</small></div></div>
+      <div class="sync-card"><span class="sync-dot"></span><div><b>HolidayLettings</b><small data-i18n="sync_note">Sincronizado hace 6 min · iCal</small></div></div>
+      <div class="sync-card"><span class="sync-dot"></span><div><b>SpainHoliday</b><small data-i18n="sync_note">Sincronizado hace 6 min · iCal</small></div></div>
+    </div>
+    <div class="cal-legend reveal">
+      <span><i style="background:#f2f8ef; border:1px solid #cfe6c2;"></i><span data-i18n="leg_available">Disponible</span></span>
+      <span><i style="background:var(--ch-direct);"></i><span data-i18n="leg_direct">Reserva directa</span></span>
+      <span><i style="background:var(--ch-airbnb);"></i>Airbnb</span>
+      <span><i style="background:var(--ch-hl);"></i>HolidayLettings</span>
+      <span><i style="background:var(--ch-sh);"></i>SpainHoliday</span>
+    </div>
+    <div class="calendar reveal">
+      <div class="cal-head">
+        <h4 data-i18n="cal_month">Agosto 2026</h4>
+        <div class="cal-nav"><button><i class="fa-solid fa-chevron-left"></i></button><button><i class="fa-solid fa-chevron-right"></i></button></div>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="reserva">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="eyebrow" data-i18n="book_eyebrow">Reserva</div>
+      <h2 data-i18n="book_title">Confirma tu estancia en tres pasos</h2>
+      <p data-i18n="book_subtitle">Reserva inicial ahora, el resto antes de la llegada y la fianza se libera al finalizar.</p>
+    </div>
+    <div class="booking-wrap reveal">
+      <div>
+        <div class="stepper">
+          <div class="step done"><i class="fa-solid fa-check"></i> <span data-i18n="step1">1. Fechas</span></div>
+          <div class="step done"><span data-i18n="step2">2. Datos huesped</span></div>
+          <div class="step active"><span data-i18n="step3">3. Pago</span></div>
+        </div>
+        <div class="form-card">
+          <h4 data-i18n="form_title">Datos del huesped</h4>
+          <div class="form-grid">
+            <div class="field"><label data-i18n="form_name">Nombre completo</label><input type="text" value="Laura Martinez"></div>
+            <div class="field"><label data-i18n="form_email">Correo electronico</label><input type="text" value="laura.martinez@email.com"></div>
+            <div class="field"><label data-i18n="form_phone">Telefono</label><input type="text" value="+34 622 104 887"></div>
+            <div class="field"><label data-i18n="form_country">Pais</label><input type="text" value="Espana"></div>
+          </div>
+          <div class="consent-box">
+            <input type="checkbox" checked disabled>
+            <p><span class="tag" data-i18n="consent_required_tag">Obligatorio</span><br><span data-i18n="consent_booking">Acepto el tratamiento de mis datos para gestionar esta reserva, el pago y la comunicacion relacionada con mi estancia.</span></p>
+          </div>
+          <div class="consent-box optional">
+            <input type="checkbox">
+            <p><span class="tag" data-i18n="consent_optional_tag">Opcional</span><br><span data-i18n="consent_realestate">Quiero recibir informacion sobre oportunidades de vivienda en la zona. Puedo retirar este consentimiento cuando quiera.</span></p>
+          </div>
+        </div>
+      </div>
+      <div class="cart-card">
+        <h4 data-i18n="cart_title">Villa Serena</h4>
+        <div class="cart-sub" data-i18n="cart_dates">7 noches · 15-22 Ago 2026</div>
+        <div class="cart-line">
+          <div class="lbl"><b data-i18n="cart_deposit">Reserva inicial (30%)</b><small data-i18n="cart_deposit_note">Se cobra ahora</small></div>
+          <div class="amt">441 EUR</div>
+        </div>
+        <div class="cart-line">
+          <div class="lbl"><b data-i18n="cart_balance">Resto del alojamiento</b><small data-i18n="cart_balance_note">Antes de la llegada</small></div>
+          <div class="amt">882 EUR</div>
+        </div>
+        <div class="cart-line">
+          <div class="lbl"><b data-i18n="cart_bond">Fianza reembolsable</b><small data-i18n="cart_bond_note">Se libera al finalizar</small></div>
+          <div class="amt">300 EUR</div>
+        </div>
+        <div class="cart-total"><span data-i18n="cart_total">Total</span><span>1.623 EUR</span></div>
+        <button class="btn btn-gold" data-i18n="cart_button">Confirmar y pagar reserva inicial</button>
+        <div class="pay-icons"><i class="fa-brands fa-cc-visa"></i><i class="fa-brands fa-cc-mastercard"></i><i class="fa-solid fa-building-columns"></i></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" style="background:var(--cream-2);">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="eyebrow" data-i18n="test_eyebrow">Huespedes</div>
+      <h2 data-i18n="test_title">Lo que dicen quienes ya se han quedado</h2>
+    </div>
+    <div class="test-grid reveal">
+      <div class="test-card">
+        <div class="test-stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
+        <p data-i18n="test_1">La reserva fue clarisima desde el primer dia. Supimos exactamente que pagabamos y cuando se liberaba la fianza.</p>
+        <div class="test-who"><img src="https://i.pravatar.cc/100?img=47" alt=""><div><b>Elena Roig</b><small>Barcelona</small></div></div>
+      </div>
+      <div class="test-card">
+        <div class="test-stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
+        <p data-i18n="test_2">Reservamos desde Francia sin ningun problema de idioma. Todo el proceso fue en frances, muy comodo.</p>
+        <div class="test-who"><img src="https://i.pravatar.cc/100?img=33" alt=""><div><b>Marc Dubois</b><small>Lyon</small></div></div>
+      </div>
+      <div class="test-card">
+        <div class="test-stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
+        <p data-i18n="test_3">Nos encanto la villa y de paso nos informamos sobre precios de la zona. Nos contactaron sin ser invasivos.</p>
+        <div class="test-who"><img src="https://i.pravatar.cc/100?img=12" alt=""><div><b>Hannah Berg</b><small>Munich</small></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <div class="logo" style="color:#fff;"><i class="fa-solid fa-sun"></i>Villa Serena</div>
+        <p style="margin-top:12px; font-size:.85rem; max-width:280px;" data-i18n="footer_desc">Alojamiento privado en la Costa Brava con reserva directa en 4 idiomas.</p>
+      </div>
+      <div><h5 data-i18n="footer_nav">Navegacion</h5><a href="#inicio" data-i18n="nav_inicio">Inicio</a><a href="#alojamiento" data-i18n="nav_alojamiento">Alojamiento</a><a href="#disponibilidad" data-i18n="nav_disponibilidad">Disponibilidad</a></div>
+      <div><h5 data-i18n="footer_lang">Idiomas</h5><a onclick="setLang('es')">Espanol</a><a onclick="setLang('ca')">Catala</a><a onclick="setLang('en')">English</a><a onclick="setLang('fr')">Francais</a></div>
+      <div><h5 data-i18n="footer_contact">Contacto</h5><a>reservas@villaserena.es</a><a>+34 972 44 00 00</a></div>
+    </div>
+    <div class="footer-bottom">
+      <span data-i18n="footer_rights">Villa Serena 2026. Todos los derechos reservados.</span>
+      <span data-i18n="footer_rgpd">Datos protegidos conforme al RGPD.</span>
+    </div>
+  </div>
+</footer>
+
+</div>
+<!-- ============ /SITE VIEW ============ -->
+
+
+<!-- ============ CRM VIEW ============ -->
+<div class="crm-view">
+<div class="crm-shell">
+  <aside class="crm-sidebar">
+    <div class="crm-brand"><i class="fa-solid fa-sun"></i>Villa Serena</div>
+    <div class="crm-nav-label">Panel</div>
+    <div class="crm-nav-item active" data-panel="panel-dashboard" onclick="setCrmPanel(this)"><i class="fa-solid fa-gauge-high"></i>Dashboard</div>
+    <div class="crm-nav-item" data-panel="panel-reservas" onclick="setCrmPanel(this)"><i class="fa-solid fa-calendar-days"></i>Reservas</div>
+    <div class="crm-nav-item" data-panel="panel-huespedes" onclick="setCrmPanel(this)"><i class="fa-solid fa-users"></i>Huespedes</div>
+    <div class="crm-nav-label">CRM inmobiliario</div>
+    <div class="crm-nav-item" data-panel="panel-leads" onclick="setCrmPanel(this)"><i class="fa-solid fa-house-flag"></i>Leads inmobiliarios</div>
+    <div class="crm-nav-label">Roadmap</div>
+    <div class="crm-nav-item" data-panel="panel-fase2" onclick="setCrmPanel(this)"><i class="fa-solid fa-robot"></i>Fase 2 · IA Concierge</div>
+    <div class="crm-nav-item" data-panel="panel-reportes" onclick="setCrmPanel(this)"><i class="fa-solid fa-chart-pie"></i>Reportes</div>
+  </aside>
+
+  <main class="crm-main">
+
+    <!-- DASHBOARD -->
+    <div class="crm-panel active" id="panel-dashboard">
+      <div class="crm-topbar"><div><h2>Dashboard</h2><p>Vision general de reservas, sincronizacion y leads.</p></div></div>
+
+      <div class="stat-row">
+        <div class="stat-tile"><div class="stat-top"><i class="fa-solid fa-plane-arrival"></i></div><div class="stat-val">3</div><div class="stat-lbl">Llegadas esta semana</div></div>
+        <div class="stat-tile"><div class="stat-top"><i class="fa-solid fa-lock"></i></div><div class="stat-val">600 EUR</div><div class="stat-lbl">Fianzas pendientes de liberar</div><div class="stat-delta warn">2 estancias finalizadas</div></div>
+        <div class="stat-tile"><div class="stat-top"><i class="fa-solid fa-house-flag"></i></div><div class="stat-val">5</div><div class="stat-lbl">Leads con interes de compra</div><div class="stat-delta good">+2 esta semana</div></div>
+        <div class="stat-tile"><div class="stat-top"><i class="fa-solid fa-chart-simple"></i></div><div class="stat-val">78%</div><div class="stat-lbl">Ocupacion del mes</div><div class="stat-delta good">+6 pts vs julio</div></div>
+      </div>
+
+      <div class="crm-grid-2">
+        <div class="card">
+          <div class="card-head"><h4>Proximas llegadas</h4><a>Ver todas</a></div>
+          <div class="arrival-row"><img class="av" src="https://i.pravatar.cc/100?img=47" alt=""><div class="info"><b>Elena Roig</b><small>15 Ago · 7 noches</small></div><span class="badge direct" style="margin-left:auto;">Directa</span></div>
+          <div class="arrival-row"><img class="av" src="https://i.pravatar.cc/100?img=33" alt=""><div class="info"><b>Marc Dubois</b><small>17 Ago · 5 noches</small></div><span class="badge airbnb" style="margin-left:auto;">Airbnb</span></div>
+          <div class="arrival-row"><img class="av" src="https://i.pravatar.cc/100?img=12" alt=""><div class="info"><b>Hannah Berg</b><small>19 Ago · 4 noches</small></div><span class="badge hl" style="margin-left:auto;">HolidayLettings</span></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h4>Estado de sincronizacion</h4></div>
+          <div class="chan-sync"><span class="l"><i style="background:var(--ch-airbnb);"></i>Airbnb</span><button onclick="pulseSync(this)">Sincronizar</button></div>
+          <div class="chan-sync"><span class="l"><i style="background:var(--ch-hl);"></i>HolidayLettings</span><button onclick="pulseSync(this)">Sincronizar</button></div>
+          <div class="chan-sync"><span class="l"><i style="background:var(--ch-sh);"></i>SpainHoliday</span><button onclick="pulseSync(this)">Sincronizar</button></div>
+          <div class="chan-sync"><span class="l"><i style="background:var(--ch-direct);"></i>Web directa</span><span class="badge good">En vivo</span></div>
+        </div>
+      </div>
+
+      <div class="crm-grid-2">
+        <div class="card">
+          <div class="card-head"><h4>Reservas por canal · Agosto</h4></div>
+          <div class="bar-chart">
+            <div class="bar-row"><div class="bar-label"><span>Airbnb</span><span>14</span></div><div class="bar-track"><div class="bar-fill" style="width:100%; background:var(--ch-airbnb);"></div></div></div>
+            <div class="bar-row"><div class="bar-label"><span>Web directa</span><span>9</span></div><div class="bar-track"><div class="bar-fill" style="width:64%; background:var(--ch-direct);"></div></div></div>
+            <div class="bar-row"><div class="bar-label"><span>HolidayLettings</span><span>6</span></div><div class="bar-track"><div class="bar-fill" style="width:43%; background:var(--ch-hl);"></div></div></div>
+            <div class="bar-row"><div class="bar-label"><span>SpainHoliday</span><span>4</span></div><div class="bar-track"><div class="bar-fill" style="width:29%; background:var(--ch-sh);"></div></div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h4>Cobros por tipo · este mes</h4></div>
+          <div class="donut-wrap">
+            <div class="donut" style="background:conic-gradient(var(--pay-deposit) 0% 40%, var(--pay-balance) 40% 85%, var(--pay-bond) 85% 100%);"></div>
+            <div class="donut-legend">
+              <div class="dl-row"><span class="l"><i style="background:var(--pay-deposit);"></i>Reserva inicial</span><b>40%</b></div>
+              <div class="dl-row"><span class="l"><i style="background:var(--pay-balance);"></i>Resto alojamiento</span><b>45%</b></div>
+              <div class="dl-row"><span class="l"><i style="background:var(--pay-bond);"></i>Fianzas</span><b>15%</b></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESERVAS -->
+    <div class="crm-panel" id="panel-reservas">
+      <div class="crm-topbar"><div><h2>Reservas</h2><p>Todas las reservas confirmadas, por canal y estado de pago.</p></div></div>
+      <div class="card">
+        <div class="filter-row">
+          <select><option>Todos los canales</option><option>Airbnb</option><option>HolidayLettings</option><option>SpainHoliday</option><option>Web directa</option></select>
+          <select><option>Todos los estados</option><option>Pago completo</option><option>Resto pendiente</option><option>Fianza retenida</option></select>
+          <input type="text" placeholder="Buscar huesped...">
+        </div>
+        <table class="crm-table">
+          <thead><tr><th>Huesped</th><th>Fechas</th><th>Canal</th><th>Estado pago</th><th>Sincronizado</th></tr></thead>
+          <tbody>
+            <tr><td>Elena Roig</td><td>15-22 Ago</td><td><span class="badge direct">Directa</span></td><td><span class="badge good">Pago completo</span></td><td><i class="fa-solid fa-circle-check" style="color:var(--good);"></i></td></tr>
+            <tr><td>Marc Dubois</td><td>17-22 Ago</td><td><span class="badge airbnb">Airbnb</span></td><td><span class="badge warn">Resto pendiente</span></td><td><i class="fa-solid fa-circle-check" style="color:var(--good);"></i></td></tr>
+            <tr><td>Hannah Berg</td><td>19-23 Ago</td><td><span class="badge hl">HolidayLettings</span></td><td><span class="badge good">Pago completo</span></td><td><i class="fa-solid fa-circle-check" style="color:var(--good);"></i></td></tr>
+            <tr><td>Pedro Salas</td><td>1-8 Ago</td><td><span class="badge sh">SpainHoliday</span></td><td><span class="badge crit">Fianza retenida</span></td><td><i class="fa-solid fa-circle-check" style="color:var(--good);"></i></td></tr>
+            <tr><td>Sofie Lindqvist</td><td>3-10 Ago</td><td><span class="badge direct">Directa</span></td><td><span class="badge crit">Fianza retenida</span></td><td><i class="fa-solid fa-circle-check" style="color:var(--good);"></i></td></tr>
+            <tr><td>Julien Petit</td><td>24-30 Ago</td><td><span class="badge airbnb">Airbnb</span></td><td><span class="badge warn">Resto pendiente</span></td><td><i class="fa-solid fa-circle-check" style="color:var(--good);"></i></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- HUESPEDES -->
+    <div class="crm-panel" id="panel-huespedes">
+      <div class="crm-topbar"><div><h2>Huespedes</h2><p>Ciclo de vida completo: registro, mensajes automaticos y senales de interes.</p></div></div>
+      <div class="crm-two-col">
+        <div class="card">
+          <table class="crm-table">
+            <thead><tr><th>Huesped</th><th>Estancia</th><th>Etiqueta</th><th>Cesion inmobiliaria</th></tr></thead>
+            <tbody>
+              <tr class="clickable" onclick="showGuest(0)"><td>Elena Roig</td><td>15-22 Ago</td><td><span class="tag-pill high">Interes alto</span></td><td><span class="badge good">Si</span></td></tr>
+              <tr class="clickable" onclick="showGuest(1)"><td>Marc Dubois</td><td>17-22 Ago</td><td><span class="tag-pill neutral">Sin senal</span></td><td><span class="badge crit">No</span></td></tr>
+              <tr class="clickable" onclick="showGuest(2)"><td>Hannah Berg</td><td>19-23 Ago</td><td><span class="tag-pill med">Interes medio</span></td><td><span class="badge warn">Pendiente</span></td></tr>
+              <tr class="clickable" onclick="showGuest(3)"><td>Pedro Salas</td><td>1-8 Ago</td><td><span class="tag-pill low">Repite huesped</span></td><td><span class="badge crit">No</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card guest-detail" id="guestDetail"></div>
+      </div>
+    </div>
+
+    <!-- LEADS INMOBILIARIOS -->
+    <div class="crm-panel" id="panel-leads">
+      <div class="crm-topbar"><div><h2>Leads inmobiliarios</h2><p>Solo huespedes con consentimiento explicito RGPD para cesion de datos.</p></div></div>
+      <div class="card">
+        <div class="filter-row">
+          <select><option>Todos los niveles</option><option>Interes alto</option><option>Interes medio</option></select>
+          <select><option>Todos los estados</option><option>Pendiente de enrutar</option><option>Enrutado</option></select>
+        </div>
+        <table class="crm-table">
+          <thead><tr><th>Huesped</th><th>Pais</th><th>Interes</th><th>Consentimiento</th><th>Estado</th><th></th></tr></thead>
+          <tbody>
+            <tr><td>Elena Roig</td><td>Espana</td><td><span class="tag-pill high">Alto</span></td><td>21 Jul 2026, 18:04</td><td><span class="badge warn">Pendiente de enrutar</span></td><td><button class="btn btn-ghost" style="padding:7px 14px; font-size:.76rem;">Enrutar</button></td></tr>
+            <tr><td>Sofie Lindqvist</td><td>Suecia</td><td><span class="tag-pill high">Alto</span></td><td>02 Ago 2026, 09:40</td><td><span class="badge good">Enrutado</span></td><td><button class="btn btn-ghost" style="padding:7px 14px; font-size:.76rem;">Ver</button></td></tr>
+            <tr><td>Hannah Berg</td><td>Alemania</td><td><span class="tag-pill med">Medio</span></td><td>Consentimiento pendiente</td><td><span class="badge warn">Sin cesion</span></td><td><button class="btn btn-ghost" style="padding:7px 14px; font-size:.76rem;" disabled>Enrutar</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- FASE 2 -->
+    <div class="crm-panel" id="panel-fase2">
+      <div class="crm-topbar"><div><h2>Fase 2 · IA Concierge</h2><p>Vista previa de la siguiente fase, construida sobre los datos que ya se estan guardando hoy.</p></div></div>
+      <div class="roadmap-card">
+        <span class="rm-tag"><i class="fa-solid fa-lock"></i> Proximamente · Fase 2</span>
+        <h3>El concierge conecta sobre el historial que ya existe</h3>
+        <p class="rm-desc">Nada de lo que se construye en Fase 1 se rehace. El modelo de datos del huesped (registro, mensajes, estancia) ya queda preparado para que el concierge de IA lo use directamente cuando arranque esta fase.</p>
+        <div class="rm-features">
+          <div class="rm-feature"><i class="fa-solid fa-comments"></i><b>Respuestas multilingues</b><span>Atiende preguntas del huesped en su idioma antes y durante la estancia.</span></div>
+          <div class="rm-feature"><i class="fa-solid fa-lightbulb"></i><b>Recomendaciones personalizadas</b><span>Sugerencias de la zona segun el perfil del huesped y su historial.</span></div>
+          <div class="rm-feature"><i class="fa-solid fa-bell"></i><b>Alertas predictivas</b><span>Anticipa necesidades durante la estancia sin intervencion manual.</span></div>
+        </div>
+        <div class="rm-cta"><i class="fa-solid fa-arrow-right"></i> Se activa cuando el volumen de reservas lo justifique</div>
+      </div>
+    </div>
+
+    <!-- REPORTES -->
+    <div class="crm-panel" id="panel-reportes">
+      <div class="crm-topbar"><div><h2>Reportes</h2><p>Ingresos y ocupacion por canal, mes a mes.</p></div></div>
+      <div class="card">
+        <div class="card-head"><h4>Ingresos por canal · ultimos 4 meses</h4></div>
+        <div class="bar-chart">
+          <div class="bar-row"><div class="bar-label"><span>Mayo</span><span>4.120 EUR</span></div><div class="bar-track"><div class="bar-fill" style="width:58%; background:var(--gold);"></div></div></div>
+          <div class="bar-row"><div class="bar-label"><span>Junio</span><span>5.640 EUR</span></div><div class="bar-track"><div class="bar-fill" style="width:80%; background:var(--gold);"></div></div></div>
+          <div class="bar-row"><div class="bar-label"><span>Julio</span><span>6.980 EUR</span></div><div class="bar-track"><div class="bar-fill" style="width:98%; background:var(--gold);"></div></div></div>
+          <div class="bar-row"><div class="bar-label"><span>Agosto (parcial)</span><span>7.120 EUR</span></div><div class="bar-track"><div class="bar-fill" style="width:100%; background:var(--gold);"></div></div></div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+</div>
+<!-- ============ /CRM VIEW ============ -->
+
+<script>
+/* ---- mode + lang switch ---- */
+function setMode(m){
+  document.body.classList.toggle('mode-crm', m==='crm');
+  document.getElementById('btnModeSite').classList.toggle('active', m==='site');
+  document.getElementById('btnModeCrm').classList.toggle('active', m==='crm');
+}
+
+var i18n = {
+  es:{nav_inicio:"Inicio",nav_alojamiento:"Alojamiento",nav_disponibilidad:"Disponibilidad",nav_contacto:"Reservar",cta_reservar:"Reservar ahora",
+  hero_tag:"Costa Brava, Espana",hero_title:"Tu proxima estancia frente al Mediterraneo",hero_subtitle:"Villa privada con piscina, disponibilidad en tiempo real y reserva en 4 idiomas. Fianza y pago fraccionado sin sorpresas.",
+  search_checkin:"Entrada",search_checkout:"Salida",search_guests:"Huespedes",search_button:"Ver disponibilidad",
+  trust_1:"4.9/5 en 82 estancias",trust_2:"Pago seguro fraccionado",trust_3:"Cancelacion flexible",trust_4:"Atencion en 4 idiomas",
+  gallery_eyebrow:"La villa",gallery_title:"Espacios pensados para desconectar",gallery_subtitle:"Cuatro habitaciones, terraza con vistas al mar y piscina privada climatizada.",
+  am_pool:"Piscina privada",am_wifi:"WiFi alta velocidad",am_ac:"Aire acondicionado",am_kitchen:"Cocina equipada",am_parking:"Parking privado",am_beach:"Playa a 5 min",
+  avail_eyebrow:"Disponibilidad",avail_title:"Un solo calendario, tres plataformas sincronizadas",avail_subtitle:"La disponibilidad se actualiza automaticamente desde Airbnb, HolidayLettings y SpainHoliday para evitar reservas duplicadas.",
+  sync_note:"Sincronizado hace 6 min · iCal",leg_available:"Disponible",leg_direct:"Reserva directa",cal_month:"Agosto 2026",
+  book_eyebrow:"Reserva",book_title:"Confirma tu estancia en tres pasos",book_subtitle:"Reserva inicial ahora, el resto antes de la llegada y la fianza se libera al finalizar.",
+  step1:"1. Fechas",step2:"2. Datos huesped",step3:"3. Pago",form_title:"Datos del huesped",form_name:"Nombre completo",form_email:"Correo electronico",form_phone:"Telefono",form_country:"Pais",
+  consent_required_tag:"Obligatorio",consent_booking:"Acepto el tratamiento de mis datos para gestionar esta reserva, el pago y la comunicacion relacionada con mi estancia.",
+  consent_optional_tag:"Opcional",consent_realestate:"Quiero recibir informacion sobre oportunidades de vivienda en la zona. Puedo retirar este consentimiento cuando quiera.",
+  cart_title:"Villa Serena",cart_dates:"7 noches · 15-22 Ago 2026",cart_deposit:"Reserva inicial (30%)",cart_deposit_note:"Se cobra ahora",
+  cart_balance:"Resto del alojamiento",cart_balance_note:"Antes de la llegada",cart_bond:"Fianza reembolsable",cart_bond_note:"Se libera al finalizar",
+  cart_total:"Total",cart_button:"Confirmar y pagar reserva inicial",
+  test_eyebrow:"Huespedes",test_title:"Lo que dicen quienes ya se han quedado",
+  test_1:"La reserva fue clarisima desde el primer dia. Supimos exactamente que pagabamos y cuando se liberaba la fianza.",
+  test_2:"Reservamos desde Francia sin ningun problema de idioma. Todo el proceso fue en frances, muy comodo.",
+  test_3:"Nos encanto la villa y de paso nos informamos sobre precios de la zona. Nos contactaron sin ser invasivos.",
+  footer_desc:"Alojamiento privado en la Costa Brava con reserva directa en 4 idiomas.",footer_nav:"Navegacion",footer_lang:"Idiomas",footer_contact:"Contacto",
+  footer_rights:"Villa Serena 2026. Todos los derechos reservados.",footer_rgpd:"Datos protegidos conforme al RGPD."},
+
+  ca:{nav_inicio:"Inici",nav_alojamiento:"Allotjament",nav_disponibilidad:"Disponibilitat",nav_contacto:"Reservar",cta_reservar:"Reserva ara",
+  hero_tag:"Costa Brava, Espanya",hero_title:"La teva propera estada davant del Mediterrani",hero_subtitle:"Vil·la privada amb piscina, disponibilitat en temps real i reserva en 4 idiomes. Fiança i pagament fraccionat sense sorpreses.",
+  search_checkin:"Entrada",search_checkout:"Sortida",search_guests:"Hostes",search_button:"Veure disponibilitat",
+  trust_1:"4.9/5 en 82 estades",trust_2:"Pagament segur fraccionat",trust_3:"Cancel·lacio flexible",trust_4:"Atencio en 4 idiomes",
+  gallery_eyebrow:"La vil·la",gallery_title:"Espais pensats per desconnectar",gallery_subtitle:"Quatre habitacions, terrassa amb vistes al mar i piscina privada climatitzada.",
+  am_pool:"Piscina privada",am_wifi:"WiFi alta velocitat",am_ac:"Aire condicionat",am_kitchen:"Cuina equipada",am_parking:"Parquing privat",am_beach:"Platja a 5 min",
+  avail_eyebrow:"Disponibilitat",avail_title:"Un unic calendari, tres plataformes sincronitzades",avail_subtitle:"La disponibilitat s'actualitza automaticament des d'Airbnb, HolidayLettings i SpainHoliday per evitar reserves duplicades.",
+  sync_note:"Sincronitzat fa 6 min · iCal",leg_available:"Disponible",leg_direct:"Reserva directa",cal_month:"Agost 2026",
+  book_eyebrow:"Reserva",book_title:"Confirma la teva estada en tres passos",book_subtitle:"Reserva inicial ara, la resta abans de l'arribada i la fiança s'allibera en finalitzar.",
+  step1:"1. Dates",step2:"2. Dades hoste",step3:"3. Pagament",form_title:"Dades de l'hoste",form_name:"Nom complet",form_email:"Correu electronic",form_phone:"Telefon",form_country:"Pais",
+  consent_required_tag:"Obligatori",consent_booking:"Accepto el tractament de les meves dades per gestionar aquesta reserva, el pagament i la comunicacio relacionada amb la meva estada.",
+  consent_optional_tag:"Opcional",consent_realestate:"Vull rebre informacio sobre oportunitats d'habitatge a la zona. Puc retirar aquest consentiment quan vulgui.",
+  cart_title:"Villa Serena",cart_dates:"7 nits · 15-22 Ago 2026",cart_deposit:"Reserva inicial (30%)",cart_deposit_note:"Es cobra ara",
+  cart_balance:"Resta de l'allotjament",cart_balance_note:"Abans de l'arribada",cart_bond:"Fiança reemborsable",cart_bond_note:"S'allibera en finalitzar",
+  cart_total:"Total",cart_button:"Confirmar i pagar reserva inicial",
+  test_eyebrow:"Hostes",test_title:"El que diuen els qui ja s'hi han quedat",
+  test_1:"La reserva va ser claríssima des del primer dia. Vam saber exactament que pagavem i quan s'alliberava la fiança.",
+  test_2:"Vam reservar des de Franca sense cap problema d'idioma. Tot el proces va ser en frances, molt comode.",
+  test_3:"Ens va encantar la vil·la i de pas ens vam informar sobre preus de la zona. Ens van contactar sense ser envaidors.",
+  footer_desc:"Allotjament privat a la Costa Brava amb reserva directa en 4 idiomes.",footer_nav:"Navegacio",footer_lang:"Idiomes",footer_contact:"Contacte",
+  footer_rights:"Villa Serena 2026. Tots els drets reservats.",footer_rgpd:"Dades protegides segons el RGPD."},
+
+  en:{nav_inicio:"Home",nav_alojamiento:"The villa",nav_disponibilidad:"Availability",nav_contacto:"Book now",cta_reservar:"Book now",
+  hero_tag:"Costa Brava, Spain",hero_title:"Your next stay right by the Mediterranean",hero_subtitle:"Private villa with pool, real time availability and booking in 4 languages. Deposit and split payment with no surprises.",
+  search_checkin:"Check in",search_checkout:"Check out",search_guests:"Guests",search_button:"Check availability",
+  trust_1:"4.9/5 across 82 stays",trust_2:"Secure split payment",trust_3:"Flexible cancellation",trust_4:"Support in 4 languages",
+  gallery_eyebrow:"The villa",gallery_title:"Spaces built for switching off",gallery_subtitle:"Four bedrooms, a sea view terrace and a heated private pool.",
+  am_pool:"Private pool",am_wifi:"High speed WiFi",am_ac:"Air conditioning",am_kitchen:"Fully equipped kitchen",am_parking:"Private parking",am_beach:"Beach 5 min away",
+  avail_eyebrow:"Availability",avail_title:"One calendar, three platforms synced",avail_subtitle:"Availability updates automatically from Airbnb, HolidayLettings and SpainHoliday to prevent double bookings.",
+  sync_note:"Synced 6 min ago · iCal",leg_available:"Available",leg_direct:"Direct booking",cal_month:"August 2026",
+  book_eyebrow:"Booking",book_title:"Confirm your stay in three steps",book_subtitle:"Deposit now, balance before arrival, security deposit released after checkout.",
+  step1:"1. Dates",step2:"2. Guest details",step3:"3. Payment",form_title:"Guest details",form_name:"Full name",form_email:"Email",form_phone:"Phone",form_country:"Country",
+  consent_required_tag:"Required",consent_booking:"I agree to the processing of my data to manage this booking, the payment and stay related communication.",
+  consent_optional_tag:"Optional",consent_realestate:"I want to receive information about property opportunities in the area. I can withdraw this consent at any time.",
+  cart_title:"Villa Serena",cart_dates:"7 nights · Aug 15-22 2026",cart_deposit:"Deposit (30%)",cart_deposit_note:"Charged now",
+  cart_balance:"Remaining balance",cart_balance_note:"Due before arrival",cart_bond:"Refundable security deposit",cart_bond_note:"Released after checkout",
+  cart_total:"Total",cart_button:"Confirm and pay deposit",
+  test_eyebrow:"Guests",test_title:"What past guests are saying",
+  test_1:"The booking process was crystal clear from day one. We knew exactly what we were paying and when the deposit would be released.",
+  test_2:"We booked from France with zero language friction. The whole process was in French, very smooth.",
+  test_3:"We loved the villa and along the way learned about property prices in the area. They reached out without being pushy.",
+  footer_desc:"Private accommodation on the Costa Brava with direct booking in 4 languages.",footer_nav:"Navigation",footer_lang:"Languages",footer_contact:"Contact",
+  footer_rights:"Villa Serena 2026. All rights reserved.",footer_rgpd:"Data protected under GDPR."},
+
+  fr:{nav_inicio:"Accueil",nav_alojamiento:"La villa",nav_disponibilidad:"Disponibilite",nav_contacto:"Reserver",cta_reservar:"Reserver maintenant",
+  hero_tag:"Costa Brava, Espagne",hero_title:"Votre prochain sejour face a la Mediterranee",hero_subtitle:"Villa privee avec piscine, disponibilite en temps reel et reservation en 4 langues. Caution et paiement fractionne sans surprise.",
+  search_checkin:"Arrivee",search_checkout:"Depart",search_guests:"Voyageurs",search_button:"Voir la disponibilite",
+  trust_1:"4.9/5 sur 82 sejours",trust_2:"Paiement fractionne securise",trust_3:"Annulation flexible",trust_4:"Assistance en 4 langues",
+  gallery_eyebrow:"La villa",gallery_title:"Des espaces penses pour se ressourcer",gallery_subtitle:"Quatre chambres, terrasse vue mer et piscine privee chauffee.",
+  am_pool:"Piscine privee",am_wifi:"WiFi haut debit",am_ac:"Climatisation",am_kitchen:"Cuisine equipee",am_parking:"Parking prive",am_beach:"Plage a 5 min",
+  avail_eyebrow:"Disponibilite",avail_title:"Un seul calendrier, trois plateformes synchronisees",avail_subtitle:"La disponibilite se met a jour automatiquement depuis Airbnb, HolidayLettings et SpainHoliday pour eviter les doubles reservations.",
+  sync_note:"Synchronise il y a 6 min · iCal",leg_available:"Disponible",leg_direct:"Reservation directe",cal_month:"Aout 2026",
+  book_eyebrow:"Reservation",book_title:"Confirmez votre sejour en trois etapes",book_subtitle:"Acompte maintenant, solde avant l'arrivee, caution liberee apres le depart.",
+  step1:"1. Dates",step2:"2. Coordonnees",step3:"3. Paiement",form_title:"Coordonnees du voyageur",form_name:"Nom complet",form_email:"Email",form_phone:"Telephone",form_country:"Pays",
+  consent_required_tag:"Obligatoire",consent_booking:"J'accepte le traitement de mes donnees pour gerer cette reservation, le paiement et la communication liee a mon sejour.",
+  consent_optional_tag:"Optionnel",consent_realestate:"Je souhaite recevoir des informations sur des opportunites immobilieres dans la region. Je peux retirer ce consentement a tout moment.",
+  cart_title:"Villa Serena",cart_dates:"7 nuits · 15-22 aout 2026",cart_deposit:"Acompte (30%)",cart_deposit_note:"Preleve maintenant",
+  cart_balance:"Solde restant",cart_balance_note:"Avant l'arrivee",cart_bond:"Caution remboursable",cart_bond_note:"Liberee apres le depart",
+  cart_total:"Total",cart_button:"Confirmer et payer l'acompte",
+  test_eyebrow:"Voyageurs",test_title:"Ce que disent nos anciens hotes",
+  test_1:"La reservation a ete tres claire des le debut. Nous savions exactement ce que nous payions et quand la caution serait liberee.",
+  test_2:"Nous avons reserve depuis la France sans aucune barriere de langue. Tout le processus etait en francais, tres simple.",
+  test_3:"Nous avons adore la villa et au passage nous nous sommes informes sur les prix immobiliers du secteur. Ils nous ont contactes sans etre insistants.",
+  footer_desc:"Hebergement prive sur la Costa Brava avec reservation directe en 4 langues.",footer_nav:"Navigation",footer_lang:"Langues",footer_contact:"Contact",
+  footer_rights:"Villa Serena 2026. Tous droits reserves.",footer_rgpd:"Donnees protegees conformement au RGPD."}
+};
+
+function setLang(lang){
+  document.querySelectorAll('.lang-switch button').forEach(function(b){b.classList.remove('active');});
+  event.target.classList.add('active');
+  document.querySelectorAll('[data-i18n]').forEach(function(el){
+    var key = el.getAttribute('data-i18n');
+    if(i18n[lang] && i18n[lang][key]) el.textContent = i18n[lang][key];
+  });
+}
+
+/* ---- calendar ---- */
+(function buildCalendar(){
+  var statuses = ['available','available','direct','direct','direct','direct','direct',
+    'airbnb','airbnb','airbnb','airbnb','airbnb','airbnb','airbnb',
+    'available','available','hl','hl','hl','hl','hl',
+    'available','available','sh','sh','sh','sh',
+    'available','available','available','available'];
+  var grid = document.getElementById('calGrid');
+  var dows = ['L','M','X','J','V','S','D'];
+  dows.forEach(function(d){var el=document.createElement('div'); el.className='cal-dow'; el.textContent=d; grid.appendChild(el);});
+  for(var i=0;i<5;i++){var e=document.createElement('div'); e.className='cal-day empty'; grid.appendChild(e);}
+  statuses.forEach(function(s,idx){
+    var el = document.createElement('div');
+    el.className = 'cal-day ' + s;
+    el.textContent = idx+1;
+    grid.appendChild(el);
+  });
+})();
+
+/* ---- CRM nav ---- */
+function setCrmPanel(el){
+  document.querySelectorAll('.crm-nav-item').forEach(function(i){i.classList.remove('active');});
+  el.classList.add('active');
+  document.querySelectorAll('.crm-panel').forEach(function(p){p.classList.remove('active');});
+  document.getElementById(el.getAttribute('data-panel')).classList.add('active');
+}
+
+function pulseSync(btn){
+  var original = btn.textContent;
+  btn.textContent = 'Sincronizando...';
+  setTimeout(function(){btn.textContent = 'Sincronizado';}, 700);
+  setTimeout(function(){btn.textContent = original;}, 2200);
+}
+
+/* ---- guest detail ---- */
+var guests = [
+  {name:'Elena Roig', avatar:'https://i.pravatar.cc/100?img=47', dates:'15-22 Ago 2026', tags:[{l:'Interes alto',c:'high'},{l:'Familia',c:'neutral'}],
+   timeline:[{l:'Registro completado',d:'20 Jul, 09:12',done:true},{l:'Mensaje de bienvenida enviado',d:'20 Jul, 09:13',done:true},{l:'Recordatorio de resto de pago enviado',d:'01 Ago, 10:00',done:true},{l:'Recordatorio pre llegada',d:'13 Ago',done:false},{l:'Encuesta post estancia',d:'23 Ago',done:false}],
+   consentBooking:true, consentRealestate:'Si · 21 Jul 2026'},
+  {name:'Marc Dubois', avatar:'https://i.pravatar.cc/100?img=33', dates:'17-22 Ago 2026', tags:[{l:'Sin senal',c:'neutral'}],
+   timeline:[{l:'Registro completado',d:'22 Jul, 14:02',done:true},{l:'Mensaje de bienvenida enviado',d:'22 Jul, 14:03',done:true},{l:'Recordatorio de resto de pago enviado',d:'03 Ago, 09:00',done:true},{l:'Recordatorio pre llegada',d:'15 Ago',done:false},{l:'Encuesta post estancia',d:'23 Ago',done:false}],
+   consentBooking:true, consentRealestate:'No otorgado'},
+  {name:'Hannah Berg', avatar:'https://i.pravatar.cc/100?img=12', dates:'19-23 Ago 2026', tags:[{l:'Interes medio',c:'med'}],
+   timeline:[{l:'Registro completado',d:'25 Jul, 11:20',done:true},{l:'Mensaje de bienvenida enviado',d:'25 Jul, 11:21',done:true},{l:'Recordatorio de resto de pago enviado',d:'05 Ago, 09:00',done:true},{l:'Recordatorio pre llegada',d:'17 Ago',done:false},{l:'Encuesta post estancia',d:'24 Ago',done:false}],
+   consentBooking:true, consentRealestate:'Pendiente'},
+  {name:'Pedro Salas', avatar:'https://i.pravatar.cc/100?img=68', dates:'1-8 Ago 2026', tags:[{l:'Repite huesped',c:'low'}],
+   timeline:[{l:'Registro completado',d:'10 Jul, 08:44',done:true},{l:'Mensaje de bienvenida enviado',d:'10 Jul, 08:45',done:true},{l:'Recordatorio de resto de pago enviado',d:'20 Jul, 09:00',done:true},{l:'Recordatorio pre llegada',d:'30 Jul',done:true},{l:'Encuesta post estancia',d:'09 Ago',done:true}],
+   consentBooking:true, consentRealestate:'No otorgado'}
+];
+
+function showGuest(i){
+  var g = guests[i];
+  var tagsHtml = g.tags.map(function(t){return '<span class="tag-pill '+t.c+'">'+t.l+'</span>';}).join('');
+  var tlHtml = g.timeline.map(function(t){return '<div class="tl-item '+(t.done?'':'pending')+'"><b>'+t.l+'</b><small>'+t.d+'</small></div>';}).join('');
+  document.getElementById('guestDetail').innerHTML =
+    '<div class="gd-head"><img src="'+g.avatar+'"><div><b>'+g.name+'</b><small>'+g.dates+'</small></div></div>'+
+    '<div class="tag-row">'+tagsHtml+'</div>'+
+    '<div class="timeline">'+tlHtml+'</div>'+
+    '<div class="consent-row"><span>Consentimiento reserva</span><span class="badge good">Otorgado</span></div>'+
+    '<div class="consent-row"><span>Cesion CRM inmobiliario</span><span>'+g.consentRealestate+'</span></div>';
+}
+showGuest(0);
+
+/* ---- scroll reveal ---- */
+var io = new IntersectionObserver(function(entries){
+  entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); } });
+}, {threshold:.12});
+document.querySelectorAll('.reveal').forEach(function(el){io.observe(el);});
+</script>
+
+</body>
+</html>
