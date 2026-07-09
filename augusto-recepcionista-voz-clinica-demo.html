@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sofia IA — Recepcionista de Voz para Clinicas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+  :root{
+    --bg:#0b0d10; --bg2:#12151a; --panel:#171b21; --panel2:#1d222a;
+    --border:#262c35; --text:#f3f5f7; --muted:#9aa4b2; --muted2:#6b7684;
+    --gold:#f59e0b; --gold-dark:#d97706; --green:#22c55e; --red:#ef4444; --blue:#3b82f6;
+    --radius:16px; --radius-sm:10px;
+    --shadow: 0 10px 40px rgba(0,0,0,.45);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{background:var(--bg); color:var(--text); font-family:'Lexend',sans-serif; scroll-behavior:smooth;}
+  body{min-height:100vh; overflow-x:hidden;}
+  a{color:inherit;}
+  ::selection{background:var(--gold); color:#1a1200;}
+
+  .wrap{max-width:1240px; margin:0 auto; padding:0 24px;}
+
+  /* HERO */
+  .hero{
+    position:relative; padding:64px 0 40px; overflow:hidden;
+    background:
+      radial-gradient(1000px 500px at 15% -10%, rgba(245,158,11,.16), transparent 60%),
+      radial-gradient(800px 400px at 90% 0%, rgba(59,130,246,.10), transparent 60%),
+      var(--bg);
+    border-bottom:1px solid var(--border);
+  }
+  .badge{
+    display:inline-flex; align-items:center; gap:8px; padding:6px 14px; border-radius:99px;
+    background:rgba(245,158,11,.12); border:1px solid rgba(245,158,11,.35); color:var(--gold);
+    font-size:13px; font-weight:600; letter-spacing:.02em;
+  }
+  .badge i{font-size:11px;}
+  .hero h1{font-size:clamp(28px,4vw,44px); font-weight:800; line-height:1.15; margin:18px 0 14px; max-width:820px;}
+  .hero p.lead{color:var(--muted); font-size:17px; max-width:640px; line-height:1.6;}
+  .hero .row{display:flex; gap:14px; flex-wrap:wrap; margin-top:26px;}
+  .pill{
+    display:flex; align-items:center; gap:10px; background:var(--panel); border:1px solid var(--border);
+    padding:10px 16px; border-radius:99px; font-size:13px; color:var(--muted);
+  }
+  .pill i{color:var(--gold);}
+
+  /* TABS */
+  .tabbar{
+    position:sticky; top:0; z-index:40; background:rgba(11,13,16,.85); backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--border);
+  }
+  .tabbar .wrap{display:flex; gap:4px; padding:10px 24px;}
+  .tabbtn{
+    display:flex; align-items:center; gap:8px; padding:10px 18px; border-radius:10px; border:none;
+    background:transparent; color:var(--muted); font-family:inherit; font-weight:600; font-size:14px; cursor:pointer;
+    transition:.15s;
+  }
+  .tabbtn:hover{color:var(--text); background:var(--panel);}
+  .tabbtn.active{color:#151008; background:var(--gold);}
+
+  section.view{display:none; padding:36px 0 80px;}
+  section.view.active{display:block;}
+
+  /* CALL SIMULATOR LAYOUT */
+  .call-grid{display:grid; grid-template-columns:380px 1fr; gap:24px; align-items:start;}
+  @media(max-width:900px){.call-grid{grid-template-columns:1fr;}}
+
+  .phone{
+    background:linear-gradient(180deg,var(--panel2),var(--panel));
+    border:1px solid var(--border); border-radius:28px; padding:22px; box-shadow:var(--shadow);
+    position:sticky; top:80px;
+  }
+  .phone-top{display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; color:var(--muted2); font-size:12px;}
+  .caller-card{text-align:center; padding:18px 0 8px;}
+  .avatar-ring{
+    width:104px; height:104px; border-radius:50%; margin:0 auto 14px; padding:4px;
+    background:conic-gradient(var(--gold), var(--gold-dark), var(--gold));
+  }
+  .avatar-ring img{width:100%; height:100%; border-radius:50%; object-fit:cover; display:block; border:3px solid var(--panel2);}
+  .caller-name{font-weight:700; font-size:19px;}
+  .caller-sub{color:var(--muted); font-size:13px; margin-top:4px;}
+  .call-status{
+    text-align:center; margin:14px 0 20px; font-size:13px; color:var(--muted2); letter-spacing:.03em;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+  }
+  .dot{width:8px; height:8px; border-radius:50%; background:var(--muted2);}
+  .dot.live{background:var(--green); box-shadow:0 0 0 0 rgba(34,197,94,.6); animation:pulse 1.4s infinite;}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(34,197,94,.55);}70%{box-shadow:0 0 0 10px rgba(34,197,94,0);}100%{box-shadow:0 0 0 0 rgba(34,197,94,0);}}
+
+  .call-actions{display:flex; gap:12px; justify-content:center; margin-top:6px;}
+  .btn-circle{
+    width:58px; height:58px; border-radius:50%; border:none; cursor:pointer; font-size:20px;
+    display:flex; align-items:center; justify-content:center; transition:.15s; color:#fff;
+  }
+  .btn-circle:hover{transform:translateY(-2px);}
+  .btn-circle.answer{background:var(--green);}
+  .btn-circle.end{background:var(--red);}
+  .btn-circle:disabled{opacity:.35; cursor:not-allowed; transform:none;}
+
+  .speaking-indicator{display:flex; gap:3px; align-items:center; justify-content:center; height:22px; margin-top:14px;}
+  .speaking-indicator span{width:4px; background:var(--gold); border-radius:2px; height:6px; opacity:.35;}
+  .speaking-indicator.on span{animation:bars 0.9s infinite ease-in-out; opacity:1;}
+  .speaking-indicator span:nth-child(1){animation-delay:0s;}
+  .speaking-indicator span:nth-child(2){animation-delay:.15s;}
+  .speaking-indicator span:nth-child(3){animation-delay:.3s;}
+  .speaking-indicator span:nth-child(4){animation-delay:.45s;}
+  .speaking-indicator span:nth-child(5){animation-delay:.6s;}
+  @keyframes bars{0%,100%{height:6px;}50%{height:20px;}}
+
+  .kb-note{margin-top:18px; padding:12px 14px; background:var(--bg2); border:1px solid var(--border); border-radius:12px; font-size:12px; color:var(--muted2); line-height:1.5;}
+  .kb-note i{color:var(--gold); margin-right:6px;}
+
+  /* TRANSCRIPT PANEL */
+  .panel{background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:24px; box-shadow:var(--shadow);}
+  .panel h3{font-size:15px; font-weight:700; margin-bottom:16px; display:flex; align-items:center; gap:8px; color:var(--text);}
+  .panel h3 i{color:var(--gold);}
+
+  .transcript{min-height:260px; max-height:420px; overflow-y:auto; display:flex; flex-direction:column; gap:14px; padding-right:4px;}
+  .msg{max-width:78%; padding:12px 16px; border-radius:14px; font-size:14.5px; line-height:1.5; animation:fadeUp .25s ease;}
+  @keyframes fadeUp{from{opacity:0; transform:translateY(6px);}to{opacity:1; transform:translateY(0);}}
+  .msg.ai{align-self:flex-start; background:var(--panel2); border:1px solid var(--border); border-bottom-left-radius:4px;}
+  .msg.ai .who{color:var(--gold);}
+  .msg.patient{align-self:flex-end; background:linear-gradient(135deg,var(--gold),var(--gold-dark)); color:#1a1200; border-bottom-right-radius:4px;}
+  .msg .who{font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; margin-bottom:4px; opacity:.75;}
+  .msg.live-caption{background:var(--panel2); border:1px dashed var(--gold); opacity:.9;}
+  .word{opacity:.4; transition:opacity .12s;}
+  .word.said{opacity:1;}
+
+  .toast{
+    display:inline-flex; align-items:center; gap:8px; align-self:center; background:rgba(239,68,68,.12);
+    border:1px solid rgba(239,68,68,.4); color:#fca5a5; padding:8px 14px; border-radius:99px; font-size:12.5px; font-weight:600;
+  }
+  .toast.transfer{background:rgba(59,130,246,.12); border-color:rgba(59,130,246,.4); color:#93c5fd;}
+  .toast.booked{background:rgba(34,197,94,.12); border-color:rgba(34,197,94,.4); color:#86efac;}
+
+  .intent-row{display:flex; flex-wrap:wrap; gap:10px; margin-top:18px;}
+  .intent-btn{
+    background:var(--panel2); border:1px solid var(--border); color:var(--text); padding:10px 16px;
+    border-radius:10px; font-family:inherit; font-size:13.5px; font-weight:500; cursor:pointer; transition:.15s;
+    display:flex; align-items:center; gap:8px;
+  }
+  .intent-btn:hover{border-color:var(--gold); color:var(--gold);}
+  .intent-btn:disabled{opacity:.35; cursor:not-allowed;}
+  .intent-btn.interrupt{background:rgba(239,68,68,.1); border-color:rgba(239,68,68,.4); color:#fca5a5; display:none;}
+  .intent-btn.interrupt.show{display:flex;}
+  .intent-btn.mic{border-color:rgba(59,130,246,.4); color:#93c5fd;}
+
+  .slot-row{display:flex; flex-wrap:wrap; gap:8px; margin:10px 0 4px;}
+  .slot-btn{
+    background:var(--bg2); border:1px solid var(--border); color:var(--text); padding:8px 14px;
+    border-radius:8px; font-family:inherit; font-size:13px; cursor:pointer;
+  }
+  .slot-btn:hover{border-color:var(--gold); color:var(--gold);}
+
+  /* KB EDITOR */
+  .kb-grid{display:grid; grid-template-columns:1fr 1fr; gap:20px;}
+  @media(max-width:900px){.kb-grid{grid-template-columns:1fr;}}
+  .field{margin-bottom:14px;}
+  .field label{display:block; font-size:12.5px; color:var(--muted); margin-bottom:6px; font-weight:600;}
+  .field input, .field textarea{
+    width:100%; background:var(--bg2); border:1px solid var(--border); color:var(--text);
+    padding:10px 12px; border-radius:8px; font-family:inherit; font-size:14px;
+  }
+  .field textarea{resize:vertical; min-height:70px;}
+  .price-row{display:flex; gap:8px; margin-bottom:8px;}
+  .price-row input{flex:1;}
+  .price-row button{background:transparent; border:none; color:var(--red); cursor:pointer; font-size:15px;}
+  .btn-gold{
+    background:linear-gradient(135deg,var(--gold),var(--gold-dark)); color:#1a1200; border:none;
+    padding:11px 20px; border-radius:10px; font-weight:700; font-size:14px; cursor:pointer; font-family:inherit;
+  }
+  .btn-ghost{background:var(--bg2); border:1px solid var(--border); color:var(--text); padding:11px 18px; border-radius:10px; font-weight:600; font-size:13.5px; cursor:pointer; font-family:inherit;}
+  .save-flash{color:var(--green); font-size:13px; font-weight:600; margin-left:12px; opacity:0; transition:opacity .3s;}
+  .save-flash.show{opacity:1;}
+
+  /* DASHBOARD */
+  .stat-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:18px; margin-bottom:26px;}
+  @media(max-width:900px){.stat-grid{grid-template-columns:repeat(2,1fr);}}
+  .stat-card{background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:20px;}
+  .stat-card .icon{width:38px; height:38px; border-radius:10px; background:rgba(245,158,11,.12); color:var(--gold); display:flex; align-items:center; justify-content:center; margin-bottom:14px;}
+  .stat-card .num{font-size:28px; font-weight:800;}
+  .stat-card .label{color:var(--muted); font-size:12.5px; margin-top:4px;}
+
+  .chart-row{display:flex; align-items:flex-end; gap:10px; height:120px; margin-top:8px;}
+  .chart-bar{flex:1; display:flex; flex-direction:column; align-items:center; gap:8px;}
+  .chart-bar .bar{width:100%; background:linear-gradient(180deg,var(--gold),var(--gold-dark)); border-radius:6px 6px 2px 2px;}
+  .chart-bar .lbl{font-size:11px; color:var(--muted2);}
+
+  table{width:100%; border-collapse:collapse; font-size:13.5px;}
+  th{text-align:left; color:var(--muted); font-weight:600; font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; padding:10px 12px; border-bottom:1px solid var(--border);}
+  td{padding:12px; border-bottom:1px solid var(--border); vertical-align:top;}
+  tr:hover td{background:rgba(255,255,255,.015);}
+  .tag{display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:99px; font-size:11.5px; font-weight:600;}
+  .tag.resolved{background:rgba(34,197,94,.12); color:#86efac;}
+  .tag.booked{background:rgba(245,158,11,.14); color:var(--gold);}
+  .tag.transferred{background:rgba(59,130,246,.12); color:#93c5fd;}
+  .expand-btn{background:none; border:none; color:var(--muted2); cursor:pointer; font-size:12px;}
+  .transcript-detail{display:none; font-size:12.5px; color:var(--muted); background:var(--bg2); border-radius:8px; padding:10px; margin-top:8px; white-space:pre-line;}
+  .transcript-detail.show{display:block;}
+
+  footer{border-top:1px solid var(--border); padding:26px 0; text-align:center; color:var(--muted2); font-size:12.5px;}
+
+  ::-webkit-scrollbar{width:8px;}
+  ::-webkit-scrollbar-thumb{background:var(--border); border-radius:8px;}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="wrap">
+    <span class="badge"><i class="fa-solid fa-microphone"></i> DEMO CON VOZ REAL — no es texto simulado</span>
+    <h1>Sofia, la recepcionista de voz con IA para tu clinica</h1>
+    <p class="lead">Contesta llamadas, agenda citas y responde dudas de pacientes las 24 horas, en espanol natural. Este demo habla de verdad: dale clic a "Contestar" y escucha la conversacion completa con tu voz del sistema.</p>
+    <div class="row">
+      <div class="pill"><i class="fa-solid fa-comments"></i> Interrupcion natural (barge-in)</div>
+      <div class="pill"><i class="fa-solid fa-calendar-check"></i> Agenda en tiempo real</div>
+      <div class="pill"><i class="fa-solid fa-user-nurse"></i> Transferencia a humano</div>
+      <div class="pill"><i class="fa-solid fa-chart-line"></i> Panel con historial y metricas</div>
+    </div>
+  </div>
+</div>
+
+<div class="tabbar">
+  <div class="wrap">
+    <button class="tabbtn active" data-view="call"><i class="fa-solid fa-phone-volume"></i> Llamada en vivo</button>
+    <button class="tabbtn" data-view="kb"><i class="fa-solid fa-database"></i> Base de conocimiento</button>
+    <button class="tabbtn" data-view="dashboard"><i class="fa-solid fa-gauge-high"></i> Panel de control</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- CALL VIEW -->
+  <section class="view active" id="view-call">
+    <div class="call-grid">
+
+      <div class="phone">
+        <div class="phone-top">
+          <span><i class="fa-solid fa-signal"></i> Linea principal</span>
+          <span id="clock">00:00</span>
+        </div>
+        <div class="caller-card">
+          <div class="avatar-ring"><img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&h=200&fit=crop&crop=faces" alt="Paciente"></div>
+          <div class="caller-name">Paciente entrante</div>
+          <div class="caller-sub" id="callerNumber">+52 55 1042 8837</div>
+        </div>
+        <div class="call-status">
+          <span class="dot" id="statusDot"></span>
+          <span id="statusText">Esperando llamada...</span>
+        </div>
+        <div class="speaking-indicator" id="speakInd">
+          <span></span><span></span><span></span><span></span><span></span>
+        </div>
+        <div class="call-actions">
+          <button class="btn-circle answer" id="answerBtn" title="Contestar"><i class="fa-solid fa-phone"></i></button>
+          <button class="btn-circle end" id="endBtn" disabled title="Colgar"><i class="fa-solid fa-phone-slash"></i></button>
+        </div>
+        <div class="kb-note"><i class="fa-solid fa-circle-info"></i>Sofia usa la sintesis de voz de tu navegador. Para la voz mas natural en espanol, abre este demo en Chrome o Edge.</div>
+      </div>
+
+      <div class="panel">
+        <h3><i class="fa-solid fa-waveform-lines"></i> Transcripcion de la llamada</h3>
+        <div class="transcript" id="transcript">
+          <div class="msg ai"><div class="who">Sofia · IA</div>Presiona "Contestar" en el telefono para iniciar la llamada. Vas a escuchar la voz real de la recepcionista, no un texto animado.</div>
+        </div>
+
+        <div class="intent-row" id="intentRow" style="display:none;">
+          <button class="intent-btn interrupt" id="interruptBtn"><i class="fa-solid fa-hand"></i> Interrumpir a Sofia</button>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- KB VIEW -->
+  <section class="view" id="view-kb">
+    <div class="panel">
+      <h3><i class="fa-solid fa-book-medical"></i> Base de conocimiento de la clinica</h3>
+      <p style="color:var(--muted); font-size:13.5px; margin-bottom:20px; max-width:620px;">Esto es lo que edita el personal de recepcion, sin tocar codigo. Cambia un horario o un precio, guarda, y en la siguiente llamada Sofia ya responde con el dato actualizado.</p>
+      <div class="kb-grid">
+        <div>
+          <div class="field">
+            <label>Nombre de la clinica</label>
+            <input type="text" id="kb-name" value="Clinica Bienestar Integral">
+          </div>
+          <div class="field">
+            <label>Horario de atencion</label>
+            <textarea id="kb-hours">Lunes a viernes de 9 a. m. a 7 p. m. Sabados de 9 a. m. a 2 p. m. Domingos cerrado.</textarea>
+          </div>
+          <div class="field">
+            <label>Promocion vigente</label>
+            <textarea id="kb-promo">Veinte por ciento de descuento en tu primera consulta durante este mes.</textarea>
+          </div>
+        </div>
+        <div>
+          <label style="display:block; font-size:12.5px; color:var(--muted); margin-bottom:6px; font-weight:600;">Servicios y precios</label>
+          <div id="priceList"></div>
+          <button class="btn-ghost" id="addPriceBtn" style="margin-top:6px;"><i class="fa-solid fa-plus"></i> Agregar servicio</button>
+        </div>
+      </div>
+      <div style="margin-top:10px;">
+        <button class="btn-gold" id="saveKbBtn"><i class="fa-solid fa-floppy-disk"></i> Guardar cambios</button>
+        <span class="save-flash" id="saveFlash">Guardado. Sofia ya usa estos datos.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- DASHBOARD VIEW -->
+  <section class="view" id="view-dashboard">
+    <div class="stat-grid">
+      <div class="stat-card"><div class="icon"><i class="fa-solid fa-phone"></i></div><div class="num" id="statCalls">0</div><div class="label">Llamadas atendidas hoy</div></div>
+      <div class="stat-card"><div class="icon"><i class="fa-solid fa-clock"></i></div><div class="num" id="statAvg">0:00</div><div class="label">Duracion promedio</div></div>
+      <div class="stat-card"><div class="icon"><i class="fa-solid fa-calendar-plus"></i></div><div class="num" id="statBooked">0</div><div class="label">Citas creadas</div></div>
+      <div class="stat-card"><div class="icon"><i class="fa-solid fa-user-nurse"></i></div><div class="num" id="statTransfer">0</div><div class="label">Transferidas a recepcion</div></div>
+    </div>
+
+    <div class="panel" style="margin-bottom:20px;">
+      <h3><i class="fa-solid fa-chart-column"></i> Llamadas atendidas por Sofia — ultimos 7 dias</h3>
+      <div class="chart-row" id="chartRow"></div>
+    </div>
+
+    <div class="panel">
+      <h3><i class="fa-solid fa-clock-rotate-left"></i> Historial de llamadas y transcripciones</h3>
+      <table>
+        <thead><tr><th>Fecha</th><th>Duracion</th><th>Resumen</th><th>Resultado</th><th></th></tr></thead>
+        <tbody id="callLogBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+</div>
+
+<footer>Demo funcional construido para el proyecto de Recepcionista de Voz con IA — la voz que escuchas es sintesis real, no una grabacion.</footer>
+
+<script>
+/* ---------- state ---------- */
+let kb = {
+  name: "Clinica Bienestar Integral",
+  hours: "Lunes a viernes de 9 a. m. a 7 p. m. Sabados de 9 a. m. a 2 p. m. Domingos cerrado.",
+  promo: "Veinte por ciento de descuento en tu primera consulta durante este mes.",
+  prices: [
+    {service:"Consulta general", price:"$600 MXN"},
+    {service:"Limpieza dental", price:"$800 MXN"},
+    {service:"Blanqueamiento dental", price:"$2,500 MXN"}
+  ]
+};
+
+let slots = [
+  {id:1, label:"Manana 10:30 a. m.", taken:false},
+  {id:2, label:"Manana 12:00 p. m.", taken:false},
+  {id:3, label:"Manana 4:15 p. m.", taken:false},
+  {id:4, label:"Pasado manana 9:00 a. m.", taken:false}
+];
+
+let existingAppointments = [
+  {id:101, label:"Jueves 10:00 a. m. — Consulta general"},
+  {id:102, label:"Viernes 5:30 p. m. — Limpieza dental"}
+];
+
+let callLog = [
+  {date:"08 Jul, 09:14", duration:"1:52", summary:"Pregunto por horario de sabado.", tag:"resolved", tagLabel:"Resuelta por IA", transcript:"Paciente: Buenas, quiero saber si abren los sabados.\nSofia: Si, atendemos sabados de 9 a. m. a 2 p. m."},
+  {date:"08 Jul, 11:02", duration:"2:47", summary:"Agendo limpieza dental para el viernes.", tag:"booked", tagLabel:"Cita creada", transcript:"Paciente: Quiero una cita para limpieza dental.\nSofia: Tengo disponible el viernes a las 5:30 p. m., ¿le queda bien?\nPaciente: Si, perfecto.\nSofia: Listo, cita confirmada para el viernes a las 5:30 p. m."},
+  {date:"08 Jul, 15:33", duration:"3:10", summary:"Duda sobre un dolor fuerte, se transfirio a recepcion.", tag:"transferred", tagLabel:"Transferida", transcript:"Paciente: Tengo un dolor muy fuerte desde ayer, no se si es urgencia.\nSofia: Entiendo, esto lo debe evaluar el personal directamente, la transfiero ahora mismo."},
+  {date:"09 Jul, 09:47", duration:"1:20", summary:"Confirmo precio de blanqueamiento.", tag:"resolved", tagLabel:"Resuelta por IA", transcript:"Paciente: ¿Cuanto cuesta el blanqueamiento dental?\nSofia: El blanqueamiento dental tiene un costo de $2,500 pesos."}
+];
+
+let callActive = false;
+let speaking = false;
+let clockInterval = null;
+let seconds = 0;
+let currentFlow = null;
+
+/* ---------- voice ---------- */
+let spanishVoice = null;
+function pickVoice(){
+  const voices = speechSynthesis.getVoices();
+  spanishVoice = voices.find(v=>v.lang==='es-MX') || voices.find(v=>v.lang==='es-US')
+    || voices.find(v=>v.lang && v.lang.startsWith('es')) || null;
+}
+if('speechSynthesis' in window){
+  pickVoice();
+  speechSynthesis.onvoiceschanged = pickVoice;
+}
+
+function speak(text, {onEnd, onWord}={}){
+  if(!('speechSynthesis' in window)){
+    if(onEnd) onEnd();
+    return;
+  }
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  if(spanishVoice) u.voice = spanishVoice;
+  u.lang = spanishVoice ? spanishVoice.lang : 'es-MX';
+  u.rate = 0.98;
+  u.pitch = 1.03;
+  speaking = true;
+  document.getElementById('speakInd').classList.add('on');
+  document.getElementById('interruptBtn').classList.add('show');
+  u.onboundary = (e)=>{ if(onWord) onWord(e.charIndex); };
+  u.onend = ()=>{
+    speaking = false;
+    document.getElementById('speakInd').classList.remove('on');
+    document.getElementById('interruptBtn').classList.remove('show');
+    if(onEnd) onEnd();
+  };
+  u.onerror = ()=>{
+    speaking = false;
+    document.getElementById('speakInd').classList.remove('on');
+    document.getElementById('interruptBtn').classList.remove('show');
+  };
+  speechSynthesis.speak(u);
+}
+
+function stopSpeaking(){
+  speechSynthesis.cancel();
+  speaking = false;
+  document.getElementById('speakInd').classList.remove('on');
+  document.getElementById('interruptBtn').classList.remove('show');
+}
+
+/* ---------- transcript UI ---------- */
+const transcriptEl = document.getElementById('transcript');
+function addMsg(who, text, cls){
+  const div = document.createElement('div');
+  div.className = 'msg ' + cls;
+  div.innerHTML = '<div class="who">'+who+'</div>' + text;
+  transcriptEl.appendChild(div);
+  transcriptEl.scrollTop = transcriptEl.scrollHeight;
+  return div;
+}
+function addToast(text, cls){
+  const div = document.createElement('div');
+  div.className = 'toast ' + cls;
+  div.innerHTML = text;
+  transcriptEl.appendChild(div);
+  transcriptEl.scrollTop = transcriptEl.scrollHeight;
+}
+function aiSay(text, cb){
+  addMsg('Sofia · IA', text, 'ai');
+  speak(text, {onEnd: cb});
+}
+function patientSay(text){
+  addMsg('Paciente', text, 'patient');
+}
+
+/* ---------- intent buttons ---------- */
+const intentRow = document.getElementById('intentRow');
+function clearIntents(){
+  intentRow.querySelectorAll('.dynamic').forEach(b=>b.remove());
+}
+function addIntent(label, icon, handler, extraClass){
+  const btn = document.createElement('button');
+  btn.className = 'intent-btn dynamic' + (extraClass?(' '+extraClass):'');
+  btn.innerHTML = '<i class="fa-solid '+icon+'"></i> ' + label;
+  btn.onclick = handler;
+  intentRow.insertBefore(btn, document.getElementById('interruptBtn'));
+  return btn;
+}
+
+function showMainMenu(){
+  clearIntents();
+  addIntent('¿Cual es su horario?', 'fa-clock', ()=>askHours());
+  addIntent('¿Cuanto cuesta una limpieza dental?', 'fa-tooth', ()=>askPrice('Limpieza dental'));
+  addIntent('Quiero agendar una cita', 'fa-calendar-plus', ()=>startBooking());
+  addIntent('Necesito cancelar una cita', 'fa-calendar-xmark', ()=>startCancel());
+  addIntent('Quiero hablar con una persona', 'fa-user-nurse', ()=>transferHuman());
+}
+
+function askHours(){
+  patientSay('¿Cual es su horario de atencion?');
+  aiSay(kb.hours + ' ' + kb.promo, ()=>showMainMenu());
+}
+function askPrice(serviceGuess){
+  patientSay('¿Cuanto cuesta ' + serviceGuess.toLowerCase() + '?');
+  const item = kb.prices.find(p=>p.service.toLowerCase().includes(serviceGuess.toLowerCase()));
+  if(item){
+    aiSay(item.service + ' tiene un costo de ' + item.price + '.', ()=>showMainMenu());
+  } else {
+    aiSay('No tengo ese servicio en mi lista, ¿le gustaria que la transfiera con recepcion?', ()=>showMainMenu());
+  }
+}
+
+function startBooking(){
+  patientSay('Quiero agendar una cita.');
+  clearIntents();
+  const free = slots.filter(s=>!s.taken);
+  aiSay('Claro, tengo estos horarios disponibles.', ()=>{
+    const row = document.createElement('div');
+    row.className = 'slot-row dynamic-slots';
+    free.forEach(s=>{
+      const b = document.createElement('button');
+      b.className = 'slot-btn';
+      b.textContent = s.label;
+      b.onclick = ()=>confirmBooking(s);
+      row.appendChild(b);
+    });
+    transcriptEl.appendChild(row);
+    transcriptEl.scrollTop = transcriptEl.scrollHeight;
+  });
+}
+function confirmBooking(slot){
+  document.querySelectorAll('.dynamic-slots').forEach(e=>e.remove());
+  patientSay(slot.label + ', por favor.');
+  slot.taken = true;
+  aiSay('Listo, su cita queda confirmada para el ' + slot.label.toLowerCase() + '. Le voy a enviar un recordatorio antes de la cita.', ()=>{
+    addToast('Cita agendada y sincronizada con el calendario', 'booked');
+    existingAppointments.push({id: Date.now()%100000, label: slot.label});
+    logCall('2:1'+Math.floor(Math.random()*9), 'Agendo cita: ' + slot.label + '.', 'booked', 'Cita creada');
+    showMainMenu();
+  });
+}
+
+function startCancel(){
+  patientSay('Necesito cancelar una cita.');
+  clearIntents();
+  aiSay('Con gusto, ¿cual de estas es la que quiere cancelar?', ()=>{
+    const row = document.createElement('div');
+    row.className = 'slot-row dynamic-slots';
+    existingAppointments.forEach(a=>{
+      const b = document.createElement('button');
+      b.className = 'slot-btn';
+      b.textContent = a.label;
+      b.onclick = ()=>confirmCancel(a);
+      row.appendChild(b);
+    });
+    transcriptEl.appendChild(row);
+    transcriptEl.scrollTop = transcriptEl.scrollHeight;
+  });
+}
+function confirmCancel(appt){
+  document.querySelectorAll('.dynamic-slots').forEach(e=>e.remove());
+  patientSay('Esa, la del ' + appt.label.toLowerCase() + '.');
+  existingAppointments = existingAppointments.filter(a=>a.id!==appt.id);
+  aiSay('Su cita del ' + appt.label.toLowerCase() + ' ha sido cancelada, y el espacio queda libre en la agenda.', ()=>{
+    addToast('Cita cancelada y liberada en el calendario', 'booked');
+    logCall('1:3'+Math.floor(Math.random()*9), 'Cancelo cita: ' + appt.label + '.', 'resolved', 'Resuelta por IA');
+    showMainMenu();
+  });
+}
+
+function transferHuman(){
+  patientSay('Quiero hablar con una persona, por favor.');
+  clearIntents();
+  aiSay('Entendido, no se preocupe. La estoy transfiriendo ahora mismo con nuestro personal de recepcion, un momento.', ()=>{
+    addToast('<i class="fa-solid fa-arrow-right-arrow-left"></i> Llamada transferida a: Recepcion - Ana Torres', 'transfer');
+    logCall('1:0'+Math.floor(Math.random()*9), 'Solicito hablar con una persona.', 'transferred', 'Transferida');
+    setTimeout(()=>endCall(), 1400);
+  });
+}
+
+/* ---------- interrupt / barge-in ---------- */
+document.getElementById('interruptBtn').onclick = ()=>{
+  if(!speaking) return;
+  stopSpeaking();
+  addToast('<i class="fa-solid fa-hand"></i> El paciente interrumpio a Sofia', 'toast');
+  addMsg('Sofia · IA', 'Perdon, adelante.', 'ai');
+  showMainMenu();
+};
+
+/* ---------- call lifecycle ---------- */
+const answerBtn = document.getElementById('answerBtn');
+const endBtn = document.getElementById('endBtn');
+const statusDot = document.getElementById('statusDot');
+const statusText = document.getElementById('statusText');
+
+answerBtn.onclick = ()=>{
+  if(callActive) return;
+  callActive = true;
+  answerBtn.disabled = true;
+  endBtn.disabled = false;
+  statusDot.classList.add('live');
+  statusText.textContent = 'Llamada en curso';
+  document.getElementById('intentRow').style.display = 'flex';
+  seconds = 0;
+  clockInterval = setInterval(()=>{
+    seconds++;
+    const m = Math.floor(seconds/60), s = seconds%60;
+    document.getElementById('clock').textContent = m+':'+String(s).padStart(2,'0');
+  }, 1000);
+
+  aiSay(kb.name + ', buenos dias, habla con Sofia, su asistente virtual. Puedo ayudarle a agendar una cita, resolver dudas sobre nuestros servicios, o comunicarlo con recepcion. ¿En que le ayudo hoy?', ()=>{
+    showMainMenu();
+  });
+};
+
+function endCall(){
+  if(!callActive) return;
+  callActive = false;
+  stopSpeaking();
+  clearInterval(clockInterval);
+  answerBtn.disabled = false;
+  endBtn.disabled = true;
+  statusDot.classList.remove('live');
+  statusText.textContent = 'Llamada finalizada';
+  document.getElementById('intentRow').style.display = 'none';
+  clearIntents();
+  document.querySelectorAll('.dynamic-slots').forEach(e=>e.remove());
+  setTimeout(()=>{
+    transcriptEl.innerHTML = '<div class="msg ai"><div class="who">Sofia · IA</div>Presiona "Contestar" para iniciar una nueva llamada.</div>';
+    statusText.textContent = 'Esperando llamada...';
+    document.getElementById('clock').textContent = '0:00';
+  }, 2200);
+}
+endBtn.onclick = endCall;
+
+/* ---------- call log / dashboard ---------- */
+function logCall(duration, summary, tag, tagLabel){
+  const now = new Date();
+  callLog.unshift({
+    date: 'Ahora mismo', duration, summary, tag, tagLabel,
+    transcript: transcriptEl.innerText
+  });
+  renderDashboard();
+}
+
+function renderDashboard(){
+  document.getElementById('statCalls').textContent = callLog.length;
+  const totalSec = callLog.reduce((acc,c)=>{
+    const [m,s] = c.duration.split(':').map(Number);
+    return acc + m*60 + s;
+  },0);
+  const avg = Math.round(totalSec / callLog.length);
+  document.getElementById('statAvg').textContent = Math.floor(avg/60)+':'+String(avg%60).padStart(2,'0');
+  document.getElementById('statBooked').textContent = callLog.filter(c=>c.tag==='booked').length;
+  document.getElementById('statTransfer').textContent = callLog.filter(c=>c.tag==='transferred').length;
+
+  const tbody = document.getElementById('callLogBody');
+  tbody.innerHTML = '';
+  callLog.forEach((c,i)=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${c.date}</td><td>${c.duration}</td><td style="max-width:320px;">${c.summary}
+        <div class="transcript-detail" id="tr-${i}">${c.transcript}</div>
+        <button class="expand-btn" onclick="document.getElementById('tr-${i}').classList.toggle('show')"><i class="fa-solid fa-chevron-down"></i> ver transcripcion</button>
+      </td>
+      <td><span class="tag ${c.tag}">${c.tagLabel}</span></td><td></td>`;
+    tbody.appendChild(tr);
+  });
+
+  const chart = document.getElementById('chartRow');
+  chart.innerHTML = '';
+  const days = [['Mie',9],['Jue',13],['Vie',11],['Sab',6],['Dom',2],['Lun',15],['Mar',10+ (callLog.length-4>0?callLog.length-4:0)]];
+  const max = Math.max(...days.map(d=>d[1]));
+  days.forEach(([lbl,val])=>{
+    const col = document.createElement('div');
+    col.className = 'chart-bar';
+    col.innerHTML = `<div class="bar" style="height:${Math.max(8,(val/max)*90)}px;"></div><div class="lbl">${lbl}</div>`;
+    chart.appendChild(col);
+  });
+}
+
+/* ---------- KB editor ---------- */
+function renderPriceList(){
+  const list = document.getElementById('priceList');
+  list.innerHTML = '';
+  kb.prices.forEach((p,i)=>{
+    const row = document.createElement('div');
+    row.className = 'price-row';
+    row.innerHTML = `<input type="text" value="${p.service}" data-field="service" data-idx="${i}">
+      <input type="text" value="${p.price}" data-field="price" data-idx="${i}" style="max-width:110px;">
+      <button data-remove="${i}"><i class="fa-solid fa-trash"></i></button>`;
+    list.appendChild(row);
+  });
+  list.querySelectorAll('input').forEach(inp=>{
+    inp.oninput = ()=>{ kb.prices[inp.dataset.idx][inp.dataset.field] = inp.value; };
+  });
+  list.querySelectorAll('[data-remove]').forEach(btn=>{
+    btn.onclick = ()=>{ kb.prices.splice(btn.dataset.remove,1); renderPriceList(); };
+  });
+}
+document.getElementById('addPriceBtn').onclick = ()=>{
+  kb.prices.push({service:'Nuevo servicio', price:'$0 MXN'});
+  renderPriceList();
+};
+document.getElementById('saveKbBtn').onclick = ()=>{
+  kb.name = document.getElementById('kb-name').value;
+  kb.hours = document.getElementById('kb-hours').value;
+  kb.promo = document.getElementById('kb-promo').value;
+  const flash = document.getElementById('saveFlash');
+  flash.classList.add('show');
+  setTimeout(()=>flash.classList.remove('show'), 2200);
+};
+renderPriceList();
+
+/* ---------- tabs ---------- */
+document.querySelectorAll('.tabbtn').forEach(btn=>{
+  btn.onclick = ()=>{
+    document.querySelectorAll('.tabbtn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('view-'+btn.dataset.view).classList.add('active');
+    if(btn.dataset.view === 'dashboard') renderDashboard();
+  };
+});
+
+renderDashboard();
+</script>
+</body>
+</html>
