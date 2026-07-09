@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nora IA — Captacion y Gestion de Pacientes para Clinicas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+  :root{
+    --bg:#0b0d10; --bg2:#12151a; --panel:#171b21; --panel2:#1d222a;
+    --border:#262c35; --text:#f3f5f7; --muted:#9aa4b2; --muted2:#6b7684;
+    --gold:#f59e0b; --gold-dark:#d97706; --green:#22c55e; --red:#ef4444; --blue:#3b82f6;
+    --whatsapp:#25d366;
+    --radius:16px; --radius-sm:10px;
+    --shadow: 0 10px 40px rgba(0,0,0,.45);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{background:var(--bg); color:var(--text); font-family:'Lexend',sans-serif; scroll-behavior:smooth;}
+  body{min-height:100vh; overflow-x:hidden;}
+  a{color:inherit;}
+  ::selection{background:var(--gold); color:#1a1200;}
+  img{max-width:100%; display:block;}
+
+  .wrap{max-width:1240px; margin:0 auto; padding:0 24px;}
+
+  .reveal{opacity:0; transform:translateY(14px); transition:opacity .5s ease, transform .5s ease;}
+  .reveal.in{opacity:1; transform:translateY(0);}
+
+  /* HERO */
+  .hero{
+    position:relative; padding:64px 0 40px; overflow:hidden;
+    background:
+      radial-gradient(1000px 500px at 15% -10%, rgba(245,158,11,.16), transparent 60%),
+      radial-gradient(800px 400px at 90% 0%, rgba(37,211,102,.10), transparent 60%),
+      var(--bg);
+    border-bottom:1px solid var(--border);
+  }
+  .hero::before{
+    content:''; position:absolute; inset:0; pointer-events:none;
+    background-image: radial-gradient(2px 2px at 20% 30%, rgba(245,158,11,.35), transparent),
+                       radial-gradient(2px 2px at 70% 60%, rgba(245,158,11,.25), transparent),
+                       radial-gradient(1.5px 1.5px at 90% 20%, rgba(37,211,102,.3), transparent),
+                       radial-gradient(1.5px 1.5px at 40% 80%, rgba(245,158,11,.2), transparent);
+    animation: floaty 9s ease-in-out infinite;
+  }
+  @keyframes floaty{0%,100%{transform:translateY(0);}50%{transform:translateY(-14px);}}
+  .hero-inner{display:grid; grid-template-columns:1.2fr .8fr; gap:36px; align-items:center; position:relative;}
+  @media(max-width:900px){.hero-inner{grid-template-columns:1fr;}}
+  .badge{
+    display:inline-flex; align-items:center; gap:8px; padding:6px 14px; border-radius:99px;
+    background:rgba(245,158,11,.12); border:1px solid rgba(245,158,11,.35); color:var(--gold);
+    font-size:13px; font-weight:600; letter-spacing:.02em;
+  }
+  .badge i{font-size:11px;}
+  .hero h1{font-size:clamp(28px,4vw,44px); font-weight:800; line-height:1.15; margin:18px 0 14px; max-width:640px;}
+  .hero p.lead{color:var(--muted); font-size:16.5px; max-width:560px; line-height:1.65;}
+  .hero .row{display:flex; gap:12px; flex-wrap:wrap; margin-top:26px;}
+  .pill{
+    display:flex; align-items:center; gap:10px; background:var(--panel); border:1px solid var(--border);
+    padding:10px 16px; border-radius:99px; font-size:13px; color:var(--muted);
+  }
+  .pill i{color:var(--gold);}
+  .hero-photo{border-radius:var(--radius); overflow:hidden; border:1px solid var(--border); box-shadow:var(--shadow); position:relative;}
+  .hero-photo img{width:100%; height:280px; object-fit:cover;}
+  .hero-photo-tag{
+    position:absolute; bottom:14px; left:14px; right:14px; background:rgba(11,13,16,.82); backdrop-filter:blur(6px);
+    border:1px solid var(--border); border-radius:12px; padding:12px 14px; font-size:12.5px; color:var(--muted);
+    display:flex; align-items:center; gap:10px;
+  }
+  .hero-photo-tag .dotlive{width:8px; height:8px; border-radius:50%; background:var(--green); box-shadow:0 0 0 0 rgba(34,197,94,.6); animation:pulse 1.4s infinite; flex-shrink:0;}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(34,197,94,.55);}70%{box-shadow:0 0 0 10px rgba(34,197,94,0);}100%{box-shadow:0 0 0 0 rgba(34,197,94,0);}}
+
+  /* TABS */
+  .tabbar{
+    position:sticky; top:0; z-index:40; background:rgba(11,13,16,.85); backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--border);
+  }
+  .tabbar .wrap{display:flex; gap:4px; padding:10px 24px;}
+  .tabbtn{
+    display:flex; align-items:center; gap:8px; padding:10px 18px; border-radius:10px; border:none;
+    background:transparent; color:var(--muted); font-family:inherit; font-weight:600; font-size:14px; cursor:pointer;
+    transition:.15s;
+  }
+  .tabbtn:hover{color:var(--text); background:var(--panel);}
+  .tabbtn.active{color:#151008; background:var(--gold);}
+
+  section.view{display:none; padding:36px 0 80px;}
+  section.view.active{display:block;}
+
+  /* CHAT LAYOUT */
+  .chat-grid{display:grid; grid-template-columns:380px 1fr; gap:24px; align-items:start;}
+  @media(max-width:900px){.chat-grid{grid-template-columns:1fr;}}
+
+  .phone{
+    background:linear-gradient(180deg,#0e1a12,#0b0d10);
+    border:1px solid var(--border); border-radius:28px; padding:0; box-shadow:var(--shadow);
+    position:sticky; top:80px; overflow:hidden;
+  }
+  .phone-header{
+    background:#1a2c22; padding:16px 18px; display:flex; align-items:center; gap:12px; border-bottom:1px solid rgba(255,255,255,.06);
+  }
+  .phone-header img{width:40px; height:40px; border-radius:50%; object-fit:cover;}
+  .phone-header .name{font-weight:700; font-size:15px;}
+  .phone-header .status{font-size:11.5px; color:#8fd6a3;}
+  .phone-body{padding:18px; min-height:340px; background:
+      radial-gradient(600px 300px at 50% 0%, rgba(37,211,102,.06), transparent 60%);}
+  .wa-msg{max-width:82%; padding:10px 13px; border-radius:12px; font-size:13.5px; line-height:1.5; margin-bottom:10px; animation:fadeUp .25s ease; position:relative;}
+  @keyframes fadeUp{from{opacity:0; transform:translateY(6px);}to{opacity:1; transform:translateY(0);}}
+  .wa-msg.bot{background:#1d222a; border:1px solid var(--border); border-bottom-left-radius:3px;}
+  .wa-msg.patient{background:#0b3d20; border:1px solid rgba(37,211,102,.25); margin-left:auto; border-bottom-right-radius:3px;}
+  .wa-msg .time{display:block; font-size:10px; color:var(--muted2); margin-top:4px; text-align:right;}
+  .wa-slots{display:flex; flex-wrap:wrap; gap:8px; margin:4px 0 12px;}
+  .wa-slot{background:var(--bg2); border:1px solid rgba(37,211,102,.35); color:#8fd6a3; padding:7px 12px; border-radius:8px; font-family:inherit; font-size:12.5px; cursor:pointer;}
+  .wa-slot:hover{border-color:var(--whatsapp); background:rgba(37,211,102,.08);}
+  .wa-typing{display:flex; gap:4px; padding:10px 13px; background:#1d222a; border:1px solid var(--border); border-radius:12px; width:fit-content; margin-bottom:10px;}
+  .wa-typing span{width:6px; height:6px; border-radius:50%; background:var(--muted2); animation:blink 1.2s infinite;}
+  .wa-typing span:nth-child(2){animation-delay:.2s;} .wa-typing span:nth-child(3){animation-delay:.4s;}
+  @keyframes blink{0%,100%{opacity:.3;}50%{opacity:1;}}
+  .phone-footer{padding:14px 18px; border-top:1px solid rgba(255,255,255,.06); display:flex; justify-content:center;}
+
+  .panel{background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:24px; box-shadow:var(--shadow);}
+  .panel h3{font-size:15px; font-weight:700; margin-bottom:8px; display:flex; align-items:center; gap:8px; color:var(--text);}
+  .panel h3 i{color:var(--gold);}
+  .panel p.sub{color:var(--muted); font-size:13.5px; margin-bottom:20px; max-width:560px; line-height:1.55;}
+
+  .btn-gold{
+    background:linear-gradient(135deg,var(--gold),var(--gold-dark)); color:#1a1200; border:none;
+    padding:12px 22px; border-radius:10px; font-weight:700; font-size:14px; cursor:pointer; font-family:inherit;
+    display:inline-flex; align-items:center; gap:8px; transition:transform .15s;
+  }
+  .btn-gold:hover{transform:translateY(-2px);}
+  .btn-gold:disabled{opacity:.4; cursor:not-allowed; transform:none;}
+  .btn-ghost{background:var(--bg2); border:1px solid var(--border); color:var(--text); padding:11px 18px; border-radius:10px; font-weight:600; font-size:13.5px; cursor:pointer; font-family:inherit;}
+  .btn-ghost:hover{border-color:var(--gold); color:var(--gold);}
+
+  .insight-box{
+    margin-top:22px; padding:16px 18px; border-radius:12px; background:rgba(245,158,11,.07); border:1px solid rgba(245,158,11,.28);
+    display:flex; gap:12px; align-items:flex-start;
+  }
+  .insight-box i{color:var(--gold); font-size:18px; margin-top:2px;}
+  .insight-box .t{font-weight:700; font-size:13.5px; margin-bottom:4px;}
+  .insight-box .d{color:var(--muted); font-size:13px; line-height:1.55;}
+
+  /* DASHBOARD */
+  .stat-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:18px; margin-bottom:26px;}
+  @media(max-width:900px){.stat-grid{grid-template-columns:repeat(2,1fr);}}
+  .stat-card{background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:20px; transition:transform .15s, border-color .15s;}
+  .stat-card:hover{transform:translateY(-3px); border-color:rgba(245,158,11,.4);}
+  .stat-card .icon{width:38px; height:38px; border-radius:10px; background:rgba(245,158,11,.12); color:var(--gold); display:flex; align-items:center; justify-content:center; margin-bottom:14px; font-size:15px;}
+  .stat-card .num{font-size:28px; font-weight:800;}
+  .stat-card .label{color:var(--muted); font-size:12.5px; margin-top:4px;}
+  .stat-card .delta{font-size:11.5px; color:var(--green); margin-top:6px; font-weight:600;}
+
+  .dash-grid{display:grid; grid-template-columns:1.3fr 1fr; gap:22px; margin-bottom:22px;}
+  @media(max-width:900px){.dash-grid{grid-template-columns:1fr;}}
+
+  .chart-row{display:flex; align-items:flex-end; gap:12px; height:140px; margin-top:14px;}
+  .chart-bar{flex:1; display:flex; flex-direction:column; align-items:center; gap:8px; justify-content:flex-end; height:100%;}
+  .chart-bar .bar{width:100%; background:linear-gradient(180deg,var(--gold),var(--gold-dark)); border-radius:6px 6px 2px 2px; height:0; transition:height 1s cubic-bezier(.2,.8,.2,1);}
+  .chart-bar .lbl{font-size:11px; color:var(--muted2);}
+  .chart-bar .val{font-size:11px; color:var(--muted); font-weight:600;}
+
+  .funnel{display:flex; flex-direction:column; gap:10px; margin-top:16px;}
+  .funnel-row{display:flex; align-items:center; gap:12px;}
+  .funnel-row .lbl{width:118px; font-size:12.5px; color:var(--muted); flex-shrink:0;}
+  .funnel-track{flex:1; height:22px; background:var(--bg2); border-radius:6px; overflow:hidden; border:1px solid var(--border);}
+  .funnel-fill{height:100%; background:linear-gradient(90deg,var(--gold-dark),var(--gold)); width:0; transition:width 1.2s cubic-bezier(.2,.8,.2,1); border-radius:6px;}
+  .funnel-row .n{width:36px; text-align:right; font-size:12.5px; font-weight:700; flex-shrink:0;}
+
+  table{width:100%; border-collapse:collapse; font-size:13.5px;}
+  th{text-align:left; color:var(--muted); font-weight:600; font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; padding:10px 12px; border-bottom:1px solid var(--border);}
+  td{padding:12px; border-bottom:1px solid var(--border); vertical-align:top;}
+  tr:hover td{background:rgba(255,255,255,.015);}
+  .tag{display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:99px; font-size:11.5px; font-weight:600;}
+  .tag.booked{background:rgba(34,197,94,.12); color:#86efac;}
+  .tag.pending{background:rgba(245,158,11,.14); color:var(--gold);}
+  .tag.lost{background:rgba(239,68,68,.12); color:#fca5a5;}
+
+  .integrations{display:flex; flex-wrap:wrap; gap:10px; margin-top:14px;}
+  .int-pill{display:flex; align-items:center; gap:8px; background:var(--bg2); border:1px solid var(--border); padding:8px 14px; border-radius:99px; font-size:12.5px; color:var(--muted);}
+  .int-pill i{color:var(--gold);}
+
+  footer{border-top:1px solid var(--border); padding:26px 0; text-align:center; color:var(--muted2); font-size:12.5px;}
+
+  ::-webkit-scrollbar{width:8px;}
+  ::-webkit-scrollbar-thumb{background:var(--border); border-radius:8px;}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="wrap hero-inner">
+    <div>
+      <span class="badge"><i class="fa-brands fa-whatsapp"></i> DEMO INTERACTIVO — flujo real de WhatsApp</span>
+      <h1>Nora, la IA que capta y agenda pacientes por WhatsApp</h1>
+      <p class="lead">Responde consultas, revisa disponibilidad y confirma citas las 24 horas, sin que el personal toque el telefono. Este demo simula una conversacion real de Clinica Dental Aurora, en Madrid: dale play y mira como una consulta se convierte en una cita agendada.</p>
+      <div class="row">
+        <div class="pill"><i class="fa-solid fa-bolt"></i> Respuesta en segundos, no en horas</div>
+        <div class="pill"><i class="fa-solid fa-calendar-check"></i> Agenda en tiempo real</div>
+        <div class="pill"><i class="fa-solid fa-chair"></i> Menos sillas vacias</div>
+        <div class="pill"><i class="fa-solid fa-gauge-high"></i> Panel de negocio incluido</div>
+      </div>
+    </div>
+    <div class="hero-photo">
+      <img src="https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=700&h=560&fit=crop" alt="Clinica dental moderna">
+      <div class="hero-photo-tag"><span class="dotlive"></span> Clinica Dental Aurora — 3 pacientes agendados en la ultima hora</div>
+    </div>
+  </div>
+</div>
+
+<div class="tabbar">
+  <div class="wrap">
+    <button class="tabbtn active" data-view="chat"><i class="fa-brands fa-whatsapp"></i> Simulador WhatsApp</button>
+    <button class="tabbtn" data-view="dashboard"><i class="fa-solid fa-gauge-high"></i> Panel de la clinica</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- CHAT VIEW -->
+  <section class="view active" id="view-chat">
+    <div class="chat-grid">
+
+      <div class="phone">
+        <div class="phone-header">
+          <img src="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=100&h=100&fit=crop&crop=faces" alt="Clinica Dental Aurora">
+          <div>
+            <div class="name">Clinica Dental Aurora</div>
+            <div class="status" id="waStatus">en linea</div>
+          </div>
+        </div>
+        <div class="phone-body" id="waBody"></div>
+        <div class="phone-footer">
+          <button class="btn-gold" id="playBtn"><i class="fa-solid fa-play"></i> Reproducir conversacion</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3><i class="fa-solid fa-lightbulb"></i> Que estas viendo</h3>
+        <p class="sub">Un paciente nuevo escribe por WhatsApp preguntando por una limpieza dental. Nora responde al instante, ofrece horarios reales, confirma la cita y sugiere un servicio adicional relevante, sin que nadie en recepcion haya escrito una sola palabra.</p>
+        <ul style="list-style:none; display:flex; flex-direction:column; gap:12px; font-size:13.5px; color:var(--muted);">
+          <li><i class="fa-solid fa-circle-check" style="color:var(--green); margin-right:8px;"></i>Responde preguntas frecuentes (precios, horarios, ubicacion) sin intervencion humana</li>
+          <li><i class="fa-solid fa-circle-check" style="color:var(--green); margin-right:8px;"></i>Muestra solo horarios realmente disponibles, tomados de la agenda de la clinica</li>
+          <li><i class="fa-solid fa-circle-check" style="color:var(--green); margin-right:8px;"></i>Confirma la cita y programa el recordatorio automatico 24h antes</li>
+          <li><i class="fa-solid fa-circle-check" style="color:var(--green); margin-right:8px;"></i>Detecta la oportunidad de ofrecer un servicio relacionado, en el momento correcto</li>
+        </ul>
+        <div class="insight-box">
+          <i class="fa-solid fa-sparkles"></i>
+          <div>
+            <div class="t">Por que esto importa para la clinica</div>
+            <div class="d">Cada minuto que un paciente espera respuesta es una probabilidad mas alta de que escriba a otra clinica. Nora responde en segundos y nunca duerme.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- DASHBOARD VIEW -->
+  <section class="view" id="view-dashboard">
+    <div class="stat-grid">
+      <div class="stat-card reveal"><div class="icon"><i class="fa-solid fa-comments"></i></div><div class="num" data-count="47">0</div><div class="label">Pacientes contactados hoy</div><div class="delta">+18% vs ayer</div></div>
+      <div class="stat-card reveal"><div class="icon"><i class="fa-solid fa-calendar-check"></i></div><div class="num" data-count="19">0</div><div class="label">Citas confirmadas hoy</div><div class="delta">+6 vs ayer</div></div>
+      <div class="stat-card reveal"><div class="icon"><i class="fa-solid fa-chair"></i></div><div class="num" data-count="11">0</div><div class="label">Sillas vacias evitadas / semana</div><div class="delta">recuperadas por IA</div></div>
+      <div class="stat-card reveal"><div class="icon"><i class="fa-solid fa-stopwatch"></i></div><div class="num" data-count="8" data-suffix="s">0</div><div class="label">Tiempo de primera respuesta</div><div class="delta">antes: 3-4 horas</div></div>
+    </div>
+
+    <div class="dash-grid">
+      <div class="panel reveal">
+        <h3><i class="fa-solid fa-chart-column"></i> Consultas recibidas esta semana</h3>
+        <p class="sub" style="margin-bottom:6px;">Cada barra es una conversacion iniciada por un paciente por WhatsApp.</p>
+        <div class="chart-row" id="chartRow"></div>
+      </div>
+      <div class="panel reveal">
+        <h3><i class="fa-solid fa-filter"></i> Embudo de conversion</h3>
+        <p class="sub" style="margin-bottom:6px;">De cada 100 pacientes que escriben, cuantos terminan en la silla.</p>
+        <div class="funnel" id="funnel"></div>
+      </div>
+    </div>
+
+    <div class="panel reveal">
+      <h3><i class="fa-solid fa-list-check"></i> Conversaciones recientes</h3>
+      <table>
+        <thead><tr><th>Paciente</th><th>Consulta</th><th>Canal</th><th>Estado</th></tr></thead>
+        <tbody>
+          <tr><td>Marta R.</td><td>Limpieza dental</td><td>WhatsApp</td><td><span class="tag booked">Agendado</span></td></tr>
+          <tr><td>Javier P.</td><td>Precio ortodoncia</td><td>WhatsApp</td><td><span class="tag pending">Pendiente</span></td></tr>
+          <tr><td>Lucia G.</td><td>Blanqueamiento</td><td>WhatsApp</td><td><span class="tag booked">Agendado</span></td></tr>
+          <tr><td>Antonio M.</td><td>Urgencia dental</td><td>WhatsApp</td><td><span class="tag booked">Agendado</span></td></tr>
+          <tr><td>Sara V.</td><td>Consulta general</td><td>WhatsApp</td><td><span class="tag lost">Sin respuesta</span></td></tr>
+        </tbody>
+      </table>
+      <div class="insight-box">
+        <i class="fa-solid fa-sparkles"></i>
+        <div>
+          <div class="t">Recomendacion de Nora esta semana</div>
+          <div class="d">Los jueves de 14:00 a 16:00 tienen la menor ocupacion del mes. Nora puede enviar una oferta a los ultimos 15 contactos que no agendaron, priorizando ese horario.</div>
+        </div>
+      </div>
+      <div class="integrations">
+        <div class="int-pill"><i class="fa-solid fa-calendar-days"></i> Google Calendar</div>
+        <div class="int-pill"><i class="fa-solid fa-tooth"></i> Doctoralia / Clinicweb</div>
+        <div class="int-pill"><i class="fa-brands fa-whatsapp"></i> WhatsApp Business API</div>
+        <div class="int-pill"><i class="fa-solid fa-plug"></i> Tu sistema de gestion actual</div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<footer>Demo funcional creado para Clinica Dental Aurora (nombre ilustrativo) — datos y conversaciones simulados para mostrar el flujo real.</footer>
+
+<script>
+  // TABS
+  document.querySelectorAll('.tabbtn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.tabbtn').forEach(b=>b.classList.remove('active'));
+      document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('view-'+btn.dataset.view).classList.add('active');
+      if(btn.dataset.view==='dashboard') initDashboard();
+    });
+  });
+
+  // CHAT SCRIPT
+  const script = [
+    {who:'patient', text:'Hola! Queria saber si tienen disponibilidad para una limpieza dental esta semana', time:'10:14'},
+    {who:'bot', text:'Hola! Soy Nora, la asistente virtual de Clinica Dental Aurora. Claro que si, tenemos disponibilidad esta semana para limpieza dental. Prefieres manana o tarde?', time:'10:14'},
+    {who:'patient', text:'Tarde, por favor', time:'10:15'},
+    {who:'bot', text:'Perfecto, estos son los horarios disponibles en la tarde:', time:'10:15', slots:['Jueves 17:00','Viernes 12:00','Sabado 10:00']},
+    {who:'patient', text:'Viernes 12:00 me viene bien', time:'10:16'},
+    {who:'bot', text:'Listo, tu cita de limpieza dental quedo confirmada para el viernes a las 12:00. Te llegara un recordatorio por este mismo chat 24 horas antes.', time:'10:16'},
+    {who:'bot', text:'Ademas, muchos pacientes que agendan limpieza aprovechan para una valoracion gratuita de blanqueamiento el mismo dia. Quieres que la agregue a tu cita sin costo adicional?', time:'10:17'},
+    {who:'patient', text:'Si, sumala tambien', time:'10:17'},
+    {who:'bot', text:'Hecho. Nos vemos el viernes a las 12:00. Cualquier duda, escribeme por aqui.', time:'10:18'}
+  ];
+
+  const waBody = document.getElementById('waBody');
+  const playBtn = document.getElementById('playBtn');
+  let playing = false;
+
+  function addTyping(){
+    const t = document.createElement('div');
+    t.className='wa-typing'; t.id='typingNow';
+    t.innerHTML='<span></span><span></span><span></span>';
+    waBody.appendChild(t);
+    waBody.scrollTop = waBody.scrollHeight;
+  }
+  function removeTyping(){
+    const t = document.getElementById('typingNow');
+    if(t) t.remove();
+  }
+
+  async function playScript(){
+    if(playing) return;
+    playing = true;
+    playBtn.disabled = true;
+    playBtn.innerHTML = '<i class="fa-solid fa-rotate"></i> Reproduciendo...';
+    waBody.innerHTML = '';
+    for(const step of script){
+      if(step.who==='bot'){
+        addTyping();
+        await new Promise(r=>setTimeout(r, 700));
+        removeTyping();
+      } else {
+        await new Promise(r=>setTimeout(r, 500));
+      }
+      const msg = document.createElement('div');
+      msg.className = 'wa-msg ' + step.who;
+      msg.innerHTML = step.text + '<span class="time">'+step.time+'</span>';
+      waBody.appendChild(msg);
+      waBody.scrollTop = waBody.scrollHeight;
+
+      if(step.slots){
+        const row = document.createElement('div');
+        row.className='wa-slots';
+        step.slots.forEach(s=>{
+          const b = document.createElement('button');
+          b.className='wa-slot'; b.textContent=s;
+          row.appendChild(b);
+        });
+        waBody.appendChild(row);
+        waBody.scrollTop = waBody.scrollHeight;
+      }
+      await new Promise(r=>setTimeout(r, 350));
+    }
+    playBtn.disabled = false;
+    playBtn.innerHTML = '<i class="fa-solid fa-rotate-right"></i> Volver a reproducir';
+    playing = false;
+  }
+  playBtn.addEventListener('click', playScript);
+
+  // DASHBOARD
+  let dashInit = false;
+  function initDashboard(){
+    if(dashInit) return;
+    dashInit = true;
+
+    document.querySelectorAll('.num[data-count]').forEach(el=>{
+      const target = parseInt(el.dataset.count,10);
+      const suffix = el.dataset.suffix || '';
+      let cur = 0;
+      const step = Math.max(1, Math.round(target/28));
+      const iv = setInterval(()=>{
+        cur += step;
+        if(cur>=target){cur=target; clearInterval(iv);}
+        el.textContent = cur + suffix;
+      }, 30);
+    });
+
+    const days = [
+      {lbl:'Lun', val:34},{lbl:'Mar', val:41},{lbl:'Mie', val:38},
+      {lbl:'Jue', val:52},{lbl:'Vie', val:61},{lbl:'Sab', val:29},{lbl:'Dom', val:12}
+    ];
+    const max = Math.max(...days.map(d=>d.val));
+    const chartRow = document.getElementById('chartRow');
+    chartRow.innerHTML='';
+    days.forEach(d=>{
+      const col = document.createElement('div');
+      col.className='chart-bar';
+      col.innerHTML = '<div class="val">'+d.val+'</div><div class="bar"></div><div class="lbl">'+d.lbl+'</div>';
+      chartRow.appendChild(col);
+      setTimeout(()=>{ col.querySelector('.bar').style.height = (d.val/max*100)+'%'; }, 60);
+    });
+
+    const funnelSteps = [
+      {lbl:'Escriben', pct:100, n:100},
+      {lbl:'Reciben respuesta', pct:100, n:100},
+      {lbl:'Piden horario', pct:74, n:74},
+      {lbl:'Agendan cita', pct:52, n:52},
+      {lbl:'Asisten', pct:44, n:44}
+    ];
+    const funnel = document.getElementById('funnel');
+    funnel.innerHTML='';
+    funnelSteps.forEach(s=>{
+      const row = document.createElement('div');
+      row.className='funnel-row';
+      row.innerHTML = '<div class="lbl">'+s.lbl+'</div><div class="funnel-track"><div class="funnel-fill"></div></div><div class="n">'+s.n+'</div>';
+      funnel.appendChild(row);
+      setTimeout(()=>{ row.querySelector('.funnel-fill').style.width = s.pct+'%'; }, 80);
+    });
+  }
+
+  // SCROLL REVEAL
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
+  }, {threshold:.15});
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+</script>
+
+</body>
+</html>
