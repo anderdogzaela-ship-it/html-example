@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SafraLog - App de Romaneio de Colheita</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,300;0,400;0,600;0,700;0,800;0,900;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --green: #3F6B33;
+    --green-dark: #223A1C;
+    --green-light: #E8F0E1;
+    --gold: #C88B1F;
+    --gold-dark: #93650F;
+    --gold-light: #F7ECD6;
+    --coral: #C4453B;
+    --coral-light: #F7E1DE;
+    --cream: #FBF7EE;
+    --ink: #20241C;
+    --ink-mid: #565F4E;
+    --ink-light: #8B9382;
+    --border: #E3DFCF;
+    --white: #FFFFFF;
+    --shadow: 0 10px 32px rgba(32,36,28,0.10);
+    --shadow-lg: 0 24px 64px rgba(32,36,28,0.20);
+  }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Nunito', sans-serif; color: var(--ink); background: var(--cream); overflow-x: hidden; }
+
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 300;
+    background: rgba(251,247,238,0.92); backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .nav-logo { font-size: 1.15rem; font-weight: 900; color: var(--green-dark); letter-spacing: -0.5px; display: flex; align-items: center; gap: 9px; }
+  .nav-logo i { color: var(--gold); }
+  .nav-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--green-dark); color: var(--white);
+    padding: 9px 20px; border-radius: 50px;
+    font-size: 0.8rem; font-weight: 800;
+  }
+
+  .hero {
+    min-height: 100vh; padding: 128px 32px 80px;
+    background: linear-gradient(150deg, #14210F 0%, #223A1C 55%, #3F6B33 100%);
+    position: relative; overflow: hidden;
+    display: flex; align-items: center;
+  }
+  .hero-bg { position: absolute; inset: 0; background: url('https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=1600&q=60') center/cover; opacity: 0.10; }
+  .hero-wrap { max-width: 1180px; margin: 0 auto; width: 100%; position: relative; z-index: 1; display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 60px; align-items: center; }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(200,139,31,0.20); border: 1px solid rgba(200,139,31,0.45);
+    color: #F2CE8F; padding: 7px 16px; border-radius: 50px;
+    font-size: 0.72rem; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+  .hero h1 { font-size: clamp(2.1rem, 4vw, 3.2rem); font-weight: 900; color: var(--white); line-height: 1.14; letter-spacing: -1.2px; margin-bottom: 20px; }
+  .hero h1 em { color: #F2CE8F; font-style: normal; }
+  .hero-sub { font-size: 1.02rem; color: rgba(255,255,255,0.80); line-height: 1.7; margin-bottom: 34px; max-width: 480px; }
+  .hero-stats { display: flex; gap: 28px; flex-wrap: wrap; }
+  .hero-stat-num { font-size: 1.7rem; font-weight: 900; color: var(--white); line-height: 1; }
+  .hero-stat-label { font-size: 0.76rem; color: rgba(255,255,255,0.55); font-weight: 700; margin-top: 4px; }
+
+  .phone-stage { display: flex; flex-direction: column; align-items: center; }
+  .phone-frame {
+    width: 300px; height: 620px;
+    background: #0d130a; border-radius: 40px; padding: 12px;
+    box-shadow: 0 40px 90px rgba(0,0,0,0.55), 0 0 0 2px rgba(255,255,255,0.06);
+    position: relative; flex-shrink: 0;
+  }
+  .phone-notch { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); width: 96px; height: 22px; background: #0d130a; border-radius: 0 0 16px 16px; z-index: 50; }
+  .phone-screen { width: 100%; height: 100%; background: var(--cream); border-radius: 28px; overflow: hidden; position: relative; }
+
+  .screen-panel { position: absolute; inset: 0; padding: 40px 16px 16px; opacity: 0; transform: translateX(14px); transition: opacity .35s ease, transform .35s ease; pointer-events: none; overflow-y: auto; }
+  .screen-panel.active { opacity: 1; transform: translateX(0); pointer-events: auto; }
+
+  .tab-switch { display: flex; gap: 8px; margin-top: 22px; flex-wrap: wrap; justify-content: center; max-width: 300px; }
+  .tab-btn {
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.16); color: rgba(255,255,255,0.65);
+    padding: 8px 14px; border-radius: 50px; font-family: 'Nunito', sans-serif; font-size: 0.74rem; font-weight: 800;
+    cursor: pointer; transition: all .2s; display: flex; align-items: center; gap: 6px;
+  }
+  .tab-btn:hover { color: var(--white); border-color: rgba(255,255,255,0.35); }
+  .tab-btn.active { background: var(--gold); border-color: var(--gold); color: var(--white); }
+
+  /* LOGIN */
+  .login-wrap { display: flex; flex-direction: column; align-items: center; padding-top: 30px; }
+  .login-icon { width: 58px; height: 58px; border-radius: 16px; background: var(--green-light); color: var(--green-dark); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 14px; }
+  .login-title { font-size: 1.1rem; font-weight: 900; color: var(--ink); margin-bottom: 4px; }
+  .login-sub { font-size: 0.78rem; color: var(--ink-light); margin-bottom: 22px; }
+  .login-field { width: 100%; display: flex; align-items: center; gap: 10px; background: var(--white); border: 2px solid var(--border); border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; }
+  .login-field i { color: var(--ink-light); width: 16px; text-align: center; }
+  .login-field span { font-size: 0.82rem; color: var(--ink-mid); font-weight: 700; }
+  .login-cta { margin-top: 12px; background: var(--green-dark); color: var(--white); border: none; width: 100%; padding: 14px; border-radius: 14px; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.88rem; }
+  .login-note { margin-top: 22px; background: var(--gold-light); border-radius: 14px; padding: 12px 14px; width: 100%; text-align: center; }
+  .login-note-label { font-size: 0.66rem; font-weight: 800; letter-spacing: 0.6px; text-transform: uppercase; color: var(--gold-dark); margin-bottom: 3px; }
+  .login-note-val { font-size: 0.82rem; font-weight: 900; color: var(--ink); }
+
+  /* ROMANEIO */
+  .offline-pill { display: inline-flex; align-items: center; gap: 7px; background: var(--gold-light); color: var(--gold-dark); border: 1px solid rgba(200,139,31,0.35); padding: 6px 13px; border-radius: 50px; font-size: 0.68rem; font-weight: 800; margin-bottom: 16px; }
+  .rom-title { font-size: 1.15rem; font-weight: 900; color: var(--ink); margin-bottom: 2px; }
+  .rom-sub { font-size: 0.78rem; color: var(--ink-light); margin-bottom: 18px; }
+  .rom-field { background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 11px 14px; margin-bottom: 9px; }
+  .rom-field-label { font-size: 0.62rem; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; color: var(--ink-light); margin-bottom: 3px; }
+  .rom-field-val { font-size: 0.86rem; font-weight: 800; color: var(--ink); }
+  .rom-cta { margin-top: 8px; background: var(--green); color: var(--white); border: none; width: 100%; padding: 13px; border-radius: 14px; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.86rem; }
+  .rom-list-title { font-size: 0.72rem; font-weight: 800; color: var(--ink-light); text-transform: uppercase; letter-spacing: 0.5px; margin: 18px 0 8px; }
+  .rom-item { display: flex; align-items: center; gap: 10px; background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; margin-bottom: 7px; }
+  .rom-item i.rom-ico { color: var(--green); width: 18px; text-align: center; }
+  .rom-item-body { flex: 1; }
+  .rom-item-name { font-size: 0.78rem; font-weight: 800; color: var(--ink); }
+  .rom-item-meta { font-size: 0.66rem; color: var(--ink-light); font-weight: 700; }
+  .status-pill { padding: 3px 10px; border-radius: 50px; font-size: 0.62rem; font-weight: 800; white-space: nowrap; }
+  .status-pill.ok { background: var(--green-light); color: var(--green-dark); }
+  .status-pill.wait { background: var(--gold-light); color: var(--gold-dark); }
+  .status-pill.flag { background: var(--coral-light); color: var(--coral); }
+
+  /* SYNC */
+  .sync-title { font-size: 1.1rem; font-weight: 900; color: var(--ink); margin-bottom: 14px; }
+  .signal-bar { display: flex; align-items: center; gap: 9px; background: var(--gold-light); border-radius: 12px; padding: 10px 13px; margin-bottom: 16px; }
+  .signal-bar i { color: var(--gold-dark); }
+  .signal-bar span { font-size: 0.76rem; font-weight: 800; color: var(--gold-dark); }
+  .sync-item { display: flex; align-items: center; gap: 10px; background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; }
+  .sync-item.flagged { border-color: rgba(196,69,59,0.4); background: var(--coral-light); }
+  .sync-ico { width: 30px; height: 30px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 0.82rem; flex-shrink: 0; }
+  .sync-ico.ok { background: var(--green-light); color: var(--green-dark); }
+  .sync-ico.wait { background: var(--gold-light); color: var(--gold-dark); }
+  .sync-ico.flag { background: var(--coral); color: var(--white); }
+  .sync-item-name { font-size: 0.78rem; font-weight: 800; color: var(--ink); }
+  .sync-item-meta { font-size: 0.66rem; color: var(--ink-light); font-weight: 700; }
+
+  /* RESUMO */
+  .sum-title { font-size: 1.05rem; font-weight: 900; color: var(--ink); margin-bottom: 2px; }
+  .sum-sub { font-size: 0.76rem; color: var(--ink-light); margin-bottom: 16px; font-weight: 700; }
+  .sum-stats { display: flex; gap: 8px; margin-bottom: 16px; }
+  .sum-stat { flex: 1; background: var(--white); border-radius: 14px; padding: 12px 8px; text-align: center; box-shadow: var(--shadow); }
+  .sum-stat-num { font-size: 0.98rem; font-weight: 900; color: var(--green-dark); }
+  .sum-stat-label { font-size: 0.58rem; color: var(--ink-light); font-weight: 800; margin-top: 2px; }
+  .sum-chart { background: var(--white); border-radius: 16px; padding: 14px; box-shadow: var(--shadow); margin-bottom: 12px; }
+  .sum-chart-title { font-size: 0.76rem; font-weight: 800; color: var(--ink); margin-bottom: 10px; }
+  .sub-card { background: var(--green-light); border-radius: 14px; padding: 12px 14px; display: flex; align-items: center; gap: 10px; }
+  .sub-card i { color: var(--green-dark); }
+  .sub-card span { font-size: 0.74rem; font-weight: 800; color: var(--green-dark); }
+
+  /* FEATURES */
+  .section { padding: 88px 32px; max-width: 1180px; margin: 0 auto; }
+  .section-tag { color: var(--gold-dark); font-size: 0.75rem; font-weight: 900; letter-spacing: 1.4px; text-transform: uppercase; margin-bottom: 10px; }
+  .section-title { font-size: clamp(1.6rem, 3vw, 2.3rem); font-weight: 900; color: var(--ink); letter-spacing: -0.8px; margin-bottom: 44px; max-width: 640px; }
+  .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 22px; }
+  .feature-card { background: var(--white); border: 1px solid var(--border); border-radius: 20px; padding: 26px; opacity: 0; transform: translateY(22px); transition: opacity .6s ease, transform .6s ease; }
+  .feature-card.reveal { opacity: 1; transform: translateY(0); }
+  .feature-icon { width: 46px; height: 46px; border-radius: 13px; background: var(--green-light); color: var(--green-dark); display: flex; align-items: center; justify-content: center; font-size: 1.15rem; margin-bottom: 16px; }
+  .feature-card h3 { font-size: 1rem; font-weight: 900; color: var(--ink); margin-bottom: 8px; }
+  .feature-card p { font-size: 0.85rem; color: var(--ink-mid); line-height: 1.6; }
+
+  /* ADMIN PANEL */
+  .admin-section { background: var(--green-light); }
+  .admin-mock { background: var(--white); border-radius: 20px; box-shadow: var(--shadow-lg); overflow: hidden; opacity: 0; transform: translateY(24px); transition: opacity .6s ease, transform .6s ease; }
+  .admin-mock.reveal { opacity: 1; transform: translateY(0); }
+  .admin-topbar { background: var(--green-dark); padding: 14px 22px; display: flex; align-items: center; justify-content: space-between; }
+  .admin-topbar-title { color: var(--white); font-weight: 900; font-size: 0.92rem; display: flex; align-items: center; gap: 9px; }
+  .admin-topbar-user { color: rgba(255,255,255,0.7); font-size: 0.76rem; font-weight: 700; }
+  .admin-body { display: grid; grid-template-columns: 190px 1fr; min-height: 360px; }
+  .admin-side { background: var(--green-light); padding: 18px 12px; border-right: 1px solid var(--border); }
+  .admin-side-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; font-size: 0.78rem; font-weight: 800; color: var(--ink-mid); margin-bottom: 4px; }
+  .admin-side-item.active { background: var(--green-dark); color: var(--white); }
+  .admin-main { padding: 22px; }
+  .admin-main-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 10px; }
+  .admin-main h4 { font-size: 0.95rem; font-weight: 900; color: var(--ink); }
+  .csv-btn { display: inline-flex; align-items: center; gap: 8px; background: var(--gold); color: var(--white); border: none; padding: 9px 16px; border-radius: 10px; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.76rem; }
+  .filter-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .filter-chip { display: inline-flex; align-items: center; gap: 6px; background: var(--cream); border: 1px solid var(--border); border-radius: 50px; padding: 7px 13px; font-size: 0.7rem; font-weight: 800; color: var(--ink-mid); }
+  .filter-chip i { color: var(--ink-light); font-size: 0.68rem; }
+  .admin-table { width: 100%; border-collapse: collapse; }
+  .admin-table th { text-align: left; font-size: 0.66rem; color: var(--ink-light); font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  .admin-table td { padding: 10px; font-size: 0.78rem; color: var(--ink); border-bottom: 1px solid var(--border); }
+
+  /* WHY IT MATTERS */
+  .why-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 18px; margin-top: 44px; }
+  .why-card { text-align: center; padding: 24px 16px; }
+  .why-num { font-size: 1.9rem; font-weight: 900; color: var(--green-dark); margin-bottom: 6px; }
+  .why-label { font-size: 0.8rem; color: var(--ink-mid); font-weight: 700; }
+
+  footer { background: #14210F; color: rgba(255,255,255,0.6); text-align: center; padding: 40px 32px; font-size: 0.8rem; }
+  footer strong { color: var(--white); }
+
+  @media (max-width: 940px) {
+    .hero-wrap { grid-template-columns: 1fr; text-align: center; }
+    .hero-sub { margin: 0 auto 34px; }
+    .hero-stats { justify-content: center; }
+    .phone-stage { margin: 0 auto; }
+    .admin-body { grid-template-columns: 1fr; }
+    .admin-side { display: flex; overflow-x: auto; border-right: none; border-bottom: 1px solid var(--border); }
+  }
+  @media (max-width: 480px) {
+    .phone-frame { width: 264px; height: 560px; }
+    .section { padding: 64px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo"><i class="fa-solid fa-wheat-awn"></i> SafraLog</div>
+  <div class="nav-badge"><i class="fa-solid fa-mobile-screen-button"></i> Mockup interativo</div>
+</nav>
+
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-wrap">
+    <div>
+      <div class="hero-badge"><i class="fa-solid fa-circle-check"></i> Previa do produto</div>
+      <h1>Sua colheita registrada certo, <em>mesmo sem sinal</em> no talhao</h1>
+      <p class="hero-sub">Login, romaneio offline com sincronizacao automatica, e painel web com filtro robusto e exportacao CSV. Toque nos botoes abaixo do celular pra percorrer cada tela.</p>
+      <div class="hero-stats">
+        <div class="hero-stat"><div class="hero-stat-num">4</div><div class="hero-stat-label">Modulos centrais</div></div>
+        <div class="hero-stat"><div class="hero-stat-num">1</div><div class="hero-stat-label">Codigo base iOS e Android</div></div>
+        <div class="hero-stat"><div class="hero-stat-num">5</div><div class="hero-stat-label">Semanas ate a Fase 1</div></div>
+      </div>
+    </div>
+    <div class="phone-stage">
+      <div class="phone-frame">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+
+          <div class="screen-panel active" data-panel="login">
+            <div class="login-wrap">
+              <div class="login-icon"><i class="fa-solid fa-wheat-awn"></i></div>
+              <div class="login-title">SafraLog</div>
+              <div class="login-sub">Entrar com sua conta</div>
+              <div class="login-field"><i class="fa-solid fa-user"></i><span>Usuario</span></div>
+              <div class="login-field"><i class="fa-solid fa-lock"></i><span>Senha</span></div>
+              <button class="login-cta">Entrar</button>
+              <div class="login-note">
+                <div class="login-note-label">Ultimo acesso</div>
+                <div class="login-note-val">Joao Pereira - Fazenda Santa Rita</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="screen-panel" data-panel="romaneio">
+            <div class="offline-pill"><i class="fa-solid fa-cloud-arrow-up"></i> Sem sinal - salvo localmente</div>
+            <div class="rom-title">Novo romaneio</div>
+            <div class="rom-sub">Talhao 12 - Cafezal Norte</div>
+            <div class="rom-field"><div class="rom-field-label">Talhao</div><div class="rom-field-val">Talhao 12 - Cafezal Norte</div></div>
+            <div class="rom-field"><div class="rom-field-label">Colhedor</div><div class="rom-field-val">Joao Pereira</div></div>
+            <div class="rom-field"><div class="rom-field-label">Peso (kg)</div><div class="rom-field-val">38,4 kg</div></div>
+            <div class="rom-field"><div class="rom-field-label">Produto</div><div class="rom-field-val">Cafe cereja</div></div>
+            <button class="rom-cta">Registrar romaneio</button>
+            <div class="rom-list-title">Registros de hoje</div>
+            <div class="rom-item"><i class="fa-solid fa-clipboard-check rom-ico"></i><div class="rom-item-body"><div class="rom-item-name">Talhao 12 - 38,4 kg</div><div class="rom-item-meta">08:14</div></div><span class="status-pill ok">Sincronizado</span></div>
+            <div class="rom-item"><i class="fa-solid fa-clipboard-check rom-ico"></i><div class="rom-item-body"><div class="rom-item-name">Talhao 07 - 41,2 kg</div><div class="rom-item-meta">07:52</div></div><span class="status-pill ok">Sincronizado</span></div>
+            <div class="rom-item"><i class="fa-solid fa-clipboard rom-ico"></i><div class="rom-item-body"><div class="rom-item-name">Talhao 12 - 35,0 kg</div><div class="rom-item-meta">07:30</div></div><span class="status-pill wait">Aguardando sinal</span></div>
+          </div>
+
+          <div class="screen-panel" data-panel="sync">
+            <div class="sync-title">Fila de sincronizacao</div>
+            <div class="signal-bar"><i class="fa-solid fa-signal"></i><span>Sinal fraco - 2G no talhao</span></div>
+            <div class="sync-item"><div class="sync-ico ok"><i class="fa-solid fa-check"></i></div><div><div class="sync-item-name">Talhao 12 - Joao Pereira</div><div class="sync-item-meta">Sincronizado ha 2 min</div></div></div>
+            <div class="sync-item"><div class="sync-ico wait"><i class="fa-solid fa-rotate"></i></div><div><div class="sync-item-name">Talhao 03 - Pedro Lima</div><div class="sync-item-meta">Sincronizando...</div></div></div>
+            <div class="sync-item flagged"><div class="sync-ico flag"><i class="fa-solid fa-triangle-exclamation"></i></div><div><div class="sync-item-name">Talhao 12 - Ana Souza</div><div class="sync-item-meta">Peso fora do padrao - revisar</div></div></div>
+            <div class="sync-item"><div class="sync-ico ok"><i class="fa-solid fa-check"></i></div><div><div class="sync-item-name">Talhao 07 - Marcos Silva</div><div class="sync-item-meta">Sincronizado ha 9 min</div></div></div>
+          </div>
+
+          <div class="screen-panel" data-panel="resumo">
+            <div class="sum-title">Fazenda Santa Rita</div>
+            <div class="sum-sub">Resumo da colheita de hoje</div>
+            <div class="sum-stats">
+              <div class="sum-stat"><div class="sum-stat-num">4.280 kg</div><div class="sum-stat-label">COLHIDO HOJE</div></div>
+              <div class="sum-stat"><div class="sum-stat-num">62</div><div class="sum-stat-label">ROMANEIOS</div></div>
+              <div class="sum-stat"><div class="sum-stat-num">14</div><div class="sum-stat-label">COLHEDORES</div></div>
+            </div>
+            <div class="sum-chart">
+              <div class="sum-chart-title">Kg colhido - ultimos 7 dias</div>
+              <svg viewBox="0 0 220 60" width="100%" height="60">
+                <polyline points="0,40 30,36 60,38 90,28 120,30 150,20 180,22 210,12" fill="none" stroke="#3F6B33" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="sub-card"><i class="fa-solid fa-cloud-arrow-up"></i><span>Ultima sincronizacao ha 3 min</span></div>
+          </div>
+
+        </div>
+      </div>
+      <div class="tab-switch">
+        <button class="tab-btn active" data-target="login"><i class="fa-solid fa-user-lock"></i> Login</button>
+        <button class="tab-btn" data-target="romaneio"><i class="fa-solid fa-clipboard-list"></i> Romaneio</button>
+        <button class="tab-btn" data-target="sync"><i class="fa-solid fa-arrows-rotate"></i> Sincronizacao</button>
+        <button class="tab-btn" data-target="resumo"><i class="fa-solid fa-chart-line"></i> Resumo</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-tag">O que o colhedor usa no campo</div>
+  <div class="section-title">Cada tela resolve uma decisao real da safra</div>
+  <div class="feature-grid">
+    <div class="feature-card"><div class="feature-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div><h3>Romaneio offline-first</h3><p>Cada registro grava no aparelho e sincroniza sozinho quando o sinal volta, sem perder dado no meio do talhao.</p></div>
+    <div class="feature-card"><div class="feature-icon"><i class="fa-solid fa-triangle-exclamation"></i></div><h3>Deteccao automatica</h3><p>Peso fora do padrao ou romaneio duplicado sao sinalizados no momento do sync, antes de chegar no fechamento.</p></div>
+    <div class="feature-card"><div class="feature-icon"><i class="fa-solid fa-user-lock"></i></div><h3>Login por usuario</h3><p>Cada colhedor ou operador acessa com sua propria conta, sem compartilhar aparelho as cegas.</p></div>
+    <div class="feature-card"><div class="feature-icon"><i class="fa-solid fa-filter"></i></div><h3>Painel web com filtro robusto</h3><p>Busca por talhao, colhedor, produto e periodo para localizar qualquer romaneio em segundos.</p></div>
+    <div class="feature-card"><div class="feature-icon"><i class="fa-solid fa-file-csv"></i></div><h3>Exportacao CSV</h3><p>Dados prontos pra abrir no Excel e fechar as contas com o time externo sem retrabalho.</p></div>
+    <div class="feature-card"><div class="feature-icon"><i class="fa-solid fa-chart-line"></i></div><h3>Base pronta pra crescer</h3><p>Arquitetura pensada pra somar relatorios de produtividade e mais de uma fazenda nas proximas fases, sem reescrever o que ja funciona.</p></div>
+  </div>
+</section>
+
+<section class="section admin-section">
+  <div class="section-tag">O que voce ve no escritorio</div>
+  <div class="section-title">Um painel simples pra fechar as contas sem retrabalho</div>
+  <div class="admin-mock">
+    <div class="admin-topbar">
+      <div class="admin-topbar-title"><i class="fa-solid fa-wheat-awn"></i> SafraLog - Painel Web</div>
+      <div class="admin-topbar-user">Mayra S.</div>
+    </div>
+    <div class="admin-body">
+      <div class="admin-side">
+        <div class="admin-side-item active"><i class="fa-solid fa-clipboard-list"></i> Romaneios</div>
+        <div class="admin-side-item"><i class="fa-solid fa-map"></i> Talhoes</div>
+        <div class="admin-side-item"><i class="fa-solid fa-users"></i> Colhedores</div>
+        <div class="admin-side-item"><i class="fa-solid fa-chart-column"></i> Relatorios</div>
+      </div>
+      <div class="admin-main">
+        <div class="admin-main-head">
+          <h4>Romaneios da safra</h4>
+          <button class="csv-btn"><i class="fa-solid fa-file-csv"></i> Exportar CSV</button>
+        </div>
+        <div class="filter-row">
+          <div class="filter-chip"><i class="fa-solid fa-map"></i> Talhao: Todos</div>
+          <div class="filter-chip"><i class="fa-solid fa-user"></i> Colhedor: Todos</div>
+          <div class="filter-chip"><i class="fa-solid fa-wheat-awn"></i> Produto: Todos</div>
+          <div class="filter-chip"><i class="fa-solid fa-calendar"></i> Ultimos 7 dias</div>
+        </div>
+        <table class="admin-table">
+          <tr><th>Colhedor</th><th>Talhao</th><th>Produto</th><th>Peso</th><th>Status</th></tr>
+          <tr><td>Joao Pereira</td><td>Talhao 12</td><td>Cafe cereja</td><td>38,4 kg</td><td><span class="status-pill ok">Sincronizado</span></td></tr>
+          <tr><td>Marcos Silva</td><td>Talhao 07</td><td>Cafe cereja</td><td>41,2 kg</td><td><span class="status-pill ok">Sincronizado</span></td></tr>
+          <tr><td>Ana Souza</td><td>Talhao 12</td><td>Cafe cereja</td><td>96,0 kg</td><td><span class="status-pill flag">Peso atipico</span></td></tr>
+          <tr><td>Pedro Lima</td><td>Talhao 03</td><td>Cafe boia</td><td>35,7 kg</td><td><span class="status-pill ok">Sincronizado</span></td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-tag">Por que importa</div>
+  <div class="section-title">O que sustenta o fechamento no fim da safra</div>
+  <div class="why-grid">
+    <div class="why-card"><div class="why-num">0</div><div class="why-label">romaneios perdidos por falta de sinal no talhao</div></div>
+    <div class="why-card"><div class="why-num">1x</div><div class="why-label">cada registro digitado, nunca retrabalhado em planilha</div></div>
+    <div class="why-card"><div class="why-num">1 clique</div><div class="why-label">pra exportar tudo em CSV pronto pro Excel</div></div>
+  </div>
+</section>
+
+<footer>
+  Mockup interativo preparado para <strong>Mayra S.</strong> - SafraLog e um nome de referencia para esta previa, nao a marca final.
+</footer>
+
+<script>
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.screen-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelector('.screen-panel[data-panel="' + btn.dataset.target + '"]').classList.add('active');
+    });
+  });
+
+  const revealEls = document.querySelectorAll('.feature-card, .admin-mock');
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('reveal'); });
+  }, { threshold: 0.15 });
+  revealEls.forEach(el => io.observe(el));
+</script>
+
+</body>
+</html>
