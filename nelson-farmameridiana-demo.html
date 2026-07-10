@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Farmacia Meridiana — Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  :root {
+    --green: #0E9F6E;
+    --green-dark: #057A55;
+    --green-light: #DEF7EC;
+    --teal: #0D9488;
+    --gold: #F59E0B;
+    --gold-dark: #D97706;
+    --gold-light: #FEF3C7;
+    --red: #EF4444;
+    --red-dark: #B91C1C;
+    --red-light: #FEE2E2;
+    --blue: #3B82F6;
+    --gray-50: #F9FAFB;
+    --gray-100: #F3F4F6;
+    --gray-200: #E5E7EB;
+    --gray-300: #D1D5DB;
+    --gray-400: #9CA3AF;
+    --gray-500: #6B7280;
+    --gray-600: #4B5563;
+    --gray-700: #374151;
+    --gray-800: #1F2937;
+    --gray-900: #111827;
+    --shadow: 0 4px 24px rgba(0,0,0,0.10);
+    --shadow-lg: 0 8px 40px rgba(0,0,0,0.15);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: linear-gradient(135deg, #06231c 0%, #0a3327 45%, #071f18 100%);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+  }
+
+  .page-title { color: white; font-size: 28px; font-weight: 900; margin-bottom: 6px; letter-spacing: -0.5px; text-align: center; }
+  .page-subtitle { color: rgba(255,255,255,0.62); font-size: 14px; margin-bottom: 26px; text-align: center; max-width: 520px; }
+
+  .role-tabs {
+    display: flex; gap: 8px; margin-bottom: 26px;
+    background: rgba(255,255,255,0.08); padding: 6px; border-radius: 16px; flex-wrap: wrap; justify-content: center;
+  }
+  .role-tab {
+    padding: 10px 20px; border-radius: 12px; border: none; cursor: pointer;
+    font-family: 'Nunito', sans-serif; font-size: 14px; font-weight: 700;
+    transition: all 0.25s; color: rgba(255,255,255,0.62); background: transparent;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .role-tab.active { background: white; color: var(--gray-800); }
+  .tab-dot { width: 8px; height: 8px; border-radius: 50%; opacity: 0.5; }
+  .tab-dot.client { background: var(--green); }
+  .tab-dot.admin { background: var(--gold); }
+  .role-tab.active .tab-dot { opacity: 1; }
+
+  .view { display: none; }
+  .view.active { display: flex; flex-direction: column; align-items: center; width: 100%; }
+
+  /* ===== PHONE SHELL (tienda) ===== */
+  .phone-shell {
+    width: 375px; background: var(--gray-100); border-radius: 40px; overflow: hidden;
+    box-shadow: var(--shadow-lg), 0 0 0 8px rgba(255,255,255,0.08); position: relative;
+  }
+  .phone-notch { background: var(--gray-900); height: 36px; display: flex; align-items: center; justify-content: center; position: relative; }
+  .notch-bar { width: 110px; height: 16px; background: var(--gray-800); border-radius: 10px; }
+  .phone-status { position: absolute; right: 16px; display: flex; align-items: center; gap: 5px; font-size: 10px; color: white; font-weight: 700; }
+
+  .screen { display: none; position: relative; min-height: 600px; overflow: hidden; }
+  .screen.active { display: block; }
+
+  .sync-banner {
+    background: linear-gradient(135deg, var(--green-dark), var(--green));
+    color: white; padding: 9px 16px; display: flex; align-items: center; gap: 9px; font-size: 11.5px; font-weight: 700;
+  }
+  .sync-banner.stale { background: linear-gradient(135deg, var(--gold-dark), var(--gold)); }
+  .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: white; animation: pulse-dot 1.4s ease-in-out infinite; }
+  @keyframes pulse-dot { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  .client-header { background: var(--gray-900); padding: 16px; color: white; }
+  .client-header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .store-name { font-size: 18px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+  .store-name i { color: var(--green); }
+  .client-avatar { width: 34px; height: 34px; background: rgba(255,255,255,0.12); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; }
+  .search-box { background: rgba(255,255,255,0.1); border-radius: 12px; padding: 9px 14px; font-size: 12.5px; color: rgba(255,255,255,0.6); display: flex; align-items: center; gap: 8px; }
+
+  .cat-pills { display: flex; gap: 8px; padding: 14px 16px 6px; overflow-x: auto; scrollbar-width: none; }
+  .cat-pills::-webkit-scrollbar { display: none; }
+  .cat-pill {
+    padding: 7px 14px; border-radius: 20px; background: var(--gray-200); color: var(--gray-600);
+    font-size: 12px; font-weight: 700; flex-shrink: 0; cursor: pointer; transition: all 0.2s; white-space: nowrap;
+  }
+  .cat-pill.active { background: var(--green); color: white; }
+
+  .section-title { font-size: 14px; font-weight: 800; color: var(--gray-800); padding: 12px 16px 8px; }
+
+  .prod-section { padding: 0 16px 90px; }
+  .prod-item {
+    background: white; border-radius: 16px; padding: 10px; display: flex; align-items: center; gap: 12px;
+    margin-bottom: 10px; box-shadow: 0 1px 6px rgba(0,0,0,0.06); position: relative;
+  }
+  .prod-img { width: 54px; height: 54px; border-radius: 12px; object-fit: cover; flex-shrink: 0; background: var(--gray-200); }
+  .prod-info { flex: 1; min-width: 0; }
+  .prod-name { font-size: 13px; font-weight: 800; color: var(--gray-800); }
+  .prod-meta { display: flex; align-items: center; gap: 6px; margin-top: 3px; flex-wrap: wrap; }
+  .stock-tag { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
+  .stock-tag.ok { background: var(--green-light); color: var(--green-dark); }
+  .stock-tag.low { background: var(--gold-light); color: var(--gold-dark); }
+  .stock-tag.out { background: var(--red-light); color: var(--red-dark); }
+  .rx-tag { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; background: #EDE9FE; color: #6D28D9; display: flex; align-items: center; gap: 4px; }
+  .prod-price { font-size: 14px; font-weight: 800; color: var(--gray-800); margin-top: 3px; }
+  .add-btn {
+    width: 32px; height: 32px; border-radius: 50%; background: var(--green); border: none; color: white;
+    font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: transform 0.15s; flex-shrink: 0;
+  }
+  .add-btn:hover { transform: scale(1.1); }
+  .add-btn.added { background: var(--gray-700); }
+  .add-btn:disabled { background: var(--gray-300); cursor: not-allowed; }
+
+  .cart-bar {
+    position: absolute; bottom: 56px; left: 0; right: 0; background: var(--gray-900); padding: 13px 16px;
+    display: flex; align-items: center; justify-content: space-between; transform: translateY(120%);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .cart-bar.visible { transform: translateY(0); }
+  .cart-info { color: white; }
+  .cart-count { font-size: 11px; opacity: 0.7; }
+  .cart-total { font-size: 16px; font-weight: 800; }
+  .order-btn {
+    background: var(--green); color: white; border: none; border-radius: 12px; padding: 9px 18px;
+    font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 800; cursor: pointer; transition: transform 0.15s;
+  }
+  .order-btn:hover { transform: scale(1.03); }
+
+  /* Cart screen */
+  .cart-header { background: var(--gray-900); padding: 16px; color: white; display: flex; align-items: center; gap: 12px; }
+  .back-btn { background: rgba(255,255,255,0.12); width: 30px; height: 30px; border-radius: 50%; border: none; color: white; cursor: pointer; }
+  .cart-title { font-size: 16px; font-weight: 800; }
+
+  .reserve-box { margin: 12px 16px 4px; background: var(--green-light); border-radius: 14px; padding: 12px 14px; display: flex; align-items: center; gap: 10px; }
+  .reserve-box.warn { background: var(--red-light); }
+  .reserve-box i { color: var(--green-dark); font-size: 16px; }
+  .reserve-box.warn i { color: var(--red-dark); }
+  .reserve-text { font-size: 11.5px; color: var(--gray-700); }
+  .reserve-text b { display: block; font-size: 13px; color: var(--gray-800); }
+
+  .cart-items { padding: 12px 16px; }
+  .cart-line { background: white; border-radius: 14px; padding: 12px; display: flex; align-items: center; gap: 10px; margin-bottom: 8px; box-shadow: 0 1px 6px rgba(0,0,0,0.06); }
+  .cart-line-img { width: 44px; height: 44px; border-radius: 10px; object-fit: cover; }
+  .cart-line-info { flex: 1; }
+  .cart-line-name { font-size: 12.5px; font-weight: 700; color: var(--gray-800); }
+  .cart-line-price { font-size: 11.5px; color: var(--gray-500); }
+
+  .cart-summary { margin: 4px 16px; background: white; border-radius: 14px; padding: 14px; box-shadow: 0 1px 6px rgba(0,0,0,0.06); }
+  .summary-row { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--gray-500); margin-bottom: 6px; }
+  .summary-total { display: flex; justify-content: space-between; font-size: 16px; font-weight: 900; color: var(--gray-800); padding-top: 8px; border-top: 1px dashed var(--gray-200); }
+
+  .confirm-btn {
+    position: absolute; bottom: 16px; left: 16px; right: 16px; background: var(--green); color: white; border: none;
+    border-radius: 14px; padding: 14px; font-family: 'Nunito', sans-serif; font-size: 14.5px; font-weight: 800; cursor: pointer;
+  }
+  .confirm-btn:hover { background: var(--green-dark); }
+  .confirm-btn:disabled { background: var(--gray-300); cursor: not-allowed; }
+
+  /* Tracking screen */
+  .tracking-header { background: var(--green-dark); padding: 18px 16px; color: white; text-align: center; }
+  .tracking-title { font-size: 17px; font-weight: 800; }
+  .tracking-subtitle { font-size: 12.5px; opacity: 0.85; margin-top: 3px; }
+  .locked-badge {
+    background: rgba(255,255,255,0.22); border-radius: 20px; padding: 5px 13px; font-size: 11.5px; font-weight: 700;
+    display: inline-flex; align-items: center; gap: 6px; margin-top: 9px;
+  }
+
+  .status-steps { padding: 18px 16px; }
+  .status-step { display: flex; align-items: center; gap: 12px; padding: 10px 0; position: relative; }
+  .status-step:not(:last-child)::after {
+    content: ''; position: absolute; left: 18px; top: 38px; width: 2px; height: calc(100% - 18px); background: var(--gray-200);
+  }
+  .status-step.done::after { background: var(--green); }
+  .step-icon { width: 36px; height: 36px; border-radius: 50%; background: var(--gray-200); display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; z-index: 1; }
+  .status-step.done .step-icon { background: var(--green); color: white; }
+  .status-step.active .step-icon { background: var(--gold); color: white; animation: pulse-icon 1.5s ease-in-out infinite; }
+  @keyframes pulse-icon { 0%, 100% { box-shadow: 0 0 0 0 rgba(245,158,11,0.4); } 50% { box-shadow: 0 0 0 8px rgba(245,158,11,0); } }
+  .step-text { flex: 1; }
+  .step-label { font-size: 13.5px; font-weight: 700; color: var(--gray-700); }
+  .status-step.done .step-label { color: var(--green-dark); }
+  .status-step.active .step-label { color: var(--gold-dark); }
+  .step-time { font-size: 10.5px; color: var(--gray-400); margin-top: 1px; }
+
+  .bottom-nav { position: absolute; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid var(--gray-200); display: flex; padding: 8px 0 12px; }
+  .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 10px; font-weight: 700; color: var(--gray-400); cursor: pointer; transition: color 0.2s; }
+  .nav-item.active { color: var(--green-dark); }
+  .nav-item i { font-size: 17px; }
+
+  .notification {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-90px); background: white; border-radius: 16px;
+    padding: 12px 18px; box-shadow: var(--shadow-lg); display: flex; align-items: center; gap: 10px; font-size: 13.5px; font-weight: 700;
+    color: var(--gray-800); transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); z-index: 1000; min-width: 260px; max-width: 360px;
+  }
+  .notification.show { transform: translateX(-50%) translateY(0); }
+  .notif-icon { font-size: 20px; color: var(--green); }
+  .notification.warn .notif-icon { color: var(--red); }
+
+  @keyframes reveal { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+  .reveal { animation: reveal 0.5s ease forwards; }
+
+  /* ===== ADMIN DASHBOARD (browser-frame) ===== */
+  .dash-frame {
+    width: 100%; max-width: 900px; background: var(--gray-800); border-radius: 18px; overflow: hidden;
+    box-shadow: var(--shadow-lg);
+  }
+  .browser-bar { display: flex; align-items: center; gap: 8px; padding: 13px 18px; background: var(--gray-900); }
+  .dot { width: 11px; height: 11px; border-radius: 50%; }
+  .dot.r { background: #f87171; } .dot.y { background: #fbbf24; } .dot.g { background: #34d399; }
+  .browser-url { margin-left: 14px; background: rgba(255,255,255,0.07); padding: 6px 16px; border-radius: 8px; font-size: 12px; color: var(--gray-400); display: flex; align-items: center; gap: 8px; }
+
+  .dash-tabs { display: flex; gap: 4px; padding: 12px 20px 0; background: white; border-bottom: 1px solid var(--gray-200); overflow-x: auto; }
+  .dash-tab { padding: 12px 18px; font-size: 13.5px; font-weight: 700; color: var(--gray-500); border-bottom: 3px solid transparent; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+  .dash-tab.active { color: var(--green-dark); border-bottom-color: var(--green); }
+  .dash-tab .badge-count { background: var(--gray-200); color: var(--gray-600); font-size: 10.5px; font-weight: 800; padding: 1px 7px; border-radius: 10px; }
+  .dash-tab.active .badge-count { background: var(--green-light); color: var(--green-dark); }
+
+  .dash-body { background: white; padding: 26px 28px; min-height: 480px; }
+  .dash-page { display: none; }
+  .dash-page.active { display: block; animation: reveal 0.4s ease forwards; }
+
+  .dash-page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+  .dash-page-title { font-size: 19px; font-weight: 900; color: var(--gray-800); }
+  .dash-page-sub { font-size: 13px; color: var(--gray-500); margin-top: 3px; }
+
+  .badge-pill { padding: 5px 13px; border-radius: 20px; font-size: 11.5px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; }
+  .badge-pill.gold { background: var(--gold-light); color: var(--gold-dark); }
+  .badge-pill.green { background: var(--green-light); color: var(--green-dark); }
+  .badge-pill.red { background: var(--red-light); color: var(--red); }
+  .badge-pill.purple { background: #EDE9FE; color: #6D28D9; }
+
+  .dash-btn { border: none; border-radius: 10px; padding: 11px 20px; font-family: 'Nunito', sans-serif; font-size: 13.5px; font-weight: 800; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+  .dash-btn.primary { background: var(--green); color: white; }
+  .dash-btn.primary:hover { background: var(--green-dark); }
+  .dash-btn.ghost { background: var(--gray-100); color: var(--gray-600); }
+  .dash-btn.ghost:hover { background: var(--gray-200); }
+  .dash-btn.danger { background: var(--red); color: white; }
+  .dash-btn:disabled { background: var(--gray-200); color: var(--gray-400); cursor: default; }
+
+  .sync-widget {
+    background: linear-gradient(135deg, var(--green-dark), var(--green)); border-radius: 16px; padding: 20px 22px; color: white;
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; flex-wrap: wrap; gap: 14px; transition: background 0.4s;
+  }
+  .sync-widget.stale { background: linear-gradient(135deg, var(--gold-dark), var(--gold)); }
+  .sync-widget-label { font-size: 12px; opacity: 0.85; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+  .sync-widget-value { font-size: 26px; font-weight: 900; margin-top: 4px; letter-spacing: 0.4px; }
+  .sync-widget-sub { font-size: 12px; opacity: 0.85; margin-top: 4px; }
+
+  .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 22px; }
+  .stat-card { background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 14px; padding: 16px; }
+  .stat-num { font-size: 24px; font-weight: 900; color: var(--gray-800); }
+  .stat-label { font-size: 11.5px; color: var(--gray-500); margin-top: 2px; }
+
+  table.data-table { width: 100%; border-collapse: collapse; }
+  table.data-table th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--gray-400); padding: 8px 10px; border-bottom: 2px solid var(--gray-100); }
+  table.data-table td { padding: 11px 10px; font-size: 13px; color: var(--gray-700); border-bottom: 1px solid var(--gray-100); }
+  .status-chip { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; }
+  .status-chip.ok { background: var(--green-light); color: var(--green-dark); }
+  .status-chip.low { background: var(--gold-light); color: var(--gold-dark); }
+  .status-chip.out { background: var(--red-light); color: var(--red-dark); }
+
+  .rx-queue-card { background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 14px; padding: 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .rx-queue-info { flex: 1; min-width: 200px; }
+  .rx-queue-order { font-size: 13.5px; font-weight: 800; color: var(--gray-800); }
+  .rx-queue-detail { font-size: 12px; color: var(--gray-500); margin-top: 2px; }
+
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--gray-400); }
+  .empty-state i { font-size: 40px; margin-bottom: 14px; color: var(--gray-300); }
+  .empty-state-title { font-size: 15px; font-weight: 800; color: var(--gray-600); margin-bottom: 6px; }
+  .empty-state-text { font-size: 13px; max-width: 340px; margin: 0 auto; }
+
+  .reset-btn {
+    margin-top: 20px; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 8px 20px;
+    border-radius: 20px; font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; transition: background 0.2s;
+  }
+  .reset-btn:hover { background: rgba(255,255,255,0.2); }
+
+  .disclaimer { color: rgba(255,255,255,0.4); font-size: 11px; text-align: center; max-width: 480px; margin-top: 22px; }
+
+  @media (max-width: 420px) {
+    .phone-shell { width: 100%; border-radius: 24px; }
+  }
+  @media (max-width: 700px) {
+    .dash-body { padding: 20px 16px; }
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<div class="page-title">Farmacia Meridiana</div>
+<div class="page-subtitle">Demo interactivo — mismo flujo descrito en la propuesta: catalogo sincronizado en tiempo real, reserva de stock atomica en el pago, y validacion de receta antes de despachar</div>
+
+<div class="role-tabs">
+  <button class="role-tab active" id="tab-client" onclick="switchRole('client')">
+    <span class="tab-dot client"></span> <i class="fa-solid fa-mobile-screen-button"></i> Tienda Online
+  </button>
+  <button class="role-tab" id="tab-admin" onclick="switchRole('admin')">
+    <span class="tab-dot admin"></span> <i class="fa-solid fa-briefcase-medical"></i> Panel Farmacia
+  </button>
+</div>
+
+<!-- ===================== CLIENT VIEW ===================== -->
+<div class="view active" id="view-client">
+  <div class="phone-shell">
+    <div class="phone-notch">
+      <div class="notch-bar"></div>
+      <div class="phone-status">9:41 <i class="fa-solid fa-battery-full"></i></div>
+    </div>
+
+    <!-- Screen 1: catalogo -->
+    <div class="screen active" id="screen-catalogo">
+      <div class="sync-banner" id="syncBanner">
+        <span class="sync-dot"></span>
+        <span id="syncBannerText">Inventario sincronizado hace 3 segundos</span>
+      </div>
+
+      <div class="client-header">
+        <div class="client-header-top">
+          <div class="store-name"><i class="fa-solid fa-house-medical-circle-check"></i> Meridiana</div>
+          <div class="client-avatar"><i class="fa-solid fa-user"></i></div>
+        </div>
+        <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i> Buscar medicamento o producto</div>
+      </div>
+
+      <div class="cat-pills">
+        <div class="cat-pill active">Todos</div>
+        <div class="cat-pill">Analgesicos</div>
+        <div class="cat-pill">Antibioticos</div>
+        <div class="cat-pill">Cuidado personal</div>
+        <div class="cat-pill">Equipos</div>
+      </div>
+
+      <div class="section-title">Disponibles ahora</div>
+      <div class="prod-section" id="prodSection">
+        <div class="prod-item reveal" id="prod-acet">
+          <img class="prod-img" src="https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=120&q=80" alt="Acetaminofen">
+          <div class="prod-info">
+            <div class="prod-name">Acetaminofen 500mg x20</div>
+            <div class="prod-meta"><span class="stock-tag ok">En stock - 48 u.</span></div>
+            <div class="prod-price">$3.50</div>
+          </div>
+          <button class="add-btn" onclick="addToCart(this,'acet','Acetaminofen 500mg x20',3.50,'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=120&q=80')"><i class="fa-solid fa-plus"></i></button>
+        </div>
+
+        <div class="prod-item reveal" style="animation-delay:0.06s" id="prod-amox">
+          <img class="prod-img" src="https://images.unsplash.com/photo-1584017911766-d451b3d0e843?auto=format&fit=crop&w=120&q=80" alt="Amoxicilina">
+          <div class="prod-info">
+            <div class="prod-name">Amoxicilina 500mg x21</div>
+            <div class="prod-meta">
+              <span class="stock-tag low" id="amoxStockTag">Ultima unidad</span>
+              <span class="rx-tag"><i class="fa-solid fa-file-prescription"></i> Requiere receta</span>
+            </div>
+            <div class="prod-price">$9.80</div>
+          </div>
+          <button class="add-btn" id="amoxAddBtn" onclick="addToCart(this,'amox','Amoxicilina 500mg x21',9.80,'https://images.unsplash.com/photo-1584017911766-d451b3d0e843?auto=format&fit=crop&w=120&q=80')"><i class="fa-solid fa-plus"></i></button>
+        </div>
+
+        <div class="prod-item reveal" style="animation-delay:0.12s">
+          <img class="prod-img" src="https://images.unsplash.com/photo-1550572017-edd951b55104?auto=format&fit=crop&w=120&q=80" alt="Insulina">
+          <div class="prod-info">
+            <div class="prod-name">Insulina Glargina 100u/ml</div>
+            <div class="prod-meta">
+              <span class="stock-tag ok">En stock - 15 u.</span>
+              <span class="rx-tag"><i class="fa-solid fa-file-prescription"></i> Requiere receta</span>
+            </div>
+            <div class="prod-price">$28.00</div>
+          </div>
+          <button class="add-btn" onclick="addToCart(this,'insu','Insulina Glargina 100u/ml',28.00,'https://images.unsplash.com/photo-1550572017-edd951b55104?auto=format&fit=crop&w=120&q=80')"><i class="fa-solid fa-plus"></i></button>
+        </div>
+
+        <div class="prod-item reveal" style="animation-delay:0.18s">
+          <img class="prod-img" src="https://images.unsplash.com/photo-1471864190281-a93a3070b6de?auto=format&fit=crop&w=120&q=80" alt="Vitamina C">
+          <div class="prod-info">
+            <div class="prod-name">Vitamina C 1000mg x30</div>
+            <div class="prod-meta"><span class="stock-tag ok">En stock - 75 u.</span></div>
+            <div class="prod-price">$6.40</div>
+          </div>
+          <button class="add-btn" onclick="addToCart(this,'vitc','Vitamina C 1000mg x30',6.40,'https://images.unsplash.com/photo-1471864190281-a93a3070b6de?auto=format&fit=crop&w=120&q=80')"><i class="fa-solid fa-plus"></i></button>
+        </div>
+
+        <div class="prod-item reveal" style="animation-delay:0.24s">
+          <img class="prod-img" src="https://images.unsplash.com/photo-1584362917165-526a968579e8?auto=format&fit=crop&w=120&q=80" alt="Tensiometro">
+          <div class="prod-info">
+            <div class="prod-name">Tensiometro digital</div>
+            <div class="prod-meta"><span class="stock-tag low">Pocas unidades - 3 u.</span></div>
+            <div class="prod-price">$22.50</div>
+          </div>
+          <button class="add-btn" onclick="addToCart(this,'tens','Tensiometro digital',22.50,'https://images.unsplash.com/photo-1584362917165-526a968579e8?auto=format&fit=crop&w=120&q=80')"><i class="fa-solid fa-plus"></i></button>
+        </div>
+      </div>
+
+      <div class="cart-bar" id="cartBar">
+        <div class="cart-info">
+          <div class="cart-count" id="cartCount">0 productos</div>
+          <div class="cart-total" id="cartTotalMini">$0.00</div>
+        </div>
+        <button class="order-btn" onclick="goToCart()">Ver carrito</button>
+      </div>
+
+      <div class="bottom-nav">
+        <div class="nav-item active" onclick="showBottomTab('catalogo')"><i class="fa-solid fa-store"></i>Tienda</div>
+        <div class="nav-item" onclick="showBottomTab('tracking')"><i class="fa-solid fa-receipt"></i>Pedidos</div>
+        <div class="nav-item" onclick="showBottomTab('catalogo')"><i class="fa-solid fa-user"></i>Perfil</div>
+      </div>
+    </div>
+
+    <!-- Screen 2: cart -->
+    <div class="screen" id="screen-cart">
+      <div class="cart-header">
+        <button class="back-btn" onclick="backToCatalogo()"><i class="fa-solid fa-arrow-left"></i></button>
+        <div class="cart-title">Tu carrito</div>
+      </div>
+
+      <div class="reserve-box" id="reserveBox">
+        <i class="fa-solid fa-lock-open"></i>
+        <div class="reserve-text"><b id="reserveTimer">Reservado por 09:47</b>El stock se aparta mientras completas el pago</div>
+      </div>
+
+      <div class="cart-items" id="cartItemsList"></div>
+
+      <div class="cart-summary">
+        <div class="summary-row"><span>Subtotal</span><span id="cartSubtotal">$0.00</span></div>
+        <div class="summary-row"><span>Envio</span><span>$0.00</span></div>
+        <div class="summary-total"><span>Total</span><span id="cartTotal">$0.00</span></div>
+      </div>
+
+      <button class="confirm-btn" id="confirmBtn" onclick="confirmOrder()">Pagar de forma segura</button>
+    </div>
+
+    <!-- Screen 3: tracking -->
+    <div class="screen" id="screen-tracking">
+      <div class="tracking-header">
+        <div class="tracking-title">Pedido #7734</div>
+        <div class="tracking-subtitle">Amoxicilina requiere validacion antes de despachar</div>
+        <div class="locked-badge"><i class="fa-solid fa-shield-halved"></i> Pago procesado de forma segura</div>
+      </div>
+      <div class="status-steps">
+        <div class="status-step done">
+          <div class="step-icon"><i class="fa-solid fa-check"></i></div>
+          <div class="step-text"><div class="step-label">Pago confirmado</div><div class="step-time">Hoy 10:14 AM</div></div>
+        </div>
+        <div class="status-step active" id="rxStep">
+          <div class="step-icon"><i class="fa-solid fa-file-prescription"></i></div>
+          <div class="step-text"><div class="step-label">Farmaceutico validando receta</div><div class="step-time" id="rxStepTime">En revision</div></div>
+        </div>
+        <div class="status-step">
+          <div class="step-icon"><i class="fa-solid fa-box"></i></div>
+          <div class="step-text"><div class="step-label">Preparando pedido</div><div class="step-time">Pendiente</div></div>
+        </div>
+        <div class="status-step">
+          <div class="step-icon"><i class="fa-solid fa-house"></i></div>
+          <div class="step-text"><div class="step-label">Entregado</div><div class="step-time">Pendiente</div></div>
+        </div>
+      </div>
+      <div class="bottom-nav">
+        <div class="nav-item" onclick="showBottomTab('catalogo')"><i class="fa-solid fa-store"></i>Tienda</div>
+        <div class="nav-item active" onclick="showBottomTab('tracking')"><i class="fa-solid fa-receipt"></i>Pedidos</div>
+        <div class="nav-item" onclick="showBottomTab('catalogo')"><i class="fa-solid fa-user"></i>Perfil</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== ADMIN VIEW ===================== -->
+<div class="view" id="view-admin">
+  <div class="dash-frame">
+    <div class="browser-bar">
+      <div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
+      <div class="browser-url"><i class="fa-solid fa-lock" style="font-size:10px"></i> admin.farmaciameridiana.com</div>
+    </div>
+    <div class="dash-tabs">
+      <div class="dash-tab active" data-page="page-sync" onclick="showDashTab('page-sync', this)"><i class="fa-solid fa-arrows-rotate"></i> Sincronizacion</div>
+      <div class="dash-tab" data-page="page-inventario" onclick="showDashTab('page-inventario', this)"><i class="fa-solid fa-boxes-stacked"></i> Inventario</div>
+      <div class="dash-tab" data-page="page-recetas" onclick="showDashTab('page-recetas', this)"><i class="fa-solid fa-file-prescription"></i> Recetas pendientes <span class="badge-count" id="rxBadge">1</span></div>
+    </div>
+
+    <div class="dash-body">
+      <!-- SYNC TAB -->
+      <div class="dash-page active" id="page-sync">
+        <div class="dash-page-header">
+          <div>
+            <div class="dash-page-title">Sincronizacion con el sistema de farmacia</div>
+            <div class="dash-page-sub">La web lee stock y precio directo de la misma fuente que usa el mostrador</div>
+          </div>
+          <span class="badge-pill green" id="syncChip"><i class="fa-solid fa-plug-circle-check"></i> Conectado</span>
+        </div>
+
+        <div class="sync-widget" id="syncWidget">
+          <div>
+            <div class="sync-widget-label">Sistema conectado: POS Central</div>
+            <div class="sync-widget-value" id="syncCounter">hace 3 segundos</div>
+            <div class="sync-widget-sub">Stock y precio se leen en el instante del pago, no de una copia guardada</div>
+          </div>
+          <button class="dash-btn ghost" style="background:rgba(255,255,255,0.18); color:white;" onclick="simulateConflict()"><i class="fa-solid fa-bolt"></i> Simular compra simultanea en mostrador</button>
+        </div>
+
+        <div class="stats-row">
+          <div class="stat-card"><div class="stat-num">312</div><div class="stat-label">Productos sincronizados</div></div>
+          <div class="stat-card"><div class="stat-num">2</div><div class="stat-label">Con stock bajo hoy</div></div>
+          <div class="stat-card"><div class="stat-num" id="statConflicts">0</div><div class="stat-label">Ventas dobles evitadas</div></div>
+        </div>
+
+        <div class="empty-state" id="syncLog">
+          <i class="fa-solid fa-arrows-rotate"></i>
+          <div class="empty-state-title">Sin conflictos por ahora</div>
+          <div class="empty-state-text">Usa el boton de arriba para simular una venta en el mostrador fisico mientras un cliente tiene el mismo producto en su carrito online.</div>
+        </div>
+      </div>
+
+      <!-- INVENTARIO TAB -->
+      <div class="dash-page" id="page-inventario">
+        <div class="dash-page-header">
+          <div>
+            <div class="dash-page-title">Inventario en tiempo real</div>
+            <div class="dash-page-sub">Misma tabla que ve el cliente en la tienda, actualizada desde el POS Central</div>
+          </div>
+        </div>
+        <table class="data-table">
+          <thead><tr><th>Producto</th><th>Precio</th><th>Stock</th><th>Estado</th></tr></thead>
+          <tbody>
+            <tr><td>Acetaminofen 500mg x20</td><td>$3.50</td><td>48</td><td><span class="status-chip ok">Disponible</span></td></tr>
+            <tr id="amoxRow"><td>Amoxicilina 500mg x21</td><td>$9.80</td><td id="amoxStockCell">1</td><td><span class="status-chip low" id="amoxStatusChip">Ultima unidad</span></td></tr>
+            <tr><td>Insulina Glargina 100u/ml</td><td>$28.00</td><td>15</td><td><span class="status-chip ok">Disponible</span></td></tr>
+            <tr><td>Vitamina C 1000mg x30</td><td>$6.40</td><td>75</td><td><span class="status-chip ok">Disponible</span></td></tr>
+            <tr><td>Tensiometro digital</td><td>$22.50</td><td>3</td><td><span class="status-chip low">Pocas unidades</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- RECETAS TAB -->
+      <div class="dash-page" id="page-recetas">
+        <div class="dash-page-header">
+          <div>
+            <div class="dash-page-title">Recetas pendientes de validacion</div>
+            <div class="dash-page-sub">Ningun producto que requiere receta se despacha sin este paso</div>
+          </div>
+        </div>
+
+        <div id="rxQueue">
+          <div class="rx-queue-card">
+            <div class="rx-queue-info">
+              <div class="rx-queue-order">Pedido #7734 - Amoxicilina 500mg x21</div>
+              <div class="rx-queue-detail">Cliente: Maria Fernanda G. - pago confirmado hace 4 minutos</div>
+            </div>
+            <span class="badge-pill purple"><i class="fa-solid fa-clock"></i> Esperando revision</span>
+            <button class="dash-btn primary" onclick="approveRx()"><i class="fa-solid fa-check"></i> Validar y aprobar</button>
+          </div>
+        </div>
+
+        <div id="rxEmpty" class="empty-state" style="display:none;">
+          <i class="fa-solid fa-circle-check"></i>
+          <div class="empty-state-title">Sin recetas pendientes</div>
+          <div class="empty-state-text">Los pedidos con productos que requieren receta vuelven a aparecer aqui apenas se confirma el pago.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <button class="reset-btn" onclick="resetDemo()"><i class="fa-solid fa-rotate-left"></i> Reiniciar demo</button>
+</div>
+
+<div class="disclaimer">Nombres, productos y cifras son de muestra para esta vista previa.</div>
+
+<div class="notification" id="notification">
+  <i class="fa-solid fa-circle-check notif-icon" id="notifIcon"></i>
+  <span id="notifText">Listo</span>
+</div>
+
+<script>
+  let cart = [];
+  let amoxSold = false;
+  let amoxInCart = false;
+  let reserveSeconds = 587;
+  let reserveTimerHandle = null;
+  let syncSeconds = 3;
+
+  function switchRole(role) {
+    document.getElementById('tab-client').classList.toggle('active', role === 'client');
+    document.getElementById('tab-admin').classList.toggle('active', role === 'admin');
+    document.getElementById('view-client').classList.toggle('active', role === 'client');
+    document.getElementById('view-admin').classList.toggle('active', role === 'admin');
+  }
+
+  function addToCart(btn, id, name, price, img) {
+    if (btn.classList.contains('added') || btn.disabled) return;
+    btn.classList.add('added');
+    btn.innerHTML = '<i class="fa-solid fa-check"></i>';
+    cart.push({ id, name, price, img });
+    if (id === 'amox') amoxInCart = true;
+    renderCartBar();
+  }
+
+  function renderCartBar() {
+    const bar = document.getElementById('cartBar');
+    const count = document.getElementById('cartCount');
+    const total = cart.reduce((s, i) => s + i.price, 0);
+    if (cart.length > 0) {
+      bar.classList.add('visible');
+      count.textContent = cart.length + (cart.length === 1 ? ' producto' : ' productos');
+      document.getElementById('cartTotalMini').textContent = '$' + total.toFixed(2);
+    } else {
+      bar.classList.remove('visible');
+    }
+  }
+
+  function goToCart() {
+    document.getElementById('screen-catalogo').classList.remove('active');
+    document.getElementById('screen-cart').classList.add('active');
+    renderCartItems();
+    startReserveTimer();
+  }
+
+  function renderCartItems() {
+    const list = document.getElementById('cartItemsList');
+    list.innerHTML = cart.map(i => `
+      <div class="cart-line">
+        <img class="cart-line-img" src="${i.img}">
+        <div class="cart-line-info">
+          <div class="cart-line-name">${i.name}</div>
+          <div class="cart-line-price">$${i.price.toFixed(2)}</div>
+        </div>
+      </div>`).join('');
+    const total = cart.reduce((s, i) => s + i.price, 0);
+    document.getElementById('cartSubtotal').textContent = '$' + total.toFixed(2);
+    document.getElementById('cartTotal').textContent = '$' + total.toFixed(2);
+  }
+
+  function backToCatalogo() {
+    document.getElementById('screen-cart').classList.remove('active');
+    document.getElementById('screen-catalogo').classList.add('active');
+  }
+
+  function startReserveTimer() {
+    if (reserveTimerHandle) return;
+    reserveTimerHandle = setInterval(() => {
+      if (amoxSold) return;
+      reserveSeconds--;
+      if (reserveSeconds <= 0) reserveSeconds = 0;
+      const m = String(Math.floor(reserveSeconds / 60)).padStart(2, '0');
+      const s = String(reserveSeconds % 60).padStart(2, '0');
+      document.getElementById('reserveTimer').textContent = 'Reservado por ' + m + ':' + s;
+    }, 1000);
+  }
+
+  function confirmOrder() {
+    if (amoxSold && amoxInCart) {
+      showNotification('No se puede pagar. La amoxicilina ya no esta disponible.', true);
+      return;
+    }
+    document.getElementById('screen-cart').classList.remove('active');
+    document.getElementById('screen-tracking').classList.add('active');
+    showNotification('Pago confirmado de forma segura', false);
+  }
+
+  function showBottomTab(tab) {
+    document.querySelectorAll('#screen-catalogo .bottom-nav .nav-item, #screen-tracking .bottom-nav .nav-item').forEach(n => n.classList.remove('active'));
+    if (tab === 'catalogo') {
+      document.getElementById('screen-tracking').classList.remove('active');
+      document.getElementById('screen-cart').classList.remove('active');
+      document.getElementById('screen-catalogo').classList.add('active');
+    } else {
+      document.getElementById('screen-catalogo').classList.remove('active');
+      document.getElementById('screen-cart').classList.remove('active');
+      document.getElementById('screen-tracking').classList.add('active');
+    }
+  }
+
+  function showNotification(text, warn) {
+    const n = document.getElementById('notification');
+    document.getElementById('notifText').textContent = text;
+    n.classList.toggle('warn', !!warn);
+    document.getElementById('notifIcon').className = 'fa-solid ' + (warn ? 'fa-triangle-exclamation' : 'fa-circle-check') + ' notif-icon';
+    n.classList.add('show');
+    setTimeout(() => n.classList.remove('show'), 3400);
+  }
+
+  function showDashTab(pageId, el) {
+    document.querySelectorAll('.dash-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.dash-page').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById(pageId).classList.add('active');
+  }
+
+  let conflictCount = 0;
+
+  function simulateConflict() {
+    if (amoxSold) {
+      showNotification('Ese producto ya se marco sin stock en esta simulacion.', true);
+      return;
+    }
+    amoxSold = true;
+    conflictCount++;
+
+    document.getElementById('amoxStockCell').textContent = '0';
+    document.getElementById('amoxStatusChip').className = 'status-chip out';
+    document.getElementById('amoxStatusChip').textContent = 'Agotado';
+    document.getElementById('statConflicts').textContent = conflictCount;
+
+    document.getElementById('amoxStockTag').className = 'stock-tag out';
+    document.getElementById('amoxStockTag').textContent = 'Agotado';
+    const amoxBtn = document.getElementById('amoxAddBtn');
+    if (!amoxBtn.classList.contains('added')) {
+      amoxBtn.disabled = true;
+      amoxBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+    }
+
+    document.getElementById('syncLog').innerHTML = `
+      <i class="fa-solid fa-shield-halved" style="color:var(--green-dark)"></i>
+      <div class="empty-state-title" style="color:var(--gray-700)">Venta de mostrador registrada</div>
+      <div class="empty-state-text">Amoxicilina 500mg x21 se vendio en el mostrador fisico. El stock bajo a 0 en el mismo instante en la tienda online, asi que nadie mas puede pagarla por una copia vieja del inventario.</div>`;
+
+    if (amoxInCart) {
+      const reserveBox = document.getElementById('reserveBox');
+      reserveBox.classList.add('warn');
+      reserveBox.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i><div class="reserve-text"><b>Amoxicilina ya no disponible</b>Se vendio en el mostrador hace instantes. Retirala para continuar el pago</div>';
+      document.getElementById('confirmBtn').disabled = true;
+      showNotification('Un producto de tu carrito se agoto en el mostrador', true);
+    } else {
+      showNotification('Conflicto de stock evitado antes de que un cliente online intentara pagarlo', false);
+    }
+  }
+
+  function approveRx() {
+    document.getElementById('rxQueue').innerHTML = '';
+    document.getElementById('rxEmpty').style.display = 'block';
+    document.getElementById('rxBadge').textContent = '0';
+    showNotification('Receta validada. El pedido pasa a preparacion', false);
+
+    const rxStep = document.getElementById('rxStep');
+    if (rxStep) {
+      rxStep.classList.remove('active');
+      rxStep.classList.add('done');
+      rxStep.querySelector('.step-icon').innerHTML = '<i class="fa-solid fa-check"></i>';
+      rxStep.querySelector('.step-label').textContent = 'Receta validada por el farmaceutico';
+      document.getElementById('rxStepTime').textContent = 'Hoy 10:19 AM';
+      const nextStep = rxStep.nextElementSibling;
+      if (nextStep) nextStep.classList.add('active');
+    }
+  }
+
+  function resetDemo() {
+    amoxSold = false;
+    conflictCount = 0;
+    document.getElementById('statConflicts').textContent = '0';
+    document.getElementById('amoxStockCell').textContent = '1';
+    document.getElementById('amoxStatusChip').className = 'status-chip low';
+    document.getElementById('amoxStatusChip').textContent = 'Ultima unidad';
+    document.getElementById('amoxStockTag').className = 'stock-tag low';
+    document.getElementById('amoxStockTag').textContent = 'Ultima unidad';
+    const amoxBtn = document.getElementById('amoxAddBtn');
+    amoxBtn.disabled = false;
+    if (!amoxInCart) { amoxBtn.classList.remove('added'); amoxBtn.innerHTML = '<i class="fa-solid fa-plus"></i>'; }
+    document.getElementById('syncLog').innerHTML = `
+      <i class="fa-solid fa-arrows-rotate"></i>
+      <div class="empty-state-title">Sin conflictos por ahora</div>
+      <div class="empty-state-text">Usa el boton de arriba para simular una venta en el mostrador fisico mientras un cliente tiene el mismo producto en su carrito online.</div>`;
+    document.querySelector('[data-page="page-sync"]').click();
+  }
+
+  function tickSync() {
+    syncSeconds++;
+    const banner = document.getElementById('syncBanner');
+    const counter = document.getElementById('syncCounter');
+    const banText = document.getElementById('syncBannerText');
+    if (syncSeconds <= 45) {
+      banner.classList.remove('stale');
+      banText.textContent = 'Inventario sincronizado hace ' + syncSeconds + ' segundos';
+      counter.textContent = 'hace ' + syncSeconds + ' segundos';
+    } else {
+      banner.classList.add('stale');
+      banText.textContent = 'Sincronizando...';
+      counter.textContent = 'sincronizando...';
+      syncSeconds = 0;
+    }
+  }
+
+  setInterval(tickSync, 1000);
+</script>
+
+</body>
+</html>
