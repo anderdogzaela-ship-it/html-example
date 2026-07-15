@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Presto · Marketplace C2C de Alquiler</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+  :root{
+    --bg:#0a0b0d; --bg-alt:#101215; --surface:#15171b; --surface-2:#1b1e23; --border:rgba(255,255,255,.08);
+    --gold-50:#fdf8ec; --gold-100:#faedc4; --gold-300:#f0c869; --gold-500:#d9a13b; --gold-600:#b9832a; --gold-700:#8f631f;
+    --text:#f4f3f0; --text-dim:#a9a9ac; --text-faint:#6c6d72;
+    --green:#34c77b; --red:#ef5757; --blue:#4d9bf0; --amber:#f0b429; --teal:#3fc7c1;
+    --radius:14px; --radius-lg:20px;
+    --shadow:0 10px 30px rgba(0,0,0,.35);
+    --ease:cubic-bezier(.34,1.56,.64,1);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{
+    font-family:'Lexend',sans-serif; background:var(--bg); color:var(--text);
+    -webkit-font-smoothing:antialiased; overflow-x:hidden;
+  }
+  body::before{
+    content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+    background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);
+    background-size:48px 48px;
+  }
+  .orb{position:fixed;border-radius:50%;filter:blur(90px);opacity:.16;z-index:0;animation:float 14s ease-in-out infinite;}
+  .orb1{width:420px;height:420px;background:var(--gold-500);top:-140px;right:-100px;}
+  .orb2{width:340px;height:340px;background:var(--teal);bottom:-120px;left:-80px;animation-delay:-6s;}
+  @keyframes float{0%,100%{transform:translateY(0) translateX(0);}50%{transform:translateY(-30px) translateX(20px);}}
+
+  a{color:inherit;text-decoration:none;}
+  ::-webkit-scrollbar{width:8px;height:8px;}
+  ::-webkit-scrollbar-thumb{background:var(--surface-2);border-radius:8px;}
+
+  .app{display:grid; grid-template-columns:250px 1fr; min-height:100vh; position:relative; z-index:1;}
+
+  /* SIDEBAR */
+  .sidebar{
+    background:var(--bg-alt); border-right:1px solid var(--border);
+    padding:22px 16px; display:flex; flex-direction:column; gap:6px; position:sticky; top:0; height:100vh; overflow-y:auto;
+  }
+  .brand{display:flex;align-items:center;gap:10px;padding:6px 8px 22px;}
+  .brand-mark{
+    width:36px;height:36px;border-radius:10px;
+    background:linear-gradient(135deg,var(--gold-300),var(--gold-700));
+    display:flex;align-items:center;justify-content:center;font-weight:800;color:#1a1200;
+    box-shadow:0 0 22px rgba(217,161,59,.5); animation:pulseLogo 3.2s ease-in-out infinite;
+  }
+  @keyframes pulseLogo{0%,100%{box-shadow:0 0 14px rgba(217,161,59,.35);}50%{box-shadow:0 0 26px rgba(217,161,59,.6);}}
+  .brand-name{font-weight:700;font-size:1.05rem;letter-spacing:.2px;}
+  .brand-sub{font-size:.68rem;color:var(--text-faint);text-transform:uppercase;letter-spacing:.08em;}
+
+  .nav-section-label{font-size:.68rem;color:var(--text-faint);text-transform:uppercase;letter-spacing:.08em;padding:14px 12px 6px;}
+  .nav-item{
+    display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:10px;color:var(--text-dim);
+    font-size:.86rem;font-weight:500;cursor:pointer;transition:background .18s,color .18s,transform .18s;
+  }
+  .nav-item i{width:18px;text-align:center;font-size:.9rem;}
+  .nav-item:hover{background:var(--surface);color:var(--text);transform:translateX(2px);}
+  .nav-item.active{background:linear-gradient(90deg,rgba(217,161,59,.16),rgba(217,161,59,.02));color:var(--gold-300);}
+  .nav-item.active i{color:var(--gold-300);}
+  .nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:.64rem;font-weight:700;padding:1px 7px;border-radius:20px;}
+  .nav-badge.ok{background:var(--green);}
+
+  .sidebar-footer{margin-top:auto;padding-top:14px;border-top:1px solid var(--border);}
+  .user-chip{display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px;}
+  .user-chip img{width:34px;height:34px;border-radius:9px;object-fit:cover;}
+  .user-name{font-size:.82rem;font-weight:600;}
+  .user-role{font-size:.68rem;color:var(--text-faint);}
+
+  /* MAIN */
+  .main{padding:26px 32px 60px;position:relative;z-index:1;min-width:0;}
+  .panel{display:none;animation:fadeIn .35s ease;}
+  .panel.active{display:block;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+  .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;gap:20px;flex-wrap:wrap;}
+  .page-title{font-size:1.5rem;font-weight:700;}
+  .page-sub{font-size:.84rem;color:var(--text-faint);margin-top:2px;}
+
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:10px;border:none;font-family:inherit;font-weight:600;font-size:.86rem;cursor:pointer;transition:transform .15s,box-shadow .15s;}
+  .btn:hover{transform:translateY(-1px);}
+  .btn-gold{background:linear-gradient(135deg,var(--gold-300),var(--gold-600));color:#241a02;box-shadow:0 6px 18px rgba(217,161,59,.3);}
+  .btn-ghost{background:var(--surface-2);color:var(--text);border:1px solid var(--border);}
+  .btn-outline{background:transparent;color:var(--gold-300);border:1px solid var(--gold-700);}
+  .btn-sm{padding:7px 13px;font-size:.78rem;}
+
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;}
+  .grid{display:grid;gap:18px;}
+  .grid-2{grid-template-columns:1fr 1fr;}
+  .grid-3{grid-template-columns:repeat(3,1fr);}
+  .grid-4{grid-template-columns:repeat(4,1fr);}
+  @media(max-width:1100px){.grid-3,.grid-4{grid-template-columns:repeat(2,1fr);}}
+
+  .badge{display:inline-flex;align-items:center;gap:5px;font-size:.68rem;font-weight:700;padding:3px 9px;border-radius:20px;text-transform:uppercase;letter-spacing:.03em;}
+  .badge-verified{background:rgba(63,199,193,.14);color:var(--teal);}
+  .badge-pending{background:rgba(240,180,41,.14);color:var(--amber);}
+  .badge-ok{background:rgba(52,199,123,.14);color:var(--green);}
+  .badge-alert{background:rgba(239,87,87,.14);color:var(--red);}
+
+  /* SEARCH BAR */
+  .searchbar{display:flex;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:10px;margin-bottom:22px;flex-wrap:wrap;}
+  .searchbar .field{flex:1;min-width:140px;display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;}
+  .searchbar .field:hover{background:var(--surface-2);}
+  .searchbar .field i{color:var(--gold-300);}
+  .searchbar input{background:transparent;border:none;color:var(--text);font-family:inherit;font-size:.84rem;width:100%;outline:none;}
+  .searchbar input::placeholder{color:var(--text-faint);}
+  .searchbar .divider{width:1px;background:var(--border);margin:6px 0;}
+
+  /* LISTING CARDS */
+  .listing-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;transition:transform .2s,box-shadow .2s;cursor:pointer;}
+  .listing-card:hover{transform:translateY(-4px);box-shadow:var(--shadow);border-color:var(--gold-700);}
+  .listing-img{position:relative;height:150px;}
+  .listing-img img{width:100%;height:100%;object-fit:cover;}
+  .listing-img .fav{position:absolute;top:10px;right:10px;width:30px;height:30px;border-radius:50%;background:rgba(10,11,13,.55);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;color:#fff;font-size:.8rem;}
+  .listing-img .badge{position:absolute;top:10px;left:10px;}
+  .listing-body{padding:14px 16px;}
+  .listing-cat{font-size:.68rem;color:var(--gold-300);text-transform:uppercase;letter-spacing:.06em;font-weight:700;}
+  .listing-title{font-weight:600;font-size:.94rem;margin:4px 0 6px;}
+  .listing-meta{display:flex;justify-content:space-between;align-items:center;font-size:.78rem;color:var(--text-faint);}
+  .listing-price{font-weight:700;color:var(--text);}
+  .listing-rating{display:flex;align-items:center;gap:4px;color:var(--gold-300);}
+
+  /* MAP MOCK */
+  .map-mock{position:relative;border-radius:var(--radius-lg);overflow:hidden;height:220px;background:
+     radial-gradient(circle at 20% 30%, rgba(63,199,193,.18), transparent 40%),
+     radial-gradient(circle at 70% 60%, rgba(217,161,59,.18), transparent 40%),
+     linear-gradient(135deg,#14161a,#1c1f24);
+     border:1px solid var(--border);}
+  .map-mock::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px);background-size:26px 26px;}
+  .pin{position:absolute;width:30px;height:30px;border-radius:50% 50% 50% 0;background:var(--gold-500);transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 10px rgba(0,0,0,.4);}
+  .pin i{transform:rotate(45deg);color:#241a02;font-size:.72rem;}
+  .pin.me{background:var(--blue);}
+
+  /* CALENDAR */
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
+  .cal-dow{font-size:.68rem;text-align:center;color:var(--text-faint);font-weight:600;padding-bottom:4px;}
+  .cal-day{aspect-ratio:1;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.8rem;background:var(--surface-2);color:var(--text-dim);border:1px solid transparent;}
+  .cal-day.avail{background:rgba(52,199,123,.1);color:var(--green);cursor:pointer;}
+  .cal-day.avail:hover{border-color:var(--green);}
+  .cal-day.booked{background:rgba(239,87,87,.08);color:var(--text-faint);text-decoration:line-through;}
+  .cal-day.sel{background:var(--gold-500);color:#241a02;font-weight:700;}
+  .cal-day.muted{opacity:.25;}
+
+  /* STEPS */
+  .steps{display:flex;gap:0;margin-bottom:22px;}
+  .step{flex:1;text-align:center;position:relative;padding-bottom:14px;}
+  .step::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--surface-2);border-radius:3px;}
+  .step.done::after{background:var(--green);}
+  .step.now::after{background:var(--gold-500);}
+  .step-num{width:30px;height:30px;border-radius:50%;background:var(--surface-2);display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-weight:700;font-size:.82rem;color:var(--text-dim);}
+  .step.done .step-num{background:var(--green);color:#04210f;}
+  .step.now .step-num{background:var(--gold-500);color:#241a02;}
+  .step-label{font-size:.74rem;color:var(--text-faint);font-weight:600;}
+  .step.done .step-label,.step.now .step-label{color:var(--text);}
+
+  /* TABLE */
+  table{width:100%;border-collapse:collapse;font-size:.84rem;}
+  th{text-align:left;color:var(--text-faint);font-weight:600;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;padding:10px 12px;border-bottom:1px solid var(--border);}
+  td{padding:12px;border-bottom:1px solid var(--border);}
+  tr:last-child td{border-bottom:none;}
+
+  /* CHAT */
+  .chat-wrap{display:grid;grid-template-columns:260px 1fr;gap:0;border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;height:480px;}
+  .chat-list{background:var(--bg-alt);border-right:1px solid var(--border);overflow-y:auto;}
+  .chat-item{display:flex;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border);cursor:pointer;}
+  .chat-item.active{background:var(--surface);}
+  .chat-item img{width:38px;height:38px;border-radius:10px;object-fit:cover;}
+  .chat-item .cn{font-size:.82rem;font-weight:600;}
+  .chat-item .cm{font-size:.72rem;color:var(--text-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:170px;}
+  .chat-main{display:flex;flex-direction:column;background:var(--surface);}
+  .chat-head{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+  .chat-body{flex:1;padding:18px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;}
+  .bubble{max-width:65%;padding:10px 14px;border-radius:14px;font-size:.84rem;line-height:1.4;}
+  .bubble.in{background:var(--surface-2);align-self:flex-start;border-bottom-left-radius:4px;}
+  .bubble.out{background:linear-gradient(135deg,var(--gold-500),var(--gold-700));color:#241a02;align-self:flex-end;border-bottom-right-radius:4px;font-weight:500;}
+  .bubble.sys{align-self:center;background:transparent;color:var(--text-faint);font-size:.72rem;font-style:italic;}
+  .chat-input{padding:12px;border-top:1px solid var(--border);display:flex;gap:8px;}
+  .chat-input input{flex:1;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:inherit;font-size:.84rem;outline:none;}
+
+  .kv{display:flex;justify-content:space-between;padding:9px 0;font-size:.85rem;border-bottom:1px dashed var(--border);}
+  .kv:last-child{border-bottom:none;}
+  .kv .k{color:var(--text-faint);}
+  .kv .v{font-weight:600;}
+
+  .note{background:rgba(217,161,59,.08);border:1px solid rgba(217,161,59,.25);border-radius:12px;padding:12px 14px;font-size:.8rem;color:var(--gold-100);display:flex;gap:10px;}
+  .note i{color:var(--gold-300);margin-top:2px;}
+
+  .stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px;}
+  .stat-label{font-size:.72rem;color:var(--text-faint);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;}
+  .stat-value{font-size:1.5rem;font-weight:700;}
+  .stat-delta{font-size:.76rem;color:var(--green);margin-top:4px;}
+
+  .progress-track{height:8px;border-radius:6px;background:var(--surface-2);overflow:hidden;}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--gold-500),var(--gold-300));border-radius:6px;}
+
+  .star{color:var(--gold-300);}
+  .section-label{font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-faint);font-weight:700;margin:26px 0 12px;}
+  .section-label:first-child{margin-top:0;}
+
+  .thumb-row{display:flex;gap:8px;margin-top:10px;}
+  .thumb-row img{width:64px;height:48px;object-fit:cover;border-radius:8px;border:1px solid var(--border);}
+
+  @media(max-width:900px){
+    .app{grid-template-columns:1fr;}
+    .sidebar{position:relative;height:auto;flex-direction:row;overflow-x:auto;}
+    .grid-2,.grid-3,.grid-4{grid-template-columns:1fr;}
+    .chat-wrap{grid-template-columns:1fr;height:auto;}
+    .chat-list{display:none;}
+  }
+</style>
+</head>
+<body>
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">P</div>
+      <div>
+        <div class="brand-name">Presto</div>
+        <div class="brand-sub">Marketplace C2C</div>
+      </div>
+    </div>
+
+    <div class="nav-section-label">Comprador</div>
+    <div class="nav-item active" data-panel="explorar"><i class="fa-solid fa-magnifying-glass"></i>Explorar</div>
+    <div class="nav-item" data-panel="anuncio"><i class="fa-solid fa-calendar-check"></i>Anuncio y reserva</div>
+    <div class="nav-item" data-panel="pago"><i class="fa-solid fa-credit-card"></i>Pago y depósito</div>
+
+    <div class="nav-section-label">Confianza</div>
+    <div class="nav-item" data-panel="kyc"><i class="fa-solid fa-id-card"></i>Verificación KYC <span class="nav-badge ok">Stripe</span></div>
+    <div class="nav-item" data-panel="mensajes"><i class="fa-solid fa-comments"></i>Mensajes</div>
+    <div class="nav-item" data-panel="disputas"><i class="fa-solid fa-scale-balanced"></i>Incidencias y RGPD</div>
+
+    <div class="nav-section-label">Anfitrión</div>
+    <div class="nav-item" data-panel="anfitrion"><i class="fa-solid fa-house-chimney"></i>Panel del anfitrión <span class="nav-badge">3</span></div>
+
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=80&q=60" alt="">
+        <div>
+          <div class="user-name">Marta Ibáñez</div>
+          <div class="user-role">Verificada · Madrid</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <!-- ================= EXPLORAR ================= -->
+    <section class="panel active" id="explorar">
+      <div class="topbar">
+        <div>
+          <div class="page-title">Explorar cerca de ti</div>
+          <div class="page-sub">Búsqueda por categoría, fechas y radio de distancia</div>
+        </div>
+        <button class="btn btn-gold"><i class="fa-solid fa-plus"></i> Publicar un artículo</button>
+      </div>
+
+      <div class="searchbar">
+        <div class="field"><i class="fa-solid fa-location-dot"></i><input placeholder="Madrid, Chamberí · radio 5 km"></div>
+        <div class="divider"></div>
+        <div class="field"><i class="fa-solid fa-tag"></i><input placeholder="Categoría: Cámaras y vídeo"></div>
+        <div class="divider"></div>
+        <div class="field"><i class="fa-solid fa-calendar"></i><input placeholder="18 - 21 jul"></div>
+        <button class="btn btn-gold btn-sm"><i class="fa-solid fa-magnifying-glass"></i> Buscar</button>
+      </div>
+
+      <div class="grid grid-2" style="margin-bottom:22px;">
+        <div class="map-mock">
+          <div class="pin me" style="top:48%;left:46%;"><i class="fa-solid fa-location-crosshairs"></i></div>
+          <div class="pin" style="top:30%;left:30%;"><i class="fa-solid fa-camera"></i></div>
+          <div class="pin" style="top:60%;left:65%;"><i class="fa-solid fa-drum"></i></div>
+          <div class="pin" style="top:22%;left:70%;"><i class="fa-solid fa-tent"></i></div>
+          <div class="pin" style="top:75%;left:35%;"><i class="fa-solid fa-drill"></i></div>
+        </div>
+        <div class="card">
+          <div class="stat-label">Cómo funciona la búsqueda geolocalizada</div>
+          <div style="font-size:.84rem;color:var(--text-dim);line-height:1.6;margin-top:8px;">
+            Cada anuncio se geocodifica al publicarse. La búsqueda combina radio de distancia, disponibilidad real en el calendario del artículo y filtro de categoría, devolviendo primero lo más cercano y disponible en las fechas pedidas.
+          </div>
+          <div class="thumb-row">
+            <span class="badge badge-verified"><i class="fa-solid fa-circle-check"></i> Anfitrión verificado</span>
+            <span class="badge badge-ok"><i class="fa-solid fa-shield"></i> Depósito protegido</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-label">142 artículos disponibles en tu zona</div>
+      <div class="grid grid-4">
+        <div class="listing-card" onclick="showPanel('anuncio')">
+          <div class="listing-img">
+            <img src="https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=400&q=70" alt="">
+            <span class="badge badge-verified" style="position:absolute;top:10px;left:10px;">KYC</span>
+            <div class="fav"><i class="fa-regular fa-heart"></i></div>
+          </div>
+          <div class="listing-body">
+            <div class="listing-cat">Fotografía</div>
+            <div class="listing-title">Cámara Sony A7 III + objetivo 24-70</div>
+            <div class="listing-meta"><span class="listing-price">28 € / día</span><span class="listing-rating"><i class="fa-solid fa-star star"></i> 4.9</span></div>
+          </div>
+        </div>
+        <div class="listing-card" onclick="showPanel('anuncio')">
+          <div class="listing-img">
+            <img src="https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=400&q=70" alt="">
+            <span class="badge badge-verified" style="position:absolute;top:10px;left:10px;">KYC</span>
+            <div class="fav"><i class="fa-solid fa-heart" style="color:var(--red);"></i></div>
+          </div>
+          <div class="listing-body">
+            <div class="listing-cat">Camping</div>
+            <div class="listing-title">Tienda de campaña 4 plazas Quechua</div>
+            <div class="listing-meta"><span class="listing-price">12 € / día</span><span class="listing-rating"><i class="fa-solid fa-star star"></i> 4.7</span></div>
+          </div>
+        </div>
+        <div class="listing-card" onclick="showPanel('anuncio')">
+          <div class="listing-img">
+            <img src="https://images.unsplash.com/photo-1572981779307-38b8cabb2407?w=400&q=70" alt="">
+            <span class="badge badge-verified" style="position:absolute;top:10px;left:10px;">KYC</span>
+            <div class="fav"><i class="fa-regular fa-heart"></i></div>
+          </div>
+          <div class="listing-body">
+            <div class="listing-cat">Herramientas</div>
+            <div class="listing-title">Taladro percutor Bosch profesional</div>
+            <div class="listing-meta"><span class="listing-price">9 € / día</span><span class="listing-rating"><i class="fa-solid fa-star star"></i> 4.8</span></div>
+          </div>
+        </div>
+        <div class="listing-card" onclick="showPanel('anuncio')">
+          <div class="listing-img">
+            <img src="https://images.unsplash.com/photo-1520170350707-b2da59970118?w=400&q=70" alt="">
+            <span class="badge badge-pending" style="position:absolute;top:10px;left:10px;">KYC pend.</span>
+            <div class="fav"><i class="fa-regular fa-heart"></i></div>
+          </div>
+          <div class="listing-body">
+            <div class="listing-cat">Eventos</div>
+            <div class="listing-title">Proyector 4K + pantalla 2x2m</div>
+            <div class="listing-meta"><span class="listing-price">18 € / día</span><span class="listing-rating"><i class="fa-solid fa-star star"></i> 4.6</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= ANUNCIO / RESERVA ================= -->
+    <section class="panel" id="anuncio">
+      <div class="topbar">
+        <div>
+          <div class="page-title">Cámara Sony A7 III + objetivo 24-70</div>
+          <div class="page-sub"><i class="fa-solid fa-location-dot"></i> Chamberí, Madrid · a 1.8 km de ti</div>
+        </div>
+        <span class="badge badge-verified"><i class="fa-solid fa-circle-check"></i> Anfitrión verificado por KYC</span>
+      </div>
+
+      <div class="grid grid-2">
+        <div>
+          <div class="card" style="padding:0;overflow:hidden;">
+            <img src="https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800&q=75" style="width:100%;height:260px;object-fit:cover;">
+          </div>
+          <div class="thumb-row">
+            <img src="https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=200&q=60">
+            <img src="https://images.unsplash.com/photo-1519183071298-a2962be96f83?w=200&q=60">
+            <img src="https://images.unsplash.com/photo-1606986628253-05620bcc3a63?w=200&q=60">
+          </div>
+          <div class="card" style="margin-top:18px;">
+            <div class="section-label" style="margin-top:0;">Descripción</div>
+            <div style="font-size:.86rem;color:var(--text-dim);line-height:1.6;">
+              Sony A7 III con objetivo 24-70mm f/2.8, dos baterías, cargador y tarjeta SD 128GB incluidos. Entrega en mano en Chamberí o envío con seguro. Fianza retenida como preautorización, no como cargo.
+            </div>
+            <div class="section-label">Anfitrión</div>
+            <div style="display:flex;align-items:center;gap:12px;">
+              <img src="https://images.unsplash.com/photo-1607346256330-dee7af15f7c5?w=100&q=60" style="width:44px;height:44px;border-radius:10px;object-fit:cover;">
+              <div>
+                <div style="font-weight:600;font-size:.86rem;">Javier R. <i class="fa-solid fa-circle-check" style="color:var(--teal);"></i></div>
+                <div style="font-size:.74rem;color:var(--text-faint);">32 alquileres completados · 4.9 <i class="fa-solid fa-star star" style="font-size:.7rem;"></i></div>
+              </div>
+              <button class="btn btn-ghost btn-sm" style="margin-left:auto;" onclick="showPanel('mensajes')"><i class="fa-solid fa-comment"></i> Mensaje</button>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="card">
+            <div class="section-label" style="margin-top:0;">Disponibilidad · julio</div>
+            <div class="cal-grid">
+              <div class="cal-dow">L</div><div class="cal-dow">M</div><div class="cal-dow">X</div><div class="cal-dow">J</div><div class="cal-dow">V</div><div class="cal-dow">S</div><div class="cal-dow">D</div>
+              <div class="cal-day muted">29</div><div class="cal-day muted">30</div><div class="cal-day avail">1</div><div class="cal-day avail">2</div><div class="cal-day booked">3</div><div class="cal-day booked">4</div><div class="cal-day avail">5</div>
+              <div class="cal-day avail">6</div><div class="cal-day avail">7</div><div class="cal-day avail">8</div><div class="cal-day avail">9</div><div class="cal-day avail">10</div><div class="cal-day booked">11</div><div class="cal-day booked">12</div>
+              <div class="cal-day avail">13</div><div class="cal-day avail">14</div><div class="cal-day avail">15</div><div class="cal-day avail">16</div><div class="cal-day avail">17</div><div class="cal-day sel">18</div><div class="cal-day sel">19</div>
+              <div class="cal-day sel">20</div><div class="cal-day sel">21</div><div class="cal-day avail">22</div><div class="cal-day avail">23</div><div class="cal-day avail">24</div><div class="cal-day avail">25</div><div class="cal-day avail">26</div>
+            </div>
+            <div style="display:flex;gap:14px;margin-top:12px;font-size:.72rem;color:var(--text-faint);">
+              <span><i class="fa-solid fa-square" style="color:var(--green);"></i> Libre</span>
+              <span><i class="fa-solid fa-square" style="color:var(--red);opacity:.6;"></i> Reservado</span>
+              <span><i class="fa-solid fa-square" style="color:var(--gold-500);"></i> Tu selección</span>
+            </div>
+          </div>
+
+          <div class="card" style="margin-top:18px;">
+            <div class="section-label" style="margin-top:0;">Resumen de la reserva</div>
+            <div class="kv"><span class="k">4 días × 28 €</span><span class="v">112,00 €</span></div>
+            <div class="kv"><span class="k">Comisión de servicio (12%)</span><span class="v">13,44 €</span></div>
+            <div class="kv"><span class="k">Fianza (preautorización, no se cobra)</span><span class="v">150,00 €</span></div>
+            <div class="kv"><span class="k" style="color:var(--text);font-weight:700;">Total a pagar hoy</span><span class="v" style="color:var(--gold-300);">125,44 €</span></div>
+            <button class="btn btn-gold" style="width:100%;justify-content:center;margin-top:14px;" onclick="showPanel('pago')">Continuar a verificación y pago</button>
+            <div class="note" style="margin-top:12px;"><i class="fa-solid fa-circle-info"></i> El anfitrión recibe 98,56 € (112,00 € menos su parte de la comisión) vía Stripe Connect al confirmarse la devolución.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= KYC ================= -->
+    <section class="panel" id="kyc">
+      <div class="topbar">
+        <div>
+          <div class="page-title">Verificación de identidad</div>
+          <div class="page-sub">Obligatoria antes de publicar o reservar · Stripe Identity</div>
+        </div>
+      </div>
+
+      <div class="steps">
+        <div class="step done"><div class="step-num"><i class="fa-solid fa-check"></i></div><div class="step-label">Documento</div></div>
+        <div class="step done"><div class="step-num"><i class="fa-solid fa-check"></i></div><div class="step-label">Prueba de vida</div></div>
+        <div class="step now"><div class="step-num">3</div><div class="step-label">Revisión automática</div></div>
+        <div class="step"><div class="step-num">4</div><div class="step-label">Acceso habilitado</div></div>
+      </div>
+
+      <div class="grid grid-2">
+        <div class="card">
+          <div class="section-label" style="margin-top:0;">Estado de verificación</div>
+          <div class="kv"><span class="k">Documento (DNI/pasaporte)</span><span class="v badge badge-ok">Validado</span></div>
+          <div class="kv"><span class="k">Coincidencia facial (liveness)</span><span class="v badge badge-ok">Validado</span></div>
+          <div class="kv"><span class="k">Lista de sanciones / PEP</span><span class="v badge badge-pending">En revisión</span></div>
+          <div class="kv"><span class="k">Webhook recibido</span><span class="v" style="font-family:monospace;font-size:.76rem;">identity.verification_session.verified</span></div>
+          <div class="progress-track" style="margin-top:14px;"><div class="progress-fill" style="width:75%;"></div></div>
+          <div style="font-size:.74rem;color:var(--text-faint);margin-top:6px;">75% · resultado final normalmente en menos de 2 minutos</div>
+        </div>
+        <div class="card">
+          <div class="section-label" style="margin-top:0;">Por qué Stripe Identity</div>
+          <div style="font-size:.84rem;color:var(--text-dim);line-height:1.7;">
+            Verificación documental y biométrica sin construir ni almacenar datos sensibles propios: reduce el alcance RGPD del sistema, ya que el documento y la selfie los procesa Stripe y Presto solo recibe el resultado (verificado / rechazado) por webhook. La misma cuenta que gestiona el cobro y el reparto (Stripe Connect) gestiona la identidad, con un único panel de eventos y sin credenciales de un tercero adicional.
+          </div>
+          <div class="note" style="margin-top:14px;"><i class="fa-solid fa-lock"></i> Ningún usuario puede publicar un artículo ni confirmar una reserva sin este estado en "Validado".</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= PAGO Y DEPÓSITO ================= -->
+    <section class="panel" id="pago">
+      <div class="topbar">
+        <div>
+          <div class="page-title">Pago y depósito</div>
+          <div class="page-sub">Reparto de pagos marketplace vía Stripe Connect</div>
+        </div>
+      </div>
+
+      <div class="grid grid-2">
+        <div class="card">
+          <div class="section-label" style="margin-top:0;">Tarjeta</div>
+          <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:12px;display:flex;align-items:center;gap:10px;font-size:.84rem;">
+            <i class="fa-brands fa-cc-visa" style="font-size:1.4rem;color:var(--blue);"></i> •••• •••• •••• 4242 <span style="margin-left:auto;color:var(--text-faint);">12/28</span>
+          </div>
+          <div class="section-label">Desglose del cargo</div>
+          <div class="kv"><span class="k">Alquiler (4 días)</span><span class="v">112,00 €</span></div>
+          <div class="kv"><span class="k">Comisión Presto</span><span class="v">13,44 €</span></div>
+          <div class="kv"><span class="k" style="font-weight:700;color:var(--text);">Cargo inmediato</span><span class="v" style="color:var(--gold-300);">125,44 €</span></div>
+          <div class="kv"><span class="k">Fianza · preautorización</span><span class="v badge badge-pending">Retenida, no cobrada</span></div>
+          <button class="btn btn-gold" style="width:100%;justify-content:center;margin-top:14px;"><i class="fa-solid fa-lock"></i> Confirmar y pagar 125,44 €</button>
+        </div>
+
+        <div class="card">
+          <div class="section-label" style="margin-top:0;">Cómo se reparte el pago</div>
+          <div style="font-size:.84rem;color:var(--text-dim);line-height:1.7;">
+            Cargo único al inquilino mediante una <b>destination charge</b> de Stripe Connect: el importe entra a la cuenta de Presto y Stripe transfiere automáticamente la parte del anfitrión a su cuenta Connect Express, reteniendo la comisión de la plataforma. La fianza usa <b>captura manual</b>: se autoriza contra la tarjeta pero solo se cobra si hay una incidencia confirmada tras la devolución.
+          </div>
+          <div class="section-label">Eventos webhook de este flujo</div>
+          <table>
+            <tr><td><i class="fa-solid fa-circle-check" style="color:var(--green);"></i> payment_intent.succeeded</td><td style="color:var(--text-faint);">Cargo confirmado</td></tr>
+            <tr><td><i class="fa-solid fa-circle-check" style="color:var(--green);"></i> account.updated</td><td style="color:var(--text-faint);">Cuenta Connect habilitada</td></tr>
+            <tr><td><i class="fa-solid fa-clock" style="color:var(--amber);"></i> charge.dispute.created</td><td style="color:var(--text-faint);">Dispara flujo de incidencias</td></tr>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= MENSAJES ================= -->
+    <section class="panel" id="mensajes">
+      <div class="topbar">
+        <div>
+          <div class="page-title">Mensajes</div>
+          <div class="page-sub">Conversación ligada a la reserva, sin exponer datos de contacto directo</div>
+        </div>
+      </div>
+      <div class="chat-wrap">
+        <div class="chat-list">
+          <div class="chat-item active">
+            <img src="https://images.unsplash.com/photo-1607346256330-dee7af15f7c5?w=100&q=60">
+            <div><div class="cn">Javier R.</div><div class="cm">Perfecto, te la dejo cargada</div></div>
+          </div>
+          <div class="chat-item">
+            <img src="https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=100&q=60">
+            <div><div class="cn">Lucía M.</div><div class="cm">¿Sigue disponible el proyector?</div></div>
+          </div>
+          <div class="chat-item">
+            <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&q=60">
+            <div><div class="cn">Diego P.</div><div class="cm">Devuelto sin incidencias, gracias</div></div>
+          </div>
+        </div>
+        <div class="chat-main">
+          <div class="chat-head">
+            <div style="font-weight:600;font-size:.88rem;">Javier R. · Reserva #4821</div>
+            <span class="badge badge-ok">Reserva confirmada</span>
+          </div>
+          <div class="chat-body">
+            <div class="bubble sys">Reserva confirmada · 18-21 jul</div>
+            <div class="bubble in">Hola, ¿a qué hora puedo recoger la cámara el día 18?</div>
+            <div class="bubble out">Hola Marta, a partir de las 10:00 estoy en casa. Te paso la ubicación exacta el día antes.</div>
+            <div class="bubble in">Genial, muchas gracias</div>
+            <div class="bubble sys">Javier compartió el punto de encuentro</div>
+            <div class="bubble out">Perfecto, te la dejo cargada y con la tarjeta SD formateada</div>
+          </div>
+          <div class="chat-input">
+            <input placeholder="Escribe un mensaje...">
+            <button class="btn btn-gold btn-sm"><i class="fa-solid fa-paper-plane"></i></button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= DISPUTAS Y RGPD ================= -->
+    <section class="panel" id="disputas">
+      <div class="topbar">
+        <div>
+          <div class="page-title">Incidencias, reseñas y RGPD</div>
+          <div class="page-sub">Gestión de disputas, valoraciones y derechos del usuario</div>
+        </div>
+      </div>
+
+      <div class="grid grid-2">
+        <div class="card">
+          <div class="section-label" style="margin-top:0;">Incidencia abierta · Reserva #4790</div>
+          <div class="kv"><span class="k">Motivo</span><span class="v">Devolución con daño menor</span></div>
+          <div class="kv"><span class="k">Estado</span><span class="v badge badge-pending">Esperando evidencia</span></div>
+          <div class="kv"><span class="k">Fianza en juego</span><span class="v">80,00 €</span></div>
+          <div class="thumb-row">
+            <img src="https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=200&q=60">
+            <img src="https://images.unsplash.com/photo-1519183071298-a2962be96f83?w=200&q=60">
+          </div>
+          <div style="display:flex;gap:8px;margin-top:14px;">
+            <button class="btn btn-ghost btn-sm">Rechazar reclamo</button>
+            <button class="btn btn-gold btn-sm">Capturar fianza parcial</button>
+          </div>
+
+          <div class="section-label">Reseñas recientes</div>
+          <div class="kv"><span class="k">Lucía M. sobre Javier R.</span><span class="v"><i class="fa-solid fa-star star"></i> 5.0</span></div>
+          <div class="kv"><span class="k">Diego P. sobre la tienda de campaña</span><span class="v"><i class="fa-solid fa-star star"></i> 4.6</span></div>
+        </div>
+
+        <div class="card">
+          <div class="section-label" style="margin-top:0;">Panel RGPD del usuario</div>
+          <div style="font-size:.84rem;color:var(--text-dim);line-height:1.6;margin-bottom:12px;">
+            Cada usuario puede ejercer sus derechos directamente desde su cuenta, con registro de auditoría de cada solicitud.
+          </div>
+          <div class="kv"><span class="k"><i class="fa-solid fa-file-export"></i> Exportar mis datos</span><span class="v"><button class="btn btn-outline btn-sm">Solicitar</button></span></div>
+          <div class="kv"><span class="k"><i class="fa-solid fa-trash"></i> Solicitar borrado de cuenta</span><span class="v"><button class="btn btn-outline btn-sm">Solicitar</button></span></div>
+          <div class="kv"><span class="k"><i class="fa-solid fa-file-shield"></i> Consentimientos activos</span><span class="v badge badge-ok">3 registrados</span></div>
+          <div class="note" style="margin-top:12px;"><i class="fa-solid fa-circle-info"></i> Los documentos de identidad no se almacenan en la base de datos de Presto: viven en Stripe Identity y solo se referencian por ID de verificación.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= PANEL ANFITRIÓN ================= -->
+    <section class="panel" id="anfitrion">
+      <div class="topbar">
+        <div>
+          <div class="page-title">Panel del anfitrión</div>
+          <div class="page-sub">Javier R. · Cuenta Stripe Connect Express</div>
+        </div>
+        <span class="badge badge-ok"><i class="fa-solid fa-circle-check"></i> Cuenta habilitada para cobros</span>
+      </div>
+
+      <div class="grid grid-4" style="margin-bottom:20px;">
+        <div class="stat"><div class="stat-label">Ingresos este mes</div><div class="stat-value">486 €</div><div class="stat-delta">+18% vs. mes anterior</div></div>
+        <div class="stat"><div class="stat-label">Próximo pago</div><div class="stat-value">98,56 €</div><div class="stat-delta" style="color:var(--text-faint);">21 jul, tras devolución</div></div>
+        <div class="stat"><div class="stat-label">Reservas activas</div><div class="stat-value">3</div><div class="stat-delta" style="color:var(--text-faint);">2 confirmadas, 1 pendiente</div></div>
+        <div class="stat"><div class="stat-label">Valoración media</div><div class="stat-value">4.9 <i class="fa-solid fa-star star" style="font-size:1rem;"></i></div><div class="stat-delta" style="color:var(--text-faint);">32 reseñas</div></div>
+      </div>
+
+      <div class="grid grid-2">
+        <div class="card">
+          <div class="section-label" style="margin-top:0;">Mis artículos publicados</div>
+          <table>
+            <tr><th>Artículo</th><th>Estado</th><th>Precio/día</th></tr>
+            <tr><td>Cámara Sony A7 III</td><td><span class="badge badge-ok">Activo</span></td><td>28 €</td></tr>
+            <tr><td>Trípode Manfrotto</td><td><span class="badge badge-ok">Activo</span></td><td>6 €</td></tr>
+            <tr><td>Micrófono de solapa</td><td><span class="badge badge-pending">En revisión</span></td><td>8 €</td></tr>
+          </table>
+        </div>
+        <div class="card">
+          <div class="section-label" style="margin-top:0;">Estado de la cuenta Connect</div>
+          <div class="kv"><span class="k">Identidad verificada</span><span class="v badge badge-ok">Sí</span></div>
+          <div class="kv"><span class="k">Cuenta bancaria enlazada</span><span class="v badge badge-ok">Sí</span></div>
+          <div class="kv"><span class="k">Requisitos pendientes de Stripe</span><span class="v badge badge-ok">Ninguno</span></div>
+          <div class="note" style="margin-top:12px;"><i class="fa-solid fa-circle-info"></i> Sin esta verificación, la cuenta no puede recibir transferencias: es el mismo estado que bloquea publicar sin KYC aprobado.</div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  function showPanel(id){
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    const nav = document.querySelector('.nav-item[data-panel="'+id+'"]');
+    if(nav) nav.classList.add('active');
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+  document.querySelectorAll('.nav-item[data-panel]').forEach(item=>{
+    item.addEventListener('click', ()=> showPanel(item.getAttribute('data-panel')));
+  });
+</script>
+</body>
+</html>
