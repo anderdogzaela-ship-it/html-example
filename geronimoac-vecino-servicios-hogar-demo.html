@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vecino - App de Servicios del Hogar en San Rafael</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,300;0,400;0,600;0,700;0,800;0,900;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --amber: #D98F2B;
+    --amber-dark: #B3721A;
+    --amber-light: #FBEFDA;
+    --trust: #2F8F6B;
+    --trust-light: #E4F3EC;
+    --cream: #FBF7F0;
+    --ink: #24211B;
+    --ink-mid: #5B564C;
+    --ink-light: #8C877A;
+    --border: #EAE4D6;
+    --white: #FFFFFF;
+    --red: #D95F4E;
+    --shadow: 0 10px 32px rgba(36,33,27,0.10);
+    --shadow-lg: 0 24px 64px rgba(36,33,27,0.18);
+  }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Nunito', sans-serif; color: var(--ink); background: var(--cream); overflow-x: hidden; }
+
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 300;
+    background: rgba(251,247,240,0.92); backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .nav-logo { font-size: 1.15rem; font-weight: 900; color: var(--amber-dark); letter-spacing: -0.5px; display: flex; align-items: center; gap: 9px; }
+  .nav-logo i { color: var(--trust); }
+  .nav-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--ink); color: var(--white);
+    padding: 9px 20px; border-radius: 50px;
+    font-size: 0.8rem; font-weight: 800;
+  }
+
+  .hero {
+    min-height: 100vh; padding: 128px 32px 80px;
+    background: linear-gradient(150deg, #221A0E 0%, #4A3418 55%, #7A5320 100%);
+    position: relative; overflow: hidden;
+    display: flex; align-items: center;
+  }
+  .hero-bg { position: absolute; inset: 0; background: url('https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=1600&q=60') center/cover; opacity: 0.10; }
+  .orb { position: absolute; border-radius: 50%; filter: blur(90px); opacity: .22; z-index: 0; animation: float 14s ease-in-out infinite; }
+  .orb1 { width: 380px; height: 380px; background: var(--amber); top: -120px; right: -80px; }
+  .orb2 { width: 300px; height: 300px; background: var(--trust); bottom: -100px; left: -60px; animation-delay: -6s; }
+  @keyframes float { 0%,100% { transform: translateY(0) translateX(0); } 50% { transform: translateY(-28px) translateX(18px); } }
+  .hero-wrap { max-width: 1180px; margin: 0 auto; width: 100%; position: relative; z-index: 1; display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 60px; align-items: center; }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(217,143,43,0.18); border: 1px solid rgba(217,143,43,0.4);
+    color: #F0C888; padding: 7px 16px; border-radius: 50px;
+    font-size: 0.72rem; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+  .hero h1 { font-size: clamp(2.1rem, 4vw, 3.2rem); font-weight: 900; color: var(--white); line-height: 1.14; letter-spacing: -1.2px; margin-bottom: 20px; }
+  .hero h1 em { color: #F0C888; font-style: normal; }
+  .hero-sub { font-size: 1.02rem; color: rgba(255,255,255,0.78); line-height: 1.7; margin-bottom: 34px; max-width: 480px; }
+  .hero-stats { display: flex; gap: 28px; flex-wrap: wrap; }
+  .hero-stat-num { font-size: 1.7rem; font-weight: 900; color: var(--white); line-height: 1; }
+  .hero-stat-label { font-size: 0.76rem; color: rgba(255,255,255,0.55); font-weight: 700; margin-top: 4px; }
+
+  .phone-stage { display: flex; flex-direction: column; align-items: center; }
+  .phone-frame {
+    width: 300px; height: 620px;
+    background: #1A1410; border-radius: 40px; padding: 12px;
+    box-shadow: 0 40px 90px rgba(0,0,0,0.55), 0 0 0 2px rgba(255,255,255,0.06);
+    position: relative; flex-shrink: 0;
+  }
+  .phone-notch { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); width: 96px; height: 22px; background: #1A1410; border-radius: 0 0 16px 16px; z-index: 50; }
+  .phone-screen { width: 100%; height: 100%; background: var(--cream); border-radius: 28px; overflow: hidden; position: relative; }
+
+  .screen-panel { position: absolute; inset: 0; padding: 40px 16px 16px; opacity: 0; transform: translateX(14px); transition: opacity .35s ease, transform .35s ease; pointer-events: none; overflow-y: auto; }
+  .screen-panel.active { opacity: 1; transform: translateX(0); pointer-events: auto; }
+
+  .tab-switch { display: flex; gap: 8px; margin-top: 22px; flex-wrap: wrap; justify-content: center; max-width: 300px; }
+  .tab-btn {
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.16); color: rgba(255,255,255,0.65);
+    padding: 8px 14px; border-radius: 50px; font-family: 'Nunito', sans-serif; font-size: 0.74rem; font-weight: 800;
+    cursor: pointer; transition: all .2s; display: flex; align-items: center; gap: 6px;
+  }
+  .tab-btn:hover { color: var(--white); border-color: rgba(255,255,255,0.35); }
+  .tab-btn.active { background: var(--amber); border-color: var(--amber); color: var(--white); }
+
+  /* BUSCAR SCREEN */
+  .loc-pill { display: inline-flex; align-items: center; gap: 6px; font-size: 0.68rem; color: var(--ink-light); font-weight: 800; margin-bottom: 10px; }
+  .loc-pill i { color: var(--amber); }
+  .search-title { font-size: 1.1rem; font-weight: 900; color: var(--ink); margin-bottom: 12px; }
+  .search-bar { display: flex; align-items: center; gap: 10px; background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 11px 14px; margin-bottom: 12px; box-shadow: var(--shadow); }
+  .search-bar i { color: var(--ink-light); }
+  .search-bar span { font-size: 0.78rem; color: var(--ink-light); font-weight: 600; }
+  .chip-row { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+  .chip { background: var(--white); border: 1px solid var(--border); border-radius: 50px; padding: 7px 12px; font-size: 0.68rem; font-weight: 800; color: var(--ink-mid); display: flex; align-items: center; gap: 6px; }
+  .chip i { font-size: 0.7rem; }
+  .chip.active { background: var(--amber); border-color: var(--amber); color: var(--white); }
+  .prov-mini { background: var(--white); border-radius: 16px; padding: 12px; margin-bottom: 10px; box-shadow: var(--shadow); display: flex; gap: 10px; align-items: center; }
+  .prov-mini img { width: 46px; height: 46px; border-radius: 12px; object-fit: cover; flex-shrink: 0; }
+  .prov-mini-body { flex: 1; min-width: 0; }
+  .prov-mini-name { font-size: 0.8rem; font-weight: 800; color: var(--ink); display: flex; align-items: center; gap: 5px; }
+  .prov-mini-name i.verif { color: var(--trust); font-size: 0.68rem; }
+  .prov-mini-cat { font-size: 0.66rem; color: var(--ink-light); font-weight: 700; margin-top: 1px; }
+  .prov-mini-meta { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+  .stars-sm { color: var(--amber); font-size: 0.62rem; }
+  .prov-mini-meta span { font-size: 0.62rem; color: var(--ink-light); font-weight: 700; }
+  .avail-pill { font-size: 0.58rem; font-weight: 800; padding: 2px 7px; border-radius: 50px; flex-shrink: 0; }
+  .avail-pill.on { background: var(--trust-light); color: var(--trust); }
+  .avail-pill.off { background: #F1EEE6; color: var(--ink-light); }
+
+  /* PERFIL SCREEN */
+  .prof-header { display: flex; flex-direction: column; align-items: center; margin-bottom: 16px; }
+  .prof-avatar { width: 74px; height: 74px; border-radius: 50%; object-fit: cover; border: 3px solid var(--amber); margin-bottom: 10px; }
+  .prof-name { font-size: 1.02rem; font-weight: 900; color: var(--ink); display: flex; align-items: center; gap: 6px; }
+  .prof-name i { color: var(--trust); font-size: 0.8rem; }
+  .prof-sub { font-size: 0.72rem; color: var(--ink-light); font-weight: 700; margin-top: 2px; }
+  .prof-rating { display: flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 0.72rem; font-weight: 800; color: var(--ink); }
+  .prof-rating .stars-sm { font-size: 0.78rem; }
+  .prof-tags { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 10px; }
+  .prof-tag { font-size: 0.62rem; font-weight: 800; background: var(--amber-light); color: var(--amber-dark); padding: 4px 10px; border-radius: 50px; }
+  .info-card { background: var(--white); border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; box-shadow: var(--shadow); }
+  .info-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; }
+  .info-row i { width: 18px; color: var(--amber-dark); font-size: 0.82rem; text-align: center; }
+  .info-row span { font-size: 0.76rem; color: var(--ink-mid); font-weight: 700; }
+  .info-row b { color: var(--ink); }
+  .contact-cta { margin-top: 4px; background: var(--trust); color: var(--white); border: none; width: 100%; padding: 13px; border-radius: 14px; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.84rem; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .verif-note { font-size: 0.62rem; color: var(--ink-light); text-align: center; margin-top: 8px; line-height: 1.5; }
+
+  /* RESENAS SCREEN */
+  .review-card { background: var(--white); border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; box-shadow: var(--shadow); }
+  .review-top { display: flex; align-items: center; justify-content: space-between; }
+  .review-user { font-size: 0.76rem; font-weight: 800; color: var(--ink); }
+  .review-date { font-size: 0.6rem; color: var(--ink-light); font-weight: 700; }
+  .review-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 0.58rem; font-weight: 800; color: var(--trust); background: var(--trust-light); padding: 2px 8px; border-radius: 50px; margin-top: 5px; }
+  .review-text { font-size: 0.72rem; color: var(--ink-mid); margin-top: 7px; line-height: 1.55; }
+
+  /* FEATURES */
+  .section { padding: 88px 32px; max-width: 1180px; margin: 0 auto; }
+  .section-tag { color: var(--amber-dark); font-size: 0.75rem; font-weight: 900; letter-spacing: 1.4px; text-transform: uppercase; margin-bottom: 10px; }
+  .section-title { font-size: clamp(1.6rem, 3vw, 2.3rem); font-weight: 900; color: var(--ink); letter-spacing: -0.8px; margin-bottom: 44px; max-width: 640px; }
+  .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 22px; }
+  .feature-card { background: var(--white); border: 1px solid var(--border); border-radius: 20px; padding: 26px; opacity: 0; transform: translateY(22px); transition: opacity .6s ease, transform .6s ease; }
+  .feature-card.reveal { opacity: 1; transform: translateY(0); }
+  .feature-icon { width: 46px; height: 46px; border-radius: 13px; background: var(--amber-light); color: var(--amber-dark); display: flex; align-items: center; justify-content: center; font-size: 1.15rem; margin-bottom: 16px; }
+  .feature-card h3 { font-size: 1rem; font-weight: 900; color: var(--ink); margin-bottom: 8px; }
+  .feature-card p { font-size: 0.85rem; color: var(--ink-mid); line-height: 1.6; }
+
+  /* ADMIN PANEL */
+  .admin-section { background: var(--amber-light); }
+  .admin-mock { background: var(--white); border-radius: 20px; box-shadow: var(--shadow-lg); overflow: hidden; opacity: 0; transform: translateY(24px); transition: opacity .6s ease, transform .6s ease; }
+  .admin-mock.reveal { opacity: 1; transform: translateY(0); }
+  .admin-topbar { background: var(--ink); padding: 14px 22px; display: flex; align-items: center; justify-content: space-between; }
+  .admin-topbar-title { color: var(--white); font-weight: 900; font-size: 0.92rem; display: flex; align-items: center; gap: 9px; }
+  .admin-topbar-user { color: rgba(255,255,255,0.7); font-size: 0.76rem; font-weight: 700; }
+  .admin-body { display: grid; grid-template-columns: 190px 1fr; min-height: 320px; }
+  .admin-side { background: var(--amber-light); padding: 18px 12px; border-right: 1px solid var(--border); }
+  .admin-side-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; font-size: 0.78rem; font-weight: 800; color: var(--ink-mid); margin-bottom: 4px; }
+  .admin-side-item.active { background: var(--amber-dark); color: var(--white); }
+  .admin-main { padding: 22px; }
+  .admin-main h4 { font-size: 0.95rem; font-weight: 900; color: var(--ink); margin-bottom: 14px; }
+  .admin-table { width: 100%; border-collapse: collapse; }
+  .admin-table th { text-align: left; font-size: 0.66rem; color: var(--ink-light); font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  .admin-table td { padding: 10px; font-size: 0.78rem; color: var(--ink); border-bottom: 1px solid var(--border); }
+  .admin-table img { width: 32px; height: 32px; border-radius: 8px; object-fit: cover; vertical-align: middle; margin-right: 8px; }
+  .status-pill { padding: 3px 10px; border-radius: 50px; font-size: 0.65rem; font-weight: 800; }
+  .status-pill.pend { background: #F3E8DC; color: var(--amber-dark); }
+  .status-pill.ok { background: var(--trust-light); color: var(--trust); }
+  .status-pill.stale { background: #FBEAE7; color: var(--red); }
+  .admin-btn { border: none; background: var(--ink); color: var(--white); padding: 5px 11px; border-radius: 8px; font-size: 0.66rem; font-weight: 800; font-family: 'Nunito', sans-serif; }
+
+  /* WHY IT MATTERS */
+  .why-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 18px; margin-top: 44px; }
+  .why-card { text-align: center; padding: 24px 16px; }
+  .why-num { font-size: 2rem; font-weight: 900; color: var(--amber-dark); margin-bottom: 6px; }
+  .why-label { font-size: 0.8rem; color: var(--ink-mid); font-weight: 700; }
+
+  footer { background: #221A0E; color: rgba(255,255,255,0.6); text-align: center; padding: 40px 32px; font-size: 0.8rem; }
+  footer strong { color: var(--white); }
+
+  @media (max-width: 940px) {
+    .hero-wrap { grid-template-columns: 1fr; text-align: center; }
+    .hero-sub { margin: 0 auto 34px; }
+    .hero-stats { justify-content: center; }
+    .phone-stage { margin: 0 auto; }
+    .admin-body { grid-template-columns: 1fr; }
+    .admin-side { display: flex; overflow-x: auto; border-right: none; border-bottom: 1px solid var(--border); }
+  }
+  @media (max-width: 480px) {
+    .phone-frame { width: 264px; height: 560px; }
+    .section { padding: 64px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo"><i class="fa-solid fa-house-chimney-window"></i> Vecino</div>
+  <div class="nav-badge"><i class="fa-solid fa-mobile-screen-button"></i> Mockup interactivo</div>
+</nav>
+
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="hero-wrap">
+    <div>
+      <div class="hero-badge"><i class="fa-solid fa-circle-check"></i> Vista previa del producto</div>
+      <h1>Conecta San Rafael con sus <em>prestadores de confianza</em></h1>
+      <p class="hero-sub">Busqueda por servicio y zona, perfiles verificados, resenas ligadas a contactos reales y panel de administracion para aprobar cada prestador antes de publicarlo. Toca los botones bajo el telefono para recorrer cada pantalla.</p>
+      <div class="hero-stats">
+        <div class="hero-stat"><div class="hero-stat-num">6</div><div class="hero-stat-label">Categorias de servicio</div></div>
+        <div class="hero-stat"><div class="hero-stat-num">1</div><div class="hero-stat-label">App web instalable, mobile-first</div></div>
+        <div class="hero-stat"><div class="hero-stat-num">4</div><div class="hero-stat-label">Semanas a Fase 1</div></div>
+      </div>
+    </div>
+    <div class="phone-stage">
+      <div class="phone-frame">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+
+          <div class="screen-panel active" data-panel="buscar">
+            <div class="loc-pill"><i class="fa-solid fa-location-dot"></i> San Rafael, Mendoza</div>
+            <div class="search-title">Encontra un prestador</div>
+            <div class="search-bar"><i class="fa-solid fa-magnifying-glass"></i><span>Plomero, electricista, jardinero...</span></div>
+            <div class="chip-row">
+              <div class="chip active"><i class="fa-solid fa-wrench"></i>Plomeria</div>
+              <div class="chip"><i class="fa-solid fa-bolt"></i>Electricidad</div>
+              <div class="chip"><i class="fa-solid fa-hammer"></i>Herreria</div>
+              <div class="chip"><i class="fa-solid fa-child-reaching"></i>Ninieras</div>
+            </div>
+            <div class="prov-mini">
+              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&q=60" alt="">
+              <div class="prov-mini-body">
+                <div class="prov-mini-name">Ruben Aguero <i class="fa-solid fa-circle-check verif"></i></div>
+                <div class="prov-mini-cat">Plomeria - Barrio Estacion</div>
+                <div class="prov-mini-meta"><span class="stars-sm">★★★★★</span><span>4.9 (37)</span></div>
+              </div>
+              <div class="avail-pill on">Disponible</div>
+            </div>
+            <div class="prov-mini">
+              <img src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=100&q=60" alt="">
+              <div class="prov-mini-body">
+                <div class="prov-mini-name">Marcelo Diaz <i class="fa-solid fa-circle-check verif"></i></div>
+                <div class="prov-mini-cat">Plomeria - Cuadro Nacional</div>
+                <div class="prov-mini-meta"><span class="stars-sm">★★★★☆</span><span>4.6 (19)</span></div>
+              </div>
+              <div class="avail-pill off">Sin confirmar</div>
+            </div>
+            <div class="prov-mini">
+              <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&q=60" alt="">
+              <div class="prov-mini-body">
+                <div class="prov-mini-name">Silvina Lopez <i class="fa-solid fa-circle-check verif"></i></div>
+                <div class="prov-mini-cat">Plomeria - Villa 25 de Mayo</div>
+                <div class="prov-mini-meta"><span class="stars-sm">★★★★★</span><span>5.0 (12)</span></div>
+              </div>
+              <div class="avail-pill on">Disponible</div>
+            </div>
+          </div>
+
+          <div class="screen-panel" data-panel="perfil">
+            <div class="prof-header">
+              <img class="prof-avatar" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=70" alt="">
+              <div class="prof-name">Ruben Aguero <i class="fa-solid fa-circle-check"></i></div>
+              <div class="prof-sub">Plomeria - Barrio Estacion</div>
+              <div class="prof-rating"><span class="stars-sm">★★★★★</span> 4.9 - 37 resenas</div>
+              <div class="prof-tags">
+                <div class="prof-tag">Destapaciones</div>
+                <div class="prof-tag">Instalaciones</div>
+                <div class="prof-tag">Urgencias</div>
+              </div>
+            </div>
+            <div class="info-card">
+              <div class="info-row"><i class="fa-solid fa-tag"></i><span>Tarifa desde <b>$8.000 visita</b></span></div>
+              <div class="info-row"><i class="fa-solid fa-map"></i><span>Cobertura: <b>Ciudad y Cuadro Nacional</b></span></div>
+              <div class="info-row"><i class="fa-solid fa-clock"></i><span>Disponibilidad: <b>Confirmada hoy</b></span></div>
+            </div>
+            <button class="contact-cta"><i class="fa-brands fa-whatsapp"></i> Contactar por WhatsApp</button>
+            <div class="verif-note">Las resenas solo se habilitan despues de un contacto real registrado en la app.</div>
+          </div>
+
+          <div class="screen-panel" data-panel="resenas">
+            <div class="search-title">Resenas de Ruben</div>
+            <div class="review-card">
+              <div class="review-top"><span class="review-user">Marisa T.</span><span class="review-date">hace 3 dias</span></div>
+              <span class="stars-sm">★★★★★</span>
+              <div class="review-badge"><i class="fa-solid fa-circle-check"></i> Contacto verificado</div>
+              <div class="review-text">Vino el mismo dia por una perdida en el bano. Puntual y dejo todo limpio.</div>
+            </div>
+            <div class="review-card">
+              <div class="review-top"><span class="review-user">Federico G.</span><span class="review-date">hace 1 semana</span></div>
+              <span class="stars-sm">★★★★★</span>
+              <div class="review-badge"><i class="fa-solid fa-circle-check"></i> Contacto verificado</div>
+              <div class="review-text">Cambio la instalacion de la cocina completa. Precio justo y avisado antes.</div>
+            </div>
+            <div class="review-card">
+              <div class="review-top"><span class="review-user">Cecilia R.</span><span class="review-date">hace 2 semanas</span></div>
+              <span class="stars-sm">★★★★☆</span>
+              <div class="review-badge"><i class="fa-solid fa-circle-check"></i> Contacto verificado</div>
+              <div class="review-text">Buen trabajo, tardo un poco mas de lo estimado pero explico el motivo.</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      <div class="tab-switch">
+        <button class="tab-btn active" data-tab="buscar"><i class="fa-solid fa-magnifying-glass"></i> Buscar</button>
+        <button class="tab-btn" data-tab="perfil"><i class="fa-solid fa-user"></i> Perfil</button>
+        <button class="tab-btn" data-tab="resenas"><i class="fa-solid fa-star"></i> Resenas</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="features">
+  <div class="section-tag">Como funciona</div>
+  <h2 class="section-title">Una plataforma pensada para que un vecino confie en quien va a entrar a su casa</h2>
+  <div class="feature-grid">
+    <div class="feature-card"><div class="feature-icon"><i class="fa-solid fa-magnifying-glass"></i></div><h3>Busqueda y filtro avanzado</h3><p>Por categoria, zona dentro de San Rafael, calificacion minima y disponibilidad, para llegar al prestador correcto en segundos.</p></div>
+    <div class="feature-card"><div class="feature-icon"><i class="fa-solid fa-id-card"></i></div><h3>Perfiles completos</h3><p>Descripcion de servicios, tarifas de referencia, zona de cobertura y datos de contacto directo, cargados por cada prestador.</p></div>
+    <div class="feature-card"><div class="feature-icon"><i class="fa-solid fa-shield-halved"></i></div><h3>Resenas ligadas a contacto real</h3><p>Solo puede calificar quien registro un contacto real con ese prestador en la app. Evita resenas falsas o compradas.</p></div>
+    <div class="feature-card"><div class="feature-icon"><i class="fa-solid fa-arrow-trend-up"></i></div><h3>Ranking por frescura</h3><p>Si un prestador no confirma su disponibilidad cada cierto tiempo, baja en el orden de busqueda. El directorio no se llena de perfiles abandonados.</p></div>
+    <div class="feature-card"><div class="feature-icon"><i class="fa-solid fa-user-shield"></i></div><h3>Aprobacion manual de prestadores</h3><p>Cada perfil nuevo pasa por el panel de administracion antes de quedar visible para los vecinos.</p></div>
+    <div class="feature-card"><div class="feature-icon"><i class="fa-solid fa-mobile-screen"></i></div><h3>Mobile-first, instalable como app</h3><p>Funciona igual que una app nativa desde el navegador, sin esperar la aprobacion de las tiendas para validar el negocio.</p></div>
+  </div>
+</section>
+
+<section class="section admin-section">
+  <div class="section-tag">Panel de administracion</div>
+  <h2 class="section-title">Control total sobre quien entra al directorio</h2>
+  <div class="admin-mock">
+    <div class="admin-topbar">
+      <div class="admin-topbar-title"><i class="fa-solid fa-house-chimney-window"></i> Vecino Admin</div>
+      <div class="admin-topbar-user">Gerencia San Rafael</div>
+    </div>
+    <div class="admin-body">
+      <div class="admin-side">
+        <div class="admin-side-item active"><i class="fa-solid fa-users"></i> Prestadores</div>
+        <div class="admin-side-item"><i class="fa-solid fa-layer-group"></i> Categorias</div>
+        <div class="admin-side-item"><i class="fa-solid fa-flag"></i> Reportes</div>
+        <div class="admin-side-item"><i class="fa-solid fa-chart-simple"></i> Metricas</div>
+      </div>
+      <div class="admin-main">
+        <h4>Prestadores nuevos y por revisar</h4>
+        <table class="admin-table">
+          <tr><th>Prestador</th><th>Categoria</th><th>Zona</th><th>Estado</th><th></th></tr>
+          <tr><td><img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&q=60">Jorge Peralta</td><td>Electricidad</td><td>Ciudad</td><td><span class="status-pill pend">Pendiente</span></td><td><button class="admin-btn">Revisar</button></td></tr>
+          <tr><td><img src="https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=80&q=60">Ana Fernandez</td><td>Ninieras</td><td>Cuadro Benegas</td><td><span class="status-pill ok">Aprobado</span></td><td><button class="admin-btn">Ver</button></td></tr>
+          <tr><td><img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&q=60">Hector Molina</td><td>Herreria</td><td>Villa 25 de Mayo</td><td><span class="status-pill stale">Sin confirmar 21 dias</span></td><td><button class="admin-btn">Contactar</button></td></tr>
+          <tr><td><img src="https://images.unsplash.com/photo-1607990281513-2c110a25bd8c?w=80&q=60">Ines Correa</td><td>Jardineria</td><td>Cuadro Nacional</td><td><span class="status-pill pend">Pendiente</span></td><td><button class="admin-btn">Revisar</button></td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-tag">Por que importa</div>
+  <h2 class="section-title">Los directorios de servicios locales suelen fallar por dos motivos</h2>
+  <div class="why-grid">
+    <div class="why-card"><div class="why-num">1</div><div class="why-label">Perfiles que quedan desactualizados a las pocas semanas y nadie los saca del listado</div></div>
+    <div class="why-card"><div class="why-num">2</div><div class="why-label">Resenas sin control que cualquiera puede dejar sin haber contratado nunca al prestador</div></div>
+    <div class="why-card"><div class="why-num">3</div><div class="why-label">Vecino resuelve ambos con frescura de disponibilidad y resenas atadas a contacto real</div></div>
+  </div>
+</section>
+
+<footer>
+  Mockup interactivo construido para evaluar el alcance del proyecto antes de cualquier compromiso. <strong>Vecino</strong> - San Rafael.
+</footer>
+
+<script>
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.screen-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelector('.screen-panel[data-panel="' + btn.dataset.tab + '"]').classList.add('active');
+    });
+  });
+  document.querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+    });
+  });
+  const revealEls = document.querySelectorAll('.feature-card, .admin-mock');
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((entry, i) => {
+      if (entry.isIntersecting) {
+        setTimeout(() => entry.target.classList.add('reveal'), i * 55);
+        io.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15 });
+  revealEls.forEach(el => io.observe(el));
+</script>
+
+</body>
+</html>
