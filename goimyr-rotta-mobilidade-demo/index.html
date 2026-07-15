@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rotta · Redesign App Multi-Serviço de Mobilidade</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+:root{
+  --bg:#0b0c10; --surface:#13151c; --surface-2:#1b1e28; --surface-3:#232733;
+  --border:rgba(255,255,255,0.08); --border-soft:rgba(255,255,255,0.05);
+  --text:#f6f4ef; --text-soft:#b8b6c4; --text-muted:#7d7c8c;
+  --g50:#fffbeb; --g400:#fbbf24; --g500:#f59e0b; --g600:#d97706; --g700:#b45309;
+  --teal:#10b981; --teal-2:#059669;
+  --blue:#6366f1; --blue-2:#4f46e5;
+  --red:#f43f5e; --red-2:#e11d48;
+  --radius:18px; --radius-sm:12px; --radius-lg:28px;
+  --shadow: 0 20px 60px rgba(0,0,0,0.45);
+  --ease: cubic-bezier(.34,1.56,.64,1);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{
+  font-family:'Lexend',sans-serif; background:var(--bg); color:var(--text);
+  line-height:1.6; -webkit-font-smoothing:antialiased; overflow-x:hidden;
+}
+img{max-width:100%; display:block;}
+a{color:inherit; text-decoration:none;}
+.container{max-width:1240px; margin:0 auto; padding:0 32px;}
+section{position:relative;}
+.eyebrow{
+  display:inline-flex; align-items:center; gap:8px; font-size:12px; font-weight:600;
+  letter-spacing:.08em; text-transform:uppercase; color:var(--g400);
+  background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.25);
+  padding:6px 14px; border-radius:100px; margin-bottom:18px;
+}
+h1,h2,h3{font-weight:700; letter-spacing:-.01em;}
+.section-title{font-size:clamp(28px,4vw,42px); font-weight:700; margin-bottom:14px;}
+.section-sub{font-size:16px; color:var(--text-soft); max-width:620px; margin-bottom:48px;}
+.center{text-align:center; margin-left:auto; margin-right:auto;}
+.btn{
+  display:inline-flex; align-items:center; gap:10px; padding:14px 26px; border-radius:100px;
+  font-weight:600; font-size:15px; cursor:pointer; border:none; transition:.25s var(--ease);
+}
+.btn-primary{background:linear-gradient(135deg,var(--g400),var(--g600)); color:#1a1206; box-shadow:0 8px 24px rgba(245,158,11,0.35);}
+.btn-primary:hover{transform:translateY(-2px) scale(1.02); box-shadow:0 12px 32px rgba(245,158,11,0.45);}
+.btn-ghost{background:rgba(255,255,255,0.06); color:var(--text); border:1px solid var(--border);}
+.btn-ghost:hover{background:rgba(255,255,255,0.1); transform:translateY(-2px);}
+
+/* NAV */
+nav{
+  position:sticky; top:0; z-index:100; padding:18px 0;
+  background:rgba(11,12,16,0.75); backdrop-filter:blur(18px); border-bottom:1px solid var(--border-soft);
+}
+.nav-inner{display:flex; align-items:center; justify-content:space-between;}
+.logo{display:flex; align-items:center; gap:10px; font-size:20px; font-weight:800;}
+.logo-mark{
+  width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center;
+  background:linear-gradient(135deg,var(--g400),var(--g700)); box-shadow:0 0 20px rgba(245,158,11,0.4);
+  font-size:16px; color:#1a1206;
+}
+.nav-links{display:flex; gap:32px; font-size:14px; color:var(--text-soft); font-weight:500;}
+.nav-links a:hover{color:var(--text);}
+.nav-actions{display:flex; align-items:center; gap:16px;}
+.hamburger{display:none; font-size:20px; cursor:pointer; background:none; border:none; color:var(--text);}
+.mobile-drawer{
+  position:fixed; inset:0 0 0 auto; width:78%; max-width:320px; background:var(--surface);
+  border-left:1px solid var(--border); z-index:200; padding:28px; transform:translateX(100%);
+  transition:transform .35s var(--ease); display:flex; flex-direction:column; gap:22px;
+}
+.mobile-drawer.open{transform:translateX(0);}
+.drawer-overlay{position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:190; opacity:0; pointer-events:none; transition:opacity .3s;}
+.drawer-overlay.open{opacity:1; pointer-events:auto;}
+
+/* HERO */
+.hero{padding:90px 0 60px; position:relative; overflow:hidden;}
+.orb{position:absolute; border-radius:50%; filter:blur(70px); opacity:.35; animation:float 9s ease-in-out infinite;}
+.orb1{width:420px; height:420px; background:var(--g500); top:-160px; right:-120px;}
+.orb2{width:320px; height:320px; background:var(--blue); bottom:-140px; left:-100px; animation-delay:2s;}
+@keyframes float{0%,100%{transform:translateY(0) translateX(0);} 50%{transform:translateY(-30px) translateX(15px);}}
+.hero-grid{display:grid; grid-template-columns:1.05fr .95fr; gap:64px; align-items:center;}
+.hero h1{font-size:clamp(34px,5vw,54px); line-height:1.08; margin-bottom:22px;}
+.hero h1 span{background:linear-gradient(135deg,var(--g400),var(--g600)); -webkit-background-clip:text; background-clip:text; color:transparent;}
+.hero p{font-size:17px; color:var(--text-soft); max-width:520px; margin-bottom:32px;}
+.hero-actions{display:flex; gap:14px; margin-bottom:44px; flex-wrap:wrap;}
+.stat-row{display:flex; gap:36px; flex-wrap:wrap;}
+.stat{display:flex; flex-direction:column;}
+.stat b{font-size:28px; font-weight:800; color:var(--g400);}
+.stat span{font-size:12px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.06em;}
+.stat-note{font-size:11px; color:var(--text-muted); margin-top:14px;}
+
+/* PHONE */
+.phone{
+  width:270px; border-radius:38px; border:9px solid #06070a; background:#000;
+  box-shadow:var(--shadow), 0 0 0 1px rgba(255,255,255,0.06); position:relative; overflow:hidden;
+}
+.phone::before{
+  content:''; position:absolute; top:0; left:50%; transform:translateX(-50%); width:110px; height:22px;
+  background:#06070a; border-radius:0 0 16px 16px; z-index:5;
+}
+.phone-screen{
+  background:linear-gradient(180deg,#171a22,#0f1117); min-height:540px; padding:36px 16px 18px;
+  display:flex; flex-direction:column; gap:12px; font-size:12px;
+}
+.phone-status{display:flex; justify-content:space-between; font-size:10px; color:var(--text-muted); padding:0 4px 4px;}
+.hero-phones{position:relative; display:flex; justify-content:center; align-items:center; min-height:600px;}
+.phone-back{position:absolute; left:6%; top:60px; transform:rotate(-7deg) scale(.86); opacity:.85; z-index:1;}
+.phone-front{position:relative; z-index:2; animation:floatSlow 6s ease-in-out infinite;}
+@keyframes floatSlow{0%,100%{transform:translateY(0);} 50%{transform:translateY(-14px);}}
+
+.app-header{display:flex; align-items:center; justify-content:space-between; padding:0 2px;}
+.app-greet b{font-size:15px; display:block;}
+.app-greet span{color:var(--text-muted); font-size:11px;}
+.avatar{width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,var(--g400),var(--g700)); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:#1a1206;}
+.service-tiles{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:6px;}
+.tile{
+  background:var(--surface-2); border:1px solid var(--border); border-radius:14px; padding:14px 12px;
+  display:flex; flex-direction:column; gap:10px; transition:.25s var(--ease); cursor:pointer;
+}
+.tile:hover{transform:translateY(-3px); border-color:rgba(255,255,255,0.18);}
+.tile i{font-size:16px;}
+.tile b{font-size:12px;}
+.tile span{font-size:9.5px; color:var(--text-muted);}
+.tile.gold i{color:var(--g400);} .tile.teal i{color:var(--teal);} .tile.blue i{color:var(--blue);} .tile.red i{color:var(--red);}
+.map-box{
+  flex:1; min-height:210px; border-radius:16px; position:relative; overflow:hidden;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(245,158,11,0.18), transparent 55%),
+    radial-gradient(circle at 70% 70%, rgba(99,102,241,0.18), transparent 55%),
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.035) 0 1px, transparent 1px 26px),
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.035) 0 1px, transparent 1px 26px),
+    #14161e;
+}
+.route-line{position:absolute; width:70%; height:2px; background:linear-gradient(90deg,var(--g400),var(--teal)); top:55%; left:15%; transform:rotate(-18deg); border-radius:2px;}
+.route-line::before,.route-line::after{content:''; position:absolute; width:9px; height:9px; border-radius:50%; top:-3.5px;}
+.route-line::before{background:var(--g400); left:-4px; box-shadow:0 0 10px var(--g400);}
+.route-line::after{background:var(--teal); right:-4px; box-shadow:0 0 10px var(--teal);}
+.pulse-pin{position:absolute; width:14px; height:14px; border-radius:50%; background:var(--red); top:38%; right:26%; box-shadow:0 0 0 rgba(244,63,94,.6);}
+.pulse-pin::after{content:''; position:absolute; inset:-8px; border:2px solid var(--red); border-radius:50%; animation:pulse 1.8s ease-out infinite;}
+@keyframes pulse{0%{transform:scale(.5); opacity:1;} 100%{transform:scale(1.8); opacity:0;}}
+.driver-card{
+  display:flex; align-items:center; gap:10px; background:var(--surface-2); border:1px solid var(--border);
+  border-radius:14px; padding:10px 12px;
+}
+.driver-card img{width:36px; height:36px; border-radius:50%; object-fit:cover;}
+.driver-meta b{font-size:12px; display:block;}
+.driver-meta span{font-size:10px; color:var(--text-muted);}
+.eta-badge{margin-left:auto; background:rgba(16,185,129,0.15); color:var(--teal); font-size:10px; font-weight:700; padding:5px 9px; border-radius:100px;}
+.cta-slab{
+  margin-top:auto; background:linear-gradient(135deg,var(--g400),var(--g600)); color:#1a1206; text-align:center;
+  font-weight:700; font-size:12.5px; padding:13px; border-radius:14px;
+}
+
+/* SECTIONS GENERIC */
+.section-pad{padding:100px 0;}
+.divider-border{border-top:1px solid var(--border-soft);}
+
+/* BEFORE/AFTER */
+.compare-grid{display:grid; grid-template-columns:1fr 1fr; gap:26px;}
+.compare-card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); padding:30px;}
+.compare-card.before{border-color:rgba(244,63,94,0.25);}
+.compare-card.after{border-color:rgba(16,185,129,0.3); background:linear-gradient(180deg, rgba(16,185,129,0.06), var(--surface));}
+.compare-head{display:flex; align-items:center; gap:10px; margin-bottom:18px; font-weight:700; font-size:15px;}
+.compare-head i{font-size:14px;}
+.compare-card.before .compare-head{color:var(--red);}
+.compare-card.after .compare-head{color:var(--teal);}
+.compare-list{list-style:none; display:flex; flex-direction:column; gap:12px;}
+.compare-list li{display:flex; gap:10px; font-size:14px; color:var(--text-soft); align-items:flex-start;}
+.compare-list i{margin-top:3px; font-size:12px; flex-shrink:0;}
+.compare-card.before .compare-list i{color:var(--red);}
+.compare-card.after .compare-list i{color:var(--teal);}
+
+/* SERVICE MODULES */
+.service-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:20px;}
+.service-card{
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:26px 22px;
+  transition:.3s var(--ease); position:relative; overflow:hidden;
+}
+.service-card:hover{transform:translateY(-6px); box-shadow:var(--shadow);}
+.service-icon{
+  width:48px; height:48px; border-radius:14px; display:flex; align-items:center; justify-content:center;
+  font-size:19px; margin-bottom:18px;
+}
+.service-card.gold .service-icon{background:rgba(245,158,11,0.15); color:var(--g400);}
+.service-card.teal .service-icon{background:rgba(16,185,129,0.15); color:var(--teal);}
+.service-card.blue .service-icon{background:rgba(99,102,241,0.15); color:var(--blue);}
+.service-card.red .service-icon{background:rgba(244,63,94,0.15); color:var(--red);}
+.service-card h3{font-size:16px; margin-bottom:8px;}
+.service-card p{font-size:13px; color:var(--text-muted); margin-bottom:16px;}
+.service-feats{list-style:none; display:flex; flex-direction:column; gap:7px;}
+.service-feats li{font-size:11.5px; color:var(--text-soft); display:flex; gap:7px; align-items:center;}
+.service-feats i{font-size:9px; color:var(--text-muted);}
+
+/* FLOW TABS */
+.flow-wrap{display:grid; grid-template-columns:.85fr 1.15fr; gap:56px; align-items:center;}
+.flow-tabs{display:flex; flex-direction:column; gap:10px;}
+.flow-tab{
+  display:flex; align-items:center; gap:14px; padding:16px 18px; border-radius:16px; cursor:pointer;
+  border:1px solid var(--border); background:var(--surface); transition:.25s var(--ease);
+}
+.flow-tab:hover{border-color:rgba(255,255,255,0.2);}
+.flow-tab.active{background:var(--surface-2); border-color:var(--g500); box-shadow:0 0 0 1px rgba(245,158,11,0.25);}
+.flow-tab i{font-size:16px; width:22px; text-align:center;}
+.flow-tab b{font-size:14px; display:block;}
+.flow-tab span{font-size:11.5px; color:var(--text-muted);}
+.flow-phone-stage{display:flex; justify-content:center;}
+.flow-screen{display:none;}
+.flow-screen.active{display:block; animation:fadeIn .4s ease;}
+@keyframes fadeIn{from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);}}
+
+/* PARTNER APP */
+.partner-wrap{display:grid; grid-template-columns:1fr .9fr; gap:56px; align-items:center;}
+.toggle-row{display:flex; align-items:center; justify-content:space-between; background:var(--surface-2); border:1px solid var(--border); border-radius:12px; padding:10px 12px; margin-bottom:8px;}
+.toggle-row .lbl{display:flex; align-items:center; gap:8px; font-size:12px;}
+.switch{width:34px; height:19px; border-radius:100px; background:var(--surface-3); position:relative; cursor:pointer; transition:.2s;}
+.switch.on{background:var(--teal);}
+.switch::after{content:''; position:absolute; width:15px; height:15px; border-radius:50%; background:#fff; top:2px; left:2px; transition:.25s var(--ease);}
+.switch.on::after{left:17px;}
+.earnings-slab{background:linear-gradient(135deg,var(--g500),var(--g700)); border-radius:14px; padding:14px; color:#1a1206; margin-top:10px;}
+.earnings-slab b{font-size:20px; display:block;}
+.earnings-slab span{font-size:10px; opacity:.85;}
+.chip-row{display:flex; gap:6px; margin-top:10px; flex-wrap:wrap;}
+.chip{font-size:9.5px; padding:4px 8px; border-radius:100px; background:rgba(255,255,255,0.08); color:var(--text-soft);}
+.feature-list{list-style:none; display:flex; flex-direction:column; gap:18px; margin-top:28px;}
+.feature-list li{display:flex; gap:16px;}
+.feature-num{width:34px; height:34px; border-radius:10px; background:var(--surface-2); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:var(--g400); flex-shrink:0;}
+.feature-list b{font-size:14.5px; display:block; margin-bottom:3px;}
+.feature-list p{font-size:13px; color:var(--text-muted);}
+
+/* DASHBOARD (browser frame) */
+.browser-frame{border-radius:16px; overflow:hidden; border:1px solid var(--border); box-shadow:var(--shadow); background:var(--surface);}
+.browser-bar{display:flex; align-items:center; gap:8px; padding:12px 16px; background:var(--surface-2); border-bottom:1px solid var(--border);}
+.browser-dot{width:10px; height:10px; border-radius:50%;}
+.browser-bar .url{margin-left:14px; font-size:11px; color:var(--text-muted); background:var(--surface-3); padding:5px 14px; border-radius:8px;}
+.dash-body{padding:26px; background:radial-gradient(circle at 15% 0%, rgba(245,158,11,0.06), transparent 45%), #10121a;}
+.dash-kpis{display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:22px;}
+.kpi-card{background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:18px;}
+.kpi-top{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;}
+.kpi-top i{font-size:14px;}
+.kpi-card b{font-size:24px; display:block;}
+.kpi-card span{font-size:11px; color:var(--text-muted);}
+.trend-up{color:var(--teal); font-size:10.5px; font-weight:700;}
+.dash-grid{display:grid; grid-template-columns:1.3fr .9fr; gap:18px;}
+.dash-panel{background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:20px;}
+.dash-panel-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; font-size:13px; font-weight:700;}
+.legend{display:flex; gap:12px; font-size:10px; color:var(--text-muted);}
+.legend span{display:flex; align-items:center; gap:5px;}
+.dot{width:7px; height:7px; border-radius:50%;}
+.mini-map{height:230px; border-radius:12px; position:relative; overflow:hidden;
+  background: repeating-linear-gradient(0deg, rgba(255,255,255,0.035) 0 1px, transparent 1px 24px),
+              repeating-linear-gradient(90deg, rgba(255,255,255,0.035) 0 1px, transparent 1px 24px), #171a22;}
+.map-dot{position:absolute; width:10px; height:10px; border-radius:50%; box-shadow:0 0 10px currentColor;}
+.bar-chart{display:flex; align-items:flex-end; gap:14px; height:150px; margin-top:10px;}
+.bar-col{flex:1; display:flex; flex-direction:column; align-items:center; gap:8px; justify-content:flex-end; height:100%;}
+.bar{width:100%; border-radius:8px 8px 0 0; position:relative; overflow:hidden; transition:height 1.2s var(--ease);}
+.bar::after{content:''; position:absolute; inset:0; background:linear-gradient(180deg, rgba(255,255,255,0.25), transparent 40%);}
+.bar-col span{font-size:10px; color:var(--text-muted);}
+.activity-feed{display:flex; flex-direction:column; gap:12px;}
+.act-item{display:flex; gap:10px; align-items:flex-start; font-size:12px;}
+.act-item i{margin-top:2px; font-size:11px;}
+.act-item b{font-weight:600;}
+.act-item span{color:var(--text-muted); display:block; font-size:10.5px;}
+
+/* ARCHITECTURE */
+.arch-wrap{display:flex; flex-direction:column; align-items:center; gap:0; position:relative; padding:40px 0;}
+.arch-core{
+  width:150px; height:150px; border-radius:50%; background:linear-gradient(135deg,var(--surface-2),var(--surface-3));
+  border:2px solid var(--g500); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
+  box-shadow:0 0 40px rgba(245,158,11,0.25); position:relative; z-index:2;
+}
+.arch-core i{font-size:26px; color:var(--g400);}
+.arch-core b{font-size:12px; text-align:center; padding:0 10px;}
+.arch-modules{display:grid; grid-template-columns:repeat(4,1fr); gap:20px; max-width:900px; margin-top:36px; position:relative; z-index:2;}
+.arch-node{background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:16px; text-align:center;}
+.arch-node i{font-size:18px; margin-bottom:8px; display:block;}
+.arch-node b{font-size:12px; display:block;}
+.arch-node span{font-size:10px; color:var(--text-muted);}
+.arch-line{position:absolute; top:190px; left:50%; width:2px; height:36px; background:linear-gradient(180deg,var(--g500),transparent); transform:translateX(-50%);}
+
+/* CTA / FOOTER */
+.cta-section{
+  background:linear-gradient(135deg, rgba(245,158,11,0.12), rgba(99,102,241,0.08));
+  border:1px solid var(--border); border-radius:var(--radius-lg); padding:60px; text-align:center; margin:0 auto;
+}
+.cta-section h2{font-size:clamp(24px,3.4vw,36px); margin-bottom:14px;}
+.cta-section p{color:var(--text-soft); max-width:520px; margin:0 auto 30px;}
+footer{padding:50px 0 30px; text-align:center; color:var(--text-muted); font-size:12px; border-top:1px solid var(--border-soft); margin-top:60px;}
+footer .fnote{max-width:560px; margin:14px auto 0; font-size:11px; opacity:.75;}
+
+/* REVEAL */
+.reveal{opacity:0; transform:translateY(24px); transition:opacity .7s ease, transform .7s ease;}
+.reveal.in{opacity:1; transform:translateY(0);}
+
+@media (max-width:980px){
+  .nav-links{display:none;}
+  .hamburger{display:block;}
+  .hero-grid, .flow-wrap, .partner-wrap, .compare-grid{grid-template-columns:1fr;}
+  .service-grid{grid-template-columns:1fr 1fr;}
+  .dash-kpis{grid-template-columns:1fr 1fr;}
+  .dash-grid{grid-template-columns:1fr;}
+  .arch-modules{grid-template-columns:1fr 1fr;}
+  .hero-phones{min-height:460px;}
+  .phone-back{display:none;}
+  .cta-section{padding:40px 24px;}
+}
+@media (max-width:560px){
+  .service-grid{grid-template-columns:1fr;}
+  .dash-kpis{grid-template-columns:1fr 1fr;}
+  .stat-row{gap:22px;}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="container nav-inner">
+    <div class="logo"><div class="logo-mark"><i class="fa-solid fa-route"></i></div>Rotta</div>
+    <div class="nav-links">
+      <a href="#servicos">Servicos</a>
+      <a href="#fluxo">Fluxo do usuario</a>
+      <a href="#parceiro">App do parceiro</a>
+      <a href="#painel">Painel operacional</a>
+      <a href="#arquitetura">Arquitetura</a>
+    </div>
+    <div class="nav-actions">
+      <a href="#cta" class="btn btn-primary" style="padding:10px 20px; font-size:13px;">Falar sobre o projeto</a>
+      <button class="hamburger" id="hamburger"><i class="fa-solid fa-bars"></i></button>
+    </div>
+  </div>
+</nav>
+<div class="drawer-overlay" id="overlay"></div>
+<div class="mobile-drawer" id="drawer">
+  <button class="hamburger" id="closeDrawer" style="align-self:flex-end;"><i class="fa-solid fa-xmark"></i></button>
+  <a href="#servicos">Servicos</a>
+  <a href="#fluxo">Fluxo do usuario</a>
+  <a href="#parceiro">App do parceiro</a>
+  <a href="#painel">Painel operacional</a>
+  <a href="#arquitetura">Arquitetura</a>
+  <a href="#cta" class="btn btn-primary">Falar sobre o projeto</a>
+</div>
+
+<section class="hero" id="inicio">
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="container hero-grid">
+    <div>
+      <div class="eyebrow"><i class="fa-solid fa-sparkles"></i> Redesign + expansao multi-servico</div>
+      <h1>De app de transporte para <span>plataforma completa</span> de mobilidade</h1>
+      <p>Prototipo interativo do redesign: passageiro, entrega, frete e guincho no mesmo app, com um motor de despacho unico por tras dos quatro servicos.</p>
+      <div class="hero-actions">
+        <a href="#fluxo" class="btn btn-primary"><i class="fa-solid fa-play"></i> Ver o fluxo completo</a>
+        <a href="#arquitetura" class="btn btn-ghost"><i class="fa-solid fa-diagram-project"></i> Ver arquitetura</a>
+      </div>
+      <div class="stat-row">
+        <div class="stat"><b class="count" data-target="4">0</b><span>Servicos no mesmo app</span></div>
+        <div class="stat"><b class="count" data-target="1">0</b><span>Motor de despacho</span></div>
+        <div class="stat"><b class="count" data-target="2">0</b><span>Apps: cliente e parceiro</span></div>
+      </div>
+      <div class="stat-note">*Prototipo de produto com dados ilustrativos, construido para validar o conceito antes do desenvolvimento.</div>
+    </div>
+    <div class="hero-phones">
+      <div class="phone phone-back">
+        <div class="phone-screen">
+          <div class="phone-status"><span>9:41</span><span><i class="fa-solid fa-signal"></i> <i class="fa-solid fa-battery-three-quarters"></i></span></div>
+          <div class="app-header">
+            <div class="app-greet"><b>Corrida em andamento</b><span>Chegada estimada 6 min</span></div>
+          </div>
+          <div class="map-box" style="min-height:280px;">
+            <div class="route-line"></div>
+          </div>
+          <div class="driver-card">
+            <img src="https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=100&h=100&fit=crop&crop=faces" onerror="this.src='https://picsum.photos/seed/rottadriver/100/100'">
+            <div class="driver-meta"><b>Marcos R.</b><span>Onix Prata · ABC-1234</span></div>
+            <div class="eta-badge">6 min</div>
+          </div>
+        </div>
+      </div>
+      <div class="phone phone-front">
+        <div class="phone-screen">
+          <div class="phone-status"><span>9:41</span><span><i class="fa-solid fa-signal"></i> <i class="fa-solid fa-battery-three-quarters"></i></span></div>
+          <div class="app-header">
+            <div class="app-greet"><b>Ola, Camila</b><span>Para onde vamos hoje?</span></div>
+            <div class="avatar">C</div>
+          </div>
+          <div class="service-tiles">
+            <div class="tile gold"><i class="fa-solid fa-car"></i><b>Passageiro</b><span>Corrida ponto a ponto</span></div>
+            <div class="tile teal"><i class="fa-solid fa-box"></i><b>Entrega</b><span>Pacotes e documentos</span></div>
+            <div class="tile blue"><i class="fa-solid fa-truck"></i><b>Frete</b><span>Carga e mudanca</span></div>
+            <div class="tile red"><i class="fa-solid fa-car-burst"></i><b>Guincho</b><span>SOS 24 horas</span></div>
+          </div>
+          <div class="map-box">
+            <div class="pulse-pin"></div>
+          </div>
+          <div class="cta-slab">Solicitar Passageiro</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section-pad" id="antes-depois">
+  <div class="container">
+    <div class="reveal">
+      <div class="eyebrow"><i class="fa-solid fa-scale-balanced"></i> Diagnostico</div>
+      <h2 class="section-title">Por que redesenhar antes de expandir</h2>
+      <p class="section-sub">Adicionar entrega, frete e guincho direto na interface atual so aumenta a confusao. O redesign resolve a base para os quatro servicos crescerem juntos.</p>
+    </div>
+    <div class="compare-grid">
+      <div class="compare-card before reveal">
+        <div class="compare-head"><i class="fa-solid fa-triangle-exclamation"></i> App atual, servico unico</div>
+        <ul class="compare-list">
+          <li><i class="fa-solid fa-xmark"></i> Tela inicial pensada so para corrida de passageiro</li>
+          <li><i class="fa-solid fa-xmark"></i> Cada novo servico viraria uma tela solta, sem padrao visual</li>
+          <li><i class="fa-solid fa-xmark"></i> Motorista cadastrado para um unico tipo de trabalho</li>
+          <li><i class="fa-solid fa-xmark"></i> Sem lugar natural para frete ou guincho de emergencia</li>
+        </ul>
+      </div>
+      <div class="compare-card after reveal">
+        <div class="compare-head"><i class="fa-solid fa-circle-check"></i> Rotta, plataforma multi-servico</div>
+        <ul class="compare-list">
+          <li><i class="fa-solid fa-check"></i> Home com selecao de servico como primeira decisao do usuario</li>
+          <li><i class="fa-solid fa-check"></i> Um sistema de design unico, cada servico com sua cor de identificacao</li>
+          <li><i class="fa-solid fa-check"></i> Parceiro com um cadastro, aceita os servicos que quiser prestar</li>
+          <li><i class="fa-solid fa-check"></i> Guincho com fluxo de emergencia proprio, prioridade no despacho</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section-pad divider-border" id="servicos">
+  <div class="container">
+    <div class="reveal">
+      <div class="eyebrow"><i class="fa-solid fa-layer-group"></i> Quatro servicos</div>
+      <h2 class="section-title">Um app, quatro formas de mover algo pela cidade</h2>
+      <p class="section-sub">Cada servico tem identidade visual propria dentro do mesmo padrao de interface, para o usuario reconhecer rapido qual esta usando.</p>
+    </div>
+    <div class="service-grid">
+      <div class="service-card gold reveal">
+        <div class="service-icon"><i class="fa-solid fa-car"></i></div>
+        <h3>Passageiro</h3>
+        <p>Corrida ponto a ponto, como hoje, com interface renovada.</p>
+        <ul class="service-feats">
+          <li><i class="fa-solid fa-circle"></i> Estimativa de tempo e valor</li>
+          <li><i class="fa-solid fa-circle"></i> Motorista verificado</li>
+          <li><i class="fa-solid fa-circle"></i> Avaliacao pos corrida</li>
+        </ul>
+      </div>
+      <div class="service-card teal reveal">
+        <div class="service-icon"><i class="fa-solid fa-box"></i></div>
+        <h3>Entrega</h3>
+        <p>Envio de pacotes e documentos pequenos dentro da cidade.</p>
+        <ul class="service-feats">
+          <li><i class="fa-solid fa-circle"></i> Rastreio em tempo real</li>
+          <li><i class="fa-solid fa-circle"></i> Confirmacao por foto na entrega</li>
+          <li><i class="fa-solid fa-circle"></i> Endereco de coleta e destino</li>
+        </ul>
+      </div>
+      <div class="service-card blue reveal">
+        <div class="service-icon"><i class="fa-solid fa-truck"></i></div>
+        <h3>Frete</h3>
+        <p>Cargas maiores, com cotacao por tipo de veiculo.</p>
+        <ul class="service-feats">
+          <li><i class="fa-solid fa-circle"></i> Selecao de van ou caminhao leve</li>
+          <li><i class="fa-solid fa-circle"></i> Agendamento com antecedencia</li>
+          <li><i class="fa-solid fa-circle"></i> Cotacao antes de confirmar</li>
+        </ul>
+      </div>
+      <div class="service-card red reveal">
+        <div class="service-icon"><i class="fa-solid fa-car-burst"></i></div>
+        <h3>Guincho</h3>
+        <p>Atendimento de emergencia para veiculo quebrado ou acidentado.</p>
+        <ul class="service-feats">
+          <li><i class="fa-solid fa-circle"></i> Botao SOS com localizacao automatica</li>
+          <li><i class="fa-solid fa-circle"></i> Despacho prioritario</li>
+          <li><i class="fa-solid fa-circle"></i> Checklist de seguranca no local</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section-pad divider-border" id="fluxo">
+  <div class="container">
+    <div class="reveal">
+      <div class="eyebrow"><i class="fa-solid fa-arrows-turn-right"></i> Experiencia do usuario</div>
+      <h2 class="section-title">O mesmo padrao de tela, quatro fluxos diferentes</h2>
+      <p class="section-sub">Toque em cada servico para ver como a tela de solicitacao muda mantendo a mesma logica de uso.</p>
+    </div>
+    <div class="flow-wrap">
+      <div class="flow-tabs">
+        <div class="flow-tab active" data-flow="pass"><i class="fa-solid fa-car" style="color:var(--g400)"></i><div><b>Passageiro</b><span>Corrida ponto a ponto com motorista</span></div></div>
+        <div class="flow-tab" data-flow="entr"><i class="fa-solid fa-box" style="color:var(--teal)"></i><div><b>Entrega</b><span>Pacote com rastreio ate a confirmacao</span></div></div>
+        <div class="flow-tab" data-flow="fret"><i class="fa-solid fa-truck" style="color:var(--blue)"></i><div><b>Frete</b><span>Cotacao por veiculo antes de agendar</span></div></div>
+        <div class="flow-tab" data-flow="guin"><i class="fa-solid fa-car-burst" style="color:var(--red)"></i><div><b>Guincho</b><span>SOS com despacho prioritario</span></div></div>
+      </div>
+      <div class="flow-phone-stage">
+        <div class="phone">
+          <div class="phone-screen">
+            <div class="phone-status"><span>9:41</span><span><i class="fa-solid fa-signal"></i> <i class="fa-solid fa-battery-three-quarters"></i></span></div>
+
+            <div class="flow-screen active" data-flow="pass">
+              <div class="app-header"><div class="app-greet"><b>Passageiro</b><span>Confirme seu destino</span></div></div>
+              <div class="map-box"><div class="route-line"></div></div>
+              <div class="driver-card"><img src="https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=100&h=100&fit=crop&crop=faces" onerror="this.src='https://picsum.photos/seed/pass1/100/100'"><div class="driver-meta"><b>Onix Prata</b><span>4.9 · 3 min ate voce</span></div><div class="eta-badge">R$ 18</div></div>
+              <div class="cta-slab">Confirmar corrida</div>
+            </div>
+
+            <div class="flow-screen" data-flow="entr">
+              <div class="app-header"><div class="app-greet"><b>Entrega</b><span>Pacote pequeno, ate 5kg</span></div></div>
+              <div class="map-box"><div class="route-line"></div></div>
+              <div class="driver-card"><img src="https://images.unsplash.com/photo-1622560480605-d83c853bc5c3?w=100&h=100&fit=crop&crop=faces" onerror="this.src='https://picsum.photos/seed/entr1/100/100'"><div class="driver-meta"><b>Coleta em 8 min</b><span>Entregador Rafael S.</span></div><div class="eta-badge">R$ 12</div></div>
+              <div class="cta-slab">Confirmar coleta</div>
+            </div>
+
+            <div class="flow-screen" data-flow="fret">
+              <div class="app-header"><div class="app-greet"><b>Frete</b><span>Selecione o veiculo</span></div></div>
+              <div class="service-tiles" style="margin-top:0;">
+                <div class="tile blue"><i class="fa-solid fa-van-shuttle"></i><b>Van</b><span>Ate 800kg</span></div>
+                <div class="tile blue"><i class="fa-solid fa-truck"></i><b>Caminhao leve</b><span>Ate 2,5t</span></div>
+              </div>
+              <div class="driver-card"><i class="fa-solid fa-calendar" style="color:var(--blue); margin-left:4px;"></i><div class="driver-meta"><b>Agendar para hoje, 15h</b><span>Cotacao valida por 30 min</span></div><div class="eta-badge" style="background:rgba(99,102,241,0.15); color:var(--blue);">R$ 140</div></div>
+              <div class="cta-slab" style="background:linear-gradient(135deg,var(--blue),var(--blue-2)); color:#fff;">Agendar frete</div>
+            </div>
+
+            <div class="flow-screen" data-flow="guin">
+              <div class="app-header"><div class="app-greet"><b style="color:var(--red)">SOS Guincho</b><span>Localizacao enviada automaticamente</span></div></div>
+              <div class="map-box"><div class="pulse-pin" style="left:45%; right:auto;"></div></div>
+              <div class="driver-card" style="border-color:rgba(244,63,94,0.3);"><i class="fa-solid fa-truck-pickup" style="color:var(--red); margin-left:4px;"></i><div class="driver-meta"><b>Guincho mais proximo</b><span>Prioridade alta · 11 min</span></div><div class="eta-badge" style="background:rgba(244,63,94,0.15); color:var(--red);">Urgente</div></div>
+              <div class="cta-slab" style="background:linear-gradient(135deg,var(--red),var(--red-2)); color:#fff;">Confirmar acionamento</div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section-pad divider-border" id="parceiro">
+  <div class="container">
+    <div class="partner-wrap">
+      <div class="reveal">
+        <div class="eyebrow"><i class="fa-solid fa-id-badge"></i> App do parceiro</div>
+        <h2 class="section-title">Um cadastro, quatro servicos possiveis</h2>
+        <p class="section-sub" style="margin-bottom:0;">O parceiro decide quais servicos aceita prestar. O motor de despacho so envia corridas, entregas, fretes ou chamados de guincho para quem esta com aquele servico ativado.</p>
+        <ul class="feature-list">
+          <li><div class="feature-num">1</div><div><b>Um motor de despacho, quatro filas</b><p>O mesmo sistema decide quem esta mais perto e disponivel, filtrando por servico ativo.</p></div></li>
+          <li><div class="feature-num">2</div><div><b>Parceiro escolhe seu mix de trabalho</b><p>Motorista de passageiro pode ligar entrega nos horarios de menor demanda, por exemplo.</p></div></li>
+          <li><div class="feature-num">3</div><div><b>Guincho como categoria propria</b><p>Exige verificacao adicional do parceiro e fica fora do mix por padrao, ligado so por quem se qualifica.</p></div></li>
+        </ul>
+      </div>
+      <div class="flow-phone-stage reveal">
+        <div class="phone">
+          <div class="phone-screen">
+            <div class="phone-status"><span>9:41</span><span><i class="fa-solid fa-signal"></i> <i class="fa-solid fa-battery-three-quarters"></i></span></div>
+            <div class="app-header"><div class="app-greet"><b>Ola, Rafael</b><span>Servicos que voce atende</span></div><div class="avatar">R</div></div>
+
+            <div class="toggle-row"><div class="lbl"><i class="fa-solid fa-car" style="color:var(--g400)"></i> Passageiro</div><div class="switch on"></div></div>
+            <div class="toggle-row"><div class="lbl"><i class="fa-solid fa-box" style="color:var(--teal)"></i> Entrega</div><div class="switch on"></div></div>
+            <div class="toggle-row"><div class="lbl"><i class="fa-solid fa-truck" style="color:var(--blue)"></i> Frete</div><div class="switch"></div></div>
+            <div class="toggle-row"><div class="lbl"><i class="fa-solid fa-car-burst" style="color:var(--red)"></i> Guincho</div><div class="switch"></div></div>
+
+            <div class="earnings-slab">
+              <span>Ganhos hoje</span>
+              <b>R$ 187,40</b>
+              <div class="chip-row"><span class="chip">9 corridas</span><span class="chip">3 entregas</span></div>
+            </div>
+            <div class="cta-slab" style="margin-top:8px;">Ficar online</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section-pad divider-border" id="painel">
+  <div class="container">
+    <div class="reveal">
+      <div class="eyebrow"><i class="fa-solid fa-gauge-high"></i> Visao operacional</div>
+      <h2 class="section-title">Um painel para enxergar os quatro servicos juntos</h2>
+      <p class="section-sub">Operacao acompanha corridas, entregas, fretes e chamados de guincho no mesmo lugar, sem trocar de sistema.</p>
+    </div>
+    <div class="browser-frame reveal">
+      <div class="browser-bar">
+        <div class="browser-dot" style="background:#f43f5e;"></div>
+        <div class="browser-dot" style="background:#f59e0b;"></div>
+        <div class="browser-dot" style="background:#10b981;"></div>
+        <div class="url"><i class="fa-solid fa-lock" style="font-size:9px; margin-right:6px;"></i>painel.rotta.app/operacao</div>
+      </div>
+      <div class="dash-body">
+        <div class="dash-kpis">
+          <div class="kpi-card"><div class="kpi-top"><i class="fa-solid fa-car" style="color:var(--g400)"></i><span class="trend-up">↑ 12%</span></div><b class="count" data-target="46">0</b><span>Corridas ativas</span></div>
+          <div class="kpi-card"><div class="kpi-top"><i class="fa-solid fa-box" style="color:var(--teal)"></i><span class="trend-up">↑ 8%</span></div><b class="count" data-target="23">0</b><span>Entregas em andamento</span></div>
+          <div class="kpi-card"><div class="kpi-top"><i class="fa-solid fa-truck" style="color:var(--blue)"></i><span class="trend-up">↑ 5%</span></div><b class="count" data-target="7">0</b><span>Fretes cotados hoje</span></div>
+          <div class="kpi-card"><div class="kpi-top"><i class="fa-solid fa-car-burst" style="color:var(--red)"></i><span style="color:var(--red); font-size:10.5px; font-weight:700;">2 urgentes</span></div><b class="count" data-target="3">0</b><span>Chamados de guincho</span></div>
+        </div>
+        <div class="dash-grid">
+          <div class="dash-panel">
+            <div class="dash-panel-head">Mapa ao vivo
+              <div class="legend">
+                <span><i class="dot" style="background:var(--g400)"></i>Passageiro</span>
+                <span><i class="dot" style="background:var(--teal)"></i>Entrega</span>
+                <span><i class="dot" style="background:var(--blue)"></i>Frete</span>
+                <span><i class="dot" style="background:var(--red)"></i>Guincho</span>
+              </div>
+            </div>
+            <div class="mini-map">
+              <div class="map-dot" style="background:var(--g400); color:var(--g400); top:30%; left:20%;"></div>
+              <div class="map-dot" style="background:var(--g400); color:var(--g400); top:55%; left:60%;"></div>
+              <div class="map-dot" style="background:var(--teal); color:var(--teal); top:22%; left:70%;"></div>
+              <div class="map-dot" style="background:var(--teal); color:var(--teal); top:70%; left:35%;"></div>
+              <div class="map-dot" style="background:var(--blue); color:var(--blue); top:45%; left:45%;"></div>
+              <div class="map-dot" style="background:var(--red); color:var(--red); top:60%; left:80%;"></div>
+            </div>
+          </div>
+          <div class="dash-panel">
+            <div class="dash-panel-head">Volume por servico, hoje</div>
+            <div class="bar-chart">
+              <div class="bar-col"><div class="bar" style="height:0%; background:var(--g500);" data-h="88"></div><span>Pass.</span></div>
+              <div class="bar-col"><div class="bar" style="height:0%; background:var(--teal);" data-h="54"></div><span>Entr.</span></div>
+              <div class="bar-col"><div class="bar" style="height:0%; background:var(--blue);" data-h="30"></div><span>Frete</span></div>
+              <div class="bar-col"><div class="bar" style="height:0%; background:var(--red);" data-h="14"></div><span>Guin.</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="dash-panel reveal" style="margin-top:18px;">
+          <div class="dash-panel-head">Atividade recente</div>
+          <div class="activity-feed">
+            <div class="act-item"><i class="fa-solid fa-car-burst" style="color:var(--red);"></i><div><b>Guincho acionado</b> na Av. Paulista<span>ha 2 min · despacho prioritario</span></div></div>
+            <div class="act-item"><i class="fa-solid fa-box" style="color:var(--teal);"></i><div><b>Entrega confirmada</b> por foto na Rua Augusta<span>ha 6 min</span></div></div>
+            <div class="act-item"><i class="fa-solid fa-truck" style="color:var(--blue);"></i><div><b>Novo frete cotado</b>, van, mudanca residencial<span>ha 14 min</span></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section-pad divider-border" id="arquitetura">
+  <div class="container">
+    <div class="reveal center" style="text-align:center;">
+      <div class="eyebrow"><i class="fa-solid fa-diagram-project"></i> Escalabilidade</div>
+      <h2 class="section-title">Pensado para crescer sem refazer o core</h2>
+      <p class="section-sub center">Cada servico e um modulo plugado no mesmo motor de despacho. Um quinto servico, no futuro, entra sem reescrever passageiro, entrega, frete ou guincho.</p>
+    </div>
+    <div class="arch-wrap reveal">
+      <div class="arch-core"><i class="fa-solid fa-server"></i><b>Motor de despacho unico</b></div>
+      <div class="arch-line"></div>
+      <div class="arch-modules">
+        <div class="arch-node"><i class="fa-solid fa-car" style="color:var(--g400)"></i><b>Passageiro</b><span>Modulo de corrida</span></div>
+        <div class="arch-node"><i class="fa-solid fa-box" style="color:var(--teal)"></i><b>Entrega</b><span>Modulo de pacote</span></div>
+        <div class="arch-node"><i class="fa-solid fa-truck" style="color:var(--blue)"></i><b>Frete</b><span>Modulo de carga</span></div>
+        <div class="arch-node"><i class="fa-solid fa-car-burst" style="color:var(--red)"></i><b>Guincho</b><span>Modulo de emergencia</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section-pad" id="cta">
+  <div class="container">
+    <div class="cta-section reveal" style="max-width:720px;">
+      <h2>Vamos alinhar o escopo da Fase 1</h2>
+      <p>Este prototipo cobre a experiencia do usuario, do parceiro e da operacao. O proximo passo e definir qual servico entra primeiro depois do redesign da base.</p>
+      <a href="#inicio" class="btn btn-primary"><i class="fa-solid fa-message"></i> Conversar sobre o projeto</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <div>Rotta · Prototipo de produto criado para avaliacao de escopo</div>
+    <div class="fnote">Interface, dados e nomes usados neste prototipo sao ilustrativos, criados para demonstrar o conceito de redesign multi-servico antes do desenvolvimento real.</div>
+  </div>
+</footer>
+
+<script>
+document.getElementById('hamburger').onclick = () => { document.getElementById('drawer').classList.add('open'); document.getElementById('overlay').classList.add('open'); };
+document.getElementById('closeDrawer').onclick = closeDrawer;
+document.getElementById('overlay').onclick = closeDrawer;
+function closeDrawer(){ document.getElementById('drawer').classList.remove('open'); document.getElementById('overlay').classList.remove('open'); }
+document.querySelectorAll('.mobile-drawer a').forEach(a => a.onclick = closeDrawer);
+
+// flow tabs
+document.querySelectorAll('.flow-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.flow-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.flow-screen').forEach(s => s.classList.remove('active'));
+    tab.classList.add('active');
+    document.querySelector('.flow-screen[data-flow="' + tab.dataset.flow + '"]').classList.add('active');
+  });
+});
+
+// partner toggles
+document.querySelectorAll('.switch').forEach(sw => {
+  sw.addEventListener('click', () => sw.classList.toggle('on'));
+});
+
+// scroll reveal
+const revealEls = document.querySelectorAll('.reveal');
+const io = new IntersectionObserver((entries) => {
+  entries.forEach((e, i) => {
+    if (e.isIntersecting) {
+      setTimeout(() => e.target.classList.add('in'), i * 55);
+      io.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.15 });
+revealEls.forEach(el => io.observe(el));
+
+// count up
+const countEls = document.querySelectorAll('.count');
+const countIo = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      const el = e.target;
+      const target = parseInt(el.dataset.target, 10);
+      let cur = 0;
+      const step = Math.max(1, Math.ceil(target / 40));
+      const iv = setInterval(() => {
+        cur += step;
+        if (cur >= target) { cur = target; clearInterval(iv); }
+        el.textContent = cur;
+      }, 30);
+      countIo.unobserve(el);
+    }
+  });
+}, { threshold: 0.4 });
+countEls.forEach(el => countIo.observe(el));
+
+// bar chart animate
+const barIo = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.querySelectorAll('.bar').forEach(b => { b.style.height = b.dataset.h + '%'; });
+      barIo.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.3 });
+document.querySelectorAll('.bar-chart').forEach(el => barIo.observe(el));
+</script>
+</body>
+</html>
