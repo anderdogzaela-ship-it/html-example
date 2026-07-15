@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ensaia — Gestão de Corpos de Prova e Portal do Cliente</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700;800&family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+  :root{
+    --bg:#f5f4f0;
+    --ink:#201c14;
+    --muted:#7a7368;
+    --card:#ffffff;
+    --border:#e8e3d8;
+    --sidebar:#1c1810;
+    --sidebar-hover:#2c2518;
+    --sidebar-active:#332918;
+    --gold:#c08a2e;
+    --gold-light:#f6e6c2;
+    --gold-dark:#96691f;
+    --green:#2f9e58;
+    --green-light:#e5f5ea;
+    --red:#c94a3a;
+    --red-light:#fbe9e6;
+    --amber:#d9932b;
+    --amber-light:#fbf0dc;
+    --blue:#3d6ea3;
+    --blue-light:#e8f0f8;
+    --shadow:0 2px 10px rgba(32,28,20,0.06);
+    --shadow-lg:0 24px 60px rgba(32,28,20,0.22);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    font-family:'Nunito',sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,h4,.brand,.stat-num,.nav-item,button,.btn{font-family:'Lexend',sans-serif;}
+  img{max-width:100%;display:block;}
+  button{cursor:pointer;border:none;background:none;font-family:inherit;}
+  a{text-decoration:none;color:inherit;}
+
+  /* ===== TOP SWITCHER BAR ===== */
+  .switcher-bar{
+    position:sticky;top:0;z-index:200;
+    background:var(--sidebar);
+    padding:12px 24px;
+    display:flex;align-items:center;justify-content:space-between;
+    gap:16px;flex-wrap:wrap;
+    border-bottom:1px solid rgba(255,255,255,0.06);
+  }
+  .switcher-brand{display:flex;align-items:center;gap:10px;color:#fff;font-weight:800;font-size:16px;}
+  .switcher-brand .mark{
+    width:32px;height:32px;border-radius:9px;
+    background:linear-gradient(135deg,var(--gold),var(--gold-dark));
+    display:flex;align-items:center;justify-content:center;color:#1c1810;font-size:15px;
+  }
+  .switcher-pills{
+    display:flex;gap:4px;background:rgba(255,255,255,0.07);padding:4px;border-radius:11px;
+  }
+  .switcher-pill{
+    padding:9px 18px;border-radius:8px;color:rgba(255,255,255,0.62);
+    font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:8px;
+    transition:all .2s;
+  }
+  .switcher-pill.active{background:var(--gold);color:#1c1810;box-shadow:0 4px 14px rgba(192,138,46,0.35);}
+  .switcher-note{color:rgba(255,255,255,0.4);font-size:12px;font-weight:600;}
+  @media(max-width:720px){.switcher-note{display:none;}}
+
+  .view{display:none;}
+  .view.active{display:block;}
+
+  /* ===== LAB APP SHELL ===== */
+  .app{display:flex;min-height:calc(100vh - 57px);}
+  .sidebar{
+    width:246px;min-height:calc(100vh - 57px);background:var(--sidebar);
+    display:flex;flex-direction:column;flex-shrink:0;position:sticky;top:57px;align-self:flex-start;
+    height:calc(100vh - 57px);overflow-y:auto;
+  }
+  .sidebar-section{padding:18px 14px 6px;}
+  .sidebar-label{color:rgba(255,255,255,0.32);font-size:10.5px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;padding:6px 10px;}
+  .nav-item{
+    display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:9px;
+    color:rgba(255,255,255,0.64);font-size:13.5px;font-weight:600;margin-bottom:2px;
+    transition:all .15s;
+  }
+  .nav-item i{width:17px;text-align:center;font-size:14px;color:rgba(255,255,255,0.4);}
+  .nav-item:hover{background:var(--sidebar-hover);color:#fff;}
+  .nav-item.active{background:var(--sidebar-active);color:var(--gold-light);}
+  .nav-item.active i{color:var(--gold);}
+  .nav-badge{
+    margin-left:auto;background:var(--red);color:#fff;font-size:10.5px;font-weight:800;
+    padding:2px 7px;border-radius:20px;
+  }
+  .sidebar-foot{
+    margin-top:auto;padding:16px;border-top:1px solid rgba(255,255,255,0.07);
+    display:flex;align-items:center;gap:10px;
+  }
+  .sidebar-foot .av{width:34px;height:34px;border-radius:9px;background:var(--gold);color:#1c1810;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;}
+  .sidebar-foot .who{color:#fff;font-size:12.5px;font-weight:700;}
+  .sidebar-foot .role{color:rgba(255,255,255,0.4);font-size:11px;}
+
+  .main{flex:1;min-width:0;padding:26px 30px 60px;}
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:22px;flex-wrap:wrap;}
+  .page-title{font-size:23px;font-weight:800;}
+  .page-sub{color:var(--muted);font-size:13.5px;margin-top:3px;}
+  .topbar-actions{display:flex;align-items:center;gap:10px;}
+  .search-box{
+    display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);
+    border-radius:9px;padding:9px 13px;color:var(--muted);font-size:13px;min-width:220px;
+  }
+  .icon-btn{
+    width:38px;height:38px;border-radius:9px;background:var(--card);border:1px solid var(--border);
+    display:flex;align-items:center;justify-content:center;color:var(--muted);position:relative;
+  }
+  .icon-btn .dot{position:absolute;top:6px;right:6px;width:7px;height:7px;border-radius:50%;background:var(--red);}
+  .btn{
+    padding:10px 18px;border-radius:9px;font-size:13.5px;font-weight:700;display:inline-flex;align-items:center;gap:8px;
+    transition:all .15s;
+  }
+  .btn-gold{background:var(--gold);color:#1c1810;}
+  .btn-gold:hover{background:var(--gold-dark);}
+  .btn-ghost{background:var(--card);border:1px solid var(--border);color:var(--ink);}
+  .btn-ghost:hover{border-color:var(--gold);}
+  .btn-sm{padding:7px 13px;font-size:12.5px;}
+
+  /* KPI cards */
+  .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
+  .kpi-card{
+    background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 20px;
+    box-shadow:var(--shadow);opacity:0;transform:translateY(10px);animation:riseIn .5s ease forwards;
+  }
+  .kpi-card:nth-child(1){animation-delay:.02s;}
+  .kpi-card:nth-child(2){animation-delay:.08s;}
+  .kpi-card:nth-child(3){animation-delay:.14s;}
+  .kpi-card:nth-child(4){animation-delay:.2s;}
+  @keyframes riseIn{to{opacity:1;transform:translateY(0);}}
+  .kpi-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+  .kpi-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;}
+  .kpi-label{color:var(--muted);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;}
+  .kpi-num{font-size:27px;font-weight:800;margin:2px 0 4px;}
+  .kpi-trend{font-size:12px;font-weight:700;display:flex;align-items:center;gap:5px;}
+  .trend-up{color:var(--green);}
+  .trend-down{color:var(--red);}
+  .trend-warn{color:var(--amber);}
+
+  .grid-2col{display:grid;grid-template-columns:1.35fr 1fr;gap:18px;margin-bottom:22px;align-items:start;}
+  @media(max-width:1100px){.grid-2col{grid-template-columns:1fr;}}
+
+  .panel{background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;}
+  .panel-head{padding:17px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+  .panel-title{font-size:15px;font-weight:800;display:flex;align-items:center;gap:9px;}
+  .panel-title i{color:var(--gold);}
+  .panel-link{font-size:12.5px;font-weight:700;color:var(--gold-dark);}
+  .panel-body{padding:6px 0;}
+
+  /* Agenda list */
+  .agenda-item{display:flex;align-items:center;gap:13px;padding:13px 20px;border-bottom:1px solid var(--border);}
+  .agenda-item:last-child{border-bottom:none;}
+  .agenda-time{
+    width:56px;text-align:center;flex-shrink:0;
+  }
+  .agenda-time .t{font-size:14px;font-weight:800;}
+  .agenda-time .d{font-size:10.5px;color:var(--muted);text-transform:uppercase;font-weight:700;}
+  .agenda-line{width:2px;align-self:stretch;background:var(--border);flex-shrink:0;}
+  .agenda-info{flex:1;min-width:0;}
+  .agenda-cp{font-size:13.5px;font-weight:700;}
+  .agenda-obra{font-size:12px;color:var(--muted);margin-top:2px;}
+  .age-pill{
+    font-size:11px;font-weight:800;padding:4px 9px;border-radius:20px;flex-shrink:0;
+  }
+  .age-28{background:var(--blue-light);color:var(--blue);}
+  .age-14{background:var(--amber-light);color:var(--amber);}
+  .age-7{background:var(--green-light);color:var(--green);}
+  .age-late{background:var(--red-light);color:var(--red);}
+
+  /* Conformity donut mini */
+  .conf-wrap{padding:20px;display:flex;flex-direction:column;align-items:center;text-align:center;}
+  .donut{
+    width:150px;height:150px;border-radius:50%;position:relative;margin-bottom:14px;
+    background:conic-gradient(var(--green) 0% 94.2%, var(--red-light) 94.2% 100%);
+  }
+  .donut::before{
+    content:'';position:absolute;inset:14px;border-radius:50%;background:var(--card);
+  }
+  .donut-txt{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .donut-txt .n{font-size:24px;font-weight:800;}
+  .donut-txt .l{font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;}
+  .conf-legend{display:flex;gap:16px;font-size:12px;color:var(--muted);font-weight:700;}
+  .conf-legend span{display:flex;align-items:center;gap:6px;}
+  .conf-dot{width:9px;height:9px;border-radius:50%;}
+
+  /* Table */
+  .table-wrap{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;min-width:920px;}
+  thead th{
+    text-align:left;font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;
+    letter-spacing:.5px;padding:12px 16px;border-bottom:1px solid var(--border);background:#fbfaf7;
+    white-space:nowrap;
+  }
+  tbody td{padding:13px 16px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle;}
+  tbody tr{transition:background .15s;cursor:pointer;}
+  tbody tr:hover{background:#fbfaf5;}
+  tbody tr:last-child td{border-bottom:none;}
+
+  .cp-id-cell{display:flex;align-items:center;gap:10px;}
+  .qr-mock{
+    width:30px;height:30px;border-radius:5px;flex-shrink:0;
+    background-image:
+      linear-gradient(90deg,#1c1810 0 30%,transparent 30%),
+      linear-gradient(180deg,#1c1810 0 30%,transparent 30%);
+    background-size:6px 6px,6px 6px;
+    background-color:#fff;border:1px solid var(--border);
+    position:relative;
+  }
+  .qr-mock::before{content:'';position:absolute;top:3px;left:3px;width:9px;height:9px;border:2px solid #1c1810;}
+  .qr-mock::after{content:'';position:absolute;bottom:3px;right:3px;width:9px;height:9px;border:2px solid #1c1810;}
+  .cp-id{font-weight:800;font-size:13px;}
+  .cp-traco{font-size:11px;color:var(--muted);}
+
+  .stage-badge{
+    display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:20px;
+    font-size:11.5px;font-weight:800;white-space:nowrap;
+  }
+  .stage-moldagem{background:var(--blue-light);color:var(--blue);}
+  .stage-cura{background:var(--amber-light);color:var(--amber);}
+  .stage-ruptura{background:#f1e9fb;color:#7841c9;}
+  .stage-laudo{background:var(--green-light);color:var(--green);}
+
+  .result-cell .mpa{font-weight:800;font-size:13.5px;}
+  .result-cell .fck{font-size:11px;color:var(--muted);}
+  .conf-pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:800;padding:4px 9px;border-radius:20px;}
+  .conf-ok{background:var(--green-light);color:var(--green);}
+  .conf-bad{background:var(--red-light);color:var(--red);}
+  .conf-wait{background:#f2f1ee;color:var(--muted);}
+
+  .row-actions{display:flex;gap:6px;}
+  .row-actions button{
+    width:30px;height:30px;border-radius:7px;background:#fbfaf7;border:1px solid var(--border);
+    display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;
+  }
+  .row-actions button:hover{border-color:var(--gold);color:var(--gold-dark);}
+
+  /* Slide-over */
+  .overlay{
+    position:fixed;inset:0;background:rgba(20,17,10,0.5);z-index:500;opacity:0;pointer-events:none;
+    transition:opacity .25s;backdrop-filter:blur(2px);
+  }
+  .overlay.open{opacity:1;pointer-events:auto;}
+  .slideover{
+    position:fixed;top:0;right:0;bottom:0;width:440px;max-width:92vw;background:var(--card);z-index:501;
+    box-shadow:var(--shadow-lg);transform:translateX(100%);transition:transform .3s ease;overflow-y:auto;
+  }
+  .slideover.open{transform:translateX(0);}
+  .so-head{padding:22px 24px;border-bottom:1px solid var(--border);display:flex;align-items:start;justify-content:space-between;}
+  .so-close{width:32px;height:32px;border-radius:8px;background:#f2f1ee;display:flex;align-items:center;justify-content:center;color:var(--muted);flex-shrink:0;}
+  .so-body{padding:22px 24px;}
+  .so-qr{width:120px;height:120px;margin:0 auto 18px;background:#fff;border:1px solid var(--border);border-radius:10px;
+    background-image:linear-gradient(90deg,#1c1810 0 22%,transparent 22%),linear-gradient(180deg,#1c1810 0 22%,transparent 22%);
+    background-size:12px 12px;position:relative;}
+  .so-qr::before{content:'';position:absolute;top:8px;left:8px;width:22px;height:22px;border:3px solid #1c1810;}
+  .so-qr::after{content:'';position:absolute;bottom:8px;right:8px;width:22px;height:22px;border:3px solid #1c1810;}
+  .so-meta{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:18px 0;}
+  .so-meta .k{font-size:10.5px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.4px;}
+  .so-meta .v{font-size:13.5px;font-weight:700;margin-top:3px;}
+  .timeline{margin:20px 0;}
+  .tl-item{display:flex;gap:12px;padding-bottom:18px;position:relative;}
+  .tl-item:not(:last-child)::before{content:'';position:absolute;left:12px;top:26px;bottom:0;width:2px;background:var(--border);}
+  .tl-dot{width:25px;height:25px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;z-index:1;}
+  .tl-dot.pending{background:#e6e3da;color:#a29b8c;}
+  .tl-txt .tt{font-size:13px;font-weight:700;}
+  .tl-txt .ts{font-size:11.5px;color:var(--muted);margin-top:1px;}
+  .predict-alert{
+    background:linear-gradient(135deg,#fbe9e6,#fdf3ee);border:1px solid #f0c4bb;border-radius:12px;
+    padding:16px;margin-top:6px;
+  }
+  .predict-alert .pa-head{display:flex;align-items:center;gap:8px;font-weight:800;font-size:13px;color:var(--red);margin-bottom:7px;}
+  .predict-alert p{font-size:12.5px;color:#6b4136;line-height:1.55;}
+
+  /* toast */
+  .toast{
+    position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(20px);z-index:800;
+    background:#1c1810;color:#fff;padding:14px 22px;border-radius:11px;font-size:13.5px;font-weight:700;
+    display:flex;align-items:center;gap:10px;box-shadow:var(--shadow-lg);opacity:0;pointer-events:none;transition:all .3s;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  .toast i{color:var(--gold);}
+
+  /* ===== CLIENT PORTAL ===== */
+  .cp-shell{max-width:1180px;margin:0 auto;padding:36px 24px 70px;}
+  .cp-hero{
+    background:linear-gradient(120deg,#1c1810 0%,#332918 100%);border-radius:18px;padding:34px 36px;
+    color:#fff;position:relative;overflow:hidden;margin-bottom:22px;
+  }
+  .cp-hero::after{
+    content:'';position:absolute;right:-40px;top:-60px;width:260px;height:260px;border-radius:50%;
+    background:radial-gradient(circle,rgba(192,138,46,0.25),transparent 70%);
+  }
+  .cp-hero-top{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;position:relative;z-index:1;}
+  .cp-client-tag{font-size:12px;font-weight:700;color:var(--gold-light);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;}
+  .cp-hero h1{font-size:25px;font-weight:800;margin-bottom:8px;}
+  .cp-hero p{font-size:13.5px;color:rgba(255,255,255,0.65);max-width:520px;}
+  .cp-notif-btn{
+    background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);color:#fff;padding:10px 16px;
+    border-radius:10px;font-size:13px;font-weight:700;display:flex;align-items:center;gap:9px;position:relative;flex-shrink:0;
+  }
+  .cp-notif-btn .badge{background:var(--red);width:18px;height:18px;border-radius:50%;font-size:10px;display:flex;align-items:center;justify-content:center;}
+
+  .cp-notif-banner{
+    background:var(--amber-light);border:1px solid #f0d9ad;border-radius:12px;padding:13px 18px;
+    display:flex;align-items:center;gap:12px;margin-bottom:22px;font-size:13px;color:#6b4f1c;font-weight:700;
+    opacity:0;animation:riseIn .5s ease forwards .1s;
+  }
+  .cp-notif-banner i{color:var(--amber);font-size:15px;}
+  .cp-notif-banner .dismiss{margin-left:auto;color:#a5822f;font-size:12px;}
+
+  .obra-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;margin-bottom:26px;}
+  @media(max-width:820px){.obra-grid{grid-template-columns:1fr;}}
+  .obra-card{
+    background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px;box-shadow:var(--shadow);
+    opacity:0;transform:translateY(10px);animation:riseIn .5s ease forwards;
+  }
+  .obra-card:nth-child(1){animation-delay:.05s;}
+  .obra-card:nth-child(2){animation-delay:.15s;}
+  .obra-top{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:16px;}
+  .obra-name{font-size:16px;font-weight:800;}
+  .obra-loc{font-size:12px;color:var(--muted);margin-top:3px;display:flex;align-items:center;gap:6px;}
+  .ring{
+    width:64px;height:64px;border-radius:50%;flex-shrink:0;position:relative;
+  }
+  .ring-txt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;}
+  .ring::before{content:'';position:absolute;inset:7px;background:var(--card);border-radius:50%;}
+  .obra-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
+  .obra-stat{background:#fbfaf6;border-radius:10px;padding:10px;text-align:center;}
+  .obra-stat .n{font-size:17px;font-weight:800;}
+  .obra-stat .l{font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;margin-top:2px;}
+  .obra-foot{display:flex;align-items:center;justify-content:space-between;padding-top:14px;border-top:1px solid var(--border);}
+  .obra-next{font-size:12px;color:var(--muted);}
+  .obra-next b{color:var(--ink);}
+
+  .cp-section-title{font-size:16px;font-weight:800;margin:30px 0 14px;display:flex;align-items:center;gap:9px;}
+  .cp-section-title i{color:var(--gold);}
+
+  .chart-panel{padding:22px;}
+  .bar-row{display:flex;align-items:center;gap:14px;margin-bottom:16px;}
+  .bar-row:last-child{margin-bottom:0;}
+  .bar-label{width:150px;flex-shrink:0;font-size:12.5px;font-weight:700;}
+  .bar-track{flex:1;height:20px;background:#f1efe8;border-radius:20px;position:relative;overflow:visible;}
+  .bar-fill{height:100%;border-radius:20px;background:linear-gradient(90deg,var(--gold),var(--gold-dark));display:flex;align-items:center;justify-content:flex-end;padding-right:10px;}
+  .bar-fill span{font-size:10.5px;font-weight:800;color:#1c1810;}
+  .bar-target{position:absolute;top:-5px;bottom:-5px;width:2px;background:var(--red);}
+  .bar-target::after{content:attr(data-label);position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:10px;font-weight:800;color:var(--red);white-space:nowrap;}
+
+  @media(max-width:900px){
+    .kpi-grid{grid-template-columns:repeat(2,1fr);}
+    .sidebar{position:fixed;left:0;top:57px;bottom:0;z-index:150;transform:translateX(-100%);transition:transform .25s;}
+    .sidebar.open{transform:translateX(0);}
+    .main{padding:20px 16px 50px;}
+    .hamburger{display:flex !important;}
+  }
+  .hamburger{display:none;width:38px;height:38px;border-radius:9px;background:var(--card);border:1px solid var(--border);align-items:center;justify-content:center;}
+  @media(max-width:600px){
+    .kpi-grid{grid-template-columns:1fr;}
+    .obra-stats{grid-template-columns:1fr 1fr;}
+  }
+</style>
+</head>
+<body>
+
+<div class="switcher-bar">
+  <div class="switcher-brand"><span class="mark"><i class="fa-solid fa-vial-circle-check"></i></span>Ensaia</div>
+  <div class="switcher-pills">
+    <button class="switcher-pill active" data-target="lab-view"><i class="fa-solid fa-flask"></i>Painel do Laboratorio</button>
+    <button class="switcher-pill" data-target="client-view"><i class="fa-solid fa-user-shield"></i>Portal do Cliente</button>
+  </div>
+  <div class="switcher-note">Demo interativa — dados ilustrativos</div>
+</div>
+
+<!-- ================= LAB VIEW ================= -->
+<div id="lab-view" class="view active">
+  <div class="app">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-label">Operacao</div>
+        <div class="nav-item active" data-tab="dashboard"><i class="fa-solid fa-gauge-high"></i>Dashboard</div>
+        <div class="nav-item" data-tab="corpos"><i class="fa-solid fa-vial"></i>Corpos de Prova<span class="nav-badge">47</span></div>
+        <div class="nav-item" data-tab="agenda"><i class="fa-solid fa-calendar-check"></i>Agenda de Rupturas</div>
+        <div class="nav-item" data-tab="laudos"><i class="fa-solid fa-file-shield"></i>Laudos<span class="nav-badge">5</span></div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Cadastros</div>
+        <div class="nav-item"><i class="fa-solid fa-building"></i>Clientes &amp; Obras</div>
+        <div class="nav-item"><i class="fa-solid fa-flask-vial"></i>Tracos de Concreto</div>
+        <div class="nav-item"><i class="fa-solid fa-users"></i>Tecnicos</div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Sistema</div>
+        <div class="nav-item"><i class="fa-solid fa-bell"></i>Notificacoes</div>
+        <div class="nav-item"><i class="fa-solid fa-gear"></i>Configuracoes</div>
+      </div>
+      <div class="sidebar-foot">
+        <div class="av">RM</div>
+        <div>
+          <div class="who">Ricardo Mendes</div>
+          <div class="role">Responsavel Tecnico</div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <button class="hamburger" id="hamburger"><i class="fa-solid fa-bars"></i></button>
+          <div>
+            <div class="page-title">Dashboard do Laboratorio</div>
+            <div class="page-sub">Terca-feira, 15 de julho de 2026 — visao geral de ensaios em andamento</div>
+          </div>
+        </div>
+        <div class="topbar-actions">
+          <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i>Buscar CP, obra ou cliente...</div>
+          <button class="icon-btn"><i class="fa-solid fa-bell"></i><span class="dot"></span></button>
+          <button class="btn btn-gold" id="new-cp-btn"><i class="fa-solid fa-plus"></i>Novo Corpo de Prova</button>
+        </div>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-top">
+            <span class="kpi-label">Em Cura</span>
+            <span class="kpi-icon" style="background:var(--blue-light);color:var(--blue);"><i class="fa-solid fa-water"></i></span>
+          </div>
+          <div class="kpi-num">47</div>
+          <div class="kpi-trend trend-up"><i class="fa-solid fa-arrow-up"></i>6 novos hoje</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-top">
+            <span class="kpi-label">Rupturas (7 dias)</span>
+            <span class="kpi-icon" style="background:var(--amber-light);color:var(--amber);"><i class="fa-solid fa-hammer"></i></span>
+          </div>
+          <div class="kpi-num">12</div>
+          <div class="kpi-trend trend-warn"><i class="fa-solid fa-triangle-exclamation"></i>2 atrasadas</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-top">
+            <span class="kpi-label">Laudos Pendentes</span>
+            <span class="kpi-icon" style="background:#f1e9fb;color:#7841c9;"><i class="fa-solid fa-file-pen"></i></span>
+          </div>
+          <div class="kpi-num">5</div>
+          <div class="kpi-trend" style="color:var(--muted);"><i class="fa-solid fa-clock"></i>Media 1.4 dias p/ emitir</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-top">
+            <span class="kpi-label">Conformidade (30d)</span>
+            <span class="kpi-icon" style="background:var(--green-light);color:var(--green);"><i class="fa-solid fa-shield-check"></i></span>
+          </div>
+          <div class="kpi-num">94.2%</div>
+          <div class="kpi-trend trend-up"><i class="fa-solid fa-arrow-up"></i>+1.8pp vs mes anterior</div>
+        </div>
+      </div>
+
+      <div class="grid-2col">
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title"><i class="fa-solid fa-calendar-day"></i>Agenda de Rupturas — Proximos dias</div>
+            <a class="panel-link">Ver agenda completa</a>
+          </div>
+          <div class="panel-body">
+            <div class="agenda-item">
+              <div class="agenda-time"><div class="t">Hoje</div><div class="d">09:30</div></div>
+              <div class="agenda-line"></div>
+              <div class="agenda-info"><div class="agenda-cp">CP-2607-014</div><div class="agenda-obra">Edificio Aurora — Construtora Horizonte</div></div>
+              <span class="age-pill age-28">28 dias</span>
+            </div>
+            <div class="agenda-item">
+              <div class="agenda-time"><div class="t">Hoje</div><div class="d">14:00</div></div>
+              <div class="agenda-line"></div>
+              <div class="agenda-info"><div class="agenda-cp">CP-2607-016</div><div class="agenda-obra">Ponte Rio Verde — Engenharia Cardoso</div></div>
+              <span class="age-pill age-14">14 dias</span>
+            </div>
+            <div class="agenda-item">
+              <div class="agenda-time"><div class="t">Ontem</div><div class="d">--:--</div></div>
+              <div class="agenda-line"></div>
+              <div class="agenda-info"><div class="agenda-cp">CP-2607-011</div><div class="agenda-obra">Condominio Bosque Azul — MRV Construcoes</div></div>
+              <span class="age-pill age-late">Atrasada</span>
+            </div>
+            <div class="agenda-item">
+              <div class="agenda-time"><div class="t">Amanha</div><div class="d">08:00</div></div>
+              <div class="agenda-line"></div>
+              <div class="agenda-info"><div class="agenda-cp">CP-2607-018</div><div class="agenda-obra">Edificio Aurora — Construtora Horizonte</div></div>
+              <span class="age-pill age-7">7 dias</span>
+            </div>
+            <div class="agenda-item">
+              <div class="agenda-time"><div class="t">Qui, 17/07</div><div class="d">--:--</div></div>
+              <div class="agenda-line"></div>
+              <div class="agenda-info"><div class="agenda-cp">CP-2607-020</div><div class="agenda-obra">Residencial Palmeiras — Construtora Horizonte</div></div>
+              <span class="age-pill age-28">28 dias</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title"><i class="fa-solid fa-chart-pie"></i>Conformidade — 30 dias</div></div>
+          <div class="conf-wrap">
+            <div class="donut"><div class="donut-txt"><div class="n">94.2%</div><div class="l">conforme</div></div></div>
+            <div class="conf-legend">
+              <span><span class="conf-dot" style="background:var(--green);"></span>142 conformes</span>
+              <span><span class="conf-dot" style="background:var(--red-light);border:2px solid var(--red);"></span>9 nao conformes</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title"><i class="fa-solid fa-vial"></i>Corpos de Prova Recentes</div>
+          <a class="panel-link">Ver todos (47)</a>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Corpo de Prova</th><th>Obra / Cliente</th><th>Moldagem</th><th>Idade</th><th>Estagio</th><th>Resultado</th><th>Conformidade</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="cp-table-body">
+              <tr data-cp="CP-2607-011">
+                <td><div class="cp-id-cell"><div class="qr-mock"></div><div><div class="cp-id">CP-2607-011</div><div class="cp-traco">Traco 1:2:3 · fck 25 MPa</div></div></div></td>
+                <td>Cond. Bosque Azul<br><span style="color:var(--muted);font-size:11.5px;">MRV Construcoes</span></td>
+                <td>28/06/2026</td>
+                <td>14 dias</td>
+                <td><span class="stage-badge stage-laudo"><i class="fa-solid fa-check"></i>Laudo Emitido</span></td>
+                <td class="result-cell"><div class="mpa">22.8 MPa</div><div class="fck">alvo 25.0 MPa</div></td>
+                <td><span class="conf-pill conf-bad"><i class="fa-solid fa-triangle-exclamation"></i>Nao Conforme</span></td>
+                <td><div class="row-actions"><button title="Ver detalhes"><i class="fa-solid fa-eye"></i></button></div></td>
+              </tr>
+              <tr data-cp="CP-2607-009">
+                <td><div class="cp-id-cell"><div class="qr-mock"></div><div><div class="cp-id">CP-2607-009</div><div class="cp-traco">Traco 1:1.8:2.6 · fck 35 MPa</div></div></div></td>
+                <td>Ponte Rio Verde<br><span style="color:var(--muted);font-size:11.5px;">Engenharia Cardoso</span></td>
+                <td>24/06/2026</td>
+                <td>7 dias</td>
+                <td><span class="stage-badge stage-laudo"><i class="fa-solid fa-check"></i>Laudo Emitido</span></td>
+                <td class="result-cell"><div class="mpa">31.2 MPa</div><div class="fck">alvo 35.0 MPa</div></td>
+                <td><span class="conf-pill conf-ok"><i class="fa-solid fa-check"></i>Conforme (parcial)</span></td>
+                <td><div class="row-actions"><button title="Ver detalhes"><i class="fa-solid fa-eye"></i></button></div></td>
+              </tr>
+              <tr data-cp="CP-2607-014">
+                <td><div class="cp-id-cell"><div class="qr-mock"></div><div><div class="cp-id">CP-2607-014</div><div class="cp-traco">Traco 1:2:3 · fck 30 MPa</div></div></div></td>
+                <td>Edificio Aurora<br><span style="color:var(--muted);font-size:11.5px;">Construtora Horizonte</span></td>
+                <td>17/06/2026</td>
+                <td>28 dias</td>
+                <td><span class="stage-badge stage-ruptura"><i class="fa-solid fa-hammer"></i>Ruptura Hoje</span></td>
+                <td class="result-cell"><div class="mpa">—</div><div class="fck">alvo 30.0 MPa</div></td>
+                <td><span class="conf-pill conf-wait">Aguardando</span></td>
+                <td><div class="row-actions"><button title="Ver detalhes"><i class="fa-solid fa-eye"></i></button></div></td>
+              </tr>
+              <tr data-cp="CP-2607-016">
+                <td><div class="cp-id-cell"><div class="qr-mock"></div><div><div class="cp-id">CP-2607-016</div><div class="cp-traco">Traco 1:1.8:2.6 · fck 35 MPa</div></div></div></td>
+                <td>Ponte Rio Verde<br><span style="color:var(--muted);font-size:11.5px;">Engenharia Cardoso</span></td>
+                <td>01/07/2026</td>
+                <td>14 dias</td>
+                <td><span class="stage-badge stage-ruptura"><i class="fa-solid fa-hammer"></i>Ruptura Hoje</span></td>
+                <td class="result-cell"><div class="mpa">—</div><div class="fck">alvo 35.0 MPa</div></td>
+                <td><span class="conf-pill conf-wait">Aguardando</span></td>
+                <td><div class="row-actions"><button title="Ver detalhes"><i class="fa-solid fa-eye"></i></button></div></td>
+              </tr>
+              <tr data-cp="CP-2607-018">
+                <td><div class="cp-id-cell"><div class="qr-mock"></div><div><div class="cp-id">CP-2607-018</div><div class="cp-traco">Traco 1:2:3 · fck 30 MPa</div></div></div></td>
+                <td>Edificio Aurora<br><span style="color:var(--muted);font-size:11.5px;">Construtora Horizonte</span></td>
+                <td>08/07/2026</td>
+                <td>7 dias</td>
+                <td><span class="stage-badge stage-cura"><i class="fa-solid fa-water"></i>Em Cura</span></td>
+                <td class="result-cell"><div class="mpa">—</div><div class="fck">alvo 30.0 MPa</div></td>
+                <td><span class="conf-pill conf-wait">—</span></td>
+                <td><div class="row-actions"><button title="Ver detalhes"><i class="fa-solid fa-eye"></i></button></div></td>
+              </tr>
+              <tr data-cp="CP-2607-022">
+                <td><div class="cp-id-cell"><div class="qr-mock"></div><div><div class="cp-id">CP-2607-022</div><div class="cp-traco">Traco 1:2.2:3.2 · fck 25 MPa</div></div></div></td>
+                <td>Res. Palmeiras<br><span style="color:var(--muted);font-size:11.5px;">Construtora Horizonte</span></td>
+                <td>13/07/2026</td>
+                <td>3 dias</td>
+                <td><span class="stage-badge stage-moldagem"><i class="fa-solid fa-cube"></i>Moldagem</span></td>
+                <td class="result-cell"><div class="mpa">—</div><div class="fck">alvo 25.0 MPa</div></td>
+                <td><span class="conf-pill conf-wait">—</span></td>
+                <td><div class="row-actions"><button title="Ver detalhes"><i class="fa-solid fa-eye"></i></button></div></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ================= CLIENT PORTAL VIEW ================= -->
+<div id="client-view" class="view">
+  <div class="cp-shell">
+    <div class="cp-hero">
+      <div class="cp-hero-top">
+        <div>
+          <div class="cp-client-tag">Portal do Cliente</div>
+          <h1>Bem-vindo, Construtora Horizonte</h1>
+          <p>Acompanhe em tempo real o andamento dos ensaios das suas obras, com rastreabilidade completa de cada corpo de prova, do molde ao laudo.</p>
+        </div>
+        <button class="cp-notif-btn" id="cp-notif-btn"><i class="fa-solid fa-bell"></i>Notificacoes<span class="badge">2</span></button>
+      </div>
+    </div>
+
+    <div class="cp-notif-banner">
+      <i class="fa-solid fa-circle-check"></i>
+      2 novos laudos disponiveis esta semana para Edificio Aurora e Residencial Palmeiras.
+      <span class="dismiss" id="cp-dismiss">Marcar como lido</span>
+    </div>
+
+    <div class="obra-grid">
+      <div class="obra-card">
+        <div class="obra-top">
+          <div>
+            <div class="obra-name">Edificio Aurora</div>
+            <div class="obra-loc"><i class="fa-solid fa-location-dot"></i>Residencial · 18 pavimentos</div>
+          </div>
+          <div class="ring" style="background:conic-gradient(var(--green) 0% 78%, #eee 78% 100%);"><div class="ring-txt">78%</div></div>
+        </div>
+        <div class="obra-stats">
+          <div class="obra-stat"><div class="n">18</div><div class="l">Total CP</div></div>
+          <div class="obra-stat"><div class="n">4</div><div class="l">Em Cura</div></div>
+          <div class="obra-stat"><div class="n">14</div><div class="l">Laudo Ok</div></div>
+        </div>
+        <div class="obra-foot">
+          <div class="obra-next">Proxima ruptura: <b>Hoje, 09:30</b></div>
+          <button class="btn btn-ghost btn-sm">Ver detalhes</button>
+        </div>
+      </div>
+      <div class="obra-card">
+        <div class="obra-top">
+          <div>
+            <div class="obra-name">Residencial Palmeiras</div>
+            <div class="obra-loc"><i class="fa-solid fa-location-dot"></i>Residencial · 6 blocos</div>
+          </div>
+          <div class="ring" style="background:conic-gradient(var(--green) 0% 45%, #eee 45% 100%);"><div class="ring-txt">45%</div></div>
+        </div>
+        <div class="obra-stats">
+          <div class="obra-stat"><div class="n">11</div><div class="l">Total CP</div></div>
+          <div class="obra-stat"><div class="n">6</div><div class="l">Em Cura</div></div>
+          <div class="obra-stat"><div class="n">5</div><div class="l">Laudo Ok</div></div>
+        </div>
+        <div class="obra-foot">
+          <div class="obra-next">Proxima ruptura: <b>Qui, 17/07</b></div>
+          <button class="btn btn-ghost btn-sm">Ver detalhes</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="cp-section-title"><i class="fa-solid fa-chart-simple"></i>Resistencia Media por Obra vs fck Especificado</div>
+    <div class="panel chart-panel">
+      <div class="bar-row">
+        <div class="bar-label">Edificio Aurora</div>
+        <div class="bar-track">
+          <div class="bar-target" style="left:83%;" data-label="fck 30"></div>
+          <div class="bar-fill" style="width:89%;"><span>32.1 MPa</span></div>
+        </div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">Residencial Palmeiras</div>
+        <div class="bar-track">
+          <div class="bar-target" style="left:69%;" data-label="fck 25"></div>
+          <div class="bar-fill" style="width:75%;"><span>27.0 MPa</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cp-section-title"><i class="fa-solid fa-vial"></i>Meus Corpos de Prova</div>
+    <div class="panel">
+      <div class="table-wrap">
+        <table style="min-width:760px;">
+          <thead>
+            <tr><th>Corpo de Prova</th><th>Obra</th><th>Idade</th><th>Estagio</th><th>Resultado</th><th>Laudo</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><div class="cp-id-cell"><div class="qr-mock"></div><div class="cp-id">CP-2607-018</div></div></td>
+              <td>Edificio Aurora</td><td>7 dias</td>
+              <td><span class="stage-badge stage-cura"><i class="fa-solid fa-water"></i>Em Cura</span></td>
+              <td class="result-cell"><div class="mpa">—</div></td>
+              <td><button class="btn btn-ghost btn-sm" disabled style="opacity:.45;cursor:not-allowed;"><i class="fa-solid fa-lock"></i>Aguardando</button></td>
+            </tr>
+            <tr>
+              <td><div class="cp-id-cell"><div class="qr-mock"></div><div class="cp-id">CP-2607-014</div></div></td>
+              <td>Edificio Aurora</td><td>28 dias</td>
+              <td><span class="stage-badge stage-ruptura"><i class="fa-solid fa-hammer"></i>Ruptura Hoje</span></td>
+              <td class="result-cell"><div class="mpa">—</div></td>
+              <td><button class="btn btn-ghost btn-sm" disabled style="opacity:.45;cursor:not-allowed;"><i class="fa-solid fa-lock"></i>Aguardando</button></td>
+            </tr>
+            <tr>
+              <td><div class="cp-id-cell"><div class="qr-mock"></div><div class="cp-id">CP-2606-041</div></div></td>
+              <td>Edificio Aurora</td><td>28 dias</td>
+              <td><span class="stage-badge stage-laudo"><i class="fa-solid fa-check"></i>Laudo Emitido</span></td>
+              <td class="result-cell"><div class="mpa">32.4 MPa</div></td>
+              <td><button class="btn btn-gold btn-sm download-btn" data-file="CP-2606-041"><i class="fa-solid fa-file-arrow-down"></i>Baixar PDF</button></td>
+            </tr>
+            <tr>
+              <td><div class="cp-id-cell"><div class="qr-mock"></div><div class="cp-id">CP-2606-038</div></div></td>
+              <td>Residencial Palmeiras</td><td>28 dias</td>
+              <td><span class="stage-badge stage-laudo"><i class="fa-solid fa-check"></i>Laudo Emitido</span></td>
+              <td class="result-cell"><div class="mpa">26.7 MPa</div></td>
+              <td><button class="btn btn-gold btn-sm download-btn" data-file="CP-2606-038"><i class="fa-solid fa-file-arrow-down"></i>Baixar PDF</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Slide-over: specimen detail -->
+<div class="overlay" id="overlay"></div>
+<div class="slideover" id="slideover">
+  <div class="so-head">
+    <div>
+      <div style="font-size:11px;font-weight:800;color:var(--gold-dark);text-transform:uppercase;letter-spacing:.5px;">Corpo de Prova</div>
+      <div style="font-size:19px;font-weight:800;margin-top:2px;">CP-2607-011</div>
+      <div style="font-size:12.5px;color:var(--muted);margin-top:2px;">Condominio Bosque Azul · MRV Construcoes</div>
+    </div>
+    <button class="so-close" id="so-close"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div class="so-body">
+    <div class="so-qr"></div>
+    <div class="so-meta">
+      <div><div class="k">Traco</div><div class="v">1:2:3 (cimento:areia:brita)</div></div>
+      <div><div class="k">fck Especificado</div><div class="v">25.0 MPa</div></div>
+      <div><div class="k">Moldagem</div><div class="v">28/06/2026 · Tec. Paulo Reis</div></div>
+      <div><div class="k">Idade Programada</div><div class="v">14 dias</div></div>
+    </div>
+
+    <div class="predict-alert">
+      <div class="pa-head"><i class="fa-solid fa-triangle-exclamation"></i>Alerta Preditivo de Nao Conformidade</div>
+      <p>O resultado parcial aos 7 dias (18.1 MPa) projetava resistencia aos 14 dias abaixo do fck especificado de 25.0 MPa. O sistema sinalizou o risco automaticamente 3 dias antes da ruptura final, permitindo contato preventivo com a obra. Resultado confirmado: 22.8 MPa.</p>
+    </div>
+
+    <div class="timeline" style="margin-top:22px;">
+      <div class="tl-item">
+        <div class="tl-dot"><i class="fa-solid fa-cube"></i></div>
+        <div class="tl-txt"><div class="tt">Moldagem realizada</div><div class="ts">28/06/2026, 10:15 · Tec. Paulo Reis</div></div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot"><i class="fa-solid fa-water"></i></div>
+        <div class="tl-txt"><div class="tt">Em cura (camara umida)</div><div class="ts">28/06/2026 a 12/07/2026</div></div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        <div class="tl-txt"><div class="tt">Alerta preditivo emitido</div><div class="ts">09/07/2026 · Baseado no ensaio parcial de 7 dias</div></div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot"><i class="fa-solid fa-hammer"></i></div>
+        <div class="tl-txt"><div class="tt">Ruptura realizada</div><div class="ts">12/07/2026, 11:00 · Resultado: 22.8 MPa</div></div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot"><i class="fa-solid fa-file-shield"></i></div>
+        <div class="tl-txt"><div class="tt">Laudo tecnico emitido</div><div class="ts">13/07/2026 · Enviado ao portal do cliente</div></div>
+      </div>
+    </div>
+
+    <button class="btn btn-gold" style="width:100%;justify-content:center;" id="gen-laudo-btn"><i class="fa-solid fa-file-pdf"></i>Gerar / Reenviar Laudo PDF</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"><i class="fa-solid fa-circle-check"></i><span id="toast-msg">Acao concluida.</span></div>
+
+<script>
+  // View switcher
+  document.querySelectorAll('.switcher-pill').forEach(pill=>{
+    pill.addEventListener('click',()=>{
+      document.querySelectorAll('.switcher-pill').forEach(p=>p.classList.remove('active'));
+      pill.classList.add('active');
+      document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+      document.getElementById(pill.dataset.target).classList.add('active');
+    });
+  });
+
+  // Sidebar nav highlight
+  document.querySelectorAll('.nav-item[data-tab]').forEach(item=>{
+    item.addEventListener('click',()=>{
+      document.querySelectorAll('.nav-item[data-tab]').forEach(i=>i.classList.remove('active'));
+      item.classList.add('active');
+    });
+  });
+
+  // Hamburger
+  const hamburger=document.getElementById('hamburger');
+  const sidebar=document.getElementById('sidebar');
+  if(hamburger){hamburger.addEventListener('click',()=>sidebar.classList.toggle('open'));}
+
+  // Toast
+  const toast=document.getElementById('toast');
+  const toastMsg=document.getElementById('toast-msg');
+  function showToast(msg){
+    toastMsg.textContent=msg;
+    toast.classList.add('show');
+    clearTimeout(showToast._t);
+    showToast._t=setTimeout(()=>toast.classList.remove('show'),3200);
+  }
+
+  // Slide-over
+  const overlay=document.getElementById('overlay');
+  const slideover=document.getElementById('slideover');
+  function openSO(){overlay.classList.add('open');slideover.classList.add('open');}
+  function closeSO(){overlay.classList.remove('open');slideover.classList.remove('open');}
+  document.querySelectorAll('#cp-table-body tr').forEach(row=>{
+    row.addEventListener('click',()=>openSO());
+  });
+  document.getElementById('so-close').addEventListener('click',closeSO);
+  overlay.addEventListener('click',closeSO);
+
+  document.getElementById('gen-laudo-btn').addEventListener('click',()=>{
+    showToast('Laudo PDF gerado e enviado ao portal do cliente.');
+  });
+  document.getElementById('new-cp-btn').addEventListener('click',()=>{
+    showToast('Novo corpo de prova cadastrado. QR code gerado automaticamente.');
+  });
+
+  document.querySelectorAll('.download-btn').forEach(btn=>{
+    btn.addEventListener('click',(e)=>{
+      e.stopPropagation();
+      showToast('Download iniciado: Laudo_'+btn.dataset.file+'.pdf');
+    });
+  });
+
+  const cpDismiss=document.getElementById('cp-dismiss');
+  if(cpDismiss){
+    cpDismiss.addEventListener('click',()=>{
+      document.querySelector('.cp-notif-banner').style.display='none';
+    });
+  }
+  const cpNotifBtn=document.getElementById('cp-notif-btn');
+  if(cpNotifBtn){
+    cpNotifBtn.addEventListener('click',()=>{
+      showToast('2 laudos novos: CP-2606-041 e CP-2606-038.');
+    });
+  }
+</script>
+</body>
+</html>
