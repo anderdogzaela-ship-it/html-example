@@ -1,0 +1,822 @@
+<title>AtiendeIA - Automatizacion inteligente de WhatsApp</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+:root{
+  --g900:#052e1c; --g800:#0a3d24; --g700:#14532d; --g650:#166534; --g600:#15803d; --g500:#16a34a; --g400:#22c55e; --g300:#4ade80;
+  --em600:#059669; --em500:#10b981; --em400:#34d399;
+  --n50:#f7f8f5; --n100:#eef1ea; --n200:#dfe4d6; --n300:#c2cab4; --n400:#98a486; --n500:#71805f; --n600:#556448; --n700:#3d4a34; --n800:#293522; --n900:#1a2314;
+  --white:#ffffff;
+  --radius-sm:8px; --radius:14px; --radius-lg:20px;
+  --shadow-sm:0 1px 2px rgba(20,30,15,.06);
+  --shadow:0 4px 16px rgba(20,40,20,.08);
+  --shadow-lg:0 12px 40px rgba(10,30,15,.14);
+  --ease-spring:cubic-bezier(.34,1.56,.64,1);
+  --ease:cubic-bezier(.4,0,.2,1);
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html{-webkit-font-smoothing:antialiased; scroll-behavior:smooth;}
+body{
+  font-family:'Lexend', sans-serif; background:var(--n50); color:var(--n900);
+  display:flex; min-height:100vh; overflow-x:hidden;
+}
+::selection{background:var(--g300); color:var(--g900);}
+a{text-decoration:none; color:inherit;}
+button{font-family:inherit; cursor:pointer;}
+
+/* ---------- Sidebar ---------- */
+.sidebar{
+  width:264px; min-width:264px; background:linear-gradient(180deg, var(--g900), var(--g800) 70%);
+  color:var(--n100); display:flex; flex-direction:column; padding:24px 16px; position:sticky; top:0; height:100vh; z-index:100;
+  transition:transform .3s var(--ease);
+}
+.brand{display:flex; align-items:center; gap:10px; padding:6px 10px 26px 10px;}
+.brand-mark{
+  width:38px; height:38px; border-radius:11px; background:linear-gradient(135deg, var(--g400), var(--em500));
+  display:flex; align-items:center; justify-content:center; font-size:18px; color:white;
+  box-shadow:0 0 0 4px rgba(52,211,153,.15); animation:pulseLogo 3s ease-in-out infinite;
+}
+@keyframes pulseLogo{0%,100%{box-shadow:0 0 0 4px rgba(52,211,153,.15);}50%{box-shadow:0 0 0 8px rgba(52,211,153,.06);}}
+.brand-name{font-weight:700; font-size:17px; letter-spacing:.2px; color:white;}
+.brand-sub{font-size:10.5px; color:var(--g300); font-weight:500; letter-spacing:.4px; text-transform:uppercase;}
+
+.nav-section-label{font-size:10.5px; text-transform:uppercase; letter-spacing:.8px; color:var(--n400); font-weight:600; padding:18px 12px 8px;}
+.nav{display:flex; flex-direction:column; gap:2px;}
+.nav-item{
+  display:flex; align-items:center; gap:12px; padding:10px 12px; border-radius:var(--radius-sm);
+  color:var(--n200); font-size:14px; font-weight:500; transition:background .2s var(--ease), color .2s var(--ease), transform .15s var(--ease);
+  position:relative; border:none; background:transparent; width:100%; text-align:left;
+}
+.nav-item i{width:18px; text-align:center; font-size:15px; opacity:.85;}
+.nav-item:hover{background:rgba(255,255,255,.06); color:white; transform:translateX(2px);}
+.nav-item.active{background:linear-gradient(90deg, rgba(52,211,153,.18), rgba(52,211,153,.02)); color:white;}
+.nav-item.active::before{content:''; position:absolute; left:-16px; top:8px; bottom:8px; width:3px; border-radius:3px; background:var(--g400);}
+.nav-badge{margin-left:auto; background:var(--g400); color:var(--g900); font-size:10.5px; font-weight:700; padding:2px 7px; border-radius:20px;}
+
+.sidebar-footer{margin-top:auto; padding:14px 12px; border-radius:var(--radius); background:rgba(255,255,255,.05); display:flex; gap:10px; align-items:center;}
+.status-dot{width:9px; height:9px; border-radius:50%; background:var(--g400); box-shadow:0 0 0 3px rgba(74,222,128,.25); flex-shrink:0; animation:blink 2.4s ease-in-out infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.5;}}
+.sidebar-footer-text{font-size:11.5px; color:var(--n300); line-height:1.4;}
+.sidebar-footer-text b{color:white; display:block; font-size:12.5px;}
+
+/* ---------- Main ---------- */
+.main{flex:1; min-width:0; display:flex; flex-direction:column;}
+.topbar{
+  height:68px; display:flex; align-items:center; justify-content:space-between; padding:0 28px;
+  background:rgba(247,248,245,.85); backdrop-filter:blur(10px); position:sticky; top:0; z-index:50;
+  border-bottom:1px solid var(--n200);
+}
+.page-title{font-size:19px; font-weight:700; color:var(--n900); display:flex; align-items:center; gap:10px;}
+.page-title .sub{font-size:12.5px; font-weight:500; color:var(--n500);}
+.topbar-right{display:flex; align-items:center; gap:16px;}
+.search-box{
+  display:flex; align-items:center; gap:8px; background:white; border:1px solid var(--n200); border-radius:10px;
+  padding:8px 14px; font-size:13px; color:var(--n500); width:230px; box-shadow:var(--shadow-sm);
+}
+.search-box input{border:none; outline:none; font-family:inherit; font-size:13px; width:100%; background:transparent;}
+.icon-btn{width:38px; height:38px; border-radius:10px; background:white; border:1px solid var(--n200); display:flex; align-items:center; justify-content:center; color:var(--n600); position:relative; transition:all .2s var(--ease);}
+.icon-btn:hover{border-color:var(--g400); color:var(--g600); transform:translateY(-1px); box-shadow:var(--shadow-sm);}
+.icon-btn .dot{position:absolute; top:7px; right:7px; width:7px; height:7px; border-radius:50%; background:#ef4444; border:2px solid white;}
+.avatar-chip{display:flex; align-items:center; gap:9px; padding:5px 10px 5px 5px; border-radius:24px; background:white; border:1px solid var(--n200); box-shadow:var(--shadow-sm);}
+.avatar-chip img{width:30px; height:30px; border-radius:50%; object-fit:cover;}
+.avatar-chip .name{font-size:12.5px; font-weight:600;}
+.avatar-chip .role{font-size:10.5px; color:var(--n500); display:block; margin-top:-2px;}
+.hamburger{display:none; background:none; border:none; font-size:18px; color:var(--n700);}
+
+.content{padding:26px 28px 60px; max-width:1400px; width:100%;}
+.page{display:none; animation:fadeIn .4s var(--ease);}
+.page.active{display:block;}
+@keyframes fadeIn{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);}}
+
+/* reveal */
+.reveal{opacity:0; transform:translateY(16px); transition:opacity .55s var(--ease), transform .55s var(--ease);}
+.reveal.in{opacity:1; transform:translateY(0);}
+
+/* ---------- KPI cards ---------- */
+.kpi-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:18px; margin-bottom:24px;}
+.kpi-card{
+  background:white; border-radius:var(--radius); padding:20px 20px 18px; border:1px solid var(--n200); box-shadow:var(--shadow-sm);
+  transition:transform .25s var(--ease-spring), box-shadow .25s var(--ease);
+}
+.kpi-card:hover{transform:translateY(-3px); box-shadow:var(--shadow);}
+.kpi-top{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px;}
+.kpi-icon{width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:15px;}
+.kpi-trend{font-size:11.5px; font-weight:700; padding:3px 8px; border-radius:20px; display:flex; align-items:center; gap:4px;}
+.trend-up{background:#dcfce7; color:var(--g650);}
+.trend-flat{background:var(--n100); color:var(--n600);}
+.kpi-value{font-size:28px; font-weight:800; letter-spacing:-.5px; color:var(--n900);}
+.kpi-label{font-size:12.5px; color:var(--n500); font-weight:500; margin-top:2px;}
+.kpi-spark{height:28px; margin-top:12px; display:flex; align-items:flex-end; gap:3px;}
+.kpi-spark span{flex:1; background:var(--g200,#bbf7d0); border-radius:2px 2px 0 0; transition:height 1s var(--ease-spring);}
+
+/* ---------- Two column dashboard ---------- */
+.dash-grid{display:grid; grid-template-columns:1.4fr 1fr; gap:20px;}
+.panel{background:white; border-radius:var(--radius); border:1px solid var(--n200); box-shadow:var(--shadow-sm); overflow:hidden;}
+.panel-head{display:flex; justify-content:space-between; align-items:center; padding:18px 20px; border-bottom:1px solid var(--n100);}
+.panel-head h3{font-size:15px; font-weight:700;}
+.panel-head .link{font-size:12.5px; color:var(--g600); font-weight:600;}
+.panel-body{padding:6px 8px;}
+
+.activity-row{display:flex; gap:12px; padding:12px 12px; border-radius:10px; transition:background .2s var(--ease); align-items:flex-start;}
+.activity-row:hover{background:var(--n50);}
+.activity-row img{width:36px; height:36px; border-radius:50%; object-fit:cover; flex-shrink:0;}
+.activity-main{flex:1; min-width:0;}
+.activity-top{display:flex; justify-content:space-between; gap:8px;}
+.activity-name{font-size:13.5px; font-weight:600;}
+.activity-time{font-size:11px; color:var(--n400); white-space:nowrap;}
+.activity-msg{font-size:12.5px; color:var(--n600); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.tag{display:inline-flex; align-items:center; gap:4px; font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:20px; margin-top:6px;}
+.tag-ai{background:#dcfce7; color:var(--g650);}
+.tag-human{background:#fef3c7; color:#92400e;}
+.tag-escalated{background:#fee2e2; color:#991b1b;}
+
+.donut-wrap{display:flex; align-items:center; gap:20px; padding:20px;}
+.donut{width:140px; height:140px; border-radius:50%; position:relative; flex-shrink:0;
+  background:conic-gradient(var(--g500) 0% 78%, #fbbf24 78% 100%);}
+.donut::after{content:''; position:absolute; inset:16px; background:white; border-radius:50%;}
+.donut-center{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;}
+.donut-center b{font-size:22px; font-weight:800;}
+.donut-center span{font-size:10.5px; color:var(--n500);}
+.legend-item{display:flex; align-items:center; gap:8px; font-size:13px; margin-bottom:10px;}
+.legend-dot{width:10px; height:10px; border-radius:3px;}
+.legend-item b{margin-left:auto;}
+
+/* ---------- Buttons ---------- */
+.btn{display:inline-flex; align-items:center; gap:8px; padding:10px 18px; border-radius:10px; font-size:13.5px; font-weight:600; border:none; transition:all .2s var(--ease-spring);}
+.btn-primary{background:linear-gradient(135deg, var(--g500), var(--em600)); color:white; box-shadow:0 4px 14px rgba(16,163,74,.28);}
+.btn-primary:hover{transform:translateY(-2px) scale(1.02); box-shadow:0 8px 20px rgba(16,163,74,.35);}
+.btn-ghost{background:white; border:1px solid var(--n200); color:var(--n700);}
+.btn-ghost:hover{border-color:var(--g400); color:var(--g600);}
+.btn-danger-ghost{background:#fef2f2; border:1px solid #fecaca; color:#b91c1c;}
+.btn-danger-ghost:hover{background:#fee2e2;}
+.btn-sm{padding:7px 12px; font-size:12px;}
+
+/* ---------- Inbox page ---------- */
+.inbox-shell{display:grid; grid-template-columns:320px 1fr; gap:0; border:1px solid var(--n200); border-radius:var(--radius); overflow:hidden; background:white; box-shadow:var(--shadow-sm); height:640px;}
+.conv-list{border-right:1px solid var(--n200); overflow-y:auto; display:flex; flex-direction:column;}
+.conv-search{padding:14px; border-bottom:1px solid var(--n100); position:sticky; top:0; background:white; z-index:2;}
+.conv-item{display:flex; gap:11px; padding:13px 14px; border-bottom:1px solid var(--n100); cursor:pointer; transition:background .15s var(--ease); position:relative;}
+.conv-item:hover{background:var(--n50);}
+.conv-item.active{background:#f0fdf4; border-left:3px solid var(--g500);}
+.conv-item img{width:40px; height:40px; border-radius:50%; object-fit:cover; flex-shrink:0;}
+.conv-info{flex:1; min-width:0;}
+.conv-top{display:flex; justify-content:space-between;}
+.conv-name{font-size:13.5px; font-weight:600;}
+.conv-time{font-size:10.5px; color:var(--n400);}
+.conv-preview{font-size:12px; color:var(--n500); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:190px;}
+.conv-unread{width:18px; height:18px; border-radius:50%; background:var(--g500); color:white; font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center; margin-top:4px;}
+
+.chat-pane{display:flex; flex-direction:column; min-width:0;}
+.chat-head{display:flex; justify-content:space-between; align-items:center; padding:14px 20px; border-bottom:1px solid var(--n200);}
+.chat-head-info{display:flex; align-items:center; gap:10px;}
+.chat-head-info img{width:38px; height:38px; border-radius:50%; object-fit:cover;}
+.chat-head-name{font-size:14px; font-weight:700;}
+.chat-head-status{font-size:11.5px; color:var(--g600); display:flex; align-items:center; gap:5px;}
+.chat-messages{flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:14px; background:linear-gradient(180deg, #fafcf8, #f5f8f2);}
+.msg{max-width:68%; padding:10px 14px; border-radius:14px; font-size:13.5px; line-height:1.5; position:relative;}
+.msg.in{background:white; border:1px solid var(--n200); align-self:flex-start; border-bottom-left-radius:4px;}
+.msg.out{background:linear-gradient(135deg, var(--g500), var(--em600)); color:white; align-self:flex-end; border-bottom-right-radius:4px;}
+.msg.out.human{background:linear-gradient(135deg,#f59e0b,#d97706);}
+.msg-meta{font-size:10px; margin-top:5px; opacity:.75; display:flex; gap:6px; align-items:center;}
+.confidence-chip{background:rgba(255,255,255,.25); padding:1px 7px; border-radius:20px; font-weight:700;}
+.msg.in .msg-meta{color:var(--n400);}
+.chat-foot{padding:14px 20px; border-top:1px solid var(--n200); display:flex; gap:10px; align-items:center;}
+.chat-foot input{flex:1; border:1px solid var(--n200); border-radius:24px; padding:11px 18px; font-family:inherit; font-size:13px; outline:none; background:var(--n50);}
+.chat-foot input:focus{border-color:var(--g400);}
+.ai-note{display:flex; align-items:center; gap:8px; padding:9px 14px; background:#f0fdf4; border:1px dashed var(--g300); border-radius:10px; font-size:11.5px; color:var(--g650); margin:0 20px 12px;}
+
+/* ---------- Knowledge base ---------- */
+.kb-toolbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;}
+.kb-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:16px;}
+.kb-card{background:white; border:1px solid var(--n200); border-radius:var(--radius); padding:18px; box-shadow:var(--shadow-sm); transition:box-shadow .2s var(--ease);}
+.kb-card:hover{box-shadow:var(--shadow);}
+.kb-card-top{display:flex; justify-content:space-between; align-items:flex-start;}
+.kb-cat{font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.4px; color:var(--g600); background:#f0fdf4; padding:3px 9px; border-radius:20px;}
+.kb-q{font-size:14.5px; font-weight:700; margin:10px 0 6px;}
+.kb-a{font-size:12.5px; color:var(--n600); line-height:1.55; margin-bottom:14px;}
+.kb-foot{display:flex; justify-content:space-between; align-items:center; padding-top:12px; border-top:1px solid var(--n100);}
+.kb-usage{font-size:11.5px; color:var(--n500);}
+.kb-usage b{color:var(--n800);}
+
+/* toggle switch */
+.switch{position:relative; width:38px; height:21px; flex-shrink:0;}
+.switch input{opacity:0; width:0; height:0;}
+.slider-toggle{position:absolute; inset:0; background:var(--n300); border-radius:24px; cursor:pointer; transition:.3s;}
+.slider-toggle::before{content:''; position:absolute; width:16px; height:16px; left:3px; top:2.5px; background:white; border-radius:50%; transition:.3s var(--ease-spring); box-shadow:0 1px 3px rgba(0,0,0,.2);}
+.switch input:checked + .slider-toggle{background:var(--g500);}
+.switch input:checked + .slider-toggle::before{transform:translateX(17px);}
+
+/* ---------- Automations flow ---------- */
+.flow-wrap{background:white; border:1px solid var(--n200); border-radius:var(--radius); padding:36px 28px; box-shadow:var(--shadow-sm); overflow-x:auto;}
+.flow-track{display:flex; align-items:center; gap:0; min-width:900px;}
+.flow-node{background:var(--n50); border:1.5px solid var(--n200); border-radius:14px; padding:16px 18px; width:190px; text-align:center; position:relative; transition:all .3s var(--ease);}
+.flow-node i{font-size:20px; color:var(--g600); margin-bottom:8px; display:block;}
+.flow-node .ft{font-size:13px; font-weight:700; margin-bottom:3px;}
+.flow-node .fs{font-size:11px; color:var(--n500); line-height:1.4;}
+.flow-node.decision{border-radius:16px; background:#fffbeb; border-color:#fde68a;}
+.flow-node.decision i{color:#d97706;}
+.flow-node.active{border-color:var(--g500); box-shadow:0 0 0 4px rgba(34,197,94,.16); transform:scale(1.04);}
+.flow-arrow{width:46px; height:2px; background:var(--n300); position:relative; flex-shrink:0;}
+.flow-arrow::after{content:''; position:absolute; right:0; top:-4px; border-left:8px solid var(--n300); border-top:5px solid transparent; border-bottom:5px solid transparent;}
+.flow-arrow.on{background:var(--g500);}
+.flow-arrow.on::after{border-left-color:var(--g500);}
+.flow-branch{display:flex; flex-direction:column; gap:16px;}
+.flow-sim-btn{margin-top:26px;}
+
+/* ---------- Analytics ---------- */
+.chart-panel{background:white; border:1px solid var(--n200); border-radius:var(--radius); padding:22px; box-shadow:var(--shadow-sm);}
+.bars{display:flex; align-items:flex-end; gap:14px; height:190px; padding-top:10px;}
+.bar-col{flex:1; display:flex; flex-direction:column; align-items:center; gap:8px;}
+.bar{width:100%; max-width:36px; border-radius:6px 6px 0 0; background:linear-gradient(180deg, var(--g400), var(--g600)); position:relative; overflow:hidden; transition:height 1.1s var(--ease-spring); height:0;}
+.bar::after{content:''; position:absolute; top:0; left:0; right:0; height:40%; background:linear-gradient(180deg, rgba(255,255,255,.35), transparent);}
+.bar-label{font-size:10.5px; color:var(--n500); font-weight:600;}
+.bar-val{font-size:11px; font-weight:700; color:var(--n700);}
+
+.intent-row{display:flex; align-items:center; gap:12px; padding:10px 0;}
+.intent-name{font-size:12.5px; font-weight:600; width:150px; flex-shrink:0;}
+.intent-track{flex:1; height:8px; background:var(--n100); border-radius:20px; overflow:hidden;}
+.intent-fill{height:100%; background:linear-gradient(90deg, var(--g500), var(--em500)); border-radius:20px; transition:width 1.2s var(--ease-spring); width:0;}
+.intent-pct{font-size:11.5px; font-weight:700; color:var(--n700); width:36px; text-align:right;}
+
+/* ---------- Settings ---------- */
+.settings-grid{display:grid; grid-template-columns:1fr 1fr; gap:18px;}
+.settings-card{background:white; border:1px solid var(--n200); border-radius:var(--radius); padding:22px; box-shadow:var(--shadow-sm);}
+.settings-row{display:flex; justify-content:space-between; align-items:center; padding:13px 0; border-bottom:1px solid var(--n100);}
+.settings-row:last-child{border-bottom:none;}
+.settings-row-text b{font-size:13.5px; display:block;}
+.settings-row-text span{font-size:11.5px; color:var(--n500);}
+.wa-status{display:flex; align-items:center; gap:14px; background:#f0fdf4; border:1px solid var(--g300); border-radius:var(--radius); padding:18px 20px; margin-bottom:18px;}
+.wa-status i{font-size:26px; color:var(--g600);}
+.range-wrap{display:flex; align-items:center; gap:12px; width:180px;}
+input[type=range]{flex:1; accent-color:var(--g500);}
+
+/* ---------- Toast ---------- */
+.toast{position:fixed; bottom:26px; right:26px; background:var(--n900); color:white; padding:14px 20px; border-radius:12px; font-size:13.5px; font-weight:500; display:flex; align-items:center; gap:10px; box-shadow:var(--shadow-lg); transform:translateY(30px); opacity:0; pointer-events:none; transition:all .4s var(--ease-spring); z-index:999;}
+.toast.show{transform:translateY(0); opacity:1;}
+.toast i{color:var(--g400);}
+
+/* ---------- Responsive ---------- */
+@media(max-width:1080px){
+  .kpi-grid{grid-template-columns:repeat(2,1fr);}
+  .dash-grid{grid-template-columns:1fr;}
+  .settings-grid, .kb-grid{grid-template-columns:1fr;}
+  .inbox-shell{grid-template-columns:260px 1fr;}
+}
+@media(max-width:768px){
+  .sidebar{position:fixed; left:0; top:0; transform:translateX(-100%); box-shadow:var(--shadow-lg);}
+  .sidebar.open{transform:translateX(0);}
+  .hamburger{display:block;}
+  .search-box{display:none;}
+  .kpi-grid{grid-template-columns:1fr;}
+  .inbox-shell{grid-template-columns:1fr; height:auto;}
+  .conv-list{max-height:260px;}
+  .chat-pane{height:480px;}
+  .content{padding:18px;}
+  .avatar-chip .name, .avatar-chip .role{display:none;}
+}
+</style>
+
+<div class="sidebar" id="sidebar">
+  <div class="brand">
+    <div class="brand-mark"><i class="fa-solid fa-comments"></i></div>
+    <div>
+      <div class="brand-name">AtiendeIA</div>
+      <div class="brand-sub">WhatsApp Automation</div>
+    </div>
+  </div>
+
+  <div class="nav-section-label">Principal</div>
+  <div class="nav">
+    <button class="nav-item active" data-page="dashboard"><i class="fa-solid fa-gauge-high"></i>Panel general</button>
+    <button class="nav-item" data-page="inbox"><i class="fa-solid fa-inbox"></i>Bandeja WhatsApp<span class="nav-badge">12</span></button>
+  </div>
+
+  <div class="nav-section-label">Automatizacion</div>
+  <div class="nav">
+    <button class="nav-item" data-page="kb"><i class="fa-solid fa-book-open"></i>Base de conocimiento</button>
+    <button class="nav-item" data-page="flows"><i class="fa-solid fa-diagram-project"></i>Flujo de decision IA</button>
+  </div>
+
+  <div class="nav-section-label">Insights</div>
+  <div class="nav">
+    <button class="nav-item" data-page="analytics"><i class="fa-solid fa-chart-line"></i>Analitica</button>
+    <button class="nav-item" data-page="settings"><i class="fa-solid fa-gear"></i>Configuracion</button>
+  </div>
+
+  <div class="sidebar-footer">
+    <span class="status-dot"></span>
+    <div class="sidebar-footer-text"><b>API conectada</b>WhatsApp Business Cloud API</div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <div style="display:flex; align-items:center; gap:14px;">
+      <button class="hamburger" id="hamburger"><i class="fa-solid fa-bars"></i></button>
+      <div class="page-title" id="pageTitle">Panel general <span class="sub" id="pageSub">Vision de hoy en atencion automatizada</span></div>
+    </div>
+    <div class="topbar-right">
+      <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input placeholder="Buscar conversacion o cliente"></div>
+      <button class="icon-btn"><i class="fa-regular fa-bell"></i><span class="dot"></span></button>
+      <div class="avatar-chip">
+        <img src="https://i.pravatar.cc/64?img=47" onerror="this.style.display='none'">
+        <div><div class="name">Elidianis J.</div><span class="role">Administradora</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ================= DASHBOARD ================= -->
+    <div class="page active" id="page-dashboard">
+      <div class="kpi-grid">
+        <div class="kpi-card reveal">
+          <div class="kpi-top">
+            <div class="kpi-icon" style="background:#dcfce7; color:var(--g650);"><i class="fa-solid fa-message"></i></div>
+            <div class="kpi-trend trend-up"><i class="fa-solid fa-arrow-up"></i>18%</div>
+          </div>
+          <div class="kpi-value" data-count="347">0</div>
+          <div class="kpi-label">Conversaciones atendidas hoy</div>
+          <div class="kpi-spark">
+            <span style="height:40%"></span><span style="height:65%"></span><span style="height:50%"></span><span style="height:80%"></span><span style="height:60%"></span><span style="height:95%"></span><span style="height:75%"></span>
+          </div>
+        </div>
+        <div class="kpi-card reveal">
+          <div class="kpi-top">
+            <div class="kpi-icon" style="background:#dbeafe; color:#1d4ed8;"><i class="fa-solid fa-bolt"></i></div>
+            <div class="kpi-trend trend-up"><i class="fa-solid fa-arrow-down"></i>32%</div>
+          </div>
+          <div class="kpi-value"><span data-count="8">0</span>s</div>
+          <div class="kpi-label">Tiempo de primera respuesta</div>
+          <div class="kpi-spark">
+            <span style="height:90%"></span><span style="height:70%"></span><span style="height:55%"></span><span style="height:40%"></span><span style="height:35%"></span><span style="height:25%"></span><span style="height:20%"></span>
+          </div>
+        </div>
+        <div class="kpi-card reveal">
+          <div class="kpi-top">
+            <div class="kpi-icon" style="background:#fef3c7; color:#92400e;"><i class="fa-solid fa-robot"></i></div>
+            <div class="kpi-trend trend-up"><i class="fa-solid fa-arrow-up"></i>6%</div>
+          </div>
+          <div class="kpi-value"><span data-count="78">0</span>%</div>
+          <div class="kpi-label">Resueltas sin intervencion humana</div>
+          <div class="kpi-spark">
+            <span style="height:50%"></span><span style="height:55%"></span><span style="height:60%"></span><span style="height:68%"></span><span style="height:74%"></span><span style="height:78%"></span><span style="height:85%"></span>
+          </div>
+        </div>
+        <div class="kpi-card reveal">
+          <div class="kpi-top">
+            <div class="kpi-icon" style="background:#fee2e2; color:#991b1b;"><i class="fa-solid fa-user-headset"></i></div>
+            <div class="kpi-trend trend-flat">estable</div>
+          </div>
+          <div class="kpi-value" data-count="22">0</div>
+          <div class="kpi-label">Escaladas a agente humano</div>
+          <div class="kpi-spark">
+            <span style="height:60%"></span><span style="height:45%"></span><span style="height:50%"></span><span style="height:38%"></span><span style="height:42%"></span><span style="height:30%"></span><span style="height:35%"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="dash-grid">
+        <div class="panel reveal">
+          <div class="panel-head">
+            <h3>Actividad reciente</h3>
+            <a class="link" data-goto="inbox">Ver bandeja completa</a>
+          </div>
+          <div class="panel-body">
+            <div class="activity-row">
+              <img src="https://i.pravatar.cc/64?img=32" onerror="this.style.background='var(--n200)'">
+              <div class="activity-main">
+                <div class="activity-top"><span class="activity-name">Camila Rios</span><span class="activity-time">hace 2 min</span></div>
+                <div class="activity-msg">Cual es el horario de atencion los sabados?</div>
+                <span class="tag tag-ai"><i class="fa-solid fa-robot"></i> Resuelto por IA</span>
+              </div>
+            </div>
+            <div class="activity-row">
+              <img src="https://i.pravatar.cc/64?img=15" onerror="this.style.background='var(--n200)'">
+              <div class="activity-main">
+                <div class="activity-top"><span class="activity-name">Jorge Mesa</span><span class="activity-time">hace 6 min</span></div>
+                <div class="activity-msg">Quiero cancelar mi pedido, es urgente</div>
+                <span class="tag tag-escalated"><i class="fa-solid fa-triangle-exclamation"></i> Escalado a agente</span>
+              </div>
+            </div>
+            <div class="activity-row">
+              <img src="https://i.pravatar.cc/64?img=5" onerror="this.style.background='var(--n200)'">
+              <div class="activity-main">
+                <div class="activity-top"><span class="activity-name">Valentina Ruiz</span><span class="activity-time">hace 11 min</span></div>
+                <div class="activity-msg">Como hago seguimiento a mi envio?</div>
+                <span class="tag tag-ai"><i class="fa-solid fa-robot"></i> Resuelto por IA</span>
+              </div>
+            </div>
+            <div class="activity-row">
+              <img src="https://i.pravatar.cc/64?img=68" onerror="this.style.background='var(--n200)'">
+              <div class="activity-main">
+                <div class="activity-top"><span class="activity-name">Andres Toro</span><span class="activity-time">hace 19 min</span></div>
+                <div class="activity-msg">Necesito hablar con un asesor sobre mi factura</div>
+                <span class="tag tag-human"><i class="fa-solid fa-user"></i> Atendido por agente</span>
+              </div>
+            </div>
+            <div class="activity-row">
+              <img src="https://i.pravatar.cc/64?img=21" onerror="this.style.background='var(--n200)'">
+              <div class="activity-main">
+                <div class="activity-top"><span class="activity-name">Laura Gomez</span><span class="activity-time">hace 24 min</span></div>
+                <div class="activity-msg">Tienen el producto en color azul disponible?</div>
+                <span class="tag tag-ai"><i class="fa-solid fa-robot"></i> Resuelto por IA</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel reveal">
+          <div class="panel-head"><h3>Distribucion de resolucion</h3></div>
+          <div class="donut-wrap">
+            <div class="donut"><div class="donut-center"><b>78%</b><span>automatico</span></div></div>
+            <div style="flex:1;">
+              <div class="legend-item"><span class="legend-dot" style="background:var(--g500);"></span>Resuelto por IA<b>78%</b></div>
+              <div class="legend-item"><span class="legend-dot" style="background:#fbbf24;"></span>Escalado a humano<b>22%</b></div>
+              <div style="margin-top:16px; padding-top:14px; border-top:1px solid var(--n100); font-size:11.5px; color:var(--n500); line-height:1.6;">
+                El motor de intenciones detecta cuando una consulta requiere criterio humano (reclamos, pagos, casos sensibles) y la transfiere automaticamente con el historial completo.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= INBOX ================= -->
+    <div class="page" id="page-inbox">
+      <div class="inbox-shell">
+        <div class="conv-list">
+          <div class="conv-search"><div class="search-box" style="width:100%;"><i class="fa-solid fa-magnifying-glass"></i><input placeholder="Buscar cliente"></div></div>
+
+          <div class="conv-item active" data-conv="1">
+            <img src="https://i.pravatar.cc/64?img=32">
+            <div class="conv-info">
+              <div class="conv-top"><span class="conv-name">Camila Rios</span><span class="conv-time">10:42</span></div>
+              <div class="conv-preview">Cual es el horario de atencion los sabados?</div>
+            </div>
+          </div>
+          <div class="conv-item" data-conv="2">
+            <img src="https://i.pravatar.cc/64?img=15">
+            <div class="conv-info">
+              <div class="conv-top"><span class="conv-name">Jorge Mesa</span><span class="conv-time">10:36</span></div>
+              <div class="conv-preview">Quiero cancelar mi pedido, es urgente</div>
+            </div>
+            <div class="conv-unread">1</div>
+          </div>
+          <div class="conv-item" data-conv="3">
+            <img src="https://i.pravatar.cc/64?img=5">
+            <div class="conv-info">
+              <div class="conv-top"><span class="conv-name">Valentina Ruiz</span><span class="conv-time">10:29</span></div>
+              <div class="conv-preview">Como hago seguimiento a mi envio?</div>
+            </div>
+          </div>
+          <div class="conv-item" data-conv="4">
+            <img src="https://i.pravatar.cc/64?img=68">
+            <div class="conv-info">
+              <div class="conv-top"><span class="conv-name">Andres Toro</span><span class="conv-time">10:21</span></div>
+              <div class="conv-preview">Necesito hablar con un asesor sobre mi factura</div>
+            </div>
+          </div>
+          <div class="conv-item" data-conv="5">
+            <img src="https://i.pravatar.cc/64?img=21">
+            <div class="conv-info">
+              <div class="conv-top"><span class="conv-name">Laura Gomez</span><span class="conv-time">10:16</span></div>
+              <div class="conv-preview">Tienen el producto en color azul disponible?</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-pane">
+          <div class="chat-head">
+            <div class="chat-head-info">
+              <img src="https://i.pravatar.cc/64?img=32">
+              <div>
+                <div class="chat-head-name">Camila Rios</div>
+                <div class="chat-head-status"><span class="status-dot" style="background:var(--g500);"></span>Atendido por IA en tiempo real</div>
+              </div>
+            </div>
+            <div style="display:flex; gap:8px;">
+              <button class="btn btn-ghost btn-sm" id="escalateBtn"><i class="fa-solid fa-user-headset"></i>Escalar a agente</button>
+              <button class="btn btn-primary btn-sm" id="resolveBtn"><i class="fa-solid fa-check"></i>Marcar resuelto</button>
+            </div>
+          </div>
+
+          <div class="chat-messages">
+            <div class="msg in">Hola, buenas! Cual es el horario de atencion los sabados?
+              <div class="msg-meta">10:41</div>
+            </div>
+            <div class="msg out">Hola Camila! Nuestro horario los sabados es de 9:00 a.m. a 2:00 p.m. Los domingos permanecemos cerrados.
+              <div class="msg-meta"><span class="confidence-chip">94% confianza</span>IA · 10:41</div>
+            </div>
+            <div class="msg in">Y si compro hoy domingo, cuando me llega?
+              <div class="msg-meta">10:42</div>
+            </div>
+            <div class="msg out">Los pedidos realizados el domingo se procesan el lunes a primera hora. El tiempo estimado de entrega es de 2 a 3 dias habiles en tu zona.
+              <div class="msg-meta"><span class="confidence-chip">89% confianza</span>IA · 10:42</div>
+            </div>
+            <div class="msg in">Perfecto, muchas gracias!
+              <div class="msg-meta">10:42</div>
+            </div>
+          </div>
+
+          <div class="ai-note"><i class="fa-solid fa-circle-info"></i>La IA respondio con 89-94% de confianza usando la base de conocimiento activa. Sin necesidad de intervencion humana.</div>
+
+          <div class="chat-foot">
+            <input placeholder="Escribir un mensaje como agente...">
+            <button class="btn btn-primary btn-sm"><i class="fa-solid fa-paper-plane"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= KNOWLEDGE BASE ================= -->
+    <div class="page" id="page-kb">
+      <div class="kb-toolbar">
+        <div style="font-size:13px; color:var(--n500);">18 respuestas activas · entrenadas con conversaciones reales</div>
+        <button class="btn btn-primary"><i class="fa-solid fa-plus"></i>Agregar respuesta</button>
+      </div>
+      <div class="kb-grid">
+        <div class="kb-card">
+          <div class="kb-card-top"><span class="kb-cat">Horarios</span>
+            <label class="switch"><input type="checkbox" checked><span class="slider-toggle"></span></label>
+          </div>
+          <div class="kb-q">Horario de atencion</div>
+          <div class="kb-a">Responde automaticamente con horario de lunes a sabado y excepciones de festivos.</div>
+          <div class="kb-foot"><span class="kb-usage">Usada <b>412</b> veces este mes</span><span class="tag tag-ai" style="margin-top:0;">96% precision</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-top"><span class="kb-cat">Envios</span>
+            <label class="switch"><input type="checkbox" checked><span class="slider-toggle"></span></label>
+          </div>
+          <div class="kb-q">Seguimiento de pedido</div>
+          <div class="kb-a">Solicita numero de orden y consulta el estado en el sistema de logistica conectado.</div>
+          <div class="kb-foot"><span class="kb-usage">Usada <b>289</b> veces este mes</span><span class="tag tag-ai" style="margin-top:0;">91% precision</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-top"><span class="kb-cat">Productos</span>
+            <label class="switch"><input type="checkbox" checked><span class="slider-toggle"></span></label>
+          </div>
+          <div class="kb-q">Disponibilidad y variantes</div>
+          <div class="kb-a">Consulta inventario en vivo y responde tallas, colores y variantes disponibles.</div>
+          <div class="kb-foot"><span class="kb-usage">Usada <b>231</b> veces este mes</span><span class="tag tag-ai" style="margin-top:0;">88% precision</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-top"><span class="kb-cat">Pagos</span>
+            <label class="switch"><input type="checkbox"><span class="slider-toggle"></span></label>
+          </div>
+          <div class="kb-q">Metodos de pago aceptados</div>
+          <div class="kb-a">Lista metodos disponibles. Casos de reembolso se escalan siempre a un asesor.</div>
+          <div class="kb-foot"><span class="kb-usage">Usada <b>97</b> veces este mes</span><span class="tag tag-human" style="margin-top:0;">en revision</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-top"><span class="kb-cat">Reclamos</span>
+            <label class="switch"><input type="checkbox" checked><span class="slider-toggle"></span></label>
+          </div>
+          <div class="kb-q">Deteccion de insatisfaccion</div>
+          <div class="kb-a">Identifica tono negativo o palabras clave de reclamo y escala de inmediato a un agente humano.</div>
+          <div class="kb-foot"><span class="kb-usage">Usada <b>64</b> veces este mes</span><span class="tag tag-escalated" style="margin-top:0;">siempre escala</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-top"><span class="kb-cat">General</span>
+            <label class="switch"><input type="checkbox" checked><span class="slider-toggle"></span></label>
+          </div>
+          <div class="kb-q">Saludo y bienvenida</div>
+          <div class="kb-a">Primer contacto: presenta la marca, identifica el motivo de contacto y enruta la conversacion.</div>
+          <div class="kb-foot"><span class="kb-usage">Usada <b>523</b> veces este mes</span><span class="tag tag-ai" style="margin-top:0;">99% precision</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= FLOWS ================= -->
+    <div class="page" id="page-flows">
+      <div class="flow-wrap">
+        <div class="flow-track" id="flowTrack">
+          <div class="flow-node" data-step="0"><i class="fa-solid fa-comment-dots"></i><div class="ft">Mensaje recibido</div><div class="fs">Cliente escribe por WhatsApp Business API</div></div>
+          <div class="flow-arrow" data-arrow="0"></div>
+          <div class="flow-node" data-step="1"><i class="fa-solid fa-brain"></i><div class="ft">NLP: deteccion de intencion</div><div class="fs">Clasifica el mensaje y calcula confianza</div></div>
+          <div class="flow-arrow" data-arrow="1"></div>
+          <div class="flow-node decision" data-step="2"><i class="fa-solid fa-code-branch"></i><div class="ft">Confianza mayor a 80%?</div><div class="fs">Umbral configurable por categoria</div></div>
+          <div class="flow-arrow" data-arrow="2"></div>
+          <div class="flow-branch">
+            <div class="flow-node" data-step="3a"><i class="fa-solid fa-robot"></i><div class="ft">Responde la IA</div><div class="fs">Usa la base de conocimiento activa</div></div>
+            <div class="flow-node" data-step="3b" style="background:#fef2f2; border-color:#fecaca;"><i class="fa-solid fa-user-headset" style="color:#b91c1c;"></i><div class="ft">Escala a agente</div><div class="fs">Con historial completo de la conversacion</div></div>
+          </div>
+        </div>
+        <button class="btn btn-primary flow-sim-btn" id="simBtn"><i class="fa-solid fa-play"></i>Simular mensaje entrante</button>
+      </div>
+
+      <div class="dash-grid" style="margin-top:20px;">
+        <div class="panel">
+          <div class="panel-head"><h3>Por que este flujo funciona</h3></div>
+          <div class="panel-body" style="padding:18px 20px; font-size:13px; color:var(--n600); line-height:1.7;">
+            El umbral de confianza evita que la IA improvise en casos delicados. Reclamos, pagos y quejas se enrutan siempre a un asesor, mientras el volumen repetitivo de preguntas frecuentes se resuelve en segundos. Este es el mismo patron de maquina de estados que usamos en un CRM multi-empresa con bot de WhatsApp en produccion, donde cada asesor recibe solo los casos que realmente requieren su criterio.
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h3>Reglas activas</h3></div>
+          <div class="panel-body" style="padding:10px 20px 18px;">
+            <div class="settings-row"><div class="settings-row-text"><b>Umbral minimo de confianza</b><span>Por debajo del umbral, se escala automaticamente</span></div><b>80%</b></div>
+            <div class="settings-row"><div class="settings-row-text"><b>Palabras clave de reclamo</b><span>Escala sin importar la confianza del modelo</span></div><b>24 terminos</b></div>
+            <div class="settings-row"><div class="settings-row-text"><b>Horario fuera de atencion</b><span>Responde IA y agenda seguimiento humano</span></div><b>Activo</b></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= ANALYTICS ================= -->
+    <div class="page" id="page-analytics">
+      <div class="dash-grid" style="grid-template-columns:1fr 1fr; margin-bottom:20px;">
+        <div class="chart-panel">
+          <div class="panel-head" style="padding:0 0 16px;"><h3>Conversaciones por dia</h3></div>
+          <div class="bars" id="barsChart">
+            <div class="bar-col"><div class="bar" data-h="55"></div><span class="bar-val">210</span><span class="bar-label">Lun</span></div>
+            <div class="bar-col"><div class="bar" data-h="68"></div><span class="bar-val">260</span><span class="bar-label">Mar</span></div>
+            <div class="bar-col"><div class="bar" data-h="62"></div><span class="bar-val">238</span><span class="bar-label">Mie</span></div>
+            <div class="bar-col"><div class="bar" data-h="80"></div><span class="bar-val">305</span><span class="bar-label">Jue</span></div>
+            <div class="bar-col"><div class="bar" data-h="90"></div><span class="bar-val">347</span><span class="bar-label">Vie</span></div>
+            <div class="bar-col"><div class="bar" data-h="45"></div><span class="bar-val">172</span><span class="bar-label">Sab</span></div>
+            <div class="bar-col"><div class="bar" data-h="20"></div><span class="bar-val">78</span><span class="bar-label">Dom</span></div>
+          </div>
+        </div>
+        <div class="chart-panel">
+          <div class="panel-head" style="padding:0 0 16px;"><h3>Intenciones mas frecuentes</h3></div>
+          <div id="intentsChart">
+            <div class="intent-row"><span class="intent-name">Horarios</span><div class="intent-track"><div class="intent-fill" data-w="92"></div></div><span class="intent-pct">92%</span></div>
+            <div class="intent-row"><span class="intent-name">Seguimiento envio</span><div class="intent-track"><div class="intent-fill" data-w="78"></div></div><span class="intent-pct">78%</span></div>
+            <div class="intent-row"><span class="intent-name">Disponibilidad</span><div class="intent-track"><div class="intent-fill" data-w="65"></div></div><span class="intent-pct">65%</span></div>
+            <div class="intent-row"><span class="intent-name">Pagos</span><div class="intent-track"><div class="intent-fill" data-w="41"></div></div><span class="intent-pct">41%</span></div>
+            <div class="intent-row"><span class="intent-name">Reclamos</span><div class="intent-track"><div class="intent-fill" data-w="19"></div></div><span class="intent-pct">19%</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h3>Satisfaccion del cliente post automatizacion</h3></div>
+        <div class="panel-body" style="display:flex; gap:30px; padding:20px; flex-wrap:wrap;">
+          <div style="text-align:center;"><div style="font-size:26px; font-weight:800; color:var(--g650);">4.7/5</div><div style="font-size:11.5px; color:var(--n500);">Valoracion promedio</div></div>
+          <div style="text-align:center;"><div style="font-size:26px; font-weight:800; color:var(--g650);">8 seg</div><div style="font-size:11.5px; color:var(--n500);">Tiempo de respuesta promedio</div></div>
+          <div style="text-align:center;"><div style="font-size:26px; font-weight:800; color:var(--g650);">-64%</div><div style="font-size:11.5px; color:var(--n500);">Carga operativa del equipo</div></div>
+          <div style="text-align:center;"><div style="font-size:26px; font-weight:800; color:var(--g650);">347</div><div style="font-size:11.5px; color:var(--n500);">Conversaciones hoy</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= SETTINGS ================= -->
+    <div class="page" id="page-settings">
+      <div class="wa-status">
+        <i class="fa-brands fa-whatsapp"></i>
+        <div style="flex:1;">
+          <b style="display:block; font-size:14px;">WhatsApp Business API conectada</b>
+          <span style="font-size:12px; color:var(--n600);">Numero +57 3XX XXX XXXX · verificado por Meta</span>
+        </div>
+        <span class="tag tag-ai" style="margin-top:0;">Activo</span>
+      </div>
+      <div class="settings-grid">
+        <div class="settings-card">
+          <h3 style="font-size:15px; margin-bottom:6px;">Automatizacion</h3>
+          <div class="settings-row"><div class="settings-row-text"><b>Umbral de confianza para respuesta automatica</b><span>Ajusta que tan segura debe estar la IA antes de responder sola</span></div>
+            <div class="range-wrap"><input type="range" min="50" max="99" value="80" id="thresholdRange"><b id="thresholdVal" style="width:32px;">80%</b></div>
+          </div>
+          <div class="settings-row"><div class="settings-row-text"><b>Respuestas fuera de horario</b><span>La IA sigue atendiendo aunque el equipo este offline</span></div>
+            <label class="switch"><input type="checkbox" checked><span class="slider-toggle"></span></label>
+          </div>
+          <div class="settings-row"><div class="settings-row-text"><b>Notificar escalamientos por email</b><span>Alerta al equipo cuando un caso pasa a agente humano</span></div>
+            <label class="switch"><input type="checkbox" checked><span class="slider-toggle"></span></label>
+          </div>
+          <div class="settings-row"><div class="settings-row-text"><b>Aprender de correcciones del equipo</b><span>Reentrena respuestas cuando un agente corrige a la IA</span></div>
+            <label class="switch"><input type="checkbox"><span class="slider-toggle"></span></label>
+          </div>
+        </div>
+        <div class="settings-card">
+          <h3 style="font-size:15px; margin-bottom:6px;">Equipo y accesos</h3>
+          <div class="settings-row"><div class="settings-row-text"><b>Elidianis J.</b><span>Administradora · acceso total</span></div><span class="tag tag-ai" style="margin-top:0;">Owner</span></div>
+          <div class="settings-row"><div class="settings-row-text"><b>Camila Vargas</b><span>Agente de soporte</span></div><span class="tag tag-human" style="margin-top:0;">Agente</span></div>
+          <div class="settings-row"><div class="settings-row-text"><b>Daniel H.</b><span>Integrador tecnico</span></div><span class="tag tag-human" style="margin-top:0;">Tecnico</span></div>
+          <div style="margin-top:14px;"><button class="btn btn-ghost btn-sm"><i class="fa-solid fa-user-plus"></i>Invitar miembro</button></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"><i class="fa-solid fa-circle-check"></i><span id="toastMsg">Listo</span></div>
+
+<script>
+// ---- Navigation ----
+const navItems = document.querySelectorAll('.nav-item');
+const pages = document.querySelectorAll('.page');
+const pageTitle = document.getElementById('pageTitle');
+const titles = {
+  dashboard:['Panel general','Vision de hoy en atencion automatizada'],
+  inbox:['Bandeja WhatsApp','Conversaciones en tiempo real'],
+  kb:['Base de conocimiento','Respuestas entrenadas para la IA'],
+  flows:['Flujo de decision IA','Como la IA decide responder o escalar'],
+  analytics:['Analitica','Desempeno del canal de WhatsApp'],
+  settings:['Configuracion','Conexion, umbrales y equipo']
+};
+function goPage(key){
+  navItems.forEach(n=>n.classList.toggle('active', n.dataset.page===key));
+  pages.forEach(p=>p.classList.toggle('active', p.id==='page-'+key));
+  const [t,s] = titles[key];
+  pageTitle.innerHTML = t+' <span class="sub">'+s+'</span>';
+  document.getElementById('sidebar').classList.remove('open');
+  runReveal();
+  if(key==='analytics') animateCharts();
+}
+navItems.forEach(n=>n.addEventListener('click', ()=>goPage(n.dataset.page)));
+document.querySelectorAll('[data-goto]').forEach(el=>el.addEventListener('click', e=>{e.preventDefault(); goPage(el.dataset.goto);}));
+
+document.getElementById('hamburger').addEventListener('click', ()=>{
+  document.getElementById('sidebar').classList.toggle('open');
+});
+
+// ---- Count up ----
+function countUp(el){
+  const target = parseInt(el.dataset.count,10);
+  const dur = 1100; const start = performance.now();
+  function tick(now){
+    const p = Math.min((now-start)/dur,1);
+    const eased = 1-Math.pow(1-p,3);
+    el.textContent = Math.round(target*eased);
+    if(p<1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+document.querySelectorAll('[data-count]').forEach(countUp);
+
+// ---- Reveal on scroll ----
+function runReveal(){
+  document.querySelectorAll('.reveal').forEach((el,i)=>{
+    setTimeout(()=>el.classList.add('in'), i*70);
+  });
+}
+runReveal();
+
+// ---- Conversation switching ----
+document.querySelectorAll('.conv-item').forEach(item=>{
+  item.addEventListener('click', ()=>{
+    document.querySelectorAll('.conv-item').forEach(i=>i.classList.remove('active'));
+    item.classList.add('active');
+    const unread = item.querySelector('.conv-unread');
+    if(unread) unread.remove();
+  });
+});
+
+// ---- Toast ----
+function showToast(msg){
+  const toast = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(window.__toastTimer);
+  window.__toastTimer = setTimeout(()=>toast.classList.remove('show'), 3200);
+}
+document.getElementById('escalateBtn').addEventListener('click', ()=>showToast('Conversacion escalada a Camila Vargas (agente)'));
+document.getElementById('resolveBtn').addEventListener('click', ()=>showToast('Conversacion marcada como resuelta'));
+
+// ---- Flow simulation ----
+const flowSteps = ['0','1','2','3a'];
+let simRunning = false;
+document.getElementById('simBtn').addEventListener('click', ()=>{
+  if(simRunning) return;
+  simRunning = true;
+  document.querySelectorAll('.flow-node').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.flow-arrow').forEach(a=>a.classList.remove('on'));
+  let i=0;
+  const interval = setInterval(()=>{
+    if(i>0){
+      const prevArrow = document.querySelector('[data-arrow="'+(i-1)+'"]');
+      if(prevArrow) prevArrow.classList.add('on');
+    }
+    const node = document.querySelector('[data-step="'+flowSteps[i]+'"]');
+    if(node) node.classList.add('active');
+    i++;
+    if(i>=flowSteps.length){
+      clearInterval(interval);
+      simRunning = false;
+      showToast('Mensaje resuelto automaticamente por la IA en 1.8s');
+    }
+  }, 650);
+});
+
+// ---- Threshold range ----
+const thresholdRange = document.getElementById('thresholdRange');
+const thresholdVal = document.getElementById('thresholdVal');
+thresholdRange.addEventListener('input', ()=>{ thresholdVal.textContent = thresholdRange.value+'%'; });
+
+// ---- Analytics charts ----
+let chartsAnimated = false;
+function animateCharts(){
+  if(chartsAnimated) return;
+  chartsAnimated = true;
+  document.querySelectorAll('#barsChart .bar').forEach(b=>{
+    setTimeout(()=>{ b.style.height = b.dataset.h+'%'; }, 100);
+  });
+  document.querySelectorAll('#intentsChart .intent-fill').forEach(f=>{
+    setTimeout(()=>{ f.style.width = f.dataset.w+'%'; }, 100);
+  });
+}
+
+// ---- KPI sparklines already sized via inline style ----
+</script>
