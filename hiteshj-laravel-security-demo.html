@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Laravel Security Hardening - Phase 1 Audit Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Roboto+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+  :root{
+    --bg:#0a0f16;
+    --bg-2:#0d141d;
+    --panel:#111a24;
+    --border:rgba(255,255,255,0.08);
+    --text:#eef3f8;
+    --text-dim:#93a3b5;
+    --cyan:#38bdf8;
+    --cyan-2:#0ea5e9;
+    --cyan-soft:rgba(56,189,248,0.14);
+    --green:#22c55e;
+    --amber:#f59e0b;
+    --orange:#fb923c;
+    --red:#f87171;
+    --mono:'Roboto Mono',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{background:var(--bg);color:var(--text);font-family:'Roboto',sans-serif;overflow-x:hidden;width:100%;}
+  a{color:inherit;text-decoration:none;}
+  button{font-family:inherit;}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 24px;}
+
+  nav{position:sticky;top:0;z-index:50;background:rgba(10,15,22,0.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);}
+  nav .wrap{display:flex;align-items:center;justify-content:space-between;height:72px;flex-wrap:wrap;gap:10px;}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:900;font-size:1.1rem;letter-spacing:-0.01em;}
+  .brand .icon{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--cyan),var(--cyan-2));display:flex;align-items:center;justify-content:center;color:#031420;font-size:1rem;}
+  .restart-btn{background:rgba(255,255,255,0.06);border:1px solid var(--border);color:var(--text);padding:9px 14px;border-radius:10px;font-size:0.78rem;font-weight:700;display:inline-flex;align-items:center;gap:7px;cursor:pointer;}
+  .restart-btn:hover{border-color:var(--cyan);color:var(--cyan);}
+
+  .hero{position:relative;padding:56px 0 30px;overflow:hidden;}
+  .hero-bg{position:absolute;inset:0;background:radial-gradient(700px 380px at 85% 0%, rgba(56,189,248,0.14), transparent 60%);pointer-events:none;}
+  .hero .wrap{position:relative;}
+  .eyebrow{display:inline-flex;align-items:center;gap:8px;background:var(--cyan-soft);color:var(--cyan);border:1px solid rgba(56,189,248,0.3);padding:7px 14px;border-radius:999px;font-size:0.75rem;font-weight:800;letter-spacing:0.03em;text-transform:uppercase;}
+  h1{font-size:2rem;line-height:1.2;font-weight:900;letter-spacing:-0.02em;margin:16px 0 12px;max-width:680px;}
+  h1 span{color:var(--cyan);}
+  .hero p.lead{color:var(--text-dim);font-size:0.98rem;line-height:1.6;max-width:640px;}
+  .disclaimer{margin-top:18px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:12px;padding:12px 16px;font-size:0.82rem;color:var(--amber);line-height:1.5;max-width:680px;}
+
+  .section{padding:36px 0;}
+
+  /* Timeline strip */
+  .phase-strip{display:flex;gap:0;margin-bottom:34px;border:1px solid var(--border);border-radius:16px;overflow:hidden;}
+  .phase-step{flex:1;padding:16px 18px;background:var(--panel);border-right:1px solid var(--border);position:relative;}
+  .phase-step:last-child{border-right:none;}
+  .phase-step .num{font-size:0.65rem;color:var(--text-dim);font-weight:800;text-transform:uppercase;letter-spacing:0.04em;}
+  .phase-step .t{font-size:0.88rem;font-weight:800;margin-top:4px;}
+  .phase-step.active{background:linear-gradient(160deg,rgba(56,189,248,0.14),var(--panel));}
+  .phase-step.active .num{color:var(--cyan);}
+  .phase-step.done .num{color:var(--green);}
+  .phase-step.done::after{content:'\f00c';font-family:'Font Awesome 6 Free';font-weight:900;position:absolute;top:14px;right:16px;color:var(--green);font-size:0.8rem;}
+
+  /* Stat row */
+  .stat-row{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:32px;}
+  .stat{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px;text-align:center;}
+  .stat .lbl{font-size:0.65rem;color:var(--text-dim);font-weight:700;text-transform:uppercase;letter-spacing:0.03em;margin-bottom:8px;}
+  .stat .val{font-size:1.6rem;font-weight:900;}
+  .stat .val.crit{color:var(--red);}
+  .stat .val.high{color:var(--orange);}
+  .stat .val.med{color:var(--amber);}
+  .stat .val.ok{color:var(--green);}
+  .stat .val.score{color:var(--cyan);}
+
+  .score-bar-track{height:8px;border-radius:4px;background:rgba(255,255,255,0.08);margin-top:10px;overflow:hidden;}
+  .score-bar-fill{height:100%;background:linear-gradient(90deg,var(--red),var(--amber),var(--green));border-radius:4px;transition:width 0.5s ease;}
+
+  /* Filters */
+  .filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;}
+  .filter-chip{background:var(--panel);border:1px solid var(--border);padding:9px 16px;border-radius:999px;font-size:0.78rem;font-weight:700;color:var(--text-dim);cursor:pointer;}
+  .filter-chip.active{background:var(--cyan-soft);color:var(--cyan);border-color:rgba(56,189,248,0.4);}
+
+  .area-label{font-size:0.72rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-dim);font-weight:800;margin:26px 0 12px;display:flex;align-items:center;gap:8px;}
+  .area-label i{color:var(--cyan);}
+
+  .finding{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:18px 20px;margin-bottom:12px;opacity:0;transform:translateY(14px);transition:all 0.5s ease;}
+  .finding.show{opacity:1;transform:translateY(0);}
+  .finding.resolved{border-color:rgba(34,197,94,0.35);}
+  .finding-top{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;}
+  .finding-title{font-size:0.92rem;font-weight:800;}
+  .finding-meta{font-size:0.72rem;color:var(--text-dim);margin-top:4px;font-family:var(--mono);}
+  .sev-badge{font-size:0.62rem;font-weight:800;padding:4px 10px;border-radius:999px;text-transform:uppercase;letter-spacing:0.03em;white-space:nowrap;}
+  .sev-badge.critical{background:rgba(248,113,113,0.14);color:var(--red);}
+  .sev-badge.high{background:rgba(251,146,60,0.16);color:var(--orange);}
+  .sev-badge.medium{background:rgba(245,158,11,0.16);color:var(--amber);}
+  .sev-badge.resolved{background:rgba(34,197,94,0.14);color:var(--green);}
+
+  .finding-actions{display:flex;gap:8px;margin-top:14px;align-items:center;}
+  .toggle-code{font-size:0.74rem;color:var(--cyan);cursor:pointer;font-weight:700;display:inline-flex;align-items:center;gap:6px;}
+  .fix-btn{margin-left:auto;background:var(--cyan);color:#031420;border:none;padding:8px 16px;border-radius:10px;font-size:0.74rem;font-weight:800;cursor:pointer;}
+  .fix-btn.reopen{background:rgba(255,255,255,0.08);color:var(--text);}
+
+  .code-block{margin-top:14px;display:none;}
+  .code-block.open{display:block;}
+  .code-pair{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .code-col .lbl{font-size:0.62rem;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:6px;}
+  .code-col.before .lbl{color:var(--red);}
+  .code-col.after .lbl{color:var(--green);}
+  pre{background:var(--bg-2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-family:var(--mono);font-size:0.72rem;color:var(--text);overflow-x:auto;line-height:1.55;}
+  @media(max-width:700px){ .code-pair{grid-template-columns:1fr;} }
+
+  /* Dependency table */
+  .table-wrap{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;min-width:560px;}
+  th{text-align:left;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-dim);padding:10px 12px;border-bottom:1px solid var(--border);}
+  td{padding:11px 12px;font-size:0.82rem;border-bottom:1px solid var(--border);font-family:var(--mono);}
+  td .pill{font-size:0.66rem;font-weight:800;padding:4px 10px;border-radius:999px;white-space:nowrap;font-family:'Roboto',sans-serif;}
+  .pill.warn{background:rgba(251,146,60,0.16);color:var(--orange);}
+  .pill.ok{background:rgba(34,197,94,0.14);color:var(--green);}
+  .upd-btn{background:var(--cyan-soft);color:var(--cyan);border:1px solid rgba(56,189,248,0.35);padding:5px 11px;border-radius:8px;font-size:0.68rem;font-weight:800;cursor:pointer;font-family:'Roboto',sans-serif;}
+  .upd-btn:disabled{opacity:0.5;cursor:default;}
+
+  .section-head{max-width:640px;margin:0 0 20px;}
+  .section-head h2{font-size:1.4rem;font-weight:900;letter-spacing:-0.01em;margin-bottom:8px;}
+  .section-head p{color:var(--text-dim);font-size:0.88rem;line-height:1.6;}
+
+  .cta-block{background:linear-gradient(135deg,rgba(56,189,248,0.14),rgba(34,197,94,0.06));border:1px solid rgba(56,189,248,0.25);border-radius:24px;padding:42px;text-align:center;margin-top:20px;}
+  .cta-block h2{font-size:1.5rem;font-weight:900;margin-bottom:12px;}
+  .cta-block p{color:var(--text-dim);max-width:560px;margin:0 auto;line-height:1.6;font-size:0.9rem;}
+
+  footer{border-top:1px solid var(--border);padding:30px 0;text-align:center;color:var(--text-dim);font-size:0.8rem;}
+
+  @media(max-width:800px){
+    .stat-row{grid-template-columns:1fr 1fr;}
+    .phase-strip{flex-direction:column;}
+    .phase-step{border-right:none;border-bottom:1px solid var(--border);}
+    .phase-step:last-child{border-bottom:none;}
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <div class="brand"><span class="icon"><i class="fa-solid fa-shield-halved"></i></span>Phase 1 Audit Dashboard</div>
+    <div class="restart-btn" onclick="restartDemo()"><i class="fa-solid fa-rotate-left"></i> Reset demo</div>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="wrap">
+    <span class="eyebrow"><i class="fa-solid fa-magnifying-glass"></i> Illustrative example</span>
+    <h1>This is the <span>format</span> your Week 1 findings report and hardening tracker would follow.</h1>
+    <p class="lead">Every finding below is a common pattern in Laravel apps of this age, not a claim about your specific codebase. Click a finding to see the before/after fix, mark it resolved, and watch the security score move.</p>
+    <div class="disclaimer"><i class="fa-solid fa-circle-info"></i> Example findings only. Your actual Phase 1 report will reflect what the audit finds in your repo, not this list.</div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <div class="phase-strip" id="phaseStrip"></div>
+
+    <div class="stat-row" id="statRow"></div>
+
+    <div class="filter-row" id="filterRow"></div>
+
+    <div id="findingsList"></div>
+
+    <div class="section-head" style="margin-top:44px;">
+      <h2>Dependency versions</h2>
+      <p>Outdated packages get flagged and updated within compatibility limits as part of core hardening.</p>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Package</th><th>Current</th><th>Recommended</th><th>Status</th><th></th></tr></thead>
+        <tbody id="depTable"></tbody>
+      </table>
+    </div>
+
+    <div class="cta-block">
+      <h2>Before locking the Phase 1 scope</h2>
+      <p>Is the security work driven by a specific finding or incident, or is this more proactive hardening before the new features? That answer changes how deep Week 1 needs to go before touching any new functionality.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">Illustrative audit dashboard prepared for Hitesh J. - Laravel security hardening Phase 1, Daniel Hachac Salas</div>
+</footer>
+
+<script>
+const PHASES = [
+  {label:'Week 1', title:'Codebase audit'},
+  {label:'Week 2', title:'Fix critical + hardening'},
+  {label:'Week 3', title:'Regression + scope Phase 2'}
+];
+
+const DEPENDENCIES = [
+  {pkg:'laravel/framework', current:'^8.40', recommended:'^8.83', updated:false},
+  {pkg:'guzzlehttp/guzzle', current:'^6.5', recommended:'^7.8', updated:false},
+  {pkg:'league/flysystem', current:'^1.1', recommended:'^1.1.10', updated:false}
+];
+
+function initialFindings(){
+  return [
+    {id:'SEC-001', area:'Query Construction', areaIcon:'fa-database', severity:'critical', title:'Raw SQL string concatenation in report filters', file:'app/Http/Controllers/ReportController.php:142',
+      before:'DB::select("SELECT * FROM invoices WHERE client = \'" . $request->client . "\'");',
+      after:'DB::select(\'SELECT * FROM invoices WHERE client = ?\', [$request->client]);',
+      resolved:false, open:false},
+    {id:'SEC-002', area:'Query Construction', areaIcon:'fa-database', severity:'high', title:'Unparameterized raw query in scheduled export job', file:'app/Jobs/ExportInvoices.php:58',
+      before:'DB::statement("DELETE FROM temp_exports WHERE batch = " . $batchId);',
+      after:'DB::statement(\'DELETE FROM temp_exports WHERE batch = ?\', [$batchId]);',
+      resolved:false, open:false},
+    {id:'SEC-003', area:'Auth & Session', areaIcon:'fa-lock', severity:'high', title:'Session cookie missing Secure and HttpOnly flags', file:'config/session.php',
+      before:"'secure' => false,\n'http_only' => false,",
+      after:"'secure' => true,\n'http_only' => true,\n'same_site' => 'lax',",
+      resolved:false, open:false},
+    {id:'SEC-004', area:'Auth & Session', areaIcon:'fa-lock', severity:'medium', title:'Password hashing left at framework-default rounds', file:'config/hashing.php',
+      before:"'bcrypt' => [\n  'rounds' => 10,\n],",
+      after:"'bcrypt' => [\n  'rounds' => 12,\n],",
+      resolved:false, open:false},
+    {id:'SEC-005', area:'Data Exposure', areaIcon:'fa-eye-slash', severity:'critical', title:'Unguarded mass assignment on User model', file:'app/Models/User.php:18',
+      before:'protected $guarded = [];',
+      after:"protected \$fillable = ['name', 'email', 'password'];",
+      resolved:false, open:false},
+    {id:'SEC-006', area:'Data Exposure', areaIcon:'fa-eye-slash', severity:'medium', title:'API resource exposes internal admin_notes field to clients', file:'app/Http/Resources/ClientResource.php',
+      before:'return parent::toArray($request);',
+      after:"return [\n  'id' => \$this->id,\n  'name' => \$this->name,\n  'email' => \$this->email,\n]; // admin_notes intentionally excluded",
+      resolved:false, open:false},
+    {id:'SEC-007', area:'Dependencies', areaIcon:'fa-box', severity:'high', title:'laravel/framework 3 minor versions behind, CVE patched upstream', file:'composer.json',
+      before:'"laravel/framework": "^8.40"',
+      after:'"laravel/framework": "^8.83"',
+      resolved:false, open:false}
+  ];
+}
+
+let findings = initialFindings();
+let deps = JSON.parse(JSON.stringify(DEPENDENCIES));
+let activeFilter = 'all';
+
+function el(id){ return document.getElementById(id); }
+function icon(cls){ return '<i class="fa-solid '+cls+'"></i>'; }
+function sevLabel(s){ return {critical:'Critical', high:'High', medium:'Medium'}[s]; }
+
+function securityScore(){
+  const total = findings.length;
+  const resolved = findings.filter(f=>f.resolved).length;
+  const base = 38;
+  const perFix = Math.round(62/total);
+  return Math.min(100, base + resolved*perFix);
+}
+
+function currentPhaseIndex(){
+  const criticalHighResolved = findings.filter(f=>f.severity!=='medium').every(f=>f.resolved);
+  const allResolved = findings.every(f=>f.resolved);
+  if(allResolved) return 2;
+  if(criticalHighResolved) return 1;
+  return 0;
+}
+
+function toggleFinding(id){
+  const f = findings.find(x=>x.id===id);
+  f.open = !f.open;
+  render();
+}
+function toggleResolved(id){
+  const f = findings.find(x=>x.id===id);
+  f.resolved = !f.resolved;
+  render();
+}
+function setFilter(f){ activeFilter = f; render(); }
+function toggleDep(idx){
+  deps[idx].updated = !deps[idx].updated;
+  render();
+}
+function restartDemo(){
+  findings = initialFindings();
+  deps = JSON.parse(JSON.stringify(DEPENDENCIES));
+  activeFilter = 'all';
+  render();
+}
+
+function renderPhaseStrip(){
+  const idx = currentPhaseIndex();
+  el('phaseStrip').innerHTML = PHASES.map((p,i)=>{
+    let cls = '';
+    if(i < idx) cls = 'done';
+    else if(i === idx) cls = 'active';
+    return '<div class="phase-step '+cls+'"><div class="num">'+p.label+'</div><div class="t">'+p.title+'</div></div>';
+  }).join('');
+}
+
+function renderStats(){
+  const crit = findings.filter(f=>f.severity==='critical' && !f.resolved).length;
+  const high = findings.filter(f=>f.severity==='high' && !f.resolved).length;
+  const med = findings.filter(f=>f.severity==='medium' && !f.resolved).length;
+  const resolved = findings.filter(f=>f.resolved).length;
+  const score = securityScore();
+  el('statRow').innerHTML =
+    '<div class="stat"><div class="lbl">Open findings</div><div class="val">'+(findings.length-resolved)+'</div></div>'
+    + '<div class="stat"><div class="lbl">Critical</div><div class="val crit">'+crit+'</div></div>'
+    + '<div class="stat"><div class="lbl">High</div><div class="val high">'+high+'</div></div>'
+    + '<div class="stat"><div class="lbl">Medium</div><div class="val med">'+med+'</div></div>'
+    + '<div class="stat"><div class="lbl">Security score</div><div class="val score">'+score+'/100</div><div class="score-bar-track"><div class="score-bar-fill" style="width:'+score+'%;"></div></div></div>';
+}
+
+function renderFilters(){
+  const opts = [['all','All'],['critical','Critical'],['high','High'],['medium','Medium'],['resolved','Resolved']];
+  el('filterRow').innerHTML = opts.map(o=>'<div class="filter-chip '+(activeFilter===o[0]?'active':'')+'" onclick="setFilter(\''+o[0]+'\')">'+o[1]+'</div>').join('');
+}
+
+function renderFindings(){
+  let list = findings;
+  if(activeFilter==='resolved') list = list.filter(f=>f.resolved);
+  else if(activeFilter!=='all') list = list.filter(f=>f.severity===activeFilter && !f.resolved);
+
+  if(list.length===0){
+    el('findingsList').innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-dim);"><i class="fa-solid fa-circle-check" style="font-size:1.6rem;color:var(--green);display:block;margin-bottom:10px;"></i>No findings match this filter.</div>';
+    return;
+  }
+
+  const areas = [...new Set(list.map(f=>f.area))];
+  let html = '';
+  areas.forEach(area=>{
+    const areaFindings = list.filter(f=>f.area===area);
+    const aIcon = areaFindings[0].areaIcon;
+    html += '<div class="area-label">'+icon(aIcon)+' '+area+'</div>';
+    areaFindings.forEach(f=>{
+      html += '<div class="finding '+(f.resolved?'resolved':'')+'">'
+        + '<div class="finding-top"><div><div class="finding-title">'+f.title+'</div><div class="finding-meta">'+f.id+' - '+f.file+'</div></div>'
+        + '<span class="sev-badge '+(f.resolved?'resolved':f.severity)+'">'+(f.resolved?'Resolved':sevLabel(f.severity))+'</span></div>'
+        + '<div class="finding-actions"><div class="toggle-code" onclick="toggleFinding(\''+f.id+'\')">'+icon(f.open?'fa-chevron-up':'fa-chevron-down')+' '+(f.open?'Hide code':'View before/after code')+'</div>'
+        + '<button class="fix-btn '+(f.resolved?'reopen':'')+'" onclick="toggleResolved(\''+f.id+'\')">'+(f.resolved?'Reopen':'Mark as fixed')+'</button></div>'
+        + '<div class="code-block '+(f.open?'open':'')+'"><div class="code-pair"><div class="code-col before"><div class="lbl">Before</div><pre>'+escapeHtml(f.before)+'</pre></div><div class="code-col after"><div class="lbl">After</div><pre>'+escapeHtml(f.after)+'</pre></div></div></div>'
+        + '</div>';
+    });
+  });
+  el('findingsList').innerHTML = html;
+}
+
+function escapeHtml(s){
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function renderDeps(){
+  el('depTable').innerHTML = deps.map((d,idx)=>
+    '<tr><td>'+d.pkg+'</td><td>'+d.current+'</td><td>'+d.recommended+'</td>'
+    + '<td><span class="pill '+(d.updated?'ok':'warn')+'">'+(d.updated?'Updated':'Outdated')+'</span></td>'
+    + '<td><button class="upd-btn" '+(d.updated?'disabled':'')+' onclick="toggleDep('+idx+')">'+(d.updated?'Applied':'Apply update')+'</button></td></tr>'
+  ).join('');
+}
+
+function render(){
+  renderPhaseStrip();
+  renderStats();
+  renderFilters();
+  renderFindings();
+  renderDeps();
+
+  const feats = document.querySelectorAll('.finding');
+  feats.forEach((f,i)=>setTimeout(()=>f.classList.add('show'), i*40));
+}
+
+document.addEventListener('DOMContentLoaded', render);
+</script>
+
+</body>
+</html>
