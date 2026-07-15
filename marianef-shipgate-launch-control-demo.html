@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<title>ShipGate — Painel de Controlo de Lançamento</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Painel de controlo para a Fase 2 de lançamento de app mobile: tradução, publicação nas lojas, bugs, Stripe em produção e notificações push.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+:root{
+  --bg:#0a0f0c;
+  --surface:#111a15;
+  --surface-2:#182620;
+  --surface-3:#20342a;
+  --border:rgba(255,255,255,.08);
+  --border-2:rgba(255,255,255,.14);
+  --text:#e9f2ec;
+  --text-dim:#8fa398;
+  --text-faint:#5c6f64;
+  --g50:#ecfdf5;
+  --g400:#34d399;
+  --g500:#10b981;
+  --g600:#059669;
+  --g700:#047857;
+  --glow:rgba(16,185,129,.35);
+  --success:#34d399;
+  --success-bg:rgba(52,211,153,.12);
+  --danger:#f87171;
+  --danger-bg:rgba(248,113,113,.12);
+  --warn:#facc15;
+  --warn-bg:rgba(250,204,21,.12);
+  --info:#60a5fa;
+  --info-bg:rgba(96,165,250,.12);
+  --r-sm:8px; --r-md:12px; --r-lg:16px; --r-xl:22px;
+  --shadow-md:0 8px 24px rgba(0,0,0,.35);
+  --shadow-lg:0 20px 50px rgba(0,0,0,.45);
+  --spring:cubic-bezier(.34,1.56,.64,1);
+  --ease:cubic-bezier(.4,0,.2,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Lexend',sans-serif;
+  background:radial-gradient(circle at 1px 1px, rgba(255,255,255,.035) 1px, transparent 0) 0 0/28px 28px, var(--bg);
+  color:var(--text);
+  -webkit-font-smoothing:antialiased;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--surface-3);border-radius:10px}
+
+.demo-badge{position:fixed;bottom:18px;right:18px;z-index:999;background:var(--surface-2);color:var(--g400);
+  font-size:11.5px;font-weight:700;padding:8px 14px;border-radius:100px;box-shadow:0 8px 24px rgba(0,0,0,.4);
+  display:flex;align-items:center;gap:7px;border:1px solid rgba(16,185,129,.3);}
+.demo-badge i{font-size:10px}
+
+.app{display:grid;grid-template-columns:264px 1fr;min-height:100vh}
+
+.sidebar{background:var(--surface);border-right:1px solid var(--border);padding:22px 16px;
+  display:flex;flex-direction:column;gap:6px;position:sticky;top:0;height:100vh;overflow-y:auto;z-index:40;}
+.brand{display:flex;align-items:center;gap:10px;padding:6px 10px 24px}
+.brand-mark{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--g400),var(--g700));
+  display:flex;align-items:center;justify-content:center;color:#03150d;font-size:15px;
+  animation:pulseLogo 3.2s ease-in-out infinite;}
+@keyframes pulseLogo{0%,100%{box-shadow:0 0 0 0 rgba(16,185,129,0)}50%{box-shadow:0 0 22px 3px var(--glow)}}
+.brand-name{font-weight:700;font-size:17px;letter-spacing:.2px}
+.brand-sub{font-size:11px;color:var(--text-faint);margin-top:-2px}
+
+.nav-group-label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-faint);padding:14px 12px 6px;font-weight:600}
+.nav-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:var(--r-md);
+  color:var(--text-dim);font-size:14.5px;font-weight:500;transition:background .2s var(--ease),color .2s var(--ease);position:relative;cursor:pointer;}
+.nav-item i{width:18px;text-align:center;font-size:15px;opacity:.85}
+.nav-item:hover{background:var(--surface-2);color:var(--text)}
+.nav-item.active{background:var(--surface-2);color:var(--g400)}
+.nav-item.active::before{content:'';position:absolute;left:-16px;top:50%;transform:translateY(-50%);width:3px;height:18px;border-radius:3px;background:var(--g500);}
+.nav-item .badge{margin-left:auto;background:var(--danger-bg);color:var(--danger);font-size:11px;font-weight:700;padding:2px 7px;border-radius:20px;}
+.nav-item .badge.warn{background:var(--warn-bg);color:var(--warn)}
+.sidebar-footer{margin-top:auto;padding-top:14px;border-top:1px solid var(--border)}
+.plan-card{background:linear-gradient(160deg,var(--surface-2),var(--surface-3));border:1px solid var(--border-2);border-radius:var(--r-lg);padding:14px;font-size:12.5px;color:var(--text-dim);}
+.plan-card strong{color:var(--text);display:block;font-size:13.5px;margin-bottom:6px}
+.plan-bar{height:6px;border-radius:6px;background:var(--surface);overflow:hidden;margin:8px 0 6px}
+.plan-bar-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--g600),var(--g400));width:0%;transition:width 1.1s var(--spring)}
+
+.main{min-width:0;display:flex;flex-direction:column}
+.topbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:16px;padding:14px 28px;
+  background:rgba(10,15,12,.7);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--border);}
+.hamburger{display:none;font-size:18px;color:var(--text-dim);padding:6px}
+.search-bar{flex:1;max-width:420px;display:flex;align-items:center;gap:10px;background:var(--surface-2);
+  border:1px solid var(--border);border-radius:var(--r-md);padding:9px 14px;color:var(--text-faint);font-size:13.5px;transition:border-color .2s var(--ease);}
+.search-bar:focus-within{border-color:var(--g600)}
+.search-bar input{background:none;border:none;outline:none;color:var(--text);font-family:inherit;font-size:13.5px;width:100%}
+.topbar-right{display:flex;align-items:center;gap:14px;margin-left:auto}
+.live-pill{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;padding:6px 12px;border-radius:20px;background:var(--success-bg);color:var(--success);}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--success);animation:blip 1.6s ease-in-out infinite}
+@keyframes blip{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(52,211,153,.5)}50%{opacity:.6;box-shadow:0 0 0 5px rgba(52,211,153,0)}}
+.icon-btn{position:relative;width:38px;height:38px;border-radius:var(--r-md);display:flex;align-items:center;justify-content:center;color:var(--text-dim);transition:background .2s,color .2s}
+.icon-btn:hover{background:var(--surface-2);color:var(--text)}
+.icon-btn .dot{position:absolute;top:7px;right:8px;width:7px;height:7px;border-radius:50%;background:var(--danger);border:2px solid var(--bg)}
+.avatar-chip{display:flex;align-items:center;gap:9px;padding:5px 10px 5px 5px;border-radius:20px;background:var(--surface-2);border:1px solid var(--border)}
+.avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--g400),var(--g700));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#03150d}
+.avatar-chip span{font-size:12.5px;font-weight:600}
+
+.content{padding:26px 28px 60px;max-width:1320px;width:100%;margin:0 auto}
+
+.welcome{position:relative;overflow:hidden;border-radius:var(--r-xl);padding:30px 32px;margin-bottom:26px;
+  background:linear-gradient(135deg,#132018,#0d1310 60%);border:1px solid var(--border-2);}
+.welcome::before,.welcome::after{content:'';position:absolute;border-radius:50%;filter:blur(50px);opacity:.5;animation:floatOrb 9s ease-in-out infinite;}
+.welcome::before{width:220px;height:220px;background:var(--g500);top:-90px;right:-40px}
+.welcome::after{width:180px;height:180px;background:#3b7cfd;bottom:-100px;right:180px;animation-delay:-4s}
+@keyframes floatOrb{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-14px,16px) scale(1.08)}}
+.welcome-inner{position:relative;z-index:2;display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap}
+.welcome h1{font-size:clamp(20px,2.4vw,26px);font-weight:700;margin-bottom:6px}
+.welcome p{color:var(--text-dim);font-size:14px;max-width:520px}
+.readiness-ring{display:flex;align-items:center;gap:14px;background:rgba(255,255,255,.03);border:1px solid var(--border-2);border-radius:var(--r-lg);padding:12px 18px;}
+.ring{width:56px;height:56px;border-radius:50%;background:conic-gradient(var(--g500) 0 78%, var(--surface-3) 78% 100%);position:relative;flex-shrink:0;}
+.ring::before{content:'';position:absolute;inset:6px;border-radius:50%;background:var(--surface);}
+.ring span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:var(--g400);}
+.readiness-label strong{display:block;font-size:14.5px}
+.readiness-label span{font-size:11.5px;color:var(--text-faint)}
+
+.btn{display:inline-flex;align-items:center;gap:8px;padding:11px 18px;border-radius:var(--r-md);font-size:13.5px;font-weight:600;transition:transform .18s var(--spring),box-shadow .18s var(--ease),background .2s;}
+.btn:active{transform:scale(.96)}
+.btn-primary{background:linear-gradient(135deg,var(--g400),var(--g600));color:#03150d;box-shadow:0 6px 18px rgba(16,185,129,.25)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(16,185,129,.35)}
+.btn-ghost{background:var(--surface-2);border:1px solid var(--border-2);color:var(--text)}
+.btn-ghost:hover{background:var(--surface-3)}
+
+.section-head{display:flex;align-items:center;justify-content:space-between;margin:30px 0 14px}
+.section-head h2{font-size:16.5px;font-weight:700}
+.section-head .sub{font-size:12.5px;color:var(--text-faint);margin-top:2px}
+
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px 20px;
+  transition:transform .25s var(--spring),box-shadow .25s var(--ease),border-color .25s;opacity:0;transform:translateY(16px);}
+.kpi-card.reveal{opacity:1;transform:translateY(0)}
+.kpi-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-md);border-color:var(--border-2)}
+.kpi-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
+.kpi-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.kpi-trend{font-size:11.5px;font-weight:700;padding:3px 8px;border-radius:20px;display:flex;align-items:center;gap:4px}
+.kpi-trend.up{background:var(--success-bg);color:var(--success)}
+.kpi-trend.down{background:var(--danger-bg);color:var(--danger)}
+.kpi-trend.flat{background:var(--warn-bg);color:var(--warn)}
+.kpi-value{font-size:26px;font-weight:800;letter-spacing:-.3px}
+.kpi-label{font-size:12.5px;color:var(--text-faint);margin-top:4px}
+
+.grid-2{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;margin-top:16px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px}
+.card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.card-head h3{font-size:14.5px;font-weight:700}
+.card-head .sub{font-size:11.5px;color:var(--text-faint);margin-top:2px}
+.chip-row{display:flex;gap:6px}
+.chip{font-size:11.5px;padding:5px 11px;border-radius:20px;background:var(--surface-2);color:var(--text-dim);border:1px solid var(--border);transition:.2s;cursor:pointer;}
+.chip.active{background:var(--warn-bg);color:var(--warn);border-color:transparent;font-weight:600}
+.chip:hover{color:var(--text)}
+
+.workstream-list{display:flex;flex-direction:column;gap:16px}
+.ws-row{display:flex;align-items:center;gap:14px}
+.ws-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.ws-body{flex:1;min-width:0}
+.ws-top{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px}
+.ws-top b{font-weight:600}
+.ws-top span{color:var(--text-faint);font-size:11.5px}
+.ws-track{height:7px;border-radius:8px;background:var(--surface-2);overflow:hidden}
+.ws-fill{height:100%;border-radius:8px;width:0%;position:relative;overflow:hidden;transition:width 1.2s var(--spring)}
+.ws-fill::after{content:'';position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.35) 50%,transparent 70%);transform:translateX(-100%);animation:shimmer 2.6s ease-in-out infinite}
+@keyframes shimmer{100%{transform:translateX(100%)}}
+
+.attn-list{display:flex;flex-direction:column;gap:10px}
+.attn-item{display:flex;gap:12px;align-items:flex-start;padding:12px;border-radius:var(--r-md);background:var(--surface-2);border:1px solid var(--border);transition:transform .2s var(--spring)}
+.attn-item:hover{transform:translateX(3px)}
+.attn-dot{width:9px;height:9px;border-radius:50%;margin-top:5px;flex-shrink:0}
+.attn-dot.danger{background:var(--danger);box-shadow:0 0 0 4px var(--danger-bg)}
+.attn-dot.warn{background:var(--warn);box-shadow:0 0 0 4px var(--warn-bg)}
+.attn-body{flex:1;min-width:0}
+.attn-title{font-size:13px;font-weight:600}
+.attn-sub{font-size:11.5px;color:var(--text-faint);margin-top:2px}
+.attn-cta{font-size:11.5px;font-weight:600;color:var(--g400);white-space:nowrap;padding:6px 10px;border-radius:8px;transition:background .2s}
+.attn-cta:hover{background:var(--warn-bg)}
+
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:640px}
+th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-faint);padding:0 12px 10px;font-weight:600}
+td{padding:13px 12px;font-size:13px;border-top:1px solid var(--border);color:var(--text-dim)}
+tr td:first-child,th:first-child{padding-left:4px}
+.cell-name{color:var(--text);font-weight:600;font-size:13px}
+.cell-sub{font-size:11px;color:var(--text-faint)}
+.badge{font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;display:inline-block}
+.badge.success{background:var(--success-bg);color:var(--success)}
+.badge.danger{background:var(--danger-bg);color:var(--danger)}
+.badge.info{background:var(--info-bg);color:var(--info)}
+.badge.warn{background:var(--warn-bg);color:var(--warn)}
+.filter-row{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+
+.store-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:900px){.store-grid{grid-template-columns:1fr}}
+.store-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:22px}
+.store-top{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.store-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:19px}
+.store-icon.google{background:var(--success-bg);color:var(--success)}
+.store-icon.apple{background:var(--info-bg);color:var(--info)}
+.store-name{font-size:15px;font-weight:700}
+.store-sub{font-size:11.5px;color:var(--text-faint)}
+.timeline{display:flex;flex-direction:column;gap:0;margin:18px 0}
+.tl-step{display:flex;gap:12px;position:relative;padding-bottom:22px}
+.tl-step:last-child{padding-bottom:0}
+.tl-step::before{content:'';position:absolute;left:10px;top:22px;bottom:0;width:2px;background:var(--border)}
+.tl-step:last-child::before{display:none}
+.tl-dot{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;z-index:1}
+.tl-dot.done{background:var(--g500);color:#03150d}
+.tl-dot.active{background:var(--warn);color:#241a00}
+.tl-dot.pending{background:var(--surface-3);color:var(--text-faint)}
+.tl-body b{display:block;font-size:13px}
+.tl-body span{font-size:11.5px;color:var(--text-faint)}
+
+.pill-toggle{display:flex;gap:6px;background:var(--surface-2);border:1px solid var(--border);border-radius:100px;padding:4px;width:fit-content}
+.pill-toggle .p{padding:6px 14px;border-radius:100px;font-size:12px;font-weight:600;color:var(--text-faint);cursor:pointer;transition:.2s}
+.pill-toggle .p.active{background:var(--surface-3);color:var(--text)}
+.pill-toggle .p.active.live{color:var(--danger)}
+
+.push-console{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:900px){.push-console{grid-template-columns:1fr}}
+.plat-card{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-md);padding:16px;}
+.plat-top{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.plat-icon{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.plat-icon.android{background:var(--success-bg);color:var(--success)}
+.plat-icon.ios{background:var(--info-bg);color:var(--info)}
+.plat-stat-row{display:flex;justify-content:space-between;font-size:12.5px;padding:7px 0;border-bottom:1px solid var(--border)}
+.plat-stat-row:last-child{border-bottom:none}
+.plat-stat-row span:first-child{color:var(--text-faint)}
+.plat-stat-row span:last-child{color:var(--text);font-weight:600}
+
+.feed{display:flex;flex-direction:column;gap:2px;max-height:280px;overflow-y:auto}
+.feed-item{display:flex;gap:10px;align-items:flex-start;padding:10px 6px;border-bottom:1px solid var(--border);animation:feedIn .5s var(--ease);}
+@keyframes feedIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.feed-icon{width:26px;height:26px;border-radius:50%;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:10.5px;color:var(--g400);flex-shrink:0;margin-top:2px}
+.feed-text{font-size:12.5px;color:var(--text-dim);line-height:1.45}
+.feed-text b{color:var(--text);font-weight:600}
+.feed-time{font-size:10.5px;color:var(--text-faint);white-space:nowrap;margin-left:auto;flex-shrink:0}
+
+.page{display:none;animation:fadeIn .5s var(--ease)}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+.skeleton-wrap{position:fixed;inset:0;background:var(--bg);z-index:100;display:flex;align-items:center;justify-content:center;transition:opacity .5s var(--ease);}
+.skeleton-wrap.hide{opacity:0;pointer-events:none}
+.skel-logo{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--g400),var(--g600));animation:pulseLogo 1.1s ease-in-out infinite}
+
+.toast{position:fixed;bottom:26px;right:26px;z-index:200;background:var(--surface-2);border:1px solid var(--border-2);border-radius:var(--r-md);
+  padding:13px 18px;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow-lg);transform:translateY(30px) scale(.9);opacity:0;transition:.4s var(--spring);font-size:13px;}
+.toast.show{transform:translateY(0) scale(1);opacity:1}
+.toast i{color:var(--success)}
+
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:35;opacity:0;pointer-events:none;transition:opacity .3s}
+.overlay.show{opacity:1;pointer-events:auto}
+
+@media (max-width:1080px){.kpi-grid{grid-template-columns:repeat(2,1fr)}.grid-2{grid-template-columns:1fr}.store-grid{gap:14px}}
+@media (max-width:860px){.app{grid-template-columns:1fr}.sidebar{position:fixed;left:0;top:0;width:264px;transform:translateX(-100%);transition:transform .3s var(--ease)}.sidebar.open{transform:translateX(0)}.hamburger{display:flex}.search-bar{display:none}}
+@media (max-width:560px){.kpi-grid{grid-template-columns:1fr}.content{padding:18px 16px 50px}.topbar{padding:12px 16px}.welcome{padding:22px}.welcome-inner{align-items:flex-start}.push-console{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="skeleton-wrap" id="skeleton"><div class="skel-logo"></div></div>
+<div class="overlay" id="overlay"></div>
+<div class="demo-badge"><i class="fa-solid fa-circle-info"></i>Protótipo de demonstração · dados fictícios</div>
+
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-mark"><i class="fa-solid fa-rocket"></i></div>
+      <div>
+        <div class="brand-name">ShipGate</div>
+        <div class="brand-sub">Painel de Lançamento</div>
+      </div>
+    </div>
+
+    <div class="nav-group-label">Fase 2</div>
+    <a class="nav-item active" data-page="overview"><i class="fa-solid fa-gauge-high"></i>Visão Geral</a>
+    <a class="nav-item" data-page="translation"><i class="fa-solid fa-language"></i>Tradução</a>
+    <a class="nav-item" data-page="stores"><i class="fa-solid fa-store"></i>Lojas<span class="badge warn">1</span></a>
+    <a class="nav-item" data-page="bugs"><i class="fa-solid fa-bug"></i>Bugs<span class="badge">2</span></a>
+    <a class="nav-item" data-page="stripe"><i class="fa-solid fa-credit-card"></i>Stripe Produção</a>
+    <a class="nav-item" data-page="push"><i class="fa-solid fa-bell"></i>Notificações Push</a>
+
+    <div class="sidebar-footer">
+      <div class="plan-card">
+        <strong>Pronto para lançar</strong>
+        Checklist Fase 2 concluído
+        <div class="plan-bar"><div class="plan-bar-fill" data-fill="78"></div></div>
+        78% · 12 dias para o alvo
+      </div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="hamburger" id="hamburgerBtn"><i class="fa-solid fa-bars"></i></button>
+      <div class="search-bar"><i class="fa-solid fa-magnifying-glass"></i><input placeholder="Buscar telas, Price IDs, submissões..."></div>
+      <div class="topbar-right">
+        <div class="live-pill"><span class="live-dot"></span>Ao vivo</div>
+        <button class="icon-btn"><i class="fa-solid fa-bell"></i><span class="dot"></span></button>
+        <div class="avatar-chip"><div class="avatar">DH</div><span>Daniel H.</span></div>
+      </div>
+    </header>
+
+    <main class="content">
+
+      <!-- OVERVIEW -->
+      <section class="page active" id="page-overview">
+        <div class="welcome">
+          <div class="welcome-inner">
+            <div>
+              <h1>Fase 2 · Preparação para o lançamento</h1>
+              <p>Tradução, lojas, correção de bugs, Stripe em produção e push notifications num único painel de acompanhamento.</p>
+            </div>
+            <div class="readiness-ring">
+              <div class="ring"><span>78%</span></div>
+              <div class="readiness-label"><strong>Pronto para lançar</strong><span>5 de 6 frentes concluídas</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-top">
+              <div class="kpi-icon" style="background:var(--success-bg);color:var(--success)"><i class="fa-solid fa-language"></i></div>
+              <div class="kpi-trend up"><i class="fa-solid fa-arrow-up"></i>94%</div>
+            </div>
+            <div class="kpi-value" data-count="94" data-suffix="%">0%</div>
+            <div class="kpi-label">Cobertura de tradução PT</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-top">
+              <div class="kpi-icon" style="background:var(--warn-bg);color:var(--warn)"><i class="fa-solid fa-store"></i></div>
+              <div class="kpi-trend flat"><i class="fa-solid fa-clock"></i>1/2</div>
+            </div>
+            <div class="kpi-value" data-count="1">0</div>
+            <div class="kpi-label">Lojas aprovadas de 2</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-top">
+              <div class="kpi-icon" style="background:var(--danger-bg);color:var(--danger)"><i class="fa-solid fa-bug"></i></div>
+              <div class="kpi-trend down"><i class="fa-solid fa-arrow-down"></i>2 abertos</div>
+            </div>
+            <div class="kpi-value" data-count="2">0</div>
+            <div class="kpi-label">Bugs críticos em aberto</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-top">
+              <div class="kpi-icon" style="background:var(--info-bg);color:var(--info)"><i class="fa-solid fa-credit-card"></i></div>
+              <div class="kpi-trend flat"><i class="fa-solid fa-hourglass-half"></i>3 pend.</div>
+            </div>
+            <div class="kpi-value" data-count="6">0</div>
+            <div class="kpi-label">Price IDs configurados</div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-head">
+              <div><h3>Progresso por frente de trabalho</h3><div class="sub">As 6 entregas da Fase 2</div></div>
+            </div>
+            <div class="workstream-list">
+              <div class="ws-row">
+                <div class="ws-icon" style="background:var(--success-bg);color:var(--success)"><i class="fa-solid fa-language"></i></div>
+                <div class="ws-body">
+                  <div class="ws-top"><b>Tradução completa do app</b><span>94%</span></div>
+                  <div class="ws-track"><div class="ws-fill" data-w="94" style="background:linear-gradient(90deg,var(--g600),var(--g400))"></div></div>
+                </div>
+              </div>
+              <div class="ws-row">
+                <div class="ws-icon" style="background:var(--warn-bg);color:var(--warn)"><i class="fa-solid fa-store"></i></div>
+                <div class="ws-body">
+                  <div class="ws-top"><b>Publicação nas lojas</b><span>50%</span></div>
+                  <div class="ws-track"><div class="ws-fill" data-w="50" style="background:linear-gradient(90deg,#b45309,var(--warn))"></div></div>
+                </div>
+              </div>
+              <div class="ws-row">
+                <div class="ws-icon" style="background:var(--danger-bg);color:var(--danger)"><i class="fa-solid fa-bug"></i></div>
+                <div class="ws-body">
+                  <div class="ws-top"><b>Correção de bugs finais</b><span>70%</span></div>
+                  <div class="ws-track"><div class="ws-fill" data-w="70" style="background:linear-gradient(90deg,#b91c1c,var(--danger))"></div></div>
+                </div>
+              </div>
+              <div class="ws-row">
+                <div class="ws-icon" style="background:var(--info-bg);color:var(--info)"><i class="fa-solid fa-credit-card"></i></div>
+                <div class="ws-body">
+                  <div class="ws-top"><b>Stripe em produção</b><span>60%</span></div>
+                  <div class="ws-track"><div class="ws-fill" data-w="60" style="background:linear-gradient(90deg,#1d4ed8,var(--info))"></div></div>
+                </div>
+              </div>
+              <div class="ws-row">
+                <div class="ws-icon" style="background:var(--success-bg);color:var(--success)"><i class="fa-solid fa-bell"></i></div>
+                <div class="ws-body">
+                  <div class="ws-top"><b>Notificações push Android/iOS</b><span>85%</span></div>
+                  <div class="ws-track"><div class="ws-fill" data-w="85" style="background:linear-gradient(90deg,var(--g600),var(--g400))"></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head"><div><h3>Precisa de atenção</h3><div class="sub">Priorizado por bloqueio ao lançamento</div></div></div>
+            <div class="attn-list">
+              <div class="attn-item">
+                <div class="attn-dot danger"></div>
+                <div class="attn-body"><div class="attn-title">2 bugs críticos bloqueiam o release</div><div class="attn-sub">Checkout e sincronização de sessão</div></div>
+                <button class="attn-cta">Ver</button>
+              </div>
+              <div class="attn-item">
+                <div class="attn-dot warn"></div>
+                <div class="attn-body"><div class="attn-title">Google Play em revisão há 2 dias</div><div class="attn-sub">Tempo médio da loja: 1 a 3 dias</div></div>
+                <button class="attn-cta">Ver</button>
+              </div>
+              <div class="attn-item">
+                <div class="attn-dot warn"></div>
+                <div class="attn-body"><div class="attn-title">3 Price IDs pendentes em produção</div><div class="attn-sub">Planos anual e trimestral</div></div>
+                <button class="attn-cta">Ver</button>
+              </div>
+              <div class="attn-item">
+                <div class="attn-dot warn"></div>
+                <div class="attn-body"><div class="attn-title">Certificado APNs expira em 45 dias</div><div class="attn-sub">Renovar antes do lançamento em produção</div></div>
+                <button class="attn-cta">Ver</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-head"><div><h2>Atividade recente</h2><div class="sub">Eventos do painel em tempo real</div></div></div>
+        <div class="card"><div class="feed" id="feed"></div></div>
+      </section>
+
+      <!-- TRANSLATION -->
+      <section class="page" id="page-translation">
+        <div class="section-head"><div><h2>Tradução para Português</h2><div class="sub">347 strings mapeadas em 18 telas</div></div>
+          <button class="btn btn-ghost" id="exportBtn"><i class="fa-solid fa-download"></i>Exportar glossário</button>
+        </div>
+        <div class="card">
+          <div class="filter-row"><div class="chip active">Todas</div><div class="chip">Traduzido</div><div class="chip">Em revisão</div><div class="chip">Pendente</div></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Tela / Módulo</th><th>Strings</th><th>Progresso</th><th>Estado</th></tr></thead>
+              <tbody>
+                <tr><td><div class="cell-name">Onboarding e login</div><div class="cell-sub">6 telas</div></td><td>52</td><td>100%</td><td><span class="badge success">Traduzido</span></td></tr>
+                <tr><td><div class="cell-name">Navegação principal / menu</div><div class="cell-sub">4 telas</div></td><td>38</td><td>100%</td><td><span class="badge success">Traduzido</span></td></tr>
+                <tr><td><div class="cell-name">Perfil e configurações</div><div class="cell-sub">5 telas</div></td><td>61</td><td>100%</td><td><span class="badge success">Traduzido</span></td></tr>
+                <tr><td><div class="cell-name">Fluxo de pagamento</div><div class="cell-sub">4 telas</div></td><td>44</td><td>90%</td><td><span class="badge warn">Em revisão</span></td></tr>
+                <tr><td><div class="cell-name">Notificações e mensagens do sistema</div><div class="cell-sub">emails + push + in-app</div></td><td>73</td><td>82%</td><td><span class="badge warn">Em revisão</span></td></tr>
+                <tr><td><div class="cell-name">Textos das lojas (App Store / Play)</div><div class="cell-sub">descrição, capturas, metadados</div></td><td>21</td><td>60%</td><td><span class="badge info">Pendente</span></td></tr>
+                <tr><td><div class="cell-name">Mensagens de erro e validação</div><div class="cell-sub">58 mensagens</div></td><td>58</td><td>95%</td><td><span class="badge warn">Em revisão</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- STORES -->
+      <section class="page" id="page-stores">
+        <div class="section-head"><div><h2>Publicação nas Lojas</h2><div class="sub">Google Play e Apple App Store, contas do cliente</div></div></div>
+        <div class="store-grid">
+          <div class="store-card">
+            <div class="store-top"><div class="store-icon google"><i class="fa-brands fa-google-play"></i></div><div><div class="store-name">Google Play Store</div><div class="store-sub">Faixa de produção</div></div></div>
+            <div class="timeline">
+              <div class="tl-step"><div class="tl-dot done"><i class="fa-solid fa-check"></i></div><div class="tl-body"><b>Build preparado e assinado</b><span>Concluído</span></div></div>
+              <div class="tl-step"><div class="tl-dot done"><i class="fa-solid fa-check"></i></div><div class="tl-body"><b>Ficha da loja e capturas de ecrã</b><span>Concluído</span></div></div>
+              <div class="tl-step"><div class="tl-dot active"><i class="fa-solid fa-hourglass-half"></i></div><div class="tl-body"><b>Em revisão pela Google</b><span>Enviado há 2 dias</span></div></div>
+              <div class="tl-step"><div class="tl-dot pending"><i class="fa-solid fa-flag-checkered"></i></div><div class="tl-body"><b>Publicado</b><span>Aguardando aprovação</span></div></div>
+            </div>
+          </div>
+          <div class="store-card">
+            <div class="store-top"><div class="store-icon apple"><i class="fa-brands fa-app-store-ios"></i></div><div><div class="store-name">Apple App Store</div><div class="store-sub">TestFlight → Produção</div></div></div>
+            <div class="timeline">
+              <div class="tl-step"><div class="tl-dot done"><i class="fa-solid fa-check"></i></div><div class="tl-body"><b>Build preparado e assinado</b><span>Concluído</span></div></div>
+              <div class="tl-step"><div class="tl-dot done"><i class="fa-solid fa-check"></i></div><div class="tl-body"><b>Ficha da loja e capturas de ecrã</b><span>Concluído</span></div></div>
+              <div class="tl-step"><div class="tl-dot done"><i class="fa-solid fa-check"></i></div><div class="tl-body"><b>Revisão da Apple</b><span>Aprovado</span></div></div>
+              <div class="tl-step"><div class="tl-dot done"><i class="fa-solid fa-check"></i></div><div class="tl-body"><b>Publicado</b><span>Disponível na loja</span></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-head"><div><h2>Histórico de submissões</h2><div class="sub">Reenvios sem custo adicional em caso de rejeição</div></div></div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Loja</th><th>Versão</th><th>Motivo</th><th>Estado</th><th>Data</th></tr></thead>
+              <tbody>
+                <tr><td><div class="cell-name">Apple App Store</div></td><td>2.0.0 (1)</td><td>Metadados incompletos</td><td><span class="badge danger">Rejeitado</span></td><td>08 Jul</td></tr>
+                <tr><td><div class="cell-name">Apple App Store</div></td><td>2.0.0 (2)</td><td>Reenvio corrigido</td><td><span class="badge success">Aprovado</span></td><td>11 Jul</td></tr>
+                <tr><td><div class="cell-name">Google Play</div></td><td>2.0.0 (1)</td><td>Submissão inicial</td><td><span class="badge warn">Em revisão</span></td><td>13 Jul</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- BUGS -->
+      <section class="page" id="page-bugs">
+        <div class="section-head"><div><h2>Correção de Bugs</h2><div class="sub">Encontrados na fase final de testes</div></div></div>
+        <div class="card">
+          <div class="filter-row"><div class="chip active">Todos</div><div class="chip">Crítico</div><div class="chip">Alto</div><div class="chip">Médio</div></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Bug</th><th>Módulo</th><th>Severidade</th><th>Estado</th></tr></thead>
+              <tbody>
+                <tr><td><div class="cell-name">Checkout trava ao trocar de cartão</div><div class="cell-sub">iOS 17, Stripe Elements</div></td><td>Pagamentos</td><td><span class="badge danger">Crítico</span></td><td><span class="badge warn">Em correção</span></td></tr>
+                <tr><td><div class="cell-name">Sessão expira sem aviso em background</div><div class="cell-sub">Android, todas as versões</div></td><td>Autenticação</td><td><span class="badge danger">Crítico</span></td><td><span class="badge warn">Em correção</span></td></tr>
+                <tr><td><div class="cell-name">Layout quebra em ecrãs pequenos</div><div class="cell-sub">Tela de perfil, Android</div></td><td>UI</td><td><span class="badge info">Médio</span></td><td><span class="badge success">Corrigido</span></td></tr>
+                <tr><td><div class="cell-name">Botão duplicado após rotação</div><div class="cell-sub">Tela de onboarding</div></td><td>UI</td><td><span class="badge info">Médio</span></td><td><span class="badge success">Verificado</span></td></tr>
+                <tr><td><div class="cell-name">Push chega duplicado em alguns Android</div><div class="cell-sub">FCM, dispositivos Samsung</div></td><td>Notificações</td><td><span class="badge warn">Alto</span></td><td><span class="badge success">Corrigido</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- STRIPE -->
+      <section class="page" id="page-stripe">
+        <div class="section-head"><div><h2>Stripe em Produção</h2><div class="sub">Price IDs e ambiente de cobrança</div></div>
+          <div class="pill-toggle"><div class="p">Test</div><div class="p active live">Live</div></div>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Produto</th><th>Price ID</th><th>Valor</th><th>Ciclo</th><th>Ambiente</th><th>Estado</th></tr></thead>
+              <tbody>
+                <tr><td><div class="cell-name">Plano Mensal</div></td><td><span class="cell-sub">price_1P9k...a2Lm</span></td><td>—</td><td>Mensal</td><td><span class="badge success">Live</span></td><td><span class="badge success">Ativo</span></td></tr>
+                <tr><td><div class="cell-name">Plano Trimestral</div></td><td><span class="cell-sub">price_1P9k...c7Qx</span></td><td>—</td><td>Trimestral</td><td><span class="badge warn">Test</span></td><td><span class="badge warn">Pendente</span></td></tr>
+                <tr><td><div class="cell-name">Plano Anual</div></td><td><span class="cell-sub">price_1P9k...f4Rt</span></td><td>—</td><td>Anual</td><td><span class="badge warn">Test</span></td><td><span class="badge warn">Pendente</span></td></tr>
+                <tr><td><div class="cell-name">Compra única · créditos</div></td><td><span class="cell-sub">price_1P9k...h1Zv</span></td><td>—</td><td>Único</td><td><span class="badge warn">Test</span></td><td><span class="badge warn">Pendente</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-head"><div><h3>Webhooks</h3><div class="sub">Endpoint de produção</div></div></div>
+            <div class="plat-card">
+              <div class="plat-stat-row"><span>checkout.session.completed</span><span style="color:var(--success)">Ativo</span></div>
+              <div class="plat-stat-row"><span>invoice.payment_failed</span><span style="color:var(--success)">Ativo</span></div>
+              <div class="plat-stat-row"><span>customer.subscription.updated</span><span style="color:var(--success)">Ativo</span></div>
+              <div class="plat-stat-row"><span>Assinatura do webhook</span><span style="color:var(--success)">Verificada</span></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head"><div><h3>Checklist de migração</h3><div class="sub">Test → Live</div></div></div>
+            <div class="plat-card">
+              <div class="plat-stat-row"><span>Chaves de API live</span><span style="color:var(--success)">Configuradas</span></div>
+              <div class="plat-stat-row"><span>Price IDs recriados em live</span><span style="color:var(--warn)">3 pendentes</span></div>
+              <div class="plat-stat-row"><span>App apontando para live</span><span style="color:var(--text-faint)">Aguardando Price IDs</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PUSH -->
+      <section class="page" id="page-push">
+        <div class="section-head"><div><h2>Notificações Push</h2><div class="sub">Android (FCM) e iOS (APNs)</div></div>
+          <button class="btn btn-primary" id="testPushBtn"><i class="fa-solid fa-paper-plane"></i>Enviar teste</button>
+        </div>
+        <div class="push-console">
+          <div class="plat-card">
+            <div class="plat-top"><div class="plat-icon android"><i class="fa-brands fa-android"></i></div><div><b>Android · FCM</b></div></div>
+            <div class="plat-stat-row"><span>Chave de servidor</span><span style="color:var(--success)">Configurada</span></div>
+            <div class="plat-stat-row"><span>Entrega (últimos 100 testes)</span><span style="color:var(--success)">98%</span></div>
+            <div class="plat-stat-row"><span>Latência média</span><span>1.2s</span></div>
+            <div class="plat-stat-row"><span>Estado</span><span style="color:var(--success)">Operacional</span></div>
+          </div>
+          <div class="plat-card">
+            <div class="plat-top"><div class="plat-icon ios"><i class="fa-brands fa-apple"></i></div><div><b>iOS · APNs</b></div></div>
+            <div class="plat-stat-row"><span>Chave de autenticação</span><span style="color:var(--success)">Configurada</span></div>
+            <div class="plat-stat-row"><span>Entrega (últimos 100 testes)</span><span style="color:var(--success)">96%</span></div>
+            <div class="plat-stat-row"><span>Validade do certificado</span><span style="color:var(--warn)">45 dias restantes</span></div>
+            <div class="plat-stat-row"><span>Estado</span><span style="color:var(--success)">Operacional</span></div>
+          </div>
+        </div>
+
+        <div class="section-head"><div><h2>Testes recentes</h2><div class="sub">Envios de verificação em ambos os sistemas</div></div></div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Mensagem</th><th>Plataforma</th><th>Dispositivos</th><th>Estado</th></tr></thead>
+              <tbody>
+                <tr><td><div class="cell-name">Novo pedido confirmado</div></td><td>Android</td><td>12</td><td><span class="badge success">Entregue</span></td></tr>
+                <tr><td><div class="cell-name">Lembrete de pagamento</div></td><td>iOS</td><td>8</td><td><span class="badge success">Entregue</span></td></tr>
+                <tr><td><div class="cell-name">Promoção de lançamento</div></td><td>Android + iOS</td><td>20</td><td><span class="badge success">Entregue</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<div class="toast" id="toast"><i class="fa-solid fa-circle-check"></i><span>Notificação de teste enviada</span></div>
+
+<script>
+window.addEventListener('load',()=>{
+  setTimeout(()=>document.getElementById('skeleton').classList.add('hide'),650);
+});
+
+const navItems=document.querySelectorAll('.nav-item');
+const pages=document.querySelectorAll('.page');
+navItems.forEach(item=>{
+  item.addEventListener('click',()=>{
+    navItems.forEach(n=>n.classList.remove('active'));
+    item.classList.add('active');
+    const target='page-'+item.dataset.page;
+    pages.forEach(p=>p.classList.toggle('active',p.id===target));
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('overlay').classList.remove('show');
+    window.scrollTo({top:0,behavior:'smooth'});
+  });
+});
+
+document.getElementById('hamburgerBtn').addEventListener('click',()=>{
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('overlay').classList.add('show');
+});
+document.getElementById('overlay').addEventListener('click',()=>{
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('show');
+});
+
+document.querySelectorAll('.chip-row, .filter-row').forEach(row=>{
+  row.querySelectorAll('.chip').forEach(chip=>{
+    chip.addEventListener('click',()=>{
+      row.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+      chip.classList.add('active');
+    });
+  });
+});
+
+document.querySelectorAll('.pill-toggle').forEach(row=>{
+  row.querySelectorAll('.p').forEach(p=>{
+    p.addEventListener('click',()=>{
+      row.querySelectorAll('.p').forEach(c=>c.classList.remove('active','live'));
+      p.classList.add('active');
+      if(p.textContent.trim()==='Live')p.classList.add('live');
+    });
+  });
+});
+
+function easeOutExpo(t){return t===1?1:1-Math.pow(2,-10*t)}
+function countUp(el){
+  const to=parseInt(el.dataset.count,10);
+  const prefix=el.dataset.prefix||'';
+  const suffix=el.dataset.suffix||'';
+  const dur=1200;const start=performance.now();
+  function frame(now){
+    const p=Math.min((now-start)/dur,1);
+    const val=Math.floor(easeOutExpo(p)*to);
+    el.textContent=prefix+val.toLocaleString('pt-PT')+suffix;
+    if(p<1)requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
+const revealObserver=new IntersectionObserver((entries)=>{
+  entries.forEach((entry,i)=>{
+    if(entry.isIntersecting){
+      const el=entry.target;
+      setTimeout(()=>{
+        el.classList.add('reveal');
+        if(el.classList.contains('kpi-card')){
+          const num=el.querySelector('[data-count]');
+          if(num && !num.dataset.done){num.dataset.done='1';countUp(num);}
+        }
+        if(el.classList.contains('ws-fill')){el.style.width=el.dataset.w+'%';}
+      },i*55);
+      revealObserver.unobserve(el);
+    }
+  });
+},{threshold:.25});
+
+document.querySelectorAll('.kpi-card').forEach(el=>revealObserver.observe(el));
+document.querySelectorAll('.ws-fill').forEach(el=>revealObserver.observe(el));
+
+window.addEventListener('load',()=>{
+  setTimeout(()=>{
+    document.querySelectorAll('.plan-bar-fill').forEach(el=>el.style.width=el.dataset.fill+'%');
+  },800);
+});
+
+const feedPool=[
+  {icon:'fa-language',text:'Tela <b>Fluxo de pagamento</b> marcada como traduzida'},
+  {icon:'fa-store',text:'<b>Google Play</b> respondeu à submissão'},
+  {icon:'fa-bug',text:'Bug <b>Checkout trava ao trocar de cartão</b> atualizado'},
+  {icon:'fa-credit-card',text:'Price ID do <b>Plano Trimestral</b> criado em modo live'},
+  {icon:'fa-bell',text:'Teste de push entregue em <b>iOS</b>'},
+  {icon:'fa-circle-check',text:'Build 2.0.0 (2) aprovado na <b>App Store</b>'},
+];
+const feedEl=document.getElementById('feed');
+function addFeedItem(){
+  const item=feedPool[Math.floor(Math.random()*feedPool.length)];
+  const div=document.createElement('div');
+  div.className='feed-item';
+  div.innerHTML=`<div class="feed-icon"><i class="fa-solid ${item.icon}"></i></div><div class="feed-text">${item.text}</div><div class="feed-time">agora mesmo</div>`;
+  feedEl.prepend(div);
+  while(feedEl.children.length>7)feedEl.removeChild(feedEl.lastChild);
+}
+for(let i=0;i<5;i++)addFeedItem();
+setInterval(addFeedItem,4200);
+
+function showToast(msg){
+  const toast=document.getElementById('toast');
+  if(msg)toast.querySelector('span').textContent=msg;
+  toast.classList.add('show');
+  setTimeout(()=>toast.classList.remove('show'),2600);
+}
+document.getElementById('exportBtn').addEventListener('click',()=>showToast('Glossário exportado'));
+document.getElementById('testPushBtn').addEventListener('click',()=>showToast('Notificação de teste enviada'));
+</script>
+
+</body>
+</html>
