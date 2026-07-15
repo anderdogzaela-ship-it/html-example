@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ViaClara — App Demo Trafico en Tiempo Real</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:'Nunito',sans-serif;
+  background:radial-gradient(ellipse at top,#1c1207 0%,#0a0a0a 60%);
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-start;
+  padding:40px 20px 120px;
+  color:#f9fafb;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* Header */
+.page-header{text-align:center;margin-bottom:32px;max-width:520px}
+.page-header .logo{font-size:2rem;font-weight:900;color:#F59E0B;letter-spacing:-1px;display:flex;align-items:center;gap:10px;justify-content:center}
+.page-header .logo i{font-size:1.6rem}
+.page-header p{font-size:0.85rem;color:#94A3B8;margin-top:8px;line-height:1.6}
+
+/* Phone */
+.phone-outer{position:relative;width:375px;margin:0 auto}
+.phone{
+  width:375px;height:780px;
+  background:#111827;border-radius:52px;border:8px solid #1F2937;
+  box-shadow:0 0 0 1px #374151,inset 0 0 0 1px #374151,0 40px 100px rgba(0,0,0,0.9),0 0 60px rgba(245,158,11,0.08);
+  overflow:hidden;position:relative;
+}
+.notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:126px;height:34px;background:#111827;border-radius:0 0 22px 22px;z-index:20;display:flex;align-items:center;justify-content:center;gap:8px}
+.notch-cam{width:10px;height:10px;border-radius:50%;background:#1F2937;border:1px solid #374151}
+.notch-speaker{width:42px;height:5px;border-radius:4px;background:#1F2937}
+.status-bar{height:44px;padding:14px 20px 0;display:flex;justify-content:space-between;align-items:center;font-size:0.65rem;font-weight:800;color:#f9fafb;position:relative;z-index:10}
+.status-right{display:flex;gap:6px;align-items:center}
+.screen{display:none;flex-direction:column;position:absolute;top:0;left:0;right:0;bottom:0;overflow:hidden}
+.screen.active{display:flex;animation:slideIn 0.35s cubic-bezier(0.25,0.46,0.45,0.94)}
+.screen.slide-back.active{animation:slideBack 0.35s cubic-bezier(0.25,0.46,0.45,0.94)}
+@keyframes slideIn{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}
+@keyframes slideBack{from{opacity:0;transform:translateX(-30px)}to{opacity:1;transform:translateX(0)}}
+
+/* ============ MAP (shared visual language) ============ */
+.map-area{flex:1;position:relative;overflow:hidden;background:#111827}
+.map-grid{position:absolute;inset:0;background:linear-gradient(rgba(55,65,81,0.15) 1px,transparent 1px),linear-gradient(90deg,rgba(55,65,81,0.15) 1px,transparent 1px);background-size:36px 36px}
+.blk{position:absolute;background:#0F172A;border-radius:3px;opacity:0.85}
+.rd{position:absolute;border-radius:3px}
+.rd-h{height:9px;left:-10px;right:-10px}
+.rd-v{width:9px;top:-10px;bottom:-10px}
+.rd-green{background:#10B981}
+.rd-amber{background:#F59E0B}
+.rd-red{background:#EF4444}
+.pin-user{position:absolute;width:40px;height:40px;background:#3B82F6;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:1rem;box-shadow:0 0 0 9px rgba(59,130,246,0.15),0 4px 16px rgba(59,130,246,0.4);z-index:6;animation:userPulse 2.5s ease-in-out infinite;border:3px solid #0F172A}
+@keyframes userPulse{0%,100%{box-shadow:0 0 0 9px rgba(59,130,246,0.15),0 4px 16px rgba(59,130,246,0.4)}50%{box-shadow:0 0 0 16px rgba(59,130,246,0.05),0 4px 20px rgba(59,130,246,0.5)}}
+.pin-inc{position:absolute;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.75rem;z-index:6;border:2px solid #0F172A;cursor:pointer;transition:transform 0.2s}
+.pin-inc:hover{transform:scale(1.15)}
+
+/* Top search overlay */
+.map-top{position:absolute;top:0;left:0;right:0;z-index:8;padding:14px 16px;background:linear-gradient(to bottom,rgba(15,23,42,0.98) 65%,transparent)}
+.search-box{background:rgba(30,41,59,0.95);border:1px solid #334155;border-radius:16px;padding:12px 16px;display:flex;align-items:center;gap:10px;cursor:pointer;backdrop-filter:blur(8px)}
+.search-box i{color:#F59E0B;font-size:0.95rem}
+.search-box span{color:#94A3B8;font-size:0.9rem;flex:1}
+.search-box .dest{color:#F59E0B;font-size:0.7rem;font-weight:800;background:rgba(245,158,11,0.1);padding:4px 10px;border-radius:10px}
+
+.legend-row{position:absolute;top:66px;left:16px;z-index:8;display:flex;gap:8px}
+.legend-chip{background:rgba(15,23,42,0.85);border:1px solid #334155;border-radius:20px;padding:4px 10px;font-size:0.6rem;font-weight:800;display:flex;align-items:center;gap:5px;color:#CBD5E1;backdrop-filter:blur(6px)}
+.legend-dot{width:7px;height:7px;border-radius:50%}
+
+.fab-report{position:absolute;bottom:18px;right:16px;z-index:9;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#F59E0B,#D97706);display:flex;align-items:center;justify-content:center;color:#111827;font-size:1.2rem;box-shadow:0 6px 20px rgba(245,158,11,0.45);cursor:pointer;border:none;transition:transform 0.15s}
+.fab-report:hover{transform:scale(1.08)}
+
+/* Home bottom panel */
+.home-panel{background:#0F172A;border-top:1px solid #1E293B;padding:16px 16px 24px;border-radius:24px 24px 0 0}
+.section-title{font-size:0.7rem;font-weight:800;color:#64748B;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:12px}
+.chip-row{display:flex;gap:10px;margin-bottom:14px}
+.chip-card{flex:1;background:#1E293B;border-radius:14px;padding:12px 10px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;border:1.5px solid #334155;transition:border-color 0.2s,transform 0.15s}
+.chip-card:hover{border-color:#F59E0B;transform:translateY(-1px)}
+.chip-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1rem;background:rgba(245,158,11,0.12);color:#F59E0B}
+.chip-name{font-size:0.68rem;font-weight:800;color:#E2E8F0}
+.chip-sub{font-size:0.6rem;color:#64748B}
+
+.eta-teaser{background:linear-gradient(135deg,rgba(245,158,11,0.1),rgba(217,119,6,0.05));border:1px solid rgba(245,158,11,0.25);border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.eta-teaser i{color:#F59E0B;font-size:1.1rem}
+.eta-teaser-text{font-size:0.76rem;color:#E2E8F0;line-height:1.4}
+.eta-teaser-text b{color:#F59E0B}
+
+.btn-main{width:100%;background:linear-gradient(135deg,#F59E0B,#D97706);color:#111827;border:none;border-radius:16px;padding:16px;font-family:'Nunito',sans-serif;font-size:0.95rem;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity 0.2s,transform 0.15s;box-shadow:0 4px 20px rgba(245,158,11,0.3)}
+.btn-main:hover{opacity:0.9;transform:translateY(-1px)}
+
+/* ============ SCREEN 2: ROUTES ============ */
+.list-header{padding:12px 16px 14px;background:#0F172A;border-bottom:1px solid #1E293B}
+.list-header-top{display:flex;align-items:center;gap:12px;margin-bottom:2px}
+.back-btn{width:36px;height:36px;border:none;background:#1E293B;border-radius:50%;color:#E2E8F0;cursor:pointer;font-size:0.9rem;display:flex;align-items:center;justify-content:center;transition:background 0.2s}
+.back-btn:hover{background:#334155}
+.list-title{font-size:1rem;font-weight:900;color:#F9FAFB}
+.list-subtitle{font-size:0.75rem;color:#64748B;margin-top:1px}
+
+.route-list{flex:1;overflow-y:auto;scrollbar-width:none;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.route-card{background:#1E293B;border-radius:16px;padding:14px;cursor:pointer;border:1.5px solid #334155;transition:border-color 0.2s,transform 0.15s;position:relative}
+.route-card:hover{border-color:#F59E0B;transform:translateX(2px)}
+.route-card.featured{border-color:rgba(245,158,11,0.5)}
+.route-badge-top{position:absolute;top:-9px;right:14px;background:#F59E0B;color:#111827;font-size:0.6rem;font-weight:900;padding:2px 10px;border-radius:20px}
+.route-top-row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.route-name{font-size:0.88rem;font-weight:800;color:#F9FAFB}
+.route-time{font-size:1.15rem;font-weight:900;color:#F59E0B}
+.route-meta-row{display:flex;gap:12px;align-items:center;margin-bottom:10px}
+.route-dist{font-size:0.7rem;color:#94A3B8;display:flex;align-items:center;gap:4px}
+.traffic-badge{font-size:0.65rem;font-weight:900;padding:3px 10px;border-radius:20px}
+.tb-green{background:rgba(16,185,129,0.15);color:#34D399}
+.tb-amber{background:rgba(245,158,11,0.15);color:#FBBF24}
+.tb-red{background:rgba(239,68,68,0.15);color:#F87171}
+.route-strip{height:6px;border-radius:4px;display:flex;overflow:hidden;gap:1px}
+.route-strip span{flex:1;border-radius:2px}
+
+/* ============ SCREEN 3: NAVIGATION ============ */
+.nav-top{background:linear-gradient(135deg,#1E293B,#0F172A);padding:20px 18px 16px;border-bottom:1px solid #1E293B;display:flex;align-items:center;gap:14px}
+.turn-icon{width:52px;height:52px;border-radius:14px;background:rgba(245,158,11,0.15);display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:#F59E0B;flex-shrink:0}
+.turn-text{font-size:0.95rem;font-weight:900;color:#F9FAFB;line-height:1.3}
+.turn-dist{font-size:0.72rem;color:#64748B;margin-top:2px}
+
+.nav-mini-map{height:150px;position:relative;overflow:hidden;background:#111827;border-bottom:1px solid #1E293B}
+.route-path{position:absolute;top:50%;left:40px;right:40px;height:4px;transform:translateY(-50%);background:linear-gradient(90deg,#3B82F6,#F59E0B,#EF4444);border-radius:3px}
+.route-dot{position:absolute;top:50%;width:12px;height:12px;border-radius:50%;transform:translateY(-50%);border:3px solid #111827}
+.route-dot.from{left:24px;background:#3B82F6}
+.route-dot.to{right:24px;background:#EF4444}
+.car-on-route{position:absolute;top:50%;left:50px;transform:translateY(-50%);font-size:1rem;z-index:5;animation:carMove 3s ease-in-out infinite;color:#F9FAFB}
+@keyframes carMove{0%{left:50px;opacity:0}10%{opacity:1}90%{opacity:1}100%{left:calc(100% - 60px);opacity:0}}
+
+.nav-body{flex:1;overflow-y:auto;scrollbar-width:none;padding:16px;display:flex;flex-direction:column;gap:14px}
+.stats-row{display:flex;gap:10px}
+.stat-box{flex:1;background:#1E293B;border-radius:14px;padding:12px;text-align:center;border:1px solid #334155}
+.stat-val{font-size:1.05rem;font-weight:900;color:#F59E0B}
+.stat-lbl{font-size:0.65rem;color:#64748B;margin-top:2px}
+
+.alert-banner{background:linear-gradient(135deg,rgba(127,29,29,0.6),rgba(153,27,27,0.4));border:1px solid rgba(239,68,68,0.4);border-radius:16px;padding:14px;display:flex;gap:12px;align-items:flex-start}
+.alert-banner i{color:#F87171;font-size:1.2rem;margin-top:2px}
+.alert-banner-title{font-size:0.82rem;font-weight:800;color:#FCA5A5}
+.alert-banner-sub{font-size:0.72rem;color:#FECACA;margin-top:3px;line-height:1.4}
+
+.btn-reroute{width:100%;background:linear-gradient(135deg,#3B82F6,#2563EB);color:white;border:none;border-radius:16px;padding:15px;font-family:'Nunito',sans-serif;font-size:0.88rem;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 20px rgba(59,130,246,0.25);transition:opacity 0.2s,transform 0.15s}
+.btn-reroute:hover{opacity:0.9;transform:translateY(-1px)}
+
+/* ============ SCREEN 4: REPORT ============ */
+.report-grid{flex:1;overflow-y:auto;scrollbar-width:none;padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px;align-content:start}
+.report-tile{background:#1E293B;border-radius:16px;padding:18px 12px;display:flex;flex-direction:column;align-items:center;gap:10px;cursor:pointer;border:1.5px solid #334155;transition:border-color 0.2s,transform 0.15s}
+.report-tile:hover{border-color:#F59E0B;transform:translateY(-2px)}
+.report-tile-icon{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.3rem}
+.report-tile-name{font-size:0.75rem;font-weight:800;color:#E2E8F0;text-align:center}
+
+.toast{position:absolute;left:16px;right:16px;bottom:60px;background:#0F172A;border:1px solid #F59E0B;border-radius:16px;padding:14px 16px;display:flex;gap:12px;align-items:center;box-shadow:0 10px 30px rgba(0,0,0,0.5);z-index:30;opacity:0;transform:translateY(20px);transition:all 0.35s cubic-bezier(0.34,1.56,0.64,1);pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast i{color:#F59E0B;font-size:1.2rem}
+.toast-text{font-size:0.76rem;color:#E2E8F0;line-height:1.4}
+.toast-text b{color:#F59E0B}
+
+/* ============ SCREEN 5: COMMUNITY ALERTS ============ */
+.alert-list{flex:1;overflow-y:auto;scrollbar-width:none;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.alert-card{background:#1E293B;border-radius:16px;padding:14px;display:flex;gap:12px;align-items:center;border:1.5px solid #334155}
+.alert-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+.alert-info{flex:1}
+.alert-type{font-size:0.84rem;font-weight:800;color:#F9FAFB}
+.alert-loc{font-size:0.7rem;color:#64748B;margin-top:1px}
+.alert-meta{display:flex;gap:10px;align-items:center;margin-top:6px}
+.alert-time{font-size:0.65rem;color:#94A3B8}
+.alert-votes{font-size:0.65rem;color:#34D399;font-weight:800;display:flex;align-items:center;gap:3px}
+
+/* Bottom nav dots */
+.screen-indicator{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:15}
+.ind-dot{width:6px;height:6px;border-radius:50%;background:#334155;cursor:pointer;transition:all 0.25s}
+.ind-dot.active{width:18px;border-radius:3px;background:#F59E0B}
+
+/* ============ OUTER CONTROLS ============ */
+.outer-controls{margin-top:24px;display:flex;flex-direction:column;align-items:center;gap:16px;width:375px}
+.nav-row{display:flex;gap:10px;justify-content:center}
+.nav-btn{background:rgba(15,23,42,0.9);border:1px solid #334155;color:#94A3B8;padding:10px 20px;border-radius:24px;cursor:pointer;font-family:'Nunito',sans-serif;font-size:0.8rem;font-weight:800;display:flex;align-items:center;gap:8px;transition:all 0.2s;backdrop-filter:blur(8px)}
+.nav-btn:hover{border-color:#475569;color:#E2E8F0}
+.nav-btn.primary{background:linear-gradient(135deg,#F59E0B,#D97706);color:#111827;border-color:transparent}
+.nav-btn.primary:hover{opacity:0.9}
+.screen-label-box{background:rgba(15,23,42,0.8);border:1px solid #1E293B;border-radius:12px;padding:8px 16px;font-size:0.72rem;color:#64748B;text-align:center;backdrop-filter:blur(8px);line-height:1.5;max-width:375px}
+.screen-label-box b{color:#F59E0B}
+.restart-row{display:flex;gap:8px;align-items:center;cursor:pointer;color:#475569;font-size:0.75rem;font-weight:700;padding:8px 16px;border-radius:20px;border:1px solid #1E293B;background:rgba(15,23,42,0.6);transition:color 0.2s,border-color 0.2s}
+.restart-row:hover{color:#64748B;border-color:#334155}
+
+/* ============ WEB VERSION (browser mockup) ============ */
+.web-section{margin-top:70px;width:100%;max-width:1040px;display:flex;flex-direction:column;align-items:center;gap:18px}
+.web-section-header{text-align:center;max-width:600px}
+.web-section-title{font-size:1.3rem;font-weight:900;color:#F9FAFB;display:flex;align-items:center;gap:10px;justify-content:center}
+.web-section-title i{color:#F59E0B}
+.web-section-sub{font-size:0.85rem;color:#94A3B8;margin-top:8px;line-height:1.6}
+
+.browser-frame{width:100%;background:#111827;border-radius:16px;border:1px solid #1F2937;box-shadow:0 30px 80px rgba(0,0,0,0.6);overflow:hidden}
+.browser-topbar{background:#0F172A;padding:12px 16px;display:flex;align-items:center;gap:14px;border-bottom:1px solid #1E293B}
+.browser-dots{display:flex;gap:6px}
+.browser-dots span{width:11px;height:11px;border-radius:50%}
+.bd-r{background:#EF4444}.bd-y{background:#F59E0B}.bd-g{background:#10B981}
+.browser-url{flex:1;background:#1E293B;border-radius:8px;padding:6px 14px;font-size:0.72rem;color:#94A3B8;display:flex;align-items:center;gap:8px}
+.browser-url i{color:#10B981;font-size:0.65rem}
+
+.web-body{display:flex;height:480px}
+.web-sidebar{width:290px;background:#0F172A;border-right:1px solid #1E293B;padding:18px;display:flex;flex-direction:column;gap:16px;overflow-y:auto}
+.web-brand{display:flex;align-items:center;gap:10px;font-size:1rem;font-weight:900;color:#F59E0B}
+.web-search{background:#1E293B;border:1px solid #334155;border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:10px;font-size:0.78rem;color:#94A3B8}
+.web-search i{color:#F59E0B}
+.web-sidebar-title{font-size:0.62rem;font-weight:800;color:#64748B;text-transform:uppercase;letter-spacing:1px;margin-top:4px}
+.web-alert-mini{background:#1E293B;border:1px solid #334155;border-radius:10px;padding:10px 12px;display:flex;gap:10px;align-items:center}
+.web-alert-mini i{font-size:0.85rem;width:18px;text-align:center}
+.web-alert-mini-text{font-size:0.7rem;color:#CBD5E1;flex:1}
+.web-alert-mini-text b{display:block;color:#F9FAFB;font-size:0.74rem}
+.web-alert-mini-dist{font-size:0.62rem;color:#64748B}
+
+.web-map{flex:1;position:relative;overflow:hidden;background:#0B1220}
+.web-legend{position:absolute;top:16px;right:16px;background:rgba(15,23,42,0.9);border:1px solid #334155;border-radius:12px;padding:10px 14px;display:flex;flex-direction:column;gap:6px;z-index:8;backdrop-filter:blur(6px)}
+.web-legend-row{display:flex;align-items:center;gap:8px;font-size:0.68rem;color:#CBD5E1;font-weight:700}
+.web-legend-dot{width:9px;height:9px;border-radius:50%}
+
+@media (max-width:900px){
+  .web-body{flex-direction:column;height:auto}
+  .web-sidebar{width:100%;border-right:none;border-bottom:1px solid #1E293B}
+  .web-map{height:320px}
+}
+@media (max-width:420px){
+  .phone-outer,.phone{width:100%;max-width:375px}
+}
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <div class="logo"><i class="fa-solid fa-route"></i> ViaClara</div>
+  <p>Trafico en tiempo real, rutas inteligentes y alertas de la comunidad — demo interactivo web + movil</p>
+</div>
+
+<div class="phone-outer">
+  <div class="phone">
+    <div class="notch"><div class="notch-speaker"></div><div class="notch-cam"></div></div>
+
+    <!-- ======= SCREEN 1: HOME ======= -->
+    <div class="screen screen-home active" id="s1">
+      <div class="status-bar">
+        <span>9:41</span>
+        <div class="status-right"><i class="fa-solid fa-signal" style="font-size:0.6rem"></i><i class="fa-solid fa-wifi" style="font-size:0.6rem"></i><i class="fa-solid fa-battery-full" style="font-size:0.6rem;color:#10B981"></i></div>
+      </div>
+      <div class="map-area">
+        <div class="map-grid"></div>
+        <div class="rd rd-h rd-green" style="top:20%"></div>
+        <div class="rd rd-h rd-amber" style="top:40%"></div>
+        <div class="rd rd-h rd-red" style="top:62%"></div>
+        <div class="rd rd-h rd-green" style="top:82%"></div>
+        <div class="rd rd-v rd-amber" style="left:22%"></div>
+        <div class="rd rd-v rd-green" style="left:50%"></div>
+        <div class="rd rd-v rd-red" style="left:74%"></div>
+        <div class="blk" style="top:22%;left:24%;width:24%;height:16%"></div>
+        <div class="blk" style="top:22%;left:52%;width:20%;height:16%"></div>
+        <div class="blk" style="top:42%;left:24%;width:24%;height:18%"></div>
+        <div class="blk" style="top:42%;left:52%;width:20%;height:18%"></div>
+        <div class="blk" style="top:64%;left:24%;width:24%;height:16%"></div>
+        <div class="blk" style="top:64%;left:52%;width:20%;height:16%"></div>
+
+        <div class="pin-user"><i class="fa-solid fa-location-arrow"></i></div>
+        <div class="pin-inc" style="top:60%;left:74%;background:#EF4444" onclick="goTo(5)"><i class="fa-solid fa-car-burst" style="color:white"></i></div>
+        <div class="pin-inc" style="top:22%;left:22%;background:#F59E0B" onclick="goTo(5)"><i class="fa-solid fa-triangle-exclamation" style="color:#111827"></i></div>
+
+        <div class="legend-row">
+          <div class="legend-chip"><span class="legend-dot" style="background:#10B981"></span>Fluido</div>
+          <div class="legend-chip"><span class="legend-dot" style="background:#F59E0B"></span>Moderado</div>
+          <div class="legend-chip"><span class="legend-dot" style="background:#EF4444"></span>Pesado</div>
+        </div>
+
+        <div class="map-top">
+          <div class="search-box" onclick="goTo(2)">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <span>¿A donde vas?</span>
+            <div class="dest">Buscar</div>
+          </div>
+        </div>
+        <button class="fab-report" onclick="goTo(4)"><i class="fa-solid fa-flag"></i></button>
+      </div>
+      <div class="home-panel">
+        <div class="section-title">Destinos frecuentes</div>
+        <div class="chip-row">
+          <div class="chip-card" onclick="goTo(2)">
+            <div class="chip-icon"><i class="fa-solid fa-house"></i></div>
+            <div class="chip-name">Casa</div>
+            <div class="chip-sub">18 min</div>
+          </div>
+          <div class="chip-card" onclick="goTo(2)">
+            <div class="chip-icon"><i class="fa-solid fa-briefcase"></i></div>
+            <div class="chip-name">Trabajo</div>
+            <div class="chip-sub">24 min</div>
+          </div>
+          <div class="chip-card" onclick="goTo(2)">
+            <div class="chip-icon"><i class="fa-solid fa-plus"></i></div>
+            <div class="chip-name">Agregar</div>
+            <div class="chip-sub">&nbsp;</div>
+          </div>
+        </div>
+        <div class="eta-teaser">
+          <i class="fa-solid fa-clock"></i>
+          <div class="eta-teaser-text">Tu ruta habitual a <b>Casa</b> tiene trafico moderado ahora. Sale <b>4 min mas rapido</b> por Av. Insurgentes.</div>
+        </div>
+        <button class="btn-main" onclick="goTo(2)"><i class="fa-solid fa-route"></i> Ver rutas disponibles</button>
+      </div>
+      <div class="screen-indicator">
+        <div class="ind-dot active" onclick="goTo(1)"></div><div class="ind-dot" onclick="goTo(2)"></div><div class="ind-dot" onclick="goTo(3)"></div><div class="ind-dot" onclick="goTo(4)"></div><div class="ind-dot" onclick="goTo(5)"></div>
+      </div>
+    </div>
+
+    <!-- ======= SCREEN 2: ROUTES ======= -->
+    <div class="screen screen-list" id="s2">
+      <div class="status-bar">
+        <span>9:42</span>
+        <div class="status-right"><i class="fa-solid fa-signal" style="font-size:0.6rem"></i><i class="fa-solid fa-wifi" style="font-size:0.6rem"></i><i class="fa-solid fa-battery-full" style="font-size:0.6rem;color:#10B981"></i></div>
+      </div>
+      <div class="list-header">
+        <div class="list-header-top">
+          <button class="back-btn" onclick="goTo(1)"><i class="fa-solid fa-arrow-left"></i></button>
+          <div><div class="list-title">Elige tu ruta</div><div class="list-subtitle">3 opciones calculadas con trafico en vivo</div></div>
+        </div>
+      </div>
+      <div class="route-list">
+        <div class="route-card featured" onclick="goTo(3)">
+          <div class="route-badge-top">Mas rapida</div>
+          <div class="route-top-row"><div class="route-name">Av. Insurgentes Sur</div><div class="route-time">18 min</div></div>
+          <div class="route-meta-row"><div class="route-dist"><i class="fa-solid fa-road"></i> 12.4 km</div><div class="traffic-badge tb-amber">Trafico moderado</div></div>
+          <div class="route-strip"><span style="background:#10B981;flex:5"></span><span style="background:#F59E0B;flex:3"></span><span style="background:#10B981;flex:4"></span></div>
+        </div>
+        <div class="route-card" onclick="goTo(3)">
+          <div class="route-top-row"><div class="route-name">Periferico + Reforma</div><div class="route-time">22 min</div></div>
+          <div class="route-meta-row"><div class="route-dist"><i class="fa-solid fa-road"></i> 14.1 km</div><div class="traffic-badge tb-green">Trafico ligero</div></div>
+          <div class="route-strip"><span style="background:#10B981;flex:6"></span><span style="background:#10B981;flex:4"></span><span style="background:#F59E0B;flex:2"></span></div>
+        </div>
+        <div class="route-card" onclick="goTo(3)">
+          <div class="route-top-row"><div class="route-name">Sin casetas</div><div class="route-time">27 min</div></div>
+          <div class="route-meta-row"><div class="route-dist"><i class="fa-solid fa-road"></i> 15.8 km</div><div class="traffic-badge tb-red">Trafico pesado</div></div>
+          <div class="route-strip"><span style="background:#EF4444;flex:4"></span><span style="background:#F59E0B;flex:3"></span><span style="background:#10B981;flex:3"></span></div>
+        </div>
+      </div>
+      <div class="screen-indicator">
+        <div class="ind-dot" onclick="goTo(1)"></div><div class="ind-dot active" onclick="goTo(2)"></div><div class="ind-dot" onclick="goTo(3)"></div><div class="ind-dot" onclick="goTo(4)"></div><div class="ind-dot" onclick="goTo(5)"></div>
+      </div>
+    </div>
+
+    <!-- ======= SCREEN 3: NAVIGATION ======= -->
+    <div class="screen screen-nav" id="s3">
+      <div class="status-bar">
+        <span>9:44</span>
+        <div class="status-right"><i class="fa-solid fa-signal" style="font-size:0.6rem"></i><i class="fa-solid fa-wifi" style="font-size:0.6rem"></i><i class="fa-solid fa-battery-full" style="font-size:0.6rem;color:#10B981"></i></div>
+      </div>
+      <div class="nav-top">
+        <button class="back-btn" onclick="goTo(2)" style="flex-shrink:0"><i class="fa-solid fa-arrow-left"></i></button>
+        <div class="turn-icon"><i class="fa-solid fa-arrow-turn-up" style="transform:rotate(90deg)"></i></div>
+        <div><div class="turn-text">Gira a la derecha en Av. Insurgentes</div><div class="turn-dist">en 300 m</div></div>
+      </div>
+      <div class="nav-mini-map">
+        <div class="map-grid"></div>
+        <div class="route-path"></div>
+        <div class="route-dot from"></div>
+        <div class="route-dot to"></div>
+        <i class="fa-solid fa-car car-on-route"></i>
+      </div>
+      <div class="nav-body">
+        <div class="stats-row">
+          <div class="stat-box"><div class="stat-val">14 min</div><div class="stat-lbl">ETA</div></div>
+          <div class="stat-box"><div class="stat-val">8.2 km</div><div class="stat-lbl">Distancia</div></div>
+          <div class="stat-box"><div class="stat-val">42 km/h</div><div class="stat-lbl">Velocidad</div></div>
+        </div>
+        <div class="alert-banner">
+          <i class="fa-solid fa-car-burst"></i>
+          <div><div class="alert-banner-title">Choque reportado adelante</div><div class="alert-banner-sub">800 m sobre tu ruta actual — retraso estimado de 6 min. 58 conductores lo confirmaron.</div></div>
+        </div>
+        <button class="btn-reroute" onclick="goTo(2)"><i class="fa-solid fa-shuffle"></i> Buscar ruta alterna</button>
+      </div>
+      <div class="screen-indicator">
+        <div class="ind-dot" onclick="goTo(1)"></div><div class="ind-dot" onclick="goTo(2)"></div><div class="ind-dot active" onclick="goTo(3)"></div><div class="ind-dot" onclick="goTo(4)"></div><div class="ind-dot" onclick="goTo(5)"></div>
+      </div>
+    </div>
+
+    <!-- ======= SCREEN 4: REPORT ======= -->
+    <div class="screen screen-report" id="s4">
+      <div class="status-bar">
+        <span>9:45</span>
+        <div class="status-right"><i class="fa-solid fa-signal" style="font-size:0.6rem"></i><i class="fa-solid fa-wifi" style="font-size:0.6rem"></i><i class="fa-solid fa-battery-full" style="font-size:0.6rem;color:#10B981"></i></div>
+      </div>
+      <div class="list-header">
+        <div class="list-header-top">
+          <button class="back-btn" onclick="goTo(1)"><i class="fa-solid fa-arrow-left"></i></button>
+          <div><div class="list-title">Reportar en la via</div><div class="list-subtitle">Ayuda a conductores cercanos en tiempo real</div></div>
+        </div>
+      </div>
+      <div class="report-grid">
+        <div class="report-tile" onclick="showToast()"><div class="report-tile-icon" style="background:rgba(239,68,68,0.15)"><i class="fa-solid fa-car-burst" style="color:#F87171"></i></div><div class="report-tile-name">Choque</div></div>
+        <div class="report-tile" onclick="showToast()"><div class="report-tile-icon" style="background:rgba(245,158,11,0.15)"><i class="fa-solid fa-car-side" style="color:#FBBF24"></i></div><div class="report-tile-name">Trafico pesado</div></div>
+        <div class="report-tile" onclick="showToast()"><div class="report-tile-icon" style="background:rgba(59,130,246,0.15)"><i class="fa-solid fa-hand" style="color:#60A5FA"></i></div><div class="report-tile-name">Reten / Control</div></div>
+        <div class="report-tile" onclick="showToast()"><div class="report-tile-icon" style="background:rgba(168,85,247,0.15)"><i class="fa-solid fa-person-digging" style="color:#C084FC"></i></div><div class="report-tile-name">Obra en la via</div></div>
+        <div class="report-tile" onclick="showToast()"><div class="report-tile-icon" style="background:rgba(234,179,8,0.15)"><i class="fa-solid fa-triangle-exclamation" style="color:#FDE047"></i></div><div class="report-tile-name">Objeto en la via</div></div>
+        <div class="report-tile" onclick="showToast()"><div class="report-tile-icon" style="background:rgba(16,185,129,0.15)"><i class="fa-solid fa-camera" style="color:#34D399"></i></div><div class="report-tile-name">Camara de velocidad</div></div>
+      </div>
+      <div class="toast" id="reportToast">
+        <i class="fa-solid fa-circle-check"></i>
+        <div class="toast-text">Gracias por tu reporte. Ya esta activo para <b>1,240 conductores</b> cercanos.</div>
+      </div>
+      <div class="screen-indicator">
+        <div class="ind-dot" onclick="goTo(1)"></div><div class="ind-dot" onclick="goTo(2)"></div><div class="ind-dot" onclick="goTo(3)"></div><div class="ind-dot active" onclick="goTo(4)"></div><div class="ind-dot" onclick="goTo(5)"></div>
+      </div>
+    </div>
+
+    <!-- ======= SCREEN 5: COMMUNITY ALERTS ======= -->
+    <div class="screen screen-alerts" id="s5">
+      <div class="status-bar">
+        <span>9:46</span>
+        <div class="status-right"><i class="fa-solid fa-signal" style="font-size:0.6rem"></i><i class="fa-solid fa-wifi" style="font-size:0.6rem"></i><i class="fa-solid fa-battery-full" style="font-size:0.6rem;color:#10B981"></i></div>
+      </div>
+      <div class="list-header">
+        <div class="list-header-top">
+          <button class="back-btn" onclick="goTo(1)"><i class="fa-solid fa-arrow-left"></i></button>
+          <div><div class="list-title">Alertas cerca de ti</div><div class="list-subtitle">Reportadas por la comunidad</div></div>
+        </div>
+      </div>
+      <div class="alert-list">
+        <div class="alert-card">
+          <div class="alert-icon" style="background:rgba(239,68,68,0.15)"><i class="fa-solid fa-car-burst" style="color:#F87171"></i></div>
+          <div class="alert-info"><div class="alert-type">Choque</div><div class="alert-loc">Av. Universidad · 1.1 km</div><div class="alert-meta"><span class="alert-time">hace 3 min</span><span class="alert-votes"><i class="fa-solid fa-thumbs-up"></i> 58</span></div></div>
+        </div>
+        <div class="alert-card">
+          <div class="alert-icon" style="background:rgba(245,158,11,0.15)"><i class="fa-solid fa-car-side" style="color:#FBBF24"></i></div>
+          <div class="alert-info"><div class="alert-type">Trafico pesado</div><div class="alert-loc">Periferico Sur · 2.4 km</div><div class="alert-meta"><span class="alert-time">hace 6 min</span><span class="alert-votes"><i class="fa-solid fa-thumbs-up"></i> 22</span></div></div>
+        </div>
+        <div class="alert-card">
+          <div class="alert-icon" style="background:rgba(59,130,246,0.15)"><i class="fa-solid fa-hand" style="color:#60A5FA"></i></div>
+          <div class="alert-info"><div class="alert-type">Reten / Control</div><div class="alert-loc">Carretera Mexico-Toluca · 4.8 km</div><div class="alert-meta"><span class="alert-time">hace 12 min</span><span class="alert-votes"><i class="fa-solid fa-thumbs-up"></i> 9</span></div></div>
+        </div>
+        <div class="alert-card">
+          <div class="alert-icon" style="background:rgba(16,185,129,0.15)"><i class="fa-solid fa-camera" style="color:#34D399"></i></div>
+          <div class="alert-info"><div class="alert-type">Camara de velocidad</div><div class="alert-loc">Av. Reforma · 0.6 km</div><div class="alert-meta"><span class="alert-time">hace 20 min</span><span class="alert-votes"><i class="fa-solid fa-thumbs-up"></i> 140</span></div></div>
+        </div>
+      </div>
+      <div class="screen-indicator">
+        <div class="ind-dot" onclick="goTo(1)"></div><div class="ind-dot" onclick="goTo(2)"></div><div class="ind-dot" onclick="goTo(3)"></div><div class="ind-dot" onclick="goTo(4)"></div><div class="ind-dot active" onclick="goTo(5)"></div>
+      </div>
+    </div>
+
+  </div><!-- /phone -->
+</div><!-- /phone-outer -->
+
+<div class="outer-controls">
+  <div class="nav-row">
+    <button class="nav-btn" onclick="prevScreen()"><i class="fa-solid fa-arrow-left"></i> Anterior</button>
+    <button class="nav-btn primary" onclick="nextScreen()">Siguiente <i class="fa-solid fa-arrow-right"></i></button>
+  </div>
+  <div class="screen-label-box" id="screenLabel"><b>Pantalla 1 de 5</b> — Inicio: mapa con trafico en vivo por color y destinos frecuentes</div>
+  <div class="restart-row" onclick="goTo(1)"><i class="fa-solid fa-rotate-left"></i> Reiniciar demo</div>
+</div>
+
+<!-- ============ WEB VERSION ============ -->
+<div class="web-section">
+  <div class="web-section-header">
+    <div class="web-section-title"><i class="fa-solid fa-desktop"></i> Version web</div>
+    <p class="web-section-sub">La misma plataforma de trafico y rutas, pensada para monitoreo desde escritorio: oficinas, operadores de flotillas o control de rutas en varias ciudades a la vez.</p>
+  </div>
+  <div class="browser-frame">
+    <div class="browser-topbar">
+      <div class="browser-dots"><span class="bd-r"></span><span class="bd-y"></span><span class="bd-g"></span></div>
+      <div class="browser-url"><i class="fa-solid fa-lock"></i> app.viaclara.mx/mapa</div>
+    </div>
+    <div class="web-body">
+      <div class="web-sidebar">
+        <div class="web-brand"><i class="fa-solid fa-route"></i> ViaClara</div>
+        <div class="web-search"><i class="fa-solid fa-magnifying-glass"></i> Buscar direccion o ciudad</div>
+        <div class="web-sidebar-title">Alertas activas</div>
+        <div class="web-alert-mini"><i class="fa-solid fa-car-burst" style="color:#F87171"></i><div class="web-alert-mini-text"><b>Choque · Av. Universidad</b><span class="web-alert-mini-dist">1.1 km · hace 3 min</span></div></div>
+        <div class="web-alert-mini"><i class="fa-solid fa-car-side" style="color:#FBBF24"></i><div class="web-alert-mini-text"><b>Trafico pesado · Periferico Sur</b><span class="web-alert-mini-dist">2.4 km · hace 6 min</span></div></div>
+        <div class="web-alert-mini"><i class="fa-solid fa-camera" style="color:#34D399"></i><div class="web-alert-mini-text"><b>Camara · Av. Reforma</b><span class="web-alert-mini-dist">0.6 km · hace 20 min</span></div></div>
+        <div class="web-sidebar-title">Rutas guardadas</div>
+        <div class="web-alert-mini"><i class="fa-solid fa-house" style="color:#F59E0B"></i><div class="web-alert-mini-text"><b>Casa</b><span class="web-alert-mini-dist">18 min con trafico actual</span></div></div>
+        <div class="web-alert-mini"><i class="fa-solid fa-briefcase" style="color:#F59E0B"></i><div class="web-alert-mini-text"><b>Trabajo</b><span class="web-alert-mini-dist">24 min con trafico actual</span></div></div>
+      </div>
+      <div class="web-map">
+        <div class="map-grid"></div>
+        <div class="rd rd-h rd-green" style="top:15%"></div>
+        <div class="rd rd-h rd-amber" style="top:33%"></div>
+        <div class="rd rd-h rd-red" style="top:52%"></div>
+        <div class="rd rd-h rd-green" style="top:70%"></div>
+        <div class="rd rd-h rd-amber" style="top:88%"></div>
+        <div class="rd rd-v rd-green" style="left:12%"></div>
+        <div class="rd rd-v rd-amber" style="left:30%"></div>
+        <div class="rd rd-v rd-red" style="left:50%"></div>
+        <div class="rd rd-v rd-green" style="left:68%"></div>
+        <div class="rd rd-v rd-amber" style="left:86%"></div>
+        <div class="pin-inc" style="top:52%;left:50%;background:#EF4444"><i class="fa-solid fa-car-burst" style="color:white"></i></div>
+        <div class="pin-inc" style="top:33%;left:30%;background:#F59E0B"><i class="fa-solid fa-triangle-exclamation" style="color:#111827"></i></div>
+        <div class="pin-inc" style="top:88%;left:68%;background:#10B981"><i class="fa-solid fa-camera" style="color:white"></i></div>
+        <div class="web-legend">
+          <div class="web-legend-row"><span class="web-legend-dot" style="background:#10B981"></span>Fluido</div>
+          <div class="web-legend-row"><span class="web-legend-dot" style="background:#F59E0B"></span>Moderado</div>
+          <div class="web-legend-row"><span class="web-legend-dot" style="background:#EF4444"></span>Pesado</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let current = 1;
+const total = 5;
+const labels = [
+  'Inicio: mapa con trafico en vivo por color y destinos frecuentes',
+  'Rutas: 3 opciones calculadas con trafico en tiempo real, comparadas por tiempo y nivel de congestion',
+  'Navegacion activa: indicaciones giro a giro con alerta en vivo de un incidente sobre la ruta',
+  'Reporte de incidentes: toque rapido para avisar a otros conductores en segundos',
+  'Alertas de la comunidad: feed de reportes cercanos con confirmaciones de otros usuarios'
+];
+
+function goTo(n, back=false){
+  const prev = document.getElementById('s'+current);
+  const next = document.getElementById('s'+n);
+  if(prev) prev.classList.remove('active');
+  if(next){
+    if(back) next.classList.add('slide-back'); else next.classList.remove('slide-back');
+    next.classList.add('active');
+    setTimeout(()=>next.classList.remove('slide-back'),400);
+  }
+  current = n;
+  document.getElementById('screenLabel').innerHTML = '<b>Pantalla '+n+' de '+total+'</b> — '+labels[n-1];
+}
+function nextScreen(){ if(current < total) goTo(current+1,false); else goTo(1,false); }
+function prevScreen(){ if(current > 1) goTo(current-1,true); else goTo(total,true); }
+function showToast(){
+  const t = document.getElementById('reportToast');
+  t.classList.add('show');
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(()=>t.classList.remove('show'), 2600);
+}
+</script>
+</body>
+</html>
