@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0d1117">
+<title>GuardIA - Consola de Gestion de Incidencias con IA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+:root {
+  --bg: #0b0f16;
+  --surface: #131a24;
+  --surface-2: #182130;
+  --surface-3: #1f2937;
+  --surface-hover: #263244;
+  --border: rgba(226,232,240,0.08);
+  --border-strong: rgba(226,232,240,0.16);
+  --text: #f1f5f9;
+  --text-soft: #93a1b5;
+  --text-muted: #64748b;
+  --accent: #6366f1;
+  --accent-2: #22d3ee;
+  --accent-deep: #4338ca;
+  --accent-glow: rgba(99,102,241,0.18);
+  --success: #34d399;
+  --success-bg: rgba(52,211,153,0.12);
+  --warning: #f59e0b;
+  --warning-bg: rgba(245,158,11,0.12);
+  --danger: #f87171;
+  --danger-bg: rgba(248,113,113,0.14);
+  --info: #38bdf8;
+  --info-bg: rgba(56,189,248,0.12);
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px;
+  --s-5: 24px; --s-6: 32px; --s-7: 48px;
+  --r-sm: 6px; --r-md: 10px; --r-lg: 14px; --r-xl: 20px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.4);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.35);
+  --shadow-lg: 0 12px 40px rgba(0,0,0,0.5);
+  --shadow-glow: 0 0 0 1px var(--accent-glow), 0 8px 32px var(--accent-glow);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: -0.01em;
+  overflow-x: hidden;
+  background-image:
+    radial-gradient(circle at 8% 0%, rgba(99,102,241,0.10), transparent 42%),
+    radial-gradient(circle at 96% 92%, rgba(34,211,238,0.07), transparent 50%);
+}
+.mono { font-family: 'JetBrains Mono', monospace; }
+button { font-family: inherit; }
+a { text-decoration: none; color: inherit; }
+
+/* ===== LAYOUT ===== */
+.app {
+  display: grid;
+  grid-template-rows: 60px auto minmax(0, 1fr);
+  min-height: 100vh;
+  width: 100%;
+}
+.app.no-kpis { grid-template-rows: 60px minmax(0, 1fr); }
+
+/* ===== TOPBAR ===== */
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 var(--s-5);
+  border-bottom: 1px solid var(--border);
+  background: rgba(11,15,22,0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  position: sticky; top: 0;
+  z-index: 50;
+}
+.brand {
+  display: flex; align-items: center; gap: 10px;
+  font-weight: 700; font-size: 15px; letter-spacing: -0.02em;
+}
+.brand-mark {
+  width: 34px; height: 34px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  display: grid; place-items: center;
+  box-shadow: 0 4px 14px var(--accent-glow);
+  position: relative;
+  color: white; font-size: 15px;
+}
+.brand-mark::after {
+  content: ''; position: absolute;
+  width: 9px; height: 9px;
+  background: var(--success);
+  border: 2px solid var(--bg);
+  border-radius: 50%;
+  bottom: -2px; right: -2px;
+}
+.brand-name { display: flex; flex-direction: column; line-height: 1.15; }
+.brand-sub { font-size: 10px; color: var(--text-muted); font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; }
+.topbar-center { display: flex; gap: 2px; padding: 3px; background: var(--surface-2); border-radius: 10px; border: 1px solid var(--border); }
+.tb-tab {
+  display: flex; align-items: center; gap: 7px;
+  padding: 7px 13px;
+  font-size: 12px; font-weight: 600;
+  color: var(--text-soft);
+  background: transparent;
+  border: none; border-radius: 7px;
+  cursor: pointer; transition: all 0.15s;
+  white-space: nowrap;
+}
+.tb-tab i { font-size: 11px; }
+.tb-tab:hover { color: var(--text); }
+.tb-tab.active { background: var(--surface-3); color: var(--text); box-shadow: var(--shadow-sm); }
+.topbar-right { display: flex; align-items: center; gap: var(--s-3); }
+.live-pill {
+  display: flex; align-items: center; gap: 7px;
+  padding: 6px 11px;
+  background: var(--success-bg);
+  color: var(--success);
+  border: 1px solid rgba(52,211,153,0.28);
+  border-radius: 999px;
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 0.05em; text-transform: uppercase;
+}
+.live-pill::before {
+  content: ''; width: 6px; height: 6px;
+  background: var(--success); border-radius: 50%;
+  box-shadow: 0 0 8px var(--success);
+  animation: pulse 1.6s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%,100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.7); }
+}
+.icon-btn {
+  width: 36px; height: 36px;
+  display: grid; place-items: center;
+  background: var(--surface); color: var(--text-soft);
+  border: 1px solid var(--border); border-radius: var(--r-md);
+  cursor: pointer; transition: all 0.18s;
+  font-size: 14px;
+}
+.icon-btn:hover { background: var(--surface-2); color: var(--text); border-color: var(--border-strong); }
+.avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1, #22d3ee);
+  display: grid; place-items: center;
+  font-size: 12px; font-weight: 700; color: white;
+}
+.menu-btn { display: none; }
+
+/* ===== KPI STRIP ===== */
+.kpis {
+  padding: var(--s-4) var(--s-5);
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--s-3);
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(24,33,48,0.4), transparent);
+}
+.kpi {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: var(--s-3) var(--s-4);
+  position: relative; overflow: hidden;
+  transition: all 0.2s;
+  min-width: 0;
+  opacity: 0; transform: translateY(8px);
+  animation: kpiIn 0.5s cubic-bezier(0.16,1,0.3,1) forwards;
+}
+@keyframes kpiIn { to { opacity: 1; transform: translateY(0); } }
+.kpi:hover {
+  background: var(--surface-2);
+  border-color: var(--border-strong);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+.kpi-label {
+  font-size: 10px; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 0.08em;
+  font-weight: 600;
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px;
+}
+.kpi-icon-wrap {
+  width: 22px; height: 22px; border-radius: 6px;
+  background: var(--surface-3);
+  display: grid; place-items: center;
+  color: var(--accent-2);
+  font-size: 11px;
+}
+.kpi-value {
+  font-size: 22px; font-weight: 700;
+  letter-spacing: -0.02em;
+  display: flex; align-items: baseline; gap: 4px;
+}
+.kpi-unit { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+.kpi-trend {
+  margin-top: 5px;
+  font-size: 11px; font-weight: 500;
+  display: flex; align-items: center; gap: 4px;
+  color: var(--text-soft);
+}
+.kpi-trend.up { color: var(--success); }
+.kpi-trend.down { color: var(--danger); }
+.kpi-trend i { font-size: 9px; }
+
+/* ===== VIEW SWITCHING ===== */
+.view { display: none; }
+.view.active { display: block; animation: viewIn 0.35s ease; }
+@keyframes viewIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* ===== FEED VIEW ===== */
+.feed-layout {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) 340px;
+  gap: var(--s-4);
+  padding: var(--s-5);
+  align-items: start;
+}
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+.panel-header {
+  padding: var(--s-4) var(--s-4);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--surface-2);
+}
+.panel-title {
+  font-size: 13px; font-weight: 700;
+  display: flex; align-items: center; gap: 9px;
+}
+.panel-title i { color: var(--accent-2); font-size: 13px; }
+.panel-count {
+  font-size: 11px; font-weight: 700;
+  padding: 3px 8px;
+  background: var(--surface-3); color: var(--text-soft);
+  border-radius: 999px;
+}
+.panel-count.crit { background: var(--danger-bg); color: var(--danger); }
+
+.incident-list { display: flex; flex-direction: column; }
+.incident-card {
+  display: flex; flex-direction: column; gap: 10px;
+  padding: var(--s-4);
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+  position: relative;
+}
+.incident-card:last-child { border-bottom: none; }
+.incident-card:hover { background: var(--surface-2); }
+.incident-card.fresh { animation: freshIn 1.1s cubic-bezier(0.16,1,0.3,1) forwards; }
+@keyframes freshIn {
+  from { background: rgba(99,102,241,0.16); transform: translateX(-6px); }
+  to { background: transparent; transform: translateX(0); }
+}
+.incident-top { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--s-3); }
+.incident-title-row { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+.incident-title { font-size: 14px; font-weight: 700; color: var(--text); }
+.sev-badge {
+  font-size: 9.5px; font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 999px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.sev-badge.critica { background: var(--danger-bg); color: var(--danger); }
+.sev-badge.alta { background: var(--warning-bg); color: var(--warning); }
+.sev-badge.media { background: var(--info-bg); color: var(--info); }
+.sev-badge.baja { background: var(--surface-3); color: var(--text-soft); }
+.incident-time { font-size: 11px; color: var(--text-muted); white-space: nowrap; flex-shrink: 0; }
+.incident-meta-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.tag {
+  font-size: 10px; font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--surface-3);
+  color: var(--text-soft);
+  display: inline-flex; align-items: center; gap: 5px;
+}
+.tag i { font-size: 9px; }
+.tag.source { color: var(--accent-2); background: rgba(34,211,238,0.1); }
+.incident-summary {
+  font-size: 12.5px; color: var(--text-soft);
+  line-height: 1.55;
+  padding: 10px 12px;
+  background: var(--surface-2);
+  border-left: 2px solid var(--accent);
+  border-radius: 6px;
+}
+.incident-summary strong { color: var(--text); font-weight: 600; }
+.incident-status {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 11.5px; font-weight: 600;
+  padding: 8px 11px;
+  border-radius: 8px;
+}
+.incident-status.calling { background: rgba(248,113,113,0.1); color: var(--danger); }
+.incident-status.whatsapp { background: rgba(52,211,153,0.1); color: var(--success); }
+.incident-status.resolved { background: var(--success-bg); color: var(--success); }
+.incident-status.ticket { background: var(--surface-3); color: var(--text-soft); }
+.incident-status.waiting { background: var(--warning-bg); color: var(--warning); }
+.status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.status-dot.pulse { animation: pulse 1.4s ease-in-out infinite; }
+
+/* ===== ESCALATION SIDEBAR ===== */
+.escalation-list { display: flex; flex-direction: column; gap: var(--s-3); padding: var(--s-3); }
+.esc-card {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: var(--s-3);
+  position: relative;
+}
+.esc-card.active { border-color: rgba(248,113,113,0.35); }
+.esc-card.active::before {
+  content: ''; position: absolute; top: 0; left: 0; bottom: 0; width: 3px;
+  background: var(--danger); border-radius: var(--r-md) 0 0 var(--r-md);
+}
+.esc-head { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
+.esc-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  display: grid; place-items: center;
+  font-size: 11px; font-weight: 700; color: white;
+  flex-shrink: 0;
+}
+.esc-name { font-size: 12px; font-weight: 700; }
+.esc-role { font-size: 10px; color: var(--text-muted); }
+.esc-call-status {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11px; font-weight: 700;
+  margin-left: auto;
+}
+.esc-call-status.ringing { color: var(--danger); }
+.esc-call-status.answered { color: var(--success); }
+.esc-call-status.escalated { color: var(--warning); }
+.esc-reason {
+  font-size: 11px; color: var(--text-soft);
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+.esc-timer {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 15px; font-weight: 600;
+  color: var(--text);
+  display: flex; align-items: center; gap: 6px;
+}
+.esc-timer i { color: var(--danger); font-size: 11px; }
+
+/* ===== ROUTING VIEW ===== */
+.routing-layout { padding: var(--s-5); display: flex; flex-direction: column; gap: var(--s-5); }
+.pipeline {
+  display: flex; align-items: stretch; gap: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: var(--s-5);
+  overflow-x: auto;
+}
+.pipe-step {
+  flex: 1; min-width: 160px;
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  gap: 10px; padding: 0 var(--s-3);
+  position: relative;
+}
+.pipe-icon {
+  width: 46px; height: 46px; border-radius: 12px;
+  display: grid; place-items: center;
+  font-size: 18px; color: white;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  box-shadow: 0 6px 18px var(--accent-glow);
+}
+.pipe-title { font-size: 12.5px; font-weight: 700; }
+.pipe-desc { font-size: 10.5px; color: var(--text-muted); line-height: 1.4; }
+.pipe-arrow { display: flex; align-items: center; color: var(--text-muted); font-size: 16px; flex-shrink: 0; }
+
+.rules-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s-4); }
+.rule-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: var(--s-4);
+  border-top: 3px solid var(--border-strong);
+}
+.rule-card.critica { border-top-color: var(--danger); }
+.rule-card.alta { border-top-color: var(--warning); }
+.rule-card.normal { border-top-color: var(--info); }
+.rule-head { display: flex; align-items: center; gap: 9px; margin-bottom: 12px; }
+.rule-head i { font-size: 15px; }
+.rule-card.critica .rule-head i { color: var(--danger); }
+.rule-card.alta .rule-head i { color: var(--warning); }
+.rule-card.normal .rule-head i { color: var(--info); }
+.rule-name { font-size: 13.5px; font-weight: 700; }
+.rule-steps { display: flex; flex-direction: column; gap: 8px; }
+.rule-step { display: flex; align-items: flex-start; gap: 8px; font-size: 12px; color: var(--text-soft); line-height: 1.5; }
+.rule-step i { color: var(--accent-2); font-size: 10px; margin-top: 4px; flex-shrink: 0; }
+
+.split-panels { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: var(--s-4); align-items: start; }
+.call-log-table { width: 100%; border-collapse: collapse; }
+.call-log-table th {
+  text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em;
+  color: var(--text-muted); font-weight: 700;
+  padding: var(--s-3) var(--s-4); border-bottom: 1px solid var(--border);
+  background: var(--surface-2);
+}
+.call-log-table td {
+  padding: 12px var(--s-4); border-bottom: 1px solid var(--border);
+  font-size: 12px; color: var(--text-soft);
+}
+.call-log-table tr:last-child td { border-bottom: none; }
+.call-status-pill {
+  font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 999px;
+  display: inline-flex; align-items: center; gap: 5px;
+}
+.call-status-pill.answered { background: var(--success-bg); color: var(--success); }
+.call-status-pill.noanswer { background: var(--danger-bg); color: var(--danger); }
+.call-status-pill.escalated { background: var(--warning-bg); color: var(--warning); }
+
+.wa-thread { padding: var(--s-4); display: flex; flex-direction: column; gap: var(--s-3); }
+.wa-msg { display: flex; flex-direction: column; max-width: 88%; gap: 4px; }
+.wa-msg.in { align-self: flex-start; }
+.wa-msg.out { align-self: flex-end; }
+.wa-bubble { padding: 10px 13px; border-radius: 13px; font-size: 12.5px; line-height: 1.5; }
+.wa-msg.in .wa-bubble { background: var(--surface-2); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+.wa-msg.out .wa-bubble { background: linear-gradient(135deg, var(--accent-deep), var(--accent)); color: white; border-bottom-right-radius: 4px; box-shadow: 0 4px 12px var(--accent-glow); }
+.wa-meta { font-size: 10px; color: var(--text-muted); padding: 0 4px; display: flex; gap: 5px; align-items: center; }
+.wa-msg.out .wa-meta { justify-content: flex-end; }
+
+/* ===== METRICS VIEW ===== */
+.metrics-layout { padding: var(--s-5); display: flex; flex-direction: column; gap: var(--s-5); }
+.compare-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--s-4); }
+.compare-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: var(--s-4);
+}
+.compare-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; margin-bottom: 14px; }
+.compare-values { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+.compare-before { text-align: center; }
+.compare-before .val { font-size: 15px; font-weight: 600; color: var(--text-muted); text-decoration: line-through; text-decoration-color: rgba(248,113,113,0.5); }
+.compare-before .lbl { font-size: 9px; color: var(--text-muted); text-transform: uppercase; }
+.compare-arrow { color: var(--success); font-size: 14px; }
+.compare-after .val { font-size: 26px; font-weight: 800; color: var(--text); letter-spacing: -0.02em; }
+.compare-after .lbl { font-size: 9px; color: var(--success); text-transform: uppercase; font-weight: 700; }
+.compare-note { font-size: 11px; color: var(--text-soft); line-height: 1.4; }
+
+.metrics-secondary { display: grid; grid-template-columns: 1.2fr 1fr; gap: var(--s-4); }
+.big-stat-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--s-4); }
+.big-stat {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: var(--s-5);
+  display: flex; flex-direction: column; gap: 6px;
+}
+.big-stat-icon { width: 40px; height: 40px; border-radius: 10px; background: var(--surface-3); display: grid; place-items: center; color: var(--accent-2); font-size: 16px; margin-bottom: 6px; }
+.big-stat-value { font-size: 30px; font-weight: 800; letter-spacing: -0.02em; }
+.big-stat-label { font-size: 11.5px; color: var(--text-soft); }
+
+.donut-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: var(--s-5);
+  display: flex; flex-direction: column; gap: var(--s-4);
+}
+.donut-wrap { display: flex; align-items: center; gap: var(--s-5); flex-wrap: wrap; }
+.donut-legend { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 160px; }
+.legend-row { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.legend-dot { width: 9px; height: 9px; border-radius: 3px; flex-shrink: 0; }
+.legend-label { color: var(--text-soft); flex: 1; }
+.legend-val { color: var(--text); font-weight: 700; font-family: 'JetBrains Mono'; font-size: 11px; }
+
+.bars-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: var(--s-5);
+}
+.an-bars { display: flex; align-items: flex-end; gap: 10px; height: 130px; margin-top: var(--s-4); }
+.an-bar { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; height: 100%; justify-content: flex-end; }
+.an-bar-fill { width: 100%; border-radius: 5px 5px 0 0; background: linear-gradient(180deg, var(--accent-2), var(--accent)); transition: filter 0.2s; min-height: 4px; }
+.an-bar-fill:hover { filter: brightness(1.25); }
+.an-bar-label { font-size: 10px; color: var(--text-muted); }
+
+/* ===== CONFIG VIEW ===== */
+.config-layout { padding: var(--s-5); display: grid; grid-template-columns: 1.2fr 1fr; gap: var(--s-4); align-items: start; }
+.config-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+.config-card-header {
+  padding: var(--s-4); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--surface-2);
+}
+.config-card-title { font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 9px; }
+.config-card-title i { color: var(--accent-2); }
+.conn-status { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; color: var(--success); }
+.conn-status .status-dot { background: var(--success); }
+.config-body { padding: var(--s-4); display: flex; flex-direction: column; gap: var(--s-4); }
+.field-group label { display: block; font-size: 11px; color: var(--text-muted); font-weight: 600; margin-bottom: 7px; text-transform: uppercase; letter-spacing: 0.04em; }
+.field-row { display: flex; gap: 8px; }
+.field-input {
+  flex: 1;
+  padding: 10px 13px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  font-size: 12.5px;
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+}
+.field-input:focus { outline: none; border-color: var(--accent); }
+.field-btn {
+  padding: 0 14px;
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  color: var(--text-soft);
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.15s;
+}
+.field-btn:hover { color: var(--text); background: var(--surface-hover); }
+.field-hint { font-size: 10.5px; color: var(--text-muted); margin-top: 6px; }
+.sync-line { display: flex; align-items: center; gap: 8px; font-size: 11.5px; color: var(--text-soft); padding-top: var(--s-2); border-top: 1px solid var(--border); }
+.sync-line i { color: var(--success); font-size: 10px; }
+
+.channel-row {
+  display: flex; align-items: center; gap: var(--s-3);
+  padding: var(--s-3);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+}
+.channel-icon { width: 36px; height: 36px; border-radius: 9px; display: grid; place-items: center; font-size: 15px; color: white; flex-shrink: 0; }
+.channel-info { flex: 1; min-width: 0; }
+.channel-name { font-size: 12.5px; font-weight: 700; }
+.channel-detail { font-size: 10.5px; color: var(--text-muted); }
+.toggle {
+  width: 40px; height: 22px; border-radius: 999px;
+  background: var(--success);
+  position: relative; cursor: pointer; flex-shrink: 0;
+  transition: background 0.2s;
+}
+.toggle::after {
+  content: ''; position: absolute; top: 2px; left: 20px;
+  width: 18px; height: 18px; border-radius: 50%; background: white;
+  transition: left 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+.toggle.off { background: var(--surface-3); }
+.toggle.off::after { left: 2px; }
+
+.roster-list { display: flex; flex-direction: column; gap: var(--s-3); }
+.roster-item {
+  display: flex; align-items: center; gap: var(--s-3);
+  padding: var(--s-3);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+}
+.roster-order {
+  width: 26px; height: 26px; border-radius: 50%;
+  background: var(--surface-3); color: var(--accent-2);
+  display: grid; place-items: center;
+  font-size: 11px; font-weight: 800; flex-shrink: 0;
+  font-family: 'JetBrains Mono';
+}
+.roster-avatar { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 700; color: white; flex-shrink: 0; }
+.roster-info { flex: 1; min-width: 0; }
+.roster-name { font-size: 12.5px; font-weight: 700; }
+.roster-role { font-size: 10.5px; color: var(--text-muted); }
+.roster-contact { display: flex; gap: 10px; font-size: 10.5px; color: var(--text-soft); margin-top: 2px; }
+.roster-contact span { display: flex; align-items: center; gap: 4px; }
+.roster-contact i { font-size: 9px; color: var(--accent-2); }
+
+/* ===== SCROLL REVEAL ===== */
+.reveal { opacity: 0; transform: translateY(14px); transition: opacity 0.5s ease, transform 0.5s ease; }
+.reveal.in { opacity: 1; transform: translateY(0); }
+
+/* ===== MOBILE BOTTOM TABS ===== */
+.mobile-tabs { display: none; }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 1200px) {
+  .kpis { grid-template-columns: repeat(3, 1fr); }
+  .kpi:nth-child(4), .kpi:nth-child(5) { display: none; }
+  .feed-layout { grid-template-columns: 1fr; }
+  .compare-grid { grid-template-columns: repeat(2, 1fr); }
+  .rules-grid { grid-template-columns: 1fr; }
+  .split-panels { grid-template-columns: 1fr; }
+  .config-layout { grid-template-columns: 1fr; }
+  .metrics-secondary { grid-template-columns: 1fr; }
+}
+@media (max-width: 768px) {
+  .topbar { padding: 0 var(--s-3); height: 56px; }
+  .brand-sub { display: none; }
+  .topbar-center { display: none; }
+  .menu-btn { display: grid; }
+  .kpis { grid-template-columns: repeat(2, 1fr); padding: var(--s-3); }
+  .kpi:nth-child(3) { display: none; }
+  .feed-layout, .routing-layout, .metrics-layout, .config-layout { padding: var(--s-3); gap: var(--s-3); }
+  .compare-grid, .big-stat-row { grid-template-columns: 1fr; }
+  .pipeline { flex-direction: column; }
+  .pipe-arrow { transform: rotate(90deg); align-self: center; }
+  .mobile-tabs {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: rgba(11,15,22,0.96);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border-strong);
+    z-index: 100;
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+  }
+  .mtab {
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    padding: 6px;
+    color: var(--text-muted);
+    background: transparent; border: none;
+    cursor: pointer;
+    font-size: 9.5px; font-weight: 600;
+  }
+  .mtab i { font-size: 15px; }
+  .mtab.active { color: var(--accent-2); }
+  body { padding-bottom: 60px; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:var(--s-3);">
+      <button class="icon-btn menu-btn" id="menuBtn" aria-label="Menu"><i class="fa-solid fa-bars"></i></button>
+      <div class="brand">
+        <div class="brand-mark"><i class="fa-solid fa-shield-halved"></i></div>
+        <div class="brand-name">
+          <span>GuardIA</span>
+          <span class="brand-sub">Gestion de Incidencias con IA</span>
+        </div>
+      </div>
+    </div>
+    <div class="topbar-center" id="viewTabs">
+      <button class="tb-tab active" data-view="feed"><i class="fa-solid fa-bolt"></i> Feed en Vivo</button>
+      <button class="tb-tab" data-view="routing"><i class="fa-solid fa-diagram-project"></i> Rutas de Notificacion</button>
+      <button class="tb-tab" data-view="metrics"><i class="fa-solid fa-chart-line"></i> Panel de Metricas</button>
+      <button class="tb-tab" data-view="config"><i class="fa-solid fa-gear"></i> Configuracion</button>
+    </div>
+    <div class="topbar-right">
+      <div class="live-pill"><span>En vivo</span></div>
+      <button class="icon-btn" aria-label="Notificaciones"><i class="fa-solid fa-bell"></i></button>
+      <div class="avatar">NX</div>
+    </div>
+  </div>
+
+  <!-- KPIS (feed view only) -->
+  <div class="kpis" id="kpiStrip">
+    <div class="kpi" style="animation-delay:0.02s">
+      <div class="kpi-label">Incidencias activas<div class="kpi-icon-wrap"><i class="fa-solid fa-triangle-exclamation"></i></div></div>
+      <div class="kpi-value" id="kpiActive">23</div>
+      <div class="kpi-trend up"><i class="fa-solid fa-arrow-up"></i> +6 vs hace 1h</div>
+    </div>
+    <div class="kpi" style="animation-delay:0.08s">
+      <div class="kpi-label">Criticas sin resolver<div class="kpi-icon-wrap"><i class="fa-solid fa-phone-volume"></i></div></div>
+      <div class="kpi-value" id="kpiCrit">1</div>
+      <div class="kpi-trend down">Llamada VOIP en curso</div>
+    </div>
+    <div class="kpi" style="animation-delay:0.14s">
+      <div class="kpi-label">Tiempo medio deteccion<div class="kpi-icon-wrap"><i class="fa-solid fa-stopwatch"></i></div></div>
+      <div class="kpi-value"><span id="kpiDetect">38</span><span class="kpi-unit">s</span></div>
+      <div class="kpi-trend up"><i class="fa-solid fa-arrow-down"></i> vs 14 min manual</div>
+    </div>
+    <div class="kpi" style="animation-delay:0.2s">
+      <div class="kpi-label">Auto-resolucion<div class="kpi-icon-wrap"><i class="fa-solid fa-robot"></i></div></div>
+      <div class="kpi-value"><span id="kpiAuto">64</span><span class="kpi-unit">%</span></div>
+      <div class="kpi-trend up">Sin intervencion humana</div>
+    </div>
+    <div class="kpi" style="animation-delay:0.26s">
+      <div class="kpi-label">Llamadas VOIP hoy<div class="kpi-icon-wrap"><i class="fa-solid fa-phone"></i></div></div>
+      <div class="kpi-value" id="kpiCalls">7</div>
+      <div class="kpi-trend">2 escaladas a 2do nivel</div>
+    </div>
+  </div>
+
+  <!-- ===== FEED VIEW ===== -->
+  <div class="view active" data-view-content="feed">
+    <div class="feed-layout">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><i class="fa-solid fa-list-check"></i> Incidencias en tiempo real <span class="panel-count" id="incidentCount">6</span></div>
+          <div class="panel-count crit"><i class="fa-solid fa-circle" style="font-size:6px;margin-right:4px;"></i> 1 critica activa</div>
+        </div>
+        <div class="incident-list" id="incidentList"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><i class="fa-solid fa-tower-broadcast"></i> Escalamiento activo</div>
+          <div class="panel-count">3</div>
+        </div>
+        <div class="escalation-list" id="escalationList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== ROUTING VIEW ===== -->
+  <div class="view" data-view-content="routing">
+    <div class="routing-layout">
+      <div class="panel reveal">
+        <div class="panel-header">
+          <div class="panel-title"><i class="fa-solid fa-diagram-project"></i> Logica de clasificacion y ruteo</div>
+        </div>
+        <div class="pipeline">
+          <div class="pipe-step">
+            <div class="pipe-icon"><i class="fa-solid fa-satellite-dish"></i></div>
+            <div class="pipe-title">Incidencia</div>
+            <div class="pipe-desc">Webhook desde su sistema actual (Zendesk / Jira)</div>
+          </div>
+          <div class="pipe-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+          <div class="pipe-step">
+            <div class="pipe-icon"><i class="fa-solid fa-brain"></i></div>
+            <div class="pipe-title">Clasificacion IA</div>
+            <div class="pipe-desc">Categoria, resumen y severidad estimados en menos de 2s</div>
+          </div>
+          <div class="pipe-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+          <div class="pipe-step">
+            <div class="pipe-icon"><i class="fa-solid fa-gauge-high"></i></div>
+            <div class="pipe-title">Severidad</div>
+            <div class="pipe-desc">Critica / Alta / Media / Baja segun impacto de negocio</div>
+          </div>
+          <div class="pipe-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+          <div class="pipe-step">
+            <div class="pipe-icon"><i class="fa-solid fa-route"></i></div>
+            <div class="pipe-title">Ruta automatica</div>
+            <div class="pipe-desc">Llamada VOIP, WhatsApp o ticket estandar</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="rules-grid">
+        <div class="rule-card critica reveal">
+          <div class="rule-head"><i class="fa-solid fa-phone-volume"></i><span class="rule-name">Severidad Critica</span></div>
+          <div class="rule-steps">
+            <div class="rule-step"><i class="fa-solid fa-check"></i> Llamada telefonica automatica inmediata al responsable de guardia</div>
+            <div class="rule-step"><i class="fa-solid fa-check"></i> WhatsApp simultaneo al equipo tecnico con detalle de la incidencia</div>
+            <div class="rule-step"><i class="fa-solid fa-check"></i> Escalamiento automatico al siguiente en la lista si no responde en 2 minutos</div>
+          </div>
+        </div>
+        <div class="rule-card alta reveal">
+          <div class="rule-head"><i class="fa-solid fa-comment-dots"></i><span class="rule-name">Severidad Alta</span></div>
+          <div class="rule-steps">
+            <div class="rule-step"><i class="fa-solid fa-check"></i> WhatsApp inmediato al responsable del area afectada</div>
+            <div class="rule-step"><i class="fa-solid fa-check"></i> Resumen generado por IA con contexto y sistema de origen</div>
+            <div class="rule-step"><i class="fa-solid fa-check"></i> Escalamiento a llamada si no hay acuse en 10 minutos</div>
+          </div>
+        </div>
+        <div class="rule-card normal reveal">
+          <div class="rule-head"><i class="fa-solid fa-clipboard-list"></i><span class="rule-name">Severidad Media / Baja</span></div>
+          <div class="rule-steps">
+            <div class="rule-step"><i class="fa-solid fa-check"></i> Ticket estandar creado en el sistema de incidencias actual</div>
+            <div class="rule-step"><i class="fa-solid fa-check"></i> Sin interrupcion en tiempo real al equipo</div>
+            <div class="rule-step"><i class="fa-solid fa-check"></i> Incluido en el resumen diario consolidado por IA</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="split-panels">
+        <div class="panel reveal">
+          <div class="panel-header">
+            <div class="panel-title"><i class="fa-solid fa-phone"></i> Registro de llamadas VOIP</div>
+            <div class="panel-count">Twilio</div>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="call-log-table">
+              <thead>
+                <tr><th>Hora</th><th>Incidencia</th><th>Llamado a</th><th>Duracion</th><th>Estado</th></tr>
+              </thead>
+              <tbody id="callLogBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel reveal">
+          <div class="panel-header">
+            <div class="panel-title"><i class="fa-brands fa-whatsapp" style="color:var(--success);"></i> WhatsApp automatizado</div>
+            <div class="panel-count">Equipo Backend</div>
+          </div>
+          <div class="wa-thread">
+            <div class="wa-msg out">
+              <div class="wa-bubble">Alerta GuardIA: incidencia critica INC-4521. Fallo en pasarela de pago Stripe detectado hace 12s. Impacto estimado: checkout bloqueado. Se ha iniciado llamada VOIP a Carlos R.</div>
+              <div class="wa-meta">14:22 <i class="fa-solid fa-check-double" style="color:var(--accent-2);"></i></div>
+            </div>
+            <div class="wa-msg in">
+              <div class="wa-bubble">Recibido, estoy revisando el dashboard de Stripe ahora mismo</div>
+              <div class="wa-meta">14:23</div>
+            </div>
+            <div class="wa-msg out">
+              <div class="wa-bubble">Registrado como acuse. Manteniendo la incidencia abierta hasta confirmacion de resolucion.</div>
+              <div class="wa-meta">14:23 <i class="fa-solid fa-check-double" style="color:var(--accent-2);"></i></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== METRICS VIEW ===== -->
+  <div class="view" data-view-content="metrics">
+    <div class="metrics-layout">
+      <div class="compare-grid">
+        <div class="compare-card reveal">
+          <div class="compare-label">Tiempo medio de deteccion</div>
+          <div class="compare-values">
+            <div class="compare-before"><div class="val">14 min</div><div class="lbl">Antes</div></div>
+            <div class="compare-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+            <div class="compare-after"><div class="val">38 s</div><div class="lbl">Con GuardIA</div></div>
+          </div>
+          <div class="compare-note">Deteccion automatica por webhook, sin espera de revision manual.</div>
+        </div>
+        <div class="compare-card reveal">
+          <div class="compare-label">Tiempo medio de primera respuesta</div>
+          <div class="compare-values">
+            <div class="compare-before"><div class="val">22 min</div><div class="lbl">Antes</div></div>
+            <div class="compare-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+            <div class="compare-after"><div class="val">1m 40s</div><div class="lbl">Con GuardIA</div></div>
+          </div>
+          <div class="compare-note">Notificacion inmediata por llamada o WhatsApp segun severidad.</div>
+        </div>
+        <div class="compare-card reveal">
+          <div class="compare-label">Criticas resueltas sin intervencion</div>
+          <div class="compare-values">
+            <div class="compare-before"><div class="val">0%</div><div class="lbl">Antes</div></div>
+            <div class="compare-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+            <div class="compare-after"><div class="val">64%</div><div class="lbl">Con GuardIA</div></div>
+          </div>
+          <div class="compare-note">Rollback y remediacion automatica en incidencias recurrentes conocidas.</div>
+        </div>
+        <div class="compare-card reveal">
+          <div class="compare-label">Tasa de escalamiento a 2do nivel</div>
+          <div class="compare-values">
+            <div class="compare-before"><div class="val">-</div><div class="lbl">Antes</div></div>
+            <div class="compare-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+            <div class="compare-after"><div class="val">18%</div><div class="lbl">Con GuardIA</div></div>
+          </div>
+          <div class="compare-note">Solo cuando el primer responsable no confirma en la ventana definida.</div>
+        </div>
+      </div>
+
+      <div class="metrics-secondary">
+        <div class="bars-card reveal">
+          <div class="config-card-title" style="margin-bottom:2px;"><i class="fa-solid fa-chart-column"></i> Incidencias reportadas · ultimos 7 dias</div>
+          <div class="an-bars" id="anBars"></div>
+        </div>
+        <div class="donut-card reveal">
+          <div class="config-card-title"><i class="fa-solid fa-chart-pie"></i> Incidencias por categoria</div>
+          <div class="donut-wrap">
+            <svg width="140" height="140" viewBox="0 0 140 140" id="donutSvg"></svg>
+            <div class="donut-legend" id="donutLegend"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="big-stat-row">
+        <div class="big-stat reveal">
+          <div class="big-stat-icon"><i class="fa-solid fa-phone-volume"></i></div>
+          <div class="big-stat-value">142</div>
+          <div class="big-stat-label">Llamadas VOIP automaticas realizadas este mes</div>
+        </div>
+        <div class="big-stat reveal">
+          <div class="big-stat-icon"><i class="fa-brands fa-whatsapp"></i></div>
+          <div class="big-stat-value">1,208</div>
+          <div class="big-stat-label">Mensajes de WhatsApp enviados a equipos este mes</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== CONFIG VIEW ===== -->
+  <div class="view" data-view-content="config">
+    <div class="config-layout">
+      <div style="display:flex;flex-direction:column;gap:var(--s-4);">
+        <div class="config-card reveal">
+          <div class="config-card-header">
+            <div class="config-card-title"><i class="fa-solid fa-plug"></i> Integracion con su aplicacion de incidencias</div>
+            <div class="conn-status"><span class="status-dot"></span> Conectado</div>
+          </div>
+          <div class="config-body">
+            <div class="field-group">
+              <label>URL del webhook entrante</label>
+              <div class="field-row">
+                <input class="field-input" type="text" value="https://api.guardia.io/hooks/inc/8a41f2e0" readonly>
+                <button class="field-btn"><i class="fa-solid fa-copy"></i></button>
+              </div>
+              <div class="field-hint">Configurado en Zendesk como trigger de "Nuevo ticket" y "Actualizacion de estado".</div>
+            </div>
+            <div class="field-group">
+              <label>API Key</label>
+              <div class="field-row">
+                <input class="field-input" type="password" value="sk_live_9f82ad61bc4e" id="apiKeyInput">
+                <button class="field-btn" id="toggleKeyBtn"><i class="fa-solid fa-eye"></i></button>
+              </div>
+            </div>
+            <div class="sync-line"><i class="fa-solid fa-circle-check"></i> Ultima sincronizacion hace <span id="syncSeconds">12</span> segundos · modo webhook, sin polling</div>
+          </div>
+        </div>
+
+        <div class="config-card reveal">
+          <div class="config-card-header">
+            <div class="config-card-title"><i class="fa-solid fa-tower-broadcast"></i> Canales de notificacion</div>
+          </div>
+          <div class="config-body">
+            <div class="channel-row">
+              <div class="channel-icon" style="background:linear-gradient(135deg,#25d366,#128c7e);"><i class="fa-brands fa-whatsapp"></i></div>
+              <div class="channel-info">
+                <div class="channel-name">WhatsApp Business API</div>
+                <div class="channel-detail">Numero conectado +34 91 234 5678 · Meta verificado</div>
+              </div>
+              <div class="toggle"></div>
+            </div>
+            <div class="channel-row">
+              <div class="channel-icon" style="background:linear-gradient(135deg,#6366f1,#22d3ee);"><i class="fa-solid fa-phone"></i></div>
+              <div class="channel-info">
+                <div class="channel-name">Proveedor VOIP (Twilio)</div>
+                <div class="channel-detail">Caller ID +34 91 000 1122 · Texto a voz en espanol</div>
+              </div>
+              <div class="toggle"></div>
+            </div>
+            <div class="channel-row">
+              <div class="channel-icon" style="background:linear-gradient(135deg,#64748b,#334155);"><i class="fa-solid fa-envelope"></i></div>
+              <div class="channel-info">
+                <div class="channel-name">Resumen diario por email</div>
+                <div class="channel-detail">Incidencias media/baja consolidadas cada 24h</div>
+              </div>
+              <div class="toggle off"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="config-card reveal">
+        <div class="config-card-header">
+          <div class="config-card-title"><i class="fa-solid fa-list-ol"></i> Lista de escalamiento (on-call)</div>
+        </div>
+        <div class="config-body">
+          <div class="roster-list">
+            <div class="roster-item">
+              <div class="roster-order">1</div>
+              <div class="roster-avatar" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);">CR</div>
+              <div class="roster-info">
+                <div class="roster-name">Carlos Reyes</div>
+                <div class="roster-role">Backend Lead</div>
+                <div class="roster-contact"><span><i class="fa-solid fa-phone"></i> +34 611 220 331</span><span><i class="fa-brands fa-whatsapp"></i> Activo</span></div>
+              </div>
+            </div>
+            <div class="roster-item">
+              <div class="roster-order">2</div>
+              <div class="roster-avatar" style="background:linear-gradient(135deg,#0891b2,#0284c7);">AT</div>
+              <div class="roster-info">
+                <div class="roster-name">Ana Torres</div>
+                <div class="roster-role">Site Reliability</div>
+                <div class="roster-contact"><span><i class="fa-solid fa-phone"></i> +34 622 118 940</span><span><i class="fa-brands fa-whatsapp"></i> Activo</span></div>
+              </div>
+            </div>
+            <div class="roster-item">
+              <div class="roster-order">3</div>
+              <div class="roster-avatar" style="background:linear-gradient(135deg,#f59e0b,#dc2626);">MG</div>
+              <div class="roster-info">
+                <div class="roster-name">Miguel Garrido</div>
+                <div class="roster-role">Responsable de Plataforma</div>
+                <div class="roster-contact"><span><i class="fa-solid fa-phone"></i> +34 655 309 271</span><span><i class="fa-brands fa-whatsapp"></i> Activo</span></div>
+              </div>
+            </div>
+            <div class="roster-item">
+              <div class="roster-order">4</div>
+              <div class="roster-avatar" style="background:linear-gradient(135deg,#10b981,#059669);">LP</div>
+              <div class="roster-info">
+                <div class="roster-name">Lucia Prado</div>
+                <div class="roster-role">Operaciones e-commerce</div>
+                <div class="roster-contact"><span><i class="fa-solid fa-phone"></i> +34 688 402 115</span><span><i class="fa-brands fa-whatsapp"></i> Activo</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MOBILE BOTTOM TABS -->
+  <div class="mobile-tabs" id="mobileTabs">
+    <button class="mtab active" data-mtab="feed"><i class="fa-solid fa-bolt"></i> Feed</button>
+    <button class="mtab" data-mtab="routing"><i class="fa-solid fa-diagram-project"></i> Rutas</button>
+    <button class="mtab" data-mtab="metrics"><i class="fa-solid fa-chart-line"></i> Metricas</button>
+    <button class="mtab" data-mtab="config"><i class="fa-solid fa-gear"></i> Config</button>
+  </div>
+</div>
+
+<script>
+/* ===== Incident data ===== */
+const incidents = [
+  {
+    id: 'INC-4521', sev: 'critica', title: 'Fallo en pasarela de pago Stripe',
+    category: 'Pagos', source: 'Zendesk #4521', time: 'hace 12s', fresh: true,
+    summary: 'Multiples transacciones fallidas por error de conexion con la API de Stripe. Posible caida parcial de la pasarela desde las 14:21.',
+    status: 'calling', statusText: 'Llamada VOIP en curso a Carlos R. (Backend Lead)'
+  },
+  {
+    id: 'INC-4519', sev: 'alta', title: 'Stock negativo detectado en SKU-4471',
+    category: 'Inventario', source: 'Jira INC-2291', time: 'hace 1 min', fresh: true,
+    summary: 'El sistema de inventario reporta -14 unidades para SKU-4471. Posible desincronizacion con el almacen central.',
+    status: 'whatsapp', statusText: 'WhatsApp enviado a equipo Logistica'
+  },
+  {
+    id: 'INC-4515', sev: 'critica', title: 'Multiples devoluciones fallidas - error 500',
+    category: 'Pagos / Devoluciones', source: 'Zendesk #4515', time: 'hace 11 min',
+    summary: '17 solicitudes de devolucion fallaron con error 500 en la ultima hora. Bug identificado en el servicio de reembolsos.',
+    status: 'resolved', statusText: 'Resuelto automaticamente, rollback aplicado'
+  },
+  {
+    id: 'INC-4511', sev: 'alta', title: 'Fallo en sincronizacion de pedidos con almacen',
+    category: 'Integraciones', source: 'Jira INC-2288', time: 'hace 6 min',
+    summary: 'El conector con el ERP de almacen devuelve error 502 desde hace 8 minutos. Los pedidos nuevos no se estan sincronizando.',
+    status: 'waiting', statusText: 'WhatsApp enviado a equipo Backend, esperando acuse'
+  },
+  {
+    id: 'INC-4508', sev: 'media', title: 'Tiempo de carga del checkout > 8s',
+    category: 'Performance', source: 'Zendesk #4519', time: 'hace 4 min',
+    summary: 'El checkout supera el umbral de 8 segundos en el 22% de las sesiones registradas desde las 14:00.',
+    status: 'ticket', statusText: 'Ticket estandar creado, incluido en reporte diario'
+  },
+  {
+    id: 'INC-4502', sev: 'baja', title: 'Aumento de tickets duplicados en soporte',
+    category: 'Soporte', source: 'Zendesk', time: 'hace 18 min',
+    summary: 'Se detectaron 8 tickets duplicados asociados al mismo error de sesion expirada durante el checkout.',
+    status: 'ticket', statusText: 'Resumen agregado al reporte diario'
+  },
+];
+
+const statusIcon = {
+  calling: '<i class="fa-solid fa-phone-volume status-dot pulse" style="background:none;"></i>',
+  whatsapp: '<i class="fa-brands fa-whatsapp"></i>',
+  resolved: '<i class="fa-solid fa-circle-check"></i>',
+  waiting: '<i class="fa-solid fa-clock"></i>',
+  ticket: '<i class="fa-solid fa-ticket"></i>',
+};
+const sevLabel = { critica: 'Critica', alta: 'Alta', media: 'Media', baja: 'Baja' };
+const sevColorVar = { critica: 'var(--danger)', alta: 'var(--warning)', media: 'var(--info)', baja: 'var(--text-muted)' };
+
+const incidentList = document.getElementById('incidentList');
+incidents.forEach((inc, idx) => {
+  const card = document.createElement('div');
+  card.className = 'incident-card' + (inc.fresh ? ' fresh' : '');
+  card.innerHTML = `
+    <div class="incident-top">
+      <div class="incident-title-row">
+        <span class="incident-title">${inc.title}</span>
+        <span class="sev-badge ${inc.sev}">${sevLabel[inc.sev]}</span>
+      </div>
+      <span class="incident-time">${inc.time}</span>
+    </div>
+    <div class="incident-meta-row">
+      <span class="tag source"><i class="fa-solid fa-satellite-dish"></i> ${inc.source}</span>
+      <span class="tag"><i class="fa-solid fa-tag"></i> ${inc.category}</span>
+      <span class="tag mono"><i class="fa-solid fa-hashtag"></i> ${inc.id}</span>
+    </div>
+    <div class="incident-summary"><strong>Resumen IA:</strong> ${inc.summary}</div>
+    <div class="incident-status ${inc.status}">${statusIcon[inc.status]} ${inc.statusText}</div>
+  `;
+  if (inc.fresh) {
+    card.style.setProperty('border-left', '3px solid ' + sevColorVar[inc.sev]);
+    card.style.paddingLeft = 'calc(var(--s-4) - 3px)';
+  }
+  incidentList.appendChild(card);
+});
+document.getElementById('incidentCount').textContent = incidents.length;
+
+/* ===== Escalation sidebar ===== */
+const escalations = [
+  { name: 'Carlos Reyes', role: 'Backend Lead', color: 'linear-gradient(135deg,#6366f1,#8b5cf6)', initials: 'CR', reason: 'Llamando por INC-4521, Fallo en pasarela de pago Stripe.', status: 'ringing', statusText: 'Llamando...', timer: true },
+  { name: 'Ana Torres', role: 'Site Reliability', color: 'linear-gradient(135deg,#0891b2,#0284c7)', initials: 'AT', reason: 'No respondio en 2 min a INC-4498. Escalado a Miguel Garrido.', status: 'escalated', statusText: 'Escalada', timer: false },
+  { name: 'Miguel Garrido', role: 'Responsable de Plataforma', color: 'linear-gradient(135deg,#f59e0b,#dc2626)', initials: 'MG', reason: 'Contesto la llamada escalada en 34s y confirmo el diagnostico.', status: 'answered', statusText: 'Contestada', timer: false },
+];
+const escList = document.getElementById('escalationList');
+escalations.forEach(e => {
+  const card = document.createElement('div');
+  card.className = 'esc-card' + (e.status === 'ringing' ? ' active' : '');
+  card.innerHTML = `
+    <div class="esc-head">
+      <div class="esc-avatar" style="background:${e.color}">${e.initials}</div>
+      <div>
+        <div class="esc-name">${e.name}</div>
+        <div class="esc-role">${e.role}</div>
+      </div>
+      <div class="esc-call-status ${e.status}"><i class="fa-solid fa-circle" style="font-size:6px;"></i> ${e.statusText}</div>
+    </div>
+    <div class="esc-reason">${e.reason}</div>
+    ${e.timer ? '<div class="esc-timer"><i class="fa-solid fa-phone-volume"></i> <span id="callTimer">00:07</span></div>' : ''}
+  `;
+  escList.appendChild(card);
+});
+
+/* Live call timer */
+let callSeconds = 7;
+setInterval(() => {
+  callSeconds++;
+  const t = document.getElementById('callTimer');
+  if (t) {
+    const m = String(Math.floor(callSeconds / 60)).padStart(2, '0');
+    const s = String(callSeconds % 60).padStart(2, '0');
+    t.textContent = `${m}:${s}`;
+  }
+}, 1000);
+
+/* ===== Call log table ===== */
+const callLog = [
+  { time: '14:22:07', inc: 'INC-4521', to: 'Carlos Reyes', dur: 'en curso', status: 'noanswer', label: 'Llamando' },
+  { time: '13:58:41', inc: 'INC-4498', to: 'Ana Torres', dur: '2m 00s', status: 'escalated', label: 'Escalada' },
+  { time: '14:00:15', inc: 'INC-4498', to: 'Miguel Garrido', dur: '0m 34s', status: 'answered', label: 'Contestada' },
+  { time: '11:42:03', inc: 'INC-4470', to: 'Lucia Prado', dur: '1m 12s', status: 'answered', label: 'Contestada' },
+  { time: '09:15:52', inc: 'INC-4451', to: 'Carlos Reyes', dur: '2m 00s', status: 'noanswer', label: 'Sin respuesta' },
+];
+const callLogBody = document.getElementById('callLogBody');
+callLog.forEach(c => {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td class="mono">${c.time}</td>
+    <td>${c.inc}</td>
+    <td>${c.to}</td>
+    <td class="mono">${c.dur}</td>
+    <td><span class="call-status-pill ${c.status}"><i class="fa-solid fa-circle" style="font-size:6px;"></i> ${c.label}</span></td>
+  `;
+  callLogBody.appendChild(tr);
+});
+
+/* ===== Analytics bars (metrics view) ===== */
+function buildBars() {
+  const bars = document.getElementById('anBars');
+  if (bars.children.length) return;
+  const days = ['Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab', 'Dom'];
+  const vol = [18, 24, 31, 22, 27, 15, 12];
+  const maxVol = Math.max(...vol);
+  vol.forEach((v, i) => {
+    const col = document.createElement('div');
+    col.className = 'an-bar';
+    col.innerHTML = `<div class="an-bar-fill" style="height:${(v/maxVol)*100}%" title="${v} incidencias"></div><div class="an-bar-label">${days[i]}</div>`;
+    bars.appendChild(col);
+  });
+}
+
+/* ===== Donut chart (pure SVG) ===== */
+function buildDonut() {
+  const svg = document.getElementById('donutSvg');
+  if (svg.children.length) return;
+  const data = [
+    { label: 'Pagos', value: 34, color: '#f87171' },
+    { label: 'Inventario', value: 22, color: '#f59e0b' },
+    { label: 'Performance', value: 18, color: '#38bdf8' },
+    { label: 'Integraciones', value: 16, color: '#6366f1' },
+    { label: 'Soporte', value: 10, color: '#64748b' },
+  ];
+  const total = data.reduce((s, d) => s + d.value, 0);
+  const cx = 70, cy = 70, r = 55, stroke = 20;
+  const circumference = 2 * Math.PI * r;
+  let offset = 0;
+  const ns = 'http://www.w3.org/2000/svg';
+  data.forEach(d => {
+    const frac = d.value / total;
+    const len = frac * circumference;
+    const circle = document.createElementNS(ns, 'circle');
+    circle.setAttribute('cx', cx);
+    circle.setAttribute('cy', cy);
+    circle.setAttribute('r', r);
+    circle.setAttribute('fill', 'none');
+    circle.setAttribute('stroke', d.color);
+    circle.setAttribute('stroke-width', stroke);
+    circle.setAttribute('stroke-dasharray', `${len} ${circumference - len}`);
+    circle.setAttribute('stroke-dashoffset', -offset);
+    circle.setAttribute('transform', `rotate(-90 ${cx} ${cy})`);
+    circle.style.transition = 'stroke-dasharray 0.8s ease';
+    svg.appendChild(circle);
+    offset += len;
+  });
+  const legend = document.getElementById('donutLegend');
+  data.forEach(d => {
+    const row = document.createElement('div');
+    row.className = 'legend-row';
+    row.innerHTML = `<span class="legend-dot" style="background:${d.color}"></span><span class="legend-label">${d.label}</span><span class="legend-val">${d.value}%</span>`;
+    legend.appendChild(row);
+  });
+}
+
+/* ===== View tabs (desktop + mobile) ===== */
+function switchView(v) {
+  document.querySelectorAll('#viewTabs .tb-tab').forEach(t => t.classList.toggle('active', t.dataset.view === v));
+  document.querySelectorAll('.mtab').forEach(t => t.classList.toggle('active', t.dataset.mtab === v));
+  document.querySelectorAll('.view').forEach(view => view.classList.toggle('active', view.dataset.viewContent === v));
+  document.getElementById('kpiStrip').style.display = (v === 'feed') ? 'grid' : 'none';
+  if (v === 'metrics') { buildBars(); buildDonut(); }
+  revealCheck();
+}
+document.querySelectorAll('#viewTabs .tb-tab').forEach(tab => {
+  tab.addEventListener('click', () => switchView(tab.dataset.view));
+});
+document.querySelectorAll('.mtab').forEach(t => {
+  t.addEventListener('click', () => switchView(t.dataset.mtab));
+});
+
+/* ===== Scroll reveal ===== */
+function revealCheck() {
+  document.querySelectorAll('.reveal').forEach(el => {
+    const rect = el.getBoundingClientRect();
+    if (rect.top < window.innerHeight - 60) el.classList.add('in');
+  });
+}
+window.addEventListener('scroll', revealCheck);
+window.addEventListener('resize', revealCheck);
+setTimeout(revealCheck, 100);
+
+/* ===== KPI count-up ===== */
+function countUp(id, target, suffix) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  let cur = 0;
+  const step = Math.max(1, Math.ceil(target / 30));
+  const timer = setInterval(() => {
+    cur += step;
+    if (cur >= target) { cur = target; clearInterval(timer); }
+    el.textContent = cur + (suffix || '');
+  }, 30);
+}
+countUp('kpiActive', 23);
+countUp('kpiCrit', 1);
+countUp('kpiDetect', 38);
+countUp('kpiAuto', 64);
+countUp('kpiCalls', 7);
+
+/* ===== Live sync seconds ticker ===== */
+let syncSec = 12;
+setInterval(() => {
+  syncSec = (syncSec >= 40) ? 1 : syncSec + 1;
+  const el = document.getElementById('syncSeconds');
+  if (el) el.textContent = syncSec;
+}, 1000);
+
+/* ===== API key show/hide ===== */
+const apiKeyInput = document.getElementById('apiKeyInput');
+const toggleKeyBtn = document.getElementById('toggleKeyBtn');
+if (toggleKeyBtn) {
+  toggleKeyBtn.addEventListener('click', () => {
+    const isPwd = apiKeyInput.type === 'password';
+    apiKeyInput.type = isPwd ? 'text' : 'password';
+    toggleKeyBtn.innerHTML = isPwd ? '<i class="fa-solid fa-eye-slash"></i>' : '<i class="fa-solid fa-eye"></i>';
+  });
+}
+
+/* ===== Toggle switches ===== */
+document.querySelectorAll('.toggle').forEach(t => {
+  t.addEventListener('click', () => t.classList.toggle('off'));
+});
+
+/* ===== Simulate a new incident arriving (feed view liveliness) ===== */
+setTimeout(() => {
+  const card = document.createElement('div');
+  card.className = 'incident-card fresh';
+  card.style.borderLeft = '3px solid var(--info)';
+  card.style.paddingLeft = 'calc(var(--s-4) - 3px)';
+  card.innerHTML = `
+    <div class="incident-top">
+      <div class="incident-title-row">
+        <span class="incident-title">Error de checkout en app movil iOS</span>
+        <span class="sev-badge media">Media</span>
+      </div>
+      <span class="incident-time">justo ahora</span>
+    </div>
+    <div class="incident-meta-row">
+      <span class="tag source"><i class="fa-solid fa-satellite-dish"></i> Zendesk #4527</span>
+      <span class="tag"><i class="fa-solid fa-tag"></i> Mobile</span>
+      <span class="tag mono"><i class="fa-solid fa-hashtag"></i> INC-4527</span>
+    </div>
+    <div class="incident-summary"><strong>Resumen IA:</strong> El boton de confirmar pago no responde en iOS 17 para el 6% de usuarios de la app movil desde hace 3 minutos.</div>
+    <div class="incident-status ticket"><i class="fa-solid fa-ticket"></i> Ticket estandar creado, incluido en reporte diario</div>
+  `;
+  incidentList.insertBefore(card, incidentList.firstChild);
+  document.getElementById('incidentCount').textContent = incidents.length + 1;
+}, 4200);
+
+/* ===== KPI live ticker ===== */
+setInterval(() => {
+  const kpiActive = document.getElementById('kpiActive');
+  const cur = parseInt(kpiActive.textContent) || 23;
+  kpiActive.textContent = Math.max(18, Math.min(30, cur + (Math.floor(Math.random() * 3) - 1)));
+}, 3400);
+</script>
+</body>
+</html>
