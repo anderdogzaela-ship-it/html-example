@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CampoCerto &middot; Relatorios de Visita</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+:root{
+  --bg:#12100a; --panel:#1a1712; --panel2:#221d16; --border:#332c20;
+  --gold:#f2b632; --gold-dark:#c98f1a; --gold-glow:rgba(242,182,50,0.18);
+  --red:#ef4444; --red-glow:rgba(239,68,68,0.15);
+  --green:#22c55e; --green-glow:rgba(34,197,94,0.15);
+  --blue:#60a5fa; --blue-glow:rgba(96,165,250,0.15);
+  --text:#f7f4ec; --text-dim:#a89e8b; --text-faint:#6b6350;
+  --paper:#f6f1e4; --paper-2:#efe8d6; --ink:#2b2417;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  font-family:'Nunito',sans-serif; background:var(--bg); color:var(--text);
+  -webkit-font-smoothing:antialiased; overflow-x:hidden;
+}
+a{color:inherit;text-decoration:none;}
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-thumb{background:#3a3222;border-radius:10px;}
+
+/* ---------- Intro ---------- */
+.intro{
+  position:relative; padding:70px 24px 50px; text-align:center; overflow:hidden;
+  background:
+    linear-gradient(180deg, rgba(18,16,10,0.78) 0%, rgba(18,16,10,0.96) 85%, var(--bg) 100%),
+    url('https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&w=1600&q=60') center/cover;
+  border-bottom:1px solid var(--border);
+}
+.intro-badge{
+  display:inline-flex; align-items:center; gap:8px; background:var(--gold-glow); color:var(--gold);
+  border:1px solid rgba(242,182,50,0.35); padding:6px 16px; border-radius:100px; font-size:12.5px; font-weight:700;
+  letter-spacing:.3px; margin-bottom:22px;
+}
+.intro h1{font-size:clamp(28px,4.5vw,46px); font-weight:900; letter-spacing:-0.5px; margin-bottom:14px;}
+.intro h1 span{color:var(--gold);}
+.intro p{color:var(--text-dim); font-size:16px; max-width:640px; margin:0 auto 34px; line-height:1.6;}
+.intro-meta{display:flex; justify-content:center; gap:28px; flex-wrap:wrap; color:var(--text-faint); font-size:13px;}
+.intro-meta span{display:flex; align-items:center; gap:7px; font-weight:600;}
+.intro-meta i{color:var(--gold);}
+
+/* ---------- Toggle Bar ---------- */
+.toggle-wrap{display:flex; justify-content:center; margin:38px 0 8px; padding:0 16px;}
+.toggle-bar{
+  display:inline-flex; gap:4px; background:var(--panel); border:1px solid var(--border);
+  border-radius:14px; padding:5px; flex-wrap:wrap; justify-content:center;
+}
+.toggle-btn{
+  display:flex; align-items:center; gap:8px; padding:11px 20px; border-radius:10px; border:none;
+  background:transparent; color:var(--text-dim); font-family:inherit; font-size:14px; font-weight:700;
+  cursor:pointer; transition:all .25s ease; white-space:nowrap;
+}
+.toggle-btn:hover{color:var(--text);}
+.toggle-btn.active{background:var(--gold); color:#1e1608; box-shadow:0 4px 18px rgba(242,182,50,0.35);}
+
+.view{display:none; padding:44px 20px 90px; max-width:1360px; margin:0 auto; animation:fadeIn .5s ease;}
+.view.active{display:block;}
+@keyframes fadeIn{from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);}}
+
+.view-head{text-align:center; margin-bottom:38px;}
+.view-head h2{font-size:24px; font-weight:800; margin-bottom:8px;}
+.view-head p{color:var(--text-dim); font-size:14.5px; max-width:580px; margin:0 auto; line-height:1.6;}
+
+/* ---------- Reveal ---------- */
+.reveal{opacity:0; transform:translateY(18px); transition:opacity .6s ease, transform .6s ease;}
+.reveal.visible{opacity:1; transform:translateY(0);}
+
+/* ================= ADMIN VIEW ================= */
+.admin-shell{
+  display:grid; grid-template-columns:230px 1fr; gap:0; background:var(--panel);
+  border:1px solid var(--border); border-radius:18px; overflow:hidden; min-height:760px;
+  box-shadow:0 30px 80px rgba(0,0,0,0.35);
+}
+.admin-sidebar{background:var(--panel2); border-right:1px solid var(--border); padding:22px 16px; display:flex; flex-direction:column;}
+.brand{display:flex; align-items:center; gap:10px; padding:0 8px 24px; font-weight:900; font-size:17px;}
+.brand i{color:var(--gold);}
+.nav-item{
+  display:flex; align-items:center; gap:12px; padding:11px 12px; border-radius:10px; color:var(--text-dim);
+  font-size:13.5px; font-weight:700; margin-bottom:2px; cursor:pointer; transition:all .2s;
+}
+.nav-item i{width:18px; text-align:center;}
+.nav-item:hover{background:rgba(255,255,255,0.04); color:var(--text);}
+.nav-item.active{background:var(--gold-glow); color:var(--gold);}
+.nav-badge{margin-left:auto; background:var(--red); color:#fff; font-size:10.5px; font-weight:700; padding:1px 7px; border-radius:100px;}
+.sidebar-foot{margin-top:auto; display:flex; align-items:center; gap:10px; padding:12px 8px; border-top:1px solid var(--border); margin-top:16px;}
+.sidebar-foot img{width:34px;height:34px;border-radius:50%; object-fit:cover;}
+.sidebar-foot .name{font-size:13px; font-weight:700;}
+.sidebar-foot .role{font-size:11px; color:var(--text-faint);}
+
+.admin-main{padding:26px 30px; overflow-y:auto;}
+.admin-topbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:26px; flex-wrap:wrap; gap:12px;}
+.admin-topbar h3{font-size:20px; font-weight:800;}
+.admin-topbar .sub{font-size:12.5px; color:var(--text-faint); margin-top:3px;}
+.bell{position:relative; width:38px; height:38px; border-radius:10px; background:var(--panel2); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; color:var(--text-dim);}
+.bell .dot{position:absolute; top:7px; right:8px; width:7px; height:7px; background:var(--red); border-radius:50%;}
+
+.kpi-row{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:24px;}
+.kpi-card{background:var(--panel2); border:1px solid var(--border); border-radius:14px; padding:16px 18px; position:relative; overflow:hidden;}
+.kpi-card i{color:var(--gold); font-size:14px; margin-bottom:10px; display:block;}
+.kpi-card .val{font-size:26px; font-weight:900; letter-spacing:-0.5px;}
+.kpi-card .label{font-size:12px; color:var(--text-faint); margin-top:2px;}
+.kpi-card .trend{position:absolute; top:16px; right:16px; font-size:11px; font-weight:700; padding:2px 8px; border-radius:100px;}
+.trend.up{color:var(--green); background:var(--green-glow);}
+.trend.warn{color:var(--gold); background:var(--gold-glow);}
+
+.panel-card{background:var(--panel2); border:1px solid var(--border); border-radius:14px; padding:18px;}
+.panel-card h4{font-size:14.5px; font-weight:800; margin-bottom:14px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;}
+.panel-card h4 .count{font-size:11.5px; font-weight:700; color:var(--text-faint);}
+.filter-tabs{display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap;}
+.filter-tab{font-size:11.5px; font-weight:700; padding:5px 12px; border-radius:100px; background:var(--panel); border:1px solid var(--border); color:var(--text-dim); cursor:pointer;}
+.filter-tab.on{background:var(--gold); color:#1e1608; border-color:var(--gold);}
+
+.visit-row{display:grid; grid-template-columns:10px 1.7fr 1fr 0.8fr 0.9fr 0.8fr; gap:12px; align-items:center; padding:12px 10px; border-radius:10px; margin-bottom:6px; background:var(--panel);}
+.visit-row:hover{background:#262016;}
+.status-dot{width:9px; height:9px; border-radius:50%;}
+.status-dot.sync{background:var(--green); box-shadow:0 0 0 4px var(--green-glow);}
+.status-dot.pending{background:var(--gold); box-shadow:0 0 0 4px var(--gold-glow);}
+.visit-title{font-size:13px; font-weight:700;}
+.visit-meta{font-size:11.5px; color:var(--text-faint); margin-top:2px;}
+.visit-col{font-size:12px; color:var(--text-dim);}
+.photo-count{display:flex; align-items:center; gap:5px; font-size:11.5px; color:var(--text-dim);}
+.photo-count i{color:var(--gold);}
+.status-pill{font-size:10.5px; font-weight:700; padding:3px 9px; border-radius:100px; text-align:center;}
+.status-pill.sync{background:var(--green-glow); color:var(--green);}
+.status-pill.pending{background:var(--gold-glow); color:var(--gold);}
+.pdf-link{font-size:11.5px; font-weight:700; color:var(--blue); display:flex; align-items:center; gap:5px; cursor:pointer;}
+
+.rep-strip{display:flex; gap:12px; margin-top:20px; overflow-x:auto; padding-bottom:6px;}
+.rep-chip{
+  flex:0 0 auto; display:flex; align-items:center; gap:10px; background:var(--panel2); border:1px solid var(--border);
+  border-radius:100px; padding:8px 16px 8px 8px; min-width:210px;
+}
+.rep-chip img{width:32px;height:32px;border-radius:50%; object-fit:cover;}
+.r-status{width:8px; height:8px; border-radius:50%; margin-left:auto;}
+.r-status.field{background:var(--gold);} .r-status.idle{background:var(--text-faint);}
+.rep-chip .rn{font-size:12.5px; font-weight:700;}
+.rep-chip .rt{font-size:10.5px; color:var(--text-faint);}
+
+/* ================= PHONE FRAME ================= */
+.phone-stage{display:flex; justify-content:center; gap:40px; flex-wrap:wrap; align-items:flex-start;}
+.phone-frame{
+  width:310px; height:640px; background:#000; border-radius:42px; padding:12px;
+  box-shadow:0 0 0 2px #2a2a2a, 0 40px 90px rgba(0,0,0,0.5); position:relative; flex-shrink:0;
+}
+.phone-screen{
+  width:100%; height:100%; background:var(--bg); border-radius:32px; overflow:hidden; position:relative; display:flex; flex-direction:column;
+}
+.status-bar{height:30px; display:flex; align-items:center; justify-content:space-between; padding:0 22px; font-size:11px; font-weight:700; flex-shrink:0; background:var(--bg);}
+.status-right{display:flex; gap:6px; font-size:10px;}
+.pscreen{flex:1; overflow-y:auto; padding:16px; -webkit-overflow-scrolling:touch;}
+.pscreen::-webkit-scrollbar{display:none;}
+
+.form-title{text-align:center; margin:2px 0 16px;}
+.form-title i{color:var(--gold); font-size:20px;}
+.form-title .t{font-size:14px; font-weight:800; margin-top:6px;}
+.form-title .s{font-size:11px; color:var(--text-faint);}
+.offline-badge{
+  display:flex; align-items:center; gap:7px; background:rgba(242,182,50,0.12); border:1px solid rgba(242,182,50,0.35);
+  border-radius:10px; padding:8px 10px; font-size:10.5px; font-weight:700; color:var(--gold); margin-bottom:14px;
+}
+.field{margin-bottom:14px;}
+.field label{font-size:11.5px; font-weight:700; color:var(--text-dim); display:block; margin-bottom:6px;}
+.field input, .field select, .field textarea{
+  width:100%; background:var(--panel2); border:1px solid var(--border); border-radius:10px; padding:11px 12px;
+  color:var(--text); font-family:inherit; font-size:12.5px; resize:none;
+}
+.field textarea{height:60px;}
+.photo-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;}
+.photo-slot{
+  aspect-ratio:1; border-radius:12px; border:1.5px dashed var(--border); display:flex; align-items:center;
+  justify-content:center; flex-direction:column; gap:6px; color:var(--text-faint); font-size:11px; font-weight:700;
+  overflow:hidden; position:relative;
+}
+.photo-slot img{width:100%; height:100%; object-fit:cover;}
+.photo-slot i{font-size:18px;}
+.photo-slot .tag{position:absolute; bottom:5px; left:5px; background:rgba(0,0,0,0.55); color:#fff; font-size:9px; font-weight:700; padding:2px 7px; border-radius:100px;}
+.btn-submit{
+  width:100%; background:var(--gold); color:#1e1608; border:none; border-radius:12px; padding:14px; font-weight:800;
+  font-size:13.5px; font-family:inherit; cursor:pointer; margin-top:6px;
+}
+.confirm-box{text-align:center; padding:44px 10px;}
+.confirm-check{
+  width:64px; height:64px; border-radius:50%; background:var(--green-glow); color:var(--green);
+  display:flex; align-items:center; justify-content:center; font-size:26px; margin:0 auto 18px;
+}
+.confirm-box h3{font-size:16px; margin-bottom:8px;}
+.confirm-box p{font-size:12px; color:var(--text-faint); line-height:1.6;}
+.confirm-ref{display:inline-block; margin-top:14px; background:var(--panel2); border:1px solid var(--border); border-radius:100px; padding:6px 16px; font-size:11.5px; color:var(--gold); font-weight:700;}
+.sync-box{margin-top:20px; display:flex; align-items:center; gap:8px; justify-content:center; font-size:11px; color:var(--text-faint);}
+.sync-box i{color:var(--gold);}
+
+.bottom-nav{display:flex; border-top:1px solid var(--border); flex-shrink:0;}
+.bn-item{flex:1; text-align:center; padding:10px 0; font-size:9.5px; color:var(--text-faint); font-weight:700;}
+.bn-item i{display:block; font-size:15px; margin-bottom:3px;}
+.bn-item.active{color:var(--gold);}
+
+.phone-caption{max-width:310px; text-align:center; margin-top:16px;}
+.phone-caption h5{font-size:13.5px; font-weight:800; margin-bottom:5px;}
+.phone-caption p{font-size:12px; color:var(--text-faint); line-height:1.6;}
+
+/* ---------- PDF paper mockup ---------- */
+.paper{
+  width:420px; background:var(--paper); color:var(--ink); border-radius:6px; padding:28px 26px;
+  box-shadow:0 30px 80px rgba(0,0,0,0.5); flex-shrink:0; font-family:'Nunito',sans-serif;
+}
+.paper-head{display:flex; justify-content:space-between; align-items:flex-start; border-bottom:2px solid var(--ink); padding-bottom:14px; margin-bottom:16px;}
+.paper-brand{display:flex; align-items:center; gap:8px; font-weight:900; font-size:15px;}
+.paper-brand i{color:var(--gold-dark);}
+.paper-meta{text-align:right; font-size:10.5px; color:#5b5238;}
+.paper h4{font-size:16px; font-weight:800; margin-bottom:14px;}
+.paper-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px 18px; margin-bottom:16px; font-size:11.5px;}
+.paper-grid div b{display:block; font-size:9.5px; text-transform:uppercase; letter-spacing:.4px; color:#6b6046; margin-bottom:2px; font-weight:800;}
+.paper-obs{font-size:11.5px; background:var(--paper-2); border-radius:8px; padding:10px 12px; margin-bottom:16px; line-height:1.6;}
+.paper-photos{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:18px;}
+.paper-photos img{width:100%; height:110px; object-fit:cover; border-radius:6px;}
+.paper-sign{display:flex; justify-content:space-between; align-items:flex-end; border-top:1px dashed #a89a70; padding-top:12px; font-size:10.5px; color:#5b5238;}
+.paper-sign .sig{font-family:'Nunito',sans-serif; font-style:italic; font-size:15px; color:var(--ink); border-bottom:1px solid #a89a70; padding:0 18px 4px;}
+.paper-stamp{position:absolute; top:80px; right:36px; border:2.5px solid var(--green); color:var(--green); font-weight:900; font-size:12px; padding:5px 12px; border-radius:6px; transform:rotate(-8deg); letter-spacing:1px;}
+.paper-wrap{position:relative;}
+
+@media (max-width:980px){
+  .admin-shell{grid-template-columns:1fr;}
+  .admin-sidebar{display:none;}
+  .kpi-row{grid-template-columns:repeat(2,1fr);}
+}
+@media (max-width:520px){
+  .kpi-row{grid-template-columns:1fr 1fr;}
+  .visit-row{grid-template-columns:8px 1fr; row-gap:4px;}
+  .visit-col, .photo-count{display:none;}
+  .paper{width:100%; padding:20px 16px;}
+}
+</style>
+</head>
+<body>
+
+<div class="intro reveal">
+  <span class="intro-badge"><i class="fa-solid fa-clipboard-check"></i> Demo de Produto</span>
+  <h1>CampoCerto <span>&middot;</span> Relatorios de Visita</h1>
+  <p>Prototipo funcional das tres telas do sistema: app do representante para preencher o relatorio em campo, painel web do gestor, e a exportacao automatica em PDF de cada visita.</p>
+  <div class="intro-meta">
+    <span><i class="fa-solid fa-mobile-screen-button"></i> Android + iOS de uma unica base</span>
+    <span><i class="fa-solid fa-wifi"></i> Funciona offline em campo</span>
+    <span><i class="fa-solid fa-file-pdf"></i> PDF gerado automaticamente</span>
+  </div>
+</div>
+
+<div class="toggle-wrap">
+  <div class="toggle-bar">
+    <button class="toggle-btn active" id="btnAdmin" onclick="showView('admin')"><i class="fa-solid fa-gauge-high"></i> Painel Web</button>
+    <button class="toggle-btn" id="btnForm" onclick="showView('form')"><i class="fa-solid fa-camera"></i> App de Campo</button>
+    <button class="toggle-btn" id="btnPdf" onclick="showView('pdf')"><i class="fa-solid fa-file-pdf"></i> Exportacao PDF</button>
+  </div>
+</div>
+
+<!-- ================= ADMIN VIEW ================= -->
+<div class="view active" id="view-admin">
+  <div class="view-head reveal">
+    <h2>Painel Web &middot; Gestao de Visitas</h2>
+    <p>Tudo o que o gestor precisa em uma tela: quem visitou quem, o que ainda esta sincronizando, e o relatorio pronto para exportar.</p>
+  </div>
+
+  <div class="admin-shell reveal">
+    <div class="admin-sidebar">
+      <div class="brand"><i class="fa-solid fa-clipboard-check"></i> CampoCerto</div>
+      <div class="nav-item active"><i class="fa-solid fa-gauge-high"></i> Dashboard</div>
+      <div class="nav-item"><i class="fa-solid fa-route"></i> Visitas <span class="nav-badge">7</span></div>
+      <div class="nav-item"><i class="fa-solid fa-building"></i> Clientes</div>
+      <div class="nav-item"><i class="fa-solid fa-users"></i> Equipe de Campo</div>
+      <div class="nav-item"><i class="fa-solid fa-file-pdf"></i> Relatorios PDF</div>
+      <div class="nav-item"><i class="fa-solid fa-gear"></i> Configuracoes</div>
+      <div class="sidebar-foot">
+        <img src="https://i.pravatar.cc/80?img=68" alt="gestor">
+        <div><div class="name">Reinaldo V.</div><div class="role">Gestor de Operacoes</div></div>
+      </div>
+    </div>
+    <div class="admin-main">
+      <div class="admin-topbar">
+        <div><h3>Boa tarde, Reinaldo</h3><div class="sub">6 representantes em campo &middot; qua, 14:20</div></div>
+        <div class="bell"><i class="fa-solid fa-bell"></i><span class="dot"></span></div>
+      </div>
+
+      <div class="kpi-row">
+        <div class="kpi-card"><i class="fa-solid fa-route"></i><div class="val">18</div><div class="label">Visitas Hoje</div><span class="trend up">+4 vs ontem</span></div>
+        <div class="kpi-card"><i class="fa-solid fa-cloud-arrow-up"></i><div class="val">3</div><div class="label">Aguardando Sincronizar</div><span class="trend warn">offline</span></div>
+        <div class="kpi-card"><i class="fa-solid fa-camera"></i><div class="val">36</div><div class="label">Fotos Anexadas</div></div>
+        <div class="kpi-card"><i class="fa-solid fa-file-pdf"></i><div class="val">18</div><div class="label">PDFs Gerados</div></div>
+      </div>
+
+      <div class="panel-card">
+        <h4>Visitas Recentes <span class="count">18 hoje</span></h4>
+        <div class="filter-tabs">
+          <div class="filter-tab on">Todas</div>
+          <div class="filter-tab">Sincronizadas</div>
+          <div class="filter-tab">Pendentes</div>
+        </div>
+
+        <div class="visit-row">
+          <div class="status-dot sync"></div>
+          <div><div class="visit-title">Mercado Bom Preco &ndash; Zona Norte</div><div class="visit-meta">Ana Ferreira &middot; ha 12 min</div></div>
+          <div class="visit-col">Reposicao</div>
+          <div class="photo-count"><i class="fa-solid fa-camera"></i> 3</div>
+          <div class="status-pill sync">Sincronizado</div>
+          <div class="pdf-link"><i class="fa-solid fa-file-pdf"></i> Ver PDF</div>
+        </div>
+        <div class="visit-row">
+          <div class="status-dot pending"></div>
+          <div><div class="visit-title">Farmacia Vitallis &ndash; Centro</div><div class="visit-meta">Carlos Mendes &middot; ha 26 min</div></div>
+          <div class="visit-col">Auditoria</div>
+          <div class="photo-count"><i class="fa-solid fa-camera"></i> 2</div>
+          <div class="status-pill pending">Sincronizando</div>
+          <div class="pdf-link"><i class="fa-solid fa-file-pdf"></i> Ver PDF</div>
+        </div>
+        <div class="visit-row">
+          <div class="status-dot sync"></div>
+          <div><div class="visit-title">Distribuidora Sao Jorge</div><div class="visit-meta">Bianca Souza &middot; ha 41 min</div></div>
+          <div class="visit-col">Prospeccao</div>
+          <div class="photo-count"><i class="fa-solid fa-camera"></i> 4</div>
+          <div class="status-pill sync">Sincronizado</div>
+          <div class="pdf-link"><i class="fa-solid fa-file-pdf"></i> Ver PDF</div>
+        </div>
+        <div class="visit-row">
+          <div class="status-dot sync"></div>
+          <div><div class="visit-title">Loja Estrela Azul &ndash; Shopping Sul</div><div class="visit-meta">Carlos Mendes &middot; ha 1h</div></div>
+          <div class="visit-col">Reposicao</div>
+          <div class="photo-count"><i class="fa-solid fa-camera"></i> 2</div>
+          <div class="status-pill sync">Sincronizado</div>
+          <div class="pdf-link"><i class="fa-solid fa-file-pdf"></i> Ver PDF</div>
+        </div>
+        <div class="visit-row">
+          <div class="status-dot pending"></div>
+          <div><div class="visit-title">Padaria Trigo Dourado</div><div class="visit-meta">Ana Ferreira &middot; ha 1h 20</div></div>
+          <div class="visit-col">Auditoria</div>
+          <div class="photo-count"><i class="fa-solid fa-camera"></i> 3</div>
+          <div class="status-pill pending">Sincronizando</div>
+          <div class="pdf-link"><i class="fa-solid fa-file-pdf"></i> Ver PDF</div>
+        </div>
+      </div>
+
+      <div class="panel-card" style="margin-top:16px;">
+        <h4>Equipe em Campo</h4>
+        <div class="rep-strip">
+          <div class="rep-chip"><img src="https://i.pravatar.cc/60?img=47"><div><div class="rn">Ana Ferreira</div><div class="rt">Em visita &middot; Zona Norte</div></div><span class="r-status field"></span></div>
+          <div class="rep-chip"><img src="https://i.pravatar.cc/60?img=13"><div><div class="rn">Carlos Mendes</div><div class="rt">Em visita &middot; Centro</div></div><span class="r-status field"></span></div>
+          <div class="rep-chip"><img src="https://i.pravatar.cc/60?img=32"><div><div class="rn">Bianca Souza</div><div class="rt">Disponivel</div></div><span class="r-status idle"></span></div>
+          <div class="rep-chip"><img src="https://i.pravatar.cc/60?img=21"><div><div class="rn">Diego Ramos</div><div class="rt">Em visita &middot; Zona Sul</div></div><span class="r-status field"></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= FIELD FORM VIEW ================= -->
+<div class="view" id="view-form">
+  <div class="view-head reveal">
+    <h2>App de Campo &middot; Novo Relatorio de Visita</h2>
+    <p>O representante preenche o formulario e anexa as fotos direto da camera ou da galeria, mesmo sem sinal de internet.</p>
+  </div>
+  <div class="phone-stage reveal">
+    <div>
+      <div class="phone-frame">
+        <div class="phone-screen">
+          <div class="status-bar"><span>14:22</span><div class="status-right"><i class="fa-solid fa-signal"></i><i class="fa-solid fa-wifi"></i><i class="fa-solid fa-battery-three-quarters"></i></div></div>
+          <div class="pscreen">
+            <div class="form-title">
+              <i class="fa-solid fa-clipboard-check"></i>
+              <div class="t">Novo Relatorio</div>
+              <div class="s">Preencha os dados da visita</div>
+            </div>
+            <div class="offline-badge"><i class="fa-solid fa-cloud"></i> Sem conexao &ndash; sera sincronizado ao voltar o sinal</div>
+            <div class="field">
+              <label>Cliente / Local</label>
+              <select><option>Mercado Bom Preco &ndash; Zona Norte</option></select>
+            </div>
+            <div class="field">
+              <label>Tipo de visita</label>
+              <select><option>Reposicao de produto</option></select>
+            </div>
+            <div class="field">
+              <label>Observacoes</label>
+              <textarea readonly>Gondola principal reabastecida. Cliente solicitou mais espaco na promocao do mes que vem.</textarea>
+            </div>
+            <div class="field">
+              <label>Fotos da visita (minimo 2)</label>
+              <div class="photo-grid">
+                <div class="photo-slot"><img src="https://images.unsplash.com/photo-1601598851547-4302969d0614?auto=format&fit=crop&w=300&q=60" alt="foto 1"><span class="tag">Antes</span></div>
+                <div class="photo-slot"><img src="https://images.unsplash.com/photo-1580913428023-02c00b6a9c7e?auto=format&fit=crop&w=300&q=60" alt="foto 2"><span class="tag">Depois</span></div>
+              </div>
+            </div>
+            <button class="btn-submit"><i class="fa-solid fa-floppy-disk"></i>&nbsp; Salvar Relatorio</button>
+          </div>
+          <div class="bottom-nav">
+            <div class="bn-item active"><i class="fa-solid fa-square-plus"></i>Nova Visita</div>
+            <div class="bn-item"><i class="fa-solid fa-clock-rotate-left"></i>Historico</div>
+            <div class="bn-item"><i class="fa-solid fa-user"></i>Perfil</div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-caption">
+        <h5>Formulario da visita</h5>
+        <p>Foto pela camera ou da galeria, com marcacao de cada uma direto no formulario &ndash; nao precisa anexar depois no computador.</p>
+      </div>
+    </div>
+
+    <div>
+      <div class="phone-frame">
+        <div class="phone-screen">
+          <div class="status-bar"><span>14:23</span><div class="status-right"><i class="fa-solid fa-signal"></i><i class="fa-solid fa-wifi"></i><i class="fa-solid fa-battery-three-quarters"></i></div></div>
+          <div class="pscreen">
+            <div class="confirm-box">
+              <div class="confirm-check"><i class="fa-solid fa-check"></i></div>
+              <h3>Relatorio salvo</h3>
+              <p>Os dados e as fotos ficaram guardados no aparelho e serao enviados automaticamente assim que houver conexao.</p>
+              <div class="confirm-ref">Visita #2247</div>
+              <div class="sync-box"><i class="fa-solid fa-arrows-rotate"></i> Sincronizando quando houver sinal</div>
+            </div>
+          </div>
+          <div class="bottom-nav">
+            <div class="bn-item"><i class="fa-solid fa-square-plus"></i>Nova Visita</div>
+            <div class="bn-item active"><i class="fa-solid fa-clock-rotate-left"></i>Historico</div>
+            <div class="bn-item"><i class="fa-solid fa-user"></i>Perfil</div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-caption">
+        <h5>Confirmacao e fila de sincronizacao</h5>
+        <p>O representante nao perde o relatorio se a loja nao tiver sinal &ndash; o app guarda local e envia sozinho depois.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= PDF VIEW ================= -->
+<div class="view" id="view-pdf">
+  <div class="view-head reveal">
+    <h2>Exportacao em PDF &middot; Um Toque</h2>
+    <p>Cada visita sincronizada vira um PDF pronto para compartilhar com o cliente ou arquivar, sem precisar montar o relatorio na mao.</p>
+  </div>
+  <div class="phone-stage reveal">
+    <div>
+      <div class="phone-frame">
+        <div class="phone-screen">
+          <div class="status-bar"><span>14:25</span><div class="status-right"><i class="fa-solid fa-signal"></i><i class="fa-solid fa-wifi"></i><i class="fa-solid fa-battery-three-quarters"></i></div></div>
+          <div class="pscreen">
+            <div class="form-title">
+              <i class="fa-solid fa-file-pdf"></i>
+              <div class="t">Visita #2247</div>
+              <div class="s">Mercado Bom Preco &ndash; Zona Norte</div>
+            </div>
+            <div class="field">
+              <label>Status</label>
+              <input type="text" value="Sincronizado &middot; PDF gerado" readonly>
+            </div>
+            <div class="field">
+              <label>Representante</label>
+              <input type="text" value="Ana Ferreira" readonly>
+            </div>
+            <div class="field">
+              <label>Data</label>
+              <input type="text" value="15/07/2026 &middot; 13:58" readonly>
+            </div>
+            <button class="btn-submit"><i class="fa-solid fa-share-from-square"></i>&nbsp; Compartilhar PDF</button>
+          </div>
+          <div class="bottom-nav">
+            <div class="bn-item"><i class="fa-solid fa-square-plus"></i>Nova Visita</div>
+            <div class="bn-item active"><i class="fa-solid fa-clock-rotate-left"></i>Historico</div>
+            <div class="bn-item"><i class="fa-solid fa-user"></i>Perfil</div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-caption">
+        <h5>Detalhe da visita</h5>
+        <p>Assim que sincroniza, o PDF ja fica pronto para compartilhar direto do celular.</p>
+      </div>
+    </div>
+
+    <div class="paper-wrap">
+      <div class="paper">
+        <div class="paper-stamp">SINCRONIZADO</div>
+        <div class="paper-head">
+          <div class="paper-brand"><i class="fa-solid fa-clipboard-check"></i> CampoCerto</div>
+          <div class="paper-meta">Relatorio de Visita<br>Nº 2247</div>
+        </div>
+        <h4>Mercado Bom Preco &ndash; Zona Norte</h4>
+        <div class="paper-grid">
+          <div><b>Representante</b>Ana Ferreira</div>
+          <div><b>Tipo de visita</b>Reposicao de produto</div>
+          <div><b>Data</b>15/07/2026</div>
+          <div><b>Horario</b>13:58 &ndash; 14:22</div>
+        </div>
+        <div class="paper-obs">Gondola principal reabastecida. Cliente solicitou mais espaco na promocao do mes que vem.</div>
+        <div class="paper-photos">
+          <img src="https://images.unsplash.com/photo-1601598851547-4302969d0614?auto=format&fit=crop&w=400&q=60" alt="foto antes">
+          <img src="https://images.unsplash.com/photo-1580913428023-02c00b6a9c7e?auto=format&fit=crop&w=400&q=60" alt="foto depois">
+        </div>
+        <div class="paper-sign">
+          <div>Gerado automaticamente pelo CampoCerto</div>
+          <div class="sig">A. Ferreira</div>
+        </div>
+      </div>
+      <div class="phone-caption">
+        <h5>PDF gerado automaticamente</h5>
+        <p>Layout fixo com dados, observacoes e as fotos anexadas &ndash; pronto para enviar por e-mail ou arquivar sem retrabalho manual.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function showView(v){
+  document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.toggle-btn').forEach(el=>el.classList.remove('active'));
+  document.getElementById('view-'+v).classList.add('active');
+  document.getElementById('btn'+v.charAt(0).toUpperCase()+v.slice(1)).classList.add('active');
+  window.scrollTo({top: document.querySelector('.toggle-wrap').offsetTop - 10, behavior:'smooth'});
+  revealCheck();
+}
+const observer = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('visible'); });
+},{threshold:0.1});
+function revealCheck(){
+  document.querySelectorAll('.reveal').forEach(el=>observer.observe(el));
+}
+revealCheck();
+</script>
+
+</body>
+</html>
