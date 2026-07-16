@@ -1,0 +1,427 @@
+<title>ReponIA — Prediccion de Demanda y Pedidos</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+:root{
+  --bg:#0b0f16;
+  --surface:#121826;
+  --surface-2:#1a2233;
+  --surface-3:#212b40;
+  --border:rgba(255,255,255,.08);
+  --border-2:rgba(255,255,255,.14);
+  --text:#e8ecf3;
+  --text-dim:#8a94a6;
+  --text-faint:#5c6577;
+  --g400:#f0b23c;
+  --g500:#e39a1c;
+  --g600:#c47f0e;
+  --g700:#9c650a;
+  --glow:rgba(227,154,28,.35);
+  --success:#34d399;
+  --success-bg:rgba(52,211,153,.12);
+  --danger:#f87171;
+  --danger-bg:rgba(248,113,113,.12);
+  --warn:#f0b23c;
+  --warn-bg:rgba(240,178,60,.12);
+  --info:#60a5fa;
+  --info-bg:rgba(96,165,250,.12);
+  --r-sm:8px;--r-md:12px;--r-lg:16px;--r-xl:22px;
+  --shadow-md:0 8px 24px rgba(0,0,0,.35);
+  --shadow-lg:0 20px 50px rgba(0,0,0,.45);
+  --spring:cubic-bezier(.34,1.56,.64,1);
+  --ease:cubic-bezier(.4,0,.2,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Lexend',sans-serif;
+  background:radial-gradient(circle at 1px 1px, rgba(255,255,255,.035) 1px, transparent 0) 0 0/28px 28px, var(--bg);
+  color:var(--text);-webkit-font-smoothing:antialiased;min-height:100vh;overflow-x:hidden;
+}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select{font-family:inherit}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--surface-3);border-radius:10px}
+
+.app{display:grid;grid-template-columns:264px 1fr;min-height:100vh}
+.sidebar{background:var(--surface);border-right:1px solid var(--border);padding:22px 16px;display:flex;flex-direction:column;gap:6px;position:sticky;top:0;height:100vh;overflow-y:auto;z-index:40;transition:transform .3s var(--ease);}
+.brand{display:flex;align-items:center;gap:10px;padding:6px 10px 24px}
+.brand-mark{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--g400),var(--g600));display:flex;align-items:center;justify-content:center;font-weight:800;color:#241505;font-size:16px;animation:pulseLogo 3.2s ease-in-out infinite;}
+@keyframes pulseLogo{0%,100%{box-shadow:0 0 0 0 rgba(227,154,28,0)}50%{box-shadow:0 0 22px 3px var(--glow)}}
+.brand-name{font-weight:700;font-size:17px;letter-spacing:.2px}
+.brand-sub{font-size:11px;color:var(--text-faint);margin-top:-2px}
+.nav-group-label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-faint);padding:14px 12px 6px;font-weight:600}
+.nav-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:var(--r-md);color:var(--text-dim);font-size:14.5px;font-weight:500;transition:background .2s var(--ease),color .2s var(--ease);position:relative;cursor:pointer;}
+.nav-item i{width:18px;text-align:center;font-size:15px;opacity:.85}
+.nav-item:hover{background:var(--surface-2);color:var(--text)}
+.nav-item.active{background:var(--surface-2);color:var(--g400)}
+.nav-item.active::before{content:'';position:absolute;left:-16px;top:50%;transform:translateY(-50%);width:3px;height:18px;border-radius:3px;background:var(--g500);}
+.nav-item .badge-count{margin-left:auto;background:var(--danger-bg);color:var(--danger);font-size:11px;font-weight:700;padding:2px 7px;border-radius:20px;}
+.sidebar-footer{margin-top:auto;padding-top:14px;border-top:1px solid var(--border)}
+.plan-card{background:linear-gradient(160deg,var(--surface-2),var(--surface-3));border:1px solid var(--border-2);border-radius:var(--r-lg);padding:14px;font-size:12.5px;color:var(--text-dim);}
+.plan-card strong{color:var(--text);display:block;font-size:13.5px;margin-bottom:6px}
+
+.main{min-width:0;display:flex;flex-direction:column}
+.topbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:16px;padding:14px 28px;background:rgba(11,15,22,.7);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--border);}
+.hamburger{display:none;font-size:18px;color:var(--text-dim);padding:6px}
+.search-bar{flex:1;max-width:420px;display:flex;align-items:center;gap:10px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-md);padding:9px 14px;color:var(--text-faint);font-size:13.5px;}
+.search-bar input{background:none;border:none;outline:none;color:var(--text);font-family:inherit;font-size:13.5px;width:100%}
+.topbar-right{display:flex;align-items:center;gap:14px;margin-left:auto}
+.live-pill{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;padding:6px 12px;border-radius:20px;background:var(--success-bg);color:var(--success);}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--success);animation:blip 1.6s ease-in-out infinite}
+@keyframes blip{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(52,211,153,.5)}50%{opacity:.6;box-shadow:0 0 0 5px rgba(52,211,153,0)}}
+.avatar-chip{display:flex;align-items:center;gap:9px;padding:5px 10px 5px 5px;border-radius:20px;background:var(--surface-2);border:1px solid var(--border)}
+.avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--g400),var(--g700));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#241505}
+.avatar-chip span{font-size:12.5px;font-weight:600}
+
+.content{padding:26px 28px 60px;max-width:1320px;width:100%;margin:0 auto}
+.page{display:none}
+.page.active{display:block}
+
+.welcome{position:relative;overflow:hidden;border-radius:var(--r-xl);padding:30px 32px;margin-bottom:26px;background:linear-gradient(135deg,#171f30,#0e131e 60%);border:1px solid var(--border-2);}
+.welcome::before,.welcome::after{content:'';position:absolute;border-radius:50%;filter:blur(50px);opacity:.5;animation:floatOrb 9s ease-in-out infinite;}
+.welcome::before{width:220px;height:220px;background:var(--g500);top:-90px;right:-40px}
+.welcome::after{width:180px;height:180px;background:#3b5bfd;bottom:-100px;right:180px;animation-delay:-4s}
+@keyframes floatOrb{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-14px,16px) scale(1.08)}}
+.welcome-inner{position:relative;z-index:2;display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap}
+.welcome h1{font-size:clamp(20px,2.4vw,26px);font-weight:700;margin-bottom:6px}
+.welcome p{color:var(--text-dim);font-size:14px;max-width:520px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:11px 18px;border-radius:var(--r-md);font-size:13.5px;font-weight:600;transition:transform .18s var(--spring),box-shadow .18s var(--ease),background .2s;}
+.btn:active{transform:scale(.96)}
+.btn-primary{background:linear-gradient(135deg,var(--g400),var(--g600));color:#241505;box-shadow:0 6px 18px rgba(227,154,28,.25)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(227,154,28,.35)}
+.btn-ghost{background:var(--surface-2);border:1px solid var(--border-2);color:var(--text)}
+.btn-ghost:hover{background:var(--surface-3)}
+.btn-sm{padding:7px 12px;font-size:12px}
+
+.section-head{display:flex;align-items:center;justify-content:space-between;margin:30px 0 14px;flex-wrap:wrap;gap:10px}
+.section-head h2{font-size:16.5px;font-weight:700}
+.section-head .sub{font-size:12.5px;color:var(--text-faint);margin-top:2px}
+
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px 20px;transition:transform .25s var(--spring),box-shadow .25s var(--ease),border-color .25s;opacity:0;transform:translateY(16px);}
+.kpi-card.reveal{opacity:1;transform:translateY(0)}
+.kpi-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-md);border-color:var(--border-2)}
+.kpi-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
+.kpi-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.kpi-trend{font-size:11.5px;font-weight:700;padding:3px 8px;border-radius:20px;display:flex;align-items:center;gap:4px}
+.kpi-trend.up{background:var(--success-bg);color:var(--success)}
+.kpi-trend.down{background:var(--danger-bg);color:var(--danger)}
+.kpi-value{font-size:26px;font-weight:800;letter-spacing:-.3px}
+.kpi-label{font-size:12.5px;color:var(--text-faint);margin-top:4px}
+
+.grid-2{display:grid;grid-template-columns:1.5fr 1fr;gap:16px;margin-top:16px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px}
+.card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px}
+.card-head h3{font-size:14.5px;font-weight:700}
+.card-head .sub{font-size:11.5px;color:var(--text-faint);margin-top:2px}
+
+.attn-list{display:flex;flex-direction:column;gap:10px}
+.attn-item{display:flex;gap:12px;align-items:flex-start;padding:12px;border-radius:var(--r-md);background:var(--surface-2);border:1px solid var(--border);transition:transform .2s var(--spring)}
+.attn-item:hover{transform:translateX(3px)}
+.attn-dot{width:9px;height:9px;border-radius:50%;margin-top:5px;flex-shrink:0}
+.attn-dot.danger{background:var(--danger);box-shadow:0 0 0 4px var(--danger-bg)}
+.attn-dot.warn{background:var(--warn);box-shadow:0 0 0 4px var(--warn-bg)}
+.attn-body{flex:1;min-width:0}
+.attn-title{font-size:13px;font-weight:600}
+.attn-sub{font-size:11.5px;color:var(--text-faint);margin-top:2px}
+.attn-cta{font-size:11.5px;font-weight:600;color:var(--g400);white-space:nowrap;padding:6px 10px;border-radius:8px;transition:background .2s}
+.attn-cta:hover{background:var(--warn-bg)}
+
+.ai-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:16px}
+.ai-card{background:linear-gradient(160deg,var(--surface),var(--surface-2));border:1px solid var(--border-2);border-radius:var(--r-lg);padding:16px;transition:transform .25s var(--spring),box-shadow .25s;}
+.ai-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-md)}
+.ai-top{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.ai-icon{width:28px;height:28px;border-radius:8px;background:var(--warn-bg);color:var(--g400);display:flex;align-items:center;justify-content:center;font-size:12px}
+.ai-conf{margin-left:auto;font-size:10.5px;font-weight:700;color:var(--g400);background:var(--warn-bg);padding:3px 8px;border-radius:20px}
+.ai-text{font-size:12.8px;color:var(--text-dim);line-height:1.5;margin-bottom:12px}
+.ai-action{font-size:12px;font-weight:600;color:var(--text);border:1px solid var(--border-2);padding:7px 12px;border-radius:8px;display:inline-flex;align-items:center;gap:6px;transition:.2s}
+.ai-action:hover{background:var(--surface-3)}
+
+.chart-wrap{position:relative;height:200px}
+.chart-wrap svg{width:100%;height:100%;overflow:visible}
+.chart-line{fill:none;stroke:url(#lineGrad);stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:900;stroke-dashoffset:900;transition:stroke-dashoffset 1.6s var(--ease)}
+.chart-wrap.reveal .chart-line{stroke-dashoffset:0}
+.chart-area{opacity:0;transition:opacity 1s var(--ease) .4s}
+.chart-wrap.reveal .chart-area{opacity:1}
+.chart-line2{fill:none;stroke:var(--info);stroke-width:2;stroke-dasharray:4 4;opacity:.7}
+
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-faint);font-weight:600;padding:10px 12px;border-bottom:1px solid var(--border)}
+td{padding:13px 12px;font-size:13px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr.rowhover:hover{background:var(--surface-2)}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px}
+.pill.danger{background:var(--danger-bg);color:var(--danger)}
+.pill.warn{background:var(--warn-bg);color:var(--g400)}
+.pill.success{background:var(--success-bg);color:var(--success)}
+.pill.info{background:var(--info-bg);color:var(--info)}
+.pill.neutral{background:var(--surface-3);color:var(--text-dim)}
+.prod-cell{display:flex;align-items:center;gap:10px}
+.prod-icon{width:32px;height:32px;border-radius:8px;background:var(--surface-3);display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--g400);flex-shrink:0}
+.mini-bar{width:70px;height:6px;border-radius:6px;background:var(--surface-3);overflow:hidden;display:inline-block;vertical-align:middle;margin-right:6px}
+.mini-bar-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--g600),var(--g400))}
+
+.detail-panel{background:var(--surface);border:1px solid var(--border-2);border-radius:var(--r-lg);padding:22px;margin-top:18px;display:none}
+.detail-panel.open{display:block}
+.reason-box{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-md);padding:16px;margin-top:14px}
+.reason-box h4{font-size:12.5px;font-weight:700;color:var(--g400);margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.reason-box p{font-size:13px;color:var(--text-dim);line-height:1.6}
+.reason-box b{color:var(--text)}
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:14px}
+.stat-box{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-md);padding:14px;text-align:center}
+.stat-box .v{font-size:19px;font-weight:800}
+.stat-box .l{font-size:11px;color:var(--text-faint);margin-top:3px}
+
+.po-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px;margin-bottom:14px}
+.po-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px}
+.po-head h4{font-size:14px;font-weight:700}
+.po-head .sub{font-size:11.5px;color:var(--text-faint)}
+.po-line{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:12.8px}
+.po-line:last-child{border-bottom:none}
+.po-actions{display:flex;gap:10px;margin-top:14px}
+
+.toast{position:fixed;bottom:24px;right:24px;background:var(--surface-3);border:1px solid var(--border-2);border-radius:var(--r-md);padding:14px 18px;display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;box-shadow:var(--shadow-lg);transform:translateY(120%);opacity:0;transition:transform .4s var(--spring),opacity .3s;z-index:100}
+.toast.show{transform:translateY(0);opacity:1}
+.toast i{color:var(--success)}
+
+.badge-live{background:var(--info-bg);color:var(--info);font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:20px;display:inline-flex;align-items:center;gap:5px}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:35}
+.overlay.show{display:block}
+
+@media(max-width:960px){
+  .app{grid-template-columns:1fr}
+  .sidebar{position:fixed;left:0;top:0;transform:translateX(-100%);width:264px}
+  .sidebar.open{transform:translateX(0)}
+  .hamburger{display:block}
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+  .grid-2{grid-template-columns:1fr}
+  .ai-grid{grid-template-columns:1fr}
+  .stat-row{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-mark">R</div>
+      <div><div class="brand-name">ReponIA</div><div class="brand-sub">Almacen &amp; Logistica</div></div>
+    </div>
+    <div class="nav-group-label">Panel</div>
+    <a class="nav-item active" data-page="inicio"><i class="fa-solid fa-gauge-high"></i>Inicio</a>
+    <a class="nav-item" data-page="alertas"><i class="fa-solid fa-triangle-exclamation"></i>Alertas de Stock<span class="badge-count">7</span></a>
+    <a class="nav-item" data-page="recomendaciones"><i class="fa-solid fa-chart-line"></i>Recomendaciones</a>
+    <a class="nav-item" data-page="pedidos"><i class="fa-solid fa-file-invoice"></i>Borradores de Pedido<span class="badge-count">4</span></a>
+    <div class="nav-group-label">Sistema</div>
+    <a class="nav-item" data-page="erp"><i class="fa-solid fa-plug"></i>Conexion ERP</a>
+    <a class="nav-item" data-page="historial"><i class="fa-solid fa-clock-rotate-left"></i>Historial</a>
+    <div class="sidebar-footer">
+      <div class="plan-card">
+        <strong>Fase 1 activa</strong>
+        Prediccion + alertas + borradores de pedido. Envio automatico sin revision: Fase 2.
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <button class="hamburger" id="hamburgerBtn"><i class="fa-solid fa-bars"></i></button>
+      <div class="search-bar"><i class="fa-solid fa-magnifying-glass"></i><input placeholder="Buscar producto o proveedor..."></div>
+      <div class="topbar-right">
+        <span class="live-pill"><span class="live-dot"></span>ERP sincronizado</span>
+        <div class="avatar-chip"><div class="avatar">AV</div><span>Almacen Central</span></div>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- INICIO -->
+      <div class="page active" id="page-inicio">
+        <div class="welcome">
+          <div class="welcome-inner">
+            <div>
+              <h1>Buenos dias. Esto necesita tu atencion hoy.</h1>
+              <p>7 productos entran en riesgo de rotura de stock en los proximos 10 dias. Ya hay 4 borradores de pedido listos para revisar.</p>
+            </div>
+            <button class="btn btn-primary" onclick="goPage('alertas')"><i class="fa-solid fa-triangle-exclamation"></i>Ver alertas criticas</button>
+          </div>
+        </div>
+
+        <div class="kpi-grid">
+          <div class="kpi-card"><div class="kpi-top"><div class="kpi-icon" style="background:var(--danger-bg);color:var(--danger)"><i class="fa-solid fa-box-open"></i></div><div class="kpi-trend down"><i class="fa-solid fa-arrow-down"></i>-2</div></div><div class="kpi-value">7</div><div class="kpi-label">Productos en riesgo de rotura</div></div>
+          <div class="kpi-card"><div class="kpi-top"><div class="kpi-icon" style="background:var(--warn-bg);color:var(--g400)"><i class="fa-solid fa-file-invoice"></i></div><div class="kpi-trend up"><i class="fa-solid fa-arrow-up"></i>+4</div></div><div class="kpi-value">4</div><div class="kpi-label">Borradores pendientes de revision</div></div>
+          <div class="kpi-card"><div class="kpi-top"><div class="kpi-icon" style="background:var(--success-bg);color:var(--success)"><i class="fa-solid fa-clock"></i></div><div class="kpi-trend up"><i class="fa-solid fa-arrow-up"></i>+6.5h</div></div><div class="kpi-value">6.5h</div><div class="kpi-label">Horas administrativas ahorradas / semana</div></div>
+          <div class="kpi-card"><div class="kpi-top"><div class="kpi-icon" style="background:var(--info-bg);color:var(--info)"><i class="fa-solid fa-gauge"></i></div><div class="kpi-trend up"><i class="fa-solid fa-arrow-up"></i>+3%</div></div><div class="kpi-value">96.2%</div><div class="kpi-label">Nivel de servicio proyectado</div></div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-head"><div><h3>Consumo vs. proyeccion, ultimos 30 dias</h3><div class="sub">Linea solida: consumo real. Punteada: demanda proyectada</div></div></div>
+            <div class="chart-wrap" id="mainChart">
+              <svg viewBox="0 0 600 200" preserveAspectRatio="none">
+                <defs><linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#c47f0e"/><stop offset="100%" stop-color="#f0b23c"/></linearGradient>
+                <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f0b23c" stop-opacity=".25"/><stop offset="100%" stop-color="#f0b23c" stop-opacity="0"/></linearGradient></defs>
+                <path class="chart-area" fill="url(#areaGrad)" d="M0,150 L40,140 L80,145 L120,120 L160,130 L200,100 L240,110 L280,90 L320,95 L360,70 L400,80 L440,60 L480,65 L520,50 L560,55 L600,40 L600,200 L0,200 Z"/>
+                <path class="chart-line" d="M0,150 L40,140 L80,145 L120,120 L160,130 L200,100 L240,110 L280,90 L320,95 L360,70 L400,80 L440,60 L480,65 L520,50 L560,55 L600,40"/>
+                <path class="chart-line2" d="M0,155 L40,148 L80,150 L120,128 L160,133 L200,108 L240,115 L280,98 L320,100 L360,78 L400,85 L440,68 L480,70 L520,58 L560,60 L600,48"/>
+              </svg>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head"><h3>Atencion inmediata</h3></div>
+            <div class="attn-list">
+              <div class="attn-item"><span class="attn-dot danger"></span><div class="attn-body"><div class="attn-title">Filtro Industrial FX-220</div><div class="attn-sub">Rotura estimada en 4 dias, lead time proveedor 9 dias</div></div><div class="attn-cta">Revisar</div></div>
+              <div class="attn-item"><span class="attn-dot danger"></span><div class="attn-body"><div class="attn-title">Bandeja Gastronorm 1/1</div><div class="attn-sub">Rotura estimada en 6 dias</div></div><div class="attn-cta">Revisar</div></div>
+              <div class="attn-item"><span class="attn-dot warn"></span><div class="attn-body"><div class="attn-title">Resistencia Calentador 3kW</div><div class="attn-sub">Rotura estimada en 11 dias</div></div><div class="attn-cta">Revisar</div></div>
+              <div class="attn-item"><span class="attn-dot warn"></span><div class="attn-body"><div class="attn-title">Valvula Solenoide 220V</div><div class="attn-sub">Rotura estimada en 13 dias</div></div><div class="attn-cta">Revisar</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-head"><h2>Que sugiere ReponIA ahora mismo</h2></div>
+        <div class="ai-grid">
+          <div class="ai-card"><div class="ai-top"><div class="ai-icon"><i class="fa-solid fa-bolt"></i></div><span class="ai-conf">92% confianza</span></div><div class="ai-text">Generar pedido a <b>Refritec S.L.</b> para Filtro FX-220 hoy mismo. Su lead time real varia entre 6 y 14 dias, no son 9 dias fijos.</div><button class="ai-action" onclick="goPage('pedidos')"><i class="fa-solid fa-file-invoice"></i>Ver borrador</button></div>
+          <div class="ai-card"><div class="ai-top"><div class="ai-icon"><i class="fa-solid fa-triangle-exclamation"></i></div><span class="ai-conf">85% confianza</span></div><div class="ai-text">3 productos del proveedor <b>Distrihosteleria</b> podrian agruparse en un solo pedido y evitar un segundo envio.</div><button class="ai-action" onclick="goPage('recomendaciones')"><i class="fa-solid fa-layer-group"></i>Ver detalle</button></div>
+          <div class="ai-card"><div class="ai-top"><div class="ai-icon"><i class="fa-solid fa-chart-simple"></i></div><span class="ai-conf">78% confianza</span></div><div class="ai-text">El consumo de Bandeja Gastronorm subio 22% este mes. Vale la pena revisar si es estacional antes de fijar el punto de pedido.</div><button class="ai-action" onclick="goPage('recomendaciones')"><i class="fa-solid fa-magnifying-glass-chart"></i>Investigar</button></div>
+        </div>
+      </div>
+
+      <!-- ALERTAS -->
+      <div class="page" id="page-alertas">
+        <div class="section-head"><div><h2>Alertas de stock critico</h2><div class="sub">Ordenado por urgencia de rotura</div></div></div>
+        <div class="card">
+          <table>
+            <thead><tr><th>Producto</th><th>Stock actual</th><th>Dias a rotura</th><th>Lead time proveedor</th><th>Confianza</th><th></th></tr></thead>
+            <tbody>
+              <tr class="rowhover"><td><div class="prod-cell"><div class="prod-icon"><i class="fa-solid fa-filter"></i></div>Filtro Industrial FX-220</div></td><td>18 uds</td><td><span class="pill danger">4 dias</span></td><td>6-14 dias (variable)</td><td><span class="mini-bar"><span class="mini-bar-fill" style="width:92%"></span></span>92%</td><td><button class="btn btn-ghost btn-sm" onclick="goPage('recomendaciones')">Ver</button></td></tr>
+              <tr class="rowhover"><td><div class="prod-cell"><div class="prod-icon"><i class="fa-solid fa-box"></i></div>Bandeja Gastronorm 1/1</div></td><td>30 uds</td><td><span class="pill danger">6 dias</span></td><td>4-8 dias</td><td><span class="mini-bar"><span class="mini-bar-fill" style="width:88%"></span></span>88%</td><td><button class="btn btn-ghost btn-sm" onclick="goPage('recomendaciones')">Ver</button></td></tr>
+              <tr class="rowhover"><td><div class="prod-cell"><div class="prod-icon"><i class="fa-solid fa-fire-burner"></i></div>Resistencia Calentador 3kW</div></td><td>9 uds</td><td><span class="pill warn">11 dias</span></td><td>10-12 dias</td><td><span class="mini-bar"><span class="mini-bar-fill" style="width:81%"></span></span>81%</td><td><button class="btn btn-ghost btn-sm" onclick="goPage('recomendaciones')">Ver</button></td></tr>
+              <tr class="rowhover"><td><div class="prod-cell"><div class="prod-icon"><i class="fa-solid fa-plug-circle-bolt"></i></div>Valvula Solenoide 220V</div></td><td>14 uds</td><td><span class="pill warn">13 dias</span></td><td>5-9 dias</td><td><span class="mini-bar"><span class="mini-bar-fill" style="width:76%"></span></span>76%</td><td><button class="btn btn-ghost btn-sm" onclick="goPage('recomendaciones')">Ver</button></td></tr>
+              <tr class="rowhover"><td><div class="prod-cell"><div class="prod-icon"><i class="fa-solid fa-mug-hot"></i></div>Vaso Termico 350ml</div></td><td>60 uds</td><td><span class="pill info">18 dias</span></td><td>7-10 dias</td><td><span class="mini-bar"><span class="mini-bar-fill" style="width:70%"></span></span>70%</td><td><button class="btn btn-ghost btn-sm" onclick="goPage('recomendaciones')">Ver</button></td></tr>
+              <tr class="rowhover"><td><div class="prod-cell"><div class="prod-icon"><i class="fa-solid fa-utensils"></i></div>Cubierto Acero Inox Set</div></td><td>120 uds</td><td><span class="pill info">21 dias</span></td><td>6-8 dias</td><td><span class="mini-bar"><span class="mini-bar-fill" style="width:66%"></span></span>66%</td><td><button class="btn btn-ghost btn-sm" onclick="goPage('recomendaciones')">Ver</button></td></tr>
+              <tr class="rowhover"><td><div class="prod-cell"><div class="prod-icon"><i class="fa-solid fa-droplet"></i></div>Detergente Industrial 5L</div></td><td>22 uds</td><td><span class="pill neutral">27 dias</span></td><td>3-5 dias</td><td><span class="mini-bar"><span class="mini-bar-fill" style="width:60%"></span></span>60%</td><td><button class="btn btn-ghost btn-sm" onclick="goPage('recomendaciones')">Ver</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- RECOMENDACIONES -->
+      <div class="page" id="page-recomendaciones">
+        <div class="section-head"><div><h2>Recomendaciones de reposicion</h2><div class="sub">Por que ReponIA sugiere pedir ahora, no solo cuanto pedir</div></div></div>
+        <div class="card">
+          <div class="card-head"><h3>Filtro Industrial FX-220</h3><span class="badge-live"><i class="fa-solid fa-circle" style="font-size:6px"></i>Proveedor: Refritec S.L.</span></div>
+          <div class="stat-row">
+            <div class="stat-box"><div class="v">18</div><div class="l">Stock actual</div></div>
+            <div class="stat-box"><div class="v">2.1/dia</div><div class="l">Consumo promedio</div></div>
+            <div class="stat-box"><div class="v">6-14 dias</div><div class="l">Lead time (variable)</div></div>
+            <div class="stat-box"><div class="v">32 uds</div><div class="l">Pedido sugerido</div></div>
+          </div>
+          <div class="reason-box">
+            <h4><i class="fa-solid fa-lightbulb"></i>Por que este numero, y no solo el promedio de consumo</h4>
+            <p>El proveedor tarda a veces <b>6 dias</b> y a veces <b>14</b>. Un calculo que solo mira el consumo promedio pide justo a tiempo y falla apenas el proveedor se retrasa. El punto de pedido de ReponIA incluye un colchon de seguridad calculado sobre esa variabilidad del lead time, no solo sobre la demanda. Por eso la cantidad sugerida es mayor que un simple "consumo x dias".</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- PEDIDOS -->
+      <div class="page" id="page-pedidos">
+        <div class="section-head"><div><h2>Borradores de pedido</h2><div class="sub">Generados por ReponIA, listos para tu revision. Nada se envia sin aprobar.</div></div></div>
+
+        <div class="po-card">
+          <div class="po-head"><div><h4>Refritec S.L.</h4><div class="sub">Borrador #PO-1042 · generado hace 2 horas</div></div><span class="pill warn">Pendiente de revision</span></div>
+          <div class="po-line"><span>Filtro Industrial FX-220</span><span>32 uds</span></div>
+          <div class="po-line"><span>Empaque de goma FX-220-E</span><span>32 uds</span></div>
+          <div class="po-actions"><button class="btn btn-primary btn-sm" onclick="showToast()"><i class="fa-solid fa-check"></i>Aprobar y enviar</button><button class="btn btn-ghost btn-sm"><i class="fa-solid fa-pen"></i>Editar cantidades</button></div>
+        </div>
+
+        <div class="po-card">
+          <div class="po-head"><div><h4>Distrihosteleria</h4><div class="sub">Borrador #PO-1043 · generado hace 2 horas</div></div><span class="pill warn">Pendiente de revision</span></div>
+          <div class="po-line"><span>Bandeja Gastronorm 1/1</span><span>60 uds</span></div>
+          <div class="po-line"><span>Vaso Termico 350ml</span><span>80 uds</span></div>
+          <div class="po-line"><span>Cubierto Acero Inox Set</span><span>150 uds</span></div>
+          <div class="po-actions"><button class="btn btn-primary btn-sm" onclick="showToast()"><i class="fa-solid fa-check"></i>Aprobar y enviar</button><button class="btn btn-ghost btn-sm"><i class="fa-solid fa-pen"></i>Editar cantidades</button></div>
+        </div>
+
+        <div class="po-card">
+          <div class="po-head"><div><h4>Termosum Ibérica</h4><div class="sub">Borrador #PO-1044 · generado ayer</div></div><span class="pill success">Aprobado</span></div>
+          <div class="po-line"><span>Resistencia Calentador 3kW</span><span>10 uds</span></div>
+          <div class="po-actions"><button class="btn btn-ghost btn-sm" disabled style="opacity:.5"><i class="fa-solid fa-check"></i>Ya enviado</button></div>
+        </div>
+      </div>
+
+      <!-- ERP -->
+      <div class="page" id="page-erp">
+        <div class="section-head"><div><h2>Conexion ERP</h2><div class="sub">Estado de la sincronizacion de datos</div></div></div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-head"><h3>Estado actual</h3></div>
+            <div class="attn-list">
+              <div class="attn-item"><span class="attn-dot" style="background:var(--success);box-shadow:0 0 0 4px var(--success-bg)"></span><div class="attn-body"><div class="attn-title">Historico de consumos</div><div class="attn-sub">Sincronizado, ultima actualizacion hace 12 min</div></div></div>
+              <div class="attn-item"><span class="attn-dot" style="background:var(--success);box-shadow:0 0 0 4px var(--success-bg)"></span><div class="attn-body"><div class="attn-title">Stock actual por almacen</div><div class="attn-sub">Sincronizado</div></div></div>
+              <div class="attn-item"><span class="attn-dot warn"></span><div class="attn-body"><div class="attn-title">Lead time por proveedor</div><div class="attn-sub">14 proveedores con datos completos, 3 pendientes de confirmar</div></div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head"><h3>Calidad de datos</h3></div>
+            <p style="font-size:12.8px;color:var(--text-dim);line-height:1.6">Un pedido automatico basado en datos incompletos genera mas problemas que ayuda. Por eso cada proveedor sin lead time confirmado queda marcado antes de generar borradores para sus productos.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- HISTORIAL -->
+      <div class="page" id="page-historial">
+        <div class="section-head"><div><h2>Historial de pedidos generados</h2><div class="sub">Sirve para ajustar el modelo con el tiempo</div></div></div>
+        <div class="card">
+          <table>
+            <thead><tr><th>Fecha</th><th>Proveedor</th><th>Productos</th><th>Estado</th><th>Resultado</th></tr></thead>
+            <tbody>
+              <tr class="rowhover"><td>02 Jul</td><td>Refritec S.L.</td><td>2</td><td><span class="pill success">Entregado</span></td><td>Sin rotura</td></tr>
+              <tr class="rowhover"><td>28 Jun</td><td>Distrihosteleria</td><td>3</td><td><span class="pill success">Entregado</span></td><td>Sin rotura</td></tr>
+              <tr class="rowhover"><td>21 Jun</td><td>Termosum Iberica</td><td>1</td><td><span class="pill success">Entregado</span></td><td>Llego 3 dias tarde, colchon absorbio el retraso</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+<div class="overlay" id="overlay"></div>
+<div class="toast" id="toast"><i class="fa-solid fa-circle-check"></i><span>Pedido aprobado y enviado al proveedor</span></div>
+
+<script>
+function goPage(name){
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.page===name));
+  document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id==='page-'+name));
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+document.querySelectorAll('.nav-item').forEach(item=>{
+  item.addEventListener('click',()=>{
+    goPage(item.dataset.page);
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('overlay').classList.remove('show');
+  });
+});
+document.getElementById('hamburgerBtn').addEventListener('click',()=>{
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('overlay').classList.add('show');
+});
+document.getElementById('overlay').addEventListener('click',()=>{
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('show');
+});
+function showToast(){
+  const t=document.getElementById('toast');
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2600);
+}
+window.addEventListener('load',()=>{
+  document.querySelectorAll('.kpi-card').forEach((c,i)=>setTimeout(()=>c.classList.add('reveal'),120*i));
+  setTimeout(()=>document.getElementById('mainChart').classList.add('reveal'),300);
+});
+</script>
