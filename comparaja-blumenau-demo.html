@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ComparaJa — Compare Precos e Descubra o Comercio Local de Blumenau</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#f5f7ee; --bg2:#eef2e2; --paper:#ffffff;
+  --ink:#152016; --ink2:#3d4c3f; --ink3:#6d7d6c;
+  --forest:#0f3324; --forest-dk:#0a2419;
+  --leaf:#4f9d3f; --leaf-lt:#7fc95d; --leaf-dk:#2f6e28;
+  --leaf-glow:rgba(79,157,63,.22); --leaf-dim:rgba(79,157,63,.09);
+  --line:rgba(21,32,22,.1); --line-dk:rgba(79,157,63,.2);
+  --ok:#2f9e5c; --warn:#c9862c; --danger:#c0432a;
+  --ease-spring:cubic-bezier(.34,1.56,.64,1); --ease-out:cubic-bezier(.22,1,.36,1);
+  --shadow-leaf:0 0 40px rgba(79,157,63,.16),0 4px 24px rgba(0,0,0,.06);
+  --shadow-card:0 4px 24px rgba(21,32,22,.08);
+  --r-sm:8px; --r-md:14px; --r-lg:22px; --r-xl:30px;
+}
+html{scroll-behavior:smooth}
+body{font-family:'Lexend',sans-serif;background:var(--bg);color:var(--ink);overflow-x:hidden;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:8px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--leaf);border-radius:4px}
+a{color:inherit;text-decoration:none}
+img{max-width:100%;display:block}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+input{font-family:inherit}
+.wrap{max-width:1240px;margin:0 auto;padding:0 28px}
+
+/* ===== NAV ===== */
+.nav{position:fixed;top:0;left:0;right:0;z-index:900;padding:18px 0;transition:all .35s var(--ease-out)}
+.nav.scrolled{background:rgba(245,247,238,.86);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 2px 24px rgba(21,32,22,.06);padding:12px 0}
+.nav-inner{display:flex;align-items:center;justify-content:space-between}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.35rem;letter-spacing:.5px}
+.logo-mark{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,var(--leaf-lt),var(--leaf-dk));display:flex;align-items:center;justify-content:center;color:#0d1b0e;font-size:1rem;box-shadow:var(--shadow-leaf);animation:pulseLogo 3.2s ease-in-out infinite}
+@keyframes pulseLogo{0%,100%{box-shadow:0 0 0 0 rgba(79,157,63,.35)}50%{box-shadow:0 0 0 10px rgba(79,157,63,0)}}
+.nav-links{display:flex;gap:34px;align-items:center}
+.nav-links a{font-size:.93rem;font-weight:500;color:var(--ink2);transition:color .25s}
+.nav-links a:hover{color:var(--leaf-dk)}
+.nav-cta{display:flex;gap:10px;align-items:center}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:11px 22px;border-radius:999px;font-weight:600;font-size:.88rem;transition:all .3s var(--ease-spring);white-space:nowrap}
+.btn-leaf{background:linear-gradient(135deg,var(--leaf-lt),var(--leaf));color:#0d1b0e;box-shadow:0 4px 18px rgba(79,157,63,.35);position:relative;overflow:hidden}
+.btn-leaf::after{content:'';position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(120deg,transparent,rgba(255,255,255,.55),transparent);transform:skewX(-20deg);animation:shimmer 3s infinite}
+@keyframes shimmer{0%{left:-60%}100%{left:140%}}
+.btn-leaf:hover{transform:translateY(-2px) scale(1.03);box-shadow:0 8px 26px rgba(79,157,63,.45)}
+.btn-outline{border:1.5px solid var(--line-dk);color:var(--ink);background:rgba(255,255,255,.6)}
+.btn-outline:hover{border-color:var(--leaf);background:var(--leaf-dim);transform:translateY(-2px)}
+.btn-ghost{color:var(--ink2);padding:11px 16px}
+.hamburger{display:none;font-size:1.4rem;color:var(--ink)}
+
+/* ===== SURFACE TABS (demo switcher) ===== */
+.surface-switch{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:950;display:flex;gap:4px;background:rgba(15,32,22,.92);backdrop-filter:blur(14px);padding:6px;border-radius:999px;box-shadow:0 10px 32px rgba(0,0,0,.28)}
+.surface-switch button{padding:9px 18px;border-radius:999px;font-size:.82rem;font-weight:600;color:rgba(245,247,238,.65);transition:all .3s var(--ease-spring)}
+.surface-switch button.active{background:linear-gradient(135deg,var(--leaf-lt),var(--leaf));color:#0d1b0e}
+
+/* ===== PAGES ===== */
+.page{display:none}
+.page.active{display:block;animation:fadeInPage .5s var(--ease-out)}
+@keyframes fadeInPage{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+
+/* ===== HERO ===== */
+.hero{position:relative;min-height:100vh;display:flex;align-items:center;overflow:hidden;background:linear-gradient(180deg,#0f3324,#0a2419)}
+.hero-bg{position:absolute;inset:0;background:url('https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=1800&q=80') center/cover;opacity:.34;animation:kenburns 22s ease-in-out infinite alternate}
+@keyframes kenburns{from{transform:scale(1) translate(0,0)}to{transform:scale(1.12) translate(-1%,-2%)}}
+.hero::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,36,25,.55),rgba(10,36,25,.93) 80%)}
+.orb{position:absolute;border-radius:50%;filter:blur(60px);opacity:.5;animation:floatOrb 9s ease-in-out infinite}
+.orb1{width:340px;height:340px;background:radial-gradient(circle,var(--leaf-glow),transparent 70%);top:-8%;right:8%;animation-delay:0s}
+.orb2{width:260px;height:260px;background:radial-gradient(circle,rgba(79,157,63,.14),transparent 70%);bottom:0;left:2%;animation-delay:2.5s}
+@keyframes floatOrb{0%,100%{transform:translate(0,0)}50%{transform:translate(24px,-30px)}}
+.grid-overlay{position:absolute;inset:0;background-image:linear-gradient(rgba(79,157,63,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(79,157,63,.06) 1px,transparent 1px);background-size:44px 44px;opacity:.4}
+.hero-content{position:relative;z-index:2;color:#f5f7ee;text-align:center;padding-top:70px}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;padding:8px 18px;border-radius:999px;background:rgba(79,157,63,.14);border:1px solid rgba(79,157,63,.32);font-size:.82rem;font-weight:600;color:var(--leaf-lt);margin-bottom:26px}
+.hero h1{font-size:clamp(2.2rem,5.2vw,4.2rem);font-weight:800;line-height:1.1;max-width:920px;margin:0 auto 22px;letter-spacing:-1px}
+.hero h1 span{color:var(--leaf-lt);font-style:italic;font-weight:300}
+.hero p{font-size:clamp(1rem,1.6vw,1.2rem);color:rgba(245,247,238,.72);max-width:620px;margin:0 auto 30px;line-height:1.6}
+.hero-search{max-width:560px;margin:0 auto 38px;display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.95);border-radius:999px;padding:8px 8px 8px 22px;box-shadow:0 12px 40px rgba(0,0,0,.25)}
+.hero-search i{color:var(--ink3)}
+.hero-search input{flex:1;border:none;outline:none;font-family:inherit;font-size:.94rem;background:none;color:var(--ink);padding:8px 0}
+.hero-search button{padding:12px 22px}
+.hero-stats{display:flex;justify-content:center;gap:56px;flex-wrap:wrap;border-top:1px solid rgba(245,247,238,.1);padding-top:32px;max-width:820px;margin:0 auto}
+.stat-num{font-size:2rem;font-weight:800;color:var(--leaf-lt)}
+.stat-label{font-size:.78rem;color:rgba(245,247,238,.55);margin-top:4px;text-transform:uppercase;letter-spacing:.6px}
+
+/* ===== SECTIONS ===== */
+.section{padding:90px 0}
+.section-alt{background:var(--paper)}
+.sec-head{text-align:center;max-width:640px;margin:0 auto 50px}
+.sec-tag{display:inline-block;font-size:.8rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--leaf-dk);margin-bottom:14px}
+.sec-head h2{font-size:clamp(1.7rem,3.2vw,2.5rem);font-weight:800;letter-spacing:-.5px;margin-bottom:14px}
+.sec-head p{color:var(--ink3);font-size:1.02rem;line-height:1.6}
+.reveal{opacity:0;transform:translateY(28px);transition:all .7s var(--ease-out)}
+.reveal.in{opacity:1;transform:translateY(0)}
+
+/* search + filters (home grid) */
+.finder{padding-top:40px}
+.finder-toolbar{display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between;margin-bottom:24px}
+.searchbar{flex:1;min-width:240px;display:flex;align-items:center;gap:10px;background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:12px 20px}
+.searchbar input{flex:1;border:none;outline:none;font-family:inherit;font-size:.92rem;background:none;color:var(--ink)}
+.chip-group{display:flex;flex-wrap:wrap;gap:8px}
+.chip{padding:8px 15px;border-radius:999px;border:1px solid var(--line);font-size:.8rem;font-weight:600;color:var(--ink2);transition:all .25s;background:var(--bg)}
+.chip:hover{border-color:var(--leaf)}
+.chip.active{background:linear-gradient(135deg,var(--leaf-lt),var(--leaf));color:#0d1b0e;border-color:transparent}
+.result-count{color:var(--ink3);font-size:.85rem;margin-bottom:18px}
+
+.grid-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(255px,1fr));gap:22px}
+.p-card{background:var(--bg);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;transition:all .4s var(--ease-spring);cursor:pointer}
+.p-card:hover{transform:translateY(-6px);box-shadow:var(--shadow-card);border-color:var(--leaf)}
+.p-img-wrap{position:relative;overflow:hidden;aspect-ratio:4/3}
+.p-img-wrap img{width:100%;height:100%;object-fit:cover;transition:transform .5s var(--ease-out)}
+.p-card:hover .p-img-wrap img{transform:scale(1.08)}
+.p-badge{position:absolute;top:12px;left:12px;background:rgba(15,32,22,.82);color:var(--leaf-lt);font-size:.68rem;font-weight:700;padding:5px 11px;border-radius:999px;text-transform:uppercase;letter-spacing:.4px}
+.p-logo{position:absolute;bottom:-22px;left:16px;width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,var(--leaf-lt),var(--leaf-dk));display:flex;align-items:center;justify-content:center;font-weight:800;color:#0d1b0e;font-size:.85rem;border:3px solid var(--bg);box-shadow:var(--shadow-card)}
+.p-body{padding:32px 16px 18px}
+.p-name{font-weight:700;font-size:1rem;margin-bottom:4px}
+.p-notes{font-size:.8rem;color:var(--ink3);margin-bottom:12px;line-height:1.4}
+.p-foot{display:flex;justify-content:space-between;align-items:center}
+.p-rate{display:flex;align-items:center;gap:4px;font-size:.8rem;color:var(--ink3)}
+.p-rate i{color:var(--leaf)}
+.p-dist{font-size:.78rem;color:var(--ink3);display:flex;align-items:center;gap:5px}
+
+/* how it works */
+.steps3{display:grid;grid-template-columns:repeat(3,1fr);gap:28px}
+.step-card{background:var(--bg);border:1px solid var(--line);border-radius:var(--r-lg);padding:32px 26px;position:relative;transition:all .4s var(--ease-spring)}
+.step-card:hover{transform:translateY(-8px);box-shadow:var(--shadow-card);border-color:var(--leaf)}
+.step-num{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--leaf-lt),var(--leaf));display:flex;align-items:center;justify-content:center;font-weight:800;color:#0d1b0e;margin-bottom:18px}
+.step-card h3{font-size:1.1rem;font-weight:700;margin-bottom:8px}
+.step-card p{color:var(--ink3);font-size:.92rem;line-height:1.55}
+
+/* benefits */
+.benefit-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.benefit-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-lg);padding:28px;transition:all .35s}
+.benefit-card:hover{border-color:var(--leaf);box-shadow:var(--shadow-card)}
+.benefit-icon{width:46px;height:46px;border-radius:12px;background:var(--leaf-dim);color:var(--leaf-dk);display:flex;align-items:center;justify-content:center;font-size:1.1rem;margin-bottom:16px}
+.benefit-card h3{font-size:1.02rem;font-weight:700;margin-bottom:8px}
+.benefit-card p{font-size:.88rem;color:var(--ink3);line-height:1.55}
+
+/* roadmap strip */
+.roadmap{background:linear-gradient(135deg,#0f3324,#0a2419);border-radius:var(--r-xl);padding:40px;color:#f5f7ee;position:relative;overflow:hidden}
+.roadmap::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(79,157,63,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(79,157,63,.08) 1px,transparent 1px);background-size:36px 36px}
+.roadmap-inner{position:relative;z-index:1}
+.roadmap-head{display:flex;align-items:center;gap:10px;margin-bottom:22px}
+.roadmap-head i{color:var(--leaf-lt)}
+.roadmap-head span{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--leaf-lt)}
+.roadmap-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.roadmap-item{background:rgba(255,255,255,.06);border:1px solid rgba(79,157,63,.2);border-radius:var(--r-md);padding:18px}
+.roadmap-item i{color:var(--leaf-lt);font-size:1.05rem;margin-bottom:10px;display:block}
+.roadmap-item p{font-size:.85rem;color:rgba(245,247,238,.82);line-height:1.5}
+
+/* footer */
+.footer{background:#0a2419;color:rgba(245,247,238,.7);padding:60px 0 26px}
+.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:40px}
+.footer h5{color:#f5f7ee;font-size:.85rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:16px}
+.footer ul{list-style:none}
+.footer li{margin-bottom:10px;font-size:.88rem}
+.footer li a:hover{color:var(--leaf-lt)}
+.footer-bottom{border-top:1px solid rgba(245,247,238,.1);padding-top:22px;display:flex;justify-content:space-between;font-size:.8rem;color:rgba(245,247,238,.45);flex-wrap:wrap;gap:10px}
+
+/* ===== EMPRESA (business detail) ===== */
+.pd-wrap{padding-top:130px}
+.breadcrumb{font-size:.82rem;color:var(--ink3);margin-bottom:24px}
+.breadcrumb a:hover{color:var(--leaf-dk)}
+.pd-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:50px;align-items:start;margin-bottom:70px}
+.pd-gallery{display:grid;grid-template-columns:1fr 1fr;gap:10px;border-radius:var(--r-xl);overflow:hidden;box-shadow:var(--shadow-card)}
+.pd-gallery img:first-child{grid-column:1/3;aspect-ratio:16/9;object-fit:cover}
+.pd-gallery img{aspect-ratio:4/3;object-fit:cover}
+.pd-cat{color:var(--leaf-dk);font-weight:700;font-size:.82rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.pd-title{font-size:1.9rem;font-weight:800;margin-bottom:12px;letter-spacing:-.5px}
+.pd-meta{display:flex;flex-direction:column;gap:10px;margin-bottom:22px;color:var(--ink2);font-size:.9rem}
+.pd-meta div{display:flex;align-items:center;gap:10px}
+.pd-meta i{color:var(--leaf);width:16px}
+.pd-desc{color:var(--ink2);line-height:1.7;margin-bottom:26px}
+.pd-actions{display:flex;gap:12px;margin-bottom:30px}
+.pd-actions .btn{flex:1;justify-content:center;padding:14px}
+.map-box{background:var(--bg2);border:1px dashed var(--line-dk);border-radius:var(--r-md);padding:26px;display:flex;align-items:center;gap:14px;color:var(--ink3);font-size:.86rem}
+.map-box i{font-size:1.4rem;color:var(--leaf)}
+
+.pd-section{margin-bottom:60px}
+.pd-section h3{font-size:1.2rem;font-weight:700;margin-bottom:18px}
+.prod-table{width:100%;border-collapse:collapse}
+.prod-table td{padding:14px 4px;border-top:1px solid var(--line);font-size:.92rem}
+.prod-table tr:first-child td{border-top:none}
+.prod-name{font-weight:600}
+.prod-note{font-size:.78rem;color:var(--ink3)}
+.prod-price{font-weight:800;text-align:right;white-space:nowrap}
+.promo-tag{display:inline-flex;align-items:center;gap:5px;font-size:.7rem;font-weight:700;color:#fff;background:var(--warn);padding:3px 9px;border-radius:999px;margin-left:8px}
+.freshness{font-size:.74rem;color:var(--ink3);text-align:right;white-space:nowrap}
+
+/* ===== COMPARACAO ===== */
+.cmp-wrap{padding-top:130px;padding-bottom:90px}
+.cmp-intro{max-width:680px;margin-bottom:36px}
+.cmp-intro .sec-tag{margin-bottom:12px}
+.cmp-intro h2{font-size:clamp(1.6rem,3vw,2.2rem);font-weight:800;margin-bottom:12px}
+.cmp-intro p{color:var(--ink3);line-height:1.6}
+.cmp-table-wrap{overflow-x:auto;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow-card)}
+table.cmp-table{width:100%;border-collapse:collapse;min-width:680px}
+.cmp-table th{text-align:left;font-size:.78rem;text-transform:uppercase;letter-spacing:.6px;color:var(--ink3);padding:18px 16px;border-bottom:1px solid var(--line)}
+.cmp-table th.mkt{text-align:center}
+.cmp-table td{padding:16px;border-bottom:1px solid var(--line);font-size:.94rem}
+.cmp-table tr:last-child td{border-bottom:none}
+.cmp-item{display:flex;align-items:center;gap:10px;font-weight:600}
+.cmp-item i{color:var(--leaf);width:18px}
+.cmp-price{text-align:center;font-weight:700;color:var(--ink2);position:relative}
+.cmp-price.best{color:var(--leaf-dk)}
+.best-badge{display:inline-flex;align-items:center;gap:4px;font-size:.64rem;font-weight:800;color:#fff;background:var(--leaf);padding:2px 8px;border-radius:999px;margin-top:5px;text-transform:uppercase;letter-spacing:.3px}
+.insight-callout{display:flex;gap:16px;align-items:flex-start;background:var(--leaf-dim);border:1px solid var(--line-dk);border-radius:var(--r-lg);padding:22px 26px;margin-top:26px}
+.insight-callout i{font-size:1.3rem;color:var(--leaf-dk);margin-top:2px}
+.insight-callout h4{font-size:.98rem;font-weight:700;margin-bottom:6px}
+.insight-callout p{font-size:.88rem;color:var(--ink2);line-height:1.55}
+
+/* ===== LISTA DE COMPRAS ===== */
+.list-wrap{padding-top:130px;padding-bottom:90px}
+.list-layout{display:grid;grid-template-columns:1fr 1fr;gap:36px;align-items:start}
+.checklist-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-lg);padding:26px}
+.checklist-card h3{font-size:1.05rem;font-weight:700;margin-bottom:6px}
+.checklist-card .sub{font-size:.85rem;color:var(--ink3);margin-bottom:18px}
+.check-row{display:flex;align-items:center;gap:14px;padding:12px 8px;border-radius:var(--r-md);transition:background .2s;cursor:pointer}
+.check-row:hover{background:var(--bg)}
+.check-box{width:22px;height:22px;border-radius:7px;border:2px solid var(--line-dk);display:flex;align-items:center;justify-content:center;color:transparent;transition:all .25s var(--ease-spring);flex-shrink:0}
+.check-row.sel .check-box{background:linear-gradient(135deg,var(--leaf-lt),var(--leaf));border-color:transparent;color:#fff}
+.check-label{flex:1;font-size:.92rem;font-weight:500}
+.check-row.sel .check-label{color:var(--ink)}
+.check-row:not(.sel) .check-label{color:var(--ink3);text-decoration:line-through}
+.calc-btn{width:100%;justify-content:center;margin-top:18px;padding:14px}
+
+.results-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-lg);padding:26px}
+.results-card h3{font-size:1.05rem;font-weight:700;margin-bottom:6px}
+.results-card .sub{font-size:.85rem;color:var(--ink3);margin-bottom:20px}
+.mkt-row{margin-bottom:16px}
+.mkt-row-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:.88rem;font-weight:600}
+.mkt-total{font-weight:800}
+.mkt-bar-track{height:10px;border-radius:6px;background:var(--bg);overflow:hidden}
+.mkt-bar-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--leaf-dk),var(--leaf-lt));width:0%;transition:width 1s var(--ease-out)}
+.mkt-row.winner .mkt-bar-fill{background:linear-gradient(90deg,var(--leaf-dk),#a6e072)}
+.mkt-row.winner .mkt-row-top{color:var(--leaf-dk)}
+.winner-badge{font-size:.64rem;font-weight:800;color:#fff;background:var(--leaf);padding:2px 8px;border-radius:999px;margin-left:8px;text-transform:uppercase}
+.combo-note{display:flex;gap:12px;background:var(--leaf-dim);border:1px solid var(--line-dk);border-radius:var(--r-md);padding:16px 18px;margin-top:22px}
+.combo-note i{color:var(--leaf-dk);font-size:1.1rem;margin-top:2px}
+.combo-note p{font-size:.85rem;color:var(--ink2);line-height:1.5}
+.combo-note b{color:var(--leaf-dk)}
+
+/* ===== ADMIN ===== */
+.admin-wrap{min-height:100vh;padding-top:110px}
+.auth-card-wrap{display:flex;align-items:center;justify-content:center;padding:60px 20px 100px}
+.auth-card{width:100%;max-width:400px;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-xl);padding:38px;box-shadow:var(--shadow-card)}
+.auth-card .logo-mark{margin:0 auto 18px}
+.auth-card h2{font-size:1.5rem;font-weight:800;margin-bottom:6px;text-align:center}
+.auth-card p.sub{text-align:center;color:var(--ink3);font-size:.88rem;margin-bottom:26px}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:.8rem;font-weight:600;margin-bottom:6px;color:var(--ink2)}
+.field input{width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--r-sm);font-family:inherit;font-size:.92rem;outline:none;transition:border .25s}
+.field input:focus{border-color:var(--leaf)}
+.auth-card .btn-leaf{width:100%;justify-content:center;padding:13px;margin-top:6px}
+.auth-switch{text-align:center;margin-top:18px;font-size:.85rem;color:var(--ink3)}
+.auth-switch a{color:var(--leaf-dk);font-weight:600}
+
+.admin-body{display:none;padding:0 0 100px}
+.admin-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;flex-wrap:wrap;gap:14px}
+.admin-head h2{font-size:1.5rem;font-weight:800}
+.admin-head p{color:var(--ink3);font-size:.88rem}
+.admin-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:30px}
+.admin-kpi{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-lg);padding:20px}
+.admin-kpi-icon{width:36px;height:36px;border-radius:10px;background:var(--leaf-dim);color:var(--leaf-dk);display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+.admin-kpi-num{font-size:1.5rem;font-weight:800}
+.admin-kpi-label{font-size:.8rem;color:var(--ink3);margin-top:2px}
+.admin-panel{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-lg);padding:24px;margin-bottom:24px}
+.admin-panel-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:10px}
+.admin-panel-head h3{font-size:1.02rem;font-weight:700}
+.admin-panel-head .sub{font-size:.8rem;color:var(--ink3);margin-top:2px}
+table.admin-table{width:100%;border-collapse:collapse}
+.admin-table th{text-align:left;font-size:.72rem;text-transform:uppercase;letter-spacing:.6px;color:var(--ink3);padding:10px 12px;border-bottom:1px solid var(--line)}
+.admin-table td{padding:13px 12px;border-bottom:1px solid var(--line);font-size:.87rem;color:var(--ink2)}
+.admin-table tr:last-child td{border-bottom:none}
+.admin-table tr:hover td{background:var(--bg)}
+.edit-btn{font-size:.76rem;font-weight:700;color:var(--leaf-dk);border:1px solid var(--line-dk);padding:6px 12px;border-radius:999px;display:inline-flex;align-items:center;gap:6px;transition:.2s}
+.edit-btn:hover{background:var(--leaf-dim)}
+.edit-row{background:var(--bg);display:none}
+.edit-row.show{display:table-row}
+.edit-row td{padding:16px 12px}
+.edit-inline{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.edit-inline input{padding:9px 12px;border:1.5px solid var(--line);border-radius:var(--r-sm);font-family:inherit;font-size:.85rem;outline:none}
+.edit-inline input:focus{border-color:var(--leaf)}
+.edit-inline button{font-size:.8rem;font-weight:700;padding:8px 16px;border-radius:999px}
+.update-time{font-size:.72rem;color:var(--ink3);white-space:nowrap}
+.update-time.fresh{color:var(--ok);font-weight:600}
+.promo-list{display:flex;flex-direction:column;gap:10px}
+.promo-row{display:flex;align-items:center;gap:14px;background:var(--bg);border:1px solid var(--line);border-radius:var(--r-md);padding:14px 16px}
+.promo-row i{color:var(--warn);font-size:1.1rem}
+.promo-row .promo-info{flex:1}
+.promo-row .promo-title{font-weight:600;font-size:.9rem}
+.promo-row .promo-sub{font-size:.78rem;color:var(--ink3)}
+
+/* toast */
+.toast{position:fixed;bottom:90px;left:50%;transform:translate(-50%,20px);background:#0a2419;color:#f5f7ee;padding:16px 24px;border-radius:var(--r-md);display:flex;align-items:center;gap:12px;box-shadow:0 12px 34px rgba(0,0,0,.3);z-index:1200;opacity:0;pointer-events:none;transition:all .4s cubic-bezier(.34,1.56,.64,1)}
+.toast.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+.toast i{color:var(--ok);font-size:1.2rem}
+
+/* mobile drawer */
+.mobile-drawer{position:fixed;top:0;right:-320px;width:300px;height:100vh;background:var(--paper);z-index:1100;box-shadow:-10px 0 30px rgba(0,0,0,.15);transition:right .4s var(--ease-out);padding:28px}
+.mobile-drawer.open{right:0}
+.mobile-drawer a,.mobile-drawer button{display:block;padding:14px 0;font-weight:600;border-bottom:1px solid var(--line);width:100%;text-align:left}
+.drawer-overlay{position:fixed;inset:0;background:rgba(10,36,25,.5);z-index:1050;opacity:0;pointer-events:none;transition:opacity .35s}
+.drawer-overlay.show{opacity:1;pointer-events:auto}
+
+@media(max-width:980px){
+  .nav-links,.nav-cta .btn-outline{display:none}
+  .hamburger{display:block}
+  .steps3,.benefit-grid,.footer-grid,.pd-grid,.list-layout{grid-template-columns:1fr}
+  .roadmap-grid{grid-template-columns:repeat(2,1fr)}
+  .admin-kpis{grid-template-columns:repeat(2,1fr)}
+  .surface-switch{transform:translateX(-50%) scale(.92)}
+}
+@media(max-width:600px){
+  .hero-stats{gap:26px}
+  .admin-kpis{grid-template-columns:1fr}
+  .finder-toolbar{flex-direction:column;align-items:stretch}
+  .roadmap-grid{grid-template-columns:1fr}
+  .cmp-table th,.cmp-table td{padding:12px 8px;font-size:.82rem}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ NAV ============ -->
+<nav class="nav" id="mainNav">
+  <div class="wrap nav-inner">
+    <div class="logo"><div class="logo-mark"><i class="fa-solid fa-basket-shopping"></i></div>ComparaJa</div>
+    <div class="nav-links">
+      <a href="#" onclick="showPage('home');return false;">Inicio</a>
+      <a href="#" onclick="showPage('comparacao');return false;">Comparar precos</a>
+      <a href="#" onclick="showPage('lista');return false;">Lista de compras</a>
+      <a href="#como-funciona" onclick="showPage('home')">Como funciona</a>
+    </div>
+    <div class="nav-cta">
+      <button class="btn btn-outline" onclick="showPage('admin')"><i class="fa-solid fa-lock"></i> Sou parceiro</button>
+      <button class="btn btn-leaf" onclick="showPage('home');setTimeout(()=>document.getElementById('finder').scrollIntoView({behavior:'smooth'}),150)"><i class="fa-solid fa-store"></i> Ver comercios</button>
+      <button class="hamburger" onclick="toggleDrawer(true)"><i class="fa-solid fa-bars"></i></button>
+    </div>
+  </div>
+</nav>
+
+<div class="drawer-overlay" id="drawerOverlay" onclick="toggleDrawer(false)"></div>
+<div class="mobile-drawer" id="mobileDrawer">
+  <button onclick="toggleDrawer(false)" style="text-align:right;border:none;font-size:1.3rem;margin-bottom:10px"><i class="fa-solid fa-xmark"></i></button>
+  <a href="#" onclick="showPage('home');toggleDrawer(false);return false;">Inicio</a>
+  <a href="#" onclick="showPage('comparacao');toggleDrawer(false);return false;">Comparar precos</a>
+  <a href="#" onclick="showPage('lista');toggleDrawer(false);return false;">Lista de compras</a>
+  <a href="#" onclick="showPage('admin');toggleDrawer(false);return false;">Sou parceiro</a>
+</div>
+
+<!-- ============ SURFACE SWITCHER ============ -->
+<div class="surface-switch">
+  <button class="active" data-surface="home" onclick="setSurface('home')"><i class="fa-solid fa-house"></i> Inicio</button>
+  <button data-surface="comparacao" onclick="setSurface('comparacao')"><i class="fa-solid fa-scale-balanced"></i> Comparar</button>
+  <button data-surface="lista" onclick="setSurface('lista')"><i class="fa-solid fa-list-check"></i> Lista</button>
+  <button data-surface="admin" onclick="setSurface('admin')"><i class="fa-solid fa-store"></i> Parceiro</button>
+</div>
+
+<!-- ============ HOME ============ -->
+<section class="page active" id="page-home">
+  <div class="hero">
+    <div class="hero-bg"></div>
+    <div class="grid-overlay"></div>
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+    <div class="wrap hero-content">
+      <div class="eyebrow"><i class="fa-solid fa-leaf"></i> Feito para Blumenau e regiao · SC</div>
+      <h1>O comercio da sua cidade, <span>num so lugar</span></h1>
+      <p>Compare precos entre supermercados, descubra restaurantes, pizzarias, barbearias, pet shops e lojas perto de voce, e monte sua lista de compras mais barata em segundos.</p>
+      <div class="hero-search">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" placeholder="Buscar mercado, pizzaria, barbearia..." id="heroSearchInput" oninput="syncHeroSearch()">
+        <button class="btn btn-leaf" onclick="document.getElementById('finder').scrollIntoView({behavior:'smooth'})">Buscar</button>
+      </div>
+      <div class="hero-stats">
+        <div><div class="stat-num" data-count="42">0</div><div class="stat-label">Comercios parceiros</div></div>
+        <div><div class="stat-num" data-count="4">0</div><div class="stat-label">Supermercados comparados</div></div>
+        <div><div class="stat-num" data-count="18" data-decimal="1">0</div><div class="stat-label">% economia media na lista</div></div>
+        <div><div class="stat-num" data-count="6">0</div><div class="stat-label">Categorias de negocio</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FINDER / PARTNER GRID -->
+  <section class="section section-alt finder" id="finder">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <div class="sec-tag">Comercios parceiros</div>
+        <h2>Descubra quem vende perto de voce</h2>
+        <p>Toque em um comercio para ver produtos, promocoes, fotos e forma de contato.</p>
+      </div>
+      <div class="finder-toolbar reveal">
+        <div class="searchbar"><i class="fa-solid fa-magnifying-glass" style="color:var(--ink3)"></i><input type="text" placeholder="Nome do comercio..." id="searchInput" oninput="filterPartners()"></div>
+        <div class="chip-group" id="categoryFilters">
+          <button class="chip active" data-val="todos">Todos</button>
+          <button class="chip" data-val="supermercado">Supermercado</button>
+          <button class="chip" data-val="restaurante">Restaurante</button>
+          <button class="chip" data-val="pizzaria">Pizzaria</button>
+          <button class="chip" data-val="barbearia">Barbearia</button>
+          <button class="chip" data-val="petshop">Pet shop</button>
+          <button class="chip" data-val="loja">Loja</button>
+        </div>
+      </div>
+      <div class="result-count reveal" id="resultCount">12 comercios encontrados</div>
+      <div class="grid-cards" id="partnerGrid"></div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="section" id="como-funciona">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <div class="sec-tag">Simples assim</div>
+        <h2>Economize em 3 passos</h2>
+        <p>Sem cadastro complicado. Compare, monte sua lista e va direto ao comercio que mais economiza.</p>
+      </div>
+      <div class="steps3">
+        <div class="step-card reveal"><div class="step-num">1</div><h3>Compare os precos</h3><p>Veja lado a lado o preco do arroz, feijao, oleo, acucar e leite em cada supermercado parceiro.</p></div>
+        <div class="step-card reveal"><div class="step-num">2</div><h3>Monte sua lista</h3><p>Marque os itens que voce costuma comprar e veja o total em cada mercado na hora.</p></div>
+        <div class="step-card reveal"><div class="step-num">3</div><h3>Escolha onde comprar</h3><p>ComparaJa mostra qual mercado sai mais barato, e quando vale a pena dividir a compra entre dois.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BENEFITS -->
+  <section class="section section-alt">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <div class="sec-tag">Por que ComparaJa</div>
+        <h2>Feito para quem vive em Blumenau</h2>
+      </div>
+      <div class="benefit-grid">
+        <div class="benefit-card reveal"><div class="benefit-icon"><i class="fa-solid fa-sack-dollar"></i></div><h3>Precos sempre atualizados</h3><p>Cada comercio atualiza seus proprios precos e promocoes pelo painel do parceiro, direto na hora.</p></div>
+        <div class="benefit-card reveal"><div class="benefit-icon"><i class="fa-solid fa-map-location-dot"></i></div><h3>Comercio local em primeiro lugar</h3><p>Supermercados, restaurantes, barbearias e lojas do bairro, sem depender de grandes redes.</p></div>
+        <div class="benefit-card reveal"><div class="benefit-icon"><i class="fa-solid fa-cart-flatbed"></i></div><h3>Sua lista, sua economia</h3><p>A ferramenta de lista de compras aponta o mercado mais barato para o que voce realmente compra.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ROADMAP STRIP -->
+  <section class="section">
+    <div class="wrap">
+      <div class="roadmap reveal">
+        <div class="roadmap-inner">
+          <div class="roadmap-head"><i class="fa-solid fa-road"></i><span>Proximas fases</span></div>
+          <div class="roadmap-grid">
+            <div class="roadmap-item"><i class="fa-solid fa-gift"></i><p>Venda direta de cestas basicas e de presente pelos proprios parceiros</p></div>
+            <div class="roadmap-item"><i class="fa-solid fa-bullhorn"></i><p>Planos de divulgacao patrocinada para comercios que querem mais destaque</p></div>
+            <div class="roadmap-item"><i class="fa-brands fa-apple"></i><p>App nativo iOS a partir da mesma base de dados e comercios</p></div>
+            <div class="roadmap-item"><i class="fa-solid fa-wand-magic-sparkles"></i><p>Leitura automatica de encartes por IA para atualizar precos ainda mais rapido</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="wrap">
+      <div class="footer-grid">
+        <div>
+          <div class="logo" style="color:#f5f7ee;margin-bottom:14px"><div class="logo-mark"><i class="fa-solid fa-basket-shopping"></i></div>ComparaJa</div>
+          <p style="font-size:.88rem;max-width:280px;line-height:1.6">Comparacao de precos e marketplace de comercio local para Blumenau e regiao.</p>
+        </div>
+        <div><h5>Plataforma</h5><ul><li><a href="#" onclick="showPage('comparacao');return false;">Comparar precos</a></li><li><a href="#" onclick="showPage('lista');return false;">Lista de compras</a></li><li><a href="#" onclick="document.getElementById('finder').scrollIntoView({behavior:'smooth'});return false;">Comercios</a></li></ul></div>
+        <div><h5>Parceiros</h5><ul><li><a href="#" onclick="showPage('admin');return false;">Entrar no painel</a></li><li><a href="#">Cadastrar comercio</a></li></ul></div>
+        <div><h5>Contato</h5><ul><li><i class="fa-brands fa-whatsapp"></i> (47) 99900-0000</li><li><i class="fa-regular fa-envelope"></i> contato@comparaja.com.br</li></ul></div>
+      </div>
+      <div class="footer-bottom"><span>© 2026 ComparaJa. Todos os direitos reservados.</span><span>MVP demo · Blumenau/SC</span></div>
+    </div>
+  </footer>
+</section>
+
+<!-- ============ EMPRESA (business detail) ============ -->
+<section class="page" id="page-empresa">
+  <div class="wrap pd-wrap">
+    <div class="breadcrumb"><a href="#" onclick="showPage('home');return false;">Inicio</a> / <span id="pdCrumb">Comercio</span></div>
+    <div class="pd-grid">
+      <div>
+        <div class="pd-gallery" id="pdGallery"></div>
+      </div>
+      <div>
+        <div class="pd-cat" id="pdCat"></div>
+        <div class="pd-title" id="pdTitle"></div>
+        <div class="pd-meta">
+          <div><i class="fa-solid fa-location-dot"></i><span id="pdAddress"></span></div>
+          <div><i class="fa-solid fa-clock"></i><span id="pdHours"></span></div>
+          <div><i class="fa-solid fa-star" style="color:var(--warn)"></i><span id="pdRating"></span></div>
+        </div>
+        <p class="pd-desc" id="pdDesc"></p>
+        <div class="pd-actions">
+          <button class="btn btn-leaf" onclick="showToast('<i class=\'fa-brands fa-whatsapp\' style=\'color:#25D366\'></i>','Mensagem enviada. O comercio vai te responder pelo WhatsApp em instantes.')"><i class="fa-brands fa-whatsapp"></i> Chamar no WhatsApp</button>
+          <button class="btn btn-outline" id="pdPhoneBtn"><i class="fa-solid fa-phone"></i> Ligar</button>
+        </div>
+        <div class="map-box"><i class="fa-solid fa-map-location-dot"></i><span>Mapa interativo com rota ate o comercio (integracao de mapa entra na proxima fase do MVP)</span></div>
+      </div>
+    </div>
+
+    <div class="pd-section">
+      <h3><i class="fa-solid fa-tags" style="color:var(--leaf);margin-right:8px"></i>Produtos e precos</h3>
+      <table class="prod-table" id="pdProducts"></table>
+    </div>
+
+    <div class="sec-head reveal" style="margin-bottom:30px;text-align:left;max-width:none">
+      <div class="sec-tag">Outros comercios</div>
+      <h2 style="font-size:1.5rem">Da mesma categoria</h2>
+    </div>
+    <div class="grid-cards" id="relatedGrid" style="margin-bottom:80px"></div>
+  </div>
+</section>
+
+<!-- ============ COMPARACAO DE PRECOS ============ -->
+<section class="page" id="page-comparacao">
+  <div class="wrap cmp-wrap">
+    <div class="cmp-intro reveal">
+      <div class="sec-tag">Comparacao de precos</div>
+      <h2>Os itens basicos, lado a lado</h2>
+      <p>Preco atual dos itens de compra mensal nos 4 supermercados parceiros de Blumenau. O item mais barato de cada linha ganha o selo "mais barato".</p>
+    </div>
+    <div class="cmp-table-wrap reveal">
+      <table class="cmp-table">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th class="mkt">Supermercado Bom Preco</th>
+            <th class="mkt">Vale Verde</th>
+            <th class="mkt">Nova Blumenau</th>
+            <th class="mkt">Economia Real</th>
+          </tr>
+        </thead>
+        <tbody id="cmpTableBody"></tbody>
+      </table>
+    </div>
+    <div class="insight-callout reveal">
+      <i class="fa-solid fa-circle-info"></i>
+      <div>
+        <h4>Precos sempre em dia</h4>
+        <p>Cada supermercado atualiza seus proprios precos pelo painel do parceiro. Assim que uma promocao entra ou sai da loja fisica, ela aparece aqui em minutos, sem depender de uma equipe central de cadastro.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ LISTA DE COMPRAS ============ -->
+<section class="page" id="page-lista">
+  <div class="wrap list-wrap">
+    <div class="sec-head reveal" style="margin-bottom:36px;text-align:left;max-width:none">
+      <div class="sec-tag">Lista de compras</div>
+      <h2>Qual mercado sai mais barato para voce?</h2>
+      <p>Marque os itens da sua lista e veja o total calculado em cada supermercado parceiro.</p>
+    </div>
+    <div class="list-layout">
+      <div class="checklist-card reveal">
+        <h3><i class="fa-solid fa-list-check" style="color:var(--leaf);margin-right:6px"></i>Sua lista</h3>
+        <div class="sub">Toque num item para marcar ou desmarcar</div>
+        <div id="checklistBody"></div>
+        <button class="btn btn-leaf calc-btn" onclick="calculateList()"><i class="fa-solid fa-calculator"></i> Calcular melhor opcao</button>
+      </div>
+      <div class="results-card reveal">
+        <h3><i class="fa-solid fa-chart-simple" style="color:var(--leaf);margin-right:6px"></i>Total por supermercado</h3>
+        <div class="sub">Atualizado com base nos itens marcados</div>
+        <div id="resultsBody"></div>
+        <div class="combo-note" id="comboNote"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ADMIN (painel do parceiro) ============ -->
+<section class="page" id="page-admin">
+  <div class="wrap admin-wrap">
+
+    <div class="auth-card-wrap" id="adminAuth">
+      <div class="auth-card">
+        <div class="logo-mark"><i class="fa-solid fa-lock"></i></div>
+        <h2>Painel do parceiro</h2>
+        <p class="sub">Entre para atualizar precos, produtos e promocoes do seu comercio</p>
+        <div class="field"><label>E-mail do comercio</label><input type="email" value="contato@bompreco.com.br"></div>
+        <div class="field"><label>Senha</label><input type="password" value="••••••••"></div>
+        <button class="btn btn-leaf" onclick="enterAdminDashboard()"><i class="fa-solid fa-right-to-bracket"></i> Entrar no painel</button>
+        <div class="auth-switch">Ainda nao e parceiro? <a href="#">Cadastre seu comercio</a></div>
+      </div>
+    </div>
+
+    <div class="admin-body" id="adminDashboard">
+      <div class="admin-head">
+        <div><h2>Ola, Supermercado Bom Preco</h2><p>Painel de autoatendimento · atualize seus proprios precos quando quiser</p></div>
+        <button class="btn btn-outline" onclick="exitAdminDashboard()"><i class="fa-solid fa-right-from-bracket"></i> Sair</button>
+      </div>
+
+      <div class="admin-kpis">
+        <div class="admin-kpi"><div class="admin-kpi-icon"><i class="fa-solid fa-tags"></i></div><div class="admin-kpi-num">18</div><div class="admin-kpi-label">Produtos cadastrados</div></div>
+        <div class="admin-kpi"><div class="admin-kpi-icon"><i class="fa-solid fa-bullhorn"></i></div><div class="admin-kpi-num">3</div><div class="admin-kpi-label">Promocoes ativas</div></div>
+        <div class="admin-kpi"><div class="admin-kpi-icon"><i class="fa-solid fa-eye"></i></div><div class="admin-kpi-num">1.240</div><div class="admin-kpi-label">Visualizacoes no mes</div></div>
+        <div class="admin-kpi"><div class="admin-kpi-icon"><i class="fa-solid fa-clock-rotate-left"></i></div><div class="admin-kpi-num">2h</div><div class="admin-kpi-label">Desde a ultima atualizacao</div></div>
+      </div>
+
+      <div class="admin-panel">
+        <div class="admin-panel-head">
+          <div><h3>Meus produtos e precos</h3><div class="sub">Clique em editar para atualizar o preco na hora</div></div>
+          <button class="btn btn-leaf" onclick="addPromotion()"><i class="fa-solid fa-plus"></i> Adicionar promocao</button>
+        </div>
+        <table class="admin-table">
+          <thead><tr><th>Produto</th><th>Preco atual</th><th>Ultima atualizacao</th><th></th></tr></thead>
+          <tbody id="adminProductsBody"></tbody>
+        </table>
+      </div>
+
+      <div class="admin-panel">
+        <div class="admin-panel-head"><div><h3>Promocoes ativas</h3><div class="sub">Aparecem na pagina do seu comercio e na busca</div></div></div>
+        <div class="promo-list" id="promoList"></div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<div class="toast" id="toast"><i class="fa-solid fa-circle-check"></i><span id="toastMsg">Alteracao salva</span></div>
+
+<script>
+/* ===== DATA: PARTNERS ===== */
+const PARTNERS = [
+  {id:'bom-preco',name:'Supermercado Bom Preco',category:'supermercado',categoryLabel:'Supermercado',logo:'BP',rating:4.7,distance:'1.2 km',
+    address:'Rua XV de Novembro, 845 - Centro, Blumenau/SC',hours:'Seg a Sab, 7h as 21h · Dom, 8h as 13h',phone:'(47) 3222-1010',
+    photos:['https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=1000&q=80','https://images.unsplash.com/photo-1542838132-92c53300491e?w=600&q=80','https://images.unsplash.com/photo-1601599963565-b7f49deb2fb1?w=600&q=80'],
+    desc:'Supermercado de bairro com mais de 20 anos em Blumenau, forte em hortifruti fresco e acougue proprio. Precos atualizados todos os dias pelo proprio gerente.',
+    products:[
+      {name:'Arroz Tio Joao 5kg',note:'Tipo 1',price:22.90,promo:false,updated:'ha 2 horas'},
+      {name:'Feijao carioca 1kg',note:'Safra nova',price:8.40,promo:false,updated:'ha 2 horas'},
+      {name:'Oleo de soja 900ml',note:'',price:7.80,promo:false,updated:'ha 5 horas'},
+      {name:'Acucar cristal 1kg',note:'',price:4.60,promo:false,updated:'ontem'},
+      {name:'Leite integral 1L',note:'',price:5.20,promo:false,updated:'ha 2 horas'},
+      {name:'Pao frances (kg)',note:'Assado na hora',price:12.90,promo:true,updated:'ha 30 minutos'}
+    ]},
+  {id:'vale-verde',name:'Supermercado Vale Verde',category:'supermercado',categoryLabel:'Supermercado',logo:'VV',rating:4.8,distance:'2.0 km',
+    address:'Rua Sao Paulo, 1290 - Velha, Blumenau/SC',hours:'Seg a Sab, 7h30 as 20h30 · Dom, 8h as 12h',phone:'(47) 3222-2020',
+    photos:['https://images.unsplash.com/photo-1524230507669-5ff97982bb5e?w=1000&q=80','https://images.unsplash.com/photo-1543168256-418811576931?w=600&q=80','https://images.unsplash.com/photo-1506617420156-8e4536971650?w=600&q=80'],
+    desc:'Rede regional conhecida pelo preco competitivo em graos e produtos de limpeza, com cartao de fidelidade proprio.',
+    products:[
+      {name:'Arroz Tio Joao 5kg',note:'Tipo 1',price:23.50,promo:false,updated:'ha 1 hora'},
+      {name:'Feijao carioca 1kg',note:'Safra nova',price:7.90,promo:true,updated:'ha 1 hora'},
+      {name:'Oleo de soja 900ml',note:'',price:8.20,promo:false,updated:'ontem'},
+      {name:'Acucar cristal 1kg',note:'',price:4.30,promo:false,updated:'ha 3 horas'},
+      {name:'Leite integral 1L',note:'',price:5.40,promo:false,updated:'ha 1 hora'}
+    ]},
+  {id:'nova-blumenau',name:'Mercado Nova Blumenau',category:'supermercado',categoryLabel:'Supermercado',logo:'NB',rating:4.5,distance:'0.8 km',
+    address:'Rua Itajai, 410 - Itoupava Seca, Blumenau/SC',hours:'Todos os dias, 7h as 22h',phone:'(47) 3222-3030',
+    photos:['https://images.unsplash.com/photo-1550989460-0adf9ea622e2?w=1000&q=80','https://images.unsplash.com/photo-1516684732162-798a0062be99?w=600&q=80','https://images.unsplash.com/photo-1542838132-92c53300491e?w=600&q=80'],
+    desc:'Mercado de conveniencia aberto todos os dias, forte em laticinios e oleos com preco baixo em compras grandes.',
+    products:[
+      {name:'Arroz Tio Joao 5kg',note:'Tipo 1',price:25.90,promo:false,updated:'ha 4 horas'},
+      {name:'Feijao carioca 1kg',note:'Safra nova',price:8.90,promo:false,updated:'ontem'},
+      {name:'Oleo de soja 900ml',note:'',price:7.50,promo:true,updated:'ha 1 hora'},
+      {name:'Acucar cristal 1kg',note:'',price:4.80,promo:false,updated:'ha 4 horas'},
+      {name:'Leite integral 1L',note:'',price:4.90,promo:true,updated:'ha 1 hora'}
+    ]},
+  {id:'economia-real',name:'Supermercado Economia Real',category:'supermercado',categoryLabel:'Supermercado',logo:'ER',rating:4.6,distance:'3.1 km',
+    address:'Rua Rui Barbosa, 220 - Garcia, Blumenau/SC',hours:'Seg a Sab, 8h as 20h',phone:'(47) 3222-4040',
+    photos:['https://images.unsplash.com/photo-1601599963565-b7f49deb2fb1?w=1000&q=80','https://images.unsplash.com/photo-1550989460-0adf9ea622e2?w=600&q=80','https://images.unsplash.com/photo-1524230507669-5ff97982bb5e?w=600&q=80'],
+    desc:'Focado em preco baixo todos os dias, sem cartao fidelidade, com boa rotatividade de graos e itens de mercearia.',
+    products:[
+      {name:'Arroz Tio Joao 5kg',note:'Tipo 1',price:22.90,promo:true,updated:'ha 30 minutos'},
+      {name:'Feijao carioca 1kg',note:'Safra nova',price:8.20,promo:false,updated:'ha 2 horas'},
+      {name:'Oleo de soja 900ml',note:'',price:7.90,promo:false,updated:'ha 2 horas'},
+      {name:'Acucar cristal 1kg',note:'',price:4.50,promo:false,updated:'ontem'},
+      {name:'Leite integral 1L',note:'',price:5.10,promo:false,updated:'ha 2 horas'}
+    ]},
+  {id:'forno-bavaro',name:'Pizzaria Forno Bavaro',category:'pizzaria',categoryLabel:'Pizzaria',logo:'FB',rating:4.9,distance:'1.5 km',
+    address:'Rua Bahia, 512 - Vila Itoupava, Blumenau/SC',hours:'Ter a Dom, 18h as 23h30',phone:'(47) 99811-2233',
+    photos:['https://images.unsplash.com/photo-1513104890138-7c749659a591?w=1000&q=80','https://images.unsplash.com/photo-1548365328-9f547fb0953b?w=600&q=80','https://images.unsplash.com/photo-1424847651672-bf20a4b0982b?w=600&q=80'],
+    desc:'Pizzaria tradicional de bairro com massa de fermentacao lenta e forno a lenha, entrega em toda a regiao central.',
+    products:[
+      {name:'Pizza grande mussarela',note:'8 fatias',price:48.00,promo:false,updated:'ha 6 horas'},
+      {name:'Pizza grande calabresa',note:'8 fatias',price:52.00,promo:true,updated:'ha 6 horas'},
+      {name:'Refrigerante 2L',note:'',price:11.00,promo:false,updated:'ontem'}
+    ]},
+  {id:'point-pizza',name:'Point da Pizza',category:'pizzaria',categoryLabel:'Pizzaria',logo:'PP',rating:4.4,distance:'2.6 km',
+    address:'Rua Amazonas, 88 - Fortaleza, Blumenau/SC',hours:'Qua a Dom, 18h30 as 23h',phone:'(47) 99822-3344',
+    photos:['https://images.unsplash.com/photo-1548365328-9f547fb0953b?w=1000&q=80','https://images.unsplash.com/photo-1513104890138-7c749659a591?w=600&q=80','https://images.unsplash.com/photo-1424847651672-bf20a4b0982b?w=600&q=80'],
+    desc:'Pizzaria de bairro com rodizio as quintas e opcoes doces, entrega rapida por aplicativo proprio.',
+    products:[
+      {name:'Pizza grande portuguesa',note:'8 fatias',price:54.00,promo:false,updated:'ha 3 horas'},
+      {name:'Rodizio individual (qui)',note:'',price:39.90,promo:true,updated:'ha 3 horas'}
+    ]},
+  {id:'sabor-germanico',name:'Restaurante Sabor Germanico',category:'restaurante',categoryLabel:'Restaurante',logo:'SG',rating:4.8,distance:'1.0 km',
+    address:'Rua XV de Novembro, 1200 - Centro, Blumenau/SC',hours:'Todos os dias, 11h30 as 15h e 18h as 22h',phone:'(47) 99833-4455',
+    photos:['https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1000&q=80','https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&q=80','https://images.unsplash.com/photo-1552566626-52f8b828add9?w=600&q=80'],
+    desc:'Buffet a quilo com pratos de influencia germanica, ambiente familiar, tradicional na regiao central desde 2005.',
+    products:[
+      {name:'Buffet a quilo (almoco)',note:'por kg',price:64.90,promo:false,updated:'ha 5 horas'},
+      {name:'Marmita executiva',note:'',price:24.90,promo:true,updated:'ha 5 horas'}
+    ]},
+  {id:'cantina-vila',name:'Cantina da Vila',category:'restaurante',categoryLabel:'Restaurante',logo:'CV',rating:4.6,distance:'2.3 km',
+    address:'Rua Bahia, 340 - Vila Itoupava, Blumenau/SC',hours:'Ter a Dom, 11h as 15h',phone:'(47) 99844-5566',
+    photos:['https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1000&q=80','https://images.unsplash.com/photo-1552566626-52f8b828add9?w=600&q=80','https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600&q=80'],
+    desc:'Cantina familiar com prato feito caseiro e entrega no bairro pelo WhatsApp.',
+    products:[
+      {name:'Prato feito completo',note:'',price:22.00,promo:false,updated:'ha 8 horas'},
+      {name:'Sobremesa do dia',note:'',price:8.50,promo:false,updated:'ha 8 horas'}
+    ]},
+  {id:'estilo-vale',name:'Barbearia Estilo Vale',category:'barbearia',categoryLabel:'Barbearia',logo:'EV',rating:4.9,distance:'1.7 km',
+    address:'Rua Sao Paulo, 700 - Velha, Blumenau/SC',hours:'Ter a Sab, 9h as 19h',phone:'(47) 99855-6677',
+    photos:['https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=1000&q=80','https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=600&q=80','https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=600&q=80'],
+    desc:'Barbearia moderna com agendamento por WhatsApp, especializada em degrade e barba desenhada.',
+    products:[
+      {name:'Corte masculino',note:'',price:35.00,promo:false,updated:'ha 1 dia'},
+      {name:'Corte + barba',note:'',price:55.00,promo:true,updated:'ha 1 dia'}
+    ]},
+  {id:'barbearia-chico',name:'Barbearia do Chico',category:'barbearia',categoryLabel:'Barbearia',logo:'BC',rating:4.5,distance:'2.9 km',
+    address:'Rua Itajai, 90 - Itoupava Seca, Blumenau/SC',hours:'Seg a Sab, 8h30 as 18h30',phone:'(47) 99866-7788',
+    photos:['https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=1000&q=80','https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=600&q=80','https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=600&q=80'],
+    desc:'Barbearia tradicional de bairro, atendimento sem hora marcada, cliente antigo tem desconto fixo.',
+    products:[
+      {name:'Corte masculino',note:'',price:28.00,promo:false,updated:'ha 2 dias'},
+      {name:'Barba tradicional',note:'',price:20.00,promo:false,updated:'ha 2 dias'}
+    ]},
+  {id:'amigo-fiel',name:'Pet Shop Amigo Fiel',category:'petshop',categoryLabel:'Pet Shop',logo:'AF',rating:4.7,distance:'1.4 km',
+    address:'Rua Rui Barbosa, 455 - Garcia, Blumenau/SC',hours:'Seg a Sab, 8h as 19h',phone:'(47) 99877-8899',
+    photos:['https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=1000&q=80','https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=600&q=80','https://images.unsplash.com/photo-1548767797-d8c844163c4c?w=600&q=80'],
+    desc:'Pet shop completo com banho e tosa, racao e servico de entrega para tutores da regiao do Garcia.',
+    products:[
+      {name:'Banho e tosa (porte P)',note:'',price:45.00,promo:false,updated:'ha 3 horas'},
+      {name:'Racao premium 15kg',note:'',price:189.90,promo:true,updated:'ha 3 horas'}
+    ]},
+  {id:'casa-cia',name:'Loja Casa & Cia',category:'loja',categoryLabel:'Loja',logo:'CC',rating:4.4,distance:'2.2 km',
+    address:'Rua XV de Novembro, 300 - Centro, Blumenau/SC',hours:'Seg a Sab, 9h as 18h30',phone:'(47) 99888-9900',
+    photos:['https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=1000&q=80','https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=600&q=80','https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=600&q=80'],
+    desc:'Loja de utilidades domesticas e presentes, com atendimento personalizado no centro de Blumenau.',
+    products:[
+      {name:'Jogo de panelas 5 pecas',note:'',price:189.00,promo:false,updated:'ha 1 dia'},
+      {name:'Kit presente decorativo',note:'',price:79.90,promo:true,updated:'ha 1 dia'}
+    ]}
+];
+const MARKETS = ['bom-preco','vale-verde','nova-blumenau','economia-real'];
+const MARKET_LABELS = {'bom-preco':'Bom Preco','vale-verde':'Vale Verde','nova-blumenau':'Nova Blumenau','economia-real':'Economia Real'};
+
+/* ===== NAV SCROLL ===== */
+window.addEventListener('scroll',()=>{document.getElementById('mainNav').classList.toggle('scrolled',window.scrollY>40)});
+function toggleDrawer(open){document.getElementById('mobileDrawer').classList.toggle('open',open);document.getElementById('drawerOverlay').classList.toggle('show',open)}
+
+/* ===== PAGE / SURFACE ROUTING ===== */
+const surfaceMap = {home:['home','empresa'],comparacao:['comparacao'],lista:['lista'],admin:['admin']};
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  window.scrollTo({top:0,behavior:'instant'});
+  for(const [surf,pages] of Object.entries(surfaceMap)){ if(pages.includes(id)){ setSurfaceUI(surf); break; } }
+  if(id==='home') setTimeout(runCountUps,150);
+  if(id==='comparacao') buildComparisonTable();
+  if(id==='lista'){ buildChecklist(); calculateList(); }
+  revealOnScroll();
+}
+function setSurface(surf){
+  setSurfaceUI(surf);
+  if(surf==='home') showPage('home');
+  if(surf==='comparacao') showPage('comparacao');
+  if(surf==='lista') showPage('lista');
+  if(surf==='admin') showPage('admin');
+}
+function setSurfaceUI(surf){document.querySelectorAll('.surface-switch button').forEach(b=>b.classList.toggle('active',b.dataset.surface===surf))}
+
+/* ===== COUNT UP ===== */
+function runCountUps(){
+  document.querySelectorAll('.stat-num').forEach(el=>{
+    if(el.dataset.done) return;
+    const target=parseFloat(el.dataset.count); const dec=el.dataset.decimal?1:0;
+    let cur=0; const step=target/40;
+    const iv=setInterval(()=>{cur+=step; if(cur>=target){cur=target;clearInterval(iv);el.dataset.done='1'} el.textContent=(dec?cur.toFixed(1):Math.floor(cur)).toLocaleString('pt-BR')},25);
+  });
+}
+
+/* ===== SCROLL REVEAL ===== */
+const io=new IntersectionObserver((entries)=>{entries.forEach((e,i)=>{if(e.isIntersecting){setTimeout(()=>e.target.classList.add('in'),i*55);io.unobserve(e.target)}})},{threshold:.12});
+function revealOnScroll(){document.querySelectorAll('.reveal:not(.in)').forEach(el=>io.observe(el))}
+
+/* ===== PARTNER CARDS ===== */
+function cardHTML(p){
+  return `<div class="p-card reveal in" onclick="openEmpresa('${p.id}')">
+    <div class="p-img-wrap"><img src="${p.photos[0]}" alt="${p.name}" onerror="this.src='https://picsum.photos/seed/${p.id}/600/450'"><div class="p-badge">${p.categoryLabel}</div><div class="p-logo">${p.logo}</div></div>
+    <div class="p-body"><div class="p-name">${p.name}</div><div class="p-notes">${p.address.split(' - ')[1]||''}</div>
+    <div class="p-foot"><div class="p-rate"><i class="fa-solid fa-star"></i>${p.rating}</div><div class="p-dist"><i class="fa-solid fa-location-dot"></i>${p.distance}</div></div></div>
+  </div>`;
+}
+document.getElementById('partnerGrid').innerHTML = PARTNERS.map(cardHTML).join('');
+
+/* ===== FILTERS ===== */
+let activeCategory='todos';
+document.getElementById('categoryFilters').addEventListener('click',e=>{
+  if(e.target.classList.contains('chip')){
+    document.querySelectorAll('#categoryFilters .chip').forEach(c=>c.classList.remove('active'));
+    e.target.classList.add('active'); activeCategory=e.target.dataset.val; filterPartners();
+  }
+});
+function filterPartners(){
+  const q=document.getElementById('searchInput').value.toLowerCase();
+  const filtered=PARTNERS.filter(p=>(activeCategory==='todos'||p.category===activeCategory)&&p.name.toLowerCase().includes(q));
+  document.getElementById('partnerGrid').innerHTML = filtered.map(cardHTML).join('') || '<p style="color:var(--ink3);padding:20px">Nenhum comercio encontrado com esses filtros.</p>';
+  document.getElementById('resultCount').textContent = filtered.length+' comercios encontrados';
+}
+function syncHeroSearch(){
+  const v=document.getElementById('heroSearchInput').value;
+  document.getElementById('searchInput').value=v;
+  filterPartners();
+}
+
+/* ===== EMPRESA (business detail) ===== */
+function openEmpresa(id){
+  const p=PARTNERS.find(x=>x.id===id); if(!p) return;
+  document.getElementById('pdCrumb').textContent=p.name;
+  document.getElementById('pdCat').textContent=p.categoryLabel;
+  document.getElementById('pdTitle').textContent=p.name;
+  document.getElementById('pdAddress').textContent=p.address;
+  document.getElementById('pdHours').textContent=p.hours;
+  document.getElementById('pdRating').textContent=p.rating+' · '+p.distance+' de voce';
+  document.getElementById('pdDesc').textContent=p.desc;
+  document.getElementById('pdPhoneBtn').innerHTML='<i class="fa-solid fa-phone"></i> '+p.phone;
+  document.getElementById('pdGallery').innerHTML = p.photos.map((src,i)=>`<img src="${src}" alt="${p.name}" onerror="this.src='https://picsum.photos/seed/${p.id}${i}/500/375'">`).join('');
+  document.getElementById('pdProducts').innerHTML = p.products.map(pr=>`
+    <tr><td>
+      <div class="prod-name">${pr.name}${pr.promo?'<span class="promo-tag"><i class="fa-solid fa-bolt"></i>Promocao</span>':''}</div>
+      ${pr.note?`<div class="prod-note">${pr.note}</div>`:''}
+    </td><td class="prod-price">R$ ${pr.price.toFixed(2).replace('.',',')}</td><td class="freshness"><i class="fa-solid fa-clock" style="margin-right:4px;color:var(--leaf)"></i>${pr.updated}</td></tr>
+  `).join('');
+  const related = PARTNERS.filter(x=>x.category===p.category && x.id!==p.id).slice(0,3);
+  document.getElementById('relatedGrid').innerHTML = (related.length?related:PARTNERS.filter(x=>x.id!==p.id).slice(0,3)).map(cardHTML).join('');
+  showPage('empresa');
+}
+
+/* ===== COMPARACAO DE PRECOS ===== */
+const STAPLES = [
+  {name:'Arroz 5kg',icon:'fa-solid fa-bowl-rice',prices:{'bom-preco':24.90,'vale-verde':23.50,'nova-blumenau':25.90,'economia-real':22.90}},
+  {name:'Feijao 1kg',icon:'fa-solid fa-seedling',prices:{'bom-preco':8.40,'vale-verde':7.90,'nova-blumenau':8.90,'economia-real':8.20}},
+  {name:'Oleo de soja 900ml',icon:'fa-solid fa-bottle-droplet',prices:{'bom-preco':7.80,'vale-verde':8.20,'nova-blumenau':7.50,'economia-real':7.90}},
+  {name:'Acucar 1kg',icon:'fa-solid fa-cubes',prices:{'bom-preco':4.60,'vale-verde':4.30,'nova-blumenau':4.80,'economia-real':4.50}},
+  {name:'Leite 1L',icon:'fa-solid fa-glass-water',prices:{'bom-preco':5.20,'vale-verde':5.40,'nova-blumenau':4.90,'economia-real':5.10}}
+];
+function buildComparisonTable(){
+  document.getElementById('cmpTableBody').innerHTML = STAPLES.map(item=>{
+    const min = Math.min(...MARKETS.map(m=>item.prices[m]));
+    return `<tr><td><div class="cmp-item"><i class="${item.icon}"></i>${item.name}</div></td>`+
+      MARKETS.map(m=>{
+        const price=item.prices[m]; const isBest=price===min;
+        return `<td class="cmp-price ${isBest?'best':''}">R$ ${price.toFixed(2).replace('.',',')}${isBest?'<br><span class="best-badge"><i class="fa-solid fa-trophy"></i>Mais barato</span>':''}</td>`;
+      }).join('')+`</tr>`;
+  }).join('');
+}
+
+/* ===== LISTA DE COMPRAS ===== */
+const LIST_ITEMS = [
+  {name:'Arroz 5kg',prices:{'bom-preco':24.90,'vale-verde':23.50,'nova-blumenau':25.90,'economia-real':22.90}},
+  {name:'Feijao 1kg',prices:{'bom-preco':8.40,'vale-verde':7.90,'nova-blumenau':8.90,'economia-real':8.20}},
+  {name:'Oleo de soja 900ml',prices:{'bom-preco':7.80,'vale-verde':8.20,'nova-blumenau':7.50,'economia-real':7.90}},
+  {name:'Acucar 1kg',prices:{'bom-preco':4.60,'vale-verde':4.30,'nova-blumenau':4.80,'economia-real':4.50}},
+  {name:'Leite 1L',prices:{'bom-preco':5.20,'vale-verde':5.40,'nova-blumenau':4.90,'economia-real':5.10}},
+  {name:'Pao frances (kg)',prices:{'bom-preco':12.90,'vale-verde':11.50,'nova-blumenau':13.20,'economia-real':12.00}},
+  {name:'Cafe 500g',prices:{'bom-preco':14.90,'vale-verde':15.50,'nova-blumenau':14.20,'economia-real':15.00}},
+  {name:'Manteiga 200g',prices:{'bom-preco':9.80,'vale-verde':9.20,'nova-blumenau':10.10,'economia-real':9.50}},
+  {name:'Detergente 500ml',prices:{'bom-preco':2.60,'vale-verde':2.40,'nova-blumenau':2.80,'economia-real':2.50}},
+  {name:'Papel higienico (4un)',prices:{'bom-preco':8.90,'vale-verde':8.50,'nova-blumenau':9.40,'economia-real':8.70}}
+];
+let listSelection = LIST_ITEMS.map(()=>true);
+function buildChecklist(){
+  document.getElementById('checklistBody').innerHTML = LIST_ITEMS.map((it,i)=>`
+    <div class="check-row ${listSelection[i]?'sel':''}" onclick="toggleItem(${i})">
+      <div class="check-box"><i class="fa-solid fa-check" style="font-size:.7rem"></i></div>
+      <div class="check-label">${it.name}</div>
+    </div>`).join('');
+}
+function toggleItem(i){ listSelection[i]=!listSelection[i]; buildChecklist(); }
+function calculateList(){
+  const totals = {}; MARKETS.forEach(m=>totals[m]=0);
+  LIST_ITEMS.forEach((it,i)=>{ if(listSelection[i]) MARKETS.forEach(m=>totals[m]+=it.prices[m]); });
+  const sorted = [...MARKETS].sort((a,b)=>totals[a]-totals[b]);
+  const winner = sorted[0]; const runnerUp = sorted[1];
+  const maxTotal = Math.max(...MARKETS.map(m=>totals[m])) || 1;
+
+  document.getElementById('resultsBody').innerHTML = MARKETS.map(m=>{
+    const pct = (totals[m]/maxTotal*100).toFixed(0);
+    const isWinner = m===winner;
+    return `<div class="mkt-row ${isWinner?'winner':''}">
+      <div class="mkt-row-top"><span>${MARKET_LABELS[m]}${isWinner?'<span class="winner-badge">Mais barato</span>':''}</span><span class="mkt-total">R$ ${totals[m].toFixed(2).replace('.',',')}</span></div>
+      <div class="mkt-bar-track"><div class="mkt-bar-fill" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
+
+  let comboTotal=0;
+  LIST_ITEMS.forEach((it,i)=>{ if(listSelection[i]) comboTotal += Math.min(it.prices[winner],it.prices[runnerUp]); });
+  const savings = totals[winner]-comboTotal;
+  const comboEl = document.getElementById('comboNote');
+  if(savings>0.05){
+    comboEl.innerHTML = `<i class="fa-solid fa-arrow-trend-down"></i><p>Dividindo a lista entre <b>${MARKET_LABELS[winner]}</b> e <b>${MARKET_LABELS[runnerUp]}</b>, o total cai para <b>R$ ${comboTotal.toFixed(2).replace('.',',')}</b>, uma economia extra de <b>R$ ${savings.toFixed(2).replace('.',',')}</b> em relacao a comprar tudo num so mercado.</p>`;
+  } else {
+    comboEl.innerHTML = `<i class="fa-solid fa-circle-check"></i><p><b>${MARKET_LABELS[winner]}</b> ja e a opcao mais barata para todos os itens marcados. Dividir a compra nao traria economia extra desta vez.</p>`;
+  }
+}
+
+/* ===== ADMIN ===== */
+const ADMIN_PRODUCTS = PARTNERS[0].products.concat([
+  {name:'Detergente 500ml',note:'',price:2.60,promo:false,updated:'ha 5 horas'},
+  {name:'Papel higienico (4un)',note:'',price:8.90,promo:false,updated:'ontem'}
+]);
+function buildAdminTable(){
+  document.getElementById('adminProductsBody').innerHTML = ADMIN_PRODUCTS.map((p,i)=>`
+    <tr>
+      <td>${p.name}${p.promo?'<span class="promo-tag"><i class="fa-solid fa-bolt"></i>Promocao</span>':''}</td>
+      <td>R$ ${p.price.toFixed(2).replace('.',',')}</td>
+      <td class="update-time ${p.updated.includes('minutos')?'fresh':''}"><i class="fa-solid fa-clock" style="margin-right:4px"></i>${p.updated}</td>
+      <td><button class="edit-btn" onclick="toggleEdit(${i})"><i class="fa-solid fa-pen"></i> Editar</button></td>
+    </tr>
+    <tr class="edit-row" id="edit-${i}">
+      <td colspan="4">
+        <div class="edit-inline">
+          <input type="text" value="${p.price.toFixed(2)}" id="editPrice-${i}" style="width:100px">
+          <button class="btn btn-leaf" onclick="savePrice(${i})"><i class="fa-solid fa-check"></i> Salvar</button>
+          <button class="btn btn-outline" onclick="toggleEdit(${i})">Cancelar</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+function toggleEdit(i){ document.getElementById('edit-'+i).classList.toggle('show'); }
+function savePrice(i){
+  const val = parseFloat(document.getElementById('editPrice-'+i).value.replace(',','.'))||ADMIN_PRODUCTS[i].price;
+  ADMIN_PRODUCTS[i].price = val; ADMIN_PRODUCTS[i].updated = 'agora ha pouco';
+  toggleEdit(i); buildAdminTable();
+  showToast('<i class="fa-solid fa-circle-check"></i>','Preco atualizado. Ja aparece na comparacao e na pagina do seu comercio.');
+}
+function buildPromoList(){
+  const promos = [
+    {name:'Pao frances com 10% off',sub:'Valido ate domingo · todos os clientes'},
+    {name:'Arroz Tio Joao em promocao',sub:'Estoque limitado · atualizado ha 30 minutos'},
+    {name:'Combo feijao + oleo',sub:'Desconto na compra dos dois itens juntos'}
+  ];
+  document.getElementById('promoList').innerHTML = promos.map(pr=>`
+    <div class="promo-row"><i class="fa-solid fa-bolt"></i><div class="promo-info"><div class="promo-title">${pr.name}</div><div class="promo-sub">${pr.sub}</div></div><span class="edit-btn"><i class="fa-solid fa-pen"></i> Editar</span></div>
+  `).join('');
+}
+function addPromotion(){
+  showToast('<i class="fa-solid fa-circle-check"></i>','Promocao criada. Ela ja aparece na sua pagina e na busca do ComparaJa.');
+}
+function enterAdminDashboard(){
+  document.getElementById('adminAuth').style.display='none';
+  document.getElementById('adminDashboard').style.display='block';
+  buildAdminTable(); buildPromoList();
+}
+function exitAdminDashboard(){
+  document.getElementById('adminDashboard').style.display='none';
+  document.getElementById('adminAuth').style.display='flex';
+}
+
+/* ===== TOAST ===== */
+function showToast(icon,msg){
+  const t=document.getElementById('toast');
+  t.querySelector('i').outerHTML=icon; document.getElementById('toastMsg').textContent=msg;
+  t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),4200);
+}
+
+/* ===== INIT ===== */
+revealOnScroll();
+setTimeout(runCountUps,300);
+</script>
+</body>
+</html>
