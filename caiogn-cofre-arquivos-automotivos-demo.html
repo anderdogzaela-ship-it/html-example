@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cofre · Gestão de Arquivos Automotivos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+:root{
+  --gold-50:#fffbeb; --gold-100:#fef3c7; --gold-200:#fde68a; --gold-300:#fcd34d; --gold-400:#fbbf24; --gold-500:#f59e0b; --gold-600:#d97706; --gold-700:#b45309; --gold-800:#92400e;
+  --n-0:#ffffff; --n-50:#faf9f7; --n-100:#f4f2ee; --n-200:#e8e5df; --n-300:#d6d1c8; --n-400:#a8a196; --n-500:#78716c; --n-600:#57534e; --n-700:#403c37; --n-800:#292420; --n-900:#191512;
+  --navy-950:#0c1220; --navy-900:#131b2e; --navy-800:#1c2740; --navy-700:#2a3552;
+  --green:#16a34a; --green-bg:#dcfce7; --red:#dc2626; --red-bg:#fee2e2; --blue:#2563eb; --blue-bg:#dbeafe; --amber-bg:#fef3c7;
+  --radius-sm:8px; --radius-md:12px; --radius-lg:18px; --radius-xl:24px;
+  --shadow-sm:0 1px 2px rgba(25,21,18,.06),0 1px 1px rgba(25,21,18,.04);
+  --shadow-md:0 4px 12px rgba(25,21,18,.08),0 2px 4px rgba(25,21,18,.04);
+  --shadow-lg:0 16px 40px rgba(25,21,18,.14),0 4px 12px rgba(25,21,18,.06);
+  --ease-spring:cubic-bezier(.34,1.56,.64,1);
+  --ease-out:cubic-bezier(.16,1,.3,1);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{
+  font-family:'Lexend',sans-serif; background:var(--n-50); color:var(--n-800);
+  -webkit-font-smoothing:antialiased; font-size:14.5px; line-height:1.5; overflow-x:hidden;
+}
+::-webkit-scrollbar{width:9px;height:9px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--n-300);border-radius:20px;}
+::-webkit-scrollbar-thumb:hover{background:var(--n-400);}
+a{color:inherit;text-decoration:none;}
+button{font-family:inherit;cursor:pointer;border:none;background:none;}
+
+.app{display:flex;min-height:100vh;}
+.sidebar{
+  width:264px; flex-shrink:0; background:linear-gradient(175deg,var(--navy-950) 0%,var(--navy-900) 55%,var(--navy-800) 100%);
+  color:#fff; display:flex; flex-direction:column; position:fixed; top:0; left:0; bottom:0; z-index:40;
+  transition:transform .3s var(--ease-out);
+}
+.sidebar-brand{display:flex;align-items:center;gap:12px;padding:24px 22px 18px;border-bottom:1px solid rgba(255,255,255,.08);}
+.brand-mark{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,var(--gold-400),var(--gold-600));display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--navy-950);font-size:16px;animation:pulseLogo 3.2s ease-in-out infinite;}
+@keyframes pulseLogo{0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,.35)}50%{box-shadow:0 0 0 8px rgba(245,158,11,0)}}
+.brand-text .name{font-size:16.5px;font-weight:700;letter-spacing:.2px;}
+.brand-text .sub{font-size:11px;color:var(--gold-300);font-weight:500;letter-spacing:.3px;}
+
+.role-switch{margin:16px 18px 6px;background:rgba(255,255,255,.06);border-radius:11px;padding:4px;display:flex;gap:3px;}
+.role-btn{flex:1;text-align:center;padding:8px 6px;border-radius:8px;font-size:12px;font-weight:600;color:rgba(255,255,255,.55);transition:all .2s var(--ease-out);}
+.role-btn.active{background:linear-gradient(135deg,var(--gold-400),var(--gold-600));color:var(--navy-950);}
+
+.sidebar-nav{flex:1;padding:14px 14px;display:flex;flex-direction:column;gap:3px;overflow-y:auto;}
+.nav-label{font-size:10.5px;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.35);font-weight:600;padding:14px 12px 6px;}
+.nav-item{display:flex;align-items:center;gap:12px;padding:10.5px 12px;border-radius:10px;color:rgba(255,255,255,.68);font-size:14px;font-weight:500;transition:all .18s var(--ease-out);position:relative;}
+.nav-item i{width:18px;text-align:center;font-size:15px;}
+.nav-item:hover{background:rgba(255,255,255,.06);color:#fff;}
+.nav-item.active{background:linear-gradient(90deg,rgba(245,158,11,.18),rgba(245,158,11,.04));color:var(--gold-300);}
+.nav-item.active::before{content:'';position:absolute;left:-14px;top:8px;bottom:8px;width:3px;background:var(--gold-400);border-radius:0 4px 4px 0;}
+.nav-badge{margin-left:auto;background:var(--gold-500);color:var(--navy-950);font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:20px;}
+
+.sidebar-footer{padding:16px 18px 20px;border-top:1px solid rgba(255,255,255,.08);}
+.plan-card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px 13px;}
+.plan-card .t{font-size:12px;font-weight:600;color:#fff;}
+.plan-card .d{font-size:11px;color:rgba(255,255,255,.45);margin-top:2px;}
+
+.main{flex:1;margin-left:264px;min-height:100vh;display:flex;flex-direction:column;}
+.topbar{height:68px;background:rgba(250,249,247,.85);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--n-200);display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:30;}
+.topbar-left{display:flex;align-items:center;gap:16px;}
+.hamburger{display:none;font-size:18px;color:var(--n-600);}
+.search-box{display:flex;align-items:center;gap:9px;background:var(--n-0);border:1px solid var(--n-200);border-radius:10px;padding:9px 14px;width:320px;transition:all .18s var(--ease-out);}
+.search-box:focus-within{border-color:var(--gold-400);box-shadow:0 0 0 3px rgba(245,158,11,.12);}
+.search-box i{color:var(--n-400);font-size:13px;}
+.search-box input{border:none;outline:none;font-family:inherit;font-size:13.5px;width:100%;background:transparent;color:var(--n-800);}
+.topbar-right{display:flex;align-items:center;gap:18px;}
+.icon-btn{position:relative;width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--n-600);transition:all .18s var(--ease-out);}
+.icon-btn:hover{background:var(--n-100);color:var(--n-800);}
+.icon-btn .dot{position:absolute;top:7px;right:8px;width:8px;height:8px;background:var(--red);border:2px solid #faf9f7;border-radius:50%;}
+.user-chip{display:flex;align-items:center;gap:10px;padding:6px 8px 6px 6px;border-radius:12px;}
+.avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--gold-400),var(--gold-600));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:var(--navy-950);}
+.user-chip .un{font-size:13px;font-weight:600;color:var(--n-800);}
+.user-chip .ur{font-size:11px;color:var(--n-500);}
+
+.content{padding:26px 30px 60px;flex:1;}
+.page{display:none;animation:fadeIn .35s var(--ease-out);}
+.page.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:14px;}
+.page-title{font-size:23px;font-weight:700;color:var(--n-900);letter-spacing:-.3px;}
+.page-sub{font-size:13px;color:var(--n-500);margin-top:3px;}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:10px;font-size:13.5px;font-weight:600;transition:all .18s var(--ease-spring);}
+.btn:active{transform:scale(.96);}
+.btn-primary{background:linear-gradient(135deg,var(--gold-500),var(--gold-600));color:#fff;box-shadow:0 2px 10px rgba(217,119,6,.3);}
+.btn-primary:hover{box-shadow:0 4px 16px rgba(217,119,6,.4);transform:translateY(-1px);}
+.btn-ghost{background:var(--n-0);border:1px solid var(--n-200);color:var(--n-700);}
+.btn-ghost:hover{border-color:var(--n-300);background:var(--n-100);}
+.btn-sm{padding:7px 13px;font-size:12.5px;}
+
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px;}
+.kpi-card{background:var(--n-0);border:1px solid var(--n-200);border-radius:var(--radius-lg);padding:20px 20px 18px;box-shadow:var(--shadow-sm);transition:all .25s var(--ease-out);position:relative;overflow:hidden;}
+.kpi-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px);border-color:var(--n-300);}
+.kpi-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.kpi-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:15px;}
+.kpi-trend{font-size:11.5px;font-weight:700;padding:3px 8px;border-radius:20px;display:flex;align-items:center;gap:4px;}
+.kpi-trend.up{color:var(--green);background:var(--green-bg);}
+.kpi-trend.warn{color:var(--gold-700);background:var(--amber-bg);}
+.kpi-value{font-size:29px;font-weight:800;color:var(--n-900);letter-spacing:-.5px;}
+.kpi-label{font-size:12.5px;color:var(--n-500);margin-top:3px;font-weight:500;}
+
+.grid-2{display:grid;grid-template-columns:1.6fr 1fr;gap:18px;align-items:start;}
+.card{background:var(--n-0);border:1px solid var(--n-200);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);overflow:hidden;}
+.card-head{display:flex;align-items:center;justify-content:space-between;padding:17px 20px;border-bottom:1px solid var(--n-100);}
+.card-head h3{font-size:14.5px;font-weight:700;color:var(--n-900);}
+.card-body{padding:6px 0;}
+
+.mini-row{display:flex;align-items:center;gap:12px;padding:11px 20px;transition:background .15s;cursor:pointer;}
+.mini-row:hover{background:var(--n-50);}
+.mini-row + .mini-row{border-top:1px solid var(--n-100);}
+.mini-avatar{width:34px;height:34px;border-radius:9px;background:var(--n-100);color:var(--n-600);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;}
+.mini-info{flex:1;min-width:0;}
+.mini-info .t{font-size:13px;font-weight:600;color:var(--n-800);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.mini-info .s{font-size:11.5px;color:var(--n-500);margin-top:1px;}
+
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;white-space:nowrap;}
+.pill i{font-size:8px;}
+.pill.p-blue{background:var(--blue-bg);color:var(--blue);}
+.pill.p-amber{background:var(--amber-bg);color:var(--gold-700);}
+.pill.p-green{background:var(--green-bg);color:var(--green);}
+.pill.p-red{background:var(--red-bg);color:var(--red);}
+.pill.p-gray{background:var(--n-100);color:var(--n-600);}
+
+.alert-item{display:flex;gap:12px;padding:12px 20px;border-top:1px solid var(--n-100);}
+.alert-item:first-child{border-top:none;}
+.alert-dot{width:8px;height:8px;border-radius:50%;background:var(--red);margin-top:6px;flex-shrink:0;box-shadow:0 0 0 3px var(--red-bg);}
+.alert-txt .t{font-size:12.5px;font-weight:600;color:var(--n-800);}
+.alert-txt .s{font-size:11.5px;color:var(--n-500);margin-top:2px;}
+.alert-txt .a{font-size:11.5px;color:var(--gold-700);font-weight:600;margin-top:4px;}
+
+.feed-item{display:flex;gap:11px;padding:11px 20px;position:relative;}
+.feed-line{position:relative;width:8px;display:flex;justify-content:center;flex-shrink:0;}
+.feed-line::before{content:'';position:absolute;top:16px;bottom:-11px;width:1.5px;background:var(--n-200);}
+.feed-item:last-child .feed-line::before{display:none;}
+.feed-dot{width:8px;height:8px;border-radius:50%;background:var(--gold-500);margin-top:5px;z-index:1;}
+.feed-txt .t{font-size:12.5px;color:var(--n-700);}
+.feed-txt .t b{font-weight:600;color:var(--n-900);}
+.feed-txt .s{font-size:11px;color:var(--n-400);margin-top:2px;}
+
+.qa-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:18px;}
+.qa-card{background:var(--n-0);border:1px solid var(--n-200);border-radius:var(--radius-md);padding:16px 18px;display:flex;align-items:center;gap:13px;transition:all .2s var(--ease-out);}
+.qa-card:hover{border-color:var(--gold-400);box-shadow:var(--shadow-md);transform:translateY(-2px);}
+.qa-icon{width:42px;height:42px;border-radius:11px;background:linear-gradient(135deg,var(--gold-100),var(--gold-200));color:var(--gold-700);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.qa-card .t{font-size:13.5px;font-weight:700;color:var(--n-900);}
+.qa-card .s{font-size:11.5px;color:var(--n-500);margin-top:1px;}
+
+.filter-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--n-0);border:1px solid var(--n-200);border-radius:var(--radius-md);padding:12px 14px;margin-bottom:16px;}
+.select{padding:8px 30px 8px 12px;border-radius:8px;border:1px solid var(--n-200);background:var(--n-0) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2378716c'/%3E%3C/svg%3E") no-repeat right 12px center;font-family:inherit;font-size:12.5px;color:var(--n-700);appearance:none;cursor:pointer;}
+.select:focus{outline:none;border-color:var(--gold-400);}
+.filter-bar .search-box{width:230px;padding:7px 12px;}
+.filter-spacer{flex:1;}
+
+.table-wrap{background:var(--n-0);border:1px solid var(--n-200);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-sm);overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+thead th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--n-500);font-weight:700;padding:13px 18px;background:var(--n-50);border-bottom:1px solid var(--n-200);white-space:nowrap;}
+tbody td{padding:14px 18px;border-bottom:1px solid var(--n-100);font-size:13px;color:var(--n-700);vertical-align:middle;}
+tbody tr{transition:background .15s;cursor:pointer;}
+tbody tr:hover{background:var(--n-50);}
+tbody tr:last-child td{border-bottom:none;}
+.co-cell{display:flex;align-items:center;gap:10px;}
+.co-avatar{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,var(--navy-800),var(--navy-700));color:var(--gold-300);display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:700;flex-shrink:0;}
+.co-name{font-weight:600;color:var(--n-900);font-size:13px;}
+.co-sub{font-size:11px;color:var(--n-500);}
+.row-action{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--n-400);transition:all .15s;}
+.row-action:hover{background:var(--n-100);color:var(--n-800);}
+
+.stepper{display:flex;align-items:flex-start;background:var(--n-0);border:1px solid var(--n-200);border-radius:var(--radius-lg);padding:26px 30px;box-shadow:var(--shadow-sm);margin-bottom:18px;overflow-x:auto;}
+.step{flex:1;min-width:130px;position:relative;text-align:center;}
+.step::before{content:'';position:absolute;top:19px;left:-50%;width:100%;height:2px;background:var(--n-200);z-index:0;}
+.step:first-child::before{display:none;}
+.step.done::before{background:var(--gold-500);}
+.step-circle{width:38px;height:38px;border-radius:50%;background:var(--n-100);border:2px solid var(--n-200);display:flex;align-items:center;justify-content:center;margin:0 auto 10px;position:relative;z-index:1;font-size:14px;color:var(--n-400);font-weight:700;transition:all .3s var(--ease-spring);}
+.step.done .step-circle{background:var(--gold-500);border-color:var(--gold-500);color:#fff;}
+.step.current .step-circle{background:#fff;border-color:var(--gold-500);color:var(--gold-600);box-shadow:0 0 0 5px rgba(245,158,11,.15);animation:stepPulse 2s infinite;}
+@keyframes stepPulse{0%,100%{box-shadow:0 0 0 5px rgba(245,158,11,.15);}50%{box-shadow:0 0 0 9px rgba(245,158,11,.06);}}
+.step-label{font-size:12.5px;font-weight:700;color:var(--n-700);}
+.step.done .step-label{color:var(--n-900);}
+.step.current .step-label{color:var(--gold-700);}
+.step-date{font-size:10.5px;color:var(--n-400);margin-top:2px;}
+
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--n-200);margin-bottom:18px;}
+.tab-btn{padding:11px 16px;font-size:13px;font-weight:600;color:var(--n-500);border-bottom:2px solid transparent;transition:all .18s;}
+.tab-btn:hover{color:var(--n-800);}
+.tab-btn.active{color:var(--gold-700);border-bottom-color:var(--gold-500);}
+.tab-content{display:none;}
+.tab-content.active{display:block;animation:fadeIn .3s var(--ease-out);}
+
+.detail-grid{display:grid;grid-template-columns:1fr 300px;gap:18px;align-items:start;}
+.info-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--n-100);font-size:12.5px;}
+.info-row:last-child{border-bottom:none;}
+.info-row .k{color:var(--n-500);}
+.info-row .v{color:var(--n-800);font-weight:600;text-align:right;}
+
+.file-card{display:flex;align-items:center;gap:14px;padding:16px 18px;border:1px solid var(--n-200);border-radius:12px;margin-bottom:10px;background:var(--n-0);transition:all .18s;}
+.file-card:hover{border-color:var(--n-300);}
+.file-ico{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.file-card .info{flex:1;}
+.file-card .t{font-size:13.5px;font-weight:700;color:var(--n-900);}
+.file-card .s{font-size:11.5px;color:var(--n-500);margin-top:2px;}
+.file-card .hash{font-size:10.5px;color:var(--n-400);margin-top:3px;font-family:monospace;}
+
+.sec-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+.sec-card{background:var(--n-0);border:1px solid var(--n-200);border-radius:var(--radius-lg);padding:22px;transition:all .22s var(--ease-out);}
+.sec-card:hover{box-shadow:var(--shadow-md);transform:translateY(-3px);border-color:var(--gold-300);}
+.sec-icon{width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,var(--gold-100),var(--gold-200));color:var(--gold-700);display:flex;align-items:center;justify-content:center;font-size:19px;margin-bottom:14px;}
+.sec-card h4{font-size:14.5px;font-weight:700;color:var(--n-900);margin-bottom:6px;}
+.sec-card p{font-size:12.5px;color:var(--n-500);line-height:1.6;}
+
+.veh-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;}
+.veh-card{background:var(--n-0);border:1px solid var(--n-200);border-radius:var(--radius-lg);padding:20px;box-shadow:var(--shadow-sm);transition:all .22s var(--ease-out);}
+.veh-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px);}
+.veh-top{display:flex;align-items:center;gap:14px;margin-bottom:14px;}
+.veh-plate{width:52px;height:40px;border-radius:8px;background:var(--navy-900);color:var(--gold-300);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;letter-spacing:.5px;flex-shrink:0;}
+.veh-top .t{font-size:14.5px;font-weight:700;color:var(--n-900);}
+.veh-top .s{font-size:12px;color:var(--n-500);}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(15,18,28,.5);backdrop-filter:blur(3px);z-index:100;display:none;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.active{display:flex;animation:fadeIn .2s var(--ease-out);}
+.modal{background:var(--n-0);border-radius:var(--radius-lg);width:100%;max-width:520px;box-shadow:var(--shadow-lg);max-height:88vh;overflow-y:auto;transform:scale(.94);animation:modalPop .28s var(--ease-spring) forwards;}
+@keyframes modalPop{to{transform:scale(1);}}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:20px 22px;border-bottom:1px solid var(--n-100);}
+.modal-head h3{font-size:16px;font-weight:700;color:var(--n-900);}
+.modal-close{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--n-500);}
+.modal-close:hover{background:var(--n-100);}
+.modal-body{padding:20px 22px;}
+.field{margin-bottom:16px;}
+.field label{display:block;font-size:12px;font-weight:700;color:var(--n-700);margin-bottom:6px;}
+.field select,.field input{width:100%;padding:10px 13px;border:1px solid var(--n-200);border-radius:9px;font-family:inherit;font-size:13px;color:var(--n-800);background:var(--n-0);}
+.field select:focus,.field input:focus{outline:none;border-color:var(--gold-400);box-shadow:0 0 0 3px rgba(245,158,11,.12);}
+.drop-zone{border:2px dashed var(--n-300);border-radius:12px;padding:30px 16px;text-align:center;color:var(--n-500);font-size:12.5px;transition:all .18s;}
+.drop-zone:hover{border-color:var(--gold-400);background:var(--gold-50);}
+.drop-zone i{font-size:26px;color:var(--gold-500);margin-bottom:10px;display:block;}
+.modal-foot{padding:16px 22px;border-top:1px solid var(--n-100);display:flex;justify-content:flex-end;gap:10px;}
+
+.toast{position:fixed;bottom:26px;right:26px;background:var(--n-900);color:#fff;padding:14px 20px;border-radius:12px;box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:11px;z-index:200;transform:translateY(120%);transition:transform .4s cubic-bezier(.34,1.56,.64,1);font-size:13px;font-weight:500;max-width:340px;}
+.toast.show{transform:translateY(0);}
+.toast i{color:var(--green);font-size:16px;}
+
+@media (max-width:1100px){
+  .kpi-row{grid-template-columns:repeat(2,1fr);}
+  .grid-2{grid-template-columns:1fr;}
+  .detail-grid{grid-template-columns:1fr;}
+  .sec-grid{grid-template-columns:repeat(2,1fr);}
+  .veh-grid{grid-template-columns:1fr;}
+}
+@media (max-width:820px){
+  .sidebar{transform:translateX(-100%);}
+  .sidebar.open{transform:translateX(0);}
+  .main{margin-left:0;}
+  .hamburger{display:block;}
+  .search-box{width:170px;}
+  .kpi-row{grid-template-columns:1fr 1fr;}
+  .qa-row{grid-template-columns:1fr;}
+  .sec-grid{grid-template-columns:1fr;}
+  .content{padding:18px 16px 50px;}
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-mark"><i class="fa-solid fa-shield-halved"></i></div>
+      <div class="brand-text">
+        <div class="name">Cofre</div>
+        <div class="sub">Gestão de Arquivos Automotivos</div>
+      </div>
+    </div>
+    <div class="role-switch">
+      <button class="role-btn active" id="roleAdminBtn" onclick="setRole('admin')">Administrador</button>
+      <button class="role-btn" id="roleClienteBtn" onclick="setRole('cliente')">Cliente</button>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-label" data-role="admin">Administração</div>
+      <a class="nav-item active" data-role="admin" data-page="dash-admin"><i class="fa-solid fa-grid-2"></i>Painel geral</a>
+      <a class="nav-item" data-role="admin" data-page="fila"><i class="fa-solid fa-folder-open"></i>Fila de arquivos<span class="nav-badge">8</span></a>
+      <a class="nav-item" data-role="admin" data-page="clientes"><i class="fa-solid fa-users-gear"></i>Clientes e acessos</a>
+      <a class="nav-item" data-role="admin" data-page="seguranca"><i class="fa-solid fa-lock"></i>Segurança e auditoria</a>
+
+      <div class="nav-label" data-role="cliente" style="display:none;">Minha área</div>
+      <a class="nav-item" data-role="cliente" data-page="dash-cliente" style="display:none;"><i class="fa-solid fa-car"></i>Meus veículos</a>
+      <a class="nav-item" data-role="cliente" data-page="arquivos-cliente" style="display:none;"><i class="fa-solid fa-file-lines"></i>Meus arquivos</a>
+      <a class="nav-item" data-role="cliente" data-page="conta-cliente" style="display:none;"><i class="fa-solid fa-user-shield"></i>Minha conta</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="plan-card">
+        <div class="t"><i class="fa-solid fa-circle-check" style="color:#fbbf24;margin-right:6px;"></i>Documentação Automotiva Caio</div>
+        <div class="d">Área restrita · acesso individual por cliente</div>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')"><i class="fa-solid fa-bars"></i></button>
+        <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="searchPlaceholder" placeholder="Buscar por cliente, placa ou documento..."></div>
+      </div>
+      <div class="topbar-right">
+        <button class="icon-btn"><i class="fa-regular fa-bell"></i><span class="dot"></span></button>
+        <button class="icon-btn"><i class="fa-regular fa-circle-question"></i></button>
+        <div class="user-chip">
+          <div class="avatar" id="topAvatar">CG</div>
+          <div>
+            <div class="un" id="topName">Caio G.</div>
+            <div class="ur" id="topRole">Administrador</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ============ DASHBOARD ADMIN ============ -->
+      <div class="page active" id="page-dash-admin">
+        <div class="page-head">
+          <div>
+            <div class="page-title">Boa tarde, Caio</div>
+            <div class="page-sub">Quarta-feira, 15 de julho · resumo da área de arquivos</div>
+          </div>
+          <button class="btn btn-primary" onclick="switchPage('fila')"><i class="fa-solid fa-folder-open"></i>Ver fila de arquivos</button>
+        </div>
+
+        <div class="kpi-row">
+          <div class="kpi-card">
+            <div class="kpi-top"><div class="kpi-icon" style="background:var(--amber-bg);color:var(--gold-700);"><i class="fa-solid fa-inbox"></i></div><div class="kpi-trend warn"><i class="fa-solid fa-clock"></i>3 há +48h</div></div>
+            <div class="kpi-value" data-count="8">0</div>
+            <div class="kpi-label">Aguardando análise</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-top"><div class="kpi-icon" style="background:var(--blue-bg);color:var(--blue);"><i class="fa-solid fa-pen-to-square"></i></div><div class="kpi-trend up"><i class="fa-solid fa-arrow-up"></i>5%</div></div>
+            <div class="kpi-value" data-count="5">0</div>
+            <div class="kpi-label">Corrigidos hoje</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-top"><div class="kpi-icon" style="background:var(--green-bg);color:var(--green);"><i class="fa-solid fa-paper-plane"></i></div><div class="kpi-trend up"><i class="fa-solid fa-arrow-up"></i>12%</div></div>
+            <div class="kpi-value" data-count="34">0</div>
+            <div class="kpi-label">Devolvidos este mês</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-top"><div class="kpi-icon" style="background:#ede9fe;color:#6d28d9;"><i class="fa-solid fa-user-group"></i></div><div class="kpi-trend up"><i class="fa-solid fa-arrow-up"></i>2</div></div>
+            <div class="kpi-value" data-count="19">0</div>
+            <div class="kpi-label">Clientes com acesso ativo</div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-head"><h3>Arquivos recentes</h3><a class="link" style="font-size:12.5px;color:var(--gold-700);font-weight:600;cursor:pointer;" onclick="switchPage('fila')">Ver todos <i class="fa-solid fa-arrow-right" style="font-size:10px;"></i></a></div>
+            <div class="card-body">
+              <div class="mini-row" onclick="openDetail()"><div class="mini-avatar">RA</div><div class="mini-info"><div class="t">Roberto Alves · CRLV 2026</div><div class="s">Placa ABC-1D23 · enviado há 12 min</div></div><span class="pill p-amber"><i class="fa-solid fa-circle"></i>Em análise</span></div>
+              <div class="mini-row" onclick="openDetail()"><div class="mini-avatar">FL</div><div class="mini-info"><div class="t">Fernanda Lima · Laudo de Vistoria</div><div class="s">Placa QWE-4E56 · enviado há 40 min</div></div><span class="pill p-gray"><i class="fa-solid fa-circle"></i>Recebido</span></div>
+              <div class="mini-row" onclick="openDetail()"><div class="mini-avatar">MT</div><div class="mini-info"><div class="t">Marcos Teixeira · DUT (Transferência)</div><div class="s">Placa RTY-7F89 · corrigido ontem</div></div><span class="pill p-blue"><i class="fa-solid fa-circle"></i>Aguardando devolução</span></div>
+              <div class="mini-row" onclick="openDetail()"><div class="mini-avatar">JP</div><div class="mini-info"><div class="t">Juliana Prado · Nota Fiscal</div><div class="s">Placa ZXC-2G34 · devolvido ontem</div></div><span class="pill p-green"><i class="fa-solid fa-circle"></i>Devolvido</span></div>
+              <div class="mini-row" onclick="openDetail()"><div class="mini-avatar">CM</div><div class="mini-info"><div class="t">Carlos Menezes · Apólice de Seguro</div><div class="s">Placa POI-9H12 · enviado ontem</div></div><span class="pill p-gray"><i class="fa-solid fa-circle"></i>Recebido</span></div>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:18px;">
+            <div class="card">
+              <div class="card-head"><h3><i class="fa-solid fa-triangle-exclamation" style="color:var(--red);margin-right:7px;"></i>Alertas de segurança</h3></div>
+              <div class="card-body">
+                <div class="alert-item"><div class="alert-dot"></div><div class="alert-txt"><div class="t">3 arquivos aguardando análise há mais de 48h</div><div class="s">Roberto Alves, Patrícia Ramos e Eduardo Sales</div><div class="a">Priorizar fila →</div></div></div>
+                <div class="alert-item"><div class="alert-dot"></div><div class="alert-txt"><div class="t">1 tentativa de acesso bloqueada</div><div class="s">Login fora do padrão para a conta de Carlos Menezes</div><div class="a">Revisar acesso →</div></div></div>
+                <div class="alert-item"><div class="alert-dot" style="background:var(--gold-500);box-shadow:0 0 0 3px var(--amber-bg);"></div><div class="alert-txt"><div class="t">Convite pendente</div><div class="s">Beatriz Costa ainda não confirmou o primeiro acesso</div></div></div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-head"><h3>Log de auditoria</h3></div>
+              <div class="card-body">
+                <div class="feed-item"><div class="feed-line"><div class="feed-dot"></div></div><div class="feed-txt"><div class="t">Verificação de integridade (SHA-256) confirmada no envio do <b>CRLV</b></div><div class="s">Roberto Alves · há 12 min</div></div></div>
+                <div class="feed-item"><div class="feed-line"><div class="feed-dot"></div></div><div class="feed-txt"><div class="t"><b>Caio G.</b> baixou o DUT original para revisão</div><div class="s">Marcos Teixeira · há 1 h</div></div></div>
+                <div class="feed-item"><div class="feed-line"><div class="feed-dot"></div></div><div class="feed-txt"><div class="t">Sistema devolveu a Nota Fiscal corrigida</div><div class="s">Juliana Prado · há 3 h</div></div></div>
+                <div class="feed-item"><div class="feed-line"><div class="feed-dot" style="background:var(--n-400);"></div></div><div class="feed-txt"><div class="t"><b>Caio G.</b> concedeu acesso à área restrita</div><div class="s">Beatriz Costa · há 5 h</div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="qa-row">
+          <div class="qa-card" onclick="switchPage('fila')"><div class="qa-icon"><i class="fa-solid fa-magnifying-glass-arrow-right"></i></div><div><div class="t">Analisar arquivo</div><div class="s">Abrir próximo item da fila</div></div></div>
+          <div class="qa-card" onclick="switchPage('clientes')"><div class="qa-icon"><i class="fa-solid fa-user-plus"></i></div><div><div class="t">Convidar cliente</div><div class="s">Criar acesso individual à área restrita</div></div></div>
+          <div class="qa-card" onclick="switchPage('seguranca')"><div class="qa-icon"><i class="fa-solid fa-shield-halved"></i></div><div><div class="t">Ver política de segurança</div><div class="s">Criptografia, acesso e integridade</div></div></div>
+        </div>
+      </div>
+
+      <!-- ============ FILA DE ARQUIVOS ============ -->
+      <div class="page" id="page-fila">
+        <div class="page-head">
+          <div><div class="page-title">Fila de arquivos</div><div class="page-sub">8 aguardando análise · 34 devolvidos este mês</div></div>
+        </div>
+        <div class="filter-bar">
+          <select class="select"><option>Todos os status</option><option>Recebido</option><option>Em análise</option><option>Corrigido</option><option>Devolvido</option></select>
+          <select class="select"><option>Todos os documentos</option><option>CRLV</option><option>Laudo de Vistoria</option><option>DUT</option><option>Nota Fiscal</option><option>Apólice de Seguro</option></select>
+          <div class="filter-spacer"></div>
+          <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input type="text" placeholder="Buscar por cliente ou placa..."></div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Cliente</th><th>Veículo</th><th>Documento</th><th>Enviado em</th><th>Status</th><th></th></tr></thead>
+            <tbody id="fila-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ============ DETALHE DO ARQUIVO ============ -->
+      <div class="page" id="page-detalhe">
+        <button class="btn btn-ghost btn-sm" style="margin-bottom:16px;" onclick="switchPage('fila')"><i class="fa-solid fa-arrow-left"></i>Voltar para a fila</button>
+        <div class="page-head">
+          <div><div class="page-title">Roberto Alves · CRLV 2026</div><div class="page-sub">Placa ABC-1D23 · Honda Civic 2022 · enviado em 15 jul 2026, 09:12</div></div>
+          <span class="pill p-amber" style="font-size:12.5px;padding:7px 15px;"><i class="fa-solid fa-circle"></i>Em análise</span>
+        </div>
+
+        <div class="stepper">
+          <div class="step done"><div class="step-circle"><i class="fa-solid fa-check"></i></div><div class="step-label">Recebido</div><div class="step-date">09:12</div></div>
+          <div class="step current"><div class="step-circle">2</div><div class="step-label">Em análise</div><div class="step-date">em curso</div></div>
+          <div class="step"><div class="step-circle">3</div><div class="step-label">Corrigido</div><div class="step-date">pendente</div></div>
+          <div class="step"><div class="step-circle">4</div><div class="step-label">Devolvido</div><div class="step-date">pendente</div></div>
+        </div>
+
+        <div class="detail-grid">
+          <div>
+            <div class="tabs">
+              <button class="tab-btn active" data-tab="arquivo">Arquivo</button>
+              <button class="tab-btn" data-tab="hist">Histórico e auditoria</button>
+              <button class="tab-btn" data-tab="dados">Dados do veículo</button>
+            </div>
+            <div class="tab-content active" id="tab-arquivo">
+              <div class="file-card">
+                <div class="file-ico" style="background:var(--blue-bg);color:var(--blue);"><i class="fa-solid fa-file-pdf"></i></div>
+                <div class="info"><div class="t">CRLV_2026_original.pdf</div><div class="s">Enviado por Roberto Alves · 2.1 MB</div><div class="hash">SHA-256 verificado na entrada · integridade OK</div></div>
+                <button class="btn btn-ghost btn-sm"><i class="fa-solid fa-download"></i>Baixar</button>
+              </div>
+              <div class="file-card" style="opacity:.6;">
+                <div class="file-ico" style="background:var(--n-100);color:var(--n-400);"><i class="fa-solid fa-file-circle-plus"></i></div>
+                <div class="info"><div class="t">Versão corrigida</div><div class="s">Ainda não enviada pelo administrador</div></div>
+                <button class="btn btn-primary btn-sm" onclick="document.getElementById('uploadModal').classList.add('active')"><i class="fa-solid fa-upload"></i>Enviar corrigido</button>
+              </div>
+            </div>
+            <div class="tab-content" id="tab-hist">
+              <div class="card"><div class="card-body">
+                <div class="feed-item"><div class="feed-line"><div class="feed-dot"></div></div><div class="feed-txt"><div class="t">Verificação de integridade (SHA-256) confirmada</div><div class="s">15 jul 2026, 09:12</div></div></div>
+                <div class="feed-item"><div class="feed-line"><div class="feed-dot"></div></div><div class="feed-txt"><div class="t"><b>Roberto Alves</b> enviou o arquivo pela área restrita</div><div class="s">15 jul 2026, 09:12</div></div></div>
+                <div class="feed-item"><div class="feed-line"><div class="feed-dot" style="background:var(--n-400);"></div></div><div class="feed-txt"><div class="t">Sistema notificou o administrador por e-mail</div><div class="s">15 jul 2026, 09:13</div></div></div>
+              </div></div>
+            </div>
+            <div class="tab-content" id="tab-dados">
+              <div class="card"><div class="card-body" style="padding:6px 20px;">
+                <div class="info-row"><span class="k">Cliente</span><span class="v">Roberto Alves</span></div>
+                <div class="info-row"><span class="k">Placa</span><span class="v">ABC-1D23</span></div>
+                <div class="info-row"><span class="k">Veículo</span><span class="v">Honda Civic 2022</span></div>
+                <div class="info-row"><span class="k">E-mail de contato</span><span class="v">roberto.alves@email.com</span></div>
+              </div></div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:16px;">
+            <div class="card">
+              <div class="card-head"><h3>Ações</h3></div>
+              <div class="card-body" style="padding:14px 18px;display:flex;flex-direction:column;gap:9px;">
+                <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="document.getElementById('uploadModal').classList.add('active')"><i class="fa-solid fa-upload"></i>Enviar versão corrigida</button>
+                <button class="btn btn-ghost" style="width:100%;justify-content:center;" onclick="markReturned()"><i class="fa-solid fa-paper-plane"></i>Marcar como devolvido</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ CLIENTES E ACESSOS ============ -->
+      <div class="page" id="page-clientes">
+        <div class="page-head"><div><div class="page-title">Clientes e acessos</div><div class="page-sub">19 clientes com acesso ativo à área restrita</div></div><button class="btn btn-primary"><i class="fa-solid fa-user-plus"></i>Convidar cliente</button></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Cliente</th><th>E-mail</th><th>Veículos vinculados</th><th>Último acesso</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+              <tr><td class="co-cell"><div class="co-avatar">RA</div><span class="co-name">Roberto Alves</span></td><td>roberto.alves@email.com</td><td>1 (ABC-1D23)</td><td>Hoje, 09:10</td><td><span class="pill p-green"><i class="fa-solid fa-circle"></i>Ativo</span></td><td><button class="row-action"><i class="fa-solid fa-ellipsis"></i></button></td></tr>
+              <tr><td class="co-cell"><div class="co-avatar">FL</div><span class="co-name">Fernanda Lima</span></td><td>fernanda.lima@email.com</td><td>1 (QWE-4E56)</td><td>Hoje, 08:38</td><td><span class="pill p-green"><i class="fa-solid fa-circle"></i>Ativo</span></td><td><button class="row-action"><i class="fa-solid fa-ellipsis"></i></button></td></tr>
+              <tr><td class="co-cell"><div class="co-avatar">MT</div><span class="co-name">Marcos Teixeira</span></td><td>marcos.teixeira@email.com</td><td>2 (RTY-7F89, JKL-5N67)</td><td>Ontem, 17:15</td><td><span class="pill p-green"><i class="fa-solid fa-circle"></i>Ativo</span></td><td><button class="row-action"><i class="fa-solid fa-ellipsis"></i></button></td></tr>
+              <tr><td class="co-cell"><div class="co-avatar">CM</div><span class="co-name">Carlos Menezes</span></td><td>carlos.menezes@email.com</td><td>1 (POI-9H12)</td><td>Ontem, 11:28</td><td><span class="pill p-amber"><i class="fa-solid fa-circle"></i>Acesso revisado</span></td><td><button class="row-action"><i class="fa-solid fa-ellipsis"></i></button></td></tr>
+              <tr><td class="co-cell"><div class="co-avatar">BC</div><span class="co-name">Beatriz Costa</span></td><td>beatriz.costa@email.com</td><td>1 (VBN-1M90)</td><td>Convite enviado</td><td><span class="pill p-gray"><i class="fa-solid fa-circle"></i>Convite pendente</span></td><td><button class="row-action"><i class="fa-solid fa-ellipsis"></i></button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ============ SEGURANCA E AUDITORIA ============ -->
+      <div class="page" id="page-seguranca">
+        <div class="page-head"><div><div class="page-title">Segurança e auditoria</div><div class="page-sub">Como o Cofre protege os arquivos e o acesso de cada cliente</div></div></div>
+        <div class="sec-grid">
+          <div class="sec-card"><div class="sec-icon"><i class="fa-solid fa-lock"></i></div><h4>Criptografia</h4><p>Conexão via HTTPS/TLS em todo o envio e download. Arquivos armazenados de forma criptografada, mesmo em repouso.</p></div>
+          <div class="sec-card"><div class="sec-icon"><i class="fa-solid fa-user-shield"></i></div><h4>Acesso por cliente</h4><p>Cada cliente acessa com login próprio e enxerga apenas os arquivos dos seus próprios veículos, nunca os de outro cliente.</p></div>
+          <div class="sec-card"><div class="sec-icon"><i class="fa-solid fa-fingerprint"></i></div><h4>Verificação de integridade</h4><p>Um hash (SHA-256) é gerado a cada envio e a cada devolução, confirmando que o arquivo não foi alterado ou corrompido no caminho.</p></div>
+          <div class="sec-card"><div class="sec-icon"><i class="fa-solid fa-clock-rotate-left"></i></div><h4>Log de auditoria</h4><p>Todo envio, análise, edição e devolução fica registrado com usuário, data e hora — nada é apagado ou sobrescrito silenciosamente.</p></div>
+          <div class="sec-card"><div class="sec-icon"><i class="fa-solid fa-database"></i></div><h4>Backup automático</h4><p>Cópias de segurança periódicas para evitar perda de arquivo em caso de falha.</p></div>
+          <div class="sec-card"><div class="sec-icon"><i class="fa-solid fa-mobile-screen"></i></div><h4>Acesso responsivo</h4><p>Área restrita adaptada para celular, para o cliente enviar foto de documento direto do carro ou da oficina.</p></div>
+        </div>
+      </div>
+
+      <!-- ============ CLIENTE: MEUS VEICULOS ============ -->
+      <div class="page" id="page-dash-cliente">
+        <div class="page-head"><div><div class="page-title">Olá, Roberto</div><div class="page-sub">Seus veículos e o andamento dos seus arquivos</div></div><button class="btn btn-primary" onclick="document.getElementById('uploadModal').classList.add('active')"><i class="fa-solid fa-upload"></i>Enviar novo arquivo</button></div>
+        <div class="veh-grid">
+          <div class="veh-card">
+            <div class="veh-top"><div class="veh-plate">ABC<br>1D23</div><div><div class="t">Honda Civic 2022</div><div class="s">1 arquivo em andamento</div></div></div>
+            <div class="mini-row" style="padding:8px 0;"><div class="mini-info"><div class="t">CRLV 2026</div><div class="s">Enviado hoje, 09:12</div></div><span class="pill p-amber"><i class="fa-solid fa-circle"></i>Em análise</span></div>
+          </div>
+          <div class="veh-card">
+            <div class="veh-top"><div class="veh-plate">JKL<br>5N67</div><div><div class="t">Toyota Corolla 2020</div><div class="s">Nenhuma pendência</div></div></div>
+            <div class="mini-row" style="padding:8px 0;"><div class="mini-info"><div class="t">Nota Fiscal</div><div class="s">Devolvido em 10 jul</div></div><span class="pill p-green"><i class="fa-solid fa-circle"></i>Devolvido</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ CLIENTE: MEUS ARQUIVOS ============ -->
+      <div class="page" id="page-arquivos-cliente">
+        <div class="page-head"><div><div class="page-title">Meus arquivos</div><div class="page-sub">Envie, acompanhe e baixe seus documentos com segurança</div></div><button class="btn btn-primary" onclick="document.getElementById('uploadModal').classList.add('active')"><i class="fa-solid fa-upload"></i>Enviar novo arquivo</button></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Documento</th><th>Veículo</th><th>Enviado em</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+              <tr><td>CRLV 2026</td><td>ABC-1D23</td><td>Hoje, 09:12</td><td><span class="pill p-amber"><i class="fa-solid fa-circle"></i>Em análise</span></td><td><button class="btn btn-ghost btn-sm" disabled style="opacity:.4;"><i class="fa-solid fa-lock"></i></button></td></tr>
+              <tr><td>Nota Fiscal</td><td>JKL-5N67</td><td>08 jul, 14:20</td><td><span class="pill p-green"><i class="fa-solid fa-circle"></i>Devolvido</span></td><td><button class="btn btn-ghost btn-sm" onclick="showToast('Download iniciado: Nota_Fiscal_corrigida.pdf')"><i class="fa-solid fa-download"></i>Baixar</button></td></tr>
+              <tr><td>Comprovante de Quitação</td><td>ABC-1D23</td><td>02 jul, 10:05</td><td><span class="pill p-green"><i class="fa-solid fa-circle"></i>Devolvido</span></td><td><button class="btn btn-ghost btn-sm" onclick="showToast('Download iniciado: Comprovante_quitacao_corrigido.pdf')"><i class="fa-solid fa-download"></i>Baixar</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ============ CLIENTE: MINHA CONTA ============ -->
+      <div class="page" id="page-conta-cliente">
+        <div class="page-head"><div><div class="page-title">Minha conta</div><div class="page-sub">Dados de acesso à área restrita</div></div></div>
+        <div class="grid-2">
+          <div class="card"><div class="card-body" style="padding:6px 20px;">
+            <div class="info-row"><span class="k">Nome</span><span class="v">Roberto Alves</span></div>
+            <div class="info-row"><span class="k">E-mail</span><span class="v">roberto.alves@email.com</span></div>
+            <div class="info-row"><span class="k">Veículos vinculados</span><span class="v">ABC-1D23, JKL-5N67</span></div>
+            <div class="info-row"><span class="k">Último acesso</span><span class="v">Hoje, 09:10</span></div>
+          </div></div>
+          <div class="card"><div class="card-head"><h3><i class="fa-solid fa-shield-halved" style="color:var(--gold-600);margin-right:7px;"></i>Sua privacidade</h3></div><div class="card-body" style="padding:16px 18px;font-size:12.5px;color:var(--n-500);line-height:1.7;">Seus arquivos só ficam visíveis para você e para a equipe administrativa responsável. Nenhum outro cliente tem acesso aos seus documentos.</div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- UPLOAD MODAL -->
+<div class="modal-overlay" id="uploadModal">
+  <div class="modal">
+    <div class="modal-head"><h3>Enviar arquivo</h3><button class="modal-close" onclick="document.getElementById('uploadModal').classList.remove('active')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-body">
+      <div class="field"><label>Veículo</label><select><option>ABC-1D23 — Honda Civic 2022</option><option>JKL-5N67 — Toyota Corolla 2020</option></select></div>
+      <div class="field"><label>Tipo de documento</label><select><option>CRLV</option><option>Laudo de Vistoria</option><option>DUT (Transferência)</option><option>Nota Fiscal</option><option>Apólice de Seguro</option><option>Comprovante de Quitação</option></select></div>
+      <div class="field"><label>Arquivo</label><div class="drop-zone"><i class="fa-solid fa-cloud-arrow-up"></i>Arraste o arquivo aqui ou clique para selecionar<br><span style="font-size:11px;">PDF, JPG ou PNG · verificação de integridade automática</span></div></div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-ghost" onclick="document.getElementById('uploadModal').classList.remove('active')">Cancelar</button><button class="btn btn-primary" onclick="sendFile()"><i class="fa-solid fa-upload"></i>Enviar com segurança</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><i class="fa-solid fa-circle-check"></i><span id="toastMsg">Arquivo enviado e verificado com sucesso.</span></div>
+
+<script>
+function switchPage(pageId){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+pageId).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.page===pageId));
+  document.getElementById('sidebar').classList.remove('open');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+document.querySelectorAll('.nav-item').forEach(n=>n.addEventListener('click',()=>switchPage(n.dataset.page)));
+
+function openDetail(){ switchPage('detalhe'); document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.page==='fila')); }
+
+function setRole(role){
+  document.querySelectorAll('[data-role="admin"]').forEach(el=>el.style.display = role==='admin' ? '' : 'none');
+  document.querySelectorAll('[data-role="cliente"]').forEach(el=>el.style.display = role==='cliente' ? '' : 'none');
+  document.getElementById('roleAdminBtn').classList.toggle('active', role==='admin');
+  document.getElementById('roleClienteBtn').classList.toggle('active', role==='cliente');
+  if(role==='admin'){
+    document.getElementById('topAvatar').textContent='CG';
+    document.getElementById('topName').textContent='Caio G.';
+    document.getElementById('topRole').textContent='Administrador';
+    document.getElementById('searchPlaceholder').placeholder='Buscar por cliente, placa ou documento...';
+    switchPage('dash-admin');
+  } else {
+    document.getElementById('topAvatar').textContent='RA';
+    document.getElementById('topName').textContent='Roberto Alves';
+    document.getElementById('topRole').textContent='Cliente';
+    document.getElementById('searchPlaceholder').placeholder='Buscar nos meus arquivos...';
+    switchPage('dash-cliente');
+  }
+}
+
+document.querySelectorAll('#page-detalhe .tab-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('#page-detalhe .tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('#page-detalhe .tab-content').forEach(c=>c.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+  });
+});
+
+const filaData = [
+  {cli:'Roberto Alves', ini:'RA', placa:'ABC-1D23', doc:'CRLV 2026', dt:'15 jul, 09:12', estado:'amber', label:'Em análise'},
+  {cli:'Fernanda Lima', ini:'FL', placa:'QWE-4E56', doc:'Laudo de Vistoria', dt:'15 jul, 08:40', estado:'gray', label:'Recebido'},
+  {cli:'Marcos Teixeira', ini:'MT', placa:'RTY-7F89', doc:'DUT (Transferência)', dt:'14 jul, 17:20', estado:'blue', label:'Aguardando devolução'},
+  {cli:'Juliana Prado', ini:'JP', placa:'ZXC-2G34', doc:'Nota Fiscal', dt:'14 jul, 14:05', estado:'green', label:'Devolvido'},
+  {cli:'Carlos Menezes', ini:'CM', placa:'POI-9H12', doc:'Apólice de Seguro', dt:'14 jul, 11:30', estado:'gray', label:'Recebido'},
+  {cli:'Patrícia Ramos', ini:'PR', placa:'LKJ-3K45', doc:'CRLV 2026', dt:'13 jul, 16:48', estado:'amber', label:'Em análise'},
+  {cli:'Eduardo Sales', ini:'ES', placa:'MNB-6L78', doc:'Comprovante de Quitação', dt:'13 jul, 10:15', estado:'green', label:'Devolvido'},
+  {cli:'Beatriz Costa', ini:'BC', placa:'VBN-1M90', doc:'Laudo de Vistoria', dt:'12 jul, 09:03', estado:'gray', label:'Recebido'},
+];
+const filaTbody = document.getElementById('fila-tbody');
+filaData.forEach(f=>{
+  const tr = document.createElement('tr');
+  tr.onclick = openDetail;
+  tr.innerHTML = `
+    <td><div class="co-cell"><div class="co-avatar">${f.ini}</div><span class="co-name">${f.cli}</span></div></td>
+    <td>${f.placa}</td>
+    <td>${f.doc}</td>
+    <td>${f.dt}</td>
+    <td><span class="pill p-${f.estado}"><i class="fa-solid fa-circle"></i>${f.label}</span></td>
+    <td><button class="row-action" onclick="event.stopPropagation()"><i class="fa-solid fa-ellipsis"></i></button></td>`;
+  filaTbody.appendChild(tr);
+});
+
+function countUp(el){
+  const target = parseInt(el.dataset.count,10);
+  const dur = 900; const start = performance.now();
+  function tick(now){
+    const p = Math.min(1,(now-start)/dur);
+    const eased = 1-Math.pow(1-p,3);
+    el.textContent = Math.round(eased*target);
+    if(p<1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+const io = new IntersectionObserver(entries=>{
+  entries.forEach(en=>{ if(en.isIntersecting){ countUp(en.target); io.unobserve(en.target); } });
+},{threshold:.3});
+document.querySelectorAll('[data-count]').forEach(el=>io.observe(el));
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3200);
+}
+function sendFile(){
+  document.getElementById('uploadModal').classList.remove('active');
+  showToast('Arquivo enviado e verificado com sucesso (hash conferido).');
+}
+function markReturned(){
+  showToast('Arquivo marcado como devolvido. Cliente notificado.');
+}
+document.getElementById('uploadModal').addEventListener('click',e=>{ if(e.target.id==='uploadModal') document.getElementById('uploadModal').classList.remove('active'); });
+</script>
+</body>
+</html>
