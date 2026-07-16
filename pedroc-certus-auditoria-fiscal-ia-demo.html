@@ -1,0 +1,974 @@
+<title>Certus — Auditoria Fiscal com IA Hibrida</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+:root{
+  --bg:#0a0f0d;
+  --surface:#111815;
+  --surface-2:#182019;
+  --surface-3:#1f2921;
+  --border:rgba(255,255,255,.08);
+  --border-2:rgba(255,255,255,.14);
+  --text:#e9f2ee;
+  --text-dim:#8ea89c;
+  --text-faint:#5c7568;
+  --t400:#2dd4bf;
+  --t500:#14b8a6;
+  --t600:#0d9488;
+  --t700:#115e59;
+  --glow:rgba(20,184,166,.35);
+  --success:#22c55e;
+  --success-bg:rgba(34,197,94,.12);
+  --danger:#f87171;
+  --danger-bg:rgba(248,113,113,.13);
+  --warn:#fbbf24;
+  --warn-bg:rgba(251,191,36,.12);
+  --info:#60a5fa;
+  --info-bg:rgba(96,165,250,.12);
+  --r-sm:8px;
+  --r-md:12px;
+  --r-lg:16px;
+  --r-xl:22px;
+  --shadow-md:0 8px 24px rgba(0,0,0,.35);
+  --shadow-lg:0 20px 50px rgba(0,0,0,.45);
+  --spring:cubic-bezier(.34,1.56,.64,1);
+  --ease:cubic-bezier(.4,0,.2,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Lexend',sans-serif;
+  background:
+    radial-gradient(circle at 1px 1px, rgba(255,255,255,.035) 1px, transparent 0) 0 0/28px 28px,
+    var(--bg);
+  color:var(--text);
+  -webkit-font-smoothing:antialiased;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select{font-family:inherit}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--surface-3);border-radius:10px}
+
+.app{display:grid;grid-template-columns:264px 1fr;min-height:100vh}
+
+.sidebar{
+  background:var(--surface);
+  border-right:1px solid var(--border);
+  padding:22px 16px;
+  display:flex;flex-direction:column;gap:6px;
+  position:sticky;top:0;height:100vh;overflow-y:auto;
+  z-index:40;
+}
+.brand{display:flex;align-items:center;gap:10px;padding:6px 10px 24px}
+.brand-mark{
+  width:36px;height:36px;border-radius:10px;
+  background:linear-gradient(135deg,var(--t400),var(--t600));
+  display:flex;align-items:center;justify-content:center;
+  font-weight:800;color:#04211d;font-size:16px;
+  animation:pulseLogo 3.2s ease-in-out infinite;
+}
+@keyframes pulseLogo{
+  0%,100%{box-shadow:0 0 0 0 rgba(20,184,166,.0)}
+  50%{box-shadow:0 0 22px 3px var(--glow)}
+}
+.brand-name{font-weight:700;font-size:17px;letter-spacing:.2px}
+.brand-sub{font-size:11px;color:var(--text-faint);margin-top:-2px}
+
+.nav-group-label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-faint);padding:14px 12px 6px;font-weight:600}
+.nav-item{
+  display:flex;align-items:center;gap:12px;
+  padding:10px 12px;border-radius:var(--r-md);
+  color:var(--text-dim);font-size:14.5px;font-weight:500;
+  transition:background .2s var(--ease),color .2s var(--ease),transform .15s var(--ease);
+  position:relative;cursor:pointer;
+}
+.nav-item i{width:18px;text-align:center;font-size:15px;opacity:.85}
+.nav-item:hover{background:var(--surface-2);color:var(--text)}
+.nav-item.active{background:var(--surface-2);color:var(--t400)}
+.nav-item.active::before{
+  content:'';position:absolute;left:-16px;top:50%;transform:translateY(-50%);
+  width:3px;height:18px;border-radius:3px;background:var(--t500);
+}
+.nav-item .badge-count{
+  margin-left:auto;background:var(--danger-bg);color:var(--danger);
+  font-size:11px;font-weight:700;padding:2px 7px;border-radius:20px;
+}
+.sidebar-footer{margin-top:auto;padding-top:14px;border-top:1px solid var(--border)}
+.plan-card{
+  background:linear-gradient(160deg,var(--surface-2),var(--surface-3));
+  border:1px solid var(--border-2);border-radius:var(--r-lg);
+  padding:14px;font-size:12.5px;color:var(--text-dim);
+}
+.plan-card strong{color:var(--text);display:block;font-size:13.5px;margin-bottom:6px}
+.plan-bar{height:6px;border-radius:6px;background:var(--surface);overflow:hidden;margin:8px 0 6px}
+.plan-bar-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--t600),var(--t400));width:0%;transition:width 1.1s var(--spring)}
+
+.main{min-width:0;display:flex;flex-direction:column}
+.topbar{
+  position:sticky;top:0;z-index:30;
+  display:flex;align-items:center;gap:16px;
+  padding:14px 28px;
+  background:rgba(10,15,13,.7);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--border);
+}
+.hamburger{display:none;font-size:18px;color:var(--text-dim);padding:6px}
+.search-bar{
+  flex:1;max-width:420px;display:flex;align-items:center;gap:10px;
+  background:var(--surface-2);border:1px solid var(--border);
+  border-radius:var(--r-md);padding:9px 14px;color:var(--text-faint);font-size:13.5px;
+  transition:border-color .2s var(--ease);
+}
+.search-bar:focus-within{border-color:var(--t600)}
+.search-bar input{background:none;border:none;outline:none;color:var(--text);font-family:inherit;font-size:13.5px;width:100%}
+.topbar-right{display:flex;align-items:center;gap:14px;margin-left:auto}
+.live-pill{
+  display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;
+  padding:6px 12px;border-radius:20px;background:var(--success-bg);color:var(--success);
+}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--success);animation:blip 1.6s ease-in-out infinite}
+@keyframes blip{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(34,197,94,.5)}50%{opacity:.6;box-shadow:0 0 0 5px rgba(34,197,94,0)}}
+.icon-btn{position:relative;width:38px;height:38px;border-radius:var(--r-md);display:flex;align-items:center;justify-content:center;color:var(--text-dim);transition:background .2s,color .2s}
+.icon-btn:hover{background:var(--surface-2);color:var(--text)}
+.icon-btn .dot{position:absolute;top:7px;right:8px;width:7px;height:7px;border-radius:50%;background:var(--danger);border:2px solid var(--bg)}
+.avatar-chip{display:flex;align-items:center;gap:9px;padding:5px 10px 5px 5px;border-radius:20px;background:var(--surface-2);border:1px solid var(--border)}
+.avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--t400),var(--t700));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#04211d}
+.avatar-chip span{font-size:12.5px;font-weight:600}
+
+.content{padding:26px 28px 60px;max-width:1320px;width:100%;margin:0 auto}
+
+.welcome{
+  position:relative;overflow:hidden;border-radius:var(--r-xl);
+  padding:30px 32px;margin-bottom:26px;
+  background:linear-gradient(135deg,#132420,#0d1614 60%);
+  border:1px solid var(--border-2);
+}
+.welcome::before,.welcome::after{
+  content:'';position:absolute;border-radius:50%;filter:blur(50px);opacity:.5;
+  animation:floatOrb 9s ease-in-out infinite;
+}
+.welcome::before{width:220px;height:220px;background:var(--t500);top:-90px;right:-40px}
+.welcome::after{width:180px;height:180px;background:#3b5bfd;bottom:-100px;right:180px;animation-delay:-4s}
+@keyframes floatOrb{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-14px,16px) scale(1.08)}}
+.welcome-inner{position:relative;z-index:2;display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap}
+.welcome h1{font-size:clamp(20px,2.4vw,26px);font-weight:700;margin-bottom:6px}
+.welcome p{color:var(--text-dim);font-size:14px;max-width:560px}
+.btn{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:11px 18px;border-radius:var(--r-md);font-size:13.5px;font-weight:600;
+  transition:transform .18s var(--spring),box-shadow .18s var(--ease),background .2s;
+}
+.btn:active{transform:scale(.96)}
+.btn-primary{background:linear-gradient(135deg,var(--t400),var(--t600));color:#04211d;box-shadow:0 6px 18px rgba(20,184,166,.25)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(20,184,166,.35)}
+.btn-ghost{background:var(--surface-2);border:1px solid var(--border-2);color:var(--text)}
+.btn-ghost:hover{background:var(--surface-3)}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none!important}
+
+.section-head{display:flex;align-items:center;justify-content:space-between;margin:30px 0 14px;flex-wrap:wrap;gap:10px}
+.section-head h2{font-size:16.5px;font-weight:700}
+.section-head .sub{font-size:12.5px;color:var(--text-faint);margin-top:2px}
+.link-more{font-size:12.5px;font-weight:600;color:var(--t400);display:flex;align-items:center;gap:5px}
+
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.kpi-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);
+  padding:18px 20px;transition:transform .25s var(--spring),box-shadow .25s var(--ease),border-color .25s;
+  opacity:0;transform:translateY(16px);
+}
+.kpi-card.reveal{opacity:1;transform:translateY(0)}
+.kpi-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-md);border-color:var(--border-2)}
+.kpi-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
+.kpi-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.kpi-trend{font-size:11.5px;font-weight:700;padding:3px 8px;border-radius:20px;display:flex;align-items:center;gap:4px}
+.kpi-trend.up{background:var(--success-bg);color:var(--success)}
+.kpi-trend.down{background:var(--danger-bg);color:var(--danger)}
+.kpi-value{font-size:26px;font-weight:800;letter-spacing:-.3px}
+.kpi-label{font-size:12.5px;color:var(--text-faint);margin-top:4px}
+
+.grid-2{display:grid;grid-template-columns:1.5fr 1fr;gap:16px;margin-top:16px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px}
+.card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px}
+.card-head h3{font-size:14.5px;font-weight:700}
+.card-head .sub{font-size:11.5px;color:var(--text-faint);margin-top:2px}
+.chip-row{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font-size:11.5px;padding:5px 11px;border-radius:20px;background:var(--surface-2);color:var(--text-dim);border:1px solid var(--border);transition:.2s;cursor:pointer}
+.chip.active{background:var(--warn-bg);color:var(--warn);border-color:transparent;font-weight:600}
+.chip:hover{color:var(--text)}
+
+.chart-wrap{position:relative;height:220px}
+.chart-wrap svg{width:100%;height:100%;overflow:visible}
+.chart-line{fill:none;stroke:url(#lineGrad);stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:900;stroke-dashoffset:900;transition:stroke-dashoffset 1.6s var(--ease)}
+.chart-wrap.reveal .chart-line{stroke-dashoffset:0}
+.chart-area{opacity:0;transition:opacity 1s var(--ease) .4s}
+.chart-wrap.reveal .chart-area{opacity:1}
+
+.attn-list{display:flex;flex-direction:column;gap:10px}
+.attn-item{display:flex;gap:12px;align-items:flex-start;padding:12px;border-radius:var(--r-md);background:var(--surface-2);border:1px solid var(--border);transition:transform .2s var(--spring)}
+.attn-item:hover{transform:translateX(3px)}
+.attn-dot{width:9px;height:9px;border-radius:50%;margin-top:5px;flex-shrink:0}
+.attn-dot.danger{background:var(--danger);box-shadow:0 0 0 4px var(--danger-bg)}
+.attn-dot.warn{background:var(--warn);box-shadow:0 0 0 4px var(--warn-bg)}
+.attn-body{flex:1;min-width:0}
+.attn-title{font-size:13px;font-weight:600}
+.attn-sub{font-size:11.5px;color:var(--text-faint);margin-top:2px}
+.attn-cta{font-size:11.5px;font-weight:600;color:var(--t400);white-space:nowrap;padding:6px 10px;border-radius:8px;transition:background .2s}
+.attn-cta:hover{background:rgba(20,184,166,.12)}
+
+.ai-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:16px}
+.ai-card{
+  background:linear-gradient(160deg,var(--surface),var(--surface-2));
+  border:1px solid var(--border-2);border-radius:var(--r-lg);padding:16px;
+  transition:transform .25s var(--spring),box-shadow .25s;
+}
+.ai-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-md)}
+.ai-top{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.ai-icon{width:28px;height:28px;border-radius:8px;background:rgba(20,184,166,.12);color:var(--t400);display:flex;align-items:center;justify-content:center;font-size:12px}
+.ai-conf{margin-left:auto;font-size:10.5px;font-weight:700;color:var(--t400);background:rgba(20,184,166,.12);padding:3px 8px;border-radius:20px}
+.ai-text{font-size:12.8px;color:var(--text-dim);line-height:1.5;margin-bottom:12px}
+.ai-action{font-size:12px;font-weight:600;color:var(--text);border:1px solid var(--border-2);padding:7px 12px;border-radius:8px;display:inline-flex;align-items:center;gap:6px;transition:.2s}
+.ai-action:hover{background:var(--surface-3)}
+
+.feed{display:flex;flex-direction:column;gap:2px;max-height:320px;overflow-y:auto}
+.feed-item{
+  display:flex;gap:10px;align-items:flex-start;padding:10px 6px;border-bottom:1px solid var(--border);
+  animation:feedIn .5s var(--ease);
+}
+@keyframes feedIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.feed-icon{width:26px;height:26px;border-radius:50%;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:10.5px;color:var(--t400);flex-shrink:0;margin-top:2px}
+.feed-text{font-size:12.5px;color:var(--text-dim);line-height:1.45}
+.feed-text b{color:var(--text);font-weight:600}
+.feed-time{font-size:10.5px;color:var(--text-faint);white-space:nowrap;margin-left:auto;flex-shrink:0}
+
+.donut-wrap{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.donut{
+  width:150px;height:150px;border-radius:50%;flex-shrink:0;
+  background:conic-gradient(var(--t500) 0 46%, #60a5fa 46% 68%, #a78bfa 68% 85%, #3a4b45 85% 100%);
+  position:relative;transition:filter .3s;
+}
+.donut::before{content:'';position:absolute;inset:20px;border-radius:50%;background:var(--surface)}
+.donut-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.donut-center strong{font-size:20px;font-weight:800}
+.donut-center span{font-size:10px;color:var(--text-faint)}
+.legend{display:flex;flex-direction:column;gap:10px}
+.legend-item{display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--text-dim)}
+.legend-swatch{width:10px;height:10px;border-radius:3px}
+.legend-item b{color:var(--text);margin-left:auto;padding-left:14px}
+
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:640px}
+th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-faint);padding:0 12px 10px;font-weight:600}
+td{padding:13px 12px;font-size:13px;border-top:1px solid var(--border);color:var(--text-dim)}
+tr td:first-child,th:first-child{padding-left:4px}
+.cell-account{display:flex;align-items:center;gap:10px}
+.cell-avatar{width:30px;height:30px;border-radius:8px;background:var(--surface-3);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--t400)}
+.cell-name{color:var(--text);font-weight:600;font-size:13px}
+.cell-sub{font-size:11px;color:var(--text-faint)}
+.badge{font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;display:inline-block}
+.badge.success{background:var(--success-bg);color:var(--success)}
+.badge.danger{background:var(--danger-bg);color:var(--danger)}
+.badge.info{background:var(--info-bg);color:var(--info)}
+.badge.warn{background:var(--warn-bg);color:var(--warn)}
+.row-actions{display:flex;gap:8px;justify-content:flex-end}
+.row-actions button{width:30px;height:30px;border-radius:8px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;color:var(--text-dim);transition:.2s}
+.row-actions button:hover{background:var(--surface-3);color:var(--text)}
+.filter-row{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+
+/* pipeline / arquitetura 3 camadas */
+.pipeline{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:16px;position:relative}
+.pipe-step{
+  background:linear-gradient(160deg,var(--surface),var(--surface-2));
+  border:1px solid var(--border-2);border-radius:var(--r-lg);padding:18px;
+  position:relative;
+}
+.pipe-num{
+  width:26px;height:26px;border-radius:8px;background:rgba(20,184,166,.14);color:var(--t400);
+  display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:800;margin-bottom:12px;
+}
+.pipe-step h4{font-size:13.5px;font-weight:700;margin-bottom:5px}
+.pipe-step p{font-size:12px;color:var(--text-dim);line-height:1.5;margin-bottom:12px}
+.pipe-stat{display:flex;align-items:center;gap:7px;font-size:11.5px;font-weight:700;color:var(--t400)}
+.pipe-arrow{
+  display:none;position:absolute;right:-24px;top:50%;transform:translateY(-50%);
+  color:var(--text-faint);font-size:14px;z-index:2;
+}
+@media(min-width:769px){.pipe-step:not(:last-child) .pipe-arrow{display:block}}
+
+/* reconciliacao camada 3 */
+.recon-table{width:100%;border-collapse:separate;border-spacing:0 10px}
+.recon-table td{border:none;padding:0;vertical-align:top}
+.recon-row{display:grid;grid-template-columns:1.1fr 1fr 1fr .8fr;gap:0;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-md);overflow:hidden}
+.recon-row.mismatch{border-color:rgba(248,113,113,.4)}
+.recon-cell{padding:14px 16px;border-right:1px solid var(--border)}
+.recon-cell:last-child{border-right:none}
+.recon-doc{display:flex;flex-direction:column;gap:3px}
+.recon-doc-name{font-size:13px;font-weight:600;color:var(--text)}
+.recon-doc-sub{font-size:11px;color:var(--text-faint)}
+.recon-label{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-faint);font-weight:600;margin-bottom:5px}
+.recon-value{font-size:14px;font-weight:700;color:var(--text)}
+.recon-value.ai{color:#60a5fa}
+.recon-value.calc{color:var(--t400)}
+.recon-status{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:6px}
+.recon-diff{font-size:11px;color:var(--danger);font-weight:600}
+.recon-explain{
+  background:var(--danger-bg);border-top:1px solid rgba(248,113,113,.3);
+  padding:12px 16px;font-size:12px;color:var(--text-dim);grid-column:1/-1;display:none;
+}
+.recon-row.mismatch .recon-explain{display:block}
+.recon-explain b{color:var(--danger)}
+
+.layer-tag{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:20px;text-transform:uppercase;letter-spacing:.04em}
+.layer-tag.l1{background:rgba(96,165,250,.12);color:var(--info)}
+.layer-tag.l2{background:rgba(96,165,250,.12);color:#60a5fa}
+.layer-tag.l3{background:rgba(20,184,166,.14);color:var(--t400)}
+
+/* classificar / camada IA */
+.classify-form{display:flex;flex-direction:column;gap:14px}
+.form-group label{display:block;font-size:11.5px;font-weight:600;color:var(--text-faint);text-transform:uppercase;letter-spacing:.05em;margin-bottom:7px}
+.form-input,.form-select{width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-md);padding:11px 14px;color:var(--text);font-size:13.5px;outline:none;transition:border-color .2s}
+.form-input:focus,.form-select:focus{border-color:var(--t600)}
+
+.scan-track{height:8px;border-radius:8px;background:var(--surface-2);overflow:hidden;margin-top:16px}
+.scan-fill{height:100%;border-radius:8px;width:0%;background:linear-gradient(90deg,var(--t600),var(--t400));position:relative;overflow:hidden;transition:width 2.2s var(--ease)}
+.scan-fill::after{content:'';position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.4) 50%,transparent 70%);transform:translateX(-100%);animation:shimmer 1.4s ease-in-out infinite}
+@keyframes shimmer{100%{transform:translateX(100%)}}
+.scan-status{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text-dim);margin-top:10px}
+.scan-status i{color:var(--t400)}
+
+.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}
+.field{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-md);padding:12px 14px;opacity:0;transform:translateY(8px);transition:.4s var(--ease)}
+.field.show{opacity:1;transform:translateY(0)}
+.field-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.field-label{font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+.conf{font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px}
+.conf.high{background:var(--success-bg);color:var(--success)}
+.conf.mid{background:var(--warn-bg);color:var(--warn)}
+.field-value{font-size:13.5px;font-weight:600;color:var(--text);line-height:1.4}
+
+.toggle-row{display:flex;justify-content:space-between;align-items:center;padding:14px 4px;border-bottom:1px solid var(--border)}
+.toggle-row:last-child{border-bottom:none}
+.toggle-title{font-size:13.5px;font-weight:600}
+.toggle-sub{font-size:11.5px;color:var(--text-faint);margin-top:2px}
+.switch{width:42px;height:24px;border-radius:20px;background:var(--surface-3);position:relative;transition:.25s;flex-shrink:0}
+.switch.on{background:linear-gradient(90deg,var(--t600),var(--t400))}
+.switch::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:.25s var(--spring)}
+.switch.on::after{left:21px}
+
+.page{display:none;animation:fadeIn .5s var(--ease)}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+.skeleton-wrap{position:fixed;inset:0;background:var(--bg);z-index:100;display:flex;align-items:center;justify-content:center;transition:opacity .5s var(--ease);}
+.skeleton-wrap.hide{opacity:0;pointer-events:none}
+.skel-logo{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--t400),var(--t600));animation:pulseLogo 1.1s ease-in-out infinite}
+
+.toast{
+  position:fixed;bottom:26px;right:26px;z-index:200;
+  background:var(--surface-2);border:1px solid var(--border-2);border-radius:var(--r-md);
+  padding:13px 18px;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow-lg);
+  transform:translateY(30px) scale(.9);opacity:0;transition:.4s var(--spring);font-size:13px;
+}
+.toast.show{transform:translateY(0) scale(1);opacity:1}
+.toast i{color:var(--success)}
+
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:35;opacity:0;pointer-events:none;transition:opacity .3s}
+.overlay.show{opacity:1;pointer-events:auto}
+
+@media (max-width:1080px){
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+  .grid-2{grid-template-columns:1fr}
+  .ai-grid{grid-template-columns:1fr}
+  .pipeline{grid-template-columns:1fr}
+  .field-grid{grid-template-columns:1fr}
+  .recon-row{grid-template-columns:1fr}
+  .recon-cell{border-right:none;border-bottom:1px solid var(--border)}
+}
+@media (max-width:860px){
+  .app{grid-template-columns:1fr}
+  .sidebar{position:fixed;left:0;top:0;width:264px;transform:translateX(-100%);transition:transform .3s var(--ease)}
+  .sidebar.open{transform:translateX(0)}
+  .hamburger{display:flex}
+  .search-bar{display:none}
+}
+@media (max-width:560px){
+  .kpi-grid{grid-template-columns:1fr}
+  .content{padding:18px 16px 50px}
+  .topbar{padding:12px 16px}
+  .welcome{padding:22px}
+  .donut-wrap{flex-direction:column;align-items:flex-start}
+}
+</style>
+
+<div class="skeleton-wrap" id="skeleton"><div class="skel-logo"></div></div>
+<div class="overlay" id="overlay"></div>
+
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-mark"><i class="fa-solid fa-shield-halved"></i></div>
+      <div>
+        <div class="brand-name">Certus</div>
+        <div class="brand-sub">Auditoria Fiscal com IA Hibrida</div>
+      </div>
+    </div>
+
+    <div class="nav-group-label">Principal</div>
+    <a class="nav-item active" data-page="painel"><i class="fa-solid fa-gauge-high"></i>Painel</a>
+    <a class="nav-item" data-page="documentos"><i class="fa-solid fa-file-invoice"></i>Documentos<span class="badge-count">128</span></a>
+    <a class="nav-item" data-page="ia"><i class="fa-solid fa-brain"></i>Camada 2 · IA Contextual</a>
+    <a class="nav-item" data-page="reconciliacao"><i class="fa-solid fa-scale-balanced"></i>Camada 3 · Reconciliacao<span class="badge-count">6</span></a>
+    <a class="nav-item" data-page="auditoria"><i class="fa-solid fa-clipboard-list"></i>Trilha de Auditoria</a>
+
+    <div class="nav-group-label">Conta</div>
+    <a class="nav-item" data-page="config"><i class="fa-solid fa-gear"></i>Configuracoes</a>
+
+    <div class="sidebar-footer">
+      <div class="plan-card">
+        <strong>Fase 1 · Nucleo de Reconciliacao</strong>
+        Ingestao + IA contextual + motor deterministico
+        <div class="plan-bar"><div class="plan-bar-fill" data-fill="58"></div></div>
+        58% do pipeline validado
+      </div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="hamburger" id="hamburgerBtn"><i class="fa-solid fa-bars"></i></button>
+      <div class="search-bar"><i class="fa-solid fa-magnifying-glass"></i><input placeholder="Buscar nota fiscal, fornecedor ou contrato..."></div>
+      <div class="topbar-right">
+        <div class="live-pill"><span class="live-dot"></span>Motor deterministico ativo</div>
+        <button class="icon-btn"><i class="fa-solid fa-bell"></i><span class="dot"></span></button>
+        <div class="avatar-chip"><div class="avatar">PC</div><span>Pedro C.</span></div>
+      </div>
+    </header>
+
+    <main class="content">
+
+      <!-- PAINEL -->
+      <section class="page active" id="page-painel">
+        <div class="welcome">
+          <div class="welcome-inner">
+            <div>
+              <h1>Bem-vindo de volta, Pedro</h1>
+              <p>O motor deterministico recalculou 128 documentos essa semana. 6 divergencias foram sinalizadas entre a interpretacao da IA e o recalculo matematico, todas retidas para revisao antes de qualquer aprovacao.</p>
+            </div>
+            <button class="btn btn-primary" onclick="goPage('reconciliacao')"><i class="fa-solid fa-scale-balanced"></i>Ver divergencias sinalizadas</button>
+          </div>
+        </div>
+
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-top">
+              <div class="kpi-icon" style="background:var(--info-bg);color:var(--info)"><i class="fa-solid fa-file-invoice"></i></div>
+              <div class="kpi-trend up"><i class="fa-solid fa-arrow-up"></i>14</div>
+            </div>
+            <div class="kpi-value" data-count="128">0</div>
+            <div class="kpi-label">Documentos auditados (mes)</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-top">
+              <div class="kpi-icon" style="background:var(--danger-bg);color:var(--danger)"><i class="fa-solid fa-triangle-exclamation"></i></div>
+              <div class="kpi-trend down"><i class="fa-solid fa-arrow-down"></i>2</div>
+            </div>
+            <div class="kpi-value" data-count="6">0</div>
+            <div class="kpi-label">Divergencias sinalizadas</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-top">
+              <div class="kpi-icon" style="background:var(--warn-bg);color:var(--warn)"><i class="fa-solid fa-magnifying-glass-dollar"></i></div>
+              <div class="kpi-trend up"><i class="fa-solid fa-arrow-up"></i>3</div>
+            </div>
+            <div class="kpi-value" data-prefix="R$ " data-count="41200">0</div>
+            <div class="kpi-label">Valor total em risco</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-top">
+              <div class="kpi-icon" style="background:rgba(20,184,166,.14);color:var(--t400)"><i class="fa-solid fa-calculator"></i></div>
+              <div class="kpi-trend up"><i class="fa-solid fa-circle-check"></i>0 falhas</div>
+            </div>
+            <div class="kpi-value" data-count="100" data-suffix="%">0</div>
+            <div class="kpi-label">Precisao do motor deterministico</div>
+          </div>
+        </div>
+
+        <div class="section-head">
+          <div><h2>Arquitetura de validacao em tres camadas</h2><div class="sub">Nenhuma equacao fiscal e delegada isoladamente a IA</div></div>
+        </div>
+        <div class="pipeline">
+          <div class="pipe-step">
+            <div class="pipe-num">1</div>
+            <h4>Ingestao de dados</h4>
+            <p>Extracao estruturada de tabelas e metadados de PDF, XML e imagem via AWS Textract ou Google Document AI.</p>
+            <div class="pipe-stat"><i class="fa-solid fa-file-import"></i>128 documentos extraidos</div>
+            <i class="fa-solid fa-arrow-right pipe-arrow"></i>
+          </div>
+          <div class="pipe-step">
+            <div class="pipe-num">2</div>
+            <h4>Contextualizacao por IA</h4>
+            <p>LLM via LangChain interpreta termos contratuais e categoriza despesas com base no contexto do documento.</p>
+            <div class="pipe-stat"><i class="fa-solid fa-brain"></i>94% classificado</div>
+            <i class="fa-solid fa-arrow-right pipe-arrow"></i>
+          </div>
+          <div class="pipe-step">
+            <div class="pipe-num">3</div>
+            <h4>Motor deterministico</h4>
+            <p>Backend Python reprocessa Preco x Quantidade + Imposto de forma isolada e compara com a Camada 2.</p>
+            <div class="pipe-stat"><i class="fa-solid fa-scale-balanced"></i>6 divergencias retidas</div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-head">
+              <div><h3>Documentos recalculados ao longo do tempo</h3><div class="sub">Volume processado pela Camada 3, atualizado em tempo real</div></div>
+              <div class="chip-row"><div class="chip active">30D</div><div class="chip">60D</div><div class="chip">90D</div></div>
+            </div>
+            <div class="chart-wrap" id="chartWrap">
+              <svg viewBox="0 0 600 200" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stop-color="#0d9488"/>
+                    <stop offset="100%" stop-color="#2dd4bf"/>
+                  </linearGradient>
+                  <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#14b8a6" stop-opacity="0.28"/>
+                    <stop offset="100%" stop-color="#14b8a6" stop-opacity="0"/>
+                  </linearGradient>
+                </defs>
+                <polygon class="chart-area" fill="url(#areaGrad)" points="0,175 46,165 92,168 138,150 184,155 230,120 276,130 322,95 368,105 414,70 460,85 506,55 552,65 600,40 600,200 0,200"/>
+                <polyline class="chart-line" points="0,175 46,165 92,168 138,150 184,155 230,120 276,130 322,95 368,105 414,70 460,85 506,55 552,65 600,40"/>
+              </svg>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <div><h3>Requer atencao</h3><div class="sub">Priorizado por valor em risco</div></div>
+            </div>
+            <div class="attn-list">
+              <div class="attn-item">
+                <div class="attn-dot danger"></div>
+                <div class="attn-body">
+                  <div class="attn-title">NF-e 000482 · Fornecedor Aurora Log</div>
+                  <div class="attn-sub">Camada 2 leu ICMS 12%, recalculo aponta 18% · diferenca R$ 6.400</div>
+                </div>
+                <button class="attn-cta" onclick="goPage('reconciliacao')">Revisar</button>
+              </div>
+              <div class="attn-item">
+                <div class="attn-dot danger"></div>
+                <div class="attn-body">
+                  <div class="attn-title">Contrato 0091 · Servicos Delta</div>
+                  <div class="attn-sub">Total declarado nao bate com Preco x Quantidade + Imposto</div>
+                </div>
+                <button class="attn-cta" onclick="goPage('reconciliacao')">Revisar</button>
+              </div>
+              <div class="attn-item">
+                <div class="attn-dot warn"></div>
+                <div class="attn-body">
+                  <div class="attn-title">Fatura 2291 · Insumos Bravo</div>
+                  <div class="attn-sub">Confianca da Camada 2 abaixo de 80% na categorizacao fiscal</div>
+                </div>
+                <button class="attn-cta" onclick="goPage('ia')">Revisar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-head">
+          <div><h2>IA hibrida em acao</h2><div class="sub">O que cada camada fez esta semana</div></div>
+        </div>
+        <div class="ai-grid">
+          <div class="ai-card">
+            <div class="ai-top"><div class="ai-icon"><i class="fa-solid fa-file-import"></i></div><div class="ai-conf">Camada 1</div></div>
+            <div class="ai-text">Textract extraiu tabelas e metadados de 128 documentos em PDF, XML e imagem, sem digitacao manual.</div>
+            <button class="ai-action" onclick="goPage('documentos')"><i class="fa-solid fa-arrow-right"></i>Ver documentos</button>
+          </div>
+          <div class="ai-card">
+            <div class="ai-top"><div class="ai-icon"><i class="fa-solid fa-brain"></i></div><div class="ai-conf">Camada 2</div></div>
+            <div class="ai-text">LLM categorizou despesas e interpretou clausulas contratuais complexas com 94% de cobertura.</div>
+            <button class="ai-action" onclick="goPage('ia')"><i class="fa-solid fa-arrow-right"></i>Ver categorizacao</button>
+          </div>
+          <div class="ai-card">
+            <div class="ai-top"><div class="ai-icon"><i class="fa-solid fa-scale-balanced"></i></div><div class="ai-conf">Camada 3</div></div>
+            <div class="ai-text">Motor deterministico recalculou toda a matematica fiscal de forma isolada e reteve 6 casos divergentes.</div>
+            <button class="ai-action" onclick="goPage('reconciliacao')"><i class="fa-solid fa-arrow-right"></i>Ver reconciliacao</button>
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-top:16px">
+          <div class="card">
+            <div class="card-head"><div><h3>Atividade recente</h3><div class="sub">Radar de auditoria em tempo real</div></div></div>
+            <div class="feed" id="feed"></div>
+          </div>
+          <div class="card">
+            <div class="card-head"><div><h3>Documentos por origem</h3><div class="sub">Distribuicao da Camada 1 de ingestao</div></div></div>
+            <div class="donut-wrap">
+              <div class="donut"><div class="donut-center"><strong>128</strong><span>documentos</span></div></div>
+              <div class="legend">
+                <div class="legend-item"><span class="legend-swatch" style="background:var(--t500)"></span>PDF (Textract) <b>46%</b></div>
+                <div class="legend-item"><span class="legend-swatch" style="background:#60a5fa"></span>XML fiscal <b>22%</b></div>
+                <div class="legend-item"><span class="legend-swatch" style="background:#a78bfa"></span>Imagem (Document AI) <b>17%</b></div>
+                <div class="legend-item"><span class="legend-swatch" style="background:#3a4b45"></span>Outros <b>15%</b></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- DOCUMENTOS -->
+      <section class="page" id="page-documentos">
+        <div class="section-head">
+          <div><h2>Documentos</h2><div class="sub">128 documentos ingeridos pela Camada 1</div></div>
+          <button class="btn btn-primary"><i class="fa-solid fa-upload"></i>Enviar documento</button>
+        </div>
+        <div class="card">
+          <div class="filter-row">
+            <div class="chip active">Todos</div>
+            <div class="chip">PDF</div>
+            <div class="chip">XML fiscal</div>
+            <div class="chip">Imagem</div>
+            <div class="chip">Pendentes</div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Documento</th><th>Formato</th><th>Extracao</th><th>Camada 2</th><th>Camada 3</th><th>Status</th><th></th></tr></thead>
+              <tbody>
+                <tr><td><div class="cell-account"><div class="cell-avatar">NF</div><div><div class="cell-name">NF-e 000482</div><div class="cell-sub">Aurora Log · R$ 38.400</div></div></div></td><td>XML fiscal</td><td><span class="layer-tag l1">Textract</span></td><td><span class="badge success">Categorizado</span></td><td><span class="badge danger">Divergente</span></td><td><span class="badge danger">Requer revisao</span></td><td class="row-actions"><button onclick="goPage('reconciliacao')"><i class="fa-solid fa-eye"></i></button></td></tr>
+                <tr><td><div class="cell-account"><div class="cell-avatar">CT</div><div><div class="cell-name">Contrato 0091</div><div class="cell-sub">Servicos Delta · R$ 92.000</div></div></div></td><td>PDF</td><td><span class="layer-tag l1">Document AI</span></td><td><span class="badge success">Categorizado</span></td><td><span class="badge danger">Divergente</span></td><td><span class="badge danger">Requer revisao</span></td><td class="row-actions"><button onclick="goPage('reconciliacao')"><i class="fa-solid fa-eye"></i></button></td></tr>
+                <tr><td><div class="cell-account"><div class="cell-avatar">FT</div><div><div class="cell-name">Fatura 2291</div><div class="cell-sub">Insumos Bravo · R$ 14.750</div></div></div></td><td>PDF</td><td><span class="layer-tag l1">Textract</span></td><td><span class="badge warn">Baixa confianca</span></td><td><span class="badge success">Reconciliado</span></td><td><span class="badge warn">Em revisao</span></td><td class="row-actions"><button><i class="fa-solid fa-eye"></i></button></td></tr>
+                <tr><td><div class="cell-account"><div class="cell-avatar">NF</div><div><div class="cell-name">NF-e 000401</div><div class="cell-sub">Ferragens Centro · R$ 6.180</div></div></div></td><td>XML fiscal</td><td><span class="layer-tag l1">Textract</span></td><td><span class="badge success">Categorizado</span></td><td><span class="badge success">Reconciliado</span></td><td><span class="badge success">Auditado</span></td><td class="row-actions"><button><i class="fa-solid fa-eye"></i></button></td></tr>
+                <tr><td><div class="cell-account"><div class="cell-avatar">RC</div><div><div class="cell-name">Recibo 8813</div><div class="cell-sub">Transporte Sul · R$ 3.020</div></div></div></td><td>Imagem</td><td><span class="layer-tag l1">Document AI</span></td><td><span class="badge success">Categorizado</span></td><td><span class="badge success">Reconciliado</span></td><td><span class="badge success">Auditado</span></td><td class="row-actions"><button><i class="fa-solid fa-eye"></i></button></td></tr>
+                <tr><td><div class="cell-account"><div class="cell-avatar">FT</div><div><div class="cell-name">Fatura 2288</div><div class="cell-sub">Grafica Impressul · R$ 5.940</div></div></div></td><td>PDF</td><td><span class="layer-tag l1">Textract</span></td><td><span class="badge">Na fila</span></td><td><span class="badge">Aguardando</span></td><td><span class="badge info">Processando</span></td><td class="row-actions"><button><i class="fa-solid fa-eye"></i></button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- CAMADA IA -->
+      <section class="page" id="page-ia">
+        <div class="section-head">
+          <div><h2>Camada 2 · Contextualizacao por IA</h2><div class="sub">LLM interpreta o documento extraido e sugere categoria fiscal, sem decidir o valor final</div></div>
+        </div>
+        <div class="grid-2" style="grid-template-columns:1fr 1fr">
+          <div class="card">
+            <div class="card-head"><div><h3>Analisar documento com IA</h3><div class="sub">Selecione o documento extraido pela Camada 1</div></div></div>
+            <div class="classify-form">
+              <div class="form-group">
+                <label>Documento</label>
+                <select class="form-select" id="docSelect">
+                  <option>NF-e 000482 · Aurora Log · R$ 38.400</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Modelo LLM</label>
+                <select class="form-select">
+                  <option>GPT-4o via LangChain</option>
+                  <option>Claude 3.5 via LlamaIndex</option>
+                </select>
+              </div>
+              <div id="scanBlock" style="display:none">
+                <div class="scan-track"><div class="scan-fill" id="scanFill"></div></div>
+                <div class="scan-status" id="scanStatus"><i class="fa-solid fa-circle-notch fa-spin"></i>Interpretando clausulas e categorizando despesa...</div>
+              </div>
+              <button class="btn btn-primary" id="analyzeBtn" style="width:100%;justify-content:center" onclick="startExtraction()">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>Analisar com IA
+              </button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head"><div><h3>Interpretacao da Camada 2</h3><div class="sub">Contexto e categoria sugeridos, aguardando validacao da Camada 3</div></div></div>
+            <div id="fieldsEmpty" style="font-size:12.8px;color:var(--text-faint);padding:30px 0;text-align:center">
+              <i class="fa-solid fa-circle-info" style="margin-right:6px"></i>Selecione um documento e clique em Analisar com IA para ver o resultado aqui.
+            </div>
+            <div class="field-grid" id="fieldsGrid" style="display:none">
+              <div class="field" data-field="1"><div class="field-top"><span class="field-label">Categoria de despesa</span><span class="conf high">97%</span></div><div class="field-value">Frete e logistica interestadual</div></div>
+              <div class="field" data-field="2"><div class="field-top"><span class="field-label">Aliquota de ICMS interpretada</span><span class="conf mid">81%</span></div><div class="field-value">12% (base contratual)</div></div>
+              <div class="field" data-field="3"><div class="field-top"><span class="field-label">Regime fiscal identificado</span><span class="conf high">95%</span></div><div class="field-value">Lucro real, substituicao tributaria</div></div>
+              <div class="field" data-field="4"><div class="field-top"><span class="field-label">Total interpretado pela IA</span><span class="conf mid">81%</span></div><div class="field-value">R$ 38.400,00</div></div>
+            </div>
+            <button class="btn btn-primary" id="saveBtn" style="margin-top:18px;width:100%;justify-content:center;display:none" onclick="sendToLayer3()">
+              <i class="fa-solid fa-scale-balanced"></i>Enviar para recalculo na Camada 3
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- RECONCILIACAO -->
+      <section class="page" id="page-reconciliacao">
+        <div class="section-head">
+          <div><h2>Camada 3 · Motor deterministico e reconciliacao</h2><div class="sub">Toda equacao (Preco x Quantidade + Imposto) e recalculada de forma isolada. A IA nunca e a fonte final do valor.</div></div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><div><h3>Comparacao Camada 2 vs Camada 3</h3><div class="sub">6 documentos com divergencia entre interpretacao e recalculo</div></div></div>
+          <div class="table-wrap">
+            <table class="recon-table">
+              <tbody>
+                <tr><td>
+                  <div class="recon-row mismatch">
+                    <div class="recon-cell recon-doc">
+                      <span class="layer-tag l1" style="margin-bottom:6px;width:fit-content">XML fiscal</span>
+                      <div class="recon-doc-name">NF-e 000482</div>
+                      <div class="recon-doc-sub">Aurora Log · frete interestadual</div>
+                    </div>
+                    <div class="recon-cell">
+                      <div class="recon-label">Camada 2 · IA</div>
+                      <div class="recon-value ai">ICMS 12% · R$ 38.400,00</div>
+                    </div>
+                    <div class="recon-cell">
+                      <div class="recon-label">Camada 3 · Recalculo</div>
+                      <div class="recon-value calc">ICMS 18% · R$ 44.800,00</div>
+                    </div>
+                    <div class="recon-cell recon-status">
+                      <span class="badge danger"><i class="fa-solid fa-triangle-exclamation"></i> Divergente</span>
+                      <span class="recon-diff">Diferenca R$ 6.400,00</span>
+                    </div>
+                    <div class="recon-explain"><b>Por que retido:</b> a aliquota interpretada pela Camada 2 partiu do texto contratual, mas a NCM do item exige substituicao tributaria a 18%. O motor deterministico aplicou a regra fiscal vigente, sem depender da leitura da IA.</div>
+                  </div>
+                </td></tr>
+                <tr><td>
+                  <div class="recon-row mismatch">
+                    <div class="recon-cell recon-doc">
+                      <span class="layer-tag l1" style="margin-bottom:6px;width:fit-content">PDF</span>
+                      <div class="recon-doc-name">Contrato 0091</div>
+                      <div class="recon-doc-sub">Servicos Delta · prestacao continuada</div>
+                    </div>
+                    <div class="recon-cell">
+                      <div class="recon-label">Camada 2 · IA</div>
+                      <div class="recon-value ai">Total declarado R$ 92.000,00</div>
+                    </div>
+                    <div class="recon-cell">
+                      <div class="recon-label">Camada 3 · Recalculo</div>
+                      <div class="recon-value calc">Preco x Qtd + Imposto = R$ 84.300,00</div>
+                    </div>
+                    <div class="recon-cell recon-status">
+                      <span class="badge danger"><i class="fa-solid fa-triangle-exclamation"></i> Divergente</span>
+                      <span class="recon-diff">Diferenca R$ 7.700,00</span>
+                    </div>
+                    <div class="recon-explain"><b>Por que retido:</b> o total declarado no contrato nao bate com a formula base recalculada linha a linha. Sinalizado como possivel indicio de fraude, aguardando revisao humana antes de qualquer aprovacao.</div>
+                  </div>
+                </td></tr>
+                <tr><td>
+                  <div class="recon-row">
+                    <div class="recon-cell recon-doc">
+                      <span class="layer-tag l1" style="margin-bottom:6px;width:fit-content">Imagem</span>
+                      <div class="recon-doc-name">Recibo 8813</div>
+                      <div class="recon-doc-sub">Transporte Sul · frete municipal</div>
+                    </div>
+                    <div class="recon-cell">
+                      <div class="recon-label">Camada 2 · IA</div>
+                      <div class="recon-value ai">ISS 5% · R$ 3.020,00</div>
+                    </div>
+                    <div class="recon-cell">
+                      <div class="recon-label">Camada 3 · Recalculo</div>
+                      <div class="recon-value calc">ISS 5% · R$ 3.020,00</div>
+                    </div>
+                    <div class="recon-cell recon-status">
+                      <span class="badge success"><i class="fa-solid fa-circle-check"></i> Reconciliado</span>
+                      <span class="recon-diff" style="color:var(--success)">Diferenca R$ 0,00</span>
+                    </div>
+                  </div>
+                </td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- AUDITORIA -->
+      <section class="page" id="page-auditoria">
+        <div class="section-head">
+          <div><h2>Trilha de auditoria</h2><div class="sub">Todo evento de cada camada, com origem e responsavel</div></div>
+          <button class="btn btn-ghost"><i class="fa-solid fa-file-export"></i>Exportar</button>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Data/hora</th><th>Camada</th><th>Documento</th><th>Acao</th><th>Resultado</th><th>Responsavel</th></tr></thead>
+              <tbody>
+                <tr><td>16/07 09:42</td><td><span class="layer-tag l3">Camada 3</span></td><td>NF-e 000482</td><td>Recalculo de ICMS</td><td><span class="badge danger">Divergencia retida</span></td><td>Motor automatico</td></tr>
+                <tr><td>16/07 09:41</td><td><span class="layer-tag l2">Camada 2</span></td><td>NF-e 000482</td><td>Categorizacao contextual</td><td><span class="badge success">Concluido</span></td><td>GPT-4o</td></tr>
+                <tr><td>16/07 09:40</td><td><span class="layer-tag l1">Camada 1</span></td><td>NF-e 000482</td><td>Extracao estruturada</td><td><span class="badge success">Concluido</span></td><td>AWS Textract</td></tr>
+                <tr><td>16/07 08:15</td><td><span class="layer-tag l3">Camada 3</span></td><td>Contrato 0091</td><td>Recalculo de total</td><td><span class="badge danger">Divergencia retida</span></td><td>Motor automatico</td></tr>
+                <tr><td>15/07 17:03</td><td><span class="layer-tag l3">Camada 3</span></td><td>Recibo 8813</td><td>Recalculo de ISS</td><td><span class="badge success">Reconciliado</span></td><td>Motor automatico</td></tr>
+                <tr><td>15/07 16:58</td><td><span class="layer-tag l2">Camada 2</span></td><td>Fatura 2291</td><td>Categorizacao contextual</td><td><span class="badge warn">Baixa confianca</span></td><td>Claude 3.5</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- CONFIG -->
+      <section class="page" id="page-config">
+        <div class="section-head"><div><h2>Configuracoes</h2><div class="sub">Regras da arquitetura hibrida</div></div></div>
+        <div class="card">
+          <div class="toggle-row"><div><div class="toggle-title">Extracao automatica na Camada 1</div><div class="toggle-sub">AWS Textract ou Google Document AI conforme o formato recebido</div></div><div class="switch on"></div></div>
+          <div class="toggle-row"><div><div class="toggle-title">Categorizacao automatica pela Camada 2</div><div class="toggle-sub">LLM sugere categoria fiscal assim que o documento e extraido</div></div><div class="switch on"></div></div>
+          <div class="toggle-row"><div><div class="toggle-title">Bloqueio automatico em divergencia</div><div class="toggle-sub">Reter documento sempre que a Camada 3 divergir da Camada 2 acima da tolerancia</div></div><div class="switch on"></div></div>
+          <div class="toggle-row"><div><div class="toggle-title">Notificacao de indicio de fraude</div><div class="toggle-sub">Alertar responsavel quando a diferenca ultrapassar o limite configurado</div></div><div class="switch on"></div></div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<div class="toast" id="toast"><i class="fa-solid fa-circle-check"></i><span>Enviado para a Camada 3</span></div>
+
+<script>
+window.addEventListener('load',()=>{
+  setTimeout(()=>document.getElementById('skeleton').classList.add('hide'),400);
+});
+
+function goPage(name){
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.page===name));
+  document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id==='page-'+name));
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+document.querySelectorAll('.nav-item').forEach(item=>{
+  item.addEventListener('click',()=>{
+    goPage(item.dataset.page);
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('overlay').classList.remove('show');
+  });
+});
+
+document.getElementById('hamburgerBtn').addEventListener('click',()=>{
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('overlay').classList.add('show');
+});
+document.getElementById('overlay').addEventListener('click',()=>{
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('show');
+});
+
+document.querySelectorAll('.chip-row, .filter-row').forEach(row=>{
+  row.querySelectorAll('.chip').forEach(chip=>{
+    chip.addEventListener('click',()=>{
+      row.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+      chip.classList.add('active');
+    });
+  });
+});
+
+function easeOutExpo(t){return t===1?1:1-Math.pow(2,-10*t)}
+function countUp(el){
+  const to=parseInt(el.dataset.count,10);
+  const prefix=el.dataset.prefix||'';
+  const suffix=el.dataset.suffix||'';
+  const dur=1200;const start=performance.now();
+  function frame(now){
+    const p=Math.min((now-start)/dur,1);
+    const val=Math.floor(easeOutExpo(p)*to);
+    el.textContent=prefix+val.toLocaleString('pt-BR')+suffix;
+    if(p<1)requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
+const revealObserver=new IntersectionObserver((entries)=>{
+  entries.forEach((entry,i)=>{
+    if(entry.isIntersecting){
+      const el=entry.target;
+      setTimeout(()=>{
+        el.classList.add('reveal');
+        if(el.classList.contains('kpi-card')){
+          const num=el.querySelector('[data-count]');
+          if(num && !num.dataset.done){num.dataset.done='1';countUp(num);}
+        }
+        if(el.id==='chartWrap'){el.classList.add('reveal');}
+      },i*55);
+      revealObserver.unobserve(el);
+    }
+  });
+},{threshold:.25});
+
+document.querySelectorAll('.kpi-card').forEach(el=>revealObserver.observe(el));
+const chartWrap=document.getElementById('chartWrap');
+if(chartWrap)revealObserver.observe(chartWrap);
+
+window.addEventListener('load',()=>{
+  setTimeout(()=>{
+    document.querySelectorAll('.plan-bar-fill').forEach(el=>el.style.width=el.dataset.fill+'%');
+  },800);
+});
+
+const feedPool=[
+  {icon:'fa-file-import',text:'Camada 1 extraiu <b>NF-e 000401</b> via AWS Textract'},
+  {icon:'fa-brain',text:'Camada 2 categorizou <b>Fatura 2288</b> como frete e logistica'},
+  {icon:'fa-scale-balanced',text:'Camada 3 recalculou <b>Contrato 0091</b> e reteve divergencia'},
+  {icon:'fa-circle-check',text:'Documento <b>Recibo 8813</b> reconciliado sem divergencia'},
+  {icon:'fa-triangle-exclamation',text:'Indicio de fraude sinalizado em <b>NF-e 000482</b>, aguardando revisao'},
+  {icon:'fa-clipboard-list',text:'Trilha de auditoria atualizada para <b>Fatura 2291</b>'},
+];
+const feedEl=document.getElementById('feed');
+function addFeedItem(){
+  const item=feedPool[Math.floor(Math.random()*feedPool.length)];
+  const div=document.createElement('div');
+  div.className='feed-item';
+  div.innerHTML=`<div class="feed-icon"><i class="fa-solid ${item.icon}"></i></div><div class="feed-text">${item.text}</div><div class="feed-time">agora</div>`;
+  feedEl.prepend(div);
+  while(feedEl.children.length>7)feedEl.removeChild(feedEl.lastChild);
+}
+for(let i=0;i<5;i++)addFeedItem();
+setInterval(addFeedItem,4200);
+
+let extracting=false;
+function startExtraction(){
+  if(extracting)return;
+  extracting=true;
+  const btn=document.getElementById('analyzeBtn');
+  btn.disabled=true;
+  btn.innerHTML='<i class="fa-solid fa-circle-notch fa-spin"></i>Analisando...';
+  document.getElementById('scanBlock').style.display='block';
+  const fill=document.getElementById('scanFill');
+  const status=document.getElementById('scanStatus');
+  setTimeout(()=>{fill.style.width='100%';},50);
+  const steps=[
+    'Interpretando clausulas e categorizando despesa...',
+    'Correlacionando NCM e regime fiscal...',
+    'Estimando aliquota aplicavel pelo contexto...',
+    'Preparando envio para recalculo deterministico...'
+  ];
+  let s=0;
+  const stepTimer=setInterval(()=>{
+    s++;
+    if(s<steps.length){status.innerHTML='<i class="fa-solid fa-circle-notch fa-spin"></i>'+steps[s];}
+  },550);
+  setTimeout(()=>{
+    clearInterval(stepTimer);
+    status.innerHTML='<i class="fa-solid fa-circle-check" style="color:var(--success)"></i>Interpretacao concluida, ainda nao validada pela Camada 3';
+    document.getElementById('fieldsEmpty').style.display='none';
+    const grid=document.getElementById('fieldsGrid');
+    grid.style.display='grid';
+    const fields=grid.querySelectorAll('.field');
+    fields.forEach((f,i)=>setTimeout(()=>f.classList.add('show'),i*90));
+    document.getElementById('saveBtn').style.display='flex';
+    btn.disabled=false;
+    btn.innerHTML='<i class="fa-solid fa-arrows-rotate"></i>Analisar outro documento';
+    extracting=false;
+  },2300);
+}
+
+function sendToLayer3(){
+  const toast=document.getElementById('toast');
+  toast.querySelector('span').textContent='Enviado para recalculo na Camada 3';
+  toast.classList.add('show');
+  setTimeout(()=>toast.classList.remove('show'),2600);
+  setTimeout(()=>goPage('reconciliacao'),700);
+}
+
+document.querySelectorAll('.switch').forEach(sw=>{
+  sw.addEventListener('click',()=>sw.classList.toggle('on'));
+});
+</script>
