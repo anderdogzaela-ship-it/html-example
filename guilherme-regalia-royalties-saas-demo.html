@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Regalia - Motor de Conciliacao de Royalties Musicais</title>
+<meta name="description" content="Plataforma multi-tenant de administracao de catalogos musicais com motor de conciliacao ISRC, splits e demonstrativos por titular.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Lexend:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+:root{
+  --bg:#0f0d0a;
+  --surface:#1a1610;
+  --surface-2:#221c14;
+  --surface-3:#2b2318;
+  --border:rgba(255,255,255,.08);
+  --border-2:rgba(255,255,255,.14);
+  --text:#f5efe6;
+  --text-dim:#a89a82;
+  --text-faint:#6b5f4d;
+  --gold400:#f2c14e;
+  --gold500:#e0a72e;
+  --gold600:#c48a1f;
+  --gold700:#9c6d18;
+  --glow:rgba(224,167,46,.35);
+  --success:#34d399;
+  --success-bg:rgba(52,211,153,.12);
+  --danger:#f87171;
+  --danger-bg:rgba(248,113,113,.12);
+  --warn:#fbbf24;
+  --warn-bg:rgba(251,191,36,.12);
+  --info:#60a5fa;
+  --info-bg:rgba(96,165,250,.12);
+  --r-sm:8px;--r-md:12px;--r-lg:16px;--r-xl:22px;
+  --shadow-md:0 8px 24px rgba(0,0,0,.35);
+  --shadow-lg:0 20px 50px rgba(0,0,0,.45);
+  --ease:cubic-bezier(.4,0,.2,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Nunito',sans-serif;
+  background:radial-gradient(circle at 1px 1px, rgba(255,255,255,.035) 1px, transparent 0) 0 0/28px 28px, var(--bg);
+  color:var(--text);-webkit-font-smoothing:antialiased;min-height:100vh;overflow-x:hidden;
+}
+h1,h2,h3,h4,.brand-name,.kpi-value{font-family:'Lexend',sans-serif}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input{font-family:inherit}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--surface-3);border-radius:10px}
+
+.demo-badge{position:fixed;bottom:18px;right:18px;z-index:999;background:var(--surface);color:var(--gold400);
+  font-size:11.5px;font-weight:700;padding:8px 14px;border-radius:100px;box-shadow:var(--shadow-lg);
+  display:flex;align-items:center;gap:7px;border:1px solid rgba(224,167,46,.3);}
+.demo-badge i{font-size:10px}
+.restart-btn{position:fixed;bottom:18px;left:18px;z-index:999;background:var(--surface-2);color:var(--text-dim);
+  font-size:11.5px;font-weight:700;padding:8px 14px;border-radius:100px;box-shadow:var(--shadow-lg);
+  display:flex;align-items:center;gap:7px;border:1px solid var(--border-2)}
+.restart-btn:hover{color:var(--gold400)}
+
+.app{display:grid;grid-template-columns:252px 1fr;min-height:100vh}
+.sidebar{background:var(--surface);border-right:1px solid var(--border);padding:20px 14px;
+  display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh;overflow-y:auto;z-index:40}
+.brand{display:flex;align-items:center;gap:10px;padding:6px 8px 18px}
+.brand-mark{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--gold400),var(--gold700));
+  display:flex;align-items:center;justify-content:center;font-weight:800;color:#241a06;font-size:14px;
+  animation:pulseLogo 3.2s ease-in-out infinite;flex-shrink:0}
+@keyframes pulseLogo{0%,100%{box-shadow:0 0 0 0 rgba(224,167,46,0)}50%{box-shadow:0 0 20px 3px var(--glow)}}
+.brand-name{font-weight:700;font-size:16.5px;letter-spacing:.2px}
+.brand-sub{font-size:10.5px;color:var(--text-faint);margin-top:-2px}
+
+.tenant-switch{margin:2px 8px 14px;padding:8px 10px;background:var(--surface-2);border:1px solid var(--border-2);
+  border-radius:var(--r-md);font-size:11.5px;display:flex;align-items:center;gap:8px;color:var(--text-dim)}
+.tenant-switch i{color:var(--gold400)}
+.tenant-switch b{color:var(--text);font-size:12px}
+
+.nav-group-label{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-faint);padding:14px 10px 6px;font-weight:600}
+.nav-item{display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:var(--r-md);
+  color:var(--text-dim);font-size:14px;font-weight:500;transition:background .2s var(--ease),color .2s var(--ease);position:relative;cursor:pointer}
+.nav-item i{width:17px;text-align:center;font-size:14px;opacity:.85}
+.nav-item:hover{background:var(--surface-2);color:var(--text)}
+.nav-item.active{background:var(--surface-2);color:var(--gold400)}
+.nav-item.active::before{content:'';position:absolute;left:-14px;top:50%;transform:translateY(-50%);width:3px;height:16px;border-radius:3px;background:var(--gold500)}
+.nav-item .badge-count{margin-left:auto;background:var(--danger-bg);color:var(--danger);font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:20px}
+.nav-item.locked{cursor:not-allowed;opacity:.55}
+.nav-item.locked:hover{background:none;color:var(--text-dim)}
+.nav-item .lock-tag{margin-left:auto;font-size:9.5px;font-weight:700;background:var(--surface-3);color:var(--text-faint);padding:2px 6px;border-radius:20px;text-transform:uppercase;letter-spacing:.03em}
+
+.sidebar-footer{margin-top:auto;padding-top:14px;border-top:1px solid var(--border)}
+.plan-card{background:linear-gradient(160deg,var(--surface-2),var(--surface-3));border:1px solid var(--border-2);
+  border-radius:var(--r-lg);padding:13px;font-size:12px;color:var(--text-dim)}
+.plan-card strong{color:var(--text);display:flex;align-items:center;gap:6px;font-size:12.5px;margin-bottom:5px}
+.plan-card strong i{color:var(--gold400);font-size:11px}
+
+.main{min-width:0;display:flex;flex-direction:column}
+.topbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:14px;padding:14px 26px;
+  background:rgba(15,13,10,.8);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--border)}
+.search-box{flex:1;max-width:380px;display:flex;align-items:center;gap:9px;background:var(--surface-2);
+  border:1px solid var(--border-2);border-radius:100px;padding:8px 14px;color:var(--text-faint);font-size:13.5px}
+.search-box input{background:none;border:none;outline:none;color:var(--text);width:100%;font-size:13.5px}
+.topbar-actions{margin-left:auto;display:flex;align-items:center;gap:12px}
+.icon-btn{width:36px;height:36px;border-radius:10px;background:var(--surface-2);border:1px solid var(--border-2);
+  display:flex;align-items:center;justify-content:center;color:var(--text-dim);position:relative;font-size:14px}
+.icon-btn .dot{position:absolute;top:6px;right:6px;width:7px;height:7px;border-radius:50%;background:var(--danger);border:2px solid var(--surface)}
+.avatar-user{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--gold400),var(--gold700));
+  display:flex;align-items:center;justify-content:center;font-weight:800;color:#241a06;font-size:13px}
+
+.content{padding:24px 26px 60px}
+.view{display:none}
+.view.active{display:block}
+.page-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px}
+.page-head h1{font-size:21px;font-weight:700}
+.page-head p{font-size:13px;color:var(--text-dim);margin-top:3px}
+
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
+.stat-tile{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:15px 17px;
+  display:flex;align-items:center;gap:13px}
+.stat-tile .s-ico{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.stat-tile .s-ico.gold{background:var(--warn-bg);color:var(--gold400)}
+.stat-tile .s-ico.blue{background:var(--info-bg);color:var(--info)}
+.stat-tile .s-ico.green{background:var(--success-bg);color:var(--success)}
+.stat-tile .s-ico.red{background:var(--danger-bg);color:var(--danger)}
+.stat-tile .s-val{font-size:20px;font-weight:800;font-family:'Lexend',sans-serif;line-height:1.1}
+.stat-tile .s-label{font-size:11.5px;color:var(--text-dim);margin-top:2px}
+
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-xl);overflow:hidden;box-shadow:var(--shadow-md)}
+.panel-head{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.panel-head h3{font-size:14.5px;font-weight:700}
+.panel-head span{font-size:11.5px;color:var(--text-faint)}
+
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{text-align:left;padding:10px 16px;color:var(--text-faint);font-weight:700;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:11px 16px;border-bottom:1px solid var(--border);color:var(--text-dim);white-space:nowrap}
+tr:last-child td{border-bottom:none}
+td.strong{color:var(--text);font-weight:600}
+.mono{font-family:'Lexend',monospace;font-size:11.5px;color:var(--text-dim)}
+
+.pill{font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:20px;display:inline-flex;align-items:center;gap:5px}
+.pill.ok{background:var(--success-bg);color:var(--success)}
+.pill.warn{background:var(--warn-bg);color:var(--gold400)}
+.pill.review{background:var(--danger-bg);color:var(--danger)}
+.pill.info{background:var(--info-bg);color:var(--info)}
+
+.section-head{display:flex;align-items:center;justify-content:space-between;margin:26px 0 14px}
+.section-head h2{font-size:16.5px;font-weight:700}
+
+.upload-box{border:1.5px dashed var(--border-2);border-radius:var(--r-lg);padding:26px;text-align:center;margin-bottom:20px;
+  background:var(--surface-2)}
+.upload-box i{font-size:26px;color:var(--gold400);margin-bottom:8px;display:block}
+.upload-box .up-title{font-size:14px;font-weight:700;margin-bottom:4px}
+.upload-box .up-sub{font-size:12px;color:var(--text-faint)}
+.btn-gold{margin-top:14px;background:linear-gradient(135deg,var(--gold400),var(--gold600));color:#241a06;font-weight:700;
+  padding:9px 20px;border-radius:10px;font-size:13px;display:inline-flex;align-items:center;gap:8px}
+.btn-ghost{background:var(--surface-2);border:1px solid var(--border-2);color:var(--text-dim);font-weight:700;
+  padding:9px 18px;border-radius:10px;font-size:13px;display:inline-flex;align-items:center;gap:8px}
+
+.progress-track{height:8px;background:var(--surface-3);border-radius:20px;overflow:hidden;margin:14px 0}
+.progress-fill{height:100%;width:100%;background:linear-gradient(90deg,var(--gold500),var(--gold400));border-radius:20px}
+
+.alert-box{display:flex;gap:12px;padding:14px 16px;border-radius:var(--r-md);margin-bottom:16px;align-items:flex-start}
+.alert-box.amber{background:var(--warn-bg);border:1px solid rgba(251,191,36,.3)}
+.alert-box i{color:var(--gold400);font-size:15px;margin-top:1px}
+.alert-box .a-title{font-weight:700;font-size:13px;margin-bottom:3px}
+.alert-box .a-body{font-size:12.5px;color:var(--text-dim);line-height:1.5}
+
+.statement-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-xl);padding:22px;box-shadow:var(--shadow-md)}
+.statement-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;flex-wrap:wrap;gap:10px}
+.statement-top h3{font-size:16px;font-weight:700}
+.statement-top p{font-size:12px;color:var(--text-faint);margin-top:2px}
+.line-row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px}
+.line-row.total{border-top:2px solid var(--border-2);border-bottom:none;margin-top:6px;padding-top:14px;font-weight:800;font-size:15px;color:var(--gold400)}
+.line-sub{font-size:11px;color:var(--text-faint);margin-top:1px}
+
+.phase2-row{margin-top:28px;display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.phase2-tile{background:var(--surface);border:1px dashed var(--border-2);border-radius:var(--r-lg);padding:16px;
+  display:flex;flex-direction:column;gap:8px;opacity:.68}
+.phase2-tile i{font-size:18px;color:var(--text-faint)}
+.phase2-tile .p2-name{font-size:13px;font-weight:700;color:var(--text-dim)}
+.phase2-tile .p2-tag{font-size:10px;font-weight:700;color:var(--text-faint);text-transform:uppercase;letter-spacing:.04em;
+  background:var(--surface-3);padding:2px 8px;border-radius:20px;width:fit-content}
+
+@media(max-width:1100px){.stat-row{grid-template-columns:1fr 1fr}}
+@media(max-width:900px){.app{grid-template-columns:1fr}.sidebar{display:none}.stat-row{grid-template-columns:1fr}.phase2-row{grid-template-columns:1fr 1fr}table{font-size:11.5px}}
+
+.fade-in{animation:fadeIn .5s var(--ease) both}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+
+<div class="demo-badge"><i class="fa-solid fa-flask"></i> Prototipo funcional - dados ficticios</div>
+<div class="restart-btn" onclick="showView('dashboard')"><i class="fa-solid fa-rotate-left"></i> Reiniciar</div>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">RG</div>
+      <div>
+        <div class="brand-name">Regalia</div>
+        <div class="brand-sub">Admin de Catalogo Musical</div>
+      </div>
+    </div>
+
+    <div class="tenant-switch"><i class="fa-solid fa-building"></i> Selo ativo: <b>Base Records</b></div>
+
+    <div class="nav-group-label">Fase 1</div>
+    <div class="nav-item active" data-view="dashboard"><i class="fa-solid fa-chart-line"></i> Dashboard</div>
+    <div class="nav-item" data-view="catalogo"><i class="fa-solid fa-record-vinyl"></i> Catalogo</div>
+    <div class="nav-item" data-view="conciliacao"><i class="fa-solid fa-layer-group"></i> Conciliacao <span class="badge-count">2</span></div>
+    <div class="nav-item" data-view="demonstrativo"><i class="fa-solid fa-file-invoice-dollar"></i> Demonstrativos</div>
+
+    <div class="nav-group-label">Fase 2</div>
+    <div class="nav-item locked"><i class="fa-solid fa-users-gear"></i> Portal do Titular <span class="lock-tag">Fase 2</span></div>
+    <div class="nav-item locked"><i class="fa-solid fa-brands fa-spotify"></i> Integracao Spotify <span class="lock-tag">Fase 2</span></div>
+    <div class="nav-item locked"><i class="fa-solid fa-credit-card"></i> Assinaturas Pix/Cartao <span class="lock-tag">Fase 2</span></div>
+    <div class="nav-item locked"><i class="fa-solid fa-file-export"></i> Exportacao XLSX/CSV <span class="lock-tag">Fase 2</span></div>
+
+    <div class="sidebar-footer">
+      <div class="plan-card">
+        <strong><i class="fa-solid fa-circle-info"></i> Fase 1</strong>
+        Cadastro multi-tenant, catalogo, contratos/splits e motor de conciliacao com matching ISRC.
+      </div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input placeholder="Buscar por titular, obra ou ISRC..."></div>
+      <div class="topbar-actions">
+        <div class="icon-btn"><i class="fa-solid fa-bell"></i><span class="dot"></span></div>
+        <div class="avatar-user">GS</div>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <div id="dashboard" class="view active">
+        <div class="page-head fade-in">
+          <div>
+            <h1>Visao Geral - Base Records</h1>
+            <p>Estado do catalogo e das ultimas importacoes de distribuidoras.</p>
+          </div>
+        </div>
+
+        <div class="stat-row fade-in">
+          <div class="stat-tile">
+            <div class="s-ico gold"><i class="fa-solid fa-music"></i></div>
+            <div><div class="s-val">1.204</div><div class="s-label">Fonogramas catalogados</div></div>
+          </div>
+          <div class="stat-tile">
+            <div class="s-ico blue"><i class="fa-solid fa-users"></i></div>
+            <div><div class="s-val">38</div><div class="s-label">Titulares ativos</div></div>
+          </div>
+          <div class="stat-tile">
+            <div class="s-ico red"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <div><div class="s-val">2</div><div class="s-label">Importacoes aguardando revisao</div></div>
+          </div>
+        </div>
+
+        <div class="section-head fade-in"><h2>Ultimas importacoes</h2></div>
+        <div class="panel fade-in">
+          <table>
+            <tr><th>Distribuidora</th><th>Periodo</th><th>Linhas</th><th>Receita bruta</th><th>Status</th></tr>
+            <tr><td class="strong">DistroKid</td><td>Jun/2026</td><td>3.842</td><td>R$ 41.280,50</td><td><span class="pill ok"><i class="fa-solid fa-circle-check"></i> Conciliado</span></td></tr>
+            <tr><td class="strong">The Orchard</td><td>Jun/2026</td><td>1.917</td><td>R$ 22.905,10</td><td><span class="pill review"><i class="fa-solid fa-triangle-exclamation"></i> Revisao pendente</span></td></tr>
+            <tr><td class="strong">ONErpm</td><td>Mai/2026</td><td>2.503</td><td>R$ 18.442,00</td><td><span class="pill ok"><i class="fa-solid fa-circle-check"></i> Conciliado</span></td></tr>
+            <tr><td class="strong">Believe Digital</td><td>Mai/2026</td><td>968</td><td>R$ 9.110,75</td><td><span class="pill review"><i class="fa-solid fa-triangle-exclamation"></i> Revisao pendente</span></td></tr>
+          </table>
+        </div>
+      </div>
+
+      <div id="catalogo" class="view">
+        <div class="page-head fade-in">
+          <div>
+            <h1>Catalogo</h1>
+            <p>Obras, fonogramas e titulares vinculados por ISRC/UPC.</p>
+          </div>
+        </div>
+        <div class="panel fade-in">
+          <div class="panel-head"><h3>Fonogramas</h3><span>1.204 registros</span></div>
+          <table>
+            <tr><th>Faixa</th><th>ISRC</th><th>Titulares / Split</th><th>Contrato</th><th>Status</th></tr>
+            <tr><td class="strong">Sob a Luz da Cidade</td><td class="mono">BR-BRX-26-00142</td><td>Marina Costa 60% / Selo 40%</td><td>Vigente</td><td><span class="pill ok">Ativo</span></td></tr>
+            <tr><td class="strong">Deriva (feat. Lian)</td><td class="mono">BR-BRX-26-00187</td><td>Lian M. 35% / Rafael Dutra 35% / Selo 30%</td><td>Vigente</td><td><span class="pill ok">Ativo</span></td></tr>
+            <tr><td class="strong">Ceu de Vidro</td><td class="mono">BR-BRX-25-00961</td><td>Marina Costa 70% / Selo 30%</td><td>Vigente</td><td><span class="pill ok">Ativo</span></td></tr>
+            <tr><td class="strong">Nada Sobrou</td><td class="mono">BR-BRX-25-00814</td><td>Trio Norte 100%</td><td>Renovar em 45 dias</td><td><span class="pill warn">Atencao</span></td></tr>
+          </table>
+        </div>
+      </div>
+
+      <div id="conciliacao" class="view">
+        <div class="page-head fade-in">
+          <div>
+            <h1>Motor de Conciliacao</h1>
+            <p>Importacao de relatorio, matching por ISRC/UPC e aplicacao de splits.</p>
+          </div>
+        </div>
+
+        <div class="upload-box fade-in">
+          <i class="fa-solid fa-file-arrow-up"></i>
+          <div class="up-title">The Orchard - relatorio_junho_2026.xlsx</div>
+          <div class="up-sub">1.917 linhas identificadas · parser mapeado para o layout desta distribuidora</div>
+          <div class="progress-track"><div class="progress-fill"></div></div>
+          <div class="btn-gold"><i class="fa-solid fa-circle-check"></i> Parsing concluido - matching aplicado</div>
+        </div>
+
+        <div class="alert-box amber fade-in">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          <div>
+            <div class="a-title">41 linhas sem ISRC correspondente no catalogo</div>
+            <div class="a-body">Essa receita fica retida em quarentena e nao e distribuida a nenhum titular ate confirmacao manual - evita creditar o valor errado por divergencia de ISRC entre distribuidora e catalogo.</div>
+          </div>
+        </div>
+
+        <div class="panel fade-in">
+          <div class="panel-head"><h3>Resultado do matching</h3><span>The Orchard · Jun/2026</span></div>
+          <table>
+            <tr><th>Faixa</th><th>ISRC recebido</th><th>Receita bruta</th><th>Status</th></tr>
+            <tr><td class="strong">Sob a Luz da Cidade</td><td class="mono">BR-BRX-26-00142</td><td>R$ 812,40</td><td><span class="pill ok"><i class="fa-solid fa-circle-check"></i> Match automatico</span></td></tr>
+            <tr><td class="strong">Deriva (feat. Lian)</td><td class="mono">BR-BRX-26-00187</td><td>R$ 604,15</td><td><span class="pill ok"><i class="fa-solid fa-circle-check"></i> Match automatico</span></td></tr>
+            <tr><td class="strong">Ceu de Vidro - Ao Vivo</td><td class="mono">BR-BRX-25-00961-L</td><td>R$ 190,00</td><td><span class="pill review"><i class="fa-solid fa-magnifying-glass"></i> ISRC divergente - revisar</span></td></tr>
+            <tr><td class="strong">Faixa sem titulo (raw)</td><td class="mono">—</td><td>R$ 58,90</td><td><span class="pill review"><i class="fa-solid fa-magnifying-glass"></i> Sem ISRC - revisar</span></td></tr>
+          </table>
+        </div>
+      </div>
+
+      <div id="demonstrativo" class="view">
+        <div class="page-head fade-in">
+          <div>
+            <h1>Demonstrativos por Titular</h1>
+            <p>Splits aplicados, deducoes itemizadas e valor liquido por titular.</p>
+          </div>
+        </div>
+
+        <div class="statement-card fade-in">
+          <div class="statement-top">
+            <div>
+              <h3>Marina Costa - Demonstrativo Jun/2026</h3>
+              <p>Selo: Base Records · 2 fonogramas com receita no periodo</p>
+            </div>
+            <div style="display:flex;gap:10px">
+              <div class="btn-ghost"><i class="fa-solid fa-envelope"></i> Enviar por email</div>
+              <div class="btn-gold"><i class="fa-solid fa-file-pdf"></i> Gerar PDF</div>
+            </div>
+          </div>
+
+          <div class="line-row"><div>Sob a Luz da Cidade <div class="line-sub">Receita bruta R$ 812,40 · split 60%</div></div><div>R$ 487,44</div></div>
+          <div class="line-row"><div>Ceu de Vidro <div class="line-sub">Receita bruta R$ 355,00 · split 70%</div></div><div>R$ 248,50</div></div>
+          <div class="line-row"><div>Taxa de distribuicao <div class="line-sub">Deducao itemizada · 8% sobre receita bruta</div></div><div>- R$ 93,47</div></div>
+          <div class="line-row total"><div>Valor liquido a repassar</div><div>R$ 642,47</div></div>
+        </div>
+      </div>
+
+      <div class="section-head fade-in"><h2>Fase 2 - proxima etapa</h2></div>
+      <div class="phase2-row fade-in">
+        <div class="phase2-tile"><i class="fa-solid fa-users-gear"></i><div class="p2-name">Portal exclusivo do titular</div><span class="p2-tag">Fase 2</span></div>
+        <div class="phase2-tile"><i class="fa-brands fa-spotify"></i><div class="p2-name">Integracao Spotify Web API</div><span class="p2-tag">Fase 2</span></div>
+        <div class="phase2-tile"><i class="fa-solid fa-credit-card"></i><div class="p2-name">Assinaturas Stripe + Pix</div><span class="p2-tag">Fase 2</span></div>
+        <div class="phase2-tile"><i class="fa-solid fa-file-export"></i><div class="p2-name">Dashboard avancado + export XLSX/CSV</div><span class="p2-tag">Fase 2</span></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+function showView(name){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById(name).classList.add('active');
+  document.querySelectorAll('.nav-item[data-view]').forEach(i=>i.classList.remove('active'));
+  document.querySelector('.nav-item[data-view="'+name+'"]').classList.add('active');
+}
+document.querySelectorAll('.nav-item[data-view]').forEach(item=>{
+  item.addEventListener('click',()=>showView(item.dataset.view));
+});
+</script>
+</body>
+</html>
