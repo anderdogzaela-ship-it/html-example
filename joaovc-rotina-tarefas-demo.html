@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rotina — Gestão de Tarefas Diárias</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+:root{
+  --bg:#f6f8f5;
+  --surface:#ffffff;
+  --surface-2:#eef3ea;
+  --text:#1e2a1f;
+  --text-soft:#5c6b5d;
+  --text-muted:#8b978c;
+  --border:#e2e8de;
+  --primary:#2f6d3c;
+  --primary-dark:#234f2c;
+  --primary-glow:rgba(47,109,60,0.14);
+  --accent:#e0a72e;
+  --danger:#c9503f;
+  --danger-soft:#fbe9e6;
+  --ok:#2f6d3c;
+  --ok-soft:#e6f0e4;
+  --radius:16px;
+  --shadow:0 2px 8px rgba(30,42,31,0.06), 0 8px 24px rgba(30,42,31,0.05);
+  --shadow-lg:0 12px 32px rgba(30,42,31,0.12);
+}
+:root[data-theme="dark"]{
+  --bg:#111712;
+  --surface:#171f18;
+  --surface-2:#1e281f;
+  --text:#eef3ea;
+  --text-soft:#a9b8aa;
+  --text-muted:#7c8a7d;
+  --border:#2a352b;
+  --primary:#4f9a5f;
+  --primary-dark:#3d7d4b;
+  --primary-glow:rgba(79,154,95,0.18);
+  --accent:#e6b84a;
+  --danger:#e2776a;
+  --danger-soft:#3a2320;
+  --ok:#4f9a5f;
+  --ok-soft:#1d2b1e;
+  --shadow:0 2px 8px rgba(0,0,0,0.25), 0 8px 24px rgba(0,0,0,0.2);
+  --shadow-lg:0 12px 32px rgba(0,0,0,0.35);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#111712;
+    --surface:#171f18;
+    --surface-2:#1e281f;
+    --text:#eef3ea;
+    --text-soft:#a9b8aa;
+    --text-muted:#7c8a7d;
+    --border:#2a352b;
+    --primary:#4f9a5f;
+    --primary-dark:#3d7d4b;
+    --primary-glow:rgba(79,154,95,0.18);
+    --accent:#e6b84a;
+    --danger:#e2776a;
+    --danger-soft:#3a2320;
+    --ok:#4f9a5f;
+    --ok-soft:#1d2b1e;
+    --shadow:0 2px 8px rgba(0,0,0,0.25), 0 8px 24px rgba(0,0,0,0.2);
+    --shadow-lg:0 12px 32px rgba(0,0,0,0.35);
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Nunito',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select{font-family:inherit}
+
+/* ---------- top bar ---------- */
+.topbar{
+  position:sticky;top:0;z-index:20;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 32px;
+  background:rgba(246,248,245,0.85);
+  backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--border);
+}
+:root[data-theme="dark"] .topbar, @media (prefers-color-scheme:dark){.topbar{background:rgba(17,23,18,0.85)}}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:19px;letter-spacing:-0.02em}
+.brand-mark{
+  width:34px;height:34px;border-radius:10px;
+  background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+  display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;
+  box-shadow:0 4px 12px var(--primary-glow);
+}
+.topbar-actions{display:flex;align-items:center;gap:14px}
+.theme-toggle{
+  width:38px;height:38px;border-radius:50%;
+  background:var(--surface-2);color:var(--text-soft);
+  display:flex;align-items:center;justify-content:center;
+  border:1px solid var(--border);font-size:14px;transition:.2s;
+}
+.theme-toggle:hover{color:var(--primary)}
+.avatar{
+  width:38px;height:38px;border-radius:50%;
+  background:var(--accent);color:#3a2c05;font-weight:800;
+  display:flex;align-items:center;justify-content:center;font-size:14px;
+}
+
+/* ---------- layout ---------- */
+.app{
+  display:grid;
+  grid-template-columns:260px 1fr;
+  max-width:1280px;
+  margin:0 auto;
+  min-height:calc(100vh - 71px);
+}
+.sidebar{
+  padding:28px 20px;
+  border-right:1px solid var(--border);
+}
+.sidebar-title{
+  font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--text-muted);margin:22px 0 10px;padding:0 10px;
+}
+.sidebar-title:first-child{margin-top:0}
+.nav-item{
+  display:flex;align-items:center;gap:11px;
+  padding:10px 12px;border-radius:11px;
+  color:var(--text-soft);font-weight:700;font-size:14.5px;
+  cursor:pointer;transition:.15s;margin-bottom:2px;
+}
+.nav-item i{width:18px;text-align:center;font-size:14px}
+.nav-item .count{
+  margin-left:auto;font-size:12px;font-weight:800;
+  background:var(--surface-2);color:var(--text-muted);
+  padding:2px 8px;border-radius:20px;
+}
+.nav-item:hover{background:var(--surface-2);color:var(--text)}
+.nav-item.active{background:var(--primary-glow);color:var(--primary)}
+.nav-item.active .count{background:var(--primary);color:#fff}
+.cat-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+
+.main{padding:28px 32px 60px}
+.page-head{
+  display:flex;align-items:flex-end;justify-content:space-between;
+  margin-bottom:22px;flex-wrap:wrap;gap:14px;
+}
+.page-head h1{font-size:26px;font-weight:800;letter-spacing:-0.02em}
+.page-head p{color:var(--text-soft);font-size:14px;margin-top:3px}
+.progress-chip{
+  display:flex;align-items:center;gap:10px;
+  background:var(--surface);border:1px solid var(--border);
+  padding:8px 16px;border-radius:100px;box-shadow:var(--shadow);
+  font-size:13px;font-weight:700;color:var(--text-soft);
+}
+.progress-ring{width:26px;height:26px;flex-shrink:0}
+
+/* quick-add */
+.quick-add{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);box-shadow:var(--shadow);
+  padding:14px 16px;display:flex;gap:12px;align-items:center;margin-bottom:22px;
+  transition:.2s;
+}
+.quick-add:focus-within{box-shadow:var(--shadow-lg);border-color:var(--primary)}
+.quick-add i{color:var(--primary);font-size:16px}
+.quick-add input{
+  flex:1;border:none;outline:none;background:none;font-size:15px;color:var(--text);
+}
+.quick-add input::placeholder{color:var(--text-muted)}
+.qa-select{
+  border:1px solid var(--border);background:var(--surface-2);
+  border-radius:9px;padding:7px 10px;font-size:12.5px;font-weight:700;color:var(--text-soft);
+}
+.qa-date{
+  border:1px solid var(--border);background:var(--surface-2);
+  border-radius:9px;padding:7px 10px;font-size:12.5px;font-weight:700;color:var(--text-soft);
+}
+.btn-add{
+  background:var(--primary);color:#fff;font-weight:800;font-size:13.5px;
+  padding:9px 18px;border-radius:9px;display:flex;align-items:center;gap:7px;
+  box-shadow:0 4px 12px var(--primary-glow);transition:.15s;white-space:nowrap;
+}
+.btn-add:hover{background:var(--primary-dark);transform:translateY(-1px)}
+
+/* filter chips */
+.filters{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap}
+.chip{
+  padding:7px 15px;border-radius:100px;font-size:13px;font-weight:700;
+  background:var(--surface);border:1px solid var(--border);color:var(--text-soft);
+  transition:.15s;
+}
+.chip:hover{border-color:var(--primary)}
+.chip.active{background:var(--text);color:var(--bg);border-color:var(--text)}
+
+/* task list */
+.task-list{display:flex;flex-direction:column;gap:10px}
+.task{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:14px;
+  box-shadow:var(--shadow);transition:.2s;opacity:0;transform:translateY(10px);
+  animation:reveal .45s ease forwards;
+}
+@keyframes reveal{to{opacity:1;transform:translateY(0)}}
+.task:hover{box-shadow:var(--shadow-lg);transform:translateY(-2px)}
+.task.done{opacity:.6}
+.task.done .task-title{text-decoration:line-through;color:var(--text-muted)}
+.check{
+  width:23px;height:23px;border-radius:50%;border:2.2px solid var(--border);
+  flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  color:transparent;font-size:12px;transition:.15s;
+}
+.check:hover{border-color:var(--primary)}
+.task.done .check{background:var(--ok);border-color:var(--ok);color:#fff}
+.task-body{flex:1;min-width:0}
+.task-title{font-weight:700;font-size:14.5px;margin-bottom:4px}
+.task-meta{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--text-muted);flex-wrap:wrap}
+.task-meta .cat-pill{
+  display:flex;align-items:center;gap:5px;padding:2px 9px;border-radius:100px;font-weight:700;
+}
+.due{display:flex;align-items:center;gap:5px}
+.due.overdue{color:var(--danger);font-weight:800}
+.due.today{color:var(--accent);font-weight:800}
+.task-actions{display:flex;gap:4px;opacity:0;transition:.15s}
+.task:hover .task-actions{opacity:1}
+.icon-btn{
+  width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;
+  color:var(--text-muted);font-size:13px;transition:.15s;
+}
+.icon-btn:hover{background:var(--surface-2);color:var(--text)}
+.icon-btn.del:hover{background:var(--danger-soft);color:var(--danger)}
+
+.empty{
+  text-align:center;padding:60px 20px;color:var(--text-muted);
+}
+.empty i{font-size:36px;margin-bottom:14px;color:var(--primary);opacity:.5}
+.empty p{font-weight:700;font-size:15px}
+
+/* modal */
+.modal-backdrop{
+  position:fixed;inset:0;background:rgba(20,25,20,0.45);backdrop-filter:blur(3px);
+  display:none;align-items:center;justify-content:center;z-index:100;padding:20px;
+}
+.modal-backdrop.open{display:flex}
+.modal{
+  background:var(--surface);border-radius:18px;padding:26px;width:100%;max-width:400px;
+  box-shadow:var(--shadow-lg);border:1px solid var(--border);
+}
+.modal h3{font-size:17px;font-weight:800;margin-bottom:16px}
+.field{margin-bottom:14px}
+.field label{font-size:12px;font-weight:800;color:var(--text-soft);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em}
+.field input,.field select{
+  width:100%;padding:10px 12px;border-radius:9px;border:1px solid var(--border);
+  background:var(--surface-2);color:var(--text);font-size:14px;outline:none;
+}
+.field input:focus,.field select:focus{border-color:var(--primary)}
+.modal-actions{display:flex;gap:10px;margin-top:20px}
+.btn-secondary{
+  flex:1;padding:11px;border-radius:10px;font-weight:800;font-size:13.5px;
+  background:var(--surface-2);color:var(--text-soft);
+}
+.btn-primary{
+  flex:1;padding:11px;border-radius:10px;font-weight:800;font-size:13.5px;
+  background:var(--primary);color:#fff;
+}
+
+/* mobile nav */
+.mobile-tabs{display:none}
+
+@media (max-width:860px){
+  .app{grid-template-columns:1fr}
+  .sidebar{display:none}
+  .main{padding:20px 16px 90px}
+  .topbar{padding:14px 18px}
+  .mobile-tabs{
+    display:flex;position:fixed;bottom:0;left:0;right:0;z-index:30;
+    background:var(--surface);border-top:1px solid var(--border);
+    padding:8px 6px calc(env(safe-area-inset-bottom) + 8px);
+    box-shadow:0 -4px 20px rgba(0,0,0,0.06);
+  }
+  .mtab{
+    flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+    padding:6px 2px;font-size:10.5px;font-weight:800;color:var(--text-muted);
+    border-radius:10px;
+  }
+  .mtab i{font-size:16px}
+  .mtab.active{color:var(--primary)}
+  .quick-add{flex-wrap:wrap}
+  .qa-select,.qa-date{flex:1}
+  .page-head{align-items:flex-start}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand"><div class="brand-mark"><i class="fa-solid fa-leaf"></i></div>Rotina</div>
+  <div class="topbar-actions">
+    <button class="theme-toggle" id="themeToggle"><i class="fa-solid fa-moon"></i></button>
+    <div class="avatar">JV</div>
+  </div>
+</div>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="sidebar-title">Visualizar</div>
+    <div class="nav-item active" data-view="all"><i class="fa-solid fa-inbox"></i>Todas as tarefas<span class="count" id="cnt-all">0</span></div>
+    <div class="nav-item" data-view="today"><i class="fa-solid fa-sun"></i>Hoje<span class="count" id="cnt-today">0</span></div>
+    <div class="nav-item" data-view="overdue"><i class="fa-solid fa-triangle-exclamation"></i>Atrasadas<span class="count" id="cnt-overdue">0</span></div>
+    <div class="nav-item" data-view="done"><i class="fa-solid fa-circle-check"></i>Concluidas<span class="count" id="cnt-done">0</span></div>
+
+    <div class="sidebar-title">Categorias</div>
+    <div class="nav-item" data-cat="Trabalho"><span class="cat-dot" style="background:#2f6d3c"></span>Trabalho</div>
+    <div class="nav-item" data-cat="Pessoal"><span class="cat-dot" style="background:#e0a72e"></span>Pessoal</div>
+    <div class="nav-item" data-cat="Casa"><span class="cat-dot" style="background:#3f7fbf"></span>Casa</div>
+    <div class="nav-item" data-cat="Estudos"><span class="cat-dot" style="background:#8a5cc2"></span>Estudos</div>
+  </aside>
+
+  <main class="main">
+    <div class="page-head">
+      <div>
+        <h1 id="viewTitle">Todas as tarefas</h1>
+        <p id="viewSub">Organize seu dia com clareza</p>
+      </div>
+      <div class="progress-chip">
+        <svg class="progress-ring" viewBox="0 0 36 36">
+          <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="var(--border)" stroke-width="3.5"/>
+          <path id="ringFg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="var(--primary)" stroke-width="3.5" stroke-dasharray="0,100" stroke-linecap="round"/>
+        </svg>
+        <span id="progressText">0/0 concluidas</span>
+      </div>
+    </div>
+
+    <div class="quick-add">
+      <i class="fa-solid fa-plus"></i>
+      <input type="text" id="newTaskInput" placeholder="Adicionar nova tarefa... (ex: Enviar proposta ao cliente)">
+      <select class="qa-select" id="newTaskCat">
+        <option value="Trabalho">Trabalho</option>
+        <option value="Pessoal">Pessoal</option>
+        <option value="Casa">Casa</option>
+        <option value="Estudos">Estudos</option>
+      </select>
+      <input type="date" class="qa-date" id="newTaskDate">
+      <button class="btn-add" id="addBtn"><i class="fa-solid fa-arrow-right"></i>Adicionar</button>
+    </div>
+
+    <div class="filters">
+      <button class="chip active" data-filter="all">Todas</button>
+      <button class="chip" data-filter="pending">Pendentes</button>
+      <button class="chip" data-filter="done">Concluidas</button>
+    </div>
+
+    <div class="task-list" id="taskList"></div>
+    <div class="empty" id="emptyState" style="display:none">
+      <i class="fa-solid fa-mug-hot"></i>
+      <p>Nenhuma tarefa por aqui. Aproveite o momento!</p>
+    </div>
+  </main>
+</div>
+
+<div class="mobile-tabs">
+  <button class="mtab active" data-view="all"><i class="fa-solid fa-inbox"></i>Todas</button>
+  <button class="mtab" data-view="today"><i class="fa-solid fa-sun"></i>Hoje</button>
+  <button class="mtab" data-view="overdue"><i class="fa-solid fa-triangle-exclamation"></i>Atrasadas</button>
+  <button class="mtab" data-view="done"><i class="fa-solid fa-circle-check"></i>Feitas</button>
+</div>
+
+<div class="modal-backdrop" id="editModal">
+  <div class="modal">
+    <h3>Editar tarefa</h3>
+    <div class="field"><label>Titulo</label><input type="text" id="editTitle"></div>
+    <div class="field"><label>Categoria</label>
+      <select id="editCat">
+        <option value="Trabalho">Trabalho</option>
+        <option value="Pessoal">Pessoal</option>
+        <option value="Casa">Casa</option>
+        <option value="Estudos">Estudos</option>
+      </select>
+    </div>
+    <div class="field"><label>Vencimento</label><input type="date" id="editDate"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="cancelEdit">Cancelar</button>
+      <button class="btn-primary" id="saveEdit">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const CAT_COLORS = {
+  Trabalho:{bg:'#e6f0e4',fg:'#2f6d3c'},
+  Pessoal:{bg:'#fbf1de',fg:'#a3781c'},
+  Casa:{bg:'#e4edf7',fg:'#2f5f8f'},
+  Estudos:{bg:'#f0e8f7',fg:'#6a3e99'}
+};
+
+function todayISO(){
+  const d = new Date();
+  return d.toISOString().slice(0,10);
+}
+function addDays(n){
+  const d = new Date();
+  d.setDate(d.getDate()+n);
+  return d.toISOString().slice(0,10);
+}
+
+let tasks = JSON.parse(localStorage.getItem('rotina_tasks_v1') || 'null') || [
+  {id:1, title:'Enviar proposta para cliente novo', cat:'Trabalho', due: todayISO(), done:false},
+  {id:2, title:'Revisar relatorio semanal', cat:'Trabalho', due: addDays(-1), done:false},
+  {id:3, title:'Pagar conta de luz', cat:'Casa', due: addDays(2), done:false},
+  {id:4, title:'Academia', cat:'Pessoal', due: todayISO(), done:true},
+  {id:5, title:'Estudar para prova de ingles', cat:'Estudos', due: addDays(3), done:false},
+  {id:6, title:'Ligar para o dentista', cat:'Pessoal', due: addDays(-2), done:false},
+];
+let currentView = 'all';
+let currentCat = null;
+let currentFilter = 'all';
+let editingId = null;
+
+function save(){ localStorage.setItem('rotina_tasks_v1', JSON.stringify(tasks)); }
+
+function classifyDue(due, done){
+  if(!due) return {label:'', cls:''};
+  if(done) return {label: formatDate(due), cls:''};
+  if(due < todayISO()) return {label:'Atrasada · '+formatDate(due), cls:'overdue'};
+  if(due === todayISO()) return {label:'Hoje', cls:'today'};
+  return {label: formatDate(due), cls:''};
+}
+function formatDate(iso){
+  const [y,m,d] = iso.split('-');
+  return `${d}/${m}`;
+}
+
+function render(){
+  const list = document.getElementById('taskList');
+  let filtered = tasks.slice();
+
+  if(currentView === 'today') filtered = filtered.filter(t => t.due === todayISO() && !t.done);
+  else if(currentView === 'overdue') filtered = filtered.filter(t => t.due < todayISO() && !t.done);
+  else if(currentView === 'done') filtered = filtered.filter(t => t.done);
+
+  if(currentCat) filtered = filtered.filter(t => t.cat === currentCat);
+
+  if(currentFilter === 'pending') filtered = filtered.filter(t => !t.done);
+  if(currentFilter === 'done') filtered = filtered.filter(t => t.done);
+
+  filtered.sort((a,b) => {
+    if(a.done !== b.done) return a.done ? 1 : -1;
+    return (a.due||'9999').localeCompare(b.due||'9999');
+  });
+
+  list.innerHTML = '';
+  document.getElementById('emptyState').style.display = filtered.length ? 'none' : 'block';
+
+  filtered.forEach((t,i) => {
+    const due = classifyDue(t.due, t.done);
+    const colors = CAT_COLORS[t.cat] || {bg:'#eee',fg:'#666'};
+    const el = document.createElement('div');
+    el.className = 'task' + (t.done ? ' done' : '');
+    el.style.animationDelay = (i*0.04)+'s';
+    el.innerHTML = `
+      <div class="check" data-id="${t.id}">${t.done ? '<i class="fa-solid fa-check"></i>' : ''}</div>
+      <div class="task-body">
+        <div class="task-title">${escapeHtml(t.title)}</div>
+        <div class="task-meta">
+          <span class="cat-pill" style="background:${colors.bg};color:${colors.fg}">${t.cat}</span>
+          ${t.due ? `<span class="due ${due.cls}"><i class="fa-regular fa-calendar"></i>${due.label}</span>` : ''}
+        </div>
+      </div>
+      <div class="task-actions">
+        <button class="icon-btn edit" data-id="${t.id}"><i class="fa-solid fa-pen"></i></button>
+        <button class="icon-btn del" data-id="${t.id}"><i class="fa-solid fa-trash"></i></button>
+      </div>
+    `;
+    list.appendChild(el);
+  });
+
+  updateCounts();
+}
+
+function escapeHtml(s){
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function updateCounts(){
+  document.getElementById('cnt-all').textContent = tasks.length;
+  document.getElementById('cnt-today').textContent = tasks.filter(t=>t.due===todayISO() && !t.done).length;
+  document.getElementById('cnt-overdue').textContent = tasks.filter(t=>t.due<todayISO() && !t.done).length;
+  document.getElementById('cnt-done').textContent = tasks.filter(t=>t.done).length;
+
+  const total = tasks.length;
+  const done = tasks.filter(t=>t.done).length;
+  const pct = total ? Math.round((done/total)*100) : 0;
+  document.getElementById('ringFg').setAttribute('stroke-dasharray', `${pct},100`);
+  document.getElementById('progressText').textContent = `${done}/${total} concluidas`;
+}
+
+document.getElementById('addBtn').addEventListener('click', addTask);
+document.getElementById('newTaskInput').addEventListener('keydown', e => { if(e.key==='Enter') addTask(); });
+
+function addTask(){
+  const input = document.getElementById('newTaskInput');
+  const title = input.value.trim();
+  if(!title) return;
+  const cat = document.getElementById('newTaskCat').value;
+  const due = document.getElementById('newTaskDate').value;
+  tasks.unshift({id: Date.now(), title, cat, due, done:false});
+  input.value = '';
+  document.getElementById('newTaskDate').value = '';
+  save();
+  render();
+}
+
+document.getElementById('taskList').addEventListener('click', e => {
+  const check = e.target.closest('.check');
+  const editBtn = e.target.closest('.edit');
+  const delBtn = e.target.closest('.del');
+  if(check){
+    const t = tasks.find(t => t.id == check.dataset.id);
+    t.done = !t.done;
+    save(); render();
+  } else if(editBtn){
+    openEdit(editBtn.dataset.id);
+  } else if(delBtn){
+    tasks = tasks.filter(t => t.id != delBtn.dataset.id);
+    save(); render();
+  }
+});
+
+function openEdit(id){
+  const t = tasks.find(t => t.id == id);
+  editingId = t.id;
+  document.getElementById('editTitle').value = t.title;
+  document.getElementById('editCat').value = t.cat;
+  document.getElementById('editDate').value = t.due || '';
+  document.getElementById('editModal').classList.add('open');
+}
+document.getElementById('cancelEdit').addEventListener('click', () => document.getElementById('editModal').classList.remove('open'));
+document.getElementById('saveEdit').addEventListener('click', () => {
+  const t = tasks.find(t => t.id == editingId);
+  t.title = document.getElementById('editTitle').value.trim() || t.title;
+  t.cat = document.getElementById('editCat').value;
+  t.due = document.getElementById('editDate').value;
+  save(); render();
+  document.getElementById('editModal').classList.remove('open');
+});
+
+function setView(view){
+  currentView = view;
+  currentCat = null;
+  document.querySelectorAll('.nav-item[data-view]').forEach(el => el.classList.toggle('active', el.dataset.view===view));
+  document.querySelectorAll('.mtab').forEach(el => el.classList.toggle('active', el.dataset.view===view));
+  document.querySelectorAll('.nav-item[data-cat]').forEach(el => el.classList.remove('active'));
+  const titles = {all:['Todas as tarefas','Organize seu dia com clareza'], today:['Hoje','O que precisa ser feito agora'], overdue:['Atrasadas','Fique em dia com seus compromissos'], done:['Concluidas','Seu historico de conquistas']};
+  document.getElementById('viewTitle').textContent = titles[view][0];
+  document.getElementById('viewSub').textContent = titles[view][1];
+  render();
+}
+document.querySelectorAll('[data-view]').forEach(el => el.addEventListener('click', () => setView(el.dataset.view)));
+
+document.querySelectorAll('.nav-item[data-cat]').forEach(el => el.addEventListener('click', () => {
+  currentView = 'all';
+  currentCat = el.dataset.cat;
+  document.querySelectorAll('.nav-item[data-view]').forEach(e2 => e2.classList.remove('active'));
+  document.querySelectorAll('.nav-item[data-cat]').forEach(e2 => e2.classList.toggle('active', e2===el));
+  document.getElementById('viewTitle').textContent = currentCat;
+  document.getElementById('viewSub').textContent = 'Tarefas filtradas por categoria';
+  render();
+}));
+
+document.querySelectorAll('.filters .chip').forEach(el => el.addEventListener('click', () => {
+  currentFilter = el.dataset.filter;
+  document.querySelectorAll('.filters .chip').forEach(c => c.classList.toggle('active', c===el));
+  render();
+}));
+
+const themeToggle = document.getElementById('themeToggle');
+themeToggle.addEventListener('click', () => {
+  const root = document.documentElement;
+  const cur = root.getAttribute('data-theme');
+  const next = cur === 'dark' ? 'light' : 'dark';
+  root.setAttribute('data-theme', next);
+  themeToggle.innerHTML = next === 'dark' ? '<i class="fa-solid fa-sun"></i>' : '<i class="fa-solid fa-moon"></i>';
+});
+
+render();
+</script>
+</body>
+</html>
