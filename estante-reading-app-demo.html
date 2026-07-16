@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Estante - Prototipo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1c1b17;
+    --ink-soft:#4a463d;
+    --cream:#faf6ee;
+    --cream-deep:#f1ead9;
+    --card:#ffffff;
+    --gold:#b8873a;
+    --gold-deep:#8f6423;
+    --gold-soft:#f4e3c1;
+    --green:#2f4a3a;
+    --line:#e7ddc9;
+    --danger:#b3492f;
+    --radius-lg:24px;
+    --radius-md:16px;
+    --radius-sm:10px;
+    --shadow:0 12px 30px rgba(28,27,23,.10);
+    --shadow-sm:0 4px 12px rgba(28,27,23,.08);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:'Lexend', sans-serif;
+    background: radial-gradient(circle at 20% 10%, #ece2cc 0%, #d9cdad 45%, #c7b98f 100%);
+    min-height:100vh;
+    display:flex; flex-direction:column; align-items:center;
+    padding:32px 16px 60px;
+    color:var(--ink);
+  }
+  .page-head{ text-align:center; margin-bottom:22px; color:#3a3323; }
+  .page-head .brand{ font-weight:800; font-size:22px; letter-spacing:.3px; }
+  .page-head .sub{ font-size:13px; opacity:.75; margin-top:4px; }
+
+  .phone-frame{
+    width:300px; height:634px;
+    background:#14130f;
+    border-radius:42px;
+    padding:12px;
+    box-shadow: 0 30px 60px rgba(0,0,0,.35), 0 4px 14px rgba(0,0,0,.2);
+    position:relative;
+  }
+  .phone-notch{
+    position:absolute; top:12px; left:50%; transform:translateX(-50%);
+    width:110px; height:24px; background:#14130f; border-radius:0 0 18px 18px; z-index:60;
+  }
+  .phone-screen{
+    width:100%; height:100%;
+    background:var(--cream);
+    border-radius:30px;
+    overflow:hidden;
+    position:relative;
+  }
+  .status-bar{
+    height:34px; display:flex; align-items:center; justify-content:space-between;
+    padding:0 20px; font-size:12px; font-weight:600; color:var(--ink);
+  }
+
+  .screen{
+    position:absolute; inset:0; top:34px;
+    display:flex; flex-direction:column;
+    opacity:0; pointer-events:none; transform:translateY(8px);
+    transition: opacity .28s ease, transform .28s ease;
+    background:var(--cream);
+  }
+  .screen.active{ opacity:1; pointer-events:auto; transform:translateY(0); }
+
+  .scroll-area{ flex:1; overflow-y:auto; -ms-overflow-style:none; scrollbar-width:none; }
+  .scroll-area::-webkit-scrollbar{ display:none; }
+
+  /* ---- Bottom Nav ---- */
+  .tabbar{
+    height:64px; background:var(--card);
+    border-top:1px solid var(--line);
+    display:flex; align-items:center; justify-content:space-around;
+    flex-shrink:0;
+  }
+  .tab-btn{
+    display:flex; flex-direction:column; align-items:center; gap:3px;
+    background:none; border:none; cursor:pointer;
+    color:#a79c82; font-family:'Lexend'; font-size:10px; font-weight:600;
+    padding:6px 14px; border-radius:12px; transition:.2s;
+  }
+  .tab-btn svg{ width:20px; height:20px; }
+  .tab-btn.active{ color:var(--gold-deep); }
+  .tab-btn.active svg{ filter:drop-shadow(0 2px 4px rgba(184,135,58,.35)); }
+
+  /* ---- Onboarding ---- */
+  #screen-onboard{ align-items:center; justify-content:center; text-align:center; padding:34px 26px; gap:0; }
+  .ob-mark{
+    width:76px; height:76px; border-radius:20px;
+    background:linear-gradient(145deg, var(--gold) 0%, var(--gold-deep) 100%);
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 10px 22px rgba(143,100,35,.35);
+    margin-bottom:22px;
+  }
+  .ob-mark svg{ width:36px; height:36px; }
+  .ob-title{ font-size:26px; font-weight:800; color:var(--ink); }
+  .ob-tag{ font-size:13.5px; color:var(--ink-soft); margin-top:10px; line-height:1.5; }
+  .ob-stats{ display:flex; gap:18px; margin:26px 0; }
+  .ob-stat{ text-align:center; }
+  .ob-stat b{ display:block; font-size:18px; color:var(--green); }
+  .ob-stat span{ font-size:10px; color:var(--ink-soft); }
+  .btn-primary{
+    width:100%; padding:14px; border:none; border-radius:14px;
+    background:linear-gradient(135deg, var(--green) 0%, #1e3327 100%);
+    color:#fff; font-family:'Lexend'; font-weight:700; font-size:14.5px;
+    cursor:pointer; box-shadow:0 8px 18px rgba(47,74,58,.3);
+    transition:transform .15s;
+  }
+  .btn-primary:active{ transform:scale(.97); }
+  .ob-skip{ margin-top:14px; font-size:12px; color:var(--ink-soft); background:none; border:none; cursor:pointer; text-decoration:underline; }
+
+  /* ---- Top header common ---- */
+  .top-header{ padding:16px 18px 10px; display:flex; align-items:center; justify-content:space-between; }
+  .top-header h1{ font-size:19px; font-weight:800; }
+  .top-header .greet{ font-size:11.5px; color:var(--ink-soft); margin-top:2px; }
+  .avatar-mini{
+    width:36px; height:36px; border-radius:50%; overflow:hidden; border:2px solid var(--gold-soft);
+    background:#ddd;
+  }
+  .avatar-mini img{ width:100%; height:100%; object-fit:cover; }
+
+  /* ---- Search + chips ---- */
+  .search-box{
+    margin:6px 18px 12px; padding:10px 14px; background:var(--card);
+    border-radius:14px; border:1px solid var(--line);
+    display:flex; align-items:center; gap:8px; box-shadow:var(--shadow-sm);
+  }
+  .search-box svg{ width:15px; height:15px; color:#a79c82; flex-shrink:0; }
+  .search-box input{ border:none; outline:none; font-family:'Lexend'; font-size:12.5px; width:100%; background:none; color:var(--ink); }
+  .chip-row{ display:flex; gap:8px; padding:0 18px 14px; overflow-x:auto; }
+  .chip-row::-webkit-scrollbar{ display:none; }
+  .chip{
+    flex-shrink:0; padding:7px 14px; border-radius:100px; font-size:11.5px; font-weight:600;
+    background:var(--card); border:1px solid var(--line); color:var(--ink-soft); cursor:pointer; white-space:nowrap;
+  }
+  .chip.active{ background:var(--green); color:#fff; border-color:var(--green); }
+
+  /* ---- Continue reading card ---- */
+  .continue-card{
+    margin:0 18px 16px; padding:14px; border-radius:18px;
+    background:linear-gradient(120deg, var(--green) 0%, #1e3327 100%);
+    display:flex; gap:12px; align-items:center; box-shadow:var(--shadow);
+    cursor:pointer;
+  }
+  .continue-card img{ width:44px; height:60px; border-radius:8px; object-fit:cover; flex-shrink:0; }
+  .continue-card .txt{ flex:1; color:#fff; }
+  .continue-card .txt .label{ font-size:9.5px; letter-spacing:.6px; opacity:.75; text-transform:uppercase; }
+  .continue-card .txt .title{ font-size:13.5px; font-weight:700; margin:2px 0 6px; }
+  .mini-progress{ height:5px; background:rgba(255,255,255,.22); border-radius:10px; overflow:hidden; }
+  .mini-progress i{ display:block; height:100%; background:var(--gold); border-radius:10px; }
+
+  .section-label{ padding:2px 18px 10px; font-size:12.5px; font-weight:700; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.4px; }
+
+  /* ---- Book grid ---- */
+  .book-grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; padding:0 18px 20px; }
+  .book-card{ cursor:pointer; }
+  .book-cover-wrap{ position:relative; border-radius:14px; overflow:hidden; box-shadow:var(--shadow-sm); aspect-ratio:3/4; }
+  .book-cover-wrap img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .premium-badge{
+    position:absolute; top:8px; right:8px; background:rgba(20,19,15,.75); backdrop-filter:blur(2px);
+    color:var(--gold-soft); font-size:9px; font-weight:700; padding:3px 7px; border-radius:100px;
+    display:flex; align-items:center; gap:3px;
+  }
+  .premium-badge svg{ width:9px; height:9px; }
+  .book-meta{ padding-top:8px; }
+  .book-meta .t{ font-size:12.5px; font-weight:700; line-height:1.25; }
+  .book-meta .a{ font-size:10.5px; color:var(--ink-soft); margin-top:1px; }
+  .book-meta .cat{ font-size:9.5px; color:var(--gold-deep); font-weight:700; margin-top:3px; text-transform:uppercase; letter-spacing:.3px; }
+
+  /* ---- Book detail ---- */
+  .detail-hero{ position:relative; padding:16px 18px 0; }
+  .back-btn{
+    width:34px; height:34px; border-radius:50%; background:var(--card); border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:var(--shadow-sm); flex-shrink:0;
+  }
+  .back-btn svg{ width:16px; height:16px; }
+  .detail-top-row{ display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+  .detail-book{ display:flex; gap:14px; align-items:flex-end; }
+  .detail-cover{ width:88px; height:120px; border-radius:12px; object-fit:cover; box-shadow:0 10px 20px rgba(0,0,0,.18); flex-shrink:0; }
+  .detail-title{ font-size:17px; font-weight:800; line-height:1.25; }
+  .detail-author{ font-size:12px; color:var(--ink-soft); margin-top:3px; }
+  .detail-tags{ display:flex; gap:6px; margin-top:8px; }
+  .tag-pill{ font-size:9.5px; font-weight:700; padding:3px 8px; border-radius:100px; background:var(--gold-soft); color:var(--gold-deep); }
+
+  .segment{
+    margin:16px 18px 4px; background:var(--cream-deep); border-radius:12px; padding:3px; display:flex; gap:2px;
+  }
+  .segment button{
+    flex:1; padding:8px; border:none; border-radius:9px; background:none; cursor:pointer;
+    font-family:'Lexend'; font-size:11.5px; font-weight:700; color:var(--ink-soft);
+  }
+  .segment button.active{ background:var(--card); color:var(--ink); box-shadow:var(--shadow-sm); }
+
+  .resumo-body{ padding:16px 18px 12px; font-size:12.8px; line-height:1.75; color:#33301f; }
+  .resumo-body p{ margin-bottom:12px; }
+  .chapter-item{ display:flex; gap:10px; padding:12px 0; border-bottom:1px solid var(--line); align-items:flex-start; }
+  .chapter-num{
+    width:22px; height:22px; border-radius:50%; background:var(--gold-soft); color:var(--gold-deep);
+    font-size:10.5px; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .chapter-tx b{ font-size:12.5px; display:block; }
+  .chapter-tx span{ font-size:11px; color:var(--ink-soft); }
+
+  .lock-overlay{
+    margin:0 18px 16px; padding:22px 18px; text-align:center; border-radius:16px;
+    background:linear-gradient(160deg, #221f16 0%, #14130f 100%);
+    color:#fff;
+  }
+  .lock-overlay svg{ width:26px; height:26px; margin-bottom:8px; color:var(--gold); }
+  .lock-overlay .h{ font-size:13.5px; font-weight:700; margin-bottom:4px; }
+  .lock-overlay .p{ font-size:11px; opacity:.7; margin-bottom:14px; line-height:1.5; }
+  .btn-gold{
+    padding:10px 22px; border:none; border-radius:100px; cursor:pointer;
+    background:linear-gradient(135deg, var(--gold) 0%, var(--gold-deep) 100%);
+    color:#fff; font-family:'Lexend'; font-weight:700; font-size:12.5px;
+    box-shadow:0 6px 14px rgba(184,135,58,.4);
+  }
+
+  .float-cta{
+    position:sticky; bottom:0; margin-top:auto; padding:14px 18px 16px;
+    background:linear-gradient(to top, var(--cream) 60%, transparent);
+  }
+
+  /* ---- Flashcards tab list ---- */
+  .deck-card{
+    margin:0 18px 12px; padding:14px; background:var(--card); border-radius:16px;
+    border:1px solid var(--line); display:flex; align-items:center; gap:12px; cursor:pointer; box-shadow:var(--shadow-sm);
+  }
+  .deck-cover{ width:46px; height:62px; border-radius:8px; object-fit:cover; flex-shrink:0; }
+  .deck-info{ flex:1; }
+  .deck-info .t{ font-size:12.5px; font-weight:700; }
+  .deck-info .d{ font-size:10.5px; color:var(--ink-soft); margin-top:2px; }
+  .deck-due{
+    font-size:9.5px; font-weight:700; padding:4px 8px; border-radius:100px; white-space:nowrap;
+  }
+  .due-now{ background:#fde3da; color:var(--danger); }
+  .due-later{ background:#e3ede5; color:var(--green); }
+
+  .streak-banner{
+    margin:14px 18px 6px; padding:14px 16px; border-radius:16px;
+    background:linear-gradient(120deg, var(--gold-soft) 0%, #ecd8ab 100%);
+    display:flex; align-items:center; gap:12px;
+  }
+  .streak-banner svg{ width:26px; height:26px; color:var(--gold-deep); flex-shrink:0; }
+  .streak-banner b{ font-size:15px; display:block; color:#5c421a; }
+  .streak-banner span{ font-size:10.5px; color:#7a5c28; }
+
+  /* ---- Flashcard review ---- */
+  #screen-review{ background:linear-gradient(160deg, #24221a 0%, #14130f 100%); }
+  .review-top{ padding:16px 18px 8px; display:flex; align-items:center; justify-content:space-between; }
+  .review-top .back-btn{ background:rgba(255,255,255,.12); border-color:rgba(255,255,255,.15); }
+  .review-top .back-btn svg{ color:#fff; }
+  .review-dots{ display:flex; gap:5px; }
+  .review-dots i{ width:18px; height:4px; border-radius:10px; background:rgba(255,255,255,.2); display:block; }
+  .review-dots i.done{ background:var(--gold); }
+  .review-dots i.now{ background:#fff; }
+
+  .card-stage{ flex:1; display:flex; align-items:center; justify-content:center; padding:10px 22px 6px; perspective:1200px; }
+  .flip-card{
+    width:100%; max-width:230px; height:270px; position:relative; cursor:pointer;
+    transform-style:preserve-3d; transition:transform .5s cubic-bezier(.4,.2,.2,1);
+  }
+  .flip-card.flipped{ transform:rotateY(180deg); }
+  .flip-face{
+    position:absolute; inset:0; backface-visibility:hidden; border-radius:20px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:24px;
+    box-shadow:0 20px 40px rgba(0,0,0,.35);
+  }
+  .flip-front{ background:linear-gradient(160deg,#fdf9ef 0%, var(--gold-soft) 100%); color:var(--ink); }
+  .flip-front .lbl{ font-size:9.5px; letter-spacing:1px; text-transform:uppercase; color:var(--gold-deep); font-weight:700; margin-bottom:12px; }
+  .flip-front .q{ font-size:15px; font-weight:700; line-height:1.4; }
+  .flip-front .hint{ font-size:10px; color:var(--ink-soft); margin-top:16px; }
+  .flip-back{ background:linear-gradient(160deg, var(--green) 0%, #16281e 100%); color:#fff; transform:rotateY(180deg); }
+  .flip-back .lbl{ font-size:9.5px; letter-spacing:1px; text-transform:uppercase; color:var(--gold); font-weight:700; margin-bottom:12px; }
+  .flip-back .a{ font-size:13px; line-height:1.5; }
+
+  .rate-row{ display:flex; gap:8px; padding:14px 18px 22px; }
+  .rate-btn{
+    flex:1; padding:11px 4px; border-radius:12px; border:none; cursor:pointer;
+    font-family:'Lexend'; font-size:10.5px; font-weight:700; color:#fff;
+    display:flex; flex-direction:column; align-items:center; gap:3px; opacity:.35; pointer-events:none; transition:.2s;
+  }
+  .rate-row.ready .rate-btn{ opacity:1; pointer-events:auto; }
+  .rate-btn span{ font-size:9px; opacity:.85; font-weight:500; }
+  .rate-again{ background:#a8402a; }
+  .rate-hard{ background:#b8873a; }
+  .rate-good{ background:#3d7255; }
+  .rate-easy{ background:#2f4a3a; }
+
+  .review-done{ display:flex; flex-direction:column; align-items:center; justify-content:center; flex:1; text-align:center; padding:30px; color:#fff; }
+  .review-done svg{ width:48px; height:48px; color:var(--gold); margin-bottom:14px; }
+  .review-done h2{ font-size:18px; font-weight:800; margin-bottom:6px; }
+  .review-done p{ font-size:12px; opacity:.7; line-height:1.5; margin-bottom:20px; }
+
+  /* ---- Paywall ---- */
+  #screen-paywall{ background:linear-gradient(180deg, #1b1a14 0%, #14130f 60%); }
+  .pw-close{
+    position:absolute; top:16px; right:16px; z-index:5;
+    width:30px; height:30px; border-radius:50%; background:rgba(255,255,255,.1);
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+  }
+  .pw-close svg{ width:14px; height:14px; color:#fff; }
+  .pw-hero{ text-align:center; padding:46px 26px 18px; color:#fff; }
+  .pw-hero .crown{ width:52px; height:52px; margin:0 auto 14px; }
+  .pw-hero h2{ font-size:21px; font-weight:800; }
+  .pw-hero p{ font-size:12px; opacity:.65; margin-top:8px; line-height:1.5; }
+  .pw-feature{ display:flex; align-items:center; gap:10px; padding:7px 30px; color:#e9e3d2; font-size:12px; }
+  .pw-feature svg{ width:14px; height:14px; color:var(--gold); flex-shrink:0; }
+  .plan-row{ display:flex; gap:10px; padding:18px 18px 6px; }
+  .plan-card{
+    flex:1; border-radius:16px; padding:14px 10px; text-align:center; cursor:pointer;
+    border:1.5px solid rgba(255,255,255,.14); background:rgba(255,255,255,.04); position:relative; color:#fff;
+    transition:.15s;
+  }
+  .plan-card.selected{ border-color:var(--gold); background:rgba(184,135,58,.14); }
+  .plan-badge{
+    position:absolute; top:-9px; left:50%; transform:translateX(-50%);
+    background:var(--gold); color:#221a0d; font-size:8.5px; font-weight:800; padding:2px 8px; border-radius:100px; white-space:nowrap;
+  }
+  .plan-card .pname{ font-size:11px; opacity:.7; margin-top:4px; }
+  .plan-card .pprice{ font-size:17px; font-weight:800; margin-top:6px; }
+  .plan-card .pnote{ font-size:9.5px; opacity:.55; margin-top:2px; }
+  .pw-cta-area{ padding:16px 18px 10px; }
+  .pw-legal{ text-align:center; font-size:9px; color:rgba(255,255,255,.4); padding:0 24px 18px; line-height:1.5; }
+
+  /* ---- Profile ---- */
+  .profile-hero{ text-align:center; padding:26px 18px 18px; }
+  .profile-avatar{ width:72px; height:72px; border-radius:50%; margin:0 auto 10px; border:3px solid var(--gold-soft); overflow:hidden; }
+  .profile-avatar img{ width:100%; height:100%; object-fit:cover; }
+  .profile-hero h2{ font-size:16.5px; font-weight:800; }
+  .plan-status{
+    display:inline-flex; align-items:center; gap:5px; margin-top:8px; padding:5px 12px; border-radius:100px;
+    font-size:10.5px; font-weight:700;
+  }
+  .plan-status.free{ background:#efe9d8; color:#7a6f4d; }
+  .plan-status.premium{ background:linear-gradient(135deg, var(--gold-soft), #e6c988); color:#6b4c15; }
+  .plan-status svg{ width:11px; height:11px; }
+
+  .stat-row{ display:flex; gap:10px; padding:6px 18px 18px; }
+  .stat-box{ flex:1; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px 8px; text-align:center; }
+  .stat-box b{ display:block; font-size:16px; color:var(--green); }
+  .stat-box span{ font-size:9px; color:var(--ink-soft); }
+
+  .settings-list{ padding:0 18px; }
+  .settings-item{
+    display:flex; align-items:center; gap:12px; padding:13px 4px; border-bottom:1px solid var(--line); cursor:pointer;
+  }
+  .settings-item .ic{
+    width:32px; height:32px; border-radius:9px; background:var(--cream-deep); display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .settings-item .ic svg{ width:15px; height:15px; color:var(--green); }
+  .settings-item .lbl{ flex:1; font-size:12.5px; font-weight:600; }
+  .settings-item .chev{ width:14px; height:14px; color:#c7bda0; }
+
+  /* ---- toast ---- */
+  .toast{
+    position:absolute; left:50%; bottom:84px; transform:translate(-50%, 20px);
+    background:#1c1b17; color:#fff; padding:11px 18px; border-radius:100px; font-size:11.5px; font-weight:600;
+    display:flex; align-items:center; gap:8px; box-shadow:0 10px 24px rgba(0,0,0,.3);
+    opacity:0; pointer-events:none; transition:.3s; z-index:80; white-space:nowrap;
+  }
+  .toast.show{ opacity:1; transform:translate(-50%, 0); }
+  .toast svg{ width:14px; height:14px; color:#7fd6a3; }
+
+  .restart-btn{
+    margin-top:20px; display:flex; align-items:center; gap:7px; padding:9px 18px; border-radius:100px;
+    background:rgba(255,255,255,.55); border:1px solid rgba(58,51,35,.15); cursor:pointer;
+    font-family:'Lexend'; font-size:11.5px; font-weight:600; color:#3a3323; backdrop-filter:blur(6px);
+  }
+  .restart-btn svg{ width:13px; height:13px; }
+</style>
+</head>
+<body>
+
+<div class="page-head">
+  <div class="brand">Estante</div>
+  <div class="sub">Prototipo interativo &middot; biblioteca, flashcards e assinatura Premium</div>
+</div>
+
+<div class="phone-frame">
+  <div class="phone-notch"></div>
+  <div class="phone-screen">
+    <div class="status-bar">
+      <span>9:41</span>
+      <span style="display:flex; gap:4px; align-items:center;">
+        <svg viewBox="0 0 24 24" fill="currentColor" style="width:13px;height:13px;"><path d="M2 22h20V2z"/></svg>
+        <svg viewBox="0 0 24 24" fill="currentColor" style="width:15px;height:15px;"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3a4.24 4.24 0 00-6 0zm-4-4l2 2a7.07 7.07 0 0110 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+      </span>
+    </div>
+
+    <!-- ONBOARDING -->
+    <div class="screen active" id="screen-onboard">
+      <div class="ob-mark">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 4.5A2.5 2.5 0 016.5 2H20v17H6.5A2.5 2.5 0 004 16.5v-12z" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/><path d="M4 16.5A2.5 2.5 0 016.5 14H20v6H6.5A2.5 2.5 0 014 17.5" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="ob-title">Estante</div>
+      <div class="ob-tag">Resumos de livros, flashcards com<br>revisao espacada e insights que ficam.</div>
+      <div class="ob-stats">
+        <div class="ob-stat"><b>1.200+</b><span>RESUMOS</span></div>
+        <div class="ob-stat"><b>18min</b><span>MEDIA/DIA</span></div>
+        <div class="ob-stat"><b>92%</b><span>RETENCAO</span></div>
+      </div>
+      <button class="btn-primary" onclick="goto('library')">Comecar a ler</button>
+      <button class="ob-skip" onclick="goto('library')">Ja tenho conta</button>
+    </div>
+
+    <!-- LIBRARY -->
+    <div class="screen" id="screen-library">
+      <div class="scroll-area">
+        <div class="top-header">
+          <div>
+            <h1>Biblioteca</h1>
+            <div class="greet">Boa tarde, Camila</div>
+          </div>
+          <div class="avatar-mini"><img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop" alt=""></div>
+        </div>
+        <div class="search-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <input placeholder="Buscar livros, temas, autores" readonly>
+        </div>
+        <div class="chip-row">
+          <div class="chip active">Todos</div>
+          <div class="chip">Habitos</div>
+          <div class="chip">Produtividade</div>
+          <div class="chip">Mente</div>
+          <div class="chip">Negocios</div>
+        </div>
+
+        <div class="continue-card" onclick="openBook(0)">
+          <img src="https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=100&h=140&fit=crop" alt="">
+          <div class="txt">
+            <div class="label">Continuar lendo</div>
+            <div class="title">O Poder do Habito</div>
+            <div class="mini-progress"><i style="width:64%"></i></div>
+          </div>
+        </div>
+
+        <div class="section-label">Recomendados pra voce</div>
+        <div class="book-grid" id="book-grid"></div>
+      </div>
+      <div class="tabbar">
+        <button class="tab-btn active" data-tab="library" onclick="switchTab('library')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20V2H6.5A2.5 2.5 0 004 4.5v15z"/></svg>
+          Biblioteca
+        </button>
+        <button class="tab-btn" data-tab="flash" onclick="switchTab('flash')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="14" height="10" rx="2"/><path d="M7 7V5a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2h-2"/></svg>
+          Flashcards
+        </button>
+        <button class="tab-btn" data-tab="profile" onclick="switchTab('profile')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>
+          Perfil
+        </button>
+      </div>
+    </div>
+
+    <!-- BOOK DETAIL -->
+    <div class="screen" id="screen-detail">
+      <div class="scroll-area">
+        <div class="detail-hero">
+          <div class="detail-top-row">
+            <div class="back-btn" onclick="switchTab('library')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+            </div>
+          </div>
+          <div class="detail-book">
+            <img class="detail-cover" id="detail-cover" src="" alt="">
+            <div>
+              <div class="detail-title" id="detail-title"></div>
+              <div class="detail-author" id="detail-author"></div>
+              <div class="detail-tags">
+                <span class="tag-pill" id="detail-cat"></span>
+                <span class="tag-pill">12 min</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="segment">
+          <button class="active" data-seg="resumo" onclick="switchSeg('resumo')">Resumo</button>
+          <button data-seg="insights" onclick="switchSeg('insights')">Insights</button>
+        </div>
+
+        <div id="seg-resumo">
+          <div class="resumo-body">
+            <p>A maioria das pessoas tenta mudar de vida mudando a forca de vontade. O que realmente funciona e mudar o ambiente ao redor do habito, o gatilho que vem antes dele.</p>
+            <p>Todo habito segue o mesmo ciclo: deixa, rotina e recompensa. Identificar a deixa exata e o primeiro passo pra reescrever qualquer padrao automatico.</p>
+          </div>
+          <div style="padding:0 18px 6px;">
+            <div class="chapter-item"><div class="chapter-num">1</div><div class="chapter-tx"><b>O ciclo do habito</b><span>Deixa, rotina, recompensa</span></div></div>
+            <div class="chapter-item"><div class="chapter-num">2</div><div class="chapter-tx"><b>Habitos-chave</b><span>O efeito domino de uma mudanca</span></div></div>
+          </div>
+          <div class="lock-overlay" id="detail-lock">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>
+            <div class="h">Continue com Premium</div>
+            <div class="p">Os capitulos 3 a 8, os insights completos e a revisao em flashcards deste livro sao exclusivos Premium.</div>
+            <button class="btn-gold" onclick="goto('paywall')">Desbloquear</button>
+          </div>
+        </div>
+
+        <div id="seg-insights" style="display:none; padding:16px 18px;">
+          <div class="chapter-item"><div class="chapter-num">01</div><div class="chapter-tx"><b>Ambiente vence vontade</b><span>Redesenhar o espaco muda o comportamento</span></div></div>
+          <div class="chapter-item"><div class="chapter-num">02</div><div class="chapter-tx"><b>Recompensa imediata</b><span>O cerebro prioriza o curto prazo</span></div></div>
+          <div class="chapter-item"><div class="chapter-num">03</div><div class="chapter-tx"><b>Empilhamento de habitos</b><span>Ancorar um habito novo num ja automatico</span></div></div>
+        </div>
+      </div>
+      <div class="float-cta">
+        <button class="btn-primary" onclick="goto('review')">Revisar em Flashcards</button>
+      </div>
+    </div>
+
+    <!-- FLASHCARDS DECK LIST -->
+    <div class="screen" id="screen-flash">
+      <div class="scroll-area">
+        <div class="top-header"><div><h1>Flashcards</h1><div class="greet">Revisao espacada dos seus resumos</div></div></div>
+        <div class="streak-banner">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c1 4-3 5-3 9a3 3 0 006 0c1.5 1 2 3 2 4.5A5.5 5.5 0 016.5 21C4 21 2 18.8 2 15.5 2 10 8 7 12 2z"/></svg>
+          <div><b>7 dias seguidos</b><span>Sua melhor sequencia: 21 dias</span></div>
+        </div>
+        <div class="section-label">Para revisar hoje</div>
+        <div class="deck-card" onclick="goto('review')">
+          <img class="deck-cover" src="https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=100&h=140&fit=crop" alt="">
+          <div class="deck-info"><div class="t">O Poder do Habito</div><div class="d">6 cartoes prontos</div></div>
+          <div class="deck-due due-now">Hoje</div>
+        </div>
+        <div class="deck-card">
+          <img class="deck-cover" src="https://images.unsplash.com/photo-1531346680769-a1d79b57de5c?w=100&h=140&fit=crop" alt="">
+          <div class="deck-info"><div class="t">Mindset</div><div class="d">9 cartoes prontos</div></div>
+          <div class="deck-due due-now">Hoje</div>
+        </div>
+        <div class="section-label">Proximas revisoes</div>
+        <div class="deck-card">
+          <img class="deck-cover" src="https://images.unsplash.com/photo-1512820790803-83ca734da794?w=100&h=140&fit=crop" alt="">
+          <div class="deck-info"><div class="t">Essencialismo</div><div class="d">4 cartoes</div></div>
+          <div class="deck-due due-later">Em 3 dias</div>
+        </div>
+        <div class="deck-card">
+          <img class="deck-cover" src="https://images.unsplash.com/photo-1589998059171-988d887df646?w=100&h=140&fit=crop" alt="">
+          <div class="deck-info"><div class="t">Deep Work</div><div class="d">7 cartoes</div></div>
+          <div class="deck-due due-later">Em 5 dias</div>
+        </div>
+      </div>
+      <div class="tabbar">
+        <button class="tab-btn" data-tab="library" onclick="switchTab('library')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20V2H6.5A2.5 2.5 0 004 4.5v15z"/></svg>
+          Biblioteca
+        </button>
+        <button class="tab-btn active" data-tab="flash" onclick="switchTab('flash')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="14" height="10" rx="2"/><path d="M7 7V5a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2h-2"/></svg>
+          Flashcards
+        </button>
+        <button class="tab-btn" data-tab="profile" onclick="switchTab('profile')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>
+          Perfil
+        </button>
+      </div>
+    </div>
+
+    <!-- REVIEW SESSION -->
+    <div class="screen" id="screen-review">
+      <div class="review-top">
+        <div class="back-btn" onclick="switchTab('flash')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+        </div>
+        <div class="review-dots" id="review-dots"></div>
+        <div style="width:34px;"></div>
+      </div>
+
+      <div id="review-active">
+        <div class="card-stage">
+          <div class="flip-card" id="flip-card" onclick="flipCard()">
+            <div class="flip-face flip-front">
+              <div class="lbl">Pergunta</div>
+              <div class="q" id="card-q">O que vem antes de todo habito automatico?</div>
+              <div class="hint">Toque para ver a resposta</div>
+            </div>
+            <div class="flip-face flip-back">
+              <div class="lbl">Resposta</div>
+              <div class="a" id="card-a">A deixa. Um gatilho especifico, de lugar, horario ou emocao, que dispara a rotina sem voce decidir de novo.</div>
+            </div>
+          </div>
+        </div>
+        <div class="rate-row" id="rate-row">
+          <button class="rate-btn rate-again" onclick="rate()"> De novo <span>&lt;1min</span></button>
+          <button class="rate-btn rate-hard" onclick="rate()"> Dificil <span>2 dias</span></button>
+          <button class="rate-btn rate-good" onclick="rate()"> Bom <span>4 dias</span></button>
+          <button class="rate-btn rate-easy" onclick="rate()"> Facil <span>9 dias</span></button>
+        </div>
+      </div>
+
+      <div class="review-done" id="review-done" style="display:none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20 6L9 17l-5-5"/></svg>
+        <h2>Sessao concluida</h2>
+        <p>6 cartoes revisados de O Poder do Habito.<br>Proxima revisao em 4 dias, baseada no seu desempenho hoje.</p>
+        <button class="btn-primary" style="width:auto; padding:12px 26px;" onclick="switchTab('flash')">Voltar aos decks</button>
+      </div>
+    </div>
+
+    <!-- PAYWALL -->
+    <div class="screen" id="screen-paywall">
+      <div class="pw-close" onclick="closePaywall()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </div>
+      <div class="scroll-area">
+        <div class="pw-hero">
+          <svg class="crown" viewBox="0 0 24 24" fill="none"><path d="M3 8l4 4 5-7 5 7 4-4-2 11H5L3 8z" stroke="var(--gold)" stroke-width="1.6" stroke-linejoin="round"/></svg>
+          <h2>Estante Premium</h2>
+          <p>Todos os resumos, insights completos e revisao ilimitada em flashcards.</p>
+        </div>
+        <div class="pw-feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> Biblioteca completa, sem limite mensal</div>
+        <div class="pw-feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> Flashcards com revisao espacada ilimitada</div>
+        <div class="pw-feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> Downloads pra ler offline</div>
+
+        <div class="plan-row">
+          <div class="plan-card" data-plan="monthly" onclick="pickPlan('monthly')">
+            <div class="pname">Mensal</div>
+            <div class="pprice">R$29,90</div>
+            <div class="pnote">por mes</div>
+          </div>
+          <div class="plan-card selected" data-plan="yearly" onclick="pickPlan('yearly')">
+            <div class="plan-badge">Economize 44%</div>
+            <div class="pname">Anual</div>
+            <div class="pprice">R$16,60</div>
+            <div class="pnote">por mes, cobrado uma vez</div>
+          </div>
+        </div>
+
+        <div class="pw-cta-area">
+          <button class="btn-primary" style="background:linear-gradient(135deg, var(--gold) 0%, var(--gold-deep) 100%); box-shadow:0 8px 18px rgba(184,135,58,.4);" onclick="subscribe()">Assinar Estante Premium</button>
+        </div>
+        <div class="pw-legal">Gerenciado pela App Store ou Google Play. Cancele quando quiser diretamente na loja.</div>
+      </div>
+    </div>
+
+    <!-- PROFILE -->
+    <div class="screen" id="screen-profile">
+      <div class="scroll-area">
+        <div class="profile-hero">
+          <div class="profile-avatar"><img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop" alt=""></div>
+          <h2>Camila Duarte</h2>
+          <div class="plan-status free" id="plan-status-pill">
+            <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+            Plano gratuito
+          </div>
+        </div>
+        <div class="stat-row">
+          <div class="stat-box"><b>34</b><span>RESUMOS LIDOS</span></div>
+          <div class="stat-box"><b>7</b><span>DIAS SEGUIDOS</span></div>
+          <div class="stat-box"><b>212</b><span>CARTOES REVISADOS</span></div>
+        </div>
+        <div class="section-label">Conta</div>
+        <div class="settings-list">
+          <div class="settings-item" onclick="goto('paywall')">
+            <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8l4 4 5-7 5 7 4-4-2 11H5L3 8z"/></svg></div>
+            <div class="lbl">Assinatura</div>
+            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+          <div class="settings-item">
+            <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4.5 8-11V5l-8-3-8 3v6c0 6.5 8 11 8 11z"/></svg></div>
+            <div class="lbl">Privacidade e dados</div>
+            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+          <div class="settings-item">
+            <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg></div>
+            <div class="lbl">Notificacoes</div>
+            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+          <div class="settings-item">
+            <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg></div>
+            <div class="lbl">Lembrete de revisao diaria</div>
+            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+        </div>
+      </div>
+      <div class="tabbar">
+        <button class="tab-btn" data-tab="library" onclick="switchTab('library')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20V2H6.5A2.5 2.5 0 004 4.5v15z"/></svg>
+          Biblioteca
+        </button>
+        <button class="tab-btn" data-tab="flash" onclick="switchTab('flash')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="14" height="10" rx="2"/><path d="M7 7V5a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2h-2"/></svg>
+          Flashcards
+        </button>
+        <button class="tab-btn active" data-tab="profile" onclick="switchTab('profile')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>
+          Perfil
+        </button>
+      </div>
+    </div>
+
+    <div class="toast" id="toast">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg>
+      <span id="toast-text">Assinatura ativada</span>
+    </div>
+  </div>
+</div>
+
+<button class="restart-btn" onclick="restartDemo()">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 11-3-6.7"/><path d="M21 3v6h-6"/></svg>
+  Reiniciar prototipo
+</button>
+
+<script>
+  const books = [
+    { title:"O Poder do Habito", author:"Charles Duhigg", cat:"Habitos", cover:"https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=300&h=420&fit=crop", premium:false },
+    { title:"Mindset", author:"Carol Dweck", cat:"Mente", cover:"https://images.unsplash.com/photo-1531346680769-a1d79b57de5c?w=300&h=420&fit=crop", premium:false },
+    { title:"Essencialismo", author:"Greg McKeown", cat:"Produtividade", cover:"https://images.unsplash.com/photo-1512820790803-83ca734da794?w=300&h=420&fit=crop", premium:true },
+    { title:"Deep Work", author:"Cal Newport", cat:"Produtividade", cover:"https://images.unsplash.com/photo-1589998059171-988d887df646?w=300&h=420&fit=crop", premium:true },
+    { title:"Rapido e Devagar", author:"Daniel Kahneman", cat:"Mente", cover:"https://images.unsplash.com/photo-1495446815901-a7297e633e8d?w=300&h=420&fit=crop", premium:true },
+    { title:"Comece Pelo Porque", author:"Simon Sinek", cat:"Negocios", cover:"https://images.unsplash.com/photo-1519682337058-a94d519337bc?w=300&h=420&fit=crop", premium:false },
+  ];
+
+  const grid = document.getElementById('book-grid');
+  books.forEach((b, i) => {
+    const el = document.createElement('div');
+    el.className = 'book-card';
+    el.onclick = () => openBook(i);
+    el.innerHTML = `
+      <div class="book-cover-wrap">
+        <img src="${b.cover}" alt="">
+        ${b.premium ? `<div class="premium-badge"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 8l4 4 5-7 5 7 4-4-2 11H5L3 8z"/></svg>Premium</div>` : ''}
+      </div>
+      <div class="book-meta">
+        <div class="t">${b.title}</div>
+        <div class="a">${b.author}</div>
+        <div class="cat">${b.cat}</div>
+      </div>`;
+    grid.appendChild(el);
+  });
+
+  let isPremium = false;
+  let currentBookIdx = 0;
+
+  function goto(name){
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('screen-' + name).classList.add('active');
+  }
+
+  function switchTab(name){
+    goto(name);
+    document.querySelectorAll('.tab-btn').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  }
+
+  function openBook(i){
+    currentBookIdx = i;
+    const b = books[i];
+    document.getElementById('detail-cover').src = b.cover;
+    document.getElementById('detail-title').textContent = b.title;
+    document.getElementById('detail-author').textContent = b.author;
+    document.getElementById('detail-cat').textContent = b.cat;
+    document.getElementById('detail-lock').style.display = (b.premium && !isPremium) ? 'block' : 'none';
+    switchSeg('resumo');
+    goto('detail');
+  }
+
+  function switchSeg(seg){
+    document.querySelectorAll('.segment button').forEach(b => b.classList.toggle('active', b.dataset.seg === seg));
+    document.getElementById('seg-resumo').style.display = seg === 'resumo' ? 'block' : 'none';
+    document.getElementById('seg-insights').style.display = seg === 'insights' ? 'block' : 'none';
+  }
+
+  function pickPlan(p){
+    document.querySelectorAll('.plan-card').forEach(c => c.classList.toggle('selected', c.dataset.plan === p));
+  }
+
+  function closePaywall(){
+    switchTab('library');
+  }
+
+  function showToast(text){
+    const t = document.getElementById('toast');
+    document.getElementById('toast-text').textContent = text;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2200);
+  }
+
+  function subscribe(){
+    isPremium = true;
+    document.getElementById('plan-status-pill').className = 'plan-status premium';
+    document.getElementById('plan-status-pill').innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 8l4 4 5-7 5 7 4-4-2 11H5L3 8z"/></svg> Premium ativo`;
+    showToast('Assinatura ativada');
+    setTimeout(() => openBook(currentBookIdx), 500);
+  }
+
+  // ---- Flashcard review session ----
+  const deck = [
+    { q:"O que vem antes de todo habito automatico?", a:"A deixa. Um gatilho especifico, de lugar, horario ou emocao, que dispara a rotina sem voce decidir de novo." },
+    { q:"Por que forca de vontade sozinha falha pra mudar habitos?", a:"Porque o ambiente continua entregando a mesma deixa. Mudar o ambiente exige menos energia do que resistir todo dia." },
+    { q:"O que e um habito-chave?", a:"Um habito que, quando muda, arrasta outros junto. Exercicio fisico costuma virar um, porque muda rotina de sono e alimentacao junto." },
+    { q:"Como reduzir o atrito de um habito novo?", a:"Deixando a acao visivel e a um passo de distancia: roupa de treino separada, livro em cima do travesseiro." },
+    { q:"O que fazer quando um habito trava depois de uma falha?", a:"Voltar no dia seguinte sem punir. A pesquisa mostra que uma falha isolada nao muda o padrao de longo prazo, duas seguidas sim." },
+    { q:"Qual o papel da recompensa no ciclo do habito?", a:"Ela confirma pro cerebro que vale repetir a rotina. Sem uma recompensa clara, o habito nao se fixa." },
+  ];
+  let reviewIdx = 0;
+
+  function renderDots(){
+    const wrap = document.getElementById('review-dots');
+    wrap.innerHTML = '';
+    deck.forEach((_, i) => {
+      const d = document.createElement('i');
+      if (i < reviewIdx) d.className = 'done';
+      else if (i === reviewIdx) d.className = 'now';
+      wrap.appendChild(d);
+    });
+  }
+
+  function loadCard(){
+    document.getElementById('review-active').style.display = 'block';
+    document.getElementById('review-done').style.display = 'none';
+    const card = document.getElementById('flip-card');
+    card.classList.remove('flipped');
+    document.getElementById('rate-row').classList.remove('ready');
+    document.getElementById('card-q').textContent = deck[reviewIdx].q;
+    document.getElementById('card-a').textContent = deck[reviewIdx].a;
+    renderDots();
+  }
+
+  function flipCard(){
+    const card = document.getElementById('flip-card');
+    card.classList.toggle('flipped');
+    if (card.classList.contains('flipped')) {
+      document.getElementById('rate-row').classList.add('ready');
+    }
+  }
+
+  function rate(){
+    reviewIdx++;
+    if (reviewIdx >= deck.length){
+      document.getElementById('review-active').style.display = 'none';
+      document.getElementById('review-done').style.display = 'flex';
+    } else {
+      loadCard();
+    }
+  }
+
+  // reset review whenever entering the screen
+  document.querySelector('[onclick="goto(\'review\')"]');
+  const origGoto = goto;
+  goto = function(name){
+    origGoto(name);
+    if (name === 'review'){ reviewIdx = 0; loadCard(); }
+  };
+
+  function restartDemo(){
+    isPremium = false;
+    reviewIdx = 0;
+    document.getElementById('plan-status-pill').className = 'plan-status free';
+    document.getElementById('plan-status-pill').innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg> Plano gratuito`;
+    document.querySelectorAll('.tab-btn').forEach(t => t.classList.toggle('active', t.dataset.tab === 'library'));
+    goto('onboard');
+  }
+</script>
+</body>
+</html>
