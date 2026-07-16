@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LigaFlow — Motor de Classificação em Tempo Real para Campeonatos de Futebol</title>
+<meta name="description" content="Protótipo funcional: tabela de jogos, classificação e artilharia recalculadas automaticamente a cada resultado, para múltiplos campeonatos.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+:root{
+  --bg:#0a0f0c;
+  --surface:#111813;
+  --surface-2:#182119;
+  --surface-3:#1f2b21;
+  --line:rgba(255,255,255,.08);
+  --line-strong:rgba(255,255,255,.16);
+  --text:#eef5ef;
+  --text-soft:#a9b8ab;
+  --text-muted:#6f8074;
+  --green:#22c55e;
+  --green-2:#15803d;
+  --green-soft:rgba(34,197,94,.14);
+  --gold:#f5b301;
+  --gold-2:#d97706;
+  --gold-soft:rgba(245,179,1,.14);
+  --red:#ef4444;
+  --red-soft:rgba(239,68,68,.14);
+  --blue:#3b82f6;
+  --blue-soft:rgba(59,130,246,.14);
+  --radius:18px;
+  --ease:cubic-bezier(.4,0,.2,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Lexend',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+  background-image:
+    radial-gradient(circle at 12% -5%, rgba(34,197,94,.12), transparent 45%),
+    radial-gradient(circle at 100% 0%, rgba(245,179,1,.08), transparent 40%);
+  min-height:100vh;
+  padding-bottom:60px;
+  overflow-x:hidden;
+}
+button{font-family:inherit;cursor:pointer}
+a{color:inherit;text-decoration:none}
+img{max-width:100%;display:block}
+input{font-family:inherit}
+.wrap{max-width:1240px;margin:0 auto;padding:0 22px}
+
+/* topbar */
+.topbar{position:sticky;top:0;z-index:60;background:rgba(10,15,12,.82);backdrop-filter:blur(18px);border-bottom:1px solid var(--line)}
+.topbar-inner{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 0}
+.brand{display:flex;align-items:center;gap:11px}
+.brand .mark{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--green) 0%,var(--green-2) 100%);display:flex;align-items:center;justify-content:center;color:#04140a;font-weight:800;font-size:15px;box-shadow:0 6px 18px rgba(34,197,94,.35)}
+.brand-text{display:flex;flex-direction:column}
+.brand-text b{font-weight:800;font-size:17px;letter-spacing:-.02em}
+.brand-text small{font-size:10.5px;color:var(--text-muted);letter-spacing:.05em;text-transform:uppercase;margin-top:-2px}
+.topbar-meta{display:flex;align-items:center;gap:14px}
+.demo-tag{font-size:11px;color:var(--text-muted);border:1px solid var(--line);padding:5px 11px;border-radius:100px;white-space:nowrap}
+.bell-wrap{position:relative}
+.icon-btn{position:relative;width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--text-soft);background:var(--surface-2);border:1px solid var(--line);transition:.18s}
+.icon-btn:hover{background:var(--surface-3);color:var(--text)}
+.icon-btn .dot{position:absolute;top:6px;right:7px;width:8px;height:8px;border-radius:50%;background:var(--red);border:2px solid var(--bg)}
+.notif-drop{position:absolute;top:48px;right:0;width:300px;background:var(--surface);border:1px solid var(--line-strong);border-radius:14px;padding:10px;box-shadow:0 20px 50px rgba(0,0,0,.5);opacity:0;visibility:hidden;transform:translateY(-6px);transition:.18s}
+.notif-drop.open{opacity:1;visibility:visible;transform:translateY(0)}
+.notif-item{display:flex;gap:10px;padding:10px;border-radius:10px;transition:.15s}
+.notif-item:hover{background:var(--surface-2)}
+.notif-item i{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12.5px;flex:none}
+.notif-item .txt b{display:block;font-size:12.5px;font-weight:700}
+.notif-item .txt span{font-size:11.5px;color:var(--text-muted)}
+
+/* hero */
+.hero{padding:52px 0 26px}
+.hero-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:40px;align-items:center}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700;color:var(--green);background:var(--green-soft);border:1px solid rgba(34,197,94,.3);padding:7px 14px;border-radius:100px;margin-bottom:20px}
+.hero h1{font-size:clamp(30px,3.8vw,46px);font-weight:800;letter-spacing:-.03em;line-height:1.1;margin-bottom:16px}
+.hero h1 span{color:var(--green)}
+.hero p.lead{font-size:15.5px;color:var(--text-soft);max-width:540px;margin-bottom:18px}
+.hero-note{display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--text-muted)}
+.hero-note i{color:var(--gold)}
+.hero-image{position:relative;border-radius:22px;overflow:hidden;border:1px solid var(--line);box-shadow:0 30px 60px rgba(0,0,0,.45)}
+.hero-image img{width:100%;height:300px;object-fit:cover;filter:saturate(.9) brightness(.75)}
+.hero-image .overlay-tag{position:absolute;bottom:16px;left:16px;right:16px;background:rgba(10,15,12,.8);backdrop-filter:blur(8px);border:1px solid var(--line);padding:12px 14px;border-radius:12px;font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:9px}
+.hero-image .overlay-tag i{color:var(--green)}
+
+/* section shell */
+.section{padding:40px 0}
+.section-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:22px;gap:20px;flex-wrap:wrap}
+.section-head h2{font-size:22px;font-weight:800;letter-spacing:-.02em}
+.section-head p{font-size:13.5px;color:var(--text-muted);margin-top:5px;max-width:520px}
+
+/* campeonato switch */
+.comp-switch{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:26px}
+.comp-pill{display:flex;align-items:center;gap:9px;padding:10px 16px;border-radius:100px;background:var(--surface);border:1px solid var(--line);font-size:13px;font-weight:600;color:var(--text-soft);transition:.18s}
+.comp-pill i{font-size:12px}
+.comp-pill.active{background:var(--green-soft);border-color:rgba(34,197,94,.4);color:var(--green)}
+.comp-pill:hover{border-color:var(--line-strong)}
+.comp-pill .n{font-size:11px;color:var(--text-muted);font-weight:500}
+
+/* showcase layout */
+.showcase{display:grid;grid-template-columns:380px 1fr;gap:36px;align-items:start}
+@media(max-width:900px){.showcase{grid-template-columns:1fr}}
+
+/* phone frame */
+.phone{position:relative;width:100%;max-width:380px;margin:0 auto;background:#000;border-radius:44px;padding:14px;box-shadow:0 40px 80px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.06)}
+.phone-notch{position:absolute;top:14px;left:50%;transform:translateX(-50%);width:120px;height:22px;background:#000;border-radius:0 0 16px 16px;z-index:5}
+.phone-screen{background:var(--bg);border-radius:32px;overflow:hidden;min-height:640px;display:flex;flex-direction:column;position:relative}
+.app-topbar{padding:20px 18px 12px;display:flex;align-items:center;justify-content:space-between}
+.app-topbar .comp-name{font-size:15px;font-weight:800;letter-spacing:-.01em}
+.app-topbar .comp-name small{display:block;font-size:10.5px;color:var(--text-muted);font-weight:500;margin-top:1px}
+.app-topbar .live-pill{display:flex;align-items:center;gap:6px;font-size:10.5px;font-weight:700;color:var(--red);background:var(--red-soft);border:1px solid rgba(239,68,68,.3);padding:5px 10px;border-radius:100px}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--red);animation:pulse 1.4s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
+
+.app-body{flex:1;overflow-y:auto;padding:6px 16px 16px}
+.app-body::-webkit-scrollbar{width:0}
+
+.toast{position:absolute;top:70px;left:16px;right:16px;background:var(--green);color:#04140a;font-size:12px;font-weight:700;padding:10px 14px;border-radius:12px;display:flex;align-items:center;gap:8px;z-index:20;opacity:0;transform:translateY(-8px);transition:.25s;box-shadow:0 10px 30px rgba(34,197,94,.4)}
+.toast.show{opacity:1;transform:translateY(0)}
+
+/* jogos list */
+.round-label{font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin:14px 0 8px}
+.round-label:first-child{margin-top:4px}
+.match-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 12px;margin-bottom:8px}
+.match-row{display:flex;align-items:center;gap:8px}
+.team-mini{display:flex;align-items:center;gap:8px;flex:1;min-width:0}
+.team-mini.right{flex-direction:row-reverse;text-align:right}
+.badge{width:26px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff;flex:none}
+.team-mini span{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.score-box{display:flex;align-items:center;gap:6px;font-weight:800;font-size:14px;padding:0 4px}
+.score-pending{font-size:10.5px;font-weight:700;color:var(--text-muted);background:var(--surface-2);padding:4px 10px;border-radius:100px}
+.match-foot{display:flex;align-items:center;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px solid var(--line)}
+.match-foot .date{font-size:10.5px;color:var(--text-muted)}
+.edit-btn{display:flex;align-items:center;gap:6px;font-size:10.5px;font-weight:700;color:var(--green);background:var(--green-soft);border:1px solid rgba(34,197,94,.3);padding:5px 10px;border-radius:100px}
+.edit-btn:hover{background:rgba(34,197,94,.22)}
+.edit-panel{display:flex;align-items:center;gap:8px;margin-top:8px;padding-top:8px;border-top:1px solid var(--line)}
+.edit-panel input{width:40px;text-align:center;background:var(--surface-2);border:1px solid var(--line-strong);border-radius:8px;color:var(--text);font-size:13px;font-weight:700;padding:6px 2px}
+.edit-panel .vs{font-size:11px;color:var(--text-muted)}
+.confirm-btn{margin-left:auto;background:var(--green);color:#04140a;font-size:11px;font-weight:800;padding:6px 12px;border-radius:8px}
+.cancel-btn{color:var(--text-muted);font-size:11px;font-weight:700;padding:6px 8px}
+
+/* classificação table */
+.table-wrap{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.tbl{width:100%;border-collapse:collapse;font-size:11.5px}
+.tbl th{text-align:center;font-size:9.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted);padding:9px 3px;border-bottom:1px solid var(--line);font-weight:700}
+.tbl th:first-child,.tbl td:first-child{text-align:left;padding-left:10px}
+.tbl td{text-align:center;padding:8px 3px;border-bottom:1px solid var(--line)}
+.tbl tr:last-child td{border-bottom:none}
+.tbl td.name{display:flex;align-items:center;gap:8px;text-align:left}
+.tbl td.name span{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:88px}
+.tbl td.pts{font-weight:800;color:var(--green)}
+.pos-num{font-weight:800;color:var(--text-muted);width:16px;display:inline-block}
+.rank-flash{animation:flash 1.4s ease}
+@keyframes flash{0%{background:rgba(34,197,94,.28)}100%{background:transparent}}
+.rank-arrow{font-size:9px;margin-left:3px}
+.rank-arrow.up{color:var(--green)}
+.rank-arrow.down{color:var(--red)}
+
+/* artilharia */
+.scorer-row{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:11px 12px;margin-bottom:8px}
+.scorer-rank{width:24px;height:24px;border-radius:8px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--text-muted);flex:none}
+.scorer-rank.gold{background:var(--gold-soft);color:var(--gold)}
+.scorer-info{flex:1;min-width:0}
+.scorer-info b{display:block;font-size:12.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.scorer-info span{font-size:10.5px;color:var(--text-muted)}
+.scorer-goals{display:flex;align-items:center;gap:6px;font-weight:800;font-size:15px;color:var(--gold)}
+.sim-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;background:var(--gold-soft);border:1px solid rgba(245,179,1,.35);color:var(--gold);font-size:12px;font-weight:700;padding:11px;border-radius:12px;margin-bottom:12px}
+.sim-btn:hover{background:rgba(245,179,1,.22)}
+.goal-pop{animation:pop .5s var(--ease)}
+@keyframes pop{0%{transform:scale(1.3);color:var(--green)}100%{transform:scale(1);color:var(--gold)}}
+
+/* equipes */
+.team-card{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:11px 12px;margin-bottom:8px}
+.team-card .badge{width:34px;height:34px;border-radius:10px;font-size:12px}
+.team-card .info{flex:1}
+.team-card .info b{display:block;font-size:12.5px;font-weight:700}
+.team-card .info span{font-size:10.5px;color:var(--text-muted)}
+.add-player{font-size:10.5px;font-weight:700;color:var(--text-soft);background:var(--surface-2);border:1px solid var(--line-strong);padding:6px 10px;border-radius:100px;white-space:nowrap}
+
+/* bottom nav */
+.app-tabbar{display:flex;border-top:1px solid var(--line);background:rgba(17,24,19,.9);backdrop-filter:blur(10px);padding:8px 6px calc(8px + env(safe-area-inset-bottom))}
+.tab-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px;border-radius:10px;color:var(--text-muted);font-size:9.5px;font-weight:600;position:relative}
+.tab-item i{font-size:15px}
+.tab-item.active{color:var(--green)}
+.tab-item .tab-dot{position:absolute;top:2px;right:14px;width:6px;height:6px;border-radius:50%;background:var(--gold);display:none}
+.tab-item .tab-dot.show{display:block}
+
+/* explainer panel */
+.explain-panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:26px}
+.explain-panel h3{font-size:16.5px;font-weight:800;margin-bottom:6px;display:flex;align-items:center;gap:9px}
+.explain-panel h3 i{color:var(--green);font-size:15px}
+.explain-panel > p{font-size:13px;color:var(--text-soft);margin-bottom:20px}
+.rule-list{list-style:none;display:flex;flex-direction:column;gap:12px;margin-bottom:24px}
+.rule-list li{display:flex;gap:12px;font-size:13px;color:var(--text-soft)}
+.rule-num{width:24px;height:24px;border-radius:7px;background:var(--green-soft);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex:none}
+.rule-list b{color:var(--text)}
+.note-box{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;gap:12px;font-size:12.5px;color:var(--text-soft)}
+.note-box i{color:var(--gold);font-size:15px;margin-top:1px}
+
+.stack-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:22px}
+.stack-card{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:14px}
+.stack-card i{color:var(--green);font-size:16px;margin-bottom:8px;display:block}
+.stack-card b{display:block;font-size:12.5px;margin-bottom:3px}
+.stack-card span{font-size:11px;color:var(--text-muted)}
+
+.reveal{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s ease}
+.reveal.in{opacity:1;transform:translateY(0)}
+
+.foot-note{text-align:center;font-size:12px;color:var(--text-muted);margin-top:50px;padding-top:26px;border-top:1px solid var(--line);max-width:640px;margin-left:auto;margin-right:auto}
+.foot-note b{color:var(--text-soft)}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="wrap topbar-inner">
+    <div class="brand">
+      <div class="mark"><i class="fa-solid fa-futbol"></i></div>
+      <div class="brand-text">
+        <b>LigaFlow</b>
+        <small>Gestão de campeonatos</small>
+      </div>
+    </div>
+    <div class="topbar-meta">
+      <span class="demo-tag"><i class="fa-solid fa-circle-play"></i> Protótipo funcional</span>
+      <div class="bell-wrap">
+        <button class="icon-btn" onclick="toggleNotif()"><i class="fa-solid fa-bell"></i><span class="dot"></span></button>
+        <div class="notif-drop" id="notifDrop">
+          <div class="notif-item">
+            <i style="background:var(--green-soft);color:var(--green)"><i class="fa-solid fa-table-list"></i></i>
+            <div class="txt"><b>Classificação atualizada</b><span>Leões FC assumiu a liderança</span></div>
+          </div>
+          <div class="notif-item">
+            <i style="background:var(--gold-soft);color:var(--gold)"><i class="fa-solid fa-futbol"></i></i>
+            <div class="txt"><b>Novo artilheiro</b><span>Kaique Silva chegou a 5 gols</span></div>
+          </div>
+          <div class="notif-item">
+            <i style="background:var(--blue-soft);color:var(--blue)"><i class="fa-solid fa-calendar"></i></i>
+            <div class="txt"><b>Rodada 3 amanhã</b><span>4 jogos programados às 15h</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="hero">
+    <div class="hero-grid">
+      <div>
+        <span class="eyebrow reveal"><i class="fa-solid fa-bolt"></i> Prova de conceito do motor de classificação</span>
+        <h1 class="reveal">Tabela e artilharia que se recalculam <span>sozinhas</span>, sem erro manual</h1>
+        <p class="lead reveal">O maior risco técnico deste projeto não é a tela, é a lógica por trás dela: pontos, saldo de gols e desempates que precisam bater certo toda vez que um placar entra. Abaixo está esse motor funcionando de verdade, edite um resultado e veja a tabela e a artilharia se ajustarem na hora.</p>
+        <div class="hero-note reveal"><i class="fa-solid fa-mobile-screen-button"></i> Layout em formato de app mobile, mesma tela que rodaria em Android e iOS via Flutter.</div>
+      </div>
+      <div class="hero-image reveal">
+        <img src="https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=900&q=80" alt="Campo de futebol">
+        <div class="overlay-tag"><i class="fa-solid fa-arrows-rotate"></i> Cada resultado editado recalcula pontos, saldo e artilharia automaticamente</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head reveal">
+      <div>
+        <h2>Um app, múltiplos campeonatos</h2>
+        <p>Cada torneio mantém seu próprio conjunto de times, jogos e artilheiros. Troque abaixo para ver os dados mudarem instantaneamente.</p>
+      </div>
+    </div>
+    <div class="comp-switch reveal">
+      <button class="comp-pill active" id="pill-copa" onclick="switchComp('copa')"><i class="fa-solid fa-trophy"></i> Copa Regional Sub-20 <span class="n">6 times</span></button>
+      <button class="comp-pill" id="pill-liga" onclick="switchComp('liga')"><i class="fa-solid fa-shield-halved"></i> Liga Amadora Municipal <span class="n">6 times</span></button>
+    </div>
+
+    <div class="showcase">
+      <div class="phone reveal">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="app-topbar">
+            <div class="comp-name" id="appCompName">Copa Regional Sub-20<small>Fase de grupos · Rodada 3</small></div>
+            <div class="live-pill"><span class="live-dot"></span> AO VIVO</div>
+          </div>
+          <div class="toast" id="toast"><i class="fa-solid fa-check"></i> <span id="toastMsg">Classificação atualizada</span></div>
+          <div class="app-body" id="appBody"></div>
+          <div class="app-tabbar">
+            <button class="tab-item active" data-tab="jogos" onclick="switchTab('jogos')"><i class="fa-solid fa-calendar-days"></i>Jogos</button>
+            <button class="tab-item" data-tab="classificacao" onclick="switchTab('classificacao')"><i class="fa-solid fa-table-list"></i>Tabela<span class="tab-dot" id="dotClass"></span></button>
+            <button class="tab-item" data-tab="artilharia" onclick="switchTab('artilharia')"><i class="fa-solid fa-futbol"></i>Artilharia<span class="tab-dot" id="dotArt"></span></button>
+            <button class="tab-item" data-tab="equipes" onclick="switchTab('equipes')"><i class="fa-solid fa-users"></i>Equipes</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="explain-panel reveal">
+        <h3><i class="fa-solid fa-gears"></i> Como o motor de classificação funciona</h3>
+        <p>A tabela nunca é digitada manualmente. Ela é derivada dos jogos cadastrados, o que elimina o erro humano que normalmente aparece em planilhas de campeonato.</p>
+        <ul class="rule-list">
+          <li><span class="rule-num">1</span><div><b>Pontos</b> — 3 por vitória, 1 por empate, recalculado a cada resultado salvo.</div></li>
+          <li><span class="rule-num">2</span><div><b>Critérios de desempate em cascata</b> — vitórias, depois saldo de gols, depois gols marcados, na ordem configurada para o campeonato.</div></li>
+          <li><span class="rule-num">3</span><div><b>Confronto direto opcional</b> — em campeonatos menores é comum o desempate priorizar quem venceu o confronto direto antes do saldo de gols, isso fica configurável por torneio, não fixo no código.</div></li>
+          <li><span class="rule-num">4</span><div><b>Artilharia por jogador</b> — separada dos placares de time, permite W.O., gol contra e substituição sem distorcer o ranking de goleadores.</div></li>
+        </ul>
+        <div class="note-box"><i class="fa-solid fa-triangle-exclamation"></i> Ponto que costuma quebrar campeonatos amadores: empate triplo em pontos e saldo de gols. O motor precisa de uma regra final determinística (ex. sorteio ou confronto direto) para nunca travar a exibição da tabela.</div>
+        <div class="stack-row">
+          <div class="stack-card"><i class="fa-brands fa-flutter"></i><b>Flutter</b><span>Um código para Android e iOS</span></div>
+          <div class="stack-card"><i class="fa-solid fa-cloud-arrow-up"></i><b>Sync em nuvem</b><span>Admin edita, participantes veem na hora</span></div>
+          <div class="stack-card"><i class="fa-solid fa-bell"></i><b>Notificações push</b><span>Início de jogo, resultado, artilheiro</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p class="foot-note reveal">Este protótipo demonstra a lógica central do projeto rodando no navegador. O app final é <b>nativo mobile em Flutter</b>, com dados persistentes multiusuário, cadastro completo de times e jogadores, e notificações push, conforme descrito no escopo.</p>
+</div>
+
+<script>
+const DATA = {
+  copa:{
+    name:'Copa Regional Sub-20',
+    teams:[
+      {id:'leoes',name:'Leões FC',color:'#ef4444',ini:'LFC'},
+      {id:'furacao',name:'Furacão EC',color:'#3b82f6',ini:'FEC'},
+      {id:'atletico',name:'Atlético Norte',color:'#f5b301',ini:'ATN'},
+      {id:'estrela',name:'Estrela Azul',color:'#06b6d4',ini:'EAZ'},
+      {id:'guerreiros',name:'Guerreiros SC',color:'#a855f7',ini:'GSC'},
+      {id:'real',name:'Real Cidade',color:'#22c55e',ini:'RCI'}
+    ],
+    players:[
+      {id:'p1',name:'Kaique Silva',teamId:'leoes',goals:5},
+      {id:'p2',name:'Bruno Alves',teamId:'leoes',goals:2},
+      {id:'p3',name:'Diego Santos',teamId:'furacao',goals:4},
+      {id:'p4',name:'Matheus Lima',teamId:'furacao',goals:1},
+      {id:'p5',name:'Rafael Costa',teamId:'atletico',goals:3},
+      {id:'p6',name:'Gabriel Rocha',teamId:'estrela',goals:3},
+      {id:'p7',name:'Pedro Henrique',teamId:'estrela',goals:1},
+      {id:'p8',name:'Lucas Martins',teamId:'guerreiros',goals:2},
+      {id:'p9',name:'Thiago Souza',teamId:'real',goals:4},
+      {id:'p10',name:'Vitor Hugo',teamId:'real',goals:2}
+    ],
+    matches:[
+      {id:'m1',round:1,homeId:'leoes',awayId:'furacao',homeScore:2,awayScore:1,played:true,date:'22 Jun'},
+      {id:'m2',round:1,homeId:'atletico',awayId:'estrela',homeScore:1,awayScore:1,played:true,date:'22 Jun'},
+      {id:'m3',round:1,homeId:'guerreiros',awayId:'real',homeScore:0,awayScore:2,played:true,date:'23 Jun'},
+      {id:'m4',round:2,homeId:'leoes',awayId:'atletico',homeScore:3,awayScore:0,played:true,date:'29 Jun'},
+      {id:'m5',round:2,homeId:'furacao',awayId:'guerreiros',homeScore:1,awayScore:1,played:true,date:'29 Jun'},
+      {id:'m6',round:2,homeId:'estrela',awayId:'real',homeScore:0,awayScore:0,played:false,date:'30 Jun'},
+      {id:'m7',round:3,homeId:'leoes',awayId:'estrela',homeScore:0,awayScore:0,played:false,date:'6 Jul'},
+      {id:'m8',round:3,homeId:'furacao',awayId:'real',homeScore:0,awayScore:0,played:false,date:'6 Jul'},
+      {id:'m9',round:3,homeId:'atletico',awayId:'guerreiros',homeScore:0,awayScore:0,played:false,date:'7 Jul'}
+    ]
+  },
+  liga:{
+    name:'Liga Amadora Municipal',
+    teams:[
+      {id:'vila',name:'Vila Verde',color:'#22c55e',ini:'VVE'},
+      {id:'recanto',name:'Recanto FC',color:'#f5b301',ini:'REC'},
+      {id:'uniao',name:'União Operária',color:'#3b82f6',ini:'UOP'},
+      {id:'ferro',name:'Ferroviário',color:'#ef4444',ini:'FER'},
+      {id:'sport',name:'Sport Clube Rio',color:'#a855f7',ini:'SCR'},
+      {id:'palmares',name:'Palmares',color:'#06b6d4',ini:'PAL'}
+    ],
+    players:[
+      {id:'q1',name:'André Nunes',teamId:'vila',goals:6},
+      {id:'q2',name:'Felipe Braga',teamId:'recanto',goals:4},
+      {id:'q3',name:'Caio Duarte',teamId:'uniao',goals:3},
+      {id:'q4',name:'Renan Vieira',teamId:'ferro',goals:3},
+      {id:'q5',name:'Igor Bastos',teamId:'sport',goals:2},
+      {id:'q6',name:'Otávio Reis',teamId:'palmares',goals:2},
+      {id:'q7',name:'Wesley Cruz',teamId:'vila',goals:1}
+    ],
+    matches:[
+      {id:'n1',round:1,homeId:'vila',awayId:'recanto',homeScore:3,awayScore:1,played:true,date:'15 Jun'},
+      {id:'n2',round:1,homeId:'uniao',awayId:'ferro',homeScore:2,awayScore:2,played:true,date:'15 Jun'},
+      {id:'n3',round:1,homeId:'sport',awayId:'palmares',homeScore:1,awayScore:0,played:true,date:'16 Jun'},
+      {id:'n4',round:2,homeId:'vila',awayId:'uniao',homeScore:0,awayScore:0,played:false,date:'22 Jun'},
+      {id:'n5',round:2,homeId:'recanto',awayId:'sport',homeScore:0,awayScore:0,played:false,date:'22 Jun'},
+      {id:'n6',round:2,homeId:'ferro',awayId:'palmares',homeScore:0,awayScore:0,played:false,date:'23 Jun'}
+    ]
+  }
+};
+
+let current = 'copa';
+let activeTab = 'jogos';
+let prevOrder = {};
+let editing = null;
+
+function teamById(id){ return DATA[current].teams.find(t=>t.id===id); }
+
+function computeStandings(){
+  const comp = DATA[current];
+  const table = {};
+  comp.teams.forEach(t=> table[t.id] = {...t,pj:0,v:0,e:0,d:0,gp:0,gc:0,pts:0});
+  comp.matches.forEach(m=>{
+    if(!m.played) return;
+    const h = table[m.homeId], a = table[m.awayId];
+    h.pj++; a.pj++;
+    h.gp+=m.homeScore; h.gc+=m.awayScore;
+    a.gp+=m.awayScore; a.gc+=m.homeScore;
+    if(m.homeScore>m.awayScore){ h.v++; h.pts+=3; a.d++; }
+    else if(m.homeScore<m.awayScore){ a.v++; a.pts+=3; h.d++; }
+    else { h.e++; a.e++; h.pts+=1; a.pts+=1; }
+  });
+  return Object.values(table).sort((x,y)=>{
+    if(y.pts!==x.pts) return y.pts-x.pts;
+    if(y.v!==x.v) return y.v-x.v;
+    const sgX=x.gp-x.gc, sgY=y.gp-y.gc;
+    if(sgY!==sgX) return sgY-sgX;
+    if(y.gp!==x.gp) return y.gp-x.gp;
+    return x.name.localeCompare(y.name);
+  });
+}
+
+function computeScorers(){
+  return [...DATA[current].players].sort((a,b)=> b.goals-a.goals || a.name.localeCompare(b.name));
+}
+
+function switchComp(id){
+  current = id;
+  editing = null;
+  prevOrder = {};
+  document.getElementById('pill-copa').classList.toggle('active', id==='copa');
+  document.getElementById('pill-liga').classList.toggle('active', id==='liga');
+  document.getElementById('appCompName').innerHTML = DATA[id].name + '<small>Fase de grupos · Rodada 3</small>';
+  render();
+}
+
+function switchTab(tab){
+  activeTab = tab;
+  document.querySelectorAll('.tab-item').forEach(el=> el.classList.toggle('active', el.dataset.tab===tab));
+  if(tab==='classificacao') document.getElementById('dotClass').classList.remove('show');
+  if(tab==='artilharia') document.getElementById('dotArt').classList.remove('show');
+  render();
+}
+
+function toggleNotif(){ document.getElementById('notifDrop').classList.toggle('open'); }
+document.addEventListener('click', e=>{
+  if(!e.target.closest('.bell-wrap')) document.getElementById('notifDrop').classList.remove('open');
+});
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=> t.classList.remove('show'), 2200);
+}
+
+function openEdit(matchId){ editing = matchId; render(); }
+function cancelEdit(){ editing = null; render(); }
+
+function confirmEdit(matchId){
+  const h = document.getElementById('h_'+matchId).value;
+  const a = document.getElementById('a_'+matchId).value;
+  const m = DATA[current].matches.find(x=>x.id===matchId);
+  m.homeScore = Math.max(0, parseInt(h||0,10));
+  m.awayScore = Math.max(0, parseInt(a||0,10));
+  m.played = true;
+  editing = null;
+  prevOrder = Object.fromEntries(computeStandingsFrom(prevOrder._snapshot||DATA[current].matches).map((t,i)=>[t.id,i]));
+  render();
+  showToast('Classificação e artilharia atualizadas automaticamente');
+  document.getElementById('dotClass').classList.add('show');
+  document.getElementById('dotArt').classList.add('show');
+}
+
+function computeStandingsFrom(){ return computeStandings(); }
+
+function renderJogos(){
+  const comp = DATA[current];
+  const rounds = [...new Set(comp.matches.map(m=>m.round))];
+  let html = '';
+  rounds.forEach(r=>{
+    html += `<div class="round-label">Rodada ${r}</div>`;
+    comp.matches.filter(m=>m.round===r).forEach(m=>{
+      const h = teamById(m.homeId), a = teamById(m.awayId);
+      const isEdit = editing===m.id;
+      html += `<div class="match-card">
+        <div class="match-row">
+          <div class="team-mini"><div class="badge" style="background:${h.color}">${h.ini}</div><span>${h.name}</span></div>
+          ${m.played
+            ? `<div class="score-box">${m.homeScore} <span style="color:var(--text-muted)">x</span> ${m.awayScore}</div>`
+            : `<div class="score-pending">a definir</div>`}
+          <div class="team-mini right"><div class="badge" style="background:${a.color}">${a.ini}</div><span>${a.name}</span></div>
+        </div>
+        ${isEdit ? `
+        <div class="edit-panel">
+          <input type="number" min="0" id="h_${m.id}" value="${m.homeScore}">
+          <span class="vs">x</span>
+          <input type="number" min="0" id="a_${m.id}" value="${m.awayScore}">
+          <button class="cancel-btn" onclick="cancelEdit()">cancelar</button>
+          <button class="confirm-btn" onclick="confirmEdit('${m.id}')"><i class="fa-solid fa-check"></i> salvar</button>
+        </div>` : `
+        <div class="match-foot">
+          <span class="date"><i class="fa-regular fa-clock"></i> ${m.date}</span>
+          <button class="edit-btn" onclick="openEdit('${m.id}')"><i class="fa-solid fa-pen"></i> ${m.played?'editar placar':'lançar resultado'}</button>
+        </div>`}
+      </div>`;
+    });
+  });
+  return html;
+}
+
+function renderClassificacao(){
+  const standings = computeStandings();
+  let html = `<div class="table-wrap"><table class="tbl"><thead><tr>
+    <th>#</th><th>Time</th><th>PJ</th><th>V</th><th>E</th><th>D</th><th>SG</th><th>Pts</th>
+  </tr></thead><tbody>`;
+  standings.forEach((t,i)=>{
+    const prev = prevOrder[t.id];
+    let arrow = '';
+    if(prev!==undefined && prev!==i){
+      arrow = prev>i ? '<i class="fa-solid fa-caret-up rank-arrow up"></i>' : '<i class="fa-solid fa-caret-down rank-arrow down"></i>';
+    }
+    const flash = (prev!==undefined && prev!==i) ? 'rank-flash' : '';
+    html += `<tr class="${flash}">
+      <td><span class="pos-num">${i+1}</span></td>
+      <td class="name"><div class="badge" style="background:${t.color};width:20px;height:20px;font-size:8px">${t.ini}</div><span>${t.name}</span>${arrow}</td>
+      <td>${t.pj}</td><td>${t.v}</td><td>${t.e}</td><td>${t.d}</td>
+      <td>${t.gp-t.gc>0?'+':''}${t.gp-t.gc}</td>
+      <td class="pts">${t.pts}</td>
+    </tr>`;
+  });
+  html += '</tbody></table></div>';
+  prevOrder = Object.fromEntries(standings.map((t,i)=>[t.id,i]));
+  return html;
+}
+
+function simGoal(){
+  const players = DATA[current].players;
+  const pick = players[Math.floor(players.length/2)];
+  pick.goals += 1;
+  render();
+  showToast(pick.name + ' marcou! Artilharia atualizada');
+}
+
+function renderArtilharia(){
+  const scorers = computeScorers();
+  let html = `<button class="sim-btn" onclick="simGoal()"><i class="fa-solid fa-futbol"></i> Simular gol ao vivo</button>`;
+  scorers.forEach((p,i)=>{
+    const t = teamById(p.teamId);
+    html += `<div class="scorer-row">
+      <div class="scorer-rank ${i===0?'gold':''}">${i+1}</div>
+      <div class="scorer-info"><b>${p.name}</b><span>${t.name}</span></div>
+      <div class="scorer-goals" id="goals_${p.id}"><i class="fa-solid fa-futbol" style="font-size:11px"></i> ${p.goals}</div>
+    </div>`;
+  });
+  return html;
+}
+
+function renderEquipes(){
+  const comp = DATA[current];
+  let html = '';
+  comp.teams.forEach(t=>{
+    const count = comp.players.filter(p=>p.teamId===t.id).length;
+    html += `<div class="team-card">
+      <div class="badge" style="background:${t.color}">${t.ini}</div>
+      <div class="info"><b>${t.name}</b><span>${count} jogadores cadastrados</span></div>
+      <button class="add-player"><i class="fa-solid fa-plus"></i> jogador</button>
+    </div>`;
+  });
+  return html;
+}
+
+function render(){
+  const body = document.getElementById('appBody');
+  if(activeTab==='jogos') body.innerHTML = renderJogos();
+  else if(activeTab==='classificacao') body.innerHTML = renderClassificacao();
+  else if(activeTab==='artilharia') body.innerHTML = renderArtilharia();
+  else if(activeTab==='equipes') body.innerHTML = renderEquipes();
+}
+
+render();
+
+const io = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('in'); });
+},{threshold:.12});
+document.querySelectorAll('.reveal').forEach(el=> io.observe(el));
+</script>
+</body>
+</html>
