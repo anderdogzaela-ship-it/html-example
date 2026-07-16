@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>TorraLive · Controle de Torra via Modbus</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+:root{
+  --bg:#0b0a08;
+  --bg-2:#0f0d0a;
+  --surface:#161310;
+  --surface-2:#1e1a14;
+  --surface-3:#282219;
+  --surface-4:#332b1e;
+  --border:rgba(255,235,200,0.09);
+  --border-strong:rgba(255,235,200,0.16);
+
+  --text:#f6f0e6;
+  --text-soft:#cabfa9;
+  --text-muted:#8e8270;
+  --text-dim:#5a5343;
+
+  --gold:#eba62f;
+  --gold-soft:rgba(235,166,47,0.15);
+  --gold-glow:rgba(235,166,47,0.45);
+  --blue:#5b9bd5;
+  --green:#4ade80;
+  --red:#ef4444;
+  --orange:#ff7a45;
+
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:20px; --s6:24px; --s8:32px; --s10:40px;
+  --radius-sm:8px; --radius-md:12px; --radius-lg:18px;
+  --font:'Lexend',system-ui,sans-serif;
+  --mono:'JetBrains Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{
+  font-family:var(--font);
+  background:
+    radial-gradient(1200px 600px at 15% -10%, rgba(235,166,47,0.07), transparent 60%),
+    radial-gradient(900px 500px at 100% 0%, rgba(91,155,213,0.06), transparent 55%),
+    var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:var(--gold-soft);}
+.app{display:flex;flex-direction:column;min-height:100vh;}
+
+/* ---------- Topbar ---------- */
+.topbar{
+  display:flex;align-items:center;gap:var(--s5);
+  padding:12px var(--s6);
+  background:linear-gradient(180deg, rgba(22,19,16,0.98), rgba(15,13,10,0.98));
+  border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:50;
+  flex-wrap:wrap;
+}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px;letter-spacing:0.2px;}
+.brand .mark{
+  width:32px;height:32px;border-radius:9px;
+  background:linear-gradient(145deg,var(--gold),#a9670f);
+  display:flex;align-items:center;justify-content:center;
+  color:#1a1206;font-size:15px;box-shadow:0 0 0 1px rgba(0,0,0,0.3), 0 4px 14px rgba(235,166,47,0.35);
+}
+.brand small{display:block;font-weight:500;font-size:10.5px;color:var(--text-muted);letter-spacing:0.4px;text-transform:uppercase;}
+
+.nav{display:flex;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:4px;margin-left:var(--s4);}
+.nav button{
+  border:none;background:transparent;color:var(--text-muted);
+  font-family:var(--font);font-weight:600;font-size:13px;
+  padding:8px 14px;border-radius:8px;cursor:pointer;
+  display:flex;align-items:center;gap:7px;transition:.15s;
+}
+.nav button i{font-size:12px;}
+.nav button:hover{color:var(--text-soft);}
+.nav button.active{background:var(--surface-3);color:var(--text);box-shadow:inset 0 0 0 1px var(--border-strong);}
+
+.topbar-right{display:flex;align-items:center;gap:10px;margin-left:auto;}
+
+.status-pill{
+  display:flex;align-items:center;gap:8px;
+  padding:7px 12px;border-radius:20px;
+  background:var(--surface-2);border:1px solid var(--border);
+  font-size:12.5px;font-weight:600;color:var(--text-soft);
+}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--text-dim);}
+.status-pill.online .dot{background:var(--green);box-shadow:0 0 8px rgba(74,222,128,0.7);}
+.status-pill.online{color:var(--green);}
+.status-pill .dot{animation:none;}
+.status-pill.online .dot{animation:pulse 1.6s infinite;}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(74,222,128,0.5);}70%{box-shadow:0 0 0 7px rgba(74,222,128,0);}100%{box-shadow:0 0 0 0 rgba(74,222,128,0);}}
+
+.icon-btn{
+  width:36px;height:36px;border-radius:9px;border:1px solid var(--border);
+  background:var(--surface-2);color:var(--text-soft);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:13px;transition:.15s;
+}
+.icon-btn:hover{background:var(--surface-3);color:var(--text);}
+
+/* ---------- Views ---------- */
+main{flex:1;padding:var(--s6);max-width:1440px;margin:0 auto;width:100%;}
+.view{display:none;animation:fadeIn .35s ease;}
+.view.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+.card{
+  background:linear-gradient(180deg, var(--surface), var(--surface-2));
+  border:1px solid var(--border);border-radius:var(--radius-lg);
+  padding:var(--s5);
+}
+.card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--s4);gap:10px;flex-wrap:wrap;}
+.card-title{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-muted);display:flex;align-items:center;gap:8px;}
+.card-title i{color:var(--gold);}
+
+/* ---------- Monitor grid ---------- */
+.monitor-grid{display:grid;grid-template-columns:1fr 340px;gap:var(--s5);align-items:start;}
+@media (max-width:980px){.monitor-grid{grid-template-columns:1fr;}}
+
+.chart-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:var(--s4);}
+.phase-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:8px 14px;border-radius:10px;font-weight:700;font-size:13px;
+  background:var(--gold-soft);color:var(--gold);border:1px solid rgba(235,166,47,0.3);
+  transition:.3s;
+}
+.phase-badge i{font-size:12px;}
+.timer{font-family:var(--mono);font-size:26px;font-weight:700;letter-spacing:0.5px;}
+.timer span{color:var(--text-muted);font-size:13px;font-weight:500;margin-left:6px;}
+
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--text-soft);}
+.legend-item{display:flex;align-items:center;gap:6px;}
+.legend-swatch{width:12px;height:3px;border-radius:2px;}
+
+.chart-wrap{position:relative;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-md);padding:var(--s4);}
+canvas#roastChart{width:100%;height:420px;display:block;}
+
+.transport-bar{display:flex;align-items:center;gap:10px;margin-top:var(--s4);flex-wrap:wrap;}
+.btn{
+  font-family:var(--font);font-weight:700;font-size:13.5px;
+  padding:11px 18px;border-radius:10px;border:1px solid var(--border-strong);
+  background:var(--surface-3);color:var(--text);cursor:pointer;
+  display:flex;align-items:center;gap:8px;transition:.15s;
+}
+.btn:hover{background:var(--surface-4);}
+.btn.primary{background:linear-gradient(145deg,var(--gold),#c8850f);color:#1a1206;border:none;box-shadow:0 4px 16px rgba(235,166,47,0.25);}
+.btn.primary:hover{filter:brightness(1.06);}
+.btn.danger{background:rgba(239,68,68,0.12);color:#ff8080;border-color:rgba(239,68,68,0.3);}
+.btn:disabled{opacity:0.4;cursor:not-allowed;}
+.btn.sm{padding:8px 12px;font-size:12.5px;}
+
+.event-buttons{display:flex;gap:8px;flex-wrap:wrap;margin-top:var(--s4);}
+.ev-btn{
+  font-family:var(--font);font-size:12px;font-weight:700;
+  padding:9px 12px;border-radius:9px;border:1px dashed var(--border-strong);
+  background:transparent;color:var(--text-muted);cursor:pointer;transition:.15s;
+}
+.ev-btn:hover{border-style:solid;color:var(--text);background:var(--surface-3);}
+.ev-btn.done{border-style:solid;border-color:transparent;background:var(--gold-soft);color:var(--gold);cursor:default;}
+.ev-btn.done i{margin-right:5px;}
+
+/* ---------- Side panel ---------- */
+.side-panel{display:flex;flex-direction:column;gap:var(--s4);}
+.readings{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.reading{
+  background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-md);
+  padding:14px;text-align:left;
+}
+.reading .lbl{font-size:11px;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;display:flex;align-items:center;gap:6px;}
+.reading .val{font-family:var(--mono);font-size:26px;font-weight:700;margin-top:6px;}
+.reading .val small{font-size:14px;color:var(--text-muted);font-weight:500;}
+.reading.bt .val{color:var(--orange);}
+.reading.et .val{color:var(--blue);}
+.reading.ror .val{color:var(--green);}
+.reading.full{grid-column:1/-1;}
+
+.control-row{margin-bottom:var(--s4);}
+.control-row:last-child{margin-bottom:0;}
+.control-row .top{display:flex;justify-content:space-between;font-size:12.5px;color:var(--text-soft);margin-bottom:8px;font-weight:600;}
+.control-row .top b{font-family:var(--mono);color:var(--text);font-weight:700;}
+input[type=range]{
+  -webkit-appearance:none;width:100%;height:6px;border-radius:4px;
+  background:var(--surface-4);outline:none;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:17px;height:17px;border-radius:50%;
+  background:var(--gold);cursor:pointer;border:2px solid #1a1206;box-shadow:0 0 0 1px var(--gold);
+}
+.events-log{display:flex;flex-direction:column;gap:8px;max-height:180px;overflow-y:auto;}
+.events-log .empty{font-size:12.5px;color:var(--text-dim);text-align:center;padding:14px 0;}
+.log-row{display:flex;align-items:center;gap:10px;font-size:12.5px;padding:8px 10px;background:var(--surface-2);border-radius:8px;border:1px solid var(--border);}
+.log-row .t{font-family:var(--mono);color:var(--text-muted);}
+.log-row .n{font-weight:700;color:var(--text-soft);flex:1;}
+.log-row i{color:var(--gold);width:14px;text-align:center;}
+
+/* ---------- Profiles ---------- */
+.profiles-toolbar{display:flex;gap:10px;margin-bottom:var(--s5);flex-wrap:wrap;align-items:center;}
+.search-box{
+  flex:1;min-width:220px;display:flex;align-items:center;gap:9px;
+  background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;
+  color:var(--text-muted);
+}
+.search-box input{background:transparent;border:none;outline:none;color:var(--text);font-family:var(--font);font-size:13.5px;width:100%;}
+.chip-row{display:flex;gap:8px;flex-wrap:wrap;}
+.chip{padding:8px 13px;border-radius:20px;background:var(--surface-2);border:1px solid var(--border);font-size:12.5px;font-weight:600;color:var(--text-soft);cursor:pointer;transition:.15s;}
+.chip.active{background:var(--gold-soft);color:var(--gold);border-color:rgba(235,166,47,0.35);}
+
+.profiles-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:var(--s4);}
+.profile-card{
+  background:linear-gradient(180deg, var(--surface), var(--surface-2));
+  border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;cursor:pointer;transition:.2s;
+}
+.profile-card:hover{border-color:var(--border-strong);transform:translateY(-2px);}
+.profile-card .thumb{height:80px;position:relative;background-size:cover;background-position:center;}
+.profile-card .thumb::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg, rgba(11,10,8,0.15), rgba(11,10,8,0.85));}
+.profile-card .thumb canvas{position:absolute;inset:0;width:100%;height:100%;}
+.profile-card .body{padding:14px;}
+.profile-card .name{font-weight:700;font-size:14.5px;margin-bottom:3px;}
+.profile-card .meta{font-size:11.5px;color:var(--text-muted);display:flex;gap:10px;flex-wrap:wrap;}
+.profile-card .stats{display:flex;gap:14px;margin-top:11px;padding-top:11px;border-top:1px solid var(--border);}
+.profile-card .stat{font-size:11px;color:var(--text-muted);}
+.profile-card .stat b{display:block;font-family:var(--mono);font-size:14px;color:var(--text-soft);font-weight:700;}
+.profile-card .pick{position:absolute;top:10px;right:10px;width:22px;height:22px;border-radius:6px;background:rgba(11,10,8,0.6);border:1px solid rgba(255,255,255,0.25);display:flex;align-items:center;justify-content:center;font-size:11px;color:transparent;}
+.profile-card.picked .pick{background:var(--gold);color:#1a1206;border-color:var(--gold);}
+
+/* ---------- Compare ---------- */
+.compare-empty{text-align:center;padding:80px 20px;color:var(--text-muted);}
+.compare-empty i{font-size:34px;color:var(--text-dim);margin-bottom:14px;display:block;}
+.compare-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-top:var(--s4);}
+.compare-stat{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-md);padding:14px;}
+.compare-stat .l{font-size:11px;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:0.4px;}
+.compare-stat .v{font-family:var(--mono);font-size:19px;font-weight:700;margin-top:6px;}
+
+/* ---------- Settings ---------- */
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--s5);align-items:start;}
+@media (max-width:980px){.settings-grid{grid-template-columns:1fr;}}
+.form-row{margin-bottom:14px;}
+.form-row label{display:block;font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:7px;}
+.form-row select,.form-row input[type=text]{
+  width:100%;padding:11px 13px;border-radius:9px;border:1px solid var(--border);
+  background:var(--surface-2);color:var(--text);font-family:var(--mono);font-size:13.5px;outline:none;
+}
+.form-row select:focus,.form-row input:focus{border-color:var(--gold);}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+table.regs{width:100%;border-collapse:collapse;font-size:12.5px;}
+table.regs th{text-align:left;padding:9px 10px;color:var(--text-muted);font-weight:700;text-transform:uppercase;font-size:10.5px;letter-spacing:0.4px;border-bottom:1px solid var(--border);}
+table.regs td{padding:10px 10px;border-bottom:1px solid var(--border);color:var(--text-soft);}
+table.regs td.addr{font-family:var(--mono);color:var(--gold);}
+table.regs td.val{font-family:var(--mono);color:var(--text);text-align:right;}
+table.regs tr:last-child td{border-bottom:none;}
+.fc-tag{font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;background:var(--surface-4);color:var(--text-muted);}
+
+/* ---------- Toasts ---------- */
+.toast-container{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:10px;z-index:200;}
+.toast{
+  background:var(--surface-3);border:1px solid var(--border-strong);border-radius:11px;
+  padding:13px 16px;display:flex;align-items:center;gap:11px;min-width:270px;
+  box-shadow:0 12px 30px rgba(0,0,0,0.5);animation:toastIn .3s ease;font-size:13px;
+}
+.toast i{color:var(--gold);font-size:15px;}
+.toast b{font-weight:700;}
+@keyframes toastIn{from{opacity:0;transform:translateX(30px);}to{opacity:1;transform:translateX(0);}}
+@keyframes toastOut{to{opacity:0;transform:translateX(30px);}}
+
+footer{text-align:center;padding:18px;color:var(--text-dim);font-size:11.5px;}
+
+::-webkit-scrollbar{width:8px;height:8px;}
+::-webkit-scrollbar-thumb{background:var(--surface-4);border-radius:4px;}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="topbar">
+    <div class="brand">
+      <div class="mark"><i class="fa-solid fa-fire-flame-curved"></i></div>
+      <div>
+        TorraLive
+        <small>Controle de Torra &middot; Protocolo Modbus</small>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <button class="active" data-view="monitor"><i class="fa-solid fa-chart-line"></i>Monitor</button>
+      <button data-view="profiles"><i class="fa-solid fa-layer-group"></i>Perfis</button>
+      <button data-view="compare"><i class="fa-solid fa-code-compare"></i>Comparar</button>
+      <button data-view="settings"><i class="fa-solid fa-plug-circle-bolt"></i>Modbus</button>
+    </nav>
+
+    <div class="topbar-right">
+      <div class="status-pill online" id="connStatus"><span class="dot"></span> Conectado &middot; TCP 192.168.0.42:502</div>
+      <button class="icon-btn" id="restartBtn" title="Reiniciar demonstração"><i class="fa-solid fa-rotate-left"></i></button>
+    </div>
+  </div>
+
+  <main>
+
+    <!-- ===================== MONITOR ===================== -->
+    <section class="view active" id="view-monitor">
+      <div class="monitor-grid">
+
+        <div class="card">
+          <div class="chart-header">
+            <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+              <span class="phase-badge" id="phaseBadge"><i class="fa-solid fa-hourglass-start"></i> Aguardando carga</span>
+              <div class="legend">
+                <div class="legend-item"><span class="legend-swatch" style="background:#ff7a45"></span>BT &middot; Temp. do Grão</div>
+                <div class="legend-item"><span class="legend-swatch" style="background:#5b9bd5"></span>ET &middot; Temp. Ambiente</div>
+                <div class="legend-item"><span class="legend-swatch" style="background:#4ade80"></span>RoR &middot; °C/min</div>
+              </div>
+            </div>
+            <div class="timer" id="timerDisplay">00:00<span>tempo de torra</span></div>
+          </div>
+
+          <div class="chart-wrap">
+            <canvas id="roastChart"></canvas>
+          </div>
+
+          <div class="transport-bar">
+            <button class="btn primary" id="playBtn"><i class="fa-solid fa-play"></i> Iniciar Torra</button>
+            <button class="btn" id="pauseBtn" disabled><i class="fa-solid fa-pause"></i> Pausar</button>
+            <button class="btn danger" id="dropBtn" disabled><i class="fa-solid fa-arrow-down"></i> Descarregar Agora</button>
+            <select class="btn" id="profileSelect" style="cursor:pointer;">
+              <option>Perfil: Bourbon Amarelo &middot; Torra Média</option>
+              <option>Perfil: Catuaí Vermelho &middot; Torra Escura</option>
+              <option>Perfil: Mundo Novo &middot; Torra Clara</option>
+            </select>
+          </div>
+
+          <div class="event-buttons" id="eventButtons">
+            <button class="ev-btn" data-ev="charge"><i class="fa-solid fa-mug-hot"></i> Carga</button>
+            <button class="ev-btn" data-ev="dryend"><i class="fa-solid fa-droplet-slash"></i> Fim da Secagem</button>
+            <button class="ev-btn" data-ev="fcstart"><i class="fa-solid fa-wave-square"></i> Início 1ª Quebra</button>
+            <button class="ev-btn" data-ev="fcend"><i class="fa-solid fa-wave-square"></i> Fim 1ª Quebra</button>
+            <button class="ev-btn" data-ev="drop"><i class="fa-solid fa-arrow-down"></i> Descarga</button>
+          </div>
+        </div>
+
+        <div class="side-panel">
+          <div class="card">
+            <div class="card-title" style="margin-bottom:14px;"><i class="fa-solid fa-satellite-dish"></i> Leituras em Tempo Real</div>
+            <div class="readings">
+              <div class="reading bt"><div class="lbl"><i class="fa-solid fa-seedling"></i> BT</div><div class="val" id="valBT">--<small>°C</small></div></div>
+              <div class="reading et"><div class="lbl"><i class="fa-solid fa-fire"></i> ET</div><div class="val" id="valET">--<small>°C</small></div></div>
+              <div class="reading ror full"><div class="lbl"><i class="fa-solid fa-gauge-high"></i> Taxa de Elevação (RoR)</div><div class="val" id="valRoR">--<small>°C/min</small></div></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title" style="margin-bottom:14px;"><i class="fa-solid fa-sliders"></i> Atuadores &middot; Registradores Holding</div>
+            <div class="control-row">
+              <div class="top">Potência do Queimador <b id="lblHeater">62%</b></div>
+              <input type="range" id="ctrlHeater" min="0" max="100" value="62">
+            </div>
+            <div class="control-row">
+              <div class="top">Velocidade do Tambor <b id="lblDrum">58 rpm</b></div>
+              <input type="range" id="ctrlDrum" min="30" max="75" value="58">
+            </div>
+            <div class="control-row">
+              <div class="top">Posição do Damper <b id="lblDamper">40%</b></div>
+              <input type="range" id="ctrlDamper" min="0" max="100" value="40">
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title" style="margin-bottom:12px;"><i class="fa-solid fa-list-check"></i> Eventos da Torra</div>
+            <div class="events-log" id="eventsLog"><div class="empty">Nenhum evento registrado ainda</div></div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ===================== PROFILES ===================== -->
+    <section class="view" id="view-profiles">
+      <div class="profiles-toolbar">
+        <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input type="text" placeholder="Buscar por origem, lote ou data..."></div>
+        <div class="chip-row">
+          <div class="chip active">Todos</div>
+          <div class="chip">Torra Clara</div>
+          <div class="chip">Torra Média</div>
+          <div class="chip">Torra Escura</div>
+        </div>
+      </div>
+      <div class="profiles-grid" id="profilesGrid"></div>
+    </section>
+
+    <!-- ===================== COMPARE ===================== -->
+    <section class="view" id="view-compare">
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title"><i class="fa-solid fa-code-compare"></i> Comparação de Perfis</div>
+          <div style="font-size:12px;color:var(--text-muted);">Selecione até 2 perfis na aba Perfis para sobrepor as curvas</div>
+        </div>
+        <div id="compareBody">
+          <div class="compare-empty"><i class="fa-solid fa-layer-group"></i>Nenhum perfil selecionado ainda.<br>Vá em <b style="color:var(--text-soft)">Perfis</b> e marque dois lotes para comparar.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== SETTINGS ===================== -->
+    <section class="view" id="view-settings">
+      <div class="settings-grid">
+        <div class="card">
+          <div class="card-title" style="margin-bottom:14px;"><i class="fa-solid fa-plug-circle-bolt"></i> Conexão Modbus</div>
+          <div class="form-row">
+            <label>Modo de Transporte</label>
+            <select id="cfgMode">
+              <option>Modbus TCP</option>
+              <option>Modbus RTU (Serial)</option>
+            </select>
+          </div>
+          <div class="two-col">
+            <div class="form-row"><label>Endereço IP</label><input type="text" value="192.168.0.42"></div>
+            <div class="form-row"><label>Porta</label><input type="text" value="502"></div>
+          </div>
+          <div class="two-col">
+            <div class="form-row"><label>Slave ID</label><input type="text" value="1"></div>
+            <div class="form-row"><label>Intervalo de Leitura</label><input type="text" value="500 ms"></div>
+          </div>
+          <button class="btn primary" id="testConnBtn" style="margin-top:6px;"><i class="fa-solid fa-satellite-dish"></i> Testar Conexão</button>
+          <div id="testConnResult" style="margin-top:12px;font-size:12.5px;color:var(--text-muted);"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title" style="margin-bottom:14px;"><i class="fa-solid fa-table-list"></i> Mapa de Registradores</div>
+          <table class="regs">
+            <thead><tr><th>Endereço</th><th>Variável</th><th>Função</th><th>Valor Bruto</th></tr></thead>
+            <tbody id="regsBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>Protótipo funcional &middot; TorraLive &middot; dados simulados para demonstração</footer>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+/* ===================== Utility ===================== */
+function toast(icon, text){
+  const c = document.getElementById('toastContainer');
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.innerHTML = `<i class="fa-solid ${icon}"></i><div>${text}</div>`;
+  c.appendChild(el);
+  setTimeout(()=>{ el.style.animation='toastOut .3s ease forwards'; setTimeout(()=>el.remove(),300); }, 3400);
+}
+function fmtTime(sec){
+  const m = Math.floor(sec/60), s = Math.floor(sec%60);
+  return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+}
+function smoothstep(a,b,t){ t = Math.max(0,Math.min(1,t)); const e = t*t*(3-2*t); return a + (b-a)*e; }
+function interp(waypoints, t){
+  for(let i=0;i<waypoints.length-1;i++){
+    const [t0,v0] = waypoints[i], [t1,v1] = waypoints[i+1];
+    if(t>=t0 && t<=t1){ return smoothstep(v0, v1, (t-t0)/(t1-t0)); }
+  }
+  return waypoints[waypoints.length-1][1];
+}
+
+/* ===================== Roast curve model ===================== */
+const BT_WAY = [[0,201],[15,141],[30,109],[60,95],[120,121],[180,141],[240,159],[300,173],[360,184],[420,193],[480,200],[540,204.5],[570,206.5],[600,210],[660,216]];
+const ET_WAY = [[0,222],[30,161],[60,150],[120,166],[180,179],[240,189],[300,197],[360,204],[420,209],[480,213.5],[540,217],[600,220],[660,223]];
+const TOTAL_SIM = 660; // 11 min simulated roast
+const SPEED = 660/48;  // 48 real seconds -> full roast
+
+const EVENTS_DEF = [
+  {key:'charge', label:'Carga', icon:'fa-mug-hot', triggerT:0},
+  {key:'dryend', label:'Fim da Secagem', icon:'fa-droplet-slash', triggerT:300},
+  {key:'fcstart', label:'Início 1ª Quebra', icon:'fa-wave-square', triggerT:543},
+  {key:'fcend', label:'Fim 1ª Quebra', icon:'fa-wave-square', triggerT:574},
+  {key:'drop', label:'Descarga', icon:'fa-arrow-down', triggerT:660},
+];
+
+function buildRoastSeries(){
+  const pts = [];
+  for(let t=0;t<=TOTAL_SIM;t+=3){
+    pts.push({t, bt: interp(BT_WAY,t), et: interp(ET_WAY,t)});
+  }
+  return pts;
+}
+const FULL_SERIES = buildRoastSeries();
+
+function calcRoR(series, idx){
+  const windowSec = 30;
+  const cur = series[idx];
+  let j = idx;
+  while(j>0 && (cur.t - series[j].t) < windowSec) j--;
+  const past = series[j];
+  if(past.t === cur.t) return 0;
+  return (cur.bt - past.bt) / ((cur.t - past.t)/60);
+}
+
+/* ===================== State ===================== */
+let simTime = 0;
+let playing = false;
+let lastFrame = null;
+let revealedIdx = 0;
+let firedEvents = {};
+let rafId = null;
+
+const canvas = document.getElementById('roastChart');
+const ctx = canvas.getContext('2d');
+
+function resizeCanvas(){
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = (rect.width - 32) * dpr;
+  canvas.height = 420 * dpr;
+  canvas.style.width = (rect.width-32)+'px';
+  canvas.style.height = '420px';
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+window.addEventListener('resize', resizeCanvas);
+
+function drawChart(series, upToIdx, markers, overlaySeries){
+  const w = canvas.clientWidth, h = 420;
+  ctx.clearRect(0,0,w,h);
+
+  const padL = 46, padR = 14, padT = 14, padB = 30;
+  const plotW = w - padL - padR, plotH = h - padT - padB;
+  const tempMin = 60, tempMax = 230;
+  const xMax = TOTAL_SIM;
+
+  function X(t){ return padL + (t/xMax)*plotW; }
+  function Y(temp){ return padT + plotH - ((temp-tempMin)/(tempMax-tempMin))*plotH; }
+
+  // grid
+  ctx.strokeStyle = 'rgba(255,235,200,0.06)';
+  ctx.lineWidth = 1;
+  ctx.font = '11px JetBrains Mono';
+  ctx.fillStyle = 'rgba(202,191,169,0.55)';
+  for(let temp=tempMin; temp<=tempMax; temp+=40){
+    const y = Y(temp);
+    ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(w-padR,y); ctx.stroke();
+    ctx.fillText(temp+'°', 6, y+4);
+  }
+  for(let t=0;t<=xMax;t+=120){
+    const x = X(t);
+    ctx.beginPath(); ctx.moveTo(x,padT); ctx.lineTo(x,h-padB); ctx.stroke();
+    ctx.fillText(fmtTime(t), x-14, h-10);
+  }
+
+  function drawLine(key, color, glow){
+    ctx.beginPath();
+    for(let i=0;i<=upToIdx && i<series.length;i++){
+      const p = series[i];
+      const x = X(p.t), y = Y(p[key]);
+      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    }
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2.4;
+    if(glow){ ctx.shadowColor = color; ctx.shadowBlur = 8; }
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
+
+  if(overlaySeries){
+    ctx.globalAlpha = 0.55;
+    ctx.setLineDash([5,4]);
+    drawLine2(overlaySeries, 'bt', '#ff7a45');
+    drawLine2(overlaySeries, 'et', '#5b9bd5');
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 1;
+  }
+  function drawLine2(s, key, color){
+    ctx.beginPath();
+    s.forEach((p,i)=>{ const x=X(p.t), y=Y(p[key]); if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); });
+    ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.stroke();
+  }
+
+  drawLine('et', '#5b9bd5', false);
+  drawLine('bt', '#ff7a45', true);
+
+  // RoR (secondary, scaled into same box, 0-40 -> top third)
+  ctx.beginPath();
+  const rorMin=0, rorMax=45;
+  for(let i=0;i<=upToIdx && i<series.length;i++){
+    const ror = calcRoR(series,i);
+    const x = X(series[i].t);
+    const y = padT + plotH*0.02 + (1-(Math.max(rorMin,Math.min(rorMax,ror))/rorMax))*plotH*0.34;
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  }
+  ctx.strokeStyle = '#4ade80'; ctx.lineWidth = 1.6; ctx.globalAlpha=0.85; ctx.stroke(); ctx.globalAlpha=1;
+
+  // markers
+  markers.forEach(m=>{
+    if(m.t > series[Math.min(upToIdx,series.length-1)].t) return;
+    const x = X(m.t);
+    ctx.beginPath();
+    ctx.strokeStyle = 'rgba(235,166,47,0.45)';
+    ctx.setLineDash([3,3]);
+    ctx.moveTo(x,padT); ctx.lineTo(x,h-padB);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#eba62f';
+    ctx.beginPath(); ctx.arc(x, padT+4, 3, 0, Math.PI*2); ctx.fill();
+  });
+}
+
+function renderMiniSpark(canvasEl, series, color){
+  const dpr = window.devicePixelRatio||1;
+  const w = canvasEl.clientWidth||260, h = canvasEl.clientHeight||80;
+  canvasEl.width = w*dpr; canvasEl.height = h*dpr;
+  const c = canvasEl.getContext('2d');
+  c.setTransform(dpr,0,0,dpr,0,0);
+  const tempMin=60,tempMax=230;
+  c.beginPath();
+  series.forEach((p,i)=>{
+    const x = (p.t/TOTAL_SIM)*w;
+    const y = h - ((p.bt-tempMin)/(tempMax-tempMin))*h;
+    if(i===0) c.moveTo(x,y); else c.lineTo(x,y);
+  });
+  c.strokeStyle = color; c.lineWidth = 2; c.stroke();
+}
+
+/* ===================== Simulation loop ===================== */
+function updateReadings(){
+  const idx = Math.min(revealedIdx, FULL_SERIES.length-1);
+  const p = FULL_SERIES[idx];
+  document.getElementById('valBT').innerHTML = (playing||revealedIdx>0 ? p.bt.toFixed(1) : '--') + '<small>°C</small>';
+  document.getElementById('valET').innerHTML = (playing||revealedIdx>0 ? p.et.toFixed(1) : '--') + '<small>°C</small>';
+  const ror = calcRoR(FULL_SERIES, idx);
+  document.getElementById('valRoR').innerHTML = (playing||revealedIdx>0 ? ror.toFixed(1) : '--') + '<small>°C/min</small>';
+  document.getElementById('timerDisplay').innerHTML = fmtTime(simTime) + '<span>tempo de torra</span>';
+}
+
+function updatePhaseBadge(){
+  const el = document.getElementById('phaseBadge');
+  let label='Aguardando carga', icon='fa-hourglass-start';
+  if(simTime>0 && simTime<60){ label='Fase de Secagem · pré ponto de virada'; icon='fa-droplet'; }
+  else if(simTime>=60 && simTime<300){ label='Fase de Secagem'; icon='fa-droplet'; }
+  else if(simTime>=300 && simTime<543){ label='Maillard · Desenvolvimento de Cor'; icon='fa-palette'; }
+  else if(simTime>=543 && simTime<660){ label='Desenvolvimento · pós 1ª Quebra'; icon='fa-fire'; }
+  else if(simTime>=660){ label='Resfriamento'; icon='fa-wind'; }
+  el.innerHTML = `<i class="fa-solid ${icon}"></i> ${label}`;
+}
+
+function checkAutoEvents(){
+  EVENTS_DEF.forEach(ev=>{
+    if(!firedEvents[ev.key] && simTime >= ev.triggerT){
+      fireEvent(ev.key, true);
+    }
+  });
+}
+
+function fireEvent(key, auto){
+  if(firedEvents[key]) return;
+  const def = EVENTS_DEF.find(e=>e.key===key);
+  firedEvents[key] = simTime;
+  const btn = document.querySelector(`.ev-btn[data-ev="${key}"]`);
+  if(btn){ btn.classList.add('done'); btn.innerHTML = `<i class="fa-solid ${def.icon}"></i> ${def.label} · ${fmtTime(simTime)}`; }
+  const log = document.getElementById('eventsLog');
+  if(log.querySelector('.empty')) log.innerHTML='';
+  const row = document.createElement('div');
+  row.className = 'log-row';
+  row.innerHTML = `<i class="fa-solid ${def.icon}"></i><div class="n">${def.label}</div><div class="t">${fmtTime(simTime)}</div>`;
+  log.prepend(row);
+  toast(def.icon, `<b>${def.label}</b> marcado em ${fmtTime(simTime)} ${auto?'(auto-detectado por temperatura)':''}`);
+  if(key==='drop'){ stopRoast(true); }
+}
+
+function tick(now){
+  if(!playing) return;
+  if(!lastFrame) lastFrame = now;
+  const dt = (now-lastFrame)/1000;
+  lastFrame = now;
+  simTime = Math.min(TOTAL_SIM, simTime + dt*SPEED);
+  revealedIdx = Math.floor(simTime/3);
+  checkAutoEvents();
+  updatePhaseBadge();
+  updateReadings();
+  drawChart(FULL_SERIES, revealedIdx, EVENTS_DEF.map(e=>({t:e.triggerT})), null);
+  jitterControls();
+  jitterRegisters();
+  if(simTime < TOTAL_SIM){ rafId = requestAnimationFrame(tick); }
+  else { stopRoast(true); }
+}
+
+function startRoast(){
+  playing = true; lastFrame = null;
+  document.getElementById('playBtn').disabled = true;
+  document.getElementById('pauseBtn').disabled = false;
+  document.getElementById('dropBtn').disabled = false;
+  document.getElementById('playBtn').innerHTML = '<i class="fa-solid fa-play"></i> Em andamento...';
+  toast('fa-satellite-dish','Lendo registradores Modbus a cada 500ms &middot; conexão estável');
+  rafId = requestAnimationFrame(tick);
+}
+function pauseRoast(){
+  playing = false;
+  document.getElementById('pauseBtn').innerHTML = '<i class="fa-solid fa-play"></i> Retomar';
+  cancelAnimationFrame(rafId);
+}
+function stopRoast(finished){
+  playing = false;
+  cancelAnimationFrame(rafId);
+  document.getElementById('playBtn').disabled = false;
+  document.getElementById('pauseBtn').disabled = true;
+  document.getElementById('dropBtn').disabled = true;
+  document.getElementById('playBtn').innerHTML = '<i class="fa-solid fa-rotate-right"></i> Nova Torra';
+  if(finished) toast('fa-circle-check','Torra finalizada e salva na biblioteca de perfis.');
+}
+
+document.getElementById('playBtn').addEventListener('click', ()=>{
+  if(simTime>=TOTAL_SIM){ resetSim(); }
+  if(!playing){ playing=true; document.getElementById('pauseBtn').innerHTML='<i class="fa-solid fa-pause"></i> Pausar'; startRoast(); }
+});
+document.getElementById('pauseBtn').addEventListener('click', ()=>{
+  if(playing){ pauseRoast(); } else { playing=true; lastFrame=null; document.getElementById('pauseBtn').innerHTML='<i class="fa-solid fa-pause"></i> Pausar'; rafId=requestAnimationFrame(tick); }
+});
+document.getElementById('dropBtn').addEventListener('click', ()=> fireEvent('drop', false));
+
+document.querySelectorAll('.ev-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=> fireEvent(btn.dataset.ev, false));
+});
+
+function resetSim(){
+  simTime=0; revealedIdx=0; firedEvents={};
+  document.querySelectorAll('.ev-btn').forEach(b=>{
+    const def = EVENTS_DEF.find(e=>e.key===b.dataset.ev);
+    b.classList.remove('done');
+    b.innerHTML = `<i class="fa-solid ${def.icon}"></i> ${def.label}`;
+  });
+  document.getElementById('eventsLog').innerHTML = '<div class="empty">Nenhum evento registrado ainda</div>';
+  updatePhaseBadge(); updateReadings();
+  drawChart(FULL_SERIES, 0, [], null);
+}
+
+document.getElementById('restartBtn').addEventListener('click', ()=>{
+  stopRoast(false);
+  resetSim();
+  document.getElementById('playBtn').innerHTML = '<i class="fa-solid fa-play"></i> Iniciar Torra';
+  toast('fa-rotate-left','Demonstração reiniciada.');
+});
+
+function jitterControls(){
+  const h = document.getElementById('ctrlHeater'), d = document.getElementById('ctrlDrum'), p = document.getElementById('ctrlDamper');
+  document.getElementById('lblHeater').textContent = h.value+'%';
+  document.getElementById('lblDrum').textContent = d.value+' rpm';
+  document.getElementById('lblDamper').textContent = p.value+'%';
+}
+['ctrlHeater','ctrlDrum','ctrlDamper'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', jitterControls);
+});
+
+/* ===================== Register table (settings) ===================== */
+const REGS = [
+  {addr:'30001', name:'Temperatura do Grão (BT)', fc:'FC04 · Input Reg.', base:200, unit:'x10 °C'},
+  {addr:'30002', name:'Temperatura Ambiente (ET)', fc:'FC04 · Input Reg.', base:220, unit:'x10 °C'},
+  {addr:'30003', name:'RPM do Tambor (leitura)', fc:'FC04 · Input Reg.', base:58, unit:'rpm'},
+  {addr:'40001', name:'Potência do Queimador', fc:'FC03/06 · Holding', base:62, unit:'%'},
+  {addr:'40002', name:'Velocidade do Tambor (setpoint)', fc:'FC03/06 · Holding', base:58, unit:'rpm'},
+  {addr:'40003', name:'Posição do Damper/Exaustor', fc:'FC03/06 · Holding', base:40, unit:'%'},
+];
+function renderRegs(){
+  const body = document.getElementById('regsBody');
+  body.innerHTML = REGS.map(r=>`
+    <tr>
+      <td class="addr">${r.addr}</td>
+      <td>${r.name}<br><span class="fc-tag">${r.fc}</span></td>
+      <td style="color:var(--text-muted);font-size:11.5px;">${r.unit}</td>
+      <td class="val" id="reg-${r.addr}">${r.base}</td>
+    </tr>`).join('');
+}
+function jitterRegisters(){
+  REGS.forEach(r=>{
+    const cell = document.getElementById('reg-'+r.addr);
+    if(!cell) return;
+    const noise = (Math.random()-0.5)*2;
+    cell.textContent = (r.base + noise).toFixed(r.unit.includes('°C')?1:0);
+  });
+}
+document.getElementById('testConnBtn').addEventListener('click', function(){
+  const btn = this;
+  btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Conectando...';
+  setTimeout(()=>{
+    btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-plug-circle-bolt"></i> Testar Conexão';
+    document.getElementById('testConnResult').innerHTML = `<i class="fa-solid fa-circle-check" style="color:var(--green)"></i> Conexão estabelecida &middot; 6 registradores respondendo &middot; latência 22ms`;
+  }, 1100);
+});
+
+/* ===================== Profile library ===================== */
+const PROFILE_IMGS = [
+  'https://images.unsplash.com/photo-1447933601403-0c6688de566e?q=80&w=400&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1442512595331-e89e73853f31?q=80&w=400&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1524350876685-274059332603?q=80&w=400&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?q=80&w=400&auto=format&fit=crop',
+];
+function scaleWaypoints(way, dtT, dtBT){
+  return way.map(([t,v])=>[t*dtT, v+dtBT]);
+}
+const PROFILES = [
+  {name:'Bourbon Amarelo · Lote 214', origin:'Sul de Minas, MG', date:'12 Jul 2026', roast:'Torra Média', loss:'14.2%', dur:'11:20', img:PROFILE_IMGS[0], bt:BT_WAY, et:ET_WAY},
+  {name:'Catuaí Vermelho · Lote 209', origin:'Mantiqueira, MG', date:'08 Jul 2026', roast:'Torra Escura', loss:'16.8%', dur:'12:05', img:PROFILE_IMGS[1], bt:scaleWaypoints(BT_WAY,1.05,4), et:scaleWaypoints(ET_WAY,1.05,3)},
+  {name:'Mundo Novo · Lote 201', origin:'Cerrado Mineiro, MG', date:'02 Jul 2026', roast:'Torra Clara', loss:'12.6%', dur:'10:10', img:PROFILE_IMGS[2], bt:scaleWaypoints(BT_WAY,0.92,-5), et:scaleWaypoints(ET_WAY,0.92,-4)},
+  {name:'Geisha · Lote 198', origin:'Carmo de Minas, MG', date:'27 Jun 2026', roast:'Torra Clara', loss:'11.9%', dur:'09:50', img:PROFILE_IMGS[3], bt:scaleWaypoints(BT_WAY,0.9,-7), et:scaleWaypoints(ET_WAY,0.9,-6)},
+];
+let picked = [];
+function renderProfiles(){
+  const grid = document.getElementById('profilesGrid');
+  grid.innerHTML = PROFILES.map((p,i)=>`
+    <div class="profile-card" data-i="${i}">
+      <div class="thumb" style="background-image:url('${p.img}')">
+        <div class="pick"><i class="fa-solid fa-check"></i></div>
+      </div>
+      <div class="body">
+        <div class="name">${p.name}</div>
+        <div class="meta"><span><i class="fa-solid fa-location-dot"></i> ${p.origin}</span><span><i class="fa-regular fa-calendar"></i> ${p.date}</span></div>
+        <div class="stats">
+          <div class="stat"><b>${p.roast}</b>Perfil</div>
+          <div class="stat"><b>${p.loss}</b>Perda de Peso</div>
+          <div class="stat"><b>${p.dur}</b>Duração</div>
+        </div>
+      </div>
+    </div>`).join('');
+  grid.querySelectorAll('.profile-card').forEach(card=>{
+    card.addEventListener('click', ()=>{
+      const i = +card.dataset.i;
+      if(picked.includes(i)){ picked = picked.filter(x=>x!==i); card.classList.remove('picked'); }
+      else{
+        if(picked.length>=2){ const removed = picked.shift(); document.querySelector(`.profile-card[data-i="${removed}"]`).classList.remove('picked'); }
+        picked.push(i); card.classList.add('picked');
+      }
+      renderCompare();
+    });
+  });
+}
+function renderCompare(){
+  const body = document.getElementById('compareBody');
+  if(picked.length<1){
+    body.innerHTML = `<div class="compare-empty"><i class="fa-solid fa-layer-group"></i>Nenhum perfil selecionado ainda.<br>Vá em <b style="color:var(--text-soft)">Perfis</b> e marque dois lotes para comparar.</div>`;
+    return;
+  }
+  body.innerHTML = `
+    <div class="chart-wrap"><canvas id="compareChart" style="width:100%;height:380px;display:block;"></canvas></div>
+    <div class="compare-stats" id="compareStats"></div>`;
+  const cvs = document.getElementById('compareChart');
+  const dpr = window.devicePixelRatio||1;
+  const rect = cvs.parentElement.getBoundingClientRect();
+  cvs.width = (rect.width-32)*dpr; cvs.height = 380*dpr;
+  cvs.style.width=(rect.width-32)+'px'; cvs.style.height='380px';
+  const cc = cvs.getContext('2d'); cc.setTransform(dpr,0,0,dpr,0,0);
+  const colors = ['#eba62f','#5b9bd5'];
+  const padL=46,padR=14,padT=14,padB=30, plotW=(rect.width-32)-padL-padR, plotH=380-padT-padB;
+  const tempMin=60,tempMax=230;
+  function X(t,maxT){ return padL + (t/maxT)*plotW; }
+  function Y(v){ return padT + plotH - ((v-tempMin)/(tempMax-tempMin))*plotH; }
+  cc.strokeStyle='rgba(255,235,200,0.06)'; cc.font='11px JetBrains Mono'; cc.fillStyle='rgba(202,191,169,0.55)';
+  for(let t=60;t<=230;t+=40){ const y=Y(t); cc.beginPath(); cc.moveTo(padL,y); cc.lineTo(rect.width-32-padR,y); cc.stroke(); cc.fillText(t+'°',6,y+4); }
+
+  const statsHtml = [];
+  picked.forEach((idx,ci)=>{
+    const prof = PROFILES[idx];
+    const maxT = prof.bt[prof.bt.length-1][0];
+    cc.beginPath();
+    for(let t=0;t<=maxT;t+=3){ const v=interp(prof.bt,t); const x=X(t,maxT), y=Y(v); if(t===0) cc.moveTo(x,y); else cc.lineTo(x,y); }
+    cc.strokeStyle = colors[ci]; cc.lineWidth=2.4; cc.stroke();
+    statsHtml.push(`
+      <div class="compare-stat" style="border-left:3px solid ${colors[ci]}">
+        <div class="l">${prof.name}</div>
+        <div class="v">${prof.dur} &middot; ${prof.loss} perda</div>
+      </div>`);
+  });
+  document.getElementById('compareStats').innerHTML = statsHtml.join('');
+}
+
+/* ===================== Init ===================== */
+function init(){
+  resizeCanvas();
+  renderRegs();
+  renderProfiles();
+  updatePhaseBadge();
+  updateReadings();
+  drawChart(FULL_SERIES, 0, [], null);
+  jitterControls();
+
+  document.querySelectorAll('.nav button').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+      document.getElementById('view-'+btn.dataset.view).classList.add('active');
+      if(btn.dataset.view==='monitor') resizeCanvas();
+    });
+  });
+
+  document.querySelectorAll('.chip').forEach(chip=>{
+    chip.addEventListener('click', ()=>{
+      document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+      chip.classList.add('active');
+    });
+  });
+}
+window.addEventListener('load', init);
+</script>
+</body>
+</html>
