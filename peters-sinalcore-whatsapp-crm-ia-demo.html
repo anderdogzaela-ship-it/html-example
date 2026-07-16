@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SinalCore - Central de Atendimento WhatsApp com IA e CRM</title>
+<meta name="description" content="Caixa de entrada unificada WhatsApp com identificacao automatica de cliente, maquina de estados IA-atendente e CRM integrado.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Lexend:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+:root{
+  --bg:#0f0d0a;
+  --surface:#1a1610;
+  --surface-2:#221c14;
+  --surface-3:#2b2318;
+  --border:rgba(255,255,255,.08);
+  --border-2:rgba(255,255,255,.14);
+  --text:#f5efe6;
+  --text-dim:#a89a82;
+  --text-faint:#6b5f4d;
+  --gold400:#f2c14e;
+  --gold500:#e0a72e;
+  --gold600:#c48a1f;
+  --gold700:#9c6d18;
+  --glow:rgba(224,167,46,.35);
+  --success:#34d399;
+  --success-bg:rgba(52,211,153,.12);
+  --danger:#f87171;
+  --danger-bg:rgba(248,113,113,.12);
+  --warn:#fbbf24;
+  --warn-bg:rgba(251,191,36,.12);
+  --info:#60a5fa;
+  --info-bg:rgba(96,165,250,.12);
+  --r-sm:8px;--r-md:12px;--r-lg:16px;--r-xl:22px;
+  --shadow-md:0 8px 24px rgba(0,0,0,.35);
+  --shadow-lg:0 20px 50px rgba(0,0,0,.45);
+  --ease:cubic-bezier(.4,0,.2,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Nunito',sans-serif;
+  background:radial-gradient(circle at 1px 1px, rgba(255,255,255,.035) 1px, transparent 0) 0 0/28px 28px, var(--bg);
+  color:var(--text);-webkit-font-smoothing:antialiased;min-height:100vh;overflow-x:hidden;
+}
+h1,h2,h3,h4,.brand-name,.kpi-value{font-family:'Lexend',sans-serif}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input{font-family:inherit}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--surface-3);border-radius:10px}
+
+.demo-badge{position:fixed;bottom:18px;right:18px;z-index:999;background:var(--surface);color:var(--gold400);
+  font-size:11.5px;font-weight:700;padding:8px 14px;border-radius:100px;box-shadow:var(--shadow-lg);
+  display:flex;align-items:center;gap:7px;border:1px solid rgba(224,167,46,.3);}
+.demo-badge i{font-size:10px}
+
+.app{display:grid;grid-template-columns:252px 1fr;min-height:100vh}
+.sidebar{background:var(--surface);border-right:1px solid var(--border);padding:20px 14px;
+  display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh;overflow-y:auto;z-index:40}
+.brand{display:flex;align-items:center;gap:10px;padding:6px 8px 18px}
+.brand-mark{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--gold400),var(--gold700));
+  display:flex;align-items:center;justify-content:center;font-weight:800;color:#241a06;font-size:14px;
+  animation:pulseLogo 3.2s ease-in-out infinite;flex-shrink:0}
+@keyframes pulseLogo{0%,100%{box-shadow:0 0 0 0 rgba(224,167,46,0)}50%{box-shadow:0 0 20px 3px var(--glow)}}
+.brand-name{font-weight:700;font-size:16.5px;letter-spacing:.2px}
+.brand-sub{font-size:10.5px;color:var(--text-faint);margin-top:-2px}
+
+.nav-group-label{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-faint);padding:14px 10px 6px;font-weight:600}
+.nav-item{display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:var(--r-md);
+  color:var(--text-dim);font-size:14px;font-weight:500;transition:background .2s var(--ease),color .2s var(--ease);position:relative;cursor:pointer}
+.nav-item i{width:17px;text-align:center;font-size:14px;opacity:.85}
+.nav-item:hover{background:var(--surface-2);color:var(--text)}
+.nav-item.active{background:var(--surface-2);color:var(--gold400)}
+.nav-item.active::before{content:'';position:absolute;left:-14px;top:50%;transform:translateY(-50%);width:3px;height:16px;border-radius:3px;background:var(--gold500)}
+.nav-item .badge-count{margin-left:auto;background:var(--danger-bg);color:var(--danger);font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:20px}
+.nav-item.locked{cursor:not-allowed;opacity:.55}
+.nav-item.locked:hover{background:none;color:var(--text-dim)}
+.nav-item .lock-tag{margin-left:auto;font-size:9.5px;font-weight:700;background:var(--surface-3);color:var(--text-faint);padding:2px 6px;border-radius:20px;text-transform:uppercase;letter-spacing:.03em}
+
+.sidebar-footer{margin-top:auto;padding-top:14px;border-top:1px solid var(--border)}
+.plan-card{background:linear-gradient(160deg,var(--surface-2),var(--surface-3));border:1px solid var(--border-2);
+  border-radius:var(--r-lg);padding:13px;font-size:12px;color:var(--text-dim)}
+.plan-card strong{color:var(--text);display:flex;align-items:center;gap:6px;font-size:12.5px;margin-bottom:5px}
+.plan-card strong i{color:var(--gold400);font-size:11px}
+
+.main{min-width:0;display:flex;flex-direction:column}
+.topbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:14px;padding:14px 26px;
+  background:rgba(15,13,10,.8);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--border)}
+.search-box{flex:1;max-width:380px;display:flex;align-items:center;gap:9px;background:var(--surface-2);
+  border:1px solid var(--border-2);border-radius:100px;padding:8px 14px;color:var(--text-faint);font-size:13.5px}
+.search-box input{background:none;border:none;outline:none;color:var(--text);width:100%;font-size:13.5px}
+.topbar-actions{margin-left:auto;display:flex;align-items:center;gap:12px}
+.icon-btn{width:36px;height:36px;border-radius:10px;background:var(--surface-2);border:1px solid var(--border-2);
+  display:flex;align-items:center;justify-content:center;color:var(--text-dim);position:relative;font-size:14px}
+.icon-btn .dot{position:absolute;top:6px;right:6px;width:7px;height:7px;border-radius:50%;background:var(--danger);border:2px solid var(--surface)}
+.avatar-user{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--gold400),var(--gold700));
+  display:flex;align-items:center;justify-content:center;font-weight:800;color:#241a06;font-size:13px}
+
+.content{padding:24px 26px 60px}
+.page-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px}
+.page-head h1{font-size:21px;font-weight:700}
+.page-head p{font-size:13px;color:var(--text-dim);margin-top:3px}
+
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
+.stat-tile{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:15px 17px;
+  display:flex;align-items:center;gap:13px}
+.stat-tile .s-ico{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.stat-tile .s-ico.gold{background:var(--warn-bg);color:var(--gold400)}
+.stat-tile .s-ico.blue{background:var(--info-bg);color:var(--info)}
+.stat-tile .s-ico.green{background:var(--success-bg);color:var(--success)}
+.stat-tile .s-val{font-size:20px;font-weight:800;font-family:'Lexend',sans-serif;line-height:1.1}
+.stat-tile .s-label{font-size:11.5px;color:var(--text-dim);margin-top:2px}
+
+.inbox-grid{display:grid;grid-template-columns:270px 1fr 260px;gap:0;background:var(--surface);
+  border:1px solid var(--border);border-radius:var(--r-xl);overflow:hidden;box-shadow:var(--shadow-md);min-height:520px}
+.conv-list{border-right:1px solid var(--border);overflow-y:auto;max-height:560px}
+.conv-list-head{padding:14px 16px;font-size:12px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border)}
+.conv-item{display:flex;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s var(--ease)}
+.conv-item:hover{background:var(--surface-2)}
+.conv-item.active{background:var(--surface-2);box-shadow:inset 3px 0 0 var(--gold500)}
+.conv-avatar{width:38px;height:38px;border-radius:50%;background:var(--surface-3);display:flex;align-items:center;justify-content:center;
+  font-weight:700;font-size:12.5px;color:var(--text-dim);flex-shrink:0}
+.conv-body{min-width:0;flex:1}
+.conv-top{display:flex;justify-content:space-between;gap:6px}
+.conv-name{font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.conv-time{font-size:10.5px;color:var(--text-faint);flex-shrink:0}
+.conv-preview{font-size:12px;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.conv-tag{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;margin-top:6px}
+.conv-tag.bot{background:var(--info-bg);color:var(--info)}
+.conv-tag.human{background:var(--success-bg);color:var(--success)}
+.conv-tag.wait{background:var(--warn-bg);color:var(--gold400)}
+
+.thread{display:flex;flex-direction:column;border-right:1px solid var(--border)}
+.thread-head{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:11px}
+.thread-head .conv-avatar{width:34px;height:34px}
+.thread-head-name{font-size:14.5px;font-weight:700}
+.thread-head-sub{font-size:11.5px;color:var(--text-faint)}
+.thread-body{flex:1;padding:18px;overflow-y:auto;max-height:460px;display:flex;flex-direction:column;gap:12px}
+.msg-row{display:flex;flex-direction:column;max-width:74%}
+.msg-row.in{align-self:flex-start}
+.msg-row.out{align-self:flex-end;align-items:flex-end}
+.msg-label{font-size:10px;font-weight:700;color:var(--text-faint);margin-bottom:3px;padding:0 4px;text-transform:uppercase;letter-spacing:.03em}
+.msg-row.out .msg-label{color:var(--gold500)}
+.msg-row.out.human .msg-label{color:var(--success)}
+.bubble{padding:9px 13px;border-radius:14px;font-size:13.5px;line-height:1.45}
+.msg-row.in .bubble{background:var(--surface-2);border:1px solid var(--border);border-bottom-left-radius:4px}
+.msg-row.out .bubble{background:linear-gradient(135deg,var(--gold600),var(--gold700));color:#241a06;border-bottom-right-radius:4px;font-weight:600}
+.msg-row.out.human .bubble{background:linear-gradient(135deg,#0e8f68,#0a6b4d);color:#eafff6}
+.sys-divider{align-self:center;display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text-faint);
+  background:var(--surface-2);border:1px dashed var(--border-2);padding:7px 14px;border-radius:100px;max-width:88%;text-align:center}
+.sys-divider i{color:var(--gold400)}
+.thread-input{padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:10px;align-items:center}
+.thread-input input{flex:1;background:var(--surface-2);border:1px solid var(--border-2);border-radius:100px;padding:10px 15px;
+  color:var(--text);outline:none;font-size:13px}
+.thread-input .send-btn{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--gold400),var(--gold600));
+  color:#241a06;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+
+.ctx-panel{padding:18px;overflow-y:auto;max-height:560px}
+.ctx-title{font-size:11.5px;font-weight:700;color:var(--text-faint);text-transform:uppercase;letter-spacing:.05em;
+  display:flex;align-items:center;gap:6px;margin-bottom:12px}
+.ctx-title i{color:var(--gold400)}
+.ctx-card{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-md);padding:14px;margin-bottom:14px}
+.ctx-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:12.5px;border-bottom:1px solid var(--border)}
+.ctx-row:last-child{border-bottom:none}
+.ctx-row .k{color:var(--text-faint)}
+.ctx-row .v{font-weight:700;text-align:right}
+.status-badge{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:20px}
+.status-badge.ok{background:var(--success-bg);color:var(--success)}
+.status-badge.due{background:var(--warn-bg);color:var(--gold400)}
+.reco-box{background:var(--surface-3);border:1px solid var(--border-2);border-radius:var(--r-md);padding:11px;font-size:12px;color:var(--text-dim);line-height:1.5}
+.reco-box strong{color:var(--gold400);display:block;margin-bottom:3px;font-size:12.5px}
+
+.section-head{display:flex;align-items:center;justify-content:space-between;margin:28px 0 14px}
+.section-head h2{font-size:16.5px;font-weight:700}
+.funnel-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.funnel-col{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px;min-height:180px}
+.funnel-col-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-size:12.5px;font-weight:700;color:var(--text-dim)}
+.funnel-col-head .cnt{background:var(--surface-3);color:var(--text)   ;font-size:11px;padding:1px 8px;border-radius:20px}
+.lead-card{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:10px 11px;margin-bottom:9px;font-size:12.5px}
+.lead-card .l-name{font-weight:700;margin-bottom:3px}
+.lead-card .l-meta{font-size:11px;color:var(--text-faint)}
+
+.phase2-row{margin-top:28px;display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.phase2-tile{background:var(--surface);border:1px dashed var(--border-2);border-radius:var(--r-lg);padding:16px;
+  display:flex;flex-direction:column;gap:8px;opacity:.68}
+.phase2-tile i{font-size:18px;color:var(--text-faint)}
+.phase2-tile .p2-name{font-size:13px;font-weight:700;color:var(--text-dim)}
+.phase2-tile .p2-tag{font-size:10px;font-weight:700;color:var(--text-faint);text-transform:uppercase;letter-spacing:.04em;
+  background:var(--surface-3);padding:2px 8px;border-radius:20px;width:fit-content}
+
+@media(max-width:1100px){.inbox-grid{grid-template-columns:230px 1fr}.ctx-panel{display:none}}
+@media(max-width:900px){.app{grid-template-columns:1fr}.sidebar{display:none}.stat-row{grid-template-columns:1fr}.inbox-grid{grid-template-columns:1fr}.conv-list{max-height:220px}.funnel-row,.phase2-row{grid-template-columns:1fr 1fr}}
+
+.fade-in{animation:fadeIn .5s var(--ease) both}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+
+<div class="demo-badge"><i class="fa-solid fa-flask"></i> Prototipo funcional - dados ficticios</div>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">SC</div>
+      <div>
+        <div class="brand-name">SinalCore</div>
+        <div class="brand-sub">Central de Atendimento</div>
+      </div>
+    </div>
+
+    <div class="nav-group-label">Fase 1</div>
+    <div class="nav-item active"><i class="fa-solid fa-inbox"></i> Caixa de Entrada <span class="badge-count">12</span></div>
+    <div class="nav-item"><i class="fa-solid fa-address-card"></i> Clientes (CRM)</div>
+    <div class="nav-item"><i class="fa-solid fa-filter"></i> Funil de Vendas</div>
+    <div class="nav-item"><i class="fa-solid fa-robot"></i> Fluxo da IA</div>
+
+    <div class="nav-group-label">Fase 2</div>
+    <div class="nav-item locked"><i class="fa-solid fa-money-bill-wave"></i> Pagamentos Pix <span class="lock-tag">Fase 2</span></div>
+    <div class="nav-item locked"><i class="fa-solid fa-server"></i> Paineis Externos <span class="lock-tag">Fase 2</span></div>
+    <div class="nav-item locked"><i class="fa-solid fa-chart-pie"></i> Dashboards <span class="lock-tag">Fase 2</span></div>
+    <div class="nav-item locked"><i class="fa-solid fa-shield-halved"></i> Usuarios e Auditoria <span class="lock-tag">Fase 2</span></div>
+
+    <div class="sidebar-footer">
+      <div class="plan-card">
+        <strong><i class="fa-solid fa-circle-info"></i> Fase 1</strong>
+        Motor de atendimento: WhatsApp + IA + CRM com maquina de estados por conversa.
+      </div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input placeholder="Buscar por nome ou telefone..."></div>
+      <div class="topbar-actions">
+        <div class="icon-btn"><i class="fa-solid fa-bell"></i><span class="dot"></span></div>
+        <div class="avatar-user">EP</div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="page-head fade-in">
+        <div>
+          <h1>Caixa de Entrada Unificada</h1>
+          <p>Identificacao automatica do cliente pelo numero, com IA e atendentes na mesma fila.</p>
+        </div>
+      </div>
+
+      <div class="stat-row fade-in">
+        <div class="stat-tile">
+          <div class="s-ico gold"><i class="fa-solid fa-robot"></i></div>
+          <div><div class="s-val">8</div><div class="s-label">Com IA respondendo agora</div></div>
+        </div>
+        <div class="stat-tile">
+          <div class="s-ico blue"><i class="fa-solid fa-user-clock"></i></div>
+          <div><div class="s-val">3</div><div class="s-label">Aguardando atendente</div></div>
+        </div>
+        <div class="stat-tile">
+          <div class="s-ico green"><i class="fa-solid fa-circle-check"></i></div>
+          <div><div class="s-val">27</div><div class="s-label">Resolvidas hoje</div></div>
+        </div>
+      </div>
+
+      <div class="inbox-grid fade-in">
+        <div class="conv-list">
+          <div class="conv-list-head">Conversas</div>
+
+          <div class="conv-item active">
+            <div class="conv-avatar">RM</div>
+            <div class="conv-body">
+              <div class="conv-top"><span class="conv-name">Rafael Mendes</span><span class="conv-time">agora</span></div>
+              <div class="conv-preview">App nao abre no meu Smart TV...</div>
+              <span class="conv-tag human"><i class="fa-solid fa-user"></i> Ana - atendente</span>
+            </div>
+          </div>
+
+          <div class="conv-item">
+            <div class="conv-avatar">CP</div>
+            <div class="conv-body">
+              <div class="conv-top"><span class="conv-name">Camila Prado</span><span class="conv-time">2 min</span></div>
+              <div class="conv-preview">Quero saber os planos disponiveis</div>
+              <span class="conv-tag bot"><i class="fa-solid fa-robot"></i> IA respondendo</span>
+            </div>
+          </div>
+
+          <div class="conv-item">
+            <div class="conv-avatar">JS</div>
+            <div class="conv-body">
+              <div class="conv-top"><span class="conv-name">Joao Silveira</span><span class="conv-time">6 min</span></div>
+              <div class="conv-preview">Meu teste ja venceu, como assino?</div>
+              <span class="conv-tag wait"><i class="fa-solid fa-hourglass-half"></i> Aguardando</span>
+            </div>
+          </div>
+
+          <div class="conv-item">
+            <div class="conv-avatar">LT</div>
+            <div class="conv-body">
+              <div class="conv-top"><span class="conv-name">Larissa Tomaz</span><span class="conv-time">14 min</span></div>
+              <div class="conv-preview">Obrigada, ja instalei certinho!</div>
+              <span class="conv-tag bot"><i class="fa-solid fa-robot"></i> IA respondendo</span>
+            </div>
+          </div>
+
+          <div class="conv-item">
+            <div class="conv-avatar">PD</div>
+            <div class="conv-body">
+              <div class="conv-top"><span class="conv-name">Pedro Duarte</span><span class="conv-time">22 min</span></div>
+              <div class="conv-preview">Vence amanha, ja vou renovar</div>
+              <span class="conv-tag human"><i class="fa-solid fa-user"></i> Carlos - atendente</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="thread">
+          <div class="thread-head">
+            <div class="conv-avatar">RM</div>
+            <div>
+              <div class="thread-head-name">Rafael Mendes</div>
+              <div class="thread-head-sub">+55 11 9****-2231 &middot; identificado automaticamente</div>
+            </div>
+          </div>
+          <div class="thread-body">
+            <div class="msg-row in"><div class="msg-label">Rafael</div><div class="bubble">Boa noite, o app nao abre mais aqui na minha Smart TV</div></div>
+            <div class="msg-row out"><div class="msg-label">SinalCore IA</div><div class="bubble">Oi Rafael! Vi aqui que seu plano esta ativo. Pode me confirmar a marca da TV?</div></div>
+            <div class="msg-row in"><div class="msg-label">Rafael</div><div class="bubble">E uma TCL, o app fecha sozinho</div></div>
+            <div class="msg-row out"><div class="msg-label">SinalCore IA</div><div class="bubble">Entendi. Ja tentei os passos padrao de cache, mas esse comportamento pode ser incompatibilidade do app nessa versao de firmware.</div></div>
+            <div class="sys-divider"><i class="fa-solid fa-arrow-right-arrow-left"></i> IA identificou caso fora do padrao - transferido para Ana (atendente), historico completo preservado</div>
+            <div class="msg-row out human"><div class="msg-label">Ana - Atendente</div><div class="bubble">Oi Rafael, aqui e a Ana! Vi todo o historico que voce passou pro assistente. Pra essa TCL, o app recomendado e outro, vou te passar o link certo agora.</div></div>
+            <div class="msg-row in"><div class="msg-label">Rafael</div><div class="bubble">Perfeito, obrigado por nao precisar explicar tudo de novo!</div></div>
+          </div>
+          <div class="thread-input">
+            <input placeholder="Digite uma mensagem...">
+            <div class="send-btn"><i class="fa-solid fa-paper-plane"></i></div>
+          </div>
+        </div>
+
+        <div class="ctx-panel">
+          <div class="ctx-title"><i class="fa-solid fa-id-card"></i> Cliente identificado</div>
+          <div class="ctx-card">
+            <div class="ctx-row"><span class="k">Nome</span><span class="v">Rafael Mendes</span></div>
+            <div class="ctx-row"><span class="k">Plano</span><span class="v">Premium 4K</span></div>
+            <div class="ctx-row"><span class="k">Aparelho</span><span class="v">Smart TV TCL</span></div>
+            <div class="ctx-row"><span class="k">Pagamento</span><span class="status-badge ok">Em dia</span></div>
+            <div class="ctx-row"><span class="k">Cliente desde</span><span class="v">Mar 2026</span></div>
+          </div>
+
+          <div class="ctx-title"><i class="fa-solid fa-wand-magic-sparkles"></i> Recomendacao</div>
+          <div class="reco-box">
+            <strong>App sugerido: Player B</strong>
+            Compatibilidade melhor testada em Smart TVs TCL nessa faixa de firmware, evita o fechamento inesperado relatado.
+          </div>
+
+          <div class="ctx-title" style="margin-top:14px"><i class="fa-solid fa-clock-rotate-left"></i> Historico recente</div>
+          <div class="ctx-card" style="font-size:12px;color:var(--text-dim);line-height:1.7">
+            10 Jul - Duvida sobre canais de esporte<br>
+            22 Jun - Renovacao automatica confirmada<br>
+            03 Jun - Instalacao guiada concluida
+          </div>
+        </div>
+      </div>
+
+      <div class="section-head fade-in">
+        <h2>Funil de Vendas</h2>
+      </div>
+      <div class="funnel-row fade-in">
+        <div class="funnel-col">
+          <div class="funnel-col-head">Novo Contato <span class="cnt">6</span></div>
+          <div class="lead-card"><div class="l-name">Bruno Alves</div><div class="l-meta">Chegou via IA agora ha pouco</div></div>
+          <div class="lead-card"><div class="l-name">Tainá Ribeiro</div><div class="l-meta">Perguntou sobre planos</div></div>
+        </div>
+        <div class="funnel-col">
+          <div class="funnel-col-head">Em Teste <span class="cnt">4</span></div>
+          <div class="lead-card"><div class="l-name">Joao Silveira</div><div class="l-meta">Teste vence hoje</div></div>
+          <div class="lead-card"><div class="l-name">Marcia Nunes</div><div class="l-meta">Instalacao guiada concluida</div></div>
+        </div>
+        <div class="funnel-col">
+          <div class="funnel-col-head">Negociando <span class="cnt">2</span></div>
+          <div class="lead-card"><div class="l-name">Eduardo Lima</div><div class="l-meta">Pediu desconto anual</div></div>
+        </div>
+        <div class="funnel-col">
+          <div class="funnel-col-head">Cliente Ativo <span class="cnt">148</span></div>
+          <div class="lead-card"><div class="l-name">Rafael Mendes</div><div class="l-meta">Renovado ha 4 meses</div></div>
+          <div class="lead-card"><div class="l-name">Pedro Duarte</div><div class="l-meta">Renova amanha</div></div>
+        </div>
+      </div>
+
+      <div class="section-head fade-in">
+        <h2>Fase 2 - proxima etapa</h2>
+      </div>
+      <div class="phase2-row fade-in">
+        <div class="phase2-tile"><i class="fa-solid fa-money-bill-wave"></i><div class="p2-name">Pix automatico + conciliacao</div><span class="p2-tag">Fase 2</span></div>
+        <div class="phase2-tile"><i class="fa-solid fa-server"></i><div class="p2-name">Ativacao em paineis externos</div><span class="p2-tag">Fase 2</span></div>
+        <div class="phase2-tile"><i class="fa-solid fa-image"></i><div class="p2-name">Suporte com analise de imagem</div><span class="p2-tag">Fase 2</span></div>
+        <div class="phase2-tile"><i class="fa-solid fa-chart-pie"></i><div class="p2-name">Dashboards completos</div><span class="p2-tag">Fase 2</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.querySelectorAll('.conv-item').forEach(item=>{
+  item.addEventListener('click',()=>{
+    document.querySelectorAll('.conv-item').forEach(i=>i.classList.remove('active'));
+    item.classList.add('active');
+  });
+});
+</script>
+</body>
+</html>
