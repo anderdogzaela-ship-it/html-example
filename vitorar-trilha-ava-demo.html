@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Trilha - Ambiente Virtual de Aprendizagem</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --green: #1F7A54;
+    --green-light: #2FA774;
+    --green-dark: #14513A;
+    --green-pale: #EAF6EF;
+    --green-muted: #CFE9DB;
+    --amber: #D9861F;
+    --amber-pale: #FCEFDB;
+    --red: #DC2626;
+    --red-pale: #FDEAEA;
+    --blue: #2563EB;
+    --ink: #16261F;
+    --text-mid: #4C6157;
+    --text-light: #7C9086;
+    --cream: #F7FAF8;
+    --white: #FFFFFF;
+    --border: rgba(22,38,31,0.10);
+    --shadow-sm: 0 2px 8px rgba(22,38,31,0.08);
+    --shadow-md: 0 10px 30px rgba(22,38,31,0.12);
+    --shadow-lg: 0 20px 56px rgba(22,38,31,0.18);
+    --radius: 14px;
+    --radius-lg: 22px;
+    --ease-spring: cubic-bezier(.34,1.56,.64,1);
+  }
+
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+  img { max-width: 100%; display: block; }
+  a { text-decoration: none; color: inherit; }
+  ul { list-style: none; }
+  button { font-family: inherit; cursor: pointer; border: none; background: none; }
+  ::-webkit-scrollbar { width: 10px; }
+  ::-webkit-scrollbar-thumb { background: var(--green-muted); border-radius: 10px; }
+
+  /* ===== ROLE TOGGLE ===== */
+  .role-toggle {
+    position: fixed; top: 14px; right: 14px; z-index: 9999;
+    display: flex; gap: 6px; background: rgba(20,81,58,0.94);
+    backdrop-filter: blur(12px); border: 1px solid rgba(47,167,116,0.4);
+    border-radius: 50px; padding: 6px;
+  }
+  .role-btn {
+    font-size: 12px; font-weight: 700; padding: 8px 16px; border-radius: 50px;
+    color: rgba(255,255,255,0.65); transition: all .25s ease; white-space: nowrap;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .role-btn.active { background: linear-gradient(135deg, var(--green-light), var(--green)); color: #fff; box-shadow: 0 2px 10px rgba(31,122,84,0.5); }
+
+  .view { display: none; }
+  .view.active { display: block; animation: fadeIn .4s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px);} to { opacity: 1; transform: translateY(0);} }
+
+  /* ===== TOP BAR ===== */
+  .topbar {
+    position: sticky; top: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 5%; background: rgba(247,250,248,0.92); backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+  }
+  .logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 19px; }
+  .logo-mark {
+    width: 38px; height: 38px; border-radius: 11px; display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, var(--green-light), var(--green-dark)); color: #fff; font-size: 16px;
+    box-shadow: 0 4px 14px rgba(31,122,84,0.35);
+  }
+  .topbar-right { display: flex; align-items: center; gap: 14px; }
+  .avatar { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2px solid var(--green-muted); }
+  .user-name { font-weight: 700; font-size: 14px; }
+  .user-role { font-size: 11.5px; color: var(--text-light); font-weight: 600; }
+
+  .page { max-width: 1180px; margin: 0 auto; padding: 34px 5% 90px; }
+
+  /* ===== WELCOME ===== */
+  .welcome-card {
+    background: linear-gradient(120deg, var(--green-dark), var(--green) 65%, var(--green-light));
+    border-radius: var(--radius-lg); padding: 32px 34px; color: #fff; margin-bottom: 28px;
+    display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;
+    box-shadow: var(--shadow-md); position: relative; overflow: hidden;
+  }
+  .welcome-card::after {
+    content: ''; position: absolute; width: 260px; height: 260px; border-radius: 50%;
+    background: rgba(255,255,255,0.08); top: -120px; right: -60px;
+  }
+  .welcome-card h1 { font-size: clamp(20px, 2.6vw, 27px); font-weight: 800; margin-bottom: 6px; position: relative; z-index: 1; }
+  .welcome-card p { font-size: 14.5px; opacity: 0.85; position: relative; z-index: 1; }
+  .welcome-progress { text-align: right; position: relative; z-index: 1; }
+  .welcome-progress .num { font-size: 30px; font-weight: 900; }
+  .welcome-progress .lbl { font-size: 12px; opacity: 0.8; font-weight: 600; }
+
+  .section-title { font-size: 15px; font-weight: 800; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; color: var(--green-dark); }
+
+  /* ===== TURMA CARDS ===== */
+  .turma-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 18px; margin-bottom: 34px; }
+  .turma-card {
+    background: var(--white); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    padding: 22px; box-shadow: var(--shadow-sm); transition: all .25s var(--ease-spring); cursor: pointer;
+  }
+  .turma-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); border-color: var(--green-muted); }
+  .turma-card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 14px; }
+  .turma-icon { width: 44px; height: 44px; border-radius: 12px; background: var(--green-pale); color: var(--green-dark); display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .badge { font-size: 10.5px; font-weight: 800; padding: 5px 10px; border-radius: 50px; text-transform: uppercase; letter-spacing: 0.4px; }
+  .badge-pending { background: var(--amber-pale); color: var(--amber); }
+  .badge-done { background: var(--green-pale); color: var(--green-dark); }
+  .turma-card h3 { font-size: 16.5px; font-weight: 800; margin-bottom: 4px; }
+  .turma-card .meta { font-size: 12.5px; color: var(--text-light); margin-bottom: 14px; }
+  .progress-track { height: 8px; background: var(--green-pale); border-radius: 20px; overflow: hidden; margin-bottom: 8px; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--green-light), var(--green)); border-radius: 20px; transition: width .6s var(--ease-spring); }
+  .progress-label { font-size: 11.5px; font-weight: 700; color: var(--text-mid); display: flex; justify-content: space-between; }
+  .deadline-alert { margin-top: 12px; display: flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 700; color: var(--amber); }
+
+  /* ===== BACK BUTTON ===== */
+  .back-btn { display: inline-flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 700; color: var(--green-dark); margin-bottom: 18px; }
+  .back-btn:hover { text-decoration: underline; }
+
+  .turma-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; margin-bottom: 22px; }
+  .turma-header h2 { font-size: clamp(20px,2.4vw,26px); font-weight: 800; }
+  .turma-header .meta { font-size: 13px; color: var(--text-light); margin-top: 4px; }
+
+  /* ===== TABS ===== */
+  .tabs { display: flex; gap: 4px; background: var(--white); border: 1px solid var(--border); border-radius: 50px; padding: 5px; width: fit-content; margin-bottom: 26px; box-shadow: var(--shadow-sm); }
+  .tab-btn { font-size: 13.5px; font-weight: 700; padding: 10px 20px; border-radius: 50px; color: var(--text-mid); transition: all .2s; display: flex; align-items: center; gap: 8px; }
+  .tab-btn.active { background: linear-gradient(135deg, var(--green-light), var(--green)); color: #fff; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; animation: fadeIn .3s ease; }
+
+  /* ===== TOPIC CARD ===== */
+  .topic-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; margin-bottom: 18px; box-shadow: var(--shadow-sm); }
+  .topic-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 12px; flex-wrap: wrap; }
+  .topic-head h4 { font-size: 16px; font-weight: 800; margin-bottom: 6px; }
+  .time-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 700; color: var(--amber); background: var(--amber-pale); padding: 5px 11px; border-radius: 50px; white-space: nowrap; }
+  .objective-box { background: var(--green-pale); border-radius: 10px; padding: 12px 16px; font-size: 13px; color: var(--green-dark); margin-bottom: 16px; display: flex; gap: 9px; align-items: flex-start; }
+  .topic-body { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 20px; }
+  @media (max-width: 760px) { .topic-body { grid-template-columns: 1fr; } }
+  .video-frame { border-radius: 12px; overflow: hidden; border: 1px solid var(--border); aspect-ratio: 16/9; background: #000; }
+  .video-frame iframe { width: 100%; height: 100%; border: 0; }
+  .topic-text p { font-size: 13.5px; line-height: 1.7; color: var(--text-mid); margin-bottom: 12px; }
+  .resource-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; }
+  .resource-btn {
+    display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700;
+    padding: 9px 15px; border-radius: 10px; border: 1.5px solid var(--border); color: var(--ink);
+    transition: all .2s;
+  }
+  .resource-btn:hover { border-color: var(--green); color: var(--green-dark); background: var(--green-pale); }
+  .resource-btn.optional { border-style: dashed; color: var(--text-light); }
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); opacity: 0;
+    background: var(--ink); color: #fff; padding: 12px 22px; border-radius: 10px; font-size: 13px; font-weight: 600;
+    box-shadow: var(--shadow-lg); z-index: 10000; transition: all .3s var(--ease-spring); pointer-events: none;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ===== QUIZ ===== */
+  .quiz-intro { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; margin-bottom: 20px; box-shadow: var(--shadow-sm); display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .quiz-intro-text h4 { font-size: 16px; font-weight: 800; margin-bottom: 4px; }
+  .quiz-intro-text p { font-size: 13px; color: var(--text-light); }
+  .question-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 22px; margin-bottom: 16px; box-shadow: var(--shadow-sm); }
+  .question-card.correct { border-color: var(--green-light); background: linear-gradient(180deg, var(--green-pale), var(--white) 40%); }
+  .question-card.wrong { border-color: var(--red); background: linear-gradient(180deg, var(--red-pale), var(--white) 40%); }
+  .q-num { font-size: 11.5px; font-weight: 800; color: var(--text-light); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .q-text { font-size: 14.5px; font-weight: 700; margin-bottom: 14px; }
+  .q-options { display: flex; flex-direction: column; gap: 9px; }
+  .q-option { display: flex; align-items: center; gap: 11px; padding: 11px 14px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 13.5px; cursor: pointer; transition: all .18s; }
+  .q-option:hover { border-color: var(--green-muted); background: var(--green-pale); }
+  .q-option.picked { border-color: var(--green); background: var(--green-pale); font-weight: 700; }
+  .q-option input { accent-color: var(--green); }
+  .q-feedback { margin-top: 12px; font-size: 12.5px; font-weight: 700; display: flex; align-items: center; gap: 7px; }
+  .q-feedback.ok { color: var(--green-dark); }
+  .q-feedback.bad { color: var(--red); }
+  .quiz-submit-row { display: flex; justify-content: center; margin: 24px 0; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px; padding: 13px 28px; border-radius: 50px;
+    font-weight: 800; font-size: 14px; transition: all .25s var(--ease-spring);
+  }
+  .btn-primary { background: linear-gradient(135deg, var(--green-light), var(--green)); color: #fff; box-shadow: var(--shadow-sm); }
+  .btn-primary:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 10px 24px rgba(31,122,84,0.4); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .btn-ghost { color: var(--ink); border: 1.5px solid var(--border); }
+  .btn-ghost:hover { border-color: var(--green); color: var(--green-dark); }
+  .btn-sm { padding: 9px 16px; font-size: 12.5px; }
+
+  .result-banner { border-radius: var(--radius-lg); padding: 30px; text-align: center; margin-bottom: 24px; box-shadow: var(--shadow-md); animation: fadeIn .4s ease; }
+  .result-banner.pass { background: linear-gradient(120deg, var(--green-dark), var(--green)); color: #fff; }
+  .result-banner .big-score { font-size: 42px; font-weight: 900; margin-bottom: 6px; }
+  .result-banner p { font-size: 14px; opacity: 0.9; }
+
+  /* ===== TEACHER TABLES ===== */
+  .stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap: 16px; margin-bottom: 28px; }
+  .stat-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; box-shadow: var(--shadow-sm); }
+  .stat-card .icon { width: 38px; height: 38px; border-radius: 10px; background: var(--green-pale); color: var(--green-dark); display: flex; align-items: center; justify-content: center; margin-bottom: 12px; font-size: 15px; }
+  .stat-card .num { font-size: 24px; font-weight: 900; }
+  .stat-card .lbl { font-size: 12px; color: var(--text-light); font-weight: 700; }
+
+  .panel { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; box-shadow: var(--shadow-sm); margin-bottom: 24px; }
+  .panel-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; flex-wrap: wrap; gap: 10px; }
+  .panel-head h3 { font-size: 15.5px; font-weight: 800; }
+
+  table.data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.data-table th { text-align: left; padding: 11px 12px; color: var(--text-light); font-weight: 800; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; border-bottom: 1.5px solid var(--border); }
+  table.data-table td { padding: 13px 12px; border-bottom: 1px solid var(--border); }
+  table.data-table tr:last-child td { border-bottom: none; }
+  .student-cell { display: flex; align-items: center; gap: 10px; }
+  .student-cell img { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; }
+  .status-pill { font-size: 11px; font-weight: 800; padding: 5px 11px; border-radius: 50px; }
+  .status-pill.done { background: var(--green-pale); color: var(--green-dark); }
+  .status-pill.pending { background: var(--amber-pale); color: var(--amber); }
+  .status-pill.notstarted { background: rgba(22,38,31,0.06); color: var(--text-light); }
+  .score-cell { font-weight: 800; }
+  .table-wrap { overflow-x: auto; }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+  @media (max-width: 640px) { .form-row { grid-template-columns: 1fr; } }
+  .field label { font-size: 12px; font-weight: 700; color: var(--text-mid); margin-bottom: 6px; display: block; }
+  .field input, .field select, .field textarea { width: 100%; padding: 11px 13px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 13.5px; font-family: inherit; }
+  .field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--green); }
+  .upload-box { border: 1.5px dashed var(--green-muted); border-radius: 12px; padding: 20px; text-align: center; color: var(--text-light); font-size: 13px; font-weight: 600; background: var(--green-pale); }
+  .upload-box i { font-size: 22px; color: var(--green); margin-bottom: 8px; display: block; }
+
+  .content-list-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 4px; border-bottom: 1px solid var(--border); gap: 12px; flex-wrap: wrap; }
+  .content-list-row:last-child { border-bottom: none; }
+  .content-list-left { display: flex; align-items: center; gap: 12px; }
+  .content-list-left .ico { width: 36px; height: 36px; border-radius: 9px; background: var(--green-pale); color: var(--green-dark); display: flex; align-items: center; justify-content: center; }
+  .content-list-left strong { font-size: 13.5px; display: block; }
+  .content-list-left span { font-size: 11.5px; color: var(--text-light); }
+
+  .footer-note { text-align: center; font-size: 12px; color: var(--text-light); margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--border); }
+
+  [data-reveal] { opacity: 0; transform: translateY(16px); transition: all .6s var(--ease-spring); }
+  [data-reveal].in { opacity: 1; transform: translateY(0); }
+
+  @media (max-width: 640px) {
+    .role-toggle { top: auto; bottom: 14px; right: 14px; }
+    .page { padding: 24px 4.5% 100px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="role-toggle">
+  <button class="role-btn active" data-role="aluno"><i class="fa-solid fa-user-graduate"></i> Aluno</button>
+  <button class="role-btn" data-role="professor"><i class="fa-solid fa-chalkboard-user"></i> Professor</button>
+</div>
+
+<!-- ================= ALUNO: DASHBOARD ================= -->
+<div class="view active" id="view-aluno-dashboard">
+  <div class="topbar">
+    <div class="logo"><div class="logo-mark"><i class="fa-solid fa-seedling"></i></div>Trilha</div>
+    <div class="topbar-right">
+      <div style="text-align:right">
+        <div class="user-name">Marina Souza</div>
+        <div class="user-role">Aluna · 7o ano</div>
+      </div>
+      <img class="avatar" src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop&crop=faces" alt="Marina" />
+    </div>
+  </div>
+
+  <div class="page">
+    <div class="welcome-card" data-reveal>
+      <div>
+        <h1>Ola, Marina! Bom te ver por aqui.</h1>
+        <p>Voce tem 1 questionario pendente e 2 turmas em andamento.</p>
+      </div>
+      <div class="welcome-progress">
+        <div class="num">68%</div>
+        <div class="lbl">Progresso geral</div>
+      </div>
+    </div>
+
+    <div class="section-title"><i class="fa-solid fa-chalkboard"></i> Minhas Turmas</div>
+    <div class="turma-grid">
+      <div class="turma-card" data-reveal onclick="openTurma('matematica')">
+        <div class="turma-card-top">
+          <div class="turma-icon"><i class="fa-solid fa-square-root-variable"></i></div>
+          <span class="badge badge-pending">Pendente</span>
+        </div>
+        <h3>Matematica Basica</h3>
+        <div class="meta">Prof. Carla Menezes · Tema atual: Fracoes</div>
+        <div class="progress-track"><div class="progress-fill" style="width:60%"></div></div>
+        <div class="progress-label"><span>60% concluido</span><span>3/5 temas</span></div>
+        <div class="deadline-alert"><i class="fa-solid fa-clock"></i> Questionario vence em 2 dias</div>
+      </div>
+
+      <div class="turma-card" data-reveal onclick="openTurma('ciencias')">
+        <div class="turma-card-top">
+          <div class="turma-icon"><i class="fa-solid fa-flask"></i></div>
+          <span class="badge badge-done">Em dia</span>
+        </div>
+        <h3>Ciencias Naturais</h3>
+        <div class="meta">Prof. Carla Menezes · Tema atual: Ciclo da Agua</div>
+        <div class="progress-track"><div class="progress-fill" style="width:80%"></div></div>
+        <div class="progress-label"><span>80% concluido</span><span>4/5 temas</span></div>
+      </div>
+
+      <div class="turma-card" data-reveal onclick="openTurma('historia')">
+        <div class="turma-card-top">
+          <div class="turma-icon"><i class="fa-solid fa-landmark"></i></div>
+          <span class="badge badge-done">Em dia</span>
+        </div>
+        <h3>Historia do Brasil</h3>
+        <div class="meta">Prof. Ricardo Alves · Tema atual: Independencia</div>
+        <div class="progress-track"><div class="progress-fill" style="width:35%"></div></div>
+        <div class="progress-label"><span>35% concluido</span><span>2/6 temas</span></div>
+      </div>
+    </div>
+    <div class="footer-note">Prototipo Trilha AVA · dados ilustrativos para demonstracao</div>
+  </div>
+</div>
+
+<!-- ================= ALUNO: TURMA DETAIL ================= -->
+<div class="view" id="view-aluno-turma">
+  <div class="topbar">
+    <div class="logo"><div class="logo-mark"><i class="fa-solid fa-seedling"></i></div>Trilha</div>
+    <div class="topbar-right">
+      <div style="text-align:right">
+        <div class="user-name">Marina Souza</div>
+        <div class="user-role">Aluna · 7o ano</div>
+      </div>
+      <img class="avatar" src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop&crop=faces" alt="Marina" />
+    </div>
+  </div>
+  <div class="page">
+    <a class="back-btn" onclick="showView('view-aluno-dashboard')"><i class="fa-solid fa-arrow-left"></i> Voltar para minhas turmas</a>
+
+    <div class="turma-header">
+      <div>
+        <h2>Matematica Basica &mdash; Fracoes</h2>
+        <div class="meta">Prof. Carla Menezes · Tema 3 de 5</div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="antes" onclick="switchTab('antes')"><i class="fa-solid fa-book-open"></i> Antes da Aula</button>
+      <button class="tab-btn" data-tab="quiz" onclick="switchTab('quiz')"><i class="fa-solid fa-clipboard-check"></i> Verificacao de Aprendizagem</button>
+    </div>
+
+    <div class="tab-panel active" id="tab-antes" data-reveal>
+      <div class="topic-card">
+        <div class="topic-head">
+          <div>
+            <h4>Fracoes: o que sao e para que servem</h4>
+          </div>
+          <span class="time-badge"><i class="fa-solid fa-clock"></i> 20 min estimados</span>
+        </div>
+        <div class="objective-box"><i class="fa-solid fa-bullseye"></i> Ao final deste tema, voce sera capaz de identificar numerador e denominador e representar uma fracao em forma visual.</div>
+        <div class="topic-body">
+          <div>
+            <div class="video-frame">
+              <iframe src="https://www.youtube.com/embed/M7lc1UVf-VE" title="Aula: Introducao as Fracoes" allowfullscreen></iframe>
+            </div>
+          </div>
+          <div class="topic-text">
+            <p>Uma fracao representa uma parte de um todo dividido em partes iguais. O numero de cima (numerador) mostra quantas partes voce tem; o numero de baixo (denominador) mostra em quantas partes o todo foi dividido.</p>
+            <p>Pense em uma pizza cortada em 4 pedacos: se voce comeu 1 pedaco, isso e representado como 1/4.</p>
+            <div class="resource-row">
+              <a class="resource-btn" onclick="fakeDownload('Slides-Fracoes.pdf')"><i class="fa-solid fa-file-pdf"></i> Slides (PDF)</a>
+              <a class="resource-btn optional" onclick="fakeDownload('Material-Complementar-Fracoes.pdf')"><i class="fa-solid fa-book"></i> Material complementar</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="topic-card">
+        <div class="topic-head">
+          <div><h4>Somando e subtraindo fracoes simples</h4></div>
+          <span class="time-badge"><i class="fa-solid fa-clock"></i> 15 min estimados</span>
+        </div>
+        <div class="objective-box"><i class="fa-solid fa-bullseye"></i> Ao final deste tema, voce sera capaz de somar e subtrair fracoes com o mesmo denominador.</div>
+        <div class="topic-body">
+          <div class="video-frame">
+            <iframe src="https://www.youtube.com/embed/M7lc1UVf-VE" title="Aula: Soma e subtracao de fracoes" allowfullscreen></iframe>
+          </div>
+          <div class="topic-text">
+            <p>Quando duas fracoes tem o mesmo denominador, basta somar ou subtrair os numeradores e manter o denominador.</p>
+            <div class="resource-row">
+              <a class="resource-btn" onclick="fakeDownload('Slides-Soma-Fracoes.pdf')"><i class="fa-solid fa-file-pdf"></i> Slides (PDF)</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="tab-quiz">
+      <div class="quiz-intro">
+        <div class="quiz-intro-text">
+          <h4>Verificacao de Aprendizagem</h4>
+          <p>5 questoes objetivas · correcao automatica e imediata</p>
+        </div>
+        <span class="badge badge-pending" id="quiz-status-badge">Nao respondido</span>
+      </div>
+      <div id="quiz-questions"></div>
+      <div class="quiz-submit-row">
+        <button class="btn btn-primary" id="quiz-submit-btn" onclick="submitQuiz()"><i class="fa-solid fa-paper-plane"></i> Enviar respostas</button>
+      </div>
+      <div id="quiz-result"></div>
+    </div>
+    <div class="footer-note">Prototipo Trilha AVA · dados ilustrativos para demonstracao</div>
+  </div>
+</div>
+
+<!-- ================= PROFESSOR: DASHBOARD ================= -->
+<div class="view" id="view-professor-dashboard">
+  <div class="topbar">
+    <div class="logo"><div class="logo-mark"><i class="fa-solid fa-seedling"></i></div>Trilha</div>
+    <div class="topbar-right">
+      <div style="text-align:right">
+        <div class="user-name">Carla Menezes</div>
+        <div class="user-role">Professora</div>
+      </div>
+      <img class="avatar" src="https://images.unsplash.com/photo-1580489944761-15a19d654956?w=100&h=100&fit=crop&crop=faces" alt="Carla" />
+    </div>
+  </div>
+  <div class="page">
+    <div class="welcome-card" data-reveal>
+      <div>
+        <h1>Bem-vinda, Carla</h1>
+        <p>3 turmas ativas · 2 questionarios aguardando revisao de resultados</p>
+      </div>
+    </div>
+
+    <div class="stat-row" data-reveal>
+      <div class="stat-card"><div class="icon"><i class="fa-solid fa-users"></i></div><div class="num">86</div><div class="lbl">Alunos ativos</div></div>
+      <div class="stat-card"><div class="icon"><i class="fa-solid fa-chalkboard"></i></div><div class="num">3</div><div class="lbl">Turmas</div></div>
+      <div class="stat-card"><div class="icon"><i class="fa-solid fa-clipboard-check"></i></div><div class="num">72%</div><div class="lbl">Taxa media de conclusao</div></div>
+      <div class="stat-card"><div class="icon"><i class="fa-solid fa-triangle-exclamation"></i></div><div class="num">9</div><div class="lbl">Alunos sem responder quiz</div></div>
+    </div>
+
+    <div class="section-title"><i class="fa-solid fa-chalkboard"></i> Minhas Turmas</div>
+    <div class="turma-grid">
+      <div class="turma-card" data-reveal onclick="openProfessorTurma()">
+        <div class="turma-card-top">
+          <div class="turma-icon"><i class="fa-solid fa-square-root-variable"></i></div>
+          <span class="badge badge-done">Ativa</span>
+        </div>
+        <h3>Matematica Basica</h3>
+        <div class="meta">32 alunos · Tema atual: Fracoes</div>
+        <div class="progress-track"><div class="progress-fill" style="width:72%"></div></div>
+        <div class="progress-label"><span>72% responderam o quiz</span><span>23/32</span></div>
+      </div>
+      <div class="turma-card" data-reveal>
+        <div class="turma-card-top">
+          <div class="turma-icon"><i class="fa-solid fa-flask"></i></div>
+          <span class="badge badge-done">Ativa</span>
+        </div>
+        <h3>Ciencias Naturais</h3>
+        <div class="meta">29 alunos · Tema atual: Ciclo da Agua</div>
+        <div class="progress-track"><div class="progress-fill" style="width:88%"></div></div>
+        <div class="progress-label"><span>88% responderam o quiz</span><span>26/29</span></div>
+      </div>
+      <div class="turma-card" data-reveal>
+        <div class="turma-card-top">
+          <div class="turma-icon"><i class="fa-solid fa-plus"></i></div>
+          <span class="badge badge-pending">Nova</span>
+        </div>
+        <h3>Criar nova turma</h3>
+        <div class="meta">Publicar temas, videos e questionarios</div>
+      </div>
+    </div>
+    <div class="footer-note">Prototipo Trilha AVA · dados ilustrativos para demonstracao</div>
+  </div>
+</div>
+
+<!-- ================= PROFESSOR: TURMA DETAIL ================= -->
+<div class="view" id="view-professor-turma">
+  <div class="topbar">
+    <div class="logo"><div class="logo-mark"><i class="fa-solid fa-seedling"></i></div>Trilha</div>
+    <div class="topbar-right">
+      <div style="text-align:right">
+        <div class="user-name">Carla Menezes</div>
+        <div class="user-role">Professora</div>
+      </div>
+      <img class="avatar" src="https://images.unsplash.com/photo-1580489944761-15a19d654956?w=100&h=100&fit=crop&crop=faces" alt="Carla" />
+    </div>
+  </div>
+  <div class="page">
+    <a class="back-btn" onclick="showView('view-professor-dashboard')"><i class="fa-solid fa-arrow-left"></i> Voltar para turmas</a>
+    <div class="turma-header">
+      <div>
+        <h2>Matematica Basica</h2>
+        <div class="meta">32 alunos matriculados · Tema atual: Fracoes</div>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="fakeDownload('novo-tema')"><i class="fa-solid fa-plus"></i> Publicar novo tema</button>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-ptab="conteudo" onclick="switchPTab('conteudo')"><i class="fa-solid fa-folder-open"></i> Conteudo</button>
+      <button class="tab-btn" data-ptab="quizbuilder" onclick="switchPTab('quizbuilder')"><i class="fa-solid fa-list-check"></i> Questionario</button>
+      <button class="tab-btn" data-ptab="resultados" onclick="switchPTab('resultados')"><i class="fa-solid fa-chart-column"></i> Resultados</button>
+    </div>
+
+    <div class="tab-panel active" id="ptab-conteudo" data-reveal>
+      <div class="panel">
+        <div class="panel-head"><h3>Temas publicados</h3></div>
+        <div class="content-list-row">
+          <div class="content-list-left"><div class="ico"><i class="fa-solid fa-video"></i></div><div><strong>Fracoes: o que sao e para que servem</strong><span>Video + PDF + material complementar · 20 min</span></div></div>
+          <span class="badge badge-done">Publicado</span>
+        </div>
+        <div class="content-list-row">
+          <div class="content-list-left"><div class="ico"><i class="fa-solid fa-video"></i></div><div><strong>Somando e subtraindo fracoes simples</strong><span>Video + PDF · 15 min</span></div></div>
+          <span class="badge badge-done">Publicado</span>
+        </div>
+        <div class="content-list-row">
+          <div class="content-list-left"><div class="ico"><i class="fa-solid fa-clock"></i></div><div><strong>Fracoes equivalentes</strong><span>Rascunho, sem video ainda</span></div></div>
+          <span class="badge badge-pending">Rascunho</span>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h3>Publicar novo material</h3></div>
+        <div class="form-row">
+          <div class="field"><label>Titulo do tema</label><input placeholder="Ex: Fracoes equivalentes" /></div>
+          <div class="field"><label>Tempo estimado</label><input placeholder="Ex: 20 minutos" /></div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label>Link do video (YouTube)</label><input placeholder="https://youtube.com/watch?v=..." /></div>
+          <div class="field"><label>Objetivo de aprendizagem</label><input placeholder="Ex: Reconhecer fracoes equivalentes" /></div>
+        </div>
+        <div class="upload-box"><i class="fa-solid fa-cloud-arrow-up"></i>Arraste o PDF dos slides aqui ou clique para enviar</div>
+        <div style="margin-top:16px"><button class="btn btn-primary btn-sm" onclick="fakeDownload('tema-publicado')"><i class="fa-solid fa-check"></i> Publicar tema</button></div>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="ptab-quizbuilder">
+      <div class="panel">
+        <div class="panel-head"><h3>Questionario: Fracoes</h3><span class="badge badge-done">5 questoes configuradas</span></div>
+        <div class="content-list-row">
+          <div class="content-list-left"><div class="ico"><i class="fa-solid fa-circle-question"></i></div><div><strong>1. O que representa o denominador de uma fracao?</strong><span>Multipla escolha · 4 alternativas</span></div></div>
+          <button class="resource-btn btn-sm">Editar</button>
+        </div>
+        <div class="content-list-row">
+          <div class="content-list-left"><div class="ico"><i class="fa-solid fa-circle-question"></i></div><div><strong>2. 1/4 + 2/4 e igual a</strong><span>Multipla escolha · 4 alternativas</span></div></div>
+          <button class="resource-btn btn-sm">Editar</button>
+        </div>
+        <div class="content-list-row">
+          <div class="content-list-left"><div class="ico"><i class="fa-solid fa-circle-question"></i></div><div><strong>3 outras questoes configuradas</strong><span>Correcao automatica ativada</span></div></div>
+          <button class="resource-btn btn-sm">Ver todas</button>
+        </div>
+        <div style="margin-top:16px"><button class="btn btn-ghost btn-sm" onclick="fakeDownload('nova-questao')"><i class="fa-solid fa-plus"></i> Adicionar questao</button></div>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="ptab-resultados">
+      <div class="panel">
+        <div class="panel-head"><h3>Quem respondeu e como foi</h3><span class="badge badge-done">23 de 32 responderam</span></div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Aluno</th><th>Acessou conteudo</th><th>Quiz</th><th>Nota</th><th>Data</th></tr></thead>
+            <tbody>
+              <tr><td><div class="student-cell"><img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=60&h=60&fit=crop&crop=faces" />Marina Souza</div></td><td><i class="fa-solid fa-check" style="color:var(--green)"></i></td><td><span class="status-pill done">Respondeu</span></td><td class="score-cell">4/5</td><td>15 Jul</td></tr>
+              <tr><td><div class="student-cell"><img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=60&h=60&fit=crop&crop=faces" />Joao Pedro Lima</div></td><td><i class="fa-solid fa-check" style="color:var(--green)"></i></td><td><span class="status-pill done">Respondeu</span></td><td class="score-cell">5/5</td><td>14 Jul</td></tr>
+              <tr><td><div class="student-cell"><img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=60&h=60&fit=crop&crop=faces" />Beatriz Nunes</div></td><td><i class="fa-solid fa-check" style="color:var(--green)"></i></td><td><span class="status-pill pending">Iniciou, nao enviou</span></td><td class="score-cell">&mdash;</td><td>&mdash;</td></tr>
+              <tr><td><div class="student-cell"><img src="https://images.unsplash.com/photo-1519345182560-3f2917c472ef?w=60&h=60&fit=crop&crop=faces" />Gabriel Costa</div></td><td><i class="fa-solid fa-xmark" style="color:var(--text-light)"></i></td><td><span class="status-pill notstarted">Nao acessou</span></td><td class="score-cell">&mdash;</td><td>&mdash;</td></tr>
+              <tr><td><div class="student-cell"><img src="https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=60&h=60&fit=crop&crop=faces" />Ana Clara Reis</div></td><td><i class="fa-solid fa-check" style="color:var(--green)"></i></td><td><span class="status-pill done">Respondeu</span></td><td class="score-cell">3/5</td><td>13 Jul</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="footer-note">Prototipo Trilha AVA · dados ilustrativos para demonstracao</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const QUESTIONS = [
+    { q: "O que representa o denominador de uma fracao?", options: ["Quantas partes voce tem", "Em quantas partes o todo foi dividido", "O resultado da soma", "O numero total de alunos"], correct: 1 },
+    { q: "1/4 + 2/4 e igual a:", options: ["3/8", "3/4", "1/2", "2/4"], correct: 1 },
+    { q: "Qual fracao representa metade de um todo?", options: ["1/3", "2/2", "1/2", "1/4"], correct: 2 },
+    { q: "3/5 - 1/5 e igual a:", options: ["2/5", "2/10", "4/5", "1/5"], correct: 0 },
+    { q: "Em uma pizza cortada em 8 pedacos, comer 4 pedacos representa:", options: ["4/8", "8/4", "1/8", "4/4"], correct: 0 },
+  ];
+  let answers = {};
+
+  function renderQuiz() {
+    const el = document.getElementById('quiz-questions');
+    el.innerHTML = QUESTIONS.map((item, i) => `
+      <div class="question-card" id="qcard-${i}">
+        <div class="q-num">Questao ${i+1} de ${QUESTIONS.length}</div>
+        <div class="q-text">${item.q}</div>
+        <div class="q-options">
+          ${item.options.map((opt, oi) => `
+            <label class="q-option" id="opt-${i}-${oi}" onclick="pickAnswer(${i},${oi})">
+              <input type="radio" name="q${i}" />${opt}
+            </label>
+          `).join('')}
+        </div>
+        <div class="q-feedback" id="feedback-${i}" style="display:none"></div>
+      </div>
+    `).join('');
+  }
+
+  function pickAnswer(qi, oi) {
+    answers[qi] = oi;
+    QUESTIONS[qi].options.forEach((_, i) => document.getElementById(`opt-${qi}-${i}`).classList.remove('picked'));
+    document.getElementById(`opt-${qi}-${oi}`).classList.add('picked');
+  }
+
+  function submitQuiz() {
+    if (Object.keys(answers).length < QUESTIONS.length) {
+      showToast('Responda todas as ' + QUESTIONS.length + ' questoes antes de enviar');
+      return;
+    }
+    let score = 0;
+    QUESTIONS.forEach((item, i) => {
+      const card = document.getElementById(`qcard-${i}`);
+      const fb = document.getElementById(`feedback-${i}`);
+      fb.style.display = 'flex';
+      if (answers[i] === item.correct) {
+        score++;
+        card.classList.add('correct');
+        fb.className = 'q-feedback ok';
+        fb.innerHTML = '<i class="fa-solid fa-circle-check"></i> Resposta correta';
+      } else {
+        card.classList.add('wrong');
+        fb.className = 'q-feedback bad';
+        fb.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> Resposta incorreta &mdash; correta: ' + item.options[item.correct];
+      }
+    });
+    document.getElementById('quiz-submit-btn').disabled = true;
+    document.getElementById('quiz-status-badge').className = 'badge badge-done';
+    document.getElementById('quiz-status-badge').textContent = 'Enviado';
+    const pct = Math.round((score / QUESTIONS.length) * 100);
+    document.getElementById('quiz-result').innerHTML = `
+      <div class="result-banner pass">
+        <div class="big-score">${score}/${QUESTIONS.length}</div>
+        <p>Voce acertou ${pct}% das questoes. O professor ja pode ver este resultado no painel dele.</p>
+      </div>
+    `;
+  }
+
+  function showView(id) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    revealOnScroll();
+  }
+
+  function openTurma(slug) {
+    showView('view-aluno-turma');
+    switchTab('antes');
+  }
+  function openProfessorTurma() {
+    showView('view-professor-turma');
+    switchPTab('conteudo');
+  }
+
+  function switchTab(name) {
+    document.querySelectorAll('#view-aluno-turma .tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+    document.querySelectorAll('#view-aluno-turma .tab-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+  }
+  function switchPTab(name) {
+    document.querySelectorAll('#view-professor-turma .tab-btn').forEach(b => b.classList.toggle('active', b.dataset.ptab === name));
+    document.querySelectorAll('#view-professor-turma .tab-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('ptab-' + name).classList.add('active');
+  }
+
+  document.querySelectorAll('.role-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      showView(btn.dataset.role === 'aluno' ? 'view-aluno-dashboard' : 'view-professor-dashboard');
+    });
+  });
+
+  let toastTimer;
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+  }
+  function fakeDownload(name) {
+    showToast('Demonstracao: acao "' + name + '" seria executada aqui');
+  }
+
+  function revealOnScroll() {
+    document.querySelectorAll('[data-reveal]').forEach(el => {
+      const r = el.getBoundingClientRect();
+      if (r.top < window.innerHeight - 60) el.classList.add('in');
+    });
+  }
+  window.addEventListener('scroll', revealOnScroll);
+  window.addEventListener('resize', revealOnScroll);
+
+  renderQuiz();
+  revealOnScroll();
+</script>
+</body>
+</html>
