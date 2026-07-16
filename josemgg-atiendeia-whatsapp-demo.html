@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AtiendeIA - Agente Conversacional para WhatsApp</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --gold: #C9A227;
+  --gold-light: #E8C547;
+  --gold-dim: rgba(201,162,39,0.18);
+  --gold-border: rgba(201,162,39,0.25);
+  --bg: #0D0D0D;
+  --bg-card: #161616;
+  --bg-lift: #202020;
+  --text: #F0F0F0;
+  --muted: #888;
+  --wa-header: #075E54;
+  --wa-green: #128C7E;
+  --wa-light: #25D366;
+  --wa-bg: #ECE5DD;
+  --wa-sent: #DCF8C6;
+  --wa-recv: #FFFFFF;
+  --danger: #E06060;
+}
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+.header {
+  background: linear-gradient(90deg, #0D0D0D 0%, #161616 100%);
+  border-bottom: 1px solid var(--gold-border);
+  padding: 18px 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.brand { display: flex; align-items: center; gap: 14px; }
+
+.brand-icon {
+  width: 46px; height: 46px;
+  background: linear-gradient(135deg, var(--gold) 0%, #9B7A0F 100%);
+  border-radius: 13px;
+  display: flex; align-items: center; justify-content: center;
+  color: #000; font-size: 20px; flex-shrink: 0;
+}
+
+.brand-name { font-size: 18px; font-weight: 800; color: var(--text); }
+.brand-sub { font-size: 12px; color: var(--muted); font-weight: 600; margin-top: 1px; }
+
+.header-badges { display: flex; gap: 10px; flex-wrap: wrap; }
+
+.api-badge {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(37,211,102,0.08);
+  border: 1px solid rgba(37,211,102,0.25);
+  border-radius: 100px; padding: 8px 16px;
+  font-size: 12px; font-weight: 700; color: var(--wa-light);
+}
+
+.demo-badge {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--gold-dim);
+  border: 1px solid var(--gold-border);
+  border-radius: 100px; padding: 8px 16px;
+  font-size: 12px; font-weight: 700; color: var(--gold-light);
+}
+
+.pulse { width: 7px; height: 7px; border-radius: 50%; background: var(--wa-light); animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+.layout {
+  display: grid;
+  grid-template-columns: 270px 400px 1fr;
+  gap: 32px;
+  padding: 36px 40px;
+  max-width: 1340px;
+  margin: 0 auto;
+  align-items: start;
+}
+
+.left-panel, .right-panel { display: flex; flex-direction: column; gap: 14px; }
+
+.panel-label {
+  font-size: 10px; font-weight: 800; letter-spacing: 1.8px;
+  text-transform: uppercase; color: var(--gold); margin-bottom: 2px;
+}
+
+.metric-card {
+  background: var(--bg-card);
+  border: 1px solid var(--gold-border);
+  border-radius: 16px; padding: 18px 20px;
+  transition: border-color .25s;
+}
+.metric-card:hover { border-color: rgba(201,162,39,.5); }
+
+.metric-val { font-size: 34px; font-weight: 900; color: var(--gold-light); line-height: 1; }
+.metric-unit { font-size: 16px; font-weight: 700; }
+.metric-lbl { font-size: 12px; color: var(--muted); font-weight: 600; margin-top: 5px; }
+.metric-trend { font-size: 11px; color: var(--wa-light); font-weight: 700; margin-top: 3px; }
+
+.nlp-card {
+  background: var(--bg-card);
+  border: 1px solid var(--gold-border);
+  border-radius: 16px; padding: 18px 20px;
+}
+
+.nlp-title {
+  font-size: 10px; font-weight: 800; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--muted); margin-bottom: 12px;
+}
+
+.nlp-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.nlp-key { font-size: 12px; color: var(--muted); font-weight: 700; }
+.nlp-val { font-size: 13px; color: var(--gold-light); font-weight: 800; }
+.nlp-bar-track { height: 6px; background: var(--bg-lift); border-radius: 4px; overflow: hidden; margin-top: 4px; }
+.nlp-bar-fill { height: 100%; background: linear-gradient(90deg, var(--gold), var(--gold-light)); width: 0%; transition: width .5s ease; border-radius: 4px; }
+
+.phone-wrap { display: flex; flex-direction: column; align-items: center; gap: 18px; }
+
+.phone {
+  width: 370px; height: 720px;
+  background: #111; border-radius: 46px; border: 3px solid #2a2a2a;
+  box-shadow: 0 0 0 1px #444, 0 40px 80px rgba(0,0,0,.7), 0 0 80px rgba(201,162,39,.07);
+  overflow: hidden; display: flex; flex-direction: column; position: relative;
+}
+
+.wa-top {
+  background: var(--wa-header); padding: 10px 14px 14px;
+  display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+}
+
+.wa-avatar {
+  width: 38px; height: 38px; border-radius: 50%;
+  background: var(--gold); display: flex; align-items: center; justify-content: center;
+  font-size: 15px; font-weight: 900; color: #000; flex-shrink: 0;
+}
+
+.wa-info { flex: 1; }
+.wa-name { font-size: 15px; font-weight: 700; color: #fff; }
+.wa-status { font-size: 11px; color: rgba(255,255,255,.7); }
+.wa-actions { display: flex; gap: 16px; color: rgba(255,255,255,.8); font-size: 17px; }
+
+.wa-msgs {
+  flex: 1; background: var(--wa-bg);
+  background-image: url("data:image/svg+xml,%3Csvg width='52' height='52' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23b8b0a8' fill-opacity='.12'%3E%3Cpath d='M26 0l4 8H22l4-8zm0 52l4-8H22l4 8zM0 26l8-4v8l-8-4zm52 0l-8-4v8l8-4z'/%3E%3C/g%3E%3C/svg%3E");
+  overflow-y: auto; padding: 12px 10px; display: flex; flex-direction: column; gap: 5px;
+}
+.wa-msgs::-webkit-scrollbar { width: 3px; }
+.wa-msgs::-webkit-scrollbar-thumb { background: rgba(0,0,0,.15); border-radius: 2px; }
+
+.date-chip {
+  align-self: center; background: rgba(0,0,0,.14); color: #666;
+  font-size: 10px; font-weight: 700; padding: 3px 12px; border-radius: 100px; margin: 4px 0 6px;
+}
+
+.msg {
+  max-width: 82%; padding: 7px 11px 4px; border-radius: 10px;
+  font-size: 12.5px; line-height: 1.5; animation: msgIn .28s ease; white-space: pre-wrap;
+}
+@keyframes msgIn { from { opacity:0; transform:translateY(7px); } to { opacity:1; transform:translateY(0); } }
+
+.msg-bot { background: var(--wa-recv); color: #222; align-self: flex-start; border-top-left-radius: 2px; box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+.msg-user { background: var(--wa-sent); color: #222; align-self: flex-end; border-top-right-radius: 2px; box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+.msg-time { font-size: 10px; color: #999; text-align: right; margin-top: 2px; }
+.msg-user .msg-time { color: #6aad6a; }
+
+.msg-conf {
+  font-size: 9.5px; font-weight: 800; color: var(--wa-green);
+  text-transform: uppercase; letter-spacing: .4px; margin-bottom: 3px;
+}
+.msg-conf.low { color: var(--danger); }
+
+.typing {
+  background: var(--wa-recv); border-radius: 10px; border-top-left-radius: 2px;
+  padding: 10px 14px; align-self: flex-start; display: flex; gap: 4px; align-items: center;
+  box-shadow: 0 1px 2px rgba(0,0,0,.12); animation: msgIn .28s ease;
+}
+.tdot { width: 6px; height: 6px; border-radius: 50%; background: #aaa; animation: bounce 1.3s infinite; }
+.tdot:nth-child(2) { animation-delay: .18s; }
+.tdot:nth-child(3) { animation-delay: .36s; }
+@keyframes bounce { 0%,60%,100% { transform:translateY(0); opacity:.5; } 30% { transform:translateY(-6px); opacity:1; } }
+
+.wa-qr {
+  background: var(--wa-bg); padding: 8px 10px; display: flex; flex-wrap: wrap; gap: 6px;
+  border-top: 1px solid rgba(0,0,0,.1); flex-shrink: 0; min-height: 40px; align-items: center;
+}
+.qr {
+  background: #fff; border: 1.5px solid var(--wa-green); color: var(--wa-green);
+  border-radius: 100px; padding: 5px 12px; font-size: 11.5px; font-weight: 700;
+  cursor: pointer; transition: all .18s; font-family: 'Nunito', sans-serif; white-space: nowrap;
+}
+.qr:hover { background: var(--wa-green); color: #fff; }
+
+.wa-input-row {
+  background: var(--wa-bg); padding: 8px 10px; display: flex; gap: 8px;
+  border-top: 1px solid rgba(0,0,0,.1); flex-shrink: 0; align-items: center;
+}
+.wa-input {
+  flex: 1; border: none; border-radius: 100px; padding: 10px 14px;
+  font-size: 12.5px; font-family: 'Nunito', sans-serif; outline: none; background: #fff; color: #222;
+}
+.wa-send {
+  width: 36px; height: 36px; border-radius: 50%; border: none;
+  background: var(--wa-green); color: #fff; font-size: 14px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background .2s;
+}
+.wa-send:hover { background: var(--wa-header); }
+
+.restart-btn {
+  background: transparent; border: 1.5px solid var(--gold-border); color: var(--gold);
+  border-radius: 100px; padding: 10px 24px; font-size: 13px; font-weight: 700;
+  cursor: pointer; transition: all .25s; font-family: 'Nunito', sans-serif;
+  display: flex; align-items: center; gap: 8px;
+}
+.restart-btn:hover { background: var(--gold-dim); border-color: var(--gold); }
+
+.hint { font-size: 11px; color: var(--muted); text-align: center; max-width: 320px; line-height: 1.5; }
+.hint b { color: var(--gold-light); }
+
+.kw-card {
+  background: var(--bg-card); border: 1px solid var(--gold-border);
+  border-radius: 14px; padding: 15px 18px; transition: all .25s;
+}
+.kw-card:hover { border-color: rgba(201,162,39,.45); }
+.kw-card.lit { border-color: var(--gold); background: rgba(201,162,39,.04); }
+
+.kw-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.kw-title { font-size: 13px; font-weight: 800; color: var(--text); }
+.kw-badge { font-size: 10px; font-weight: 800; padding: 3px 10px; border-radius: 100px; }
+.kw-badge.on { background: rgba(37,211,102,.12); color: var(--wa-light); }
+.kw-badge.lit-badge { background: var(--gold-dim); color: var(--gold-light); }
+
+.tags { display: flex; flex-wrap: wrap; gap: 5px; }
+.tag { font-size: 10.5px; font-weight: 700; background: var(--bg-lift); color: var(--muted); border-radius: 6px; padding: 3px 8px; }
+
+@media (max-width: 1100px) {
+  .layout { grid-template-columns: 1fr; padding: 20px; }
+  .left-panel, .right-panel { display: none; }
+  .phone-wrap { margin: 0 auto; }
+}
+@media (max-width: 480px) {
+  .phone { width: 330px; height: 640px; }
+  .header { padding: 14px 20px; }
+}
+
+.fade { opacity:0; transform:translateY(18px); transition:opacity .5s ease,transform .5s ease; }
+.fade.in { opacity:1; transform:translateY(0); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="brand">
+    <div class="brand-icon"><i class="fa-solid fa-comments"></i></div>
+    <div>
+      <div class="brand-name">AtiendeIA</div>
+      <div class="brand-sub">Agente conversacional para WhatsApp con motor NLP en vivo</div>
+    </div>
+  </div>
+  <div class="header-badges">
+    <div class="demo-badge"><i class="fa-solid fa-flask"></i> Demo generico, adaptable a tu negocio</div>
+    <div class="api-badge"><span class="pulse"></span> API Oficial Meta</div>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- LEFT -->
+  <div class="left-panel fade" id="leftPanel">
+    <div class="panel-label">Metricas de ejemplo</div>
+
+    <div class="metric-card">
+      <div class="metric-val">312</div>
+      <div class="metric-lbl">Consultas respondidas hoy</div>
+      <div class="metric-trend"><i class="fa-solid fa-arrow-trend-up"></i> +18% vs ayer</div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-val">3<span class="metric-unit"> seg</span></div>
+      <div class="metric-lbl">Tiempo medio de respuesta</div>
+      <div class="metric-trend"><i class="fa-solid fa-clock"></i> Antes: horas de espera</div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-val">91<span class="metric-unit">%</span></div>
+      <div class="metric-lbl">Resuelto sin intervencion humana</div>
+      <div class="metric-trend"><i class="fa-solid fa-user-check"></i> 9% derivado a una persona</div>
+    </div>
+
+    <div class="nlp-card">
+      <div class="nlp-title">Motor NLP - ultima consulta</div>
+      <div class="nlp-row">
+        <span class="nlp-key">Intencion detectada</span>
+        <span class="nlp-val" id="nlpIntent">-</span>
+      </div>
+      <div class="nlp-row">
+        <span class="nlp-key">Confianza</span>
+        <span class="nlp-val" id="nlpConf">-</span>
+      </div>
+      <div class="nlp-bar-track"><div class="nlp-bar-fill" id="nlpBar"></div></div>
+    </div>
+  </div>
+
+  <!-- CENTER -->
+  <div class="phone-wrap">
+    <div class="phone">
+      <div class="wa-top">
+        <div class="wa-avatar">N</div>
+        <div class="wa-info">
+          <div class="wa-name">Negocio Ejemplo</div>
+          <div class="wa-status" id="botStatus">En linea</div>
+        </div>
+        <div class="wa-actions">
+          <i class="fa-solid fa-video"></i>
+          <i class="fa-solid fa-phone"></i>
+          <i class="fa-solid fa-ellipsis-vertical"></i>
+        </div>
+      </div>
+
+      <div class="wa-msgs" id="msgs">
+        <div class="date-chip">Hoy</div>
+      </div>
+
+      <div class="wa-qr" id="qr"></div>
+
+      <div class="wa-input-row">
+        <input class="wa-input" id="userInput" type="text" placeholder="Escribi tu consulta, con tus propias palabras..." maxlength="140">
+        <button class="wa-send" id="sendBtn"><i class="fa-solid fa-paper-plane"></i></button>
+      </div>
+    </div>
+
+    <div class="hint">Escribi como le escribirias a cualquier negocio real, por ejemplo <b>"que precio tiene"</b> o <b>"cuanto sale"</b>. El motor entiende ambas formas como la misma intencion.</div>
+
+    <button class="restart-btn" onclick="restart()">
+      <i class="fa-solid fa-rotate-left"></i>
+      Reiniciar demo
+    </button>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="right-panel fade" id="rightPanel">
+    <div class="panel-label">Que reconoce la IA</div>
+
+    <div class="kw-card" id="kw-horarios">
+      <div class="kw-head">
+        <div class="kw-title"><i class="fa-solid fa-clock" style="color:var(--gold);margin-right:6px;font-size:12px;"></i>Horarios</div>
+        <span class="kw-badge on">Activo</span>
+      </div>
+      <div class="tags">
+        <span class="tag">horario</span><span class="tag">a que hora abren</span><span class="tag">estan atendiendo</span><span class="tag">cierran</span>
+      </div>
+    </div>
+
+    <div class="kw-card" id="kw-precios">
+      <div class="kw-head">
+        <div class="kw-title"><i class="fa-solid fa-tag" style="color:var(--gold);margin-right:6px;font-size:12px;"></i>Precios y planes</div>
+        <span class="kw-badge on">Activo</span>
+      </div>
+      <div class="tags">
+        <span class="tag">precio</span><span class="tag">cuanto sale</span><span class="tag">tarifa</span><span class="tag">presupuesto</span>
+      </div>
+    </div>
+
+    <div class="kw-card" id="kw-ubicacion">
+      <div class="kw-head">
+        <div class="kw-title"><i class="fa-solid fa-location-dot" style="color:var(--gold);margin-right:6px;font-size:12px;"></i>Ubicacion</div>
+        <span class="kw-badge on">Activo</span>
+      </div>
+      <div class="tags">
+        <span class="tag">donde estan</span><span class="tag">direccion</span><span class="tag">como llego</span>
+      </div>
+    </div>
+
+    <div class="kw-card" id="kw-turno">
+      <div class="kw-head">
+        <div class="kw-title"><i class="fa-solid fa-calendar-check" style="color:var(--gold);margin-right:6px;font-size:12px;"></i>Turnos y reservas</div>
+        <span class="kw-badge on">Activo</span>
+      </div>
+      <div class="tags">
+        <span class="tag">turno</span><span class="tag">reservar</span><span class="tag">agendar</span><span class="tag">disponibilidad</span>
+      </div>
+    </div>
+
+    <div class="kw-card" id="kw-soporte">
+      <div class="kw-head">
+        <div class="kw-title"><i class="fa-solid fa-headset" style="color:var(--gold);margin-right:6px;font-size:12px;"></i>Soporte / reclamo</div>
+        <span class="kw-badge on">Activo</span>
+      </div>
+      <div class="tags">
+        <span class="tag">problema</span><span class="tag">no funciona</span><span class="tag">reclamo</span>
+      </div>
+    </div>
+
+    <div class="kw-card" id="kw-humano">
+      <div class="kw-head">
+        <div class="kw-title"><i class="fa-solid fa-user" style="color:var(--gold);margin-right:6px;font-size:12px;"></i>Fuera de alcance</div>
+        <span class="kw-badge on">Deriva a persona</span>
+      </div>
+      <div class="tags">
+        <span class="tag">hablar con alguien</span><span class="tag">algo no reconocido</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const msgsEl   = document.getElementById('msgs');
+const qrEl     = document.getElementById('qr');
+const statusEl = document.getElementById('botStatus');
+const inputEl  = document.getElementById('userInput');
+const sendBtn  = document.getElementById('sendBtn');
+const nlpIntentEl = document.getElementById('nlpIntent');
+const nlpConfEl   = document.getElementById('nlpConf');
+const nlpBarEl    = document.getElementById('nlpBar');
+
+const INTENTS = [
+  {
+    id: 'horarios',
+    label: 'Horarios',
+    keywords: ['horario','hora','abren','cierran','atienden','abierto','cerrado','funcionan'],
+    response: 'Atendemos de lunes a viernes de 9:00 a 18:00, y sabados de 10:00 a 14:00. Fuera de ese horario este asistente sigue respondiendo consultas basicas las 24 horas.'
+  },
+  {
+    id: 'precios',
+    label: 'Precios y planes',
+    keywords: ['precio','cuesta','vale','tarifa','coste','costo','presupuesto','plan','sale'],
+    response: 'El precio depende del servicio que necesites. Contame que estas buscando y te paso el detalle exacto, o si preferis te conecto con el equipo comercial.'
+  },
+  {
+    id: 'ubicacion',
+    label: 'Ubicacion',
+    keywords: ['donde','direccion','ubicacion','local','sucursal','llegar'],
+    response: 'Estamos en el centro, con acceso facil en transporte publico. Confirmame tu ciudad y te paso la direccion exacta.'
+  },
+  {
+    id: 'turno',
+    label: 'Turnos y reservas',
+    keywords: ['turno','cita','reservar','agendar','disponibilidad','reserva'],
+    response: 'Puedo revisar la disponibilidad y reservarte un turno. Que dia y horario te queda mejor?'
+  },
+  {
+    id: 'soporte',
+    label: 'Soporte / reclamo',
+    keywords: ['problema','funciona','reclamo','queja','ayuda','error','falla'],
+    response: 'Lamento el inconveniente. Contame brevemente que esta pasando y si hace falta te conecto directo con una persona del equipo.'
+  },
+  {
+    id: 'humano',
+    label: 'Hablar con alguien',
+    keywords: ['humano','persona','agente','asesor','alguien'],
+    response: null
+  }
+];
+
+function normalize(str) {
+  return str
+    .toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function classify(rawText) {
+  const text = normalize(rawText);
+  let best = null;
+  let bestScore = 0;
+  INTENTS.forEach(intent => {
+    let score = 0;
+    intent.keywords.forEach(kw => {
+      if (text.includes(kw)) score += kw.split(' ').length;
+    });
+    if (score > bestScore) { bestScore = score; best = intent; }
+  });
+  if (!best) return { intent: null, confidence: 0 };
+  const confidence = Math.min(58 + bestScore * 13, 97);
+  return { intent: best, confidence };
+}
+
+function now() {
+  const d = new Date();
+  return d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+}
+
+function addMsg(text, who, confidence) {
+  const m = document.createElement('div');
+  m.className = 'msg msg-' + who;
+  const check = who === 'user' ? ' <i class="fa-solid fa-check-double" style="color:#53bdeb;font-size:9px;"></i>' : '';
+  let confHtml = '';
+  if (who === 'bot' && typeof confidence === 'number') {
+    const low = confidence < 60;
+    confHtml = '<div class="msg-conf' + (low ? ' low' : '') + '">' + (low ? 'Derivado a una persona' : 'IA - confianza ' + confidence + '%') + '</div>';
+  }
+  m.innerHTML = confHtml + text.replace(/\n/g,'<br>') + '<div class="msg-time">' + now() + check + '</div>';
+  msgsEl.appendChild(m);
+  msgsEl.scrollTop = msgsEl.scrollHeight;
+}
+
+function showTyping(ms) {
+  return new Promise(res => {
+    const el = document.createElement('div');
+    el.className = 'typing';
+    el.id = 'typing';
+    el.innerHTML = '<div class="tdot"></div><div class="tdot"></div><div class="tdot"></div>';
+    msgsEl.appendChild(el);
+    msgsEl.scrollTop = msgsEl.scrollHeight;
+    statusEl.textContent = 'escribiendo...';
+    setTimeout(() => {
+      const t = document.getElementById('typing');
+      if (t) t.remove();
+      statusEl.textContent = 'En linea';
+      res();
+    }, ms);
+  });
+}
+
+function litKw(id) {
+  document.querySelectorAll('.kw-card').forEach(c => {
+    c.classList.remove('lit');
+    const b = c.querySelector('.kw-badge');
+    if (b && b.classList.contains('lit-badge')) {
+      b.classList.remove('lit-badge'); b.classList.add('on'); b.textContent = 'Activo';
+    }
+  });
+  if (!id) return;
+  const el = document.getElementById('kw-' + id);
+  if (el) {
+    el.classList.add('lit');
+    const b = el.querySelector('.kw-badge');
+    if (b && !b.textContent.includes('persona')) { b.classList.remove('on'); b.classList.add('lit-badge'); b.textContent = 'Coincidencia'; }
+  }
+}
+
+function updateNlpPanel(label, confidence) {
+  nlpIntentEl.textContent = label;
+  nlpConfEl.textContent = confidence + '%';
+  nlpBarEl.style.width = confidence + '%';
+}
+
+function setQR(options) {
+  qrEl.innerHTML = '';
+  options.forEach(o => {
+    const btn = document.createElement('button');
+    btn.className = 'qr';
+    btn.textContent = o.label;
+    btn.onclick = () => { inputEl.value = o.label; sendMessage(); };
+    qrEl.appendChild(btn);
+  });
+}
+
+async function sendMessage() {
+  const raw = inputEl.value.trim();
+  if (!raw) return;
+  inputEl.value = '';
+  setQR([]);
+  addMsg(raw, 'user');
+
+  const { intent, confidence } = classify(raw);
+
+  await showTyping(700 + Math.random() * 700);
+
+  if (!intent || intent.id === 'humano' || confidence < 60) {
+    litKw('humano');
+    updateNlpPanel(intent ? intent.label : 'Sin coincidencia clara', intent ? confidence : 0);
+    addMsg('No tengo una respuesta exacta para eso todavia. Te conecto con una persona del equipo para ayudarte mejor.', 'bot', intent ? confidence : 0);
+    setQR([{label:'Hablar con alguien',action:'humano'}, {label:'Reiniciar demo',action:'reiniciar'}]);
+    return;
+  }
+
+  litKw(intent.id);
+  updateNlpPanel(intent.label, confidence);
+  addMsg(intent.response, 'bot', confidence);
+  setQR([{label:'Otra consulta',action:'otra'},{label:'Hablar con alguien',action:'humano'}]);
+}
+
+sendBtn.addEventListener('click', sendMessage);
+inputEl.addEventListener('keydown', e => { if (e.key === 'Enter') sendMessage(); });
+
+function restart() {
+  msgsEl.innerHTML = '<div class="date-chip">Hoy</div>';
+  qrEl.innerHTML = '';
+  litKw(null);
+  updateNlpPanel('-', 0);
+  nlpConfEl.textContent = '-';
+  statusEl.textContent = 'En linea';
+  setTimeout(async () => {
+    await showTyping(900);
+    addMsg('Hola! Soy el asistente virtual de Negocio Ejemplo. Preguntame sobre horarios, precios, ubicacion o turnos, con tus propias palabras.', 'bot');
+    setQR([
+      {label:'A que hora abren',action:'demo1'},
+      {label:'Cuanto sale',action:'demo2'},
+      {label:'Hablar con alguien',action:'humano'}
+    ]);
+  }, 300);
+}
+
+function reveal() {
+  document.querySelectorAll('.fade').forEach(el => {
+    if (el.getBoundingClientRect().top < window.innerHeight - 40) el.classList.add('in');
+  });
+}
+window.addEventListener('scroll', reveal);
+window.onload = () => { reveal(); restart(); };
+</script>
+</body>
+</html>
