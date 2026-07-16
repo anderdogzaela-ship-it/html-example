@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZapPronto – Respostas Automaticas para WhatsApp</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+  :root{
+    --g50:#f0fdf6; --g100:#dcfce9; --g200:#bbf7d3; --g300:#86efb0; --g400:#4ade80;
+    --g500:#22c55e; --g600:#16a34a; --g700:#15803d; --g800:#166534; --g900:#14532d;
+    --em400:#34d399; --em500:#10b981; --em600:#059669;
+    --n0:#0c1210; --n50:#121a17; --n100:#17211d; --n200:#202c26; --n300:#2b3931;
+    --n400:#47594f; --n500:#68796f; --n600:#8b9c92; --n700:#adbbb2; --n800:#d3ddd7; --n900:#f2f7f4;
+    --ok:#22c55e; --warn:#eab308; --bad:#f87171; --info:#38bdf8; --purple:#c084fc;
+    --radius:14px; --shadow:0 24px 60px rgba(0,0,0,0.55);
+    --ease:cubic-bezier(.34,1.56,.64,1);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Nunito',sans-serif;background:var(--n0);color:var(--n900);min-height:100vh;display:flex;align-items:center;justify-content:center;-webkit-font-smoothing:antialiased;padding:20px;overflow-x:hidden;}
+  body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(circle at 1px 1px, rgba(34,197,94,0.07) 1px, transparent 0);background-size:26px 26px;pointer-events:none;z-index:0;}
+  .orb{position:fixed;border-radius:50%;filter:blur(70px);opacity:.32;z-index:0;animation:float 9s ease-in-out infinite;}
+  .orb1{width:340px;height:340px;background:var(--g600);top:-100px;left:-100px;}
+  .orb2{width:280px;height:280px;background:var(--em500);bottom:-80px;right:-80px;animation-delay:2s;}
+  @keyframes float{0%,100%{transform:translateY(0) translateX(0)}50%{transform:translateY(-24px) translateX(14px)}}
+
+  .app-wrapper{position:relative;z-index:1;display:flex;width:1140px;max-width:100%;height:720px;background:var(--n50);border-radius:20px;overflow:hidden;box-shadow:var(--shadow);border:1px solid var(--n300);}
+
+  .sidebar{width:222px;background:var(--n100);display:flex;flex-direction:column;border-right:1px solid var(--n300);flex-shrink:0;}
+  .sidebar-logo{padding:22px 18px 18px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--n300);}
+  .sidebar-logo-icon{width:38px;height:38px;background:linear-gradient(135deg,var(--g400),var(--g700));border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:17px;color:#08150e;box-shadow:0 0 22px rgba(34,197,94,0.45);flex-shrink:0;animation:pulseLogo 3s ease-in-out infinite;}
+  @keyframes pulseLogo{0%,100%{box-shadow:0 0 22px rgba(34,197,94,0.45);}50%{box-shadow:0 0 30px rgba(34,197,94,0.7);}}
+  .sidebar-logo-text{font-size:14px;font-weight:800;color:var(--n900);line-height:1.2;letter-spacing:-0.2px;}
+  .sidebar-logo-sub{font-size:10px;color:var(--n600);margin-top:1px;}
+  .sidebar-nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:2px;}
+  .nav-item{display:flex;align-items:center;gap:11px;padding:10px 12px;cursor:pointer;border-radius:10px;transition:all .15s;font-size:12.5px;font-weight:700;color:var(--n600);}
+  .nav-item i{width:16px;text-align:center;font-size:13px;}
+  .nav-item:hover{background:var(--n200);color:var(--n900);}
+  .nav-item.active{background:rgba(34,197,94,0.15);color:var(--g400);}
+  .nav-badge{margin-left:auto;background:var(--bad);color:#fff;font-size:9px;font-weight:800;padding:1px 6px;border-radius:8px;}
+  .sidebar-footer{padding:14px 18px;border-top:1px solid var(--n300);}
+  .status-row{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--n700);font-weight:700;}
+  .status-dot{width:7px;height:7px;background:var(--ok);border-radius:50%;animation:pulse 2s infinite;box-shadow:0 0 8px var(--ok);}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  .status-sub{font-size:10px;color:var(--n500);margin-top:3px;}
+
+  .main{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--n0);}
+  .view{display:none;flex:1;flex-direction:column;overflow:hidden;}
+  .view.active{display:flex;animation:fadeIn .25s ease-out;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+  .topbar{padding:16px 24px;background:var(--n100);border-bottom:1px solid var(--n300);display:flex;align-items:center;gap:12px;}
+  .topbar-title{font-size:15px;font-weight:800;color:var(--n900);flex:1;display:flex;flex-direction:column;}
+  .topbar-title small{font-size:10.5px;font-weight:600;color:var(--n600);margin-top:2px;}
+  .btn-sm{padding:8px 15px;border-radius:9px;border:none;cursor:pointer;font-size:11.5px;font-weight:700;transition:all .15s var(--ease);font-family:inherit;}
+  .btn-primary{background:linear-gradient(135deg,var(--g400),var(--g700));color:#08150e;}
+  .btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(34,197,94,0.35);}
+  .btn-secondary{background:var(--n200);color:var(--n900);border:1px solid var(--n300);}
+  .btn-secondary:hover{background:var(--n300);}
+
+  /* DASHBOARD */
+  .dash-body{flex:1;overflow-y:auto;padding:20px 24px;}
+  .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px;}
+  .kpi-card{background:var(--n100);border:1px solid var(--n300);border-radius:var(--radius);padding:16px;transition:transform .18s var(--ease),box-shadow .18s;}
+  .kpi-card:hover{transform:translateY(-3px);box-shadow:0 12px 28px rgba(0,0,0,.4);border-color:var(--g700);}
+  .kpi-icon{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:13px;margin-bottom:10px;}
+  .kpi-label{font-size:10.5px;color:var(--n600);font-weight:700;text-transform:uppercase;letter-spacing:.4px;}
+  .kpi-value{font-size:24px;font-weight:800;color:var(--n900);margin-top:4px;}
+  .kpi-delta{font-size:10.5px;font-weight:700;margin-top:6px;display:flex;align-items:center;gap:4px;}
+  .kpi-up{color:var(--g400);}
+  .kpi-warn{color:var(--warn);}
+
+  .dash-row{display:grid;grid-template-columns:1.4fr 1fr;gap:14px;}
+  .panel{background:var(--n100);border:1px solid var(--n300);border-radius:var(--radius);padding:18px;}
+  .panel-title{font-size:12.5px;font-weight:800;color:var(--n900);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;}
+  .panel-title span.sub{font-size:10px;color:var(--n600);font-weight:600;}
+
+  .bar-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+  .bar-label{width:150px;font-size:11.5px;color:var(--n700);font-weight:600;flex-shrink:0;}
+  .bar-track{flex:1;height:9px;background:var(--n200);border-radius:6px;overflow:hidden;position:relative;}
+  .bar-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--g600),var(--em400));width:0;transition:width 1s var(--ease);position:relative;overflow:hidden;}
+  .bar-fill::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);animation:shimmer 2.2s infinite;}
+  @keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+  .bar-val{width:34px;text-align:right;font-size:11px;font-weight:800;color:var(--n800);}
+
+  .activity-item{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--n200);}
+  .activity-item:last-child{border-bottom:none;}
+  .activity-dot{width:26px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;margin-top:1px;}
+  .activity-text{font-size:11.5px;color:var(--n800);line-height:1.4;}
+  .activity-text b{color:var(--n900);}
+  .activity-time{font-size:10px;color:var(--n500);margin-top:2px;}
+
+  /* RULES */
+  .rules-toolbar{padding:14px 24px;background:var(--n100);border-bottom:1px solid var(--n300);display:flex;align-items:center;gap:12px;}
+  .search-box{flex:1;max-width:280px;background:var(--n200);border:1px solid var(--n300);border-radius:9px;padding:8px 12px;display:flex;align-items:center;gap:8px;color:var(--n600);font-size:11.5px;}
+  .search-box input{background:none;border:none;outline:none;color:var(--n900);font-family:inherit;font-size:11.5px;flex:1;}
+  .filter-chip{padding:7px 13px;border-radius:8px;background:var(--n200);border:1px solid var(--n300);font-size:11px;font-weight:700;color:var(--n700);cursor:pointer;transition:all .15s;}
+  .filter-chip.active{background:rgba(34,197,94,0.16);color:var(--g400);border-color:var(--g700);}
+  .rules-body{flex:1;overflow-y:auto;padding:16px 24px;display:flex;flex-direction:column;gap:10px;}
+  .rule-card{background:var(--n100);border:1px solid var(--n300);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:14px;transition:all .15s var(--ease);}
+  .rule-card:hover{border-color:var(--g700);transform:translateY(-1px);box-shadow:0 8px 20px rgba(0,0,0,.35);}
+  .rule-cat{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+  .rule-main{flex:1;min-width:0;}
+  .rule-cat-label{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--g400);margin-bottom:4px;}
+  .rule-keywords{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:6px;}
+  .kw-chip{background:var(--n200);border:1px solid var(--n300);border-radius:6px;padding:2px 8px;font-size:10.5px;color:var(--n800);font-weight:700;}
+  .rule-response{font-size:11.5px;color:var(--n600);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:480px;}
+  .rule-meta{display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0;}
+  .toggle{width:36px;height:20px;border-radius:12px;background:var(--n300);position:relative;cursor:pointer;transition:background .2s;}
+  .toggle.on{background:var(--g600);}
+  .toggle-dot{width:16px;height:16px;background:#fff;border-radius:50%;position:absolute;top:2px;left:2px;transition:left .2s var(--ease);}
+  .toggle.on .toggle-dot{left:18px;}
+  .rule-actions{display:flex;gap:6px;}
+  .icon-btn{width:26px;height:26px;border-radius:7px;background:var(--n200);border:1px solid var(--n300);display:flex;align-items:center;justify-content:center;color:var(--n700);cursor:pointer;font-size:10.5px;transition:all .15s;}
+  .icon-btn:hover{background:var(--n300);color:var(--n900);}
+
+  /* MODAL */
+  .modal-overlay{position:fixed;inset:0;background:rgba(5,10,8,.65);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:50;}
+  .modal-overlay.active{display:flex;}
+  .modal{background:var(--n100);border:1px solid var(--n300);border-radius:16px;padding:22px;width:420px;box-shadow:0 30px 70px rgba(0,0,0,.6);animation:modalIn .22s var(--ease);}
+  @keyframes modalIn{from{opacity:0;transform:scale(.94) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+  .modal-title{font-size:14px;font-weight:800;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;}
+  .modal-title i{cursor:pointer;color:var(--n600);}
+  .field{margin-bottom:13px;}
+  .field label{font-size:10.5px;font-weight:800;color:var(--n700);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:6px;}
+  .field input,.field textarea,.field select{width:100%;background:var(--n200);border:1px solid var(--n300);border-radius:8px;padding:9px 11px;color:var(--n900);font-family:inherit;font-size:12px;outline:none;}
+  .field textarea{resize:vertical;min-height:60px;}
+  .field input:focus,.field textarea:focus,.field select:focus{border-color:var(--g600);}
+  .modal-actions{display:flex;gap:10px;margin-top:6px;justify-content:flex-end;}
+
+  /* CHAT */
+  .chat-layout{display:flex;flex:1;overflow:hidden;}
+  .contact-list{width:230px;background:var(--n100);border-right:1px solid var(--n300);display:flex;flex-direction:column;}
+  .contact-list-header{padding:14px 16px;border-bottom:1px solid var(--n300);font-size:11px;font-weight:800;color:var(--n600);text-transform:uppercase;letter-spacing:.6px;}
+  .contact-item{padding:11px 16px;cursor:pointer;border-bottom:1px solid var(--n0);display:flex;align-items:center;gap:10px;transition:background .12s;}
+  .contact-item:hover{background:var(--n200);}
+  .contact-item.active{background:var(--n200);}
+  .contact-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0;color:#08150e;background-size:cover;background-position:center;}
+  .contact-info{flex:1;min-width:0;}
+  .contact-name{font-size:12.5px;font-weight:700;color:var(--n900);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .contact-preview{font-size:11px;color:var(--n600);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;}
+  .contact-time{font-size:10px;color:var(--n500);}
+  .status-chip{font-size:9px;padding:2px 6px;border-radius:5px;font-weight:800;}
+  .chip-auto{background:rgba(34,197,94,0.16);color:var(--g400);}
+  .chip-human{background:rgba(234,179,8,0.16);color:var(--warn);}
+
+  .chat-window{flex:1;display:flex;flex-direction:column;background:var(--n0);}
+  .chat-header{padding:12px 18px;background:var(--n100);border-bottom:1px solid var(--n300);display:flex;align-items:center;gap:12px;}
+  .chat-header-info{flex:1;}
+  .chat-header-name{font-size:13.5px;font-weight:700;color:var(--n900);}
+  .chat-header-status{font-size:10.5px;color:var(--n600);}
+
+  .chat-messages{flex:1;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:7px;}
+  .msg{max-width:70%;padding:9px 12px 6px;border-radius:10px;font-size:12.5px;line-height:1.45;position:relative;animation:msgIn .2s ease-out;}
+  @keyframes msgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  .msg-in{background:var(--n200);color:var(--n900);align-self:flex-start;border-bottom-left-radius:2px;}
+  .msg-bot{background:rgba(34,197,94,0.12);border-left:3px solid var(--g500);align-self:flex-start;border-bottom-left-radius:2px;color:var(--n900);}
+  .msg-system{background:rgba(56,189,248,0.09);border:1px solid rgba(56,189,248,0.25);color:var(--info);align-self:center;font-size:10.5px;padding:5px 12px;border-radius:12px;text-align:center;}
+  .msg-human{background:rgba(192,132,252,0.1);border-left:3px solid var(--purple);align-self:flex-start;border-bottom-left-radius:2px;color:var(--n900);}
+  .msg-time{font-size:10px;color:var(--n600);margin-top:4px;}
+  .msg-bot-label{font-size:10px;color:var(--g400);font-weight:800;margin-bottom:3px;display:flex;align-items:center;gap:4px;}
+  .msg-human-label{font-size:10px;color:var(--purple);font-weight:800;margin-bottom:3px;}
+  .kw-highlight{background:rgba(34,197,94,0.28);border-radius:3px;padding:0 3px;font-weight:800;}
+
+  .chat-input{padding:11px 18px;background:var(--n100);border-top:1px solid var(--n300);display:flex;align-items:center;gap:10px;}
+  .chat-input-box{flex:1;background:var(--n200);border:1px solid var(--n300);border-radius:20px;padding:9px 15px;color:var(--n600);font-size:12px;font-style:italic;}
+  .send-btn{width:36px;height:36px;background:linear-gradient(135deg,var(--g400),var(--g700));border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#08150e;font-size:14px;flex-shrink:0;}
+
+  /* MESSAGE LIBRARY */
+  .lib-body{flex:1;overflow-y:auto;padding:18px 24px;display:grid;grid-template-columns:repeat(2,1fr);gap:12px;align-content:start;}
+  .lib-card{background:var(--n100);border:1px solid var(--n300);border-radius:12px;padding:15px;transition:all .15s var(--ease);}
+  .lib-card:hover{transform:translateY(-2px);border-color:var(--g700);box-shadow:0 10px 24px rgba(0,0,0,.35);}
+  .lib-tag{display:inline-block;font-size:9.5px;font-weight:800;padding:3px 9px;border-radius:6px;margin-bottom:9px;text-transform:uppercase;letter-spacing:.4px;}
+  .lib-text{font-size:11.5px;color:var(--n700);line-height:1.5;margin-bottom:10px;}
+  .lib-footer{display:flex;align-items:center;justify-content:space-between;font-size:10.5px;color:var(--n500);}
+
+  /* INTEGRATIONS */
+  .integ-body{flex:1;overflow-y:auto;padding:20px 24px;display:flex;flex-direction:column;gap:14px;}
+  .integ-card{background:var(--n100);border:1px solid var(--n300);border-radius:var(--radius);padding:18px;display:flex;align-items:center;gap:16px;}
+  .integ-icon{width:44px;height:44px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+  .integ-main{flex:1;}
+  .integ-title{font-size:13px;font-weight:800;color:var(--n900);margin-bottom:3px;}
+  .integ-sub{font-size:11px;color:var(--n600);}
+  .integ-badge{font-size:10px;font-weight:800;padding:5px 11px;border-radius:8px;display:flex;align-items:center;gap:5px;flex-shrink:0;}
+  .badge-ok{background:rgba(34,197,94,0.16);color:var(--g400);}
+  .badge-warn{background:rgba(234,179,8,0.16);color:var(--warn);}
+
+  .hours-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--n200);font-size:12px;color:var(--n800);font-weight:600;}
+  .hours-row:last-child{border-bottom:none;}
+
+  /* TOAST */
+  .toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--n100);border:1px solid var(--g700);border-radius:12px;padding:12px 20px;display:flex;align-items:center;gap:10px;font-size:12px;font-weight:700;color:var(--n900);box-shadow:0 16px 40px rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:all .35s cubic-bezier(.34,1.56,.64,1);z-index:100;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  .toast i{color:var(--g400);}
+
+  @media (max-width:900px){
+    .app-wrapper{flex-direction:column;height:auto;max-height:94vh;}
+    .sidebar{width:100%;flex-direction:row;overflow-x:auto;}
+    .sidebar-nav{flex-direction:row;}
+    .kpi-grid{grid-template-columns:repeat(2,1fr);}
+    .dash-row{grid-template-columns:1fr;}
+    .lib-body{grid-template-columns:1fr;}
+    .chat-layout{flex-direction:column;}
+    .contact-list{width:100%;max-height:160px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+
+<div class="app-wrapper">
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon"><i class="fa-solid fa-bolt"></i></div>
+      <div>
+        <div class="sidebar-logo-text">ZapPronto</div>
+        <div class="sidebar-logo-sub">Respostas automaticas</div>
+      </div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-item active" data-view="dash"><i class="fa-solid fa-chart-line"></i>Painel</div>
+      <div class="nav-item" data-view="rules"><i class="fa-solid fa-key"></i>Regras de Palavras-chave</div>
+      <div class="nav-item" data-view="chat"><i class="fa-solid fa-comments"></i>Conversas<span class="nav-badge">6</span></div>
+      <div class="nav-item" data-view="lib"><i class="fa-solid fa-layer-group"></i>Biblioteca de Mensagens</div>
+      <div class="nav-item" data-view="integ"><i class="fa-solid fa-plug"></i>Integracao</div>
+    </div>
+    <div class="sidebar-footer">
+      <div class="status-row"><span class="status-dot"></span>WhatsApp conectado</div>
+      <div class="status-sub">+55 11 98432-0917</div>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <!-- DASHBOARD -->
+    <div class="view active" id="view-dash">
+      <div class="topbar">
+        <div class="topbar-title">Painel de atendimento<small>Visao geral do dia, 16 de julho</small></div>
+        <button class="btn-sm btn-secondary"><i class="fa-solid fa-download"></i> Exportar</button>
+      </div>
+      <div class="dash-body">
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-icon" style="background:rgba(34,197,94,.15);color:var(--g400);"><i class="fa-solid fa-message"></i></div>
+            <div class="kpi-label">Mensagens hoje</div>
+            <div class="kpi-value" data-count="184">0</div>
+            <div class="kpi-delta kpi-up"><i class="fa-solid fa-arrow-up"></i> 12% vs ontem</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon" style="background:rgba(16,185,129,.15);color:var(--em400);"><i class="fa-solid fa-bolt"></i></div>
+            <div class="kpi-label">Taxa de automacao</div>
+            <div class="kpi-value" data-count="78" data-suffix="%">0</div>
+            <div class="kpi-delta kpi-up"><i class="fa-solid fa-arrow-up"></i> 5pts esta semana</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon" style="background:rgba(56,189,248,.15);color:var(--info);"><i class="fa-solid fa-clock"></i></div>
+            <div class="kpi-label">Resposta automatica</div>
+            <div class="kpi-value" data-count="4" data-suffix="s">0</div>
+            <div class="kpi-delta kpi-up">vs ~12 min manual</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon" style="background:rgba(234,179,8,.15);color:var(--warn);"><i class="fa-solid fa-user-clock"></i></div>
+            <div class="kpi-label">Aguardando atendente</div>
+            <div class="kpi-value" data-count="6">0</div>
+            <div class="kpi-delta kpi-warn"><i class="fa-solid fa-triangle-exclamation"></i> requer atencao</div>
+          </div>
+        </div>
+
+        <div class="dash-row">
+          <div class="panel">
+            <div class="panel-title">Palavras-chave mais acionadas<span class="sub">ultimos 7 dias</span></div>
+            <div class="bar-row"><div class="bar-label">Horario de funcionamento</div><div class="bar-track"><div class="bar-fill" data-w="88"></div></div><div class="bar-val">88%</div></div>
+            <div class="bar-row"><div class="bar-label">Formas de pagamento</div><div class="bar-track"><div class="bar-fill" data-w="71"></div></div><div class="bar-val">71%</div></div>
+            <div class="bar-row"><div class="bar-label">Prazo de entrega</div><div class="bar-track"><div class="bar-fill" data-w="64"></div></div><div class="bar-val">64%</div></div>
+            <div class="bar-row"><div class="bar-label">Rastreio de pedido</div><div class="bar-track"><div class="bar-fill" data-w="52"></div></div><div class="bar-val">52%</div></div>
+            <div class="bar-row"><div class="bar-label">Trocas e devolucoes</div><div class="bar-track"><div class="bar-fill" data-w="38"></div></div><div class="bar-val">38%</div></div>
+          </div>
+          <div class="panel">
+            <div class="panel-title">Atividade recente</div>
+            <div class="activity-item">
+              <div class="activity-dot" style="background:rgba(34,197,94,.15);color:var(--g400);"><i class="fa-solid fa-bolt"></i></div>
+              <div><div class="activity-text"><b>Camila R.</b> perguntou sobre frete, resposta automatica enviada</div><div class="activity-time">ha 2 min</div></div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-dot" style="background:rgba(234,179,8,.15);color:var(--warn);"><i class="fa-solid fa-user"></i></div>
+              <div><div class="activity-text">Palavra-chave nao reconhecida, encaminhado para <b>Marina</b></div><div class="activity-time">ha 9 min</div></div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-dot" style="background:rgba(34,197,94,.15);color:var(--g400);"><i class="fa-solid fa-bolt"></i></div>
+              <div><div class="activity-text"><b>Joao P.</b> perguntou horario, resposta automatica enviada</div><div class="activity-time">ha 14 min</div></div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-dot" style="background:rgba(192,132,252,.15);color:var(--purple);"><i class="fa-solid fa-pen"></i></div>
+              <div><div class="activity-text">Regra <b>Trocas e devolucoes</b> foi atualizada</div><div class="activity-time">ha 41 min</div></div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-dot" style="background:rgba(34,197,94,.15);color:var(--g400);"><i class="fa-solid fa-bolt"></i></div>
+              <div><div class="activity-text"><b>Renata S.</b> perguntou sobre pagamento, resposta automatica enviada</div><div class="activity-time">ha 58 min</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RULES -->
+    <div class="view" id="view-rules">
+      <div class="topbar">
+        <div class="topbar-title">Regras de palavras-chave<small>Configure sem precisar de tecnico</small></div>
+        <button class="btn-sm btn-primary" onclick="openModal()"><i class="fa-solid fa-plus"></i> Nova regra</button>
+      </div>
+      <div class="rules-toolbar">
+        <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input placeholder="Buscar regra ou palavra-chave..."></div>
+        <div class="filter-chip active">Todas</div>
+        <div class="filter-chip">Ativas</div>
+        <div class="filter-chip">Pausadas</div>
+      </div>
+      <div class="rules-body" id="rules-list"></div>
+    </div>
+
+    <!-- CHAT -->
+    <div class="view" id="view-chat">
+      <div class="chat-layout">
+        <div class="contact-list">
+          <div class="contact-list-header">Conversas ao vivo</div>
+          <div id="contact-items"></div>
+        </div>
+        <div class="chat-window">
+          <div class="chat-header">
+            <div class="contact-avatar" style="background:linear-gradient(135deg,var(--g400),var(--g700));">C</div>
+            <div class="chat-header-info">
+              <div class="chat-header-name">Camila Ribeiro</div>
+              <div class="chat-header-status">visto por ultimo agora</div>
+            </div>
+            <div class="status-chip chip-auto"><i class="fa-solid fa-bolt"></i> Automatico</div>
+          </div>
+          <div class="chat-messages" id="chat-messages"></div>
+          <div class="chat-input">
+            <div class="chat-input-box">Simulacao ao vivo, sem digitacao manual</div>
+            <button class="send-btn"><i class="fa-solid fa-paper-plane"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LIBRARY -->
+    <div class="view" id="view-lib">
+      <div class="topbar">
+        <div class="topbar-title">Biblioteca de mensagens<small>Modelos reutilizaveis por categoria</small></div>
+        <button class="btn-sm btn-primary"><i class="fa-solid fa-plus"></i> Novo modelo</button>
+      </div>
+      <div class="lib-body" id="lib-list"></div>
+    </div>
+
+    <!-- INTEGRATIONS -->
+    <div class="view" id="view-integ">
+      <div class="topbar">
+        <div class="topbar-title">Integracao e configuracoes<small>Conexao com o WhatsApp Business</small></div>
+      </div>
+      <div class="integ-body">
+        <div class="integ-card">
+          <div class="integ-icon" style="background:rgba(34,197,94,.15);color:var(--g400);"><i class="fa-brands fa-whatsapp"></i></div>
+          <div class="integ-main"><div class="integ-title">WhatsApp Business API</div><div class="integ-sub">Numero verificado +55 11 98432-0917, webhook assinado</div></div>
+          <div class="integ-badge badge-ok"><i class="fa-solid fa-circle-check"></i> Conectado</div>
+        </div>
+        <div class="integ-card">
+          <div class="integ-icon" style="background:rgba(56,189,248,.15);color:var(--info);"><i class="fa-solid fa-shield-halved"></i></div>
+          <div class="integ-main"><div class="integ-title">Modelos aprovados pela Meta</div><div class="integ-sub">4 modelos ativos para reabrir conversas fora da janela de 24h</div></div>
+          <div class="integ-badge badge-ok"><i class="fa-solid fa-circle-check"></i> Em dia</div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">Horario de atendimento automatico</div>
+          <div class="hours-row"><span>Segunda a sexta</span><span>08:00 - 20:00</span></div>
+          <div class="hours-row"><span>Sabado</span><span>09:00 - 14:00</span></div>
+          <div class="hours-row"><span>Domingo</span><span>Encaminhar direto para atendente</span></div>
+          <div class="hours-row"><span>Fora do horario</span><span>Envia mensagem de ausencia + registra para retorno</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-title">Nova regra de palavra-chave <i class="fa-solid fa-xmark" onclick="closeModal()"></i></div>
+    <div class="field"><label>Categoria</label><select><option>Horario de funcionamento</option><option>Formas de pagamento</option><option>Prazo de entrega</option><option>Trocas e devolucoes</option><option>Outro</option></select></div>
+    <div class="field"><label>Palavras-chave (separadas por virgula)</label><input value="horario, funciona, aberto, atende ate"></div>
+    <div class="field"><label>Resposta automatica</label><textarea>Atendemos de segunda a sexta das 8h as 20h, e aos sabados das 9h as 14h. Fora desse horario, sua mensagem fica registrada e respondemos assim que possivel.</textarea></div>
+    <div class="field"><label>Status</label><div class="toggle on" style="margin-top:2px;"><div class="toggle-dot"></div></div></div>
+    <div class="modal-actions">
+      <button class="btn-sm btn-secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn-sm btn-primary" onclick="saveRule()"><i class="fa-solid fa-check"></i> Salvar regra</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><i class="fa-solid fa-circle-check"></i> Regra salva e ja esta ativa</div>
+
+<script>
+const rules = [
+  {cat:'Horario de funcionamento', icon:'fa-clock', color:'g', kws:['horario','funciona','aberto','atende ate'], resp:'Atendemos de segunda a sexta das 8h as 20h, e aos sabados das 9h as 14h.', on:true},
+  {cat:'Formas de pagamento', icon:'fa-credit-card', color:'em', kws:['pagamento','pix','cartao','parcela'], resp:'Aceitamos Pix, cartao de credito em ate 3x e boleto. O Pix tem 5% de desconto.', on:true},
+  {cat:'Prazo de entrega', icon:'fa-truck', color:'info', kws:['prazo','entrega','frete','envio'], resp:'O prazo medio e de 3 a 7 dias uteis, dependendo da sua regiao. Frete calculado no checkout.', on:true},
+  {cat:'Rastreio de pedido', icon:'fa-location-dot', color:'purple', kws:['rastrear','onde esta','codigo de rastreio'], resp:'Envie o numero do seu pedido que localizamos o rastreio na hora para voce.', on:true},
+  {cat:'Trocas e devolucoes', icon:'fa-rotate-left', color:'warn', kws:['trocar','devolver','defeito','cancelar'], resp:'Trocas e devolucoes podem ser solicitadas em ate 7 dias apos o recebimento, sem custo.', on:true},
+  {cat:'Saudacao inicial', icon:'fa-hand-wave', color:'g', kws:['oi','ola','bom dia','boa tarde'], resp:'Ola! Seja bem-vinda. Como posso ajudar hoje? Posso falar sobre horarios, pagamento, entrega ou trocas.', on:false},
+];
+const colorMap = {g:'rgba(34,197,94,.15)|var(--g400)', em:'rgba(16,185,129,.15)|var(--em400)', info:'rgba(56,189,248,.15)|var(--info)', purple:'rgba(192,132,252,.15)|var(--purple)', warn:'rgba(234,179,8,.15)|var(--warn)'};
+
+function renderRules(){
+  const list = document.getElementById('rules-list');
+  list.innerHTML = rules.map((r,i)=>{
+    const [bg,fg] = colorMap[r.color].split('|');
+    return `<div class="rule-card">
+      <div class="rule-cat" style="background:${bg};color:${fg};"><i class="fa-solid ${r.icon}"></i></div>
+      <div class="rule-main">
+        <div class="rule-cat-label">${r.cat}</div>
+        <div class="rule-keywords">${r.kws.map(k=>`<span class="kw-chip">${k}</span>`).join('')}</div>
+        <div class="rule-response">${r.resp}</div>
+      </div>
+      <div class="rule-meta">
+        <div class="toggle ${r.on?'on':''}" onclick="toggleRule(${i})"><div class="toggle-dot"></div></div>
+        <div class="rule-actions">
+          <div class="icon-btn"><i class="fa-solid fa-pen"></i></div>
+          <div class="icon-btn"><i class="fa-solid fa-trash"></i></div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function toggleRule(i){ rules[i].on = !rules[i].on; renderRules(); showToast(rules[i].on ? 'Regra ativada' : 'Regra pausada'); }
+
+const contacts = [
+  {name:'Camila Ribeiro', preview:'Qual o prazo de entrega para SP?', time:'agora', mode:'auto', init:'C'},
+  {name:'Joao Pereira', preview:'Voces abrem aos domingos?', time:'9 min', mode:'auto', init:'J'},
+  {name:'Renata Souza', preview:'Aceita pagamento no Pix?', time:'22 min', mode:'auto', init:'R'},
+  {name:'Bruno Alves', preview:'Preciso falar com um atendente', time:'34 min', mode:'human', init:'B'},
+  {name:'Marina Costa', preview:'Meu pedido veio com defeito', time:'1h', mode:'human', init:'M'},
+];
+function renderContacts(){
+  document.getElementById('contact-items').innerHTML = contacts.map((c,i)=>`
+    <div class="contact-item ${i===0?'active':''}">
+      <div class="contact-avatar" style="background:linear-gradient(135deg,var(--g400),var(--g700));">${c.init}</div>
+      <div class="contact-info">
+        <div class="contact-name">${c.name}</div>
+        <div class="contact-preview">${c.preview}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+        <div class="contact-time">${c.time}</div>
+        <div class="status-chip ${c.mode==='auto'?'chip-auto':'chip-human'}">${c.mode==='auto'?'Auto':'Humano'}</div>
+      </div>
+    </div>`).join('');
+}
+function renderChat(){
+  document.getElementById('chat-messages').innerHTML = `
+    <div class="msg-system">Janela de atendimento aberta, ha 24h</div>
+    <div class="msg msg-in">Oi, boa tarde! Qual o <span class="kw-highlight">prazo de entrega</span> para SP?<div class="msg-time">14:02</div></div>
+    <div class="msg msg-bot"><div class="msg-bot-label"><i class="fa-solid fa-bolt"></i> Resposta automatica, regra: Prazo de entrega</div>O prazo medio e de 3 a 7 dias uteis, dependendo da sua regiao. Frete calculado no checkout.<div class="msg-time">14:02</div></div>
+    <div class="msg msg-in">Perfeito, e voces tem <span class="kw-highlight">rastreio</span> do pedido?<div class="msg-time">14:03</div></div>
+    <div class="msg msg-bot"><div class="msg-bot-label"><i class="fa-solid fa-bolt"></i> Resposta automatica, regra: Rastreio de pedido</div>Envie o numero do seu pedido que localizamos o rastreio na hora para voce.<div class="msg-time">14:03</div></div>
+    <div class="msg msg-in">Meu pedido chegou com defeito, quero trocar mas nao sei como<div class="msg-time">14:05</div></div>
+    <div class="msg-system"><i class="fa-solid fa-circle-info"></i> Nenhuma regra correspondeu com confianca, encaminhado para atendente</div>
+    <div class="msg msg-human"><div class="msg-human-label">Marina, atendente</div>Oi Camila, sinto muito pelo transtorno! Pode me mandar uma foto do produto que ja abro a troca pra voce.<div class="msg-time">14:07</div></div>
+  `;
+}
+
+const library = [
+  {tag:'Saudacao', color:'g', text:'Ola! Seja bem-vinda. Como posso ajudar hoje? Posso falar sobre horarios, pagamento, entrega ou trocas.', used:'42 vezes'},
+  {tag:'Horario', color:'info', text:'Atendemos de segunda a sexta das 8h as 20h, e aos sabados das 9h as 14h.', used:'88 vezes'},
+  {tag:'Pagamento', color:'em', text:'Aceitamos Pix, cartao de credito em ate 3x e boleto. O Pix tem 5% de desconto.', used:'71 vezes'},
+  {tag:'Entrega', color:'purple', text:'O prazo medio e de 3 a 7 dias uteis, dependendo da sua regiao. Frete calculado no checkout.', used:'64 vezes'},
+  {tag:'Trocas', color:'warn', text:'Trocas e devolucoes podem ser solicitadas em ate 7 dias apos o recebimento, sem custo.', used:'38 vezes'},
+  {tag:'Despedida', color:'g', text:'Foi um prazer ajudar! Qualquer outra duvida e so chamar por aqui.', used:'55 vezes'},
+];
+function renderLib(){
+  document.getElementById('lib-list').innerHTML = library.map(l=>{
+    const [bg,fg] = colorMap[l.color].split('|');
+    return `<div class="lib-card">
+      <span class="lib-tag" style="background:${bg};color:${fg};">${l.tag}</span>
+      <div class="lib-text">${l.text}</div>
+      <div class="lib-footer"><span><i class="fa-solid fa-repeat"></i> ${l.used}</span><span style="display:flex;gap:6px;"><i class="fa-solid fa-copy icon-btn" style="width:22px;height:22px;font-size:9px;"></i><i class="fa-solid fa-pen icon-btn" style="width:22px;height:22px;font-size:9px;"></i></span></div>
+    </div>`;
+  }).join('');
+}
+
+function openModal(){ document.getElementById('modal-overlay').classList.add('active'); }
+function closeModal(){ document.getElementById('modal-overlay').classList.remove('active'); }
+function saveRule(){ closeModal(); showToast('Regra salva e ja esta ativa'); }
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${msg}`;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2600);
+}
+
+document.querySelectorAll('.nav-item').forEach(item=>{
+  item.addEventListener('click', ()=>{
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    item.classList.add('active');
+    document.getElementById('view-'+item.dataset.view).classList.add('active');
+  });
+});
+document.querySelectorAll('.filter-chip').forEach(chip=>{
+  chip.addEventListener('click', ()=>{
+    document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
+    chip.classList.add('active');
+  });
+});
+
+function countUp(el){
+  const target = parseInt(el.dataset.count,10);
+  const suffix = el.dataset.suffix || '';
+  let cur = 0;
+  const step = Math.max(1, Math.round(target/30));
+  const iv = setInterval(()=>{
+    cur += step;
+    if(cur >= target){ cur = target; clearInterval(iv); }
+    el.textContent = cur + suffix;
+  }, 25);
+}
+
+renderRules();
+renderContacts();
+renderChat();
+renderLib();
+document.querySelectorAll('.kpi-value').forEach(countUp);
+setTimeout(()=>{ document.querySelectorAll('.bar-fill').forEach(b=> b.style.width = b.dataset.w+'%'); }, 200);
+</script>
+</body>
+</html>
