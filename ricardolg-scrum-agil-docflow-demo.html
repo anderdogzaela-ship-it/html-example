@@ -1,0 +1,375 @@
+<title>DocFlow Ágil · Documentação Técnica + Rotina Ágil</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+  :root{
+    --g900:#052e1f; --g800:#0a3d2a; --g700:#0f5132; --g600:#166534; --g500:#15803d;
+    --em600:#059669; --em500:#10b981; --em400:#34d399;
+    --n900:#071410; --n800:#0c1f19; --n700:#12291f; --n600:#1a352a; --n500:#26463a;
+    --n300:#7c9c8e; --n200:#a9c3b6; --n100:#d6e6de; --n50:#f0f7f3;
+    --radius:16px; --radius-sm:10px;
+    --shadow:0 20px 60px rgba(0,0,0,.35);
+    --ease-spring:cubic-bezier(.34,1.56,.64,1);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    font-family:'Lexend',sans-serif; background:var(--n900); color:var(--n100);
+    -webkit-font-smoothing:antialiased; overflow-x:hidden;
+  }
+  a{text-decoration:none; color:inherit;}
+  img{display:block; max-width:100%;}
+  .grid-overlay{
+    position:fixed; inset:0; pointer-events:none; z-index:0; opacity:.05;
+    background-image:linear-gradient(var(--em400) 1px, transparent 1px), linear-gradient(90deg, var(--em400) 1px, transparent 1px);
+    background-size:48px 48px;
+  }
+  .orb{ position:fixed; border-radius:50%; filter:blur(70px); opacity:.28; z-index:0; pointer-events:none; animation:float 14s ease-in-out infinite; }
+  .orb1{ width:420px; height:420px; background:var(--em500); top:-120px; left:-100px; }
+  .orb2{ width:380px; height:380px; background:var(--g500); bottom:-140px; right:-100px; animation-delay:-6s; }
+  @keyframes float{ 0%,100%{transform:translate(0,0);} 50%{transform:translate(30px,-40px);} }
+
+  nav{
+    position:sticky; top:0; z-index:50; display:flex; align-items:center; justify-content:space-between;
+    padding:16px 32px; background:rgba(7,20,16,.65); backdrop-filter:blur(16px); border-bottom:1px solid rgba(255,255,255,.06);
+  }
+  .brand{ display:flex; align-items:center; gap:10px; font-weight:800; font-size:1.15rem; letter-spacing:.2px; }
+  .brand-mark{
+    width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(135deg,var(--em500),var(--g700)); box-shadow:0 0 18px rgba(16,185,129,.55);
+    animation:pulseLogo 3.2s ease-in-out infinite;
+  }
+  @keyframes pulseLogo{ 0%,100%{box-shadow:0 0 14px rgba(16,185,129,.4);} 50%{box-shadow:0 0 26px rgba(16,185,129,.75);} }
+  .switcher{ display:flex; gap:4px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08); border-radius:999px; padding:4px; }
+  .switch-btn{
+    padding:9px 18px; border-radius:999px; font-size:.85rem; font-weight:600; color:var(--n300); cursor:pointer;
+    transition:all .3s var(--ease-spring); border:none; background:transparent; font-family:inherit;
+  }
+  .switch-btn.active{ background:linear-gradient(135deg,var(--em600),var(--g600)); color:#fff; box-shadow:0 4px 16px rgba(16,185,129,.4); }
+  .switch-btn:not(.active):hover{ color:var(--n100); }
+  .hamburger{ display:none; font-size:1.3rem; cursor:pointer; }
+
+  .page{ display:none; position:relative; z-index:1; opacity:0; }
+  .page.active{ display:block; animation:fadeIn .5s ease forwards; }
+  @keyframes fadeIn{ from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);} }
+
+  .hero{ padding:56px 32px 32px; text-align:center; position:relative; }
+  .hero-bg{
+    position:absolute; inset:0; background-size:cover; background-position:center;
+    opacity:.16; mask-image:linear-gradient(to bottom, black, transparent);
+  }
+  .eyebrow{ display:inline-flex; align-items:center; gap:8px; font-size:.78rem; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--em400); background:rgba(16,185,129,.1); border:1px solid rgba(16,185,129,.25); padding:7px 16px; border-radius:999px; margin-bottom:18px; }
+  .hero h1{ font-size:clamp(1.7rem,4vw,2.8rem); font-weight:800; line-height:1.15; max-width:820px; margin:0 auto 14px; }
+  .hero p{ font-size:clamp(.95rem,1.6vw,1.1rem); color:var(--n200); max-width:600px; margin:0 auto 30px; }
+  .stat-row{ display:flex; justify-content:center; gap:14px; flex-wrap:wrap; }
+  .stat-card{
+    background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius:var(--radius);
+    padding:18px 26px; min-width:150px; backdrop-filter:blur(10px);
+  }
+  .stat-num{ font-size:1.7rem; font-weight:800; color:var(--em400); }
+  .stat-label{ font-size:.78rem; color:var(--n300); margin-top:2px; }
+
+  .section{ max-width:1180px; margin:0 auto; padding:24px 32px 64px; }
+  .reveal{ opacity:0; transform:translateY(24px); transition:opacity .6s ease, transform .6s ease; }
+  .reveal.in{ opacity:1; transform:translateY(0); }
+
+  .docs-layout{ display:grid; grid-template-columns:240px 1fr; gap:24px; align-items:start; }
+  .doc-nav{
+    background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.07); border-radius:var(--radius);
+    padding:14px; position:sticky; top:90px;
+  }
+  .doc-nav-item{
+    display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:var(--radius-sm); font-size:.88rem;
+    color:var(--n200); cursor:pointer; transition:all .25s ease; margin-bottom:2px;
+  }
+  .doc-nav-item i{ width:16px; color:var(--em400); }
+  .doc-nav-item:hover{ background:rgba(255,255,255,.05); color:#fff; }
+  .doc-nav-item.active{ background:rgba(16,185,129,.12); color:#fff; border-left:2px solid var(--em500); }
+
+  .doc-card{
+    background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+    border:1px solid rgba(255,255,255,.08); border-radius:var(--radius); padding:28px; box-shadow:var(--shadow);
+  }
+  .doc-card-head{ display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:6px; }
+  .doc-card-head h3{ font-size:1.25rem; font-weight:700; }
+  .badge{ font-size:.72rem; font-weight:700; padding:5px 12px; border-radius:999px; letter-spacing:.02em; }
+  .badge-ok{ background:rgba(16,185,129,.15); color:var(--em400); border:1px solid rgba(16,185,129,.3); }
+  .badge-mid{ background:rgba(245,158,11,.15); color:#f59e0b; border:1px solid rgba(245,158,11,.3); }
+  .doc-desc{ color:var(--n200); font-size:.92rem; margin:12px 0 22px; line-height:1.6; }
+
+  .flow-steps{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:24px; }
+  .flow-step{
+    flex:1; min-width:140px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08);
+    border-radius:var(--radius-sm); padding:14px; text-align:center; transition:transform .3s var(--ease-spring);
+    position:relative;
+  }
+  .flow-step:hover{ transform:translateY(-4px); border-color:rgba(16,185,129,.4); }
+  .flow-step i{ font-size:1.2rem; color:var(--em400); margin-bottom:8px; display:block; }
+  .flow-step span{ font-size:.78rem; color:var(--n200); display:block; }
+  .flow-step .num{ position:absolute; top:-8px; left:-8px; width:22px; height:22px; border-radius:50%; background:var(--g600); color:#fff; font-size:.7rem; font-weight:700; display:flex; align-items:center; justify-content:center; }
+  .flow-arrow{ display:flex; align-items:center; color:var(--n300); }
+
+  .role-row{ display:flex; align-items:center; gap:10px; font-size:.85rem; color:var(--n200); }
+  .avatar{ width:30px; height:30px; border-radius:50%; object-fit:cover; border:2px solid rgba(16,185,129,.4); background:var(--g700); }
+
+  .coverage-list{ margin-top:24px; display:flex; flex-direction:column; gap:14px; }
+  .coverage-item{ display:grid; grid-template-columns:170px 1fr 48px; align-items:center; gap:14px; font-size:.85rem; }
+  .bar-track{ height:8px; border-radius:999px; background:rgba(255,255,255,.06); overflow:hidden; }
+  .bar-fill{ height:100%; border-radius:999px; background:linear-gradient(90deg,var(--g600),var(--em500)); width:0%; transition:width 1.1s var(--ease-spring); position:relative; }
+  .bar-fill::after{ content:''; position:absolute; inset:0; background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent); animation:shimmer 2.2s infinite; }
+  @keyframes shimmer{ 0%{transform:translateX(-100%);} 100%{transform:translateX(100%);} }
+
+  .board{ display:grid; grid-template-columns:repeat(5,1fr); gap:14px; margin-bottom:44px; }
+  .board-col{ background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.07); border-radius:var(--radius); padding:14px; min-height:340px; }
+  .board-col h4{ font-size:.8rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--n200); margin-bottom:12px; display:flex; justify-content:space-between; }
+  .board-col h4 span{ background:rgba(255,255,255,.08); border-radius:999px; padding:1px 8px; font-size:.7rem; }
+  .task-card{
+    background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08); border-radius:var(--radius-sm);
+    padding:12px; margin-bottom:10px; font-size:.8rem; cursor:grab; transition:transform .25s var(--ease-spring), border-color .25s;
+  }
+  .task-card:hover{ transform:translateY(-3px) scale(1.01); border-color:rgba(16,185,129,.4); }
+  .task-tag{ display:inline-block; font-size:.64rem; font-weight:700; padding:2px 8px; border-radius:6px; margin-bottom:8px; }
+  .tag-bug{ background:rgba(239,68,68,.15); color:#f87171; }
+  .tag-feat{ background:rgba(16,185,129,.15); color:var(--em400); }
+  .tag-doc{ background:rgba(245,158,11,.15); color:#f59e0b; }
+  .task-foot{ display:flex; justify-content:space-between; align-items:center; margin-top:10px; color:var(--n300); font-size:.72rem; }
+
+  .cadence-row{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:44px; }
+  .cadence-card{
+    background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius:var(--radius); padding:20px;
+    text-align:center; transition:transform .3s var(--ease-spring);
+  }
+  .cadence-card:hover{ transform:translateY(-5px); }
+  .cadence-card i{ font-size:1.4rem; color:var(--em400); margin-bottom:10px; display:block; }
+  .cadence-card h5{ font-size:.95rem; margin-bottom:4px; }
+  .cadence-card p{ font-size:.78rem; color:var(--n300); }
+
+  .commflow{ display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap; margin-bottom:44px; }
+  .comm-node{ background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius:var(--radius); padding:16px 22px; text-align:center; min-width:130px; }
+  .comm-node i{ font-size:1.1rem; color:var(--em400); display:block; margin-bottom:6px; }
+  .comm-node span{ font-size:.78rem; color:var(--n200); }
+  .comm-arrow{ color:var(--n300); font-size:1.1rem; }
+
+  .velocity{ display:flex; align-items:end; gap:16px; height:150px; padding:20px 10px 0; }
+  .vbar{ flex:1; background:linear-gradient(180deg,var(--em500),var(--g700)); border-radius:8px 8px 0 0; position:relative; height:0; transition:height 1s var(--ease-spring); }
+  .vbar span{ position:absolute; top:-22px; left:50%; transform:translateX(-50%); font-size:.72rem; color:var(--n200); }
+  .vbar small{ position:absolute; bottom:-22px; left:50%; transform:translateX(-50%); font-size:.7rem; color:var(--n300); }
+
+  h2.section-title{ font-size:1.5rem; font-weight:700; margin-bottom:22px; display:flex; align-items:center; gap:10px; }
+  h2.section-title i{ color:var(--em400); }
+
+  footer{ text-align:center; padding:36px 20px 48px; color:var(--n300); font-size:.82rem; border-top:1px solid rgba(255,255,255,.06); position:relative; z-index:1; }
+  footer strong{ color:var(--n100); }
+
+  @media (max-width:860px){
+    .docs-layout{ grid-template-columns:1fr; }
+    .doc-nav{ position:static; display:flex; overflow-x:auto; gap:6px; }
+    .doc-nav-item{ white-space:nowrap; }
+    .board{ grid-template-columns:1fr 1fr; }
+    .cadence-row{ grid-template-columns:1fr 1fr; }
+  }
+  @media (max-width:600px){
+    .switcher{ display:none; }
+    .switcher.open{ display:flex; position:absolute; top:64px; right:16px; flex-direction:column; background:var(--n800); }
+    .hamburger{ display:block; }
+    .board{ grid-template-columns:1fr; }
+    .cadence-row{ grid-template-columns:1fr; }
+    .flow-steps{ flex-direction:column; }
+    .coverage-item{ grid-template-columns:110px 1fr 40px; }
+  }
+</style>
+
+<div class="grid-overlay"></div>
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+
+<nav>
+  <div class="brand"><div class="brand-mark"><i class="fa-solid fa-diagram-project" style="color:#fff;font-size:.85rem;"></i></div>DocFlow Ágil</div>
+  <div class="switcher" id="switcher">
+    <button class="switch-btn active" data-target="docs">Documentação Técnica</button>
+    <button class="switch-btn" data-target="agile">Rotina Ágil</button>
+  </div>
+  <div class="hamburger" id="hamburger"><i class="fa-solid fa-bars"></i></div>
+</nav>
+
+<div class="page active" id="page-docs">
+  <div class="hero">
+    <div class="hero-bg" style="background-image:url('https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=1200&q=60');"></div>
+    <span class="eyebrow"><i class="fa-solid fa-scooter"></i> APP Patinete · amostra de documentação</span>
+    <h1>Conhecimento técnico dos patinetes, organizado e acessível</h1>
+    <p>Modelo ilustrativo de como ficaria a documentação consolidada: módulos, fluxos operacionais, responsáveis e glossário em um só lugar.</p>
+    <div class="stat-row reveal">
+      <div class="stat-card"><div class="stat-num" data-count="5">0</div><div class="stat-label">Módulos mapeados</div></div>
+      <div class="stat-card"><div class="stat-num" data-count="12">0</div><div class="stat-label">Fluxos documentados</div></div>
+      <div class="stat-card"><div class="stat-num" data-count="68">0</div><div class="stat-label">% cobertura atual</div></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="docs-layout reveal">
+      <div class="doc-nav">
+        <div class="doc-nav-item active"><i class="fa-solid fa-house"></i> Visão Geral</div>
+        <div class="doc-nav-item"><i class="fa-solid fa-cubes"></i> Módulos do Sistema</div>
+        <div class="doc-nav-item"><i class="fa-solid fa-diagram-project"></i> Fluxos Operacionais</div>
+        <div class="doc-nav-item"><i class="fa-solid fa-users"></i> Papéis &amp; Responsáveis</div>
+        <div class="doc-nav-item"><i class="fa-solid fa-book"></i> Glossário</div>
+        <div class="doc-nav-item"><i class="fa-solid fa-clock-rotate-left"></i> Histórico de Decisões</div>
+      </div>
+
+      <div class="doc-card">
+        <div class="doc-card-head">
+          <h3>Módulo: Reserva e Desbloqueio</h3>
+          <span class="badge badge-ok">Documentado</span>
+        </div>
+        <p class="doc-desc">Fluxo que leva o usuário da abertura do app até o patinete desbloqueado e pronto para uso. Consolidado a partir de conversa com a equipe técnica, cobrindo os pontos de decisão e as exceções mais comuns.</p>
+
+        <div class="flow-steps">
+          <div class="flow-step"><div class="num">1</div><i class="fa-solid fa-map-location-dot"></i><span>Localizar patinete no mapa</span></div>
+          <div class="flow-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+          <div class="flow-step"><div class="num">2</div><i class="fa-solid fa-qrcode"></i><span>Escanear QR / código</span></div>
+          <div class="flow-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+          <div class="flow-step"><div class="num">3</div><i class="fa-solid fa-credit-card"></i><span>Validar método de pagamento</span></div>
+          <div class="flow-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+          <div class="flow-step"><div class="num">4</div><i class="fa-solid fa-unlock"></i><span>Enviar comando de desbloqueio</span></div>
+        </div>
+
+        <div class="role-row">
+          <img class="avatar" src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&q=60" onerror="this.style.display='none'">
+          <span>Responsável técnico: <strong style="color:#fff">Equipe de Hardware/IoT</strong> · última revisão há 4 dias</span>
+        </div>
+
+        <div class="coverage-list">
+          <div class="coverage-item"><span>Pagamento &amp; Cobrança</span><div class="bar-track"><div class="bar-fill" data-width="60"></div></div><span>60%</span></div>
+          <div class="coverage-item"><span>Localização (GPS)</span><div class="bar-track"><div class="bar-fill" data-width="40"></div></div><span>40%</span></div>
+          <div class="coverage-item"><span>Manutenção &amp; Frota</span><div class="bar-track"><div class="bar-fill" data-width="15"></div></div><span>15%</span></div>
+          <div class="coverage-item"><span>Cadastro de Usuário</span><div class="bar-track"><div class="bar-fill" data-width="80"></div></div><span>80%</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="page-agile">
+  <div class="hero">
+    <div class="hero-bg" style="background-image:url('https://images.unsplash.com/photo-1552664730-d307ca884978?w=1200&q=60');"></div>
+    <span class="eyebrow"><i class="fa-solid fa-people-group"></i> Projeto CHECKY · amostra de rotina ágil</span>
+    <h1>Prioridade clara, comunicação fluida, entregas previsíveis</h1>
+    <p>Modelo ilustrativo do quadro de acompanhamento, cadência de cerimônias e fluxo de comunicação entre cliente e equipe técnica.</p>
+    <div class="stat-row reveal">
+      <div class="stat-card"><div class="stat-num" data-count="18">0</div><div class="stat-label">Itens no quadro</div></div>
+      <div class="stat-card"><div class="stat-num" data-count="4">0</div><div class="stat-label">Cerimônias / semana</div></div>
+      <div class="stat-card"><div class="stat-num" data-count="92">0</div><div class="stat-label">% entregas no prazo</div></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2 class="section-title reveal"><i class="fa-solid fa-table-columns"></i> Quadro de Priorização</h2>
+    <div class="board reveal">
+      <div class="board-col"><h4>Backlog <span>7</span></h4>
+        <div class="task-card"><span class="task-tag tag-feat">Melhoria</span>Revisão do fluxo de aprovação de pagamento<div class="task-foot"><span>#CHK-104</span><span><i class="fa-regular fa-comment"></i> 2</span></div></div>
+        <div class="task-card"><span class="task-tag tag-doc">Doc</span>Mapear responsáveis por módulo de frota<div class="task-foot"><span>#CHK-108</span><span><i class="fa-regular fa-comment"></i> 0</span></div></div>
+      </div>
+      <div class="board-col"><h4>Priorizado <span>4</span></h4>
+        <div class="task-card"><span class="task-tag tag-bug">Bug</span>Erro intermitente no desbloqueio via QR<div class="task-foot"><span>#CHK-112</span><span><i class="fa-regular fa-comment"></i> 5</span></div></div>
+      </div>
+      <div class="board-col"><h4>Em Desenvolvimento <span>3</span></h4>
+        <div class="task-card"><span class="task-tag tag-feat">Feature</span>Notificação de bateria baixa em tempo real<div class="task-foot"><span>#CHK-098</span><span><i class="fa-regular fa-comment"></i> 3</span></div></div>
+      </div>
+      <div class="board-col"><h4>Em Revisão <span>2</span></h4>
+        <div class="task-card"><span class="task-tag tag-doc">Doc</span>Consolidar glossário técnico do time<div class="task-foot"><span>#CHK-101</span><span><i class="fa-regular fa-comment"></i> 1</span></div></div>
+      </div>
+      <div class="board-col"><h4>Concluído <span>2</span></h4>
+        <div class="task-card"><span class="task-tag tag-feat">Feature</span>Ajuste na priorização de chamados de suporte<div class="task-foot"><span>#CHK-090</span><span><i class="fa-regular fa-comment"></i> 4</span></div></div>
+      </div>
+    </div>
+
+    <h2 class="section-title reveal"><i class="fa-solid fa-repeat"></i> Cadência de Cerimônias</h2>
+    <div class="cadence-row reveal">
+      <div class="cadence-card"><i class="fa-solid fa-sun"></i><h5>Daily</h5><p>15 min · alinhamento e bloqueios</p></div>
+      <div class="cadence-card"><i class="fa-solid fa-list-check"></i><h5>Planning</h5><p>Semanal · priorização com o time</p></div>
+      <div class="cadence-card"><i class="fa-solid fa-magnifying-glass"></i><h5>Review</h5><p>Fim do ciclo · validação de entregas</p></div>
+      <div class="cadence-card"><i class="fa-solid fa-arrows-rotate"></i><h5>Retro</h5><p>Fim do ciclo · melhoria contínua</p></div>
+    </div>
+
+    <h2 class="section-title reveal"><i class="fa-solid fa-share-nodes"></i> Fluxo de Comunicação</h2>
+    <div class="commflow reveal">
+      <div class="comm-node"><i class="fa-solid fa-user-tie"></i><span>Cliente</span></div>
+      <div class="comm-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+      <div class="comm-node"><i class="fa-solid fa-diagram-project"></i><span>Scrum Master</span></div>
+      <div class="comm-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+      <div class="comm-node"><i class="fa-solid fa-code"></i><span>Equipe Técnica</span></div>
+      <div class="comm-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+      <div class="comm-node"><i class="fa-solid fa-flag-checkered"></i><span>Entrega</span></div>
+    </div>
+
+    <h2 class="section-title reveal"><i class="fa-solid fa-chart-column"></i> Ritmo de Entregas (últimos 6 ciclos)</h2>
+    <div class="doc-card reveal">
+      <div class="velocity">
+        <div class="vbar" data-h="55"><span>6</span><small>C1</small></div>
+        <div class="vbar" data-h="70"><span>8</span><small>C2</small></div>
+        <div class="vbar" data-h="60"><span>7</span><small>C3</small></div>
+        <div class="vbar" data-h="85"><span>10</span><small>C4</small></div>
+        <div class="vbar" data-h="78"><span>9</span><small>C5</small></div>
+        <div class="vbar" data-h="95"><span>11</span><small>C6</small></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  Modelo ilustrativo produzido para fins de demonstração, sem dados reais de clientes. · <strong>Daniel Hachac Salas</strong> — Technical Partner
+</footer>
+
+<script>
+  const switchBtns = document.querySelectorAll('.switch-btn');
+  const pages = { docs: document.getElementById('page-docs'), agile: document.getElementById('page-agile') };
+  switchBtns.forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      switchBtns.forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      Object.values(pages).forEach(p=>p.classList.remove('active'));
+      pages[btn.dataset.target].classList.add('active');
+      document.getElementById('switcher').classList.remove('open');
+      revealCheck(); animateBarsIn(pages[btn.dataset.target]);
+    });
+  });
+  document.getElementById('hamburger').addEventListener('click', ()=>{
+    document.getElementById('switcher').classList.toggle('open');
+  });
+
+  function animateCount(el){
+    const target = +el.dataset.count;
+    let cur = 0; const step = Math.max(1, Math.ceil(target/40));
+    const t = setInterval(()=>{ cur += step; if(cur>=target){cur=target; clearInterval(t);} el.textContent = cur; }, 25);
+  }
+  function animateBarsIn(scope){
+    scope.querySelectorAll('.bar-fill').forEach(b=>{ b.style.width = b.dataset.width + '%'; });
+    scope.querySelectorAll('.vbar').forEach(v=>{ v.style.height = v.dataset.h + '%'; });
+  }
+
+  const revealed = new WeakSet();
+  function revealCheck(){
+    document.querySelectorAll('.reveal').forEach(el=>{
+      const r = el.getBoundingClientRect();
+      if(r.top < window.innerHeight*0.9 && !revealed.has(el)){
+        el.classList.add('in'); revealed.add(el);
+      }
+    });
+  }
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){
+        e.target.classList.add('in');
+        if(e.target.querySelector('.stat-num')) e.target.querySelectorAll('.stat-num').forEach(animateCount);
+        if(e.target.classList.contains('docs-layout')) animateBarsIn(document.getElementById('page-docs'));
+      }
+    });
+  }, {threshold:.2});
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+  document.getElementById('page-agile').querySelectorAll('.bar-fill, .vbar').forEach(()=>{});
+  setTimeout(()=>{ animateBarsIn(document.getElementById('page-docs')); }, 400);
+</script>
