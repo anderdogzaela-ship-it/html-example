@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trazo · Gestión de Expedientes Fiscales</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+:root{
+  --f-50:#f0fdf4; --f-100:#dcfce7; --f-200:#bbf7d0; --f-300:#86efac; --f-400:#4ade80; --f-500:#22c55e; --f-600:#16a34a; --f-700:#15803d; --f-800:#166534;
+  --n-0:#ffffff; --n-50:#f8faf9; --n-100:#eef1f0; --n-200:#dfe4e2; --n-300:#c3cbc8; --n-400:#93a19c; --n-500:#69786f4d; --n-500s:#69786f; --n-600:#4b5750; --n-700:#37423c; --n-800:#242e29; --n-900:#141a17;
+  --slate-950:#0d1512; --slate-900:#15201b; --slate-800:#1e2c25; --slate-700:#2c3f35;
+  --amber:#d97706; --amber-bg:#fef3c7; --red:#dc2626; --red-bg:#fee2e2; --blue:#2563eb; --blue-bg:#dbeafe;
+  --radius-sm:8px; --radius-md:12px; --radius-lg:18px; --radius-xl:24px;
+  --shadow-sm:0 1px 2px rgba(20,26,23,.06),0 1px 1px rgba(20,26,23,.04);
+  --shadow-md:0 4px 14px rgba(20,26,23,.09),0 2px 4px rgba(20,26,23,.05);
+  --shadow-lg:0 18px 44px rgba(20,26,23,.16),0 4px 14px rgba(20,26,23,.06);
+  --ease-spring:cubic-bezier(.34,1.56,.64,1);
+  --ease-out:cubic-bezier(.16,1,.3,1);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{
+  font-family:'Nunito',sans-serif; background:var(--n-50); color:var(--n-800);
+  -webkit-font-smoothing:antialiased; font-size:14.5px; line-height:1.5; overflow-x:hidden;
+}
+::-webkit-scrollbar{width:9px;height:9px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--n-300);border-radius:20px;}
+::-webkit-scrollbar-thumb:hover{background:var(--n-400);}
+a{color:inherit;text-decoration:none;}
+button{font-family:inherit;cursor:pointer;border:none;background:none;}
+h1,h2,h3{font-weight:800;}
+
+/* ===== APP SHELL ===== */
+.app{display:flex;min-height:100vh;}
+
+/* SIDEBAR */
+.sidebar{
+  width:262px; flex-shrink:0; background:linear-gradient(175deg,var(--slate-950) 0%,var(--slate-900) 55%,var(--slate-800) 100%);
+  color:#fff; display:flex; flex-direction:column; position:fixed; top:0; left:0; bottom:0; z-index:40;
+}
+.sidebar-brand{display:flex;align-items:center;gap:12px;padding:24px 22px 20px;border-bottom:1px solid rgba(255,255,255,.08);}
+.brand-mark{
+  width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,var(--f-400),var(--f-700));
+  display:flex;align-items:center;justify-content:center;font-weight:900;color:var(--slate-950);font-size:17px;
+  animation:pulseLogo 3.2s ease-in-out infinite;
+}
+@keyframes pulseLogo{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,.35)}50%{box-shadow:0 0 0 8px rgba(34,197,94,0)}}
+.brand-text .name{font-size:16.5px;font-weight:800;letter-spacing:.2px;}
+.brand-text .sub{font-size:11px;color:var(--f-300);font-weight:600;letter-spacing:.3px;}
+
+.sidebar-nav{flex:1;padding:18px 14px;display:flex;flex-direction:column;gap:3px;overflow-y:auto;}
+.nav-label{font-size:10.5px;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.35);font-weight:700;padding:14px 12px 6px;}
+.nav-item{display:flex;align-items:center;gap:12px;padding:10.5px 12px;border-radius:10px;color:rgba(255,255,255,.68);font-size:14px;font-weight:600;transition:all .18s var(--ease-out);position:relative;width:100%;text-align:left;}
+.nav-item i{width:18px;text-align:center;font-size:15px;}
+.nav-item:hover{background:rgba(255,255,255,.06);color:#fff;}
+.nav-item.active{background:linear-gradient(90deg,rgba(34,197,94,.2),rgba(34,197,94,.04));color:var(--f-300);}
+.nav-item.active::before{content:'';position:absolute;left:-14px;top:8px;bottom:8px;width:3px;background:var(--f-400);border-radius:0 4px 4px 0;}
+.nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:10.5px;font-weight:800;padding:1px 7px;border-radius:20px;}
+
+.sidebar-footer{padding:16px 18px 20px;border-top:1px solid rgba(255,255,255,.08);}
+.plan-card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px 13px;display:flex;align-items:center;gap:10px;}
+.plan-card .t{font-size:12px;font-weight:700;color:#fff;}
+.plan-card .d{font-size:11px;color:rgba(255,255,255,.45);margin-top:1px;}
+.restart-btn{width:100%;margin-top:10px;padding:9px;border-radius:10px;background:rgba(255,255,255,.06);color:rgba(255,255,255,.7);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:7px;transition:.15s;}
+.restart-btn:hover{background:rgba(255,255,255,.12);color:#fff;}
+
+/* MAIN */
+.main{flex:1;margin-left:262px;min-height:100vh;display:flex;flex-direction:column;}
+.topbar{height:66px;background:rgba(248,250,249,.85);backdrop-filter:blur(14px);border-bottom:1px solid var(--n-200);display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:30;}
+.topbar-title{font-size:18px;font-weight:800;color:var(--n-900);}
+.topbar-title .crumb{font-size:12.5px;font-weight:600;color:var(--n-400);}
+.topbar-right{display:flex;align-items:center;gap:16px;}
+.search-mini{display:flex;align-items:center;gap:8px;background:var(--n-100);border-radius:10px;padding:8px 12px;width:250px;color:var(--n-500s);font-size:13px;}
+.search-mini input{border:none;background:none;outline:none;font-family:inherit;font-size:13px;width:100%;color:var(--n-800);}
+.avatar-chip{display:flex;align-items:center;gap:9px;padding:6px 10px 6px 6px;border-radius:30px;background:var(--n-100);}
+.avatar-chip .av{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--f-500),var(--f-700));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:12.5px;}
+.avatar-chip .nm{font-size:12.5px;font-weight:700;}
+.avatar-chip .rl{font-size:10.5px;color:var(--n-500s);}
+
+.view{padding:26px 30px 50px;display:none;animation:viewIn .35s var(--ease-out);}
+.view.active{display:block;}
+@keyframes viewIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+
+/* KPI cards */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px;}
+.kpi-card{background:var(--n-0);border:1px solid var(--n-200);border-radius:var(--radius-lg);padding:18px 20px;box-shadow:var(--shadow-sm);transition:.2s var(--ease-out);}
+.kpi-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px);}
+.kpi-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.kpi-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:15px;}
+.kpi-label{font-size:12px;font-weight:700;color:var(--n-500s);}
+.kpi-value{font-size:27px;font-weight:900;color:var(--n-900);}
+.kpi-delta{font-size:11.5px;font-weight:700;margin-top:3px;}
+.kpi-delta.up{color:var(--f-700);}
+.kpi-delta.warn{color:var(--amber);}
+
+.grid-2{display:grid;grid-template-columns:1.5fr 1fr;gap:18px;}
+.card{background:var(--n-0);border:1px solid var(--n-200);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);}
+.card-head{padding:18px 20px 4px;display:flex;align-items:center;justify-content:space-between;}
+.card-head h3{font-size:15px;font-weight:800;}
+.card-head .sub{font-size:11.5px;color:var(--n-500s);font-weight:600;}
+.card-body{padding:14px 20px 20px;}
+.link-mini{font-size:12px;font-weight:700;color:var(--f-700);}
+
+/* attention list */
+.att-item{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--n-100);}
+.att-item:last-child{border-bottom:none;}
+.att-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.att-dot.red{background:var(--red);box-shadow:0 0 0 3px var(--red-bg);}
+.att-dot.amber{background:var(--amber);box-shadow:0 0 0 3px var(--amber-bg);}
+.att-txt .t{font-size:13px;font-weight:700;}
+.att-txt .d{font-size:11.5px;color:var(--n-500s);}
+.att-cta{margin-left:auto;font-size:11.5px;font-weight:800;color:var(--f-700);background:var(--f-100);padding:5px 10px;border-radius:8px;}
+
+/* funnel bars */
+.funnel-row{display:flex;align-items:center;gap:12px;margin-bottom:13px;}
+.funnel-label{width:96px;font-size:12px;font-weight:700;color:var(--n-600);flex-shrink:0;}
+.funnel-track{flex:1;height:20px;background:var(--n-100);border-radius:20px;overflow:hidden;position:relative;}
+.funnel-fill{height:100%;border-radius:20px;background:linear-gradient(90deg,var(--f-400),var(--f-600));width:0;transition:width 1.1s var(--ease-out);}
+.funnel-count{width:26px;text-align:right;font-size:12.5px;font-weight:800;}
+
+/* activity feed */
+.feed-item{display:flex;gap:11px;padding:10px 0;border-bottom:1px solid var(--n-100);}
+.feed-item:last-child{border-bottom:none;}
+.feed-ic{width:30px;height:30px;border-radius:9px;background:var(--n-100);display:flex;align-items:center;justify-content:center;font-size:12.5px;color:var(--n-600);flex-shrink:0;}
+.feed-txt .t{font-size:12.5px;font-weight:700;}
+.feed-txt .d{font-size:11px;color:var(--n-500s);}
+
+/* filters + table */
+.filters-bar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center;}
+.pill-select, .search-box{background:var(--n-0);border:1px solid var(--n-200);border-radius:10px;padding:9px 13px;font-size:12.5px;font-weight:700;color:var(--n-600);display:flex;align-items:center;gap:8px;}
+.search-box{flex:1;min-width:220px;}
+.search-box input{border:none;outline:none;font-family:inherit;font-size:12.5px;font-weight:600;width:100%;color:var(--n-800);}
+select.pill-select{appearance:none;border:1px solid var(--n-200);cursor:pointer;}
+.btn-primary{background:var(--slate-900);color:#fff;border-radius:10px;padding:9px 16px;font-size:12.5px;font-weight:800;display:flex;align-items:center;gap:8px;margin-left:auto;transition:.15s;}
+.btn-primary:hover{background:var(--f-700);}
+
+.exp-table{width:100%;border-collapse:collapse;background:var(--n-0);border:1px solid var(--n-200);border-radius:var(--radius-lg);overflow:hidden;}
+.exp-table thead th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--n-500s);font-weight:800;padding:13px 16px;background:var(--n-50);border-bottom:1px solid var(--n-200);}
+.exp-table tbody tr{border-bottom:1px solid var(--n-100);cursor:pointer;transition:.12s;}
+.exp-table tbody tr:hover{background:var(--f-50);}
+.exp-table tbody tr:last-child{border-bottom:none;}
+.exp-table td{padding:13px 16px;font-size:13px;}
+.co-cell{display:flex;align-items:center;gap:11px;}
+.co-avatar{width:34px;height:34px;border-radius:9px;background:var(--n-200);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:var(--n-700);flex-shrink:0;}
+.co-name{font-weight:800;font-size:13px;}
+.co-sub{font-size:11px;color:var(--n-500s);}
+.stage-chip{font-size:11px;font-weight:800;padding:4px 10px;border-radius:20px;display:inline-block;}
+.stage-chip.recepcion{background:var(--n-100);color:var(--n-600);}
+.stage-chip.validacion{background:var(--amber-bg);color:var(--amber);}
+.stage-chip.rfc{background:var(--blue-bg);color:var(--blue);}
+.stage-chip.efirma{background:#ede9fe;color:#7c3aed;}
+.stage-chip.cierre{background:var(--f-100);color:var(--f-700);}
+.risk-chip{font-size:11px;font-weight:800;}
+.risk-chip.ok{color:var(--f-700);}
+.risk-chip.warn{color:var(--amber);}
+.risk-chip.late{color:var(--red);}
+
+/* Expediente detail */
+.exp-header{display:flex;align-items:center;gap:16px;margin-bottom:22px;}
+.back-btn{width:36px;height:36px;border-radius:10px;background:var(--n-100);display:flex;align-items:center;justify-content:center;color:var(--n-600);flex-shrink:0;transition:.15s;}
+.back-btn:hover{background:var(--n-200);}
+.exp-header .co-avatar{width:52px;height:52px;font-size:17px;border-radius:14px;}
+.exp-header h1{font-size:20px;}
+.exp-header .meta{font-size:12.5px;color:var(--n-500s);font-weight:600;margin-top:2px;}
+
+.stepper{display:flex;background:var(--n-0);border:1px solid var(--n-200);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);padding:22px 24px;margin-bottom:20px;position:relative;}
+.step{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;text-align:center;}
+.step:not(:last-child)::after{content:'';position:absolute;top:19px;left:calc(50% + 24px);right:calc(-50% + 24px);height:3px;background:var(--n-200);z-index:0;}
+.step.done:not(:last-child)::after{background:var(--f-500);}
+.step-circle{width:38px;height:38px;border-radius:50%;background:var(--n-100);border:3px solid var(--n-200);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:var(--n-400);z-index:1;transition:.3s var(--ease-spring);}
+.step.done .step-circle{background:var(--f-500);border-color:var(--f-500);color:#fff;}
+.step.current .step-circle{background:var(--slate-900);border-color:var(--slate-900);color:var(--f-300);animation:pulseStep 1.8s infinite;}
+@keyframes pulseStep{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,.3)}50%{box-shadow:0 0 0 7px rgba(34,197,94,0)}}
+.step-label{font-size:12px;font-weight:800;margin-top:9px;color:var(--n-700);}
+.step-date{font-size:10.5px;color:var(--n-500s);font-weight:600;margin-top:2px;}
+
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--n-200);margin-bottom:18px;}
+.tab-btn{padding:11px 16px;font-size:13px;font-weight:800;color:var(--n-500s);border-bottom:2.5px solid transparent;transition:.15s;}
+.tab-btn.active{color:var(--f-700);border-color:var(--f-600);}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;animation:viewIn .3s var(--ease-out);}
+
+.doc-row{display:flex;align-items:center;gap:14px;padding:13px 16px;background:var(--n-0);border:1px solid var(--n-200);border-radius:12px;margin-bottom:10px;}
+.doc-ic{width:38px;height:38px;border-radius:10px;background:var(--n-100);display:flex;align-items:center;justify-content:center;color:var(--n-600);flex-shrink:0;}
+.doc-name{font-weight:800;font-size:13px;}
+.doc-sub{font-size:11.5px;color:var(--n-500s);}
+.doc-status{margin-left:auto;font-size:11px;font-weight:800;padding:5px 11px;border-radius:20px;}
+.doc-status.completo{background:var(--f-100);color:var(--f-700);}
+.doc-status.pendiente{background:var(--amber-bg);color:var(--amber);}
+.doc-status.bloqueado{background:var(--n-100);color:var(--n-500s);}
+.ver-badge{font-size:10px;font-weight:800;background:var(--n-100);color:var(--n-600);padding:2px 7px;border-radius:6px;margin-left:8px;}
+
+.hist-item{display:flex;gap:13px;padding:12px 0;border-bottom:1px solid var(--n-100);}
+.hist-item:last-child{border-bottom:none;}
+.hist-dot{width:8px;height:8px;border-radius:50%;background:var(--f-500);margin-top:5px;flex-shrink:0;}
+.hist-txt .t{font-size:12.5px;font-weight:700;}
+.hist-txt .d{font-size:11px;color:var(--n-500s);margin-top:1px;}
+
+/* Templates grid */
+.tpl-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+.tpl-card{background:var(--n-0);border:1px solid var(--n-200);border-radius:var(--radius-lg);padding:18px;box-shadow:var(--shadow-sm);transition:.2s;}
+.tpl-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px);}
+.tpl-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.tpl-ic{width:40px;height:40px;border-radius:11px;background:var(--f-100);color:var(--f-700);display:flex;align-items:center;justify-content:center;font-size:16px;}
+.tpl-name{font-size:14px;font-weight:800;margin-top:2px;}
+.tpl-meta{font-size:11.5px;color:var(--n-500s);margin-top:3px;}
+.tpl-foot{display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding-top:12px;border-top:1px solid var(--n-100);}
+.tpl-used{font-size:11px;font-weight:700;color:var(--n-600);}
+.tpl-edit{font-size:11.5px;font-weight:800;color:var(--f-700);}
+.tpl-card.locked{opacity:.6;background:var(--n-50);}
+.locked-badge{font-size:10px;font-weight:800;background:var(--n-800);color:#fff;padding:3px 9px;border-radius:20px;display:flex;align-items:center;gap:5px;}
+
+/* Users / permissions */
+.user-row{display:flex;align-items:center;gap:13px;padding:13px 16px;background:var(--n-0);border:1px solid var(--n-200);border-radius:12px;margin-bottom:9px;}
+.role-badge{font-size:10.5px;font-weight:800;padding:4px 10px;border-radius:20px;}
+.role-badge.admin{background:#ede9fe;color:#7c3aed;}
+.role-badge.capturista{background:var(--blue-bg);color:var(--blue);}
+.role-badge.limitado{background:var(--amber-bg);color:var(--amber);}
+.role-badge.consulta{background:var(--n-100);color:var(--n-600);}
+.role-badge.config{background:var(--f-100);color:var(--f-700);}
+
+.perm-table{width:100%;border-collapse:collapse;margin-top:8px;}
+.perm-table th{font-size:10.5px;text-transform:uppercase;color:var(--n-500s);font-weight:800;padding:10px 8px;text-align:center;border-bottom:1px solid var(--n-200);}
+.perm-table th:first-child{text-align:left;}
+.perm-table td{padding:10px 8px;text-align:center;border-bottom:1px solid var(--n-100);font-size:12.5px;}
+.perm-table td:first-child{text-align:left;font-weight:700;}
+.toggle{width:36px;height:20px;border-radius:20px;background:var(--n-200);position:relative;display:inline-block;cursor:pointer;transition:.2s;}
+.toggle.on{background:var(--f-500);}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.2s var(--ease-spring);}
+.toggle.on::after{left:18px;}
+
+/* config catalogs */
+.cfg-tabs{display:flex;gap:8px;margin-bottom:18px;}
+.cfg-tab{padding:9px 15px;border-radius:10px;font-size:12.5px;font-weight:800;color:var(--n-600);background:var(--n-100);}
+.cfg-tab.active{background:var(--slate-900);color:#fff;}
+.cfg-panel{display:none;}
+.cfg-panel.active{display:block;animation:viewIn .3s var(--ease-out);}
+.cfg-list-item{display:flex;align-items:center;gap:12px;padding:13px 16px;background:var(--n-0);border:1px solid var(--n-200);border-radius:12px;margin-bottom:9px;}
+.cfg-ic{width:34px;height:34px;border-radius:9px;background:var(--n-100);display:flex;align-items:center;justify-content:center;color:var(--n-600);}
+.cfg-name{font-weight:800;font-size:13px;}
+.cfg-sub{font-size:11.5px;color:var(--n-500s);}
+
+@media(max-width:1080px){.kpi-row{grid-template-columns:repeat(2,1fr);}.grid-2{grid-template-columns:1fr;}.tpl-grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:720px){.sidebar{transform:translateX(-100%);}.main{margin-left:0;}.kpi-row{grid-template-columns:1fr;}.tpl-grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-mark">T</div>
+      <div class="brand-text"><div class="name">Trazo</div><div class="sub">Expedientes Fiscales</div></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-label">Operación</div>
+      <button class="nav-item active" data-view="dashboard"><i class="fa-solid fa-gauge"></i>Dashboard</button>
+      <button class="nav-item" data-view="expedientes"><i class="fa-solid fa-folder-open"></i>Expedientes<span class="nav-badge">3</span></button>
+      <button class="nav-item" data-view="plantillas"><i class="fa-solid fa-file-lines"></i>Plantillas</button>
+      <div class="nav-label">Administración</div>
+      <button class="nav-item" data-view="usuarios"><i class="fa-solid fa-users"></i>Usuarios y permisos</button>
+      <button class="nav-item" data-view="config"><i class="fa-solid fa-gear"></i>Configuración</button>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="plan-card">
+        <div class="brand-mark" style="width:30px;height:30px;font-size:12px;border-radius:8px;">MZ</div>
+        <div><div class="t">Mercedes Z.</div><div class="d">Administrador</div></div>
+      </div>
+      <button class="restart-btn" onclick="restartDemo()"><i class="fa-solid fa-rotate-left"></i> Reiniciar demo</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title" id="topTitle">Dashboard</div>
+        <div class="crumb" id="topCrumb">Vista general del despacho</div>
+      </div>
+      <div class="topbar-right">
+        <div class="search-mini"><i class="fa-solid fa-magnifying-glass"></i><input placeholder="Buscar empresa, RFC..."></div>
+        <div class="avatar-chip"><div class="av">MZ</div><div><div class="nm">Mercedes Z.</div><div class="rl">Administrador</div></div></div>
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <section class="view active" id="view-dashboard">
+      <div class="kpi-row">
+        <div class="kpi-card">
+          <div class="kpi-top"><div class="kpi-label">Expedientes activos</div><div class="kpi-icon" style="background:var(--f-100);color:var(--f-700);"><i class="fa-solid fa-folder-open"></i></div></div>
+          <div class="kpi-value" data-count="27">0</div>
+          <div class="kpi-delta up"><i class="fa-solid fa-arrow-up"></i> 4 nuevos esta semana</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-top"><div class="kpi-label">Pendientes de validación</div><div class="kpi-icon" style="background:var(--amber-bg);color:var(--amber);"><i class="fa-solid fa-clock"></i></div></div>
+          <div class="kpi-value" data-count="9">0</div>
+          <div class="kpi-delta warn"><i class="fa-solid fa-triangle-exclamation"></i> 2 con más de 5 días</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-top"><div class="kpi-label">RFC obtenidos (mes)</div><div class="kpi-icon" style="background:var(--blue-bg);color:var(--blue);"><i class="fa-solid fa-stamp"></i></div></div>
+          <div class="kpi-value" data-count="14">0</div>
+          <div class="kpi-delta up"><i class="fa-solid fa-arrow-up"></i> vs 10 el mes pasado</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-top"><div class="kpi-label">Documentos generados</div><div class="kpi-icon" style="background:#ede9fe;color:#7c3aed;"><i class="fa-solid fa-file-signature"></i></div></div>
+          <div class="kpi-value" data-count="182">0</div>
+          <div class="kpi-delta up">100% con plantilla versionada</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-head"><h3>Necesita tu atención</h3><span class="sub">3 expedientes estancados</span></div>
+          <div class="card-body">
+            <div class="att-item"><span class="att-dot red"></span><div class="att-txt"><div class="t">Comercializadora Rivas SA de CV</div><div class="d">8 días sin avanzar en Validación</div></div><span class="att-cta">Revisar</span></div>
+            <div class="att-item"><span class="att-dot amber"></span><div class="att-txt"><div class="t">Grupo Ferretero del Bajío</div><div class="d">Falta acta constitutiva para generar poder notarial</div></div><span class="att-cta">Revisar</span></div>
+            <div class="att-item"><span class="att-dot amber"></span><div class="att-txt"><div class="t">Innovatech Soluciones SC</div><div class="d">e.firma agendada, sin confirmar cita SAT</div></div><span class="att-cta">Revisar</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>Actividad reciente</h3></div>
+          <div class="card-body">
+            <div class="feed-item"><div class="feed-ic"><i class="fa-solid fa-check"></i></div><div class="feed-txt"><div class="t">Karla P. cerró expediente de Textiles Monarca</div><div class="d">Hace 24 min</div></div></div>
+            <div class="feed-item"><div class="feed-ic"><i class="fa-solid fa-file-arrow-up"></i></div><div class="feed-txt"><div class="t">Documento generado con plantilla Acta v3</div><div class="d">Hace 1 h · Comercializadora Rivas</div></div></div>
+            <div class="feed-item"><div class="feed-ic"><i class="fa-solid fa-user-plus"></i></div><div class="feed-txt"><div class="t">Nuevo expediente: Panadería La Espiga</div><div class="d">Hace 3 h</div></div></div>
+            <div class="feed-item"><div class="feed-ic"><i class="fa-solid fa-lock"></i></div><div class="feed-txt"><div class="t">Permiso ajustado para Diego R. (Capturista)</div><div class="d">Ayer</div></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:18px;">
+        <div class="card-head"><h3>Expedientes por etapa</h3><span class="sub">27 activos</span></div>
+        <div class="card-body">
+          <div class="funnel-row"><div class="funnel-label">Recepción</div><div class="funnel-track"><div class="funnel-fill" data-w="30" style="background:linear-gradient(90deg,#c3cbc8,#93a19c);"></div></div><div class="funnel-count">6</div></div>
+          <div class="funnel-row"><div class="funnel-label">Validación</div><div class="funnel-track"><div class="funnel-fill" data-w="45" style="background:linear-gradient(90deg,#fbbf24,#d97706);"></div></div><div class="funnel-count">9</div></div>
+          <div class="funnel-row"><div class="funnel-label">RFC</div><div class="funnel-track"><div class="funnel-fill" data-w="25" style="background:linear-gradient(90deg,#60a5fa,#2563eb);"></div></div><div class="funnel-count">5</div></div>
+          <div class="funnel-row"><div class="funnel-label">e.firma</div><div class="funnel-track"><div class="funnel-fill" data-w="20" style="background:linear-gradient(90deg,#c4b5fd,#7c3aed);"></div></div><div class="funnel-count">4</div></div>
+          <div class="funnel-row"><div class="funnel-label">Cierre</div><div class="funnel-track"><div class="funnel-fill" data-w="15" style="background:linear-gradient(90deg,var(--f-400),var(--f-700));"></div></div><div class="funnel-count">3</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- EXPEDIENTES LIST -->
+    <section class="view" id="view-expedientes">
+      <div class="filters-bar">
+        <div class="search-box"><i class="fa-solid fa-magnifying-glass" style="color:var(--n-400);"></i><input placeholder="Buscar por empresa o RFC..."></div>
+        <div class="pill-select"><i class="fa-solid fa-filter"></i> Etapa: Todas</div>
+        <div class="pill-select"><i class="fa-solid fa-building"></i> Línea de negocio: Todas</div>
+        <button class="btn-primary"><i class="fa-solid fa-plus"></i> Nuevo expediente</button>
+      </div>
+      <table class="exp-table">
+        <thead><tr><th>Empresa</th><th>Etapa</th><th>Línea de negocio</th><th>Responsable</th><th>Actualizado</th><th>Estado</th></tr></thead>
+        <tbody>
+          <tr onclick="openExpediente('rivas')"><td><div class="co-cell"><div class="co-avatar">CR</div><div><div class="co-name">Comercializadora Rivas SA de CV</div><div class="co-sub">RFC en trámite</div></div></div></td><td><span class="stage-chip validacion">Validación</span></td><td>Altas Corporativas</td><td>Karla P.</td><td>Hace 8 días</td><td><span class="risk-chip late"><i class="fa-solid fa-circle-exclamation"></i> Estancado</span></td></tr>
+          <tr onclick="openExpediente('ferretero')"><td><div class="co-cell"><div class="co-avatar">GF</div><div><div class="co-name">Grupo Ferretero del Bajío</div><div class="co-sub">Persona moral</div></div></div></td><td><span class="stage-chip validacion">Validación</span></td><td>Altas Corporativas</td><td>Diego R.</td><td>Hace 2 días</td><td><span class="risk-chip warn"><i class="fa-solid fa-clock"></i> Atención</span></td></tr>
+          <tr onclick="openExpediente('innovatech')"><td><div class="co-cell"><div class="co-avatar">IS</div><div><div class="co-name">Innovatech Soluciones SC</div><div class="co-sub">Sociedad civil</div></div></div></td><td><span class="stage-chip efirma">e.firma</span></td><td>Servicios Profesionales</td><td>Karla P.</td><td>Hace 1 día</td><td><span class="risk-chip warn"><i class="fa-solid fa-clock"></i> Atención</span></td></tr>
+          <tr onclick="openExpediente('espiga')"><td><div class="co-cell"><div class="co-avatar">PE</div><div><div class="co-name">Panadería La Espiga SA de CV</div><div class="co-sub">Persona moral</div></div></div></td><td><span class="stage-chip recepcion">Recepción</span></td><td>Comercio</td><td>Diego R.</td><td>Hace 3 h</td><td><span class="risk-chip ok"><i class="fa-solid fa-circle-check"></i> En tiempo</span></td></tr>
+          <tr onclick="openExpediente('monarca')"><td><div class="co-cell"><div class="co-avatar">TM</div><div><div class="co-name">Textiles Monarca SA de CV</div><div class="co-sub">Persona moral</div></div></div></td><td><span class="stage-chip cierre">Cierre</span></td><td>Manufactura</td><td>Karla P.</td><td>Hace 24 min</td><td><span class="risk-chip ok"><i class="fa-solid fa-circle-check"></i> Completo</span></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- EXPEDIENTE DETAIL -->
+    <section class="view" id="view-detalle">
+      <div class="exp-header">
+        <button class="back-btn" onclick="switchView('expedientes')"><i class="fa-solid fa-arrow-left"></i></button>
+        <div class="co-avatar">CR</div>
+        <div>
+          <h1>Comercializadora Rivas SA de CV</h1>
+          <div class="meta">Línea de negocio: Altas Corporativas · Responsable: Karla P. · Domicilio: CDMX - Del. Benito Juárez</div>
+        </div>
+      </div>
+
+      <div class="stepper">
+        <div class="step done"><div class="step-circle"><i class="fa-solid fa-check"></i></div><div class="step-label">Recepción</div><div class="step-date">2 jul</div></div>
+        <div class="step current"><div class="step-circle">2</div><div class="step-label">Validación</div><div class="step-date">En curso, día 8</div></div>
+        <div class="step"><div class="step-circle">3</div><div class="step-label">RFC</div><div class="step-date">Pendiente</div></div>
+        <div class="step"><div class="step-circle">4</div><div class="step-label">e.firma</div><div class="step-date">Pendiente</div></div>
+        <div class="step"><div class="step-circle">5</div><div class="step-label">Cierre</div><div class="step-date">Pendiente</div></div>
+      </div>
+
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="docs">Documentos</button>
+        <button class="tab-btn" data-tab="hist">Historial / Bitácora</button>
+        <button class="tab-btn" data-tab="notas">Notas</button>
+      </div>
+
+      <div class="tab-panel active" id="tab-docs">
+        <div class="doc-row"><div class="doc-ic"><i class="fa-solid fa-file-check"></i></div><div><div class="doc-name">Acta constitutiva <span class="ver-badge">recibido</span></div><div class="doc-sub">Cargado el 2 jul por Karla P.</div></div><span class="doc-status completo">Completo</span></div>
+        <div class="doc-row"><div class="doc-ic"><i class="fa-solid fa-file-pen"></i></div><div><div class="doc-name">Poder notarial <span class="ver-badge">plantilla v3</span></div><div class="doc-sub">Generado con plantilla Poder Notarial v3 · esperando firma</div></div><span class="doc-status pendiente">Pendiente</span></div>
+        <div class="doc-row"><div class="doc-ic"><i class="fa-solid fa-id-card"></i></div><div><div class="doc-name">Comprobante de domicilio</div><div class="doc-sub">Verificación cruzada con catálogo de domicilios</div></div><span class="doc-status pendiente">Pendiente</span></div>
+        <div class="doc-row"><div class="doc-ic"><i class="fa-solid fa-stamp"></i></div><div><div class="doc-name">Solicitud de RFC</div><div class="doc-sub">Se habilita al completar Validación</div></div><span class="doc-status bloqueado">Bloqueado</span></div>
+      </div>
+      <div class="tab-panel" id="tab-hist">
+        <div class="hist-item"><span class="hist-dot"></span><div class="hist-txt"><div class="t">Karla P. marcó "Acta constitutiva" como completo</div><div class="d">2 jul, 10:14 · Documento generado con plantilla Acta v3</div></div></div>
+        <div class="hist-item"><span class="hist-dot"></span><div class="hist-txt"><div class="t">Sistema generó "Poder notarial" desde plantilla v3</div><div class="d">3 jul, 09:02</div></div></div>
+        <div class="hist-item"><span class="hist-dot"></span><div class="hist-txt"><div class="t">Expediente movido de Recepción a Validación</div><div class="d">3 jul, 09:05 · por Karla P.</div></div></div>
+        <div class="hist-item"><span class="hist-dot"></span><div class="hist-txt"><div class="t">Recordatorio automático: 5 días sin avance</div><div class="d">8 jul, 08:00 · sistema</div></div></div>
+      </div>
+      <div class="tab-panel" id="tab-notas">
+        <div class="doc-row" style="cursor:default;"><div class="doc-ic"><i class="fa-solid fa-note-sticky"></i></div><div><div class="doc-name">Cliente solicitó copia certificada adicional</div><div class="doc-sub">Karla P. · 4 jul</div></div></div>
+      </div>
+    </section>
+
+    <!-- PLANTILLAS -->
+    <section class="view" id="view-plantillas">
+      <div class="card-head" style="padding:0 0 16px;"><h3 style="font-size:16px;">Plantillas de documentos</h3><span class="sub">Cada versión queda ligada a los documentos que generó</span></div>
+      <div class="tpl-grid">
+        <div class="tpl-card">
+          <div class="tpl-top"><div class="tpl-ic"><i class="fa-solid fa-file-signature"></i></div><span class="ver-badge">v3 actual</span></div>
+          <div class="tpl-name">Poder Notarial</div>
+          <div class="tpl-meta">Altas Corporativas · actualizado 15 jun</div>
+          <div class="tpl-foot"><span class="tpl-used">Usada en 41 documentos</span><span class="tpl-edit">Editar</span></div>
+        </div>
+        <div class="tpl-card">
+          <div class="tpl-top"><div class="tpl-ic"><i class="fa-solid fa-file-contract"></i></div><span class="ver-badge">v3 actual</span></div>
+          <div class="tpl-name">Acta Constitutiva</div>
+          <div class="tpl-meta">Todas las líneas · actualizado 2 jun</div>
+          <div class="tpl-foot"><span class="tpl-used">Usada en 63 documentos</span><span class="tpl-edit">Editar</span></div>
+        </div>
+        <div class="tpl-card">
+          <div class="tpl-top"><div class="tpl-ic"><i class="fa-solid fa-stamp"></i></div><span class="ver-badge">v2 actual</span></div>
+          <div class="tpl-name">Solicitud de RFC</div>
+          <div class="tpl-meta">Todas las líneas · actualizado 28 abr</div>
+          <div class="tpl-foot"><span class="tpl-used">Usada en 38 documentos</span><span class="tpl-edit">Editar</span></div>
+        </div>
+        <div class="tpl-card">
+          <div class="tpl-top"><div class="tpl-ic"><i class="fa-solid fa-file-shield"></i></div><span class="ver-badge">v1 actual</span></div>
+          <div class="tpl-name">Solicitud e.firma</div>
+          <div class="tpl-meta">Todas las líneas · actualizado 10 mar</div>
+          <div class="tpl-foot"><span class="tpl-used">Usada en 24 documentos</span><span class="tpl-edit">Editar</span></div>
+        </div>
+        <div class="tpl-card">
+          <div class="tpl-top"><div class="tpl-ic"><i class="fa-solid fa-house-circle-check"></i></div><span class="ver-badge">v2 actual</span></div>
+          <div class="tpl-name">Comprobante de Domicilio</div>
+          <div class="tpl-meta">Comercio, Manufactura · actualizado 5 feb</div>
+          <div class="tpl-foot"><span class="tpl-used">Usada en 29 documentos</span><span class="tpl-edit">Editar</span></div>
+        </div>
+        <div class="tpl-card">
+          <div class="tpl-top"><div class="tpl-ic"><i class="fa-solid fa-folder-tree"></i></div><span class="tpl-edit" style="color:var(--n-500s);">+ Nueva</span></div>
+          <div class="tpl-name" style="color:var(--n-500s);">Agregar plantilla</div>
+          <div class="tpl-meta">Para nueva línea de negocio o documento</div>
+        </div>
+      </div>
+
+      <div class="card-head" style="padding:26px 0 16px;"><h3 style="font-size:16px;">Fase 2 · próximamente</h3></div>
+      <div class="tpl-grid">
+        <div class="tpl-card locked">
+          <div class="tpl-top"><div class="tpl-ic" style="background:var(--n-200);color:var(--n-500s);"><i class="fa-solid fa-camera"></i></div><span class="locked-badge"><i class="fa-solid fa-lock"></i> Fase 2</span></div>
+          <div class="tpl-name">OCR de protocolización</div>
+          <div class="tpl-meta">Captura automática desde foto o PDF</div>
+        </div>
+        <div class="tpl-card locked">
+          <div class="tpl-top"><div class="tpl-ic" style="background:var(--n-200);color:var(--n-500s);"><i class="fa-solid fa-qrcode"></i></div><span class="locked-badge"><i class="fa-solid fa-lock"></i> Fase 2</span></div>
+          <div class="tpl-name">Portal público de validación QR</div>
+          <div class="tpl-meta">Verificación externa de documentos</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- USUARIOS -->
+    <section class="view" id="view-usuarios">
+      <div class="card-head" style="padding:0 0 16px;"><h3 style="font-size:16px;">Usuarios</h3></div>
+      <div class="user-row"><div class="co-avatar" style="border-radius:50%;">MZ</div><div><div class="co-name">Mercedes Z.</div><div class="co-sub">mercedes@despacho.mx</div></div><span class="role-badge admin" style="margin-left:auto;">Administrador</span></div>
+      <div class="user-row"><div class="co-avatar" style="border-radius:50%;">KP</div><div><div class="co-name">Karla P.</div><div class="co-sub">karla@despacho.mx</div></div><span class="role-badge capturista" style="margin-left:auto;">Capturista</span></div>
+      <div class="user-row"><div class="co-avatar" style="border-radius:50%;">DR</div><div><div class="co-name">Diego R.</div><div class="co-sub">diego@despacho.mx</div></div><span class="role-badge limitado" style="margin-left:auto;">Limitado por documento</span></div>
+      <div class="user-row"><div class="co-avatar" style="border-radius:50%;">LT</div><div><div class="co-name">Lucía T.</div><div class="co-sub">lucia@despacho.mx</div></div><span class="role-badge consulta" style="margin-left:auto;">Consulta</span></div>
+      <div class="user-row"><div class="co-avatar" style="border-radius:50%;">JA</div><div><div class="co-name">Jorge A.</div><div class="co-sub">jorge@despacho.mx</div></div><span class="role-badge config" style="margin-left:auto;">Configuración</span></div>
+
+      <div class="card-head" style="padding:26px 0 4px;"><h3 style="font-size:16px;">Permisos por documento — Diego R. (Limitado)</h3><span class="sub">Control a nivel de documento, no solo de módulo</span></div>
+      <div class="card"><div class="card-body">
+        <table class="perm-table">
+          <thead><tr><th>Documento</th><th>Ver</th><th>Editar</th><th>Generar</th><th>Aprobar</th></tr></thead>
+          <tbody>
+            <tr><td>Acta constitutiva</td><td><span class="toggle on" onclick="this.classList.toggle('on')"></span></td><td><span class="toggle" onclick="this.classList.toggle('on')"></span></td><td><span class="toggle" onclick="this.classList.toggle('on')"></span></td><td><span class="toggle" onclick="this.classList.toggle('on')"></span></td></tr>
+            <tr><td>Comprobante de domicilio</td><td><span class="toggle on" onclick="this.classList.toggle('on')"></span></td><td><span class="toggle on" onclick="this.classList.toggle('on')"></span></td><td><span class="toggle" onclick="this.classList.toggle('on')"></span></td><td><span class="toggle" onclick="this.classList.toggle('on')"></span></td></tr>
+            <tr><td>Poder notarial</td><td><span class="toggle on" onclick="this.classList.toggle('on')"></span></td><td><span class="toggle" onclick="this.classList.toggle('on')"></span></td><td><span class="toggle" onclick="this.classList.toggle('on')"></span></td><td><span class="toggle" onclick="this.classList.toggle('on')"></span></td></tr>
+            <tr><td>Solicitud de RFC</td><td><span class="toggle" onclick="this.classList.toggle('on')"></span></td><td><span class="toggle" onclick="this.classList.toggle('on')"></span></td><td><span class="toggle" onclick="this.classList.toggle('on')"></span></td><td><span class="toggle" onclick="this.classList.toggle('on')"></span></td></tr>
+          </tbody>
+        </table>
+      </div></div>
+    </section>
+
+    <!-- CONFIG -->
+    <section class="view" id="view-config">
+      <div class="cfg-tabs">
+        <button class="cfg-tab active" data-cfg="lineas">Líneas de negocio</button>
+        <button class="cfg-tab" data-cfg="domicilios">Domicilios</button>
+        <button class="cfg-tab" data-cfg="institucional">Datos institucionales</button>
+      </div>
+      <div class="cfg-panel active" id="cfg-lineas">
+        <div class="cfg-list-item"><div class="cfg-ic"><i class="fa-solid fa-building-columns"></i></div><div><div class="cfg-name">Altas Corporativas</div><div class="cfg-sub">18 expedientes activos · 4 plantillas asociadas</div></div></div>
+        <div class="cfg-list-item"><div class="cfg-ic"><i class="fa-solid fa-industry"></i></div><div><div class="cfg-name">Manufactura</div><div class="cfg-sub">5 expedientes activos · 3 plantillas asociadas</div></div></div>
+        <div class="cfg-list-item"><div class="cfg-ic"><i class="fa-solid fa-store"></i></div><div><div class="cfg-name">Comercio</div><div class="cfg-sub">3 expedientes activos · 3 plantillas asociadas</div></div></div>
+        <div class="cfg-list-item"><div class="cfg-ic"><i class="fa-solid fa-briefcase"></i></div><div><div class="cfg-name">Servicios Profesionales</div><div class="cfg-sub">1 expediente activo · 3 plantillas asociadas</div></div></div>
+      </div>
+      <div class="cfg-panel" id="cfg-domicilios">
+        <div class="cfg-list-item"><div class="cfg-ic"><i class="fa-solid fa-location-dot"></i></div><div><div class="cfg-name">CDMX - Del. Benito Juárez</div><div class="cfg-sub">Domicilio fiscal principal del despacho</div></div></div>
+        <div class="cfg-list-item"><div class="cfg-ic"><i class="fa-solid fa-location-dot"></i></div><div><div class="cfg-name">Guadalajara - Zapopan</div><div class="cfg-sub">Sucursal · 6 expedientes asociados</div></div></div>
+      </div>
+      <div class="cfg-panel" id="cfg-institucional">
+        <div class="cfg-list-item"><div class="cfg-ic"><i class="fa-solid fa-stamp"></i></div><div><div class="cfg-name">Datos del despacho para membrete</div><div class="cfg-sub">Razón social, RFC del despacho, logo, firma autorizada</div></div></div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+function switchView(name){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const navMap={dashboard:'dashboard',expedientes:'expedientes',detalle:'expedientes',plantillas:'plantillas',usuarios:'usuarios',config:'config'};
+  const navBtn=document.querySelector('.nav-item[data-view="'+navMap[name]+'"]');
+  if(navBtn) navBtn.classList.add('active');
+  const titles={dashboard:['Dashboard','Vista general del despacho'],expedientes:['Expedientes','27 expedientes activos'],detalle:['Expediente','Detalle de empresa'],plantillas:['Plantillas','Generación documental versionada'],usuarios:['Usuarios y permisos','Control por rol y por documento'],config:['Configuración','Catálogos del despacho']};
+  document.getElementById('topTitle').textContent=titles[name][0];
+  document.getElementById('topCrumb').textContent=titles[name][1];
+  if(name==='dashboard') animateCounters();
+  if(name==='dashboard') animateFunnels();
+}
+document.querySelectorAll('.nav-item[data-view]').forEach(btn=>{
+  btn.addEventListener('click',()=>switchView(btn.dataset.view));
+});
+function openExpediente(id){ switchView('detalle'); }
+
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+  });
+});
+document.querySelectorAll('.cfg-tab').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.cfg-tab').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.cfg-panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('cfg-'+btn.dataset.cfg).classList.add('active');
+  });
+});
+
+function animateCounters(){
+  document.querySelectorAll('.kpi-value[data-count]').forEach(el=>{
+    const target=parseInt(el.dataset.count);
+    let cur=0; const step=Math.max(1,Math.ceil(target/30));
+    const t=setInterval(()=>{cur+=step; if(cur>=target){cur=target;clearInterval(t);} el.textContent=cur;},25);
+  });
+}
+function animateFunnels(){
+  document.querySelectorAll('.funnel-fill').forEach(el=>{
+    const w=el.dataset.w; el.style.width='0';
+    setTimeout(()=>{el.style.width=w+'%';},80);
+  });
+}
+function restartDemo(){ switchView('dashboard'); }
+window.addEventListener('load',()=>{ animateCounters(); animateFunnels(); });
+</script>
+</body>
+</html>
