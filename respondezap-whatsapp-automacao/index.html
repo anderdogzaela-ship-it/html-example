@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RespondeZap – Automação de Atendimento WhatsApp</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+  :root{
+    --g50:#fffaf0; --g100:#fef3d9; --g200:#fde3ac; --g300:#fbcd6f; --g400:#f7b73e;
+    --g500:#f0a020; --g600:#d97706; --g700:#b45309; --g800:#8a3f0e; --g900:#5c2b0c;
+    --n0:#0f1115; --n50:#171a20; --n100:#1c1f27; --n200:#252932; --n300:#323744;
+    --n400:#4b5160; --n500:#6b7280; --n600:#8b91a0; --n700:#b3b8c4; --n800:#d8dbe2; --n900:#f4f5f7;
+    --ok:#22c55e; --warn:#eab308; --bad:#ef4444; --info:#38bdf8;
+    --radius:14px; --shadow:0 24px 60px rgba(0,0,0,0.55);
+    --ease:cubic-bezier(.34,1.56,.64,1);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Lexend',sans-serif;background:var(--n0);color:var(--n900);min-height:100vh;display:flex;align-items:center;justify-content:center;-webkit-font-smoothing:antialiased;padding:20px;}
+  body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(circle at 1px 1px, rgba(240,160,32,0.06) 1px, transparent 0);background-size:26px 26px;pointer-events:none;z-index:0;}
+  .orb{position:fixed;border-radius:50%;filter:blur(70px);opacity:.35;z-index:0;animation:float 9s ease-in-out infinite;}
+  .orb1{width:340px;height:340px;background:var(--g500);top:-100px;left:-100px;}
+  .orb2{width:280px;height:280px;background:#22c55e;bottom:-80px;right:-80px;animation-delay:2s;}
+  @keyframes float{0%,100%{transform:translateY(0) translateX(0)}50%{transform:translateY(-24px) translateX(14px)}}
+
+  .app-wrapper{position:relative;z-index:1;display:flex;width:1080px;max-width:100%;height:700px;background:var(--n50);border-radius:20px;overflow:hidden;box-shadow:var(--shadow);border:1px solid var(--n300);}
+
+  .sidebar{width:216px;background:var(--n100);display:flex;flex-direction:column;border-right:1px solid var(--n300);flex-shrink:0;}
+  .sidebar-logo{padding:22px 18px 18px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--n300);}
+  .sidebar-logo-icon{width:38px;height:38px;background:linear-gradient(135deg,var(--g400),var(--g600));border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:17px;color:#1a1206;box-shadow:0 0 22px rgba(240,160,32,0.45);flex-shrink:0;}
+  .sidebar-logo-text{font-size:14px;font-weight:800;color:var(--n900);line-height:1.2;letter-spacing:-0.2px;}
+  .sidebar-logo-sub{font-size:10px;color:var(--n600);margin-top:1px;}
+  .sidebar-nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:2px;}
+  .nav-item{display:flex;align-items:center;gap:11px;padding:10px 12px;cursor:pointer;border-radius:10px;transition:all .15s;font-size:12.5px;font-weight:600;color:var(--n600);}
+  .nav-item i{width:16px;text-align:center;font-size:13px;}
+  .nav-item:hover{background:var(--n200);color:var(--n900);}
+  .nav-item.active{background:rgba(240,160,32,0.14);color:var(--g400);}
+  .sidebar-footer{padding:14px 18px;border-top:1px solid var(--n300);}
+  .status-row{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--n700);font-weight:600;}
+  .status-dot{width:7px;height:7px;background:var(--ok);border-radius:50%;animation:pulse 2s infinite;box-shadow:0 0 8px var(--ok);}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  .status-sub{font-size:10px;color:var(--n500);margin-top:3px;}
+
+  .main{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--n0);}
+  .view{display:none;flex:1;flex-direction:column;overflow:hidden;}
+  .view.active{display:flex;}
+
+  /* CHAT */
+  .chat-layout{display:flex;flex:1;overflow:hidden;}
+  .contact-list{width:236px;background:var(--n100);border-right:1px solid var(--n300);display:flex;flex-direction:column;}
+  .contact-list-header{padding:14px 16px;border-bottom:1px solid var(--n300);font-size:11px;font-weight:700;color:var(--n600);text-transform:uppercase;letter-spacing:.6px;}
+  .contact-item{padding:11px 16px;cursor:pointer;border-bottom:1px solid var(--n0);display:flex;align-items:center;gap:10px;transition:background .12s;}
+  .contact-item:hover{background:var(--n200);}
+  .contact-item.active{background:var(--n200);}
+  .contact-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;color:#1a1206;}
+  .contact-info{flex:1;min-width:0;}
+  .contact-name{font-size:12.5px;font-weight:700;color:var(--n900);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .contact-preview{font-size:11px;color:var(--n600);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;}
+  .contact-meta{display:flex;flex-direction:column;align-items:flex-end;gap:4px;}
+  .contact-time{font-size:10px;color:var(--n500);}
+  .unread-badge{background:var(--g500);color:#1a1206;font-size:9.5px;font-weight:800;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;}
+  .window-badge{font-size:9px;padding:2px 6px;border-radius:5px;font-weight:700;}
+  .window-open{background:rgba(34,197,94,0.16);color:var(--ok);}
+  .window-closed{background:rgba(234,179,8,0.16);color:var(--warn);}
+
+  .chat-window{flex:1;display:flex;flex-direction:column;background:var(--n0);}
+  .chat-header{padding:12px 18px;background:var(--n100);border-bottom:1px solid var(--n300);display:flex;align-items:center;gap:12px;}
+  .chat-header-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#1a1206;}
+  .chat-header-info{flex:1;}
+  .chat-header-name{font-size:13.5px;font-weight:700;color:var(--n900);}
+  .chat-header-status{font-size:10.5px;color:var(--n600);}
+  .window-indicator{padding:4px 10px;border-radius:12px;font-size:10.5px;font-weight:700;display:flex;align-items:center;gap:5px;}
+  .window-open-badge{background:rgba(34,197,94,0.13);color:var(--ok);border:1px solid rgba(34,197,94,0.28);}
+  .window-closed-badge{background:rgba(234,179,8,0.13);color:var(--warn);border:1px solid rgba(234,179,8,0.28);}
+  .window-countdown{font-size:9.5px;opacity:.75;}
+
+  .window-banner{margin:8px 18px 0;padding:8px 12px;background:rgba(234,179,8,0.1);border:1px solid rgba(234,179,8,0.3);border-radius:9px;font-size:11px;color:var(--warn);display:flex;align-items:center;gap:8px;}
+
+  .chat-messages{flex:1;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:7px;}
+  .msg{max-width:72%;padding:8px 12px 6px;border-radius:10px;font-size:12.5px;line-height:1.45;position:relative;animation:msgIn .2s ease-out;}
+  @keyframes msgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  .msg-in{background:var(--n200);color:var(--n900);align-self:flex-start;border-bottom-left-radius:2px;}
+  .msg-out{background:#1f5f4d;color:#eafff5;align-self:flex-end;border-bottom-right-radius:2px;}
+  .msg-bot{background:rgba(240,160,32,0.1);border-left:3px solid var(--g500);align-self:flex-start;border-bottom-left-radius:2px;color:var(--n900);}
+  .msg-system{background:rgba(56,189,248,0.08);border:1px solid rgba(56,189,248,0.25);color:var(--info);align-self:center;font-size:11px;padding:5px 12px;border-radius:12px;text-align:center;}
+  .msg-template{background:rgba(168,85,247,0.1);border-left:3px solid #a855f7;align-self:flex-start;border-bottom-left-radius:2px;color:var(--n900);}
+  .msg-time{font-size:10px;color:var(--n600);margin-top:4px;display:flex;align-items:center;gap:4px;}
+  .msg-out .msg-time{color:rgba(234,255,245,0.65);}
+  .msg-bot-label{font-size:10px;color:var(--g400);font-weight:700;margin-bottom:3px;}
+  .msg-template-label{font-size:10px;color:#c084fc;font-weight:700;margin-bottom:3px;}
+  .tick{color:var(--info);}
+  .date-divider{text-align:center;font-size:10.5px;color:var(--n600);background:var(--n100);padding:3px 10px;border-radius:8px;align-self:center;margin:6px 0;}
+  .handoff-card{background:var(--n100);border:1px solid var(--n300);border-radius:10px;padding:10px 14px;align-self:center;font-size:11.5px;color:var(--n700);text-align:center;max-width:270px;}
+  .handoff-card-title{color:var(--warn);font-weight:700;margin-bottom:4px;font-size:12.5px;}
+  .handoff-avatar-row{display:flex;gap:6px;align-items:center;justify-content:center;margin-top:8px;flex-wrap:wrap;}
+  .agent-chip{background:var(--n200);border-radius:12px;padding:3px 10px;font-size:10.5px;color:var(--n900);display:flex;align-items:center;gap:5px;}
+  .agent-dot{width:6px;height:6px;background:var(--ok);border-radius:50%;}
+
+  .chat-input{padding:11px 18px;background:var(--n100);border-top:1px solid var(--n300);display:flex;align-items:center;gap:10px;}
+  .chat-input-box{flex:1;background:var(--n200);border:1px solid var(--n300);border-radius:20px;padding:9px 15px;color:var(--n900);font-size:12.5px;outline:none;font-family:inherit;}
+  .chat-input-box::placeholder{color:var(--n500);}
+  .send-btn{width:36px;height:36px;background:linear-gradient(135deg,var(--g400),var(--g600));border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#1a1206;font-size:14px;transition:transform .15s var(--ease);flex-shrink:0;}
+  .send-btn:hover{transform:scale(1.08);}
+  .quick-replies{padding:8px 18px;display:flex;gap:6px;flex-wrap:wrap;border-top:1px solid var(--n0);}
+  .qr-btn{background:var(--n100);border:1px solid var(--n300);border-radius:14px;padding:5px 12px;font-size:11px;font-weight:600;color:var(--g400);cursor:pointer;transition:all .15s;white-space:nowrap;}
+  .qr-btn:hover{background:rgba(240,160,32,0.12);border-color:var(--g500);}
+
+  /* FLOW */
+  .flow-view{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+  .flow-toolbar{padding:13px 22px;background:var(--n100);border-bottom:1px solid var(--n300);display:flex;align-items:center;gap:12px;}
+  .flow-title{font-size:13.5px;font-weight:700;color:var(--n900);flex:1;display:flex;align-items:center;gap:8px;}
+  .btn-sm{padding:7px 15px;border-radius:9px;border:none;cursor:pointer;font-size:11.5px;font-weight:700;transition:all .15s var(--ease);font-family:inherit;}
+  .btn-primary{background:linear-gradient(135deg,var(--g400),var(--g600));color:#1a1206;}
+  .btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(240,160,32,0.3);}
+  .btn-secondary{background:var(--n200);color:var(--n900);border:1px solid var(--n300);}
+  .btn-secondary:hover{background:var(--n300);}
+  .flow-body{flex:1;display:flex;overflow:hidden;}
+  .flow-canvas{flex:1;padding:20px 22px;overflow:auto;}
+  .flow-nodes{display:flex;flex-direction:column;gap:10px;max-width:480px;}
+  .flow-node{background:var(--n100);border:1px solid var(--n300);border-radius:11px;padding:12px 16px;cursor:pointer;transition:all .2s;}
+  .flow-node:hover{border-color:var(--g500);}
+  .flow-node.selected{border-color:var(--g500);box-shadow:0 0 0 3px rgba(240,160,32,0.16);}
+  .flow-node-type{font-size:9.5px;text-transform:uppercase;letter-spacing:.6px;font-weight:800;margin-bottom:6px;}
+  .node-trigger{color:var(--warn);}
+  .node-message{color:var(--g400);}
+  .node-condition{color:var(--info);}
+  .node-handoff{color:var(--bad);}
+  .node-template{color:#c084fc;}
+  .flow-node-content{font-size:12.5px;color:var(--n900);font-weight:600;}
+  .flow-node-sub{font-size:10.5px;color:var(--n600);margin-top:4px;}
+  .flow-arrow{text-align:center;color:var(--n400);font-size:15px;margin:-3px 0;}
+  .node-badges{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
+  .node-badge{font-size:9.5px;padding:2px 8px;border-radius:10px;font-weight:700;}
+  .badge-keyword{background:rgba(240,160,32,0.14);color:var(--g400);border:1px solid rgba(240,160,32,0.25);}
+  .badge-window{background:rgba(56,189,248,0.14);color:var(--info);border:1px solid rgba(56,189,248,0.25);}
+  .badge-template{background:rgba(168,85,247,0.14);color:#c084fc;border:1px solid rgba(168,85,247,0.25);}
+  .badge-handoff{background:rgba(239,68,68,0.14);color:var(--bad);border:1px solid rgba(239,68,68,0.25);}
+  .flow-sidebar{width:250px;background:var(--n100);border-left:1px solid var(--n300);padding:16px;overflow-y:auto;}
+  .flow-sidebar-title{font-size:11px;font-weight:800;color:var(--n600);text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px;}
+  .faq-item{background:var(--n0);border:1px solid var(--n300);border-radius:9px;padding:10px;margin-bottom:8px;cursor:pointer;transition:border-color .15s;}
+  .faq-item:hover{border-color:var(--g500);}
+  .faq-q{font-size:11.5px;color:var(--n900);font-weight:700;}
+  .faq-a{font-size:10.5px;color:var(--n600);margin-top:4px;}
+  .faq-tags{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap;}
+  .faq-tag{font-size:9.5px;background:var(--n200);color:var(--n600);padding:1px 6px;border-radius:6px;font-weight:600;}
+  .add-faq-btn{width:100%;padding:9px;background:rgba(240,160,32,0.08);border:1px dashed rgba(240,160,32,0.35);border-radius:9px;color:var(--g400);font-size:11.5px;font-weight:700;cursor:pointer;text-align:center;transition:all .15s;font-family:inherit;}
+  .add-faq-btn:hover{background:rgba(240,160,32,0.14);}
+
+  /* INTEGRATION */
+  .integ-view{flex:1;padding:22px;overflow-y:auto;}
+  .integ-header{margin-bottom:18px;}
+  .integ-title{font-size:15px;font-weight:800;color:var(--n900);display:flex;align-items:center;gap:9px;}
+  .integ-sub{font-size:11.5px;color:var(--n600);margin-top:4px;}
+  .integ-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .integ-card{background:var(--n100);border:1px solid var(--n300);border-radius:12px;padding:17px;}
+  .integ-card-title{font-size:12.5px;font-weight:700;color:var(--n900);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;}
+  .conn-status{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;}
+  .conn-ok{color:var(--ok);}
+  .conn-row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--n0);font-size:11.5px;}
+  .conn-row:last-child{border-bottom:none;}
+  .conn-label{color:var(--n600);}
+  .conn-val{color:var(--n900);font-weight:700;}
+  .chip-ok{background:rgba(34,197,94,0.14);color:var(--ok);padding:2px 9px;border-radius:8px;font-size:10px;font-weight:700;}
+  .chip-pending{background:rgba(234,179,8,0.14);color:var(--warn);padding:2px 9px;border-radius:8px;font-size:10px;font-weight:700;}
+  .tpl-row{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--n0);border-radius:8px;margin-bottom:6px;font-size:11px;}
+  .tpl-name{color:var(--n900);font-weight:600;}
+  .tpl-cat{color:var(--n600);font-size:10px;margin-top:2px;}
+  .webhook-box{background:var(--n0);border:1px solid var(--n300);border-radius:9px;padding:11px 13px;font-size:10.5px;color:var(--n700);font-family:monospace;margin-top:6px;word-break:break-all;}
+  .integ-note{font-size:10.5px;color:var(--n600);margin-top:10px;line-height:1.5;}
+
+  /* REPORTS */
+  .reports-view{flex:1;padding:20px 22px;overflow-y:auto;}
+  .reports-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .reports-title{font-size:15px;font-weight:800;color:var(--n900);}
+  .date-range{font-size:11.5px;color:var(--n600);background:var(--n100);border:1px solid var(--n300);border-radius:9px;padding:6px 12px;}
+  .metrics-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;}
+  .metric-card{background:var(--n100);border:1px solid var(--n300);border-radius:11px;padding:14px 16px;transition:transform .15s;}
+  .metric-card:hover{transform:translateY(-2px);}
+  .metric-label{font-size:10.5px;color:var(--n600);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;font-weight:700;}
+  .metric-value{font-size:21px;font-weight:800;color:var(--n900);}
+  .metric-delta{font-size:10.5px;margin-top:4px;font-weight:600;}
+  .delta-up{color:var(--ok);}
+  .delta-down{color:var(--bad);}
+  .reports-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .report-card{background:var(--n100);border:1px solid var(--n300);border-radius:11px;padding:16px;}
+  .report-card-title{font-size:12.5px;font-weight:700;color:var(--n900);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;}
+  .report-card-badge{font-size:9.5px;background:rgba(240,160,32,0.14);color:var(--g400);border-radius:8px;padding:2px 8px;font-weight:700;}
+  .bar-chart{display:flex;flex-direction:column;gap:8px;}
+  .bar-row{display:flex;align-items:center;gap:8px;}
+  .bar-label{font-size:10.5px;color:var(--n600);width:126px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .bar-track{flex:1;background:var(--n0);border-radius:4px;height:8px;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:4px;transition:width 1s ease;}
+  .bar-val{font-size:10.5px;color:var(--n900);width:30px;text-align:right;flex-shrink:0;font-weight:600;}
+  .vol-chart{display:flex;align-items:flex-end;gap:4px;height:80px;}
+  .vol-bar{flex:1;border-radius:3px 3px 0 0;transition:height .5s ease;cursor:pointer;position:relative;}
+  .vol-bar:hover::after{content:attr(data-tip);position:absolute;bottom:105%;left:50%;transform:translateX(-50%);background:var(--n300);color:var(--n900);font-size:10px;padding:3px 6px;border-radius:4px;white-space:nowrap;z-index:2;}
+  .vol-labels{display:flex;gap:4px;margin-top:4px;}
+  .vol-label{flex:1;font-size:9px;color:var(--n600);text-align:center;}
+  .window-stats{display:flex;gap:12px;margin-bottom:12px;}
+  .window-stat{flex:1;background:var(--n0);border-radius:9px;padding:10px;text-align:center;}
+  .window-stat-val{font-size:17px;font-weight:800;}
+  .window-stat-label{font-size:10px;color:var(--n600);margin-top:2px;}
+  .window-open-color{color:var(--ok);}
+  .window-closed-color{color:var(--warn);}
+  .handoff-list{display:flex;flex-direction:column;gap:8px;}
+  .handoff-row{display:flex;align-items:center;gap:10px;padding:8px;background:var(--n0);border-radius:9px;}
+  .handoff-avatar-sm{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:700;flex-shrink:0;}
+  .handoff-info{flex:1;}
+  .handoff-name{font-size:11.5px;font-weight:700;color:var(--n900);}
+  .handoff-reason{font-size:10.5px;color:var(--n600);}
+  .handoff-time{font-size:9.5px;color:var(--n600);}
+  .resolved-chip{font-size:9.5px;background:rgba(34,197,94,0.14);color:var(--ok);border-radius:6px;padding:2px 8px;font-weight:700;}
+  .pending-chip{font-size:9.5px;background:rgba(234,179,8,0.14);color:var(--warn);border-radius:6px;padding:2px 8px;font-weight:700;}
+
+  .restart-btn{position:fixed;bottom:20px;right:20px;background:var(--n100);border:1px solid var(--n300);color:var(--n700);padding:9px 18px;border-radius:20px;cursor:pointer;font-size:11.5px;font-weight:600;transition:all .2s;z-index:100;font-family:inherit;}
+  .restart-btn:hover{background:var(--n200);color:var(--n900);}
+
+  ::-webkit-scrollbar{width:5px;height:5px;}
+  ::-webkit-scrollbar-thumb{background:var(--n300);border-radius:3px;}
+
+  @media (max-width:900px){
+    .app-wrapper{width:100%;height:100vh;border-radius:0;flex-direction:column;}
+    .sidebar{width:100%;flex-direction:row;align-items:center;}
+    .sidebar-nav{flex-direction:row;flex:1;overflow-x:auto;}
+    .sidebar-footer{display:none;}
+    .integ-grid,.reports-grid,.metrics-row{grid-template-columns:1fr;}
+    .contact-list{width:130px;}
+    .flow-sidebar{display:none;}
+  }
+</style>
+</head>
+<body>
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+
+<div class="app-wrapper">
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon"><i class="fa-solid fa-bolt"></i></div>
+      <div>
+        <div class="sidebar-logo-text">RespondeZap</div>
+        <div class="sidebar-logo-sub">Automação WhatsApp</div>
+      </div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-item active" onclick="switchView('chat',this)"><i class="fa-solid fa-comments"></i> Conversas</div>
+      <div class="nav-item" onclick="switchView('flow',this)"><i class="fa-solid fa-diagram-project"></i> Fluxos e FAQ</div>
+      <div class="nav-item" onclick="switchView('integ',this)"><i class="fa-solid fa-plug"></i> Integração API</div>
+      <div class="nav-item" onclick="switchView('reports',this)"><i class="fa-solid fa-chart-line"></i> Relatórios</div>
+    </div>
+    <div class="sidebar-footer">
+      <div class="status-row"><span class="status-dot"></span> Bot ativo</div>
+      <div class="status-sub">WhatsApp Business API</div>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <div class="view active" id="view-chat">
+      <div class="chat-layout">
+        <div class="contact-list">
+          <div class="contact-list-header">Conversas recentes</div>
+          <div id="contactList"></div>
+        </div>
+        <div class="chat-window">
+          <div class="chat-header">
+            <div class="chat-header-avatar" id="chatAvatar" style="background:#4ade80">M</div>
+            <div class="chat-header-info">
+              <div class="chat-header-name" id="chatName">Mariana Torres</div>
+              <div class="chat-header-status" id="chatStatus">+55 11 99100-2345</div>
+            </div>
+            <div class="window-indicator window-open-badge" id="windowBadge">
+              <i class="fa-solid fa-circle" style="font-size:6px"></i> <span id="windowText">Janela aberta</span>
+            </div>
+          </div>
+          <div id="windowBanner" class="window-banner" style="display:none">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span>Janela de 24h expirada. Próxima mensagem será enviada como <strong>template aprovado pela Meta</strong>.</span>
+          </div>
+          <div class="chat-messages" id="chatMessages"></div>
+          <div class="quick-replies" id="quickReplies"></div>
+          <div class="chat-input">
+            <input class="chat-input-box" id="chatInput" placeholder="Digite uma mensagem..." onkeydown="if(event.key==='Enter')sendUserMsg()">
+            <button class="send-btn" onclick="sendUserMsg()"><i class="fa-solid fa-paper-plane"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="view" id="view-flow">
+      <div class="flow-view">
+        <div class="flow-toolbar">
+          <div class="flow-title"><i class="fa-solid fa-diagram-project"></i> Editor de Fluxo de Atendimento</div>
+          <button class="btn-sm btn-secondary"><i class="fa-solid fa-plus"></i> Novo nó</button>
+          <button class="btn-sm btn-primary"><i class="fa-solid fa-check"></i> Publicar</button>
+        </div>
+        <div class="flow-body">
+          <div class="flow-canvas"><div class="flow-nodes" id="flowNodes"></div></div>
+          <div class="flow-sidebar">
+            <div class="flow-sidebar-title">Perguntas frequentes</div>
+            <div id="faqList"></div>
+            <button class="add-faq-btn" onclick="addFaq()"><i class="fa-solid fa-plus"></i> Nova pergunta</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="view" id="view-integ">
+      <div class="integ-view">
+        <div class="integ-header">
+          <div class="integ-title"><i class="fa-solid fa-plug" style="color:var(--g400)"></i> Integração WhatsApp Business API</div>
+          <div class="integ-sub">Status da conexão, templates aprovados pela Meta e webhook de recebimento.</div>
+        </div>
+        <div class="integ-grid">
+          <div class="integ-card">
+            <div class="integ-card-title">Conta comercial<span class="conn-status conn-ok"><i class="fa-solid fa-circle-check"></i> Conectada</span></div>
+            <div class="conn-row"><span class="conn-label">Número verificado</span><span class="conn-val">+55 11 4002-8922</span></div>
+            <div class="conn-row"><span class="conn-label">Provedor</span><span class="conn-val">Meta Cloud API</span></div>
+            <div class="conn-row"><span class="conn-label">Nível de qualidade</span><span class="chip-ok">Alto</span></div>
+            <div class="conn-row"><span class="conn-label">Limite de envio (24h)</span><span class="conn-val">10.000 conversas</span></div>
+            <div class="integ-note">Conexão feita via API oficial do WhatsApp Business, sem depender de número pessoal ou soluções não homologadas que arriscam banimento.</div>
+          </div>
+          <div class="integ-card">
+            <div class="integ-card-title">Webhook de mensagens<span class="chip-ok">Ativo</span></div>
+            <div class="conn-row"><span class="conn-label">Eventos assinados</span><span class="conn-val">messages, status</span></div>
+            <div class="conn-row"><span class="conn-label">Última entrega</span><span class="conn-val">há 4s</span></div>
+            <div class="webhook-box">POST /webhook/whatsapp<br>x-hub-signature-256: verificado &#10003;</div>
+            <div class="integ-note">Assinatura validada a cada requisição, para garantir que só a Meta consegue enviar eventos para o sistema.</div>
+          </div>
+          <div class="integ-card">
+            <div class="integ-card-title">Templates aprovados<span class="chip-ok">3 ativos</span></div>
+            <div class="tpl-row"><div><div class="tpl-name">boas_vindas_v2</div><div class="tpl-cat">Utilidade</div></div><span class="chip-ok">Aprovado</span></div>
+            <div class="tpl-row"><div><div class="tpl-name">retomada_atendimento</div><div class="tpl-cat">Utilidade</div></div><span class="chip-ok">Aprovado</span></div>
+            <div class="tpl-row"><div><div class="tpl-name">confirmacao_horario</div><div class="tpl-cat">Marketing</div></div><span class="chip-pending">Em análise</span></div>
+            <div class="integ-note">Templates obrigatórios sempre que a janela de 24h expira, seguindo a política oficial da Meta para evitar bloqueio da conta.</div>
+          </div>
+          <div class="integ-card">
+            <div class="integ-card-title">Painel de gerenciamento<span class="chip-ok">Multiusuário</span></div>
+            <div class="conn-row"><span class="conn-label">Atendentes ativos</span><span class="conn-val">4</span></div>
+            <div class="conn-row"><span class="conn-label">Permissões</span><span class="conn-val">Admin / Atendente</span></div>
+            <div class="conn-row"><span class="conn-label">Fluxos publicados</span><span class="conn-val">2</span></div>
+            <div class="integ-note">Equipe consegue editar fluxos, mensagens automáticas e revisar handoffs sem depender de alteração de código.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="view" id="view-reports">
+      <div class="reports-view">
+        <div class="reports-header">
+          <div class="reports-title"><i class="fa-solid fa-chart-line" style="color:var(--g400)"></i> Relatórios de Performance</div>
+          <div class="date-range">01/07/2026 – 16/07/2026</div>
+        </div>
+        <div class="metrics-row" id="metricsRow"></div>
+        <div class="reports-grid" id="reportsGrid"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<button class="restart-btn" onclick="restartDemo()"><i class="fa-solid fa-rotate-left"></i> Reiniciar demo</button>
+
+<script>
+const contacts = [
+  { id:0, name:'Mariana Torres', phone:'+55 11 99100-2345', avatar:'M', color:'#4ade80', preview:'Vocês atendem aos sábados?', time:'14:32', unread:0, window:'open', windowLabel:'Aberta' },
+  { id:1, name:'Carlos Beraldo', phone:'+55 21 98200-1122', avatar:'C', color:'#60a5fa', preview:'Ainda não recebi retorno...', time:'13:15', unread:2, window:'closed', windowLabel:'Expirada' },
+  { id:2, name:'Bruna Ferraz', phone:'+55 31 97300-4455', avatar:'B', color:'#f472b6', preview:'Bot: Transferindo para atend...', time:'12:48', unread:0, window:'open', windowLabel:'Aberta' },
+  { id:3, name:'Fábio Nogueira', phone:'+55 85 99400-6677', avatar:'F', color:'#fb923c', preview:'Obrigado pela ajuda!', time:'11:20', unread:0, window:'closed', windowLabel:'Expirada' },
+];
+
+const conversations = {
+  0: [
+    { type:'date', text:'Hoje' },
+    { type:'in', text:'Oi, gostaria de saber o horário de funcionamento.', time:'14:26' },
+    { type:'bot', text:'Olá! Atendemos de segunda a sexta das 8h às 18h e aos sábados das 9h às 13h. Posso ajudar com mais alguma coisa?', time:'14:26', label:'Bot respondeu automaticamente' },
+    { type:'in', text:'Vocês atendem aos sábados?', time:'14:32' },
+    { type:'bot', text:'Sim! Aos sábados o atendimento é das 9h às 13h. Quer que eu já confirme um horário para você?', time:'14:32', label:'Bot respondeu automaticamente' },
+  ],
+  1: [
+    { type:'date', text:'Ontem' },
+    { type:'in', text:'Fiz uma solicitação e ainda não tive retorno.', time:'13:10' },
+    { type:'bot', text:'Sinto muito pela demora! Pode me passar o número do protocolo ou o CPF para eu verificar?', time:'13:10', label:'Bot respondeu automaticamente' },
+    { type:'in', text:'Ainda não recebi retorno sobre minha solicitação.', time:'13:15' },
+    { type:'date', text:'Hoje – 25h depois da última mensagem' },
+    { type:'template', text:'Olá Carlos! Ainda podemos te ajudar com sua solicitação em aberto? Responda SIM para continuar o atendimento.', time:'15:02', label:'Template aprovado Meta – janela de 24h expirada' },
+  ],
+  2: [
+    { type:'date', text:'Hoje' },
+    { type:'in', text:'Preciso remarcar meu horário e mudar o endereço de atendimento.', time:'12:40' },
+    { type:'bot', text:'Entendi! Esse tipo de alteração precisa passar pela nossa equipe. Vou te transferir agora para agilizar.', time:'12:41', label:'Bot detectou: assunto fora do fluxo automático' },
+    { type:'system', text:'Transferido para atendente humano' },
+    { type:'handoff', time:'12:42' },
+    { type:'out', text:'Olá Bruna, aqui é a Camila da equipe de atendimento. Vi que você quer remarcar e mudar o endereço, pode me confirmar a nova data?', time:'12:45' },
+    { type:'in', text:'Pode ser dia 22, de manhã.', time:'12:48' },
+  ],
+  3: [
+    { type:'date', text:'Hoje' },
+    { type:'in', text:'Quais formas de pagamento vocês aceitam?', time:'11:15' },
+    { type:'bot', text:'Aceitamos Pix, cartão de crédito em até 3x sem juros e boleto. Posso te ajudar com mais alguma coisa?', time:'11:15', label:'Bot respondeu automaticamente' },
+    { type:'in', text:'Obrigado pela ajuda!', time:'11:20' },
+    { type:'bot', text:'Disponha! Qualquer dúvida é só chamar por aqui.', time:'11:20', label:'Bot respondeu automaticamente' },
+  ]
+};
+
+const quickRepliesByContact = {
+  0: ['Marcar horário', 'Endereço', 'Formas de pagamento', 'Falar com atendente'],
+  1: ['Consultar protocolo', 'Falar com atendente'],
+  2: ['Ver horários', 'Falar com atendente'],
+  3: ['Formas de pagamento', 'Ver serviços'],
+};
+
+const flowNodes = [
+  { type:'trigger', label:'Gatilho', content:'Cliente envia qualquer mensagem', sub:'Início do fluxo automático', badges:['window'] },
+  { type:'condition', label:'Verificação', content:'Janela de 24h está aberta?', sub:'Controle automático por timestamp da última interação', badges:['window'] },
+  { type:'message', label:'Resposta livre', content:'Bot identifica intenção por palavra-chave', sub:'Roteia para FAQ, agendamento ou handoff', badges:['keyword'] },
+  { type:'template', label:'Template Meta', content:'Envia mensagem pré-aprovada', sub:'Obrigatório quando a janela de 24h expira', badges:['template'] },
+  { type:'message', label:'FAQ Match', content:'Resposta automática da base de perguntas', sub:'18 perguntas configuradas no painel', badges:['keyword'] },
+  { type:'handoff', label:'Handoff humano', content:'Transfere para atendente disponível', sub:'Trigger: palavra-chave, remarcação ou baixa confiança', badges:['handoff'] },
+];
+
+const faqs = [
+  { q:'Qual o horário de funcionamento?', a:'Seg-Sex 8h-18h, Sáb 9h-13h.', tags:['horário'] },
+  { q:'Quais formas de pagamento?', a:'Pix, cartão até 3x, boleto.', tags:['pagamento'] },
+  { q:'Como marco um horário?', a:'Bot coleta data e confirma disponibilidade.', tags:['agendamento'] },
+  { q:'Vocês atendem em qual endereço?', a:'Envia endereço + link do mapa.', tags:['localização'] },
+  { q:'Como cancelo ou remarco?', a:'Encaminha para atendente humano.', tags:['handoff'] },
+];
+
+let activeContact = 0;
+let typingTimeout = null;
+
+function init(){ renderContacts(); loadConversation(0); renderFlow(); renderFaqs(); renderReports(); }
+
+function switchView(id, el){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('view-'+id).classList.add('active');
+  el.classList.add('active');
+}
+
+function renderContacts(){
+  document.getElementById('contactList').innerHTML = contacts.map((c,i)=>`
+    <div class="contact-item ${i===activeContact?'active':''}" onclick="loadConversation(${i})">
+      <div class="contact-avatar" style="background:${c.color}">${c.avatar}</div>
+      <div class="contact-info">
+        <div class="contact-name">${c.name}</div>
+        <div class="contact-preview">${c.preview}</div>
+      </div>
+      <div class="contact-meta">
+        <div class="contact-time">${c.time}</div>
+        <div class="window-badge ${c.window==='open'?'window-open':'window-closed'}">${c.windowLabel}</div>
+        ${c.unread?`<div class="unread-badge">${c.unread}</div>`:''}
+      </div>
+    </div>`).join('');
+}
+
+function loadConversation(idx){
+  activeContact = idx;
+  const c = contacts[idx];
+  document.getElementById('chatAvatar').textContent = c.avatar;
+  document.getElementById('chatAvatar').style.background = c.color;
+  document.getElementById('chatName').textContent = c.name;
+  document.getElementById('chatStatus').textContent = c.phone;
+
+  const wb = document.getElementById('windowBadge');
+  const banner = document.getElementById('windowBanner');
+  if(c.window==='open'){
+    wb.className = 'window-indicator window-open-badge';
+    wb.innerHTML = '<i class="fa-solid fa-circle" style="font-size:6px;color:var(--ok)"></i> Janela aberta <span class="window-countdown">22h restantes</span>';
+    banner.style.display = 'none';
+  } else {
+    wb.className = 'window-indicator window-closed-badge';
+    wb.innerHTML = '<i class="fa-solid fa-circle" style="font-size:6px;color:var(--warn)"></i> Janela expirada';
+    banner.style.display = 'flex';
+  }
+  renderMessages(conversations[idx]||[]);
+  renderQuickReplies(idx);
+  renderContacts();
+}
+
+function renderMessages(msgs){
+  const el = document.getElementById('chatMessages');
+  el.innerHTML = msgs.map(renderMsg).join('');
+  el.scrollTop = el.scrollHeight;
+}
+
+function renderMsg(m){
+  if(m.type==='date') return `<div class="date-divider">${m.text}</div>`;
+  if(m.type==='system') return `<div class="msg msg-system">${m.text}</div>`;
+  if(m.type==='handoff') return `
+    <div class="handoff-card">
+      <div class="handoff-card-title"><i class="fa-solid fa-user-headset"></i> Handoff para atendente</div>
+      <div style="font-size:11px;color:var(--n600)">Bot identificou assunto fora do fluxo. Transferindo...</div>
+      <div class="handoff-avatar-row">
+        <div class="agent-chip"><div class="agent-dot"></div> Camila R. – online</div>
+        <div class="agent-chip" style="color:var(--n600)">João P. – ocupado</div>
+      </div>
+    </div>`;
+  if(m.type==='bot') return `<div class="msg msg-bot"><div class="msg-bot-label"><i class="fa-solid fa-robot"></i> ${m.label}</div>${m.text}<div class="msg-time">${m.time} <span class="tick">✓✓</span></div></div>`;
+  if(m.type==='template') return `<div class="msg msg-template"><div class="msg-template-label"><i class="fa-solid fa-file-lines"></i> ${m.label}</div>${m.text}<div class="msg-time">${m.time} <span class="tick">✓✓</span></div></div>`;
+  if(m.type==='out') return `<div class="msg msg-out">${m.text}<div class="msg-time">${m.time} <span class="tick">✓✓</span></div></div>`;
+  return `<div class="msg msg-in">${m.text}<div class="msg-time">${m.time}</div></div>`;
+}
+
+function renderQuickReplies(idx){
+  document.getElementById('quickReplies').innerHTML = (quickRepliesByContact[idx]||[]).map(q=>`<button class="qr-btn" onclick="clickQR('${q}')">${q}</button>`).join('');
+}
+
+const botResponses = {
+  'horário':'Atendemos de segunda a sexta das 8h às 18h e aos sábados das 9h às 13h.',
+  'pagamento':'Aceitamos Pix, cartão de crédito em até 3x sem juros e boleto.',
+  'endereço':'Estamos na Av. Paulista, 1200, sala 402. Posso te enviar a localização no mapa.',
+  'marcar':'Perfeito! Para marcar um horário, me diga o dia e período (manhã ou tarde) de sua preferência.',
+  'agendar':'Claro! Me diga o dia e período (manhã ou tarde) de sua preferência para eu verificar disponibilidade.',
+  'serviços':'Trabalhamos com atendimento presencial e remoto. Quer que eu te envie a lista completa de serviços?',
+  'atendente':null, 'humano':null, 'remarcar':null, 'cancelar':null,
+};
+
+function getUserTime(){ const d=new Date(); return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0'); }
+
+function addMessage(msg){
+  conversations[activeContact] = conversations[activeContact]||[];
+  conversations[activeContact].push(msg);
+  const el = document.getElementById('chatMessages');
+  const div = document.createElement('div');
+  div.innerHTML = renderMsg(msg);
+  Array.from(div.children).forEach(c=>el.appendChild(c));
+  el.scrollTop = el.scrollHeight;
+}
+
+function sendUserMsg(){
+  const inp = document.getElementById('chatInput');
+  const text = inp.value.trim();
+  if(!text) return;
+  inp.value = '';
+  addMessage({type:'in', text, time:getUserTime()});
+  scheduleBot(text);
+}
+function clickQR(text){ addMessage({type:'in', text, time:getUserTime()}); scheduleBot(text); }
+function scheduleBot(text){ clearTimeout(typingTimeout); typingTimeout = setTimeout(()=>respondBot(text), 850); }
+
+function respondBot(text){
+  const lower = text.toLowerCase();
+  if(lower.includes('atendente')||lower.includes('humano')||lower.includes('remarcar')||lower.includes('cancelar')){
+    addMessage({type:'bot', text:'Claro! Vou te conectar com um atendente disponível agora.', time:getUserTime(), label:'Bot'});
+    setTimeout(()=>{ addMessage({type:'system', text:'Transferido para atendente humano'}); addMessage({type:'handoff', time:getUserTime()}); }, 600);
+    return;
+  }
+  if(contacts[activeContact].window==='closed'){
+    addMessage({type:'template', text:'Olá! Notamos que você entrou em contato. Para continuar, responda SIM e nossa equipe irá te ajudar.', time:getUserTime(), label:'Template Meta – janela de 24h expirada'});
+    return;
+  }
+  for(const key of Object.keys(botResponses)){
+    if(lower.includes(key) && botResponses[key]){
+      addMessage({type:'bot', text:botResponses[key], time:getUserTime(), label:'Bot respondeu automaticamente'});
+      return;
+    }
+  }
+  addMessage({type:'bot', text:'Entendi! Deixa eu verificar isso para você. Pode me confirmar seu nome completo?', time:getUserTime(), label:'Bot (baixa confiança – considere handoff)'});
+}
+
+function renderFlow(){
+  document.getElementById('flowNodes').innerHTML = flowNodes.map((n,i)=>`
+    <div class="flow-node" onclick="this.classList.toggle('selected')">
+      <div class="flow-node-type node-${n.type}">${n.label.toUpperCase()}</div>
+      <div class="flow-node-content">${n.content}</div>
+      <div class="flow-node-sub">${n.sub}</div>
+      <div class="node-badges">${(n.badges||[]).map(b=>`<span class="node-badge badge-${b}">${badgeLabel(b)}</span>`).join('')}</div>
+    </div>
+    ${i<flowNodes.length-1?'<div class="flow-arrow"><i class="fa-solid fa-arrow-down"></i></div>':''}`).join('');
+}
+function badgeLabel(b){ return {window:'Janela 24h', keyword:'Palavra-chave', template:'Template Meta', handoff:'Handoff'}[b]||b; }
+
+function renderFaqs(){
+  document.getElementById('faqList').innerHTML = faqs.map(f=>`
+    <div class="faq-item">
+      <div class="faq-q">${f.q}</div>
+      <div class="faq-a">${f.a}</div>
+      <div class="faq-tags">${f.tags.map(t=>`<span class="faq-tag">${t}</span>`).join('')}</div>
+    </div>`).join('');
+}
+function addFaq(){
+  const q = prompt('Nova pergunta:');
+  if(!q) return;
+  faqs.push({q, a:'Resposta não configurada ainda.', tags:['novo']});
+  renderFaqs();
+}
+
+function renderReports(){
+  document.getElementById('metricsRow').innerHTML = [
+    {label:'Mensagens recebidas', value:'938', delta:'+22% vs mês ant.', up:true},
+    {label:'Respostas automáticas', value:'86%', delta:'Taxa de automação', up:true},
+    {label:'Handoffs para humano', value:'96', delta:'10% do total', up:false},
+    {label:'Tempo médio de resposta', value:'< 2s', delta:'Bot. ~3h humano.', up:true},
+  ].map(m=>`
+    <div class="metric-card">
+      <div class="metric-label">${m.label}</div>
+      <div class="metric-value">${m.value}</div>
+      <div class="metric-delta ${m.up?'delta-up':'delta-down'}">${m.delta}</div>
+    </div>`).join('');
+
+  const volData=[310,280,360,340,390,300,270,340,380,410,350,370,390,340,430,420,390];
+  const maxVol=Math.max(...volData);
+  const days=['1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17'];
+  const topFaqs=[
+    {label:'Horário de funcionamento', val:34, pct:100},
+    {label:'Formas de pagamento', val:24, pct:70},
+    {label:'Agendamento de horário', val:19, pct:56},
+    {label:'Endereço / localização', val:14, pct:41},
+    {label:'Cancelamento / remarcação', val:9, pct:26},
+  ];
+  const handoffs=[
+    {name:'Remarcação de horário', reason:'Fora do fluxo automático', time:'12:48', status:'resolved', agent:'Camila R.'},
+    {name:'Dúvida sobre cobrança', reason:'Fora do fluxo automático', time:'11:33', status:'pending', agent:'João P.'},
+    {name:'Cliente indeciso', reason:'Baixa confiança', time:'10:15', status:'resolved', agent:'Camila R.'},
+  ];
+
+  document.getElementById('reportsGrid').innerHTML = `
+    <div class="report-card">
+      <div class="report-card-title">Volume diário de mensagens <span class="report-card-badge">Jul 2026</span></div>
+      <div class="vol-chart">${volData.map((v,i)=>`<div class="vol-bar" style="height:${Math.round(v/maxVol*100)}%;background:${i===16?'var(--g500)':'var(--n300)'}" data-tip="${days[i]}/07: ${v} msgs"></div>`).join('')}</div>
+      <div class="vol-labels">${days.map(d=>`<div class="vol-label">${d}</div>`).join('')}</div>
+    </div>
+    <div class="report-card">
+      <div class="report-card-title">Janelas de sessão</div>
+      <div class="window-stats">
+        <div class="window-stat"><div class="window-stat-val window-open-color">81%</div><div class="window-stat-label">Janela aberta</div></div>
+        <div class="window-stat"><div class="window-stat-val window-closed-color">19%</div><div class="window-stat-label">Janela expirada</div></div>
+      </div>
+      <div style="font-size:10.5px;color:var(--n600);margin-bottom:8px">19% das sessões atingiram a janela de 24h. Templates enviados: <strong style="color:var(--warn)">178</strong></div>
+      <div class="bar-row"><div class="bar-label">Template Retomada</div><div class="bar-track"><div class="bar-fill" style="width:64%;background:var(--warn)"></div></div><div class="bar-val">114</div></div>
+      <div class="bar-row" style="margin-top:6px"><div class="bar-label">Template Confirmação</div><div class="bar-track"><div class="bar-fill" style="width:36%;background:#c084fc"></div></div><div class="bar-val">64</div></div>
+    </div>
+    <div class="report-card">
+      <div class="report-card-title">Perguntas mais frequentes</div>
+      <div class="bar-chart">${topFaqs.map(f=>`
+        <div class="bar-row"><div class="bar-label">${f.label}</div><div class="bar-track"><div class="bar-fill" style="width:${f.pct}%;background:var(--g500)"></div></div><div class="bar-val">${f.val}%</div></div>`).join('')}</div>
+    </div>
+    <div class="report-card">
+      <div class="report-card-title">Handoffs recentes <span class="report-card-badge">${handoffs.length} hoje</span></div>
+      <div class="handoff-list">${handoffs.map(h=>`
+        <div class="handoff-row">
+          <div class="handoff-avatar-sm" style="background:var(--n200);color:var(--n700)">${h.agent.charAt(0)}</div>
+          <div class="handoff-info"><div class="handoff-name">${h.name}</div><div class="handoff-reason">${h.reason} · ${h.agent}</div></div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+            <div class="handoff-time">${h.time}</div>
+            <div class="${h.status==='resolved'?'resolved-chip':'pending-chip'}">${h.status==='resolved'?'Resolvido':'Em andamento'}</div>
+          </div>
+        </div>`).join('')}</div>
+    </div>`;
+}
+
+function restartDemo(){
+  activeContact = 0;
+  init();
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('view-chat').classList.add('active');
+  document.querySelectorAll('.nav-item')[0].classList.add('active');
+}
+
+init();
+</script>
+</body>
+</html>
