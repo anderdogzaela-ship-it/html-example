@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orbita - Gerenciador de Instancias Isoladas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+:root{
+  --bg:#0a0c11;
+  --bg-alt:#0e1117;
+  --panel:#12151c;
+  --panel-2:#171b24;
+  --panel-3:#1c202b;
+  --border:#242938;
+  --border-soft:#1a1e29;
+  --text:#eceef3;
+  --text-dim:#9aa1b5;
+  --text-faint:#5c6479;
+  --gold:#d9a441;
+  --gold-bright:#f0bc4e;
+  --gold-dim:#8a6a2a;
+  --gold-glow:rgba(217,164,65,0.18);
+  --green:#3ddc97;
+  --green-dim:rgba(61,220,151,0.14);
+  --red:#f2685c;
+  --red-dim:rgba(242,104,92,0.14);
+  --gray:#6b7180;
+  --shadow-lg:0 24px 60px -20px rgba(0,0,0,0.6);
+  --shadow-md:0 12px 30px -12px rgba(0,0,0,0.5);
+  --radius:14px;
+  --radius-sm:9px;
+  --ease-spring:cubic-bezier(.34,1.56,.64,1);
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{
+  font-family:'Lexend',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  -webkit-font-smoothing:antialiased;
+  overflow:hidden;
+  font-size:14px;
+}
+::-webkit-scrollbar{width:8px;height:8px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:8px;}
+::-webkit-scrollbar-thumb:hover{background:var(--gold-dim);}
+
+.mono{font-family:'Roboto Mono',monospace;}
+
+/* ---------- App window shell ---------- */
+.app-shell{
+  width:100%;
+  height:100vh;
+  display:flex;
+  flex-direction:column;
+  position:relative;
+}
+.titlebar{
+  height:44px;
+  min-height:44px;
+  background:linear-gradient(180deg,#14171f,#101319);
+  border-bottom:1px solid var(--border-soft);
+  display:flex;
+  align-items:center;
+  padding:0 16px;
+  gap:14px;
+  position:relative;
+  z-index:20;
+}
+.win-dots{display:flex;gap:8px;}
+.win-dots span{width:11px;height:11px;border-radius:50%;display:inline-block;transition:filter .15s;}
+.win-dots span:nth-child(1){background:#f2685c;}
+.win-dots span:nth-child(2){background:#e8b13c;}
+.win-dots span:nth-child(3){background:#3ddc97;}
+.win-dots:hover span{filter:brightness(1.25);}
+.titlebar-title{
+  flex:1;
+  text-align:center;
+  font-size:12.5px;
+  color:var(--text-faint);
+  letter-spacing:.3px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+}
+.titlebar-title i{font-size:11px;color:var(--gold);}
+.titlebar-actions{display:flex;gap:10px;align-items:center;}
+.tb-btn{
+  background:var(--panel-2);
+  border:1px solid var(--border);
+  color:var(--text-dim);
+  font-size:11.5px;
+  padding:6px 12px;
+  border-radius:7px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  transition:all .15s var(--ease);
+}
+.tb-btn:hover{background:var(--panel-3);color:var(--text);border-color:var(--gold-dim);transform:translateY(-1px);}
+.tb-btn:active{transform:translateY(0) scale(.97);}
+
+.body-row{
+  flex:1;
+  display:flex;
+  min-height:0;
+}
+
+/* ---------- Sidebar ---------- */
+.sidebar{
+  width:224px;
+  min-width:224px;
+  background:var(--bg-alt);
+  border-right:1px solid var(--border-soft);
+  display:flex;
+  flex-direction:column;
+  padding:20px 12px;
+}
+.brand{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:4px 10px 22px 10px;
+}
+.brand-mark{
+  width:32px;height:32px;border-radius:9px;
+  background:radial-gradient(circle at 30% 30%, var(--gold-bright), var(--gold-dim));
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 18px var(--gold-glow);
+  position:relative;
+}
+.brand-mark i{color:#151109;font-size:14px;}
+.brand-text{display:flex;flex-direction:column;}
+.brand-text b{font-size:15.5px;font-weight:700;letter-spacing:.2px;}
+.brand-text span{font-size:10.5px;color:var(--text-faint);letter-spacing:.4px;text-transform:uppercase;}
+
+.nav{display:flex;flex-direction:column;gap:3px;flex:1;}
+.nav-item{
+  display:flex;align-items:center;gap:11px;
+  padding:10px 12px;border-radius:9px;
+  color:var(--text-dim);font-size:13.5px;font-weight:500;
+  cursor:pointer;transition:all .15s var(--ease);
+  position:relative;border:1px solid transparent;
+}
+.nav-item i{width:16px;text-align:center;font-size:14px;}
+.nav-item:hover{background:var(--panel-2);color:var(--text);}
+.nav-item.active{
+  background:linear-gradient(90deg, var(--gold-glow), transparent);
+  color:var(--gold-bright);
+  border-color:rgba(217,164,65,0.25);
+}
+.nav-item.active i{color:var(--gold-bright);}
+.nav-badge{
+  margin-left:auto;font-size:10px;background:var(--panel-3);
+  color:var(--text-faint);padding:2px 7px;border-radius:20px;
+  font-family:'Roboto Mono',monospace;
+}
+.nav-item.active .nav-badge{background:rgba(217,164,65,0.2);color:var(--gold-bright);}
+
+.sidebar-footer{
+  border-top:1px solid var(--border-soft);
+  padding-top:14px;margin-top:10px;
+  display:flex;align-items:center;gap:10px;
+}
+.status-dot-wrap{position:relative;width:9px;height:9px;}
+.status-dot-wrap .core{width:9px;height:9px;border-radius:50%;background:var(--green);display:block;}
+.status-dot-wrap .ring{position:absolute;inset:-4px;border-radius:50%;border:1.5px solid var(--green);opacity:.5;animation:pulseRing 2s ease-out infinite;}
+@keyframes pulseRing{0%{transform:scale(.6);opacity:.6;}100%{transform:scale(1.9);opacity:0;}}
+.sidebar-footer-text{font-size:11.5px;color:var(--text-faint);line-height:1.3;}
+.sidebar-footer-text b{color:var(--text-dim);font-weight:600;}
+
+/* ---------- Main content ---------- */
+.main{
+  flex:1;
+  overflow-y:auto;
+  padding:26px 32px 60px 32px;
+  position:relative;
+}
+.page{display:none;animation:fadeUp .38s var(--ease);}
+.page.active{display:block;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:22px;gap:20px;flex-wrap:wrap;}
+.page-head h1{font-size:22px;font-weight:700;letter-spacing:-.2px;}
+.page-head p{color:var(--text-faint);font-size:13px;margin-top:4px;}
+.primary-btn{
+  background:linear-gradient(135deg,var(--gold-bright),var(--gold));
+  color:#171208;border:none;font-weight:700;font-size:13px;
+  padding:11px 18px;border-radius:10px;cursor:pointer;
+  display:flex;align-items:center;gap:8px;
+  box-shadow:0 8px 22px -8px rgba(217,164,65,0.55);
+  transition:all .18s var(--ease-spring);
+}
+.primary-btn:hover{transform:translateY(-2px);box-shadow:0 12px 28px -8px rgba(217,164,65,0.7);}
+.primary-btn:active{transform:translateY(0) scale(.97);}
+.ghost-btn{
+  background:var(--panel-2);border:1px solid var(--border);color:var(--text-dim);
+  font-size:12.5px;font-weight:500;padding:9px 14px;border-radius:9px;cursor:pointer;
+  display:flex;align-items:center;gap:7px;transition:all .15s var(--ease);
+}
+.ghost-btn:hover{color:var(--text);border-color:var(--gold-dim);background:var(--panel-3);}
+
+/* KPI tiles */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}
+.kpi{
+  background:linear-gradient(180deg,var(--panel-2),var(--panel));
+  border:1px solid var(--border-soft);border-radius:var(--radius);
+  padding:18px 18px 16px 18px;position:relative;overflow:hidden;
+  transition:transform .2s var(--ease), border-color .2s;
+}
+.kpi:hover{transform:translateY(-3px);border-color:var(--gold-dim);}
+.kpi::after{
+  content:'';position:absolute;top:-40%;right:-30%;width:120px;height:120px;
+  background:radial-gradient(circle,var(--gold-glow),transparent 70%);
+  pointer-events:none;
+}
+.kpi-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.kpi-icon{width:30px;height:30px;border-radius:8px;background:var(--panel-3);display:flex;align-items:center;justify-content:center;color:var(--gold-bright);font-size:13px;}
+.kpi-trend{font-size:11px;color:var(--green);display:flex;align-items:center;gap:4px;}
+.kpi-value{font-size:26px;font-weight:700;letter-spacing:-.5px;font-family:'Roboto Mono',monospace;}
+.kpi-label{font-size:12px;color:var(--text-faint);margin-top:4px;}
+
+/* Panels */
+.grid-2{display:grid;grid-template-columns:1.55fr 1fr;gap:16px;}
+.panel{
+  background:var(--panel);border:1px solid var(--border-soft);border-radius:var(--radius);
+  padding:20px;
+}
+.panel-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.panel-head h3{font-size:14.5px;font-weight:600;display:flex;align-items:center;gap:8px;}
+.panel-head h3 i{color:var(--gold-bright);font-size:13px;}
+.panel-head span.tag{font-size:10.5px;color:var(--text-faint);background:var(--panel-2);padding:3px 9px;border-radius:20px;}
+
+/* Activity log */
+.log-list{display:flex;flex-direction:column;gap:2px;max-height:320px;overflow-y:auto;}
+.log-item{
+  display:flex;gap:11px;padding:10px 8px;border-radius:9px;
+  transition:background .15s;
+}
+.log-item:hover{background:var(--panel-2);}
+.log-dot{width:7px;height:7px;border-radius:50%;margin-top:5px;flex-shrink:0;}
+.log-dot.ok{background:var(--green);}
+.log-dot.warn{background:var(--gold-bright);}
+.log-dot.danger{background:var(--red);}
+.log-text{font-size:12.5px;color:var(--text-dim);line-height:1.45;}
+.log-text b{color:var(--text);font-weight:600;}
+.log-time{font-size:10.5px;color:var(--text-faint);margin-top:2px;font-family:'Roboto Mono',monospace;}
+
+/* mini instance list in dashboard */
+.mini-inst{display:flex;flex-direction:column;gap:8px;}
+.mini-row{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:9px;border:1px solid var(--border-soft);background:var(--panel-2);}
+.mini-avatar{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:700;color:#151109;flex-shrink:0;}
+.mini-row .mname{font-size:12.5px;font-weight:600;flex:1;}
+.mini-row .mstatus{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:600;}
+.mstatus.on{background:var(--green-dim);color:var(--green);}
+.mstatus.off{background:rgba(107,113,128,0.18);color:var(--gray);}
+
+/* Instances grid */
+.toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:12px;}
+.chip-row{display:flex;gap:8px;}
+.chip{
+  font-size:12px;padding:7px 13px;border-radius:20px;border:1px solid var(--border);
+  color:var(--text-dim);cursor:pointer;transition:all .15s;background:var(--panel-2);
+}
+.chip.active{background:var(--gold-glow);border-color:rgba(217,164,65,0.4);color:var(--gold-bright);}
+.chip:hover:not(.active){border-color:var(--gold-dim);color:var(--text);}
+
+.inst-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(272px,1fr));gap:14px;}
+.inst-card{
+  background:var(--panel);border:1px solid var(--border-soft);border-radius:var(--radius);
+  padding:16px;transition:transform .2s var(--ease), border-color .2s, box-shadow .2s;
+  display:flex;flex-direction:column;gap:12px;
+}
+.inst-card:hover{transform:translateY(-3px);border-color:var(--gold-dim);box-shadow:var(--shadow-md);}
+.inst-card.stopped{opacity:.68;}
+.inst-top{display:flex;align-items:center;gap:10px;}
+.inst-avatar{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#151109;flex-shrink:0;}
+.inst-name{font-size:13.5px;font-weight:600;}
+.inst-partition{font-size:10.5px;color:var(--text-faint);font-family:'Roboto Mono',monospace;margin-top:1px;}
+.inst-status{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:10.5px;font-weight:600;padding:3px 9px;border-radius:20px;}
+.inst-status.on{background:var(--green-dim);color:var(--green);}
+.inst-status.off{background:rgba(107,113,128,0.18);color:var(--gray);}
+.status-dot-sm{width:6px;height:6px;border-radius:50%;background:currentColor;}
+.status-dot-sm.pulse{animation:pulseDot 1.6s ease-in-out infinite;}
+@keyframes pulseDot{0%,100%{opacity:1;}50%{opacity:.35;}}
+
+.inst-meta{display:flex;gap:14px;font-size:11px;color:var(--text-faint);}
+.inst-meta span{display:flex;align-items:center;gap:5px;}
+.inst-meta i{font-size:10px;color:var(--gold-bright);}
+
+.mem-bar-wrap{display:flex;flex-direction:column;gap:5px;}
+.mem-bar-track{height:5px;border-radius:6px;background:var(--panel-2);overflow:hidden;}
+.mem-bar-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--gold-dim),var(--gold-bright));transition:width .6s var(--ease);}
+.mem-bar-label{font-size:10px;color:var(--text-faint);display:flex;justify-content:space-between;}
+
+.inst-actions{display:flex;gap:7px;margin-top:2px;}
+.icon-btn{
+  width:30px;height:30px;border-radius:8px;background:var(--panel-2);border:1px solid var(--border);
+  color:var(--text-dim);display:flex;align-items:center;justify-content:center;cursor:pointer;
+  font-size:12px;transition:all .15s var(--ease-spring);
+}
+.icon-btn:hover{transform:translateY(-2px);color:var(--text);border-color:var(--gold-dim);}
+.icon-btn.danger:hover{color:var(--red);border-color:rgba(242,104,92,0.4);}
+.icon-btn.play:hover{color:var(--green);border-color:rgba(61,220,151,0.4);}
+.icon-btn.active-icon{background:var(--gold-glow);color:var(--gold-bright);border-color:rgba(217,164,65,0.35);}
+
+/* Audit page */
+.audit-banner{
+  display:flex;align-items:center;gap:16px;padding:20px 22px;border-radius:var(--radius);
+  background:linear-gradient(120deg,rgba(61,220,151,0.12),rgba(61,220,151,0.02));
+  border:1px solid rgba(61,220,151,0.28);margin-bottom:20px;
+}
+.audit-banner .aicon{width:46px;height:46px;border-radius:12px;background:rgba(61,220,151,0.16);display:flex;align-items:center;justify-content:center;color:var(--green);font-size:19px;flex-shrink:0;}
+.audit-banner h3{font-size:15.5px;font-weight:700;color:var(--green);}
+.audit-banner p{font-size:12.5px;color:var(--text-dim);margin-top:3px;}
+.audit-banner .aright{margin-left:auto;}
+
+.audit-table{width:100%;border-collapse:collapse;}
+.audit-table th{
+  text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-faint);
+  padding:10px 12px;border-bottom:1px solid var(--border-soft);font-weight:600;
+}
+.audit-table td{padding:12px;border-bottom:1px solid var(--border-soft);font-size:12.5px;vertical-align:middle;}
+.audit-table tr:hover td{background:var(--panel-2);}
+.check-ok{color:var(--green);font-size:13px;}
+.check-cell{display:flex;align-items:center;gap:6px;}
+.audit-name{display:flex;align-items:center;gap:9px;}
+.audit-avatar{width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:700;color:#151109;}
+
+.skeleton-row td{padding:12px;}
+.skeleton{height:12px;border-radius:5px;background:linear-gradient(90deg,var(--panel-2) 25%,var(--panel-3) 50%,var(--panel-2) 75%);background-size:200% 100%;animation:shimmer 1.3s linear infinite;}
+@keyframes shimmer{0%{background-position:200% 0;}100%{background-position:-200% 0;}}
+
+/* Settings page */
+.setting-row{
+  display:flex;align-items:center;justify-content:space-between;padding:16px 4px;
+  border-bottom:1px solid var(--border-soft);gap:20px;
+}
+.setting-row:last-child{border-bottom:none;}
+.setting-text b{font-size:13.5px;font-weight:600;display:block;}
+.setting-text span{font-size:12px;color:var(--text-faint);display:block;margin-top:3px;line-height:1.4;}
+.toggle{width:42px;height:24px;border-radius:20px;background:var(--panel-3);border:1px solid var(--border);position:relative;cursor:pointer;flex-shrink:0;transition:background .2s;}
+.toggle::after{content:'';position:absolute;width:18px;height:18px;border-radius:50%;background:var(--text-faint);top:2px;left:2px;transition:all .22s var(--ease-spring);}
+.toggle.on{background:var(--gold-glow);border-color:rgba(217,164,65,0.5);}
+.toggle.on::after{left:20px;background:var(--gold-bright);}
+.locked-badge{font-size:9.5px;background:var(--panel-3);color:var(--text-faint);padding:3px 8px;border-radius:20px;font-weight:600;letter-spacing:.3px;}
+.setting-block.locked{opacity:.5;pointer-events:none;}
+.slider-track{width:180px;height:5px;background:var(--panel-3);border-radius:6px;position:relative;}
+.slider-fill{position:absolute;left:0;top:0;height:100%;width:55%;background:var(--gold-bright);border-radius:6px;}
+.slider-handle{position:absolute;left:55%;top:50%;transform:translate(-50%,-50%);width:15px;height:15px;border-radius:50%;background:var(--gold-bright);border:2px solid var(--bg);box-shadow:0 0 0 1px var(--gold-dim);cursor:pointer;}
+.slider-val{font-size:11px;color:var(--text-faint);text-align:right;margin-top:6px;font-family:'Roboto Mono',monospace;}
+
+/* Modal */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(4,5,8,0.72);backdrop-filter:blur(6px);
+  display:none;align-items:center;justify-content:center;z-index:100;opacity:0;transition:opacity .2s;
+}
+.modal-overlay.show{display:flex;opacity:1;}
+.modal{
+  width:420px;background:var(--panel);border:1px solid var(--border);border-radius:16px;
+  padding:24px;box-shadow:var(--shadow-lg);transform:scale(.92) translateY(10px);transition:transform .25s var(--ease-spring);
+}
+.modal-overlay.show .modal{transform:scale(1) translateY(0);}
+.modal h3{font-size:16px;font-weight:700;margin-bottom:4px;}
+.modal p.sub{font-size:12px;color:var(--text-faint);margin-bottom:18px;}
+.field{margin-bottom:14px;}
+.field label{font-size:11.5px;color:var(--text-dim);display:block;margin-bottom:6px;font-weight:500;}
+.field input[type=text]{
+  width:100%;background:var(--panel-2);border:1px solid var(--border);border-radius:9px;
+  padding:10px 12px;color:var(--text);font-family:'Lexend',sans-serif;font-size:13px;outline:none;transition:border-color .15s;
+}
+.field input[type=text]:focus{border-color:var(--gold-dim);}
+.radio-group{display:flex;flex-direction:column;gap:8px;}
+.radio-opt{
+  display:flex;align-items:flex-start;gap:10px;padding:11px 12px;border-radius:9px;border:1px solid var(--border);
+  cursor:pointer;transition:all .15s;
+}
+.radio-opt:hover{border-color:var(--gold-dim);}
+.radio-opt.selected{background:var(--gold-glow);border-color:rgba(217,164,65,0.4);}
+.radio-dot{width:15px;height:15px;border-radius:50%;border:2px solid var(--border);flex-shrink:0;margin-top:1px;position:relative;}
+.radio-opt.selected .radio-dot{border-color:var(--gold-bright);}
+.radio-opt.selected .radio-dot::after{content:'';position:absolute;inset:2.5px;border-radius:50%;background:var(--gold-bright);}
+.radio-opt b{font-size:12.5px;display:block;}
+.radio-opt span{font-size:11px;color:var(--text-faint);display:block;margin-top:2px;line-height:1.4;}
+.modal-actions{display:flex;gap:10px;margin-top:20px;}
+.modal-actions .ghost-btn,.modal-actions .primary-btn{flex:1;justify-content:center;}
+
+/* Toasts */
+.toast-wrap{position:fixed;bottom:22px;right:22px;display:flex;flex-direction:column;gap:10px;z-index:200;}
+.toast{
+  display:flex;align-items:center;gap:10px;background:var(--panel-3);border:1px solid var(--border);
+  border-radius:11px;padding:12px 16px;font-size:12.5px;box-shadow:var(--shadow-md);
+  transform:translateY(16px);opacity:0;animation:toastIn .4s var(--ease-spring) forwards;min-width:260px;
+}
+@keyframes toastIn{to{transform:translateY(0);opacity:1;}}
+.toast i{color:var(--green);font-size:14px;}
+.toast.warn i{color:var(--gold-bright);}
+.toast b{font-weight:600;}
+
+/* empty state */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center;}
+.empty-state i{font-size:34px;color:var(--text-faint);margin-bottom:14px;}
+.empty-state h4{font-size:14.5px;margin-bottom:6px;}
+.empty-state p{font-size:12.5px;color:var(--text-faint);max-width:280px;}
+
+/* misc */
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+@media (max-width:1000px){
+  .kpi-row{grid-template-columns:repeat(2,1fr);}
+  .grid-2{grid-template-columns:1fr;}
+  .sidebar{width:190px;min-width:190px;}
+}
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+  <div class="titlebar">
+    <div class="win-dots"><span></span><span></span><span></span></div>
+    <div class="titlebar-title"><i class="fa-solid fa-shield-halved"></i> Orbita - Gerenciador de Instancias Isoladas</div>
+    <div class="titlebar-actions">
+      <button class="tb-btn" onclick="restartDemo()"><i class="fa-solid fa-rotate-left"></i> Reiniciar Demo</button>
+    </div>
+  </div>
+
+  <div class="body-row">
+    <div class="sidebar">
+      <div class="brand">
+        <div class="brand-mark"><i class="fa-solid fa-circle-nodes"></i></div>
+        <div class="brand-text"><b>Orbita</b><span>Multi-instancia</span></div>
+      </div>
+      <div class="nav">
+        <div class="nav-item active" data-page="dashboard"><i class="fa-solid fa-gauge-high"></i> Dashboard</div>
+        <div class="nav-item" data-page="instances"><i class="fa-solid fa-window-restore"></i> Instancias <span class="nav-badge" id="navInstCount">10</span></div>
+        <div class="nav-item" data-page="audit"><i class="fa-solid fa-shield-check"></i> Auditoria de Isolamento</div>
+        <div class="nav-item" data-page="settings"><i class="fa-solid fa-sliders"></i> Configuracoes</div>
+      </div>
+      <div class="sidebar-footer">
+        <div class="status-dot-wrap"><span class="core"></span><span class="ring"></span></div>
+        <div class="sidebar-footer-text"><b>Watchdog ativo</b><br>Monitorando processos</div>
+      </div>
+    </div>
+
+    <div class="main">
+
+      <!-- ================= DASHBOARD ================= -->
+      <div class="page active" id="page-dashboard">
+        <div class="page-head">
+          <div>
+            <h1>Visao geral</h1>
+            <p>Status das instancias isoladas em tempo real</p>
+          </div>
+          <button class="primary-btn" onclick="openModal()"><i class="fa-solid fa-plus"></i> Nova Instancia</button>
+        </div>
+
+        <div class="kpi-row">
+          <div class="kpi">
+            <div class="kpi-top"><div class="kpi-icon"><i class="fa-solid fa-play"></i></div><div class="kpi-trend"><i class="fa-solid fa-arrow-up"></i></div></div>
+            <div class="kpi-value" data-count="7" id="kpiActive">0</div>
+            <div class="kpi-label">Instancias ativas / 10</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-top"><div class="kpi-icon"><i class="fa-solid fa-shield-check"></i></div></div>
+            <div class="kpi-value" data-count="10" id="kpiIsolated">0</div>
+            <div class="kpi-label">Sessoes isoladas verificadas</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-top"><div class="kpi-icon"><i class="fa-solid fa-memory"></i></div></div>
+            <div class="kpi-value"><span data-count="1.8" data-decimal="1" id="kpiMem">0</span> GB</div>
+            <div class="kpi-label">Memoria total em uso</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-top"><div class="kpi-icon"><i class="fa-solid fa-clock-rotate-left"></i></div></div>
+            <div class="kpi-value mono">4h32m</div>
+            <div class="kpi-label">Uptime medio por instancia</div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-head">
+              <h3><i class="fa-solid fa-list-check"></i> Atividade recente</h3>
+              <span class="tag">ao vivo</span>
+            </div>
+            <div class="log-list" id="logList"></div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <h3><i class="fa-solid fa-window-restore"></i> Instancias</h3>
+              <span class="tag" style="cursor:pointer" onclick="goPage('instances')">ver todas</span>
+            </div>
+            <div class="mini-inst" id="miniInstList"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= INSTANCES ================= -->
+      <div class="page" id="page-instances">
+        <div class="page-head">
+          <div>
+            <h1>Instancias</h1>
+            <p>Cada card e um processo Chromium isolado, com sessao, cookies e storage proprios</p>
+          </div>
+          <button class="primary-btn" onclick="openModal()"><i class="fa-solid fa-plus"></i> Nova Instancia</button>
+        </div>
+        <div class="toolbar">
+          <div class="chip-row">
+            <div class="chip active" data-filter="all" onclick="setFilter('all',this)">Todas</div>
+            <div class="chip" data-filter="on" onclick="setFilter('on',this)">Ativas</div>
+            <div class="chip" data-filter="off" onclick="setFilter('off',this)">Paradas</div>
+          </div>
+          <div class="ghost-btn" onclick="auditAll()"><i class="fa-solid fa-shield-check"></i> Verificar isolamento de todas</div>
+        </div>
+        <div class="inst-grid" id="instGrid"></div>
+      </div>
+
+      <!-- ================= AUDIT ================= -->
+      <div class="page" id="page-audit">
+        <div class="page-head">
+          <div>
+            <h1>Auditoria de isolamento</h1>
+            <p>Confirmacao de que cada instancia nao compartilha cookies, storage ou cache com as demais</p>
+          </div>
+          <button class="ghost-btn" onclick="runAudit()"><i class="fa-solid fa-arrows-rotate"></i> Executar auditoria agora</button>
+        </div>
+
+        <div class="audit-banner">
+          <div class="aicon"><i class="fa-solid fa-shield-halved"></i></div>
+          <div>
+            <h3>Isolamento verificado</h3>
+            <p>10 de 10 instancias com partition propria confirmada. Nenhum vazamento de sessao detectado.</p>
+          </div>
+          <div class="aright"><span class="tag" style="border:1px solid rgba(61,220,151,0.3);color:var(--green);background:rgba(61,220,151,0.1)">ultima checagem: agora</span></div>
+        </div>
+
+        <div class="panel" style="padding:0;overflow:hidden;">
+          <div style="overflow-x:auto;">
+            <table class="audit-table">
+              <thead>
+                <tr>
+                  <th>Instancia</th>
+                  <th>Partition ID</th>
+                  <th>Cookies</th>
+                  <th>LocalStorage</th>
+                  <th>Cache</th>
+                  <th>Verificado</th>
+                </tr>
+              </thead>
+              <tbody id="auditBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= SETTINGS ================= -->
+      <div class="page" id="page-settings">
+        <div class="page-head">
+          <div>
+            <h1>Configuracoes</h1>
+            <p>Comportamento do gerenciador e limites de recursos</p>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-bottom:16px;">
+          <div class="setting-row">
+            <div class="setting-text">
+              <b>Watchdog de processos</b>
+              <span>Reinicia automaticamente uma instancia que travou ou fechou de forma abrupta, sem derrubar as outras 9</span>
+            </div>
+            <div class="toggle on" id="toggleWatchdog" onclick="this.classList.toggle('on')"></div>
+          </div>
+          <div class="setting-row">
+            <div class="setting-text">
+              <b>Particao persistente por padrao</b>
+              <span>Cada nova instancia recebe uma partition persist: fixada na criacao da BrowserWindow, nunca reaproveitada</span>
+            </div>
+            <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+          </div>
+          <div class="setting-row">
+            <div class="setting-text">
+              <b>Limite de memoria por instancia</b>
+              <span>Alerta quando um processo Chromium isolado ultrapassa o limite configurado</span>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;">
+              <div class="slider-track"><div class="slider-fill"></div><div class="slider-handle"></div></div>
+              <div class="slider-val">280 MB</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel setting-block locked">
+          <div class="panel-head">
+            <h3><i class="fa-solid fa-lock"></i> Rede por instancia</h3>
+            <span class="locked-badge">FASE 2</span>
+          </div>
+          <div class="setting-row">
+            <div class="setting-text">
+              <b>Proxy dedicado por instancia</b>
+              <span>Associar um proxy ou IP de saida diferente para cada sessao isolada</span>
+            </div>
+            <div class="toggle"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h3>Nova instancia isolada</h3>
+    <p class="sub">Uma nova partition e criada e fixada antes da janela abrir</p>
+    <div class="field">
+      <label>Nome da instancia</label>
+      <input type="text" id="newInstName" placeholder="Ex: Atendimento Loja 3">
+    </div>
+    <div class="field">
+      <label>Modo de sessao</label>
+      <div class="radio-group">
+        <div class="radio-opt selected" onclick="selectRadio(this)">
+          <div class="radio-dot"></div>
+          <div><b>Isolada persistente</b><span>Cookies e storage salvos no disco, sobrevivem ao fechar a instancia</span></div>
+        </div>
+        <div class="radio-opt" onclick="selectRadio(this)">
+          <div class="radio-dot"></div>
+          <div><b>Temporaria efemera</b><span>Sessao apenas em memoria, apagada ao encerrar a instancia</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="ghost-btn" onclick="closeModal()">Cancelar</button>
+      <button class="primary-btn" onclick="createInstance()"><i class="fa-solid fa-shield-halved"></i> Criar isolada</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+const NAMES = ["Atendimento Cliente A","Atendimento Cliente B","Monitoramento Concorrencia","QA Automatizado","Redes Sociais Loja 1","Redes Sociais Loja 2","Pesquisa de Mercado","Testes A/B Checkout","Backoffice Financeiro","Suporte Tecnico"];
+const COLORS = ["#f0bc4e","#3ddc97","#7aa7f2","#f2685c","#c98cf2","#4fd1c5","#f2a15c","#8fd15c","#f26ca1","#d9a441"];
+
+let instances = [];
+let filterState = 'all';
+
+function initInstances(){
+  instances = NAMES.map((name,i)=>{
+    const on = i < 7;
+    return {
+      id: i+1,
+      name: name,
+      color: COLORS[i%COLORS.length],
+      status: on ? 'on' : 'off',
+      partition: 'persist:instance-' + String(i+1).padStart(2,'0'),
+      cookies: on ? Math.floor(Math.random()*30)+4 : 0,
+      storage: on ? (Math.random()*4+0.3).toFixed(1) : '0.0',
+      mem: on ? Math.floor(Math.random()*60)+140 : 0,
+      uptime: on ? ['12m','48m','1h05m','2h40m','3h12m','55m','4h50m'][i%7] : '--'
+    };
+  });
+}
+initInstances();
+
+function initials(name){
+  return name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+}
+
+function renderAll(){
+  renderInstGrid();
+  renderMiniList();
+  renderAuditTable();
+  updateKpis();
+  document.getElementById('navInstCount').textContent = instances.length;
+}
+
+function renderInstGrid(){
+  const grid = document.getElementById('instGrid');
+  const list = instances.filter(i => filterState==='all' ? true : i.status===filterState);
+  if(list.length===0){
+    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><i class="fa-solid fa-window-restore"></i><h4>Nenhuma instancia aqui</h4><p>Ajuste o filtro ou crie uma nova instancia isolada</p></div>';
+    return;
+  }
+  grid.innerHTML = list.map(inst => `
+    <div class="inst-card ${inst.status==='off'?'stopped':''}">
+      <div class="inst-top">
+        <div class="inst-avatar" style="background:${inst.color}">${initials(inst.name)}</div>
+        <div>
+          <div class="inst-name">${inst.name}</div>
+          <div class="inst-partition">${inst.partition}</div>
+        </div>
+        <div class="inst-status ${inst.status}">
+          <span class="status-dot-sm ${inst.status==='on'?'pulse':''}"></span>
+          ${inst.status==='on' ? 'Ativa' : 'Parada'}
+        </div>
+      </div>
+      <div class="inst-meta">
+        <span><i class="fa-solid fa-cookie-bite"></i> ${inst.cookies} cookies</span>
+        <span><i class="fa-solid fa-database"></i> ${inst.storage} MB storage</span>
+        <span><i class="fa-solid fa-clock"></i> ${inst.uptime}</span>
+      </div>
+      <div class="mem-bar-wrap">
+        <div class="mem-bar-label"><span>Memoria</span><span>${inst.mem} MB</span></div>
+        <div class="mem-bar-track"><div class="mem-bar-fill" style="width:${Math.min(inst.mem/3,100)}%"></div></div>
+      </div>
+      <div class="inst-actions">
+        <div class="icon-btn play" title="${inst.status==='on'?'Parar':'Iniciar'}" onclick="toggleInstance(${inst.id})"><i class="fa-solid ${inst.status==='on'?'fa-stop':'fa-play'}"></i></div>
+        <div class="icon-btn" title="Duplicar" onclick="duplicateInstance(${inst.id})"><i class="fa-solid fa-clone"></i></div>
+        <div class="icon-btn" title="Auditar" onclick="auditOne(${inst.id})"><i class="fa-solid fa-shield-check"></i></div>
+        <div class="icon-btn danger" title="Excluir" onclick="deleteInstance(${inst.id})"><i class="fa-solid fa-trash"></i></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderMiniList(){
+  const wrap = document.getElementById('miniInstList');
+  wrap.innerHTML = instances.slice(0,5).map(inst=>`
+    <div class="mini-row">
+      <div class="mini-avatar" style="background:${inst.color}">${initials(inst.name)}</div>
+      <div class="mname">${inst.name}</div>
+      <div class="mstatus ${inst.status==='on'?'on':'off'}">${inst.status==='on'?'ativa':'parada'}</div>
+    </div>
+  `).join('');
+}
+
+function renderAuditTable(){
+  const body = document.getElementById('auditBody');
+  body.innerHTML = instances.map(inst=>`
+    <tr>
+      <td>
+        <div class="audit-name">
+          <div class="audit-avatar" style="background:${inst.color}">${initials(inst.name)}</div>
+          ${inst.name}
+        </div>
+      </td>
+      <td class="mono" style="color:var(--text-faint)">${inst.partition}</td>
+      <td><div class="check-cell"><i class="fa-solid fa-circle-check check-ok"></i> isolado</div></td>
+      <td><div class="check-cell"><i class="fa-solid fa-circle-check check-ok"></i> isolado</div></td>
+      <td><div class="check-cell"><i class="fa-solid fa-circle-check check-ok"></i> isolado</div></td>
+      <td class="mono" style="color:var(--text-faint)">agora</td>
+    </tr>
+  `).join('');
+}
+
+function updateKpis(){
+  const active = instances.filter(i=>i.status==='on').length;
+  document.getElementById('kpiActive').setAttribute('data-count', active);
+  countUp(document.getElementById('kpiActive'));
+}
+
+function countUp(el, decimals){
+  const target = parseFloat(el.getAttribute('data-count'));
+  const dec = decimals || parseInt(el.getAttribute('data-decimal')||'0');
+  let cur = 0;
+  const steps = 26;
+  const inc = target/steps;
+  let i=0;
+  const t = setInterval(()=>{
+    cur += inc; i++;
+    if(i>=steps){cur=target;clearInterval(t);}
+    el.textContent = dec>0 ? cur.toFixed(dec) : Math.round(cur);
+  }, 22);
+}
+
+function runCountUps(){
+  document.querySelectorAll('[data-count]').forEach(el=>countUp(el));
+}
+
+/* ---- log feed ---- */
+const LOG_TEMPLATES = [
+  {icon:'ok', text:(n)=>`<b>${n}</b> iniciada com partition isolada`},
+  {icon:'warn', text:(n)=>`Watchdog reiniciou <b>${n}</b> automaticamente (tentativa 1/3)`},
+  {icon:'ok', text:(n)=>`Auditoria confirmou isolamento de cookies em <b>${n}</b>`},
+  {icon:'ok', text:(n)=>`<b>${n}</b> encerrada pelo usuario`},
+  {icon:'danger', text:(n)=>`<b>${n}</b> excedeu limite de memoria, alerta enviado`},
+];
+function pushLog(entry){
+  const list = document.getElementById('logList');
+  const div = document.createElement('div');
+  div.className = 'log-item';
+  div.innerHTML = `<span class="log-dot ${entry.icon}"></span><div><div class="log-text">${entry.text}</div><div class="log-time">agora mesmo</div></div>`;
+  list.prepend(div);
+  while(list.children.length > 8) list.removeChild(list.lastChild);
+}
+function seedLogs(){
+  document.getElementById('logList').innerHTML = '';
+  const seed = [
+    {icon:'ok', text:'<b>Atendimento Cliente A</b> iniciada com partition isolada'},
+    {icon:'ok', text:'Auditoria confirmou isolamento de cookies em <b>10</b> instancias'},
+    {icon:'warn', text:'Watchdog reiniciou <b>Monitoramento Concorrencia</b> automaticamente (tentativa 1/3)'},
+    {icon:'ok', text:'<b>Redes Sociais Loja 2</b> encerrada pelo usuario'},
+    {icon:'ok', text:'Nova instancia <b>QA Automatizado</b> criada'},
+  ];
+  seed.forEach(pushLog);
+}
+
+/* ---- nav ---- */
+function goPage(name){
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.page===name));
+  document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active', p.id==='page-'+name));
+  if(name==='dashboard') runCountUps();
+}
+document.querySelectorAll('.nav-item').forEach(item=>{
+  item.addEventListener('click', ()=>goPage(item.dataset.page));
+});
+
+/* ---- filters ---- */
+function setFilter(f, el){
+  filterState = f;
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  renderInstGrid();
+}
+
+/* ---- actions ---- */
+function toggleInstance(id){
+  const inst = instances.find(i=>i.id===id);
+  inst.status = inst.status==='on' ? 'off' : 'on';
+  if(inst.status==='on'){
+    inst.mem = Math.floor(Math.random()*60)+140;
+    inst.cookies = Math.floor(Math.random()*30)+4;
+    inst.storage = (Math.random()*4+0.3).toFixed(1);
+    inst.uptime = '0m';
+    showToast(`${inst.name} iniciada, sessao isolada carregada`,'ok');
+  } else {
+    inst.mem = 0; inst.uptime='--';
+    showToast(`${inst.name} encerrada`,'warn');
+  }
+  renderAll();
+}
+
+function duplicateInstance(id){
+  const src = instances.find(i=>i.id===id);
+  const newId = Math.max(...instances.map(i=>i.id))+1;
+  const copy = {...src, id:newId, name: src.name + ' (copia)', partition: 'persist:instance-'+String(newId).padStart(2,'0'), status:'off', mem:0, uptime:'--'};
+  instances.push(copy);
+  showToast(`Instancia duplicada com nova partition isolada`,'ok');
+  renderAll();
+}
+
+function deleteInstance(id){
+  instances = instances.filter(i=>i.id!==id);
+  showToast('Instancia removida, sessao apagada','warn');
+  renderAll();
+}
+
+function auditOne(id){
+  const inst = instances.find(i=>i.id===id);
+  showToast(`${inst.name}: cookies, storage e cache isolados`,'ok');
+}
+function auditAll(){
+  goPage('audit');
+  runAudit();
+}
+function runAudit(){
+  const body = document.getElementById('auditBody');
+  body.innerHTML = instances.map(()=>`
+    <tr class="skeleton-row"><td colspan="6"><div class="skeleton" style="width:100%"></div></td></tr>
+  `).join('');
+  setTimeout(()=>{
+    renderAuditTable();
+    showToast('Auditoria concluida, nenhum vazamento encontrado','ok');
+  }, 750);
+}
+
+/* ---- modal ---- */
+function openModal(){ document.getElementById('modalOverlay').classList.add('show'); document.getElementById('newInstName').focus(); }
+function closeModal(){ document.getElementById('modalOverlay').classList.remove('show'); document.getElementById('newInstName').value=''; }
+function selectRadio(el){
+  el.parentElement.querySelectorAll('.radio-opt').forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected');
+}
+function createInstance(){
+  const nameInput = document.getElementById('newInstName');
+  const name = nameInput.value.trim() || ('Instancia ' + String(instances.length+1).padStart(2,'0'));
+  const newId = Math.max(...instances.map(i=>i.id))+1;
+  instances.push({
+    id:newId, name:name, color: COLORS[newId%COLORS.length], status:'on',
+    partition:'persist:instance-'+String(newId).padStart(2,'0'),
+    cookies: 0, storage:'0.0', mem: Math.floor(Math.random()*40)+120, uptime:'0m'
+  });
+  closeModal();
+  pushLog({icon:'ok', text:`<b>${name}</b> criada com partition isolada e fixada na abertura`});
+  showToast(`${name} criada, sessao isolada e ativa`,'ok');
+  renderAll();
+}
+
+/* ---- toasts ---- */
+function showToast(msg, kind){
+  const wrap = document.getElementById('toastWrap');
+  const t = document.createElement('div');
+  t.className = 'toast' + (kind==='warn' ? ' warn':'');
+  t.innerHTML = `<i class="fa-solid ${kind==='warn'?'fa-triangle-exclamation':'fa-circle-check'}"></i> <span>${msg}</span>`;
+  wrap.appendChild(t);
+  setTimeout(()=>{ t.style.transition='all .3s ease'; t.style.opacity='0'; t.style.transform='translateY(10px)'; setTimeout(()=>t.remove(),300); }, 3200);
+}
+
+/* ---- restart ---- */
+function restartDemo(){
+  initInstances();
+  filterState='all';
+  document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('active', c.dataset.filter==='all'));
+  seedLogs();
+  renderAll();
+  goPage('dashboard');
+  showToast('Demo reiniciada','ok');
+}
+
+/* ---- init ---- */
+seedLogs();
+renderAll();
+runCountUps();
+setInterval(()=>{
+  const templates = LOG_TEMPLATES;
+  const t = templates[Math.floor(Math.random()*templates.length)];
+  const inst = instances[Math.floor(Math.random()*instances.length)];
+  pushLog({icon:t.icon, text:t.text(inst.name)});
+}, 9000);
+</script>
+</body>
+</html>
