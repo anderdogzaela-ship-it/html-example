@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TreinoBase - Prototipo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#16211a;
+    --ink-soft:#4a5a4f;
+    --cream:#f3f6ef;
+    --cream-deep:#e7ecdd;
+    --card:#ffffff;
+    --moss:#2f6b45;
+    --moss-deep:#1f4a30;
+    --moss-soft:#dcefe0;
+    --clay:#d8663f;
+    --clay-deep:#a8492a;
+    --clay-soft:#fbe3d6;
+    --line:#e0e6d8;
+    --warn:#c07a1f;
+    --danger:#b3492f;
+    --radius-lg:24px;
+    --radius-md:16px;
+    --radius-sm:10px;
+    --shadow:0 12px 30px rgba(22,33,26,.10);
+    --shadow-sm:0 4px 12px rgba(22,33,26,.08);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:'Lexend', sans-serif;
+    background: radial-gradient(circle at 20% 10%, #eef2e4 0%, #d7ddc4 45%, #bcc5a2 100%);
+    min-height:100vh;
+    display:flex; flex-direction:column; align-items:center;
+    padding:32px 16px 60px;
+    color:var(--ink);
+  }
+  .page-head{ text-align:center; margin-bottom:22px; color:#243424; }
+  .page-head .brand{ font-weight:800; font-size:22px; letter-spacing:.3px; }
+  .page-head .sub{ font-size:13px; opacity:.75; margin-top:4px; }
+
+  .phone-frame{
+    width:300px; height:634px;
+    background:#12160f;
+    border-radius:42px;
+    padding:12px;
+    box-shadow: 0 30px 60px rgba(0,0,0,.35), 0 4px 14px rgba(0,0,0,.2);
+    position:relative;
+  }
+  .phone-notch{
+    position:absolute; top:12px; left:50%; transform:translateX(-50%);
+    width:110px; height:24px; background:#12160f; border-radius:0 0 18px 18px; z-index:60;
+  }
+  .phone-screen{
+    width:100%; height:100%;
+    background:var(--cream);
+    border-radius:30px;
+    overflow:hidden;
+    position:relative;
+  }
+  .status-bar{
+    height:34px; display:flex; align-items:center; justify-content:space-between;
+    padding:0 20px; font-size:12px; font-weight:600; color:var(--ink);
+  }
+
+  .screen{
+    position:absolute; inset:0; top:34px;
+    display:flex; flex-direction:column;
+    opacity:0; pointer-events:none; transform:translateY(8px);
+    transition: opacity .28s ease, transform .28s ease;
+    background:var(--cream);
+  }
+  .screen.active{ opacity:1; pointer-events:auto; transform:translateY(0); }
+
+  .scroll-area{ flex:1; overflow-y:auto; -ms-overflow-style:none; scrollbar-width:none; }
+  .scroll-area::-webkit-scrollbar{ display:none; }
+
+  /* ---- Bottom Nav ---- */
+  .tabbar{
+    height:64px; background:var(--card);
+    border-top:1px solid var(--line);
+    display:flex; align-items:center; justify-content:space-around;
+    flex-shrink:0;
+  }
+  .tab-btn{
+    display:flex; flex-direction:column; align-items:center; gap:3px;
+    background:none; border:none; cursor:pointer;
+    color:#9aa693; font-family:'Lexend'; font-size:10px; font-weight:600;
+    padding:6px 14px; border-radius:12px; transition:.2s;
+  }
+  .tab-btn svg{ width:20px; height:20px; }
+  .tab-btn.active{ color:var(--moss-deep); }
+  .tab-btn.active svg{ filter:drop-shadow(0 2px 4px rgba(47,107,69,.35)); }
+
+  /* ---- Onboarding ---- */
+  #screen-onboard{ align-items:center; justify-content:center; text-align:center; padding:34px 26px; gap:0; }
+  .ob-mark{
+    width:76px; height:76px; border-radius:20px;
+    background:linear-gradient(145deg, var(--moss) 0%, var(--moss-deep) 100%);
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 10px 22px rgba(31,74,48,.35);
+    margin-bottom:22px;
+  }
+  .ob-mark svg{ width:36px; height:36px; }
+  .ob-title{ font-size:26px; font-weight:800; color:var(--ink); }
+  .ob-tag{ font-size:13.5px; color:var(--ink-soft); margin-top:10px; line-height:1.5; }
+  .ob-stats{ display:flex; gap:18px; margin:26px 0; }
+  .ob-stat{ text-align:center; }
+  .ob-stat b{ display:block; font-size:18px; color:var(--moss-deep); }
+  .ob-stat span{ font-size:10px; color:var(--ink-soft); }
+  .btn-primary{
+    width:100%; padding:14px; border:none; border-radius:14px;
+    background:linear-gradient(135deg, var(--moss) 0%, var(--moss-deep) 100%);
+    color:#fff; font-family:'Lexend'; font-weight:700; font-size:14.5px;
+    cursor:pointer; box-shadow:0 8px 18px rgba(47,107,69,.3);
+    transition:transform .15s;
+  }
+  .btn-primary:active{ transform:scale(.97); }
+
+  /* ---- Anamnese form ---- */
+  #screen-anamnese .scroll-area{ padding:20px 20px 0; }
+  .form-title{ font-size:19px; font-weight:800; margin-bottom:4px; }
+  .form-sub{ font-size:12px; color:var(--ink-soft); margin-bottom:18px; line-height:1.5; }
+  .field{ margin-bottom:14px; }
+  .field label{ font-size:11.5px; font-weight:700; color:var(--ink-soft); display:block; margin-bottom:6px; }
+  .field-input{
+    width:100%; padding:11px 13px; border-radius:12px; border:1px solid var(--line);
+    background:var(--card); font-family:'Lexend'; font-size:12.5px; color:var(--ink);
+  }
+  .upload-box{
+    border:1.5px dashed #b9c5ab; border-radius:14px; padding:18px; text-align:center;
+    background:var(--card); cursor:pointer; margin-bottom:16px;
+  }
+  .upload-box svg{ width:22px; height:22px; color:var(--moss); margin-bottom:6px; }
+  .upload-box .t{ font-size:12px; font-weight:700; }
+  .upload-box .s{ font-size:10.5px; color:var(--ink-soft); margin-top:2px; }
+  .file-chip{
+    display:flex; align-items:center; gap:8px; background:var(--moss-soft); border-radius:10px;
+    padding:8px 12px; font-size:11px; font-weight:600; color:var(--moss-deep); margin-bottom:16px;
+  }
+  .file-chip svg{ width:14px; height:14px; flex-shrink:0; }
+  .anamnese-cta{ padding:8px 20px 20px; }
+
+  /* ---- Top header common ---- */
+  .top-header{ padding:16px 18px 10px; display:flex; align-items:center; justify-content:space-between; }
+  .top-header h1{ font-size:19px; font-weight:800; }
+  .top-header .greet{ font-size:11.5px; color:var(--ink-soft); margin-top:2px; }
+  .avatar-mini{
+    width:36px; height:36px; border-radius:50%; overflow:hidden; border:2px solid var(--moss-soft);
+    background:#ddd;
+  }
+  .avatar-mini img{ width:100%; height:100%; object-fit:cover; }
+
+  /* ---- Segment (Treino A/B/C) ---- */
+  .segment{
+    margin:0 18px 14px; background:var(--cream-deep); border-radius:12px; padding:3px; display:flex; gap:2px;
+  }
+  .segment button{
+    flex:1; padding:9px; border:none; border-radius:9px; background:none; cursor:pointer;
+    font-family:'Lexend'; font-size:12px; font-weight:700; color:var(--ink-soft);
+  }
+  .segment button.active{ background:var(--card); color:var(--ink); box-shadow:var(--shadow-sm); }
+
+  .plan-banner{
+    margin:0 18px 14px; padding:12px 14px; border-radius:14px;
+    background:linear-gradient(120deg, var(--moss) 0%, var(--moss-deep) 100%);
+    color:#fff; font-size:11.5px; display:flex; align-items:center; gap:10px;
+  }
+  .plan-banner svg{ width:18px; height:18px; flex-shrink:0; }
+
+  /* ---- Exercise list ---- */
+  .ex-card{
+    margin:0 18px 12px; padding:13px; background:var(--card); border-radius:16px;
+    border:1px solid var(--line); display:flex; align-items:center; gap:12px; cursor:pointer; box-shadow:var(--shadow-sm);
+  }
+  .ex-thumb{ width:52px; height:52px; border-radius:12px; object-fit:cover; flex-shrink:0; position:relative; }
+  .ex-info{ flex:1; min-width:0; }
+  .ex-info .t{ font-size:12.8px; font-weight:700; }
+  .ex-info .d{ font-size:10.5px; color:var(--ink-soft); margin-top:3px; }
+  .ex-tag{
+    font-size:9px; font-weight:700; padding:3px 8px; border-radius:100px; background:var(--clay-soft); color:var(--clay-deep);
+    white-space:nowrap;
+  }
+
+  /* ---- Exercise detail ---- */
+  .detail-hero{ position:relative; }
+  .detail-video{ width:100%; height:170px; object-fit:cover; }
+  .play-overlay{
+    position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,.05), rgba(0,0,0,.35));
+    display:flex; align-items:center; justify-content:center;
+  }
+  .play-btn{
+    width:46px; height:46px; border-radius:50%; background:rgba(255,255,255,.92);
+    display:flex; align-items:center; justify-content:center; box-shadow:0 6px 16px rgba(0,0,0,.25);
+  }
+  .play-btn svg{ width:18px; height:18px; color:var(--moss-deep); }
+  .back-btn{
+    position:absolute; top:14px; left:14px; width:32px; height:32px; border-radius:50%;
+    background:rgba(255,255,255,.85); display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:5;
+  }
+  .back-btn svg{ width:15px; height:15px; color:var(--ink); }
+  .detail-body{ padding:16px 18px; }
+  .detail-title{ font-size:17px; font-weight:800; }
+  .detail-tags{ display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; }
+  .tag-pill{ font-size:9.5px; font-weight:700; padding:4px 9px; border-radius:100px; background:var(--moss-soft); color:var(--moss-deep); }
+  .spec-grid{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin:14px 0; }
+  .spec-box{ background:var(--card); border:1px solid var(--line); border-radius:12px; padding:10px 6px; text-align:center; }
+  .spec-box b{ display:block; font-size:14px; color:var(--moss-deep); }
+  .spec-box span{ font-size:9px; color:var(--ink-soft); }
+  .spec-note{ font-size:11.5px; color:var(--ink-soft); line-height:1.6; margin-bottom:14px; }
+
+  /* ---- Timer ---- */
+  .timer-card{
+    margin-top:6px; background:linear-gradient(160deg, #1b2a1e 0%, #101a12 100%);
+    border-radius:18px; padding:20px; text-align:center; color:#fff;
+  }
+  .timer-label{ font-size:10.5px; letter-spacing:1px; text-transform:uppercase; opacity:.65; margin-bottom:10px; }
+  .timer-ring{ position:relative; width:110px; height:110px; margin:0 auto 14px; }
+  .timer-ring svg{ transform:rotate(-90deg); }
+  .timer-ring .bg{ stroke:rgba(255,255,255,.12); }
+  .timer-ring .fg{ stroke:var(--clay); transition:stroke-dashoffset 1s linear; }
+  .timer-num{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-size:24px; font-weight:800;
+  }
+  .timer-actions{ display:flex; gap:8px; justify-content:center; }
+  .timer-btn{
+    padding:9px 18px; border-radius:100px; border:none; cursor:pointer; font-family:'Lexend';
+    font-size:11.5px; font-weight:700;
+  }
+  .timer-btn.start{ background:var(--clay); color:#fff; }
+  .timer-btn.reset{ background:rgba(255,255,255,.12); color:#fff; }
+
+  /* ---- Video library ---- */
+  .chip-row{ display:flex; gap:8px; padding:0 18px 14px; overflow-x:auto; }
+  .chip-row::-webkit-scrollbar{ display:none; }
+  .chip{
+    flex-shrink:0; padding:7px 14px; border-radius:100px; font-size:11.5px; font-weight:600;
+    background:var(--card); border:1px solid var(--line); color:var(--ink-soft); cursor:pointer; white-space:nowrap;
+  }
+  .chip.active{ background:var(--moss-deep); color:#fff; border-color:var(--moss-deep); }
+  .vid-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:0 18px 20px; }
+  .vid-card{ cursor:pointer; }
+  .vid-cover-wrap{ position:relative; border-radius:14px; overflow:hidden; box-shadow:var(--shadow-sm); aspect-ratio:4/3; }
+  .vid-cover-wrap img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .vid-dur{
+    position:absolute; bottom:6px; right:6px; background:rgba(0,0,0,.6); color:#fff;
+    font-size:9px; font-weight:700; padding:2px 6px; border-radius:6px;
+  }
+  .vid-play-mini{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center; opacity:0; transition:.2s;
+  }
+  .vid-cover-wrap:hover .vid-play-mini{ opacity:1; background:rgba(0,0,0,.2); }
+  .vid-play-mini svg{ width:28px; height:28px; color:#fff; }
+  .vid-meta{ padding-top:6px; }
+  .vid-meta .t{ font-size:11.5px; font-weight:700; line-height:1.3; }
+  .vid-meta .c{ font-size:9.5px; color:var(--moss-deep); font-weight:700; margin-top:2px; text-transform:uppercase; }
+
+  /* ---- Payments (coach view) ---- */
+  .pay-summary{
+    margin:0 18px 16px; padding:16px; border-radius:16px;
+    background:linear-gradient(120deg, var(--ink) 0%, #223228 100%); color:#fff;
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .pay-summary .num{ font-size:20px; font-weight:800; }
+  .pay-summary .lbl{ font-size:9.5px; opacity:.65; text-transform:uppercase; letter-spacing:.4px; margin-top:2px; }
+  .pay-summary .divider{ width:1px; height:34px; background:rgba(255,255,255,.15); }
+  .pay-row{
+    margin:0 18px 10px; padding:12px 13px; background:var(--card); border:1px solid var(--line);
+    border-radius:14px; display:flex; align-items:center; gap:11px; box-shadow:var(--shadow-sm);
+  }
+  .pay-avatar{ width:38px; height:38px; border-radius:50%; object-fit:cover; flex-shrink:0; }
+  .pay-info{ flex:1; }
+  .pay-info .n{ font-size:12.5px; font-weight:700; }
+  .pay-info .d{ font-size:10.5px; color:var(--ink-soft); margin-top:2px; }
+  .pay-status{
+    font-size:10px; font-weight:700; padding:5px 10px; border-radius:100px; cursor:pointer; white-space:nowrap;
+  }
+  .st-pago{ background:var(--moss-soft); color:var(--moss-deep); }
+  .st-pendente{ background:#fbe9cf; color:var(--warn); }
+  .st-atrasado{ background:#fbdcd2; color:var(--danger); }
+
+  /* ---- toast ---- */
+  .toast{
+    position:absolute; left:50%; bottom:84px; transform:translate(-50%, 20px);
+    background:#16211a; color:#fff; padding:11px 18px; border-radius:100px; font-size:11.5px; font-weight:600;
+    display:flex; align-items:center; gap:8px; box-shadow:0 10px 24px rgba(0,0,0,.3);
+    opacity:0; pointer-events:none; transition:.3s; z-index:80; white-space:nowrap;
+  }
+  .toast.show{ opacity:1; transform:translate(-50%, 0); }
+  .toast svg{ width:14px; height:14px; color:#7fd6a3; }
+
+  .restart-btn{
+    margin-top:20px; display:flex; align-items:center; gap:7px; padding:9px 18px; border-radius:100px;
+    background:rgba(255,255,255,.55); border:1px solid rgba(36,52,36,.15); cursor:pointer;
+    font-family:'Lexend'; font-size:11.5px; font-weight:600; color:#243424; backdrop-filter:blur(6px);
+  }
+  .restart-btn svg{ width:13px; height:13px; }
+</style>
+</head>
+<body>
+
+<div class="page-head">
+  <div class="brand">TreinoBase</div>
+  <div class="sub">Prototipo interativo - treino, biblioteca de video e controle de pagamento</div>
+</div>
+
+<div class="phone-frame">
+  <div class="phone-notch"></div>
+  <div class="phone-screen">
+    <div class="status-bar">
+      <span>9:41</span>
+      <span style="display:flex; gap:4px; align-items:center;">
+        <svg viewBox="0 0 24 24" fill="currentColor" style="width:13px;height:13px;"><path d="M2 22h20V2z"/></svg>
+        <svg viewBox="0 0 24 24" fill="currentColor" style="width:15px;height:15px;"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3a4.24 4.24 0 00-6 0zm-4-4l2 2a7.07 7.07 0 0110 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+      </span>
+    </div>
+
+    <!-- ONBOARDING -->
+    <div class="screen active" id="screen-onboard">
+      <div class="ob-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><path d="M6.5 6.5l11 11M4 9l3-3 3 3-3 3-3-3zm14 6l3 3-3 3-3-3 3-3zM9 4l1.5 1.5M14.5 18.5L16 20"/></svg>
+      </div>
+      <div class="ob-title">TreinoBase</div>
+      <div class="ob-tag">Seu programa de treino, biblioteca de video<br>e controle de aluno num so lugar.</div>
+      <div class="ob-stats">
+        <div class="ob-stat"><b>340+</b><span>ALUNOS</span></div>
+        <div class="ob-stat"><b>28</b><span>EXERCICIOS</span></div>
+        <div class="ob-stat"><b>96%</b><span>ADESAO</span></div>
+      </div>
+      <button class="btn-primary" onclick="goto('anamnese')">Comecar cadastro</button>
+    </div>
+
+    <!-- ANAMNESE -->
+    <div class="screen" id="screen-anamnese">
+      <div class="scroll-area">
+        <div class="form-title">Anamnese</div>
+        <div class="form-sub">Antes de liberar seu treino, conta um pouco sobre voce.</div>
+        <div class="field">
+          <label>Objetivo principal</label>
+          <input class="field-input" value="Hipertrofia e condicionamento" readonly>
+        </div>
+        <div class="field">
+          <label>Lesao ou restricao</label>
+          <input class="field-input" value="Leve desconforto no ombro direito" readonly>
+        </div>
+        <div class="upload-box" onclick="attachFile()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3"/></svg>
+          <div class="t">Anexar exame ou avaliacao previa</div>
+          <div class="s">PDF, JPG ou PNG</div>
+        </div>
+        <div class="file-chip" id="file-chip" style="display:none;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>
+          <span>avaliacao_fisica.pdf anexado</span>
+        </div>
+      </div>
+      <div class="anamnese-cta">
+        <button class="btn-primary" onclick="goto('treinos'); switchTab('treinos')">Enviar e ver meu treino</button>
+      </div>
+    </div>
+
+    <!-- TREINOS -->
+    <div class="screen" id="screen-treinos">
+      <div class="scroll-area">
+        <div class="top-header">
+          <div>
+            <h1>Treinos</h1>
+            <div class="greet">Bom treino, Camila</div>
+          </div>
+          <div class="avatar-mini"><img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop" alt=""></div>
+        </div>
+        <div class="segment">
+          <button class="active" data-day="A" onclick="switchDay('A')">Treino A</button>
+          <button data-day="B" onclick="switchDay('B')">Treino B</button>
+          <button data-day="C" onclick="switchDay('C')">Treino C</button>
+        </div>
+        <div class="plan-banner">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 2l2.4 6.6L21 11l-6.6 2.4L12 20l-2.4-6.6L3 11l6.6-2.4z"/></svg>
+          <span id="day-desc">Foco superior, membros superiores e core</span>
+        </div>
+        <div id="ex-list"></div>
+      </div>
+      <div class="tabbar">
+        <button class="tab-btn active" data-tab="treinos" onclick="switchTab('treinos')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6.5 6.5l11 11M4 9l3-3 3 3-3 3-3-3zm14 6l3 3-3 3-3-3 3-3z"/></svg>
+          Treinos
+        </button>
+        <button class="tab-btn" data-tab="videos" onclick="switchTab('videos')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="14" height="14" rx="2"/><path d="M17 9l4-2v10l-4-2"/></svg>
+          Videos
+        </button>
+        <button class="tab-btn" data-tab="pagamentos" onclick="switchTab('pagamentos')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg>
+          Pagamentos
+        </button>
+      </div>
+    </div>
+
+    <!-- EXERCISE DETAIL -->
+    <div class="screen" id="screen-detail">
+      <div class="scroll-area">
+        <div class="detail-hero">
+          <div class="back-btn" onclick="switchTab('treinos')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+          </div>
+          <img class="detail-video" id="detail-video" src="" alt="">
+          <div class="play-overlay"><div class="play-btn" onclick="showToast('Reproduzindo video demonstrativo')"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div></div>
+        </div>
+        <div class="detail-body">
+          <div class="detail-title" id="detail-title"></div>
+          <div class="detail-tags">
+            <span class="tag-pill" id="detail-method"></span>
+            <span class="tag-pill" id="detail-rest-tag"></span>
+          </div>
+          <div class="spec-grid">
+            <div class="spec-box"><b id="spec-sets"></b><span>SERIES</span></div>
+            <div class="spec-box"><b id="spec-reps"></b><span>REPETICOES</span></div>
+            <div class="spec-box"><b id="spec-load"></b><span>CARGA</span></div>
+          </div>
+          <div class="spec-note" id="spec-note"></div>
+
+          <div class="timer-card">
+            <div class="timer-label">Descanso entre series</div>
+            <div class="timer-ring">
+              <svg width="110" height="110" viewBox="0 0 110 110">
+                <circle class="bg" cx="55" cy="55" r="48" fill="none" stroke-width="8"/>
+                <circle class="fg" id="timer-circle" cx="55" cy="55" r="48" fill="none" stroke-width="8" stroke-linecap="round"/>
+              </svg>
+              <div class="timer-num" id="timer-display">60</div>
+            </div>
+            <div class="timer-actions">
+              <button class="timer-btn start" id="timer-toggle" onclick="toggleTimer()">Iniciar descanso</button>
+              <button class="timer-btn reset" onclick="resetTimer()">Reiniciar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIDEO LIBRARY -->
+    <div class="screen" id="screen-videos">
+      <div class="scroll-area">
+        <div class="top-header"><div><h1>Biblioteca</h1><div class="greet">Video de cada exercicio, organizado por grupo</div></div></div>
+        <div class="chip-row">
+          <div class="chip active" data-cat="Todos" onclick="filterVideos('Todos')">Todos</div>
+          <div class="chip" data-cat="Superior" onclick="filterVideos('Superior')">Superior</div>
+          <div class="chip" data-cat="Inferior" onclick="filterVideos('Inferior')">Inferior</div>
+          <div class="chip" data-cat="Core" onclick="filterVideos('Core')">Core</div>
+        </div>
+        <div class="vid-grid" id="vid-grid"></div>
+      </div>
+      <div class="tabbar">
+        <button class="tab-btn" data-tab="treinos" onclick="switchTab('treinos')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6.5 6.5l11 11M4 9l3-3 3 3-3 3-3-3zm14 6l3 3-3 3-3-3 3-3z"/></svg>
+          Treinos
+        </button>
+        <button class="tab-btn active" data-tab="videos" onclick="switchTab('videos')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="14" height="14" rx="2"/><path d="M17 9l4-2v10l-4-2"/></svg>
+          Videos
+        </button>
+        <button class="tab-btn" data-tab="pagamentos" onclick="switchTab('pagamentos')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg>
+          Pagamentos
+        </button>
+      </div>
+    </div>
+
+    <!-- PAGAMENTOS (coach view) -->
+    <div class="screen" id="screen-pagamentos">
+      <div class="scroll-area">
+        <div class="top-header"><div><h1>Pagamentos</h1><div class="greet">Controle de vencimento por aluno</div></div></div>
+        <div class="pay-summary">
+          <div><div class="num">R$ 4.280</div><div class="lbl">A receber este mes</div></div>
+          <div class="divider"></div>
+          <div><div class="num" id="atrasado-count">3</div><div class="lbl">Atrasados</div></div>
+        </div>
+        <div id="pay-list"></div>
+      </div>
+      <div class="tabbar">
+        <button class="tab-btn" data-tab="treinos" onclick="switchTab('treinos')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6.5 6.5l11 11M4 9l3-3 3 3-3 3-3-3zm14 6l3 3-3 3-3-3 3-3z"/></svg>
+          Treinos
+        </button>
+        <button class="tab-btn" data-tab="videos" onclick="switchTab('videos')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="14" height="14" rx="2"/><path d="M17 9l4-2v10l-4-2"/></svg>
+          Videos
+        </button>
+        <button class="tab-btn active" data-tab="pagamentos" onclick="switchTab('pagamentos')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg>
+          Pagamentos
+        </button>
+      </div>
+    </div>
+
+    <div class="toast" id="toast">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg>
+      <span id="toast-text">Atualizado</span>
+    </div>
+  </div>
+</div>
+
+<button class="restart-btn" onclick="restartDemo()">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 11-3-6.7"/><path d="M21 3v6h-6"/></svg>
+  Reiniciar prototipo
+</button>
+
+<script>
+  const workouts = {
+    A: {
+      desc: "Foco superior, membros superiores e core",
+      exercises: [
+        { name:"Supino reto", sets:4, reps:"10", load:"20kg", rest:60, method:"Bi-set", note:"Descer a barra ate encostar levemente no peito, cotovelo a 45 graus, sem travar no topo.", cover:"https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=220&fit=crop" },
+        { name:"Puxada frontal", sets:4, reps:"12", load:"28kg", rest:60, method:"Serie normal", note:"Puxar ate a barra tocar a altura do queixo, controlando a volta, sem balancar o tronco.", cover:"https://images.unsplash.com/photo-1584863231364-2edc166de576?w=300&h=220&fit=crop" },
+        { name:"Desenvolvimento ombro", sets:3, reps:"12", load:"10kg", rest:45, method:"Drop set", note:"Cotovelo levemente a frente do corpo, evitar hiperextensao no ombro no topo do movimento.", cover:"https://images.unsplash.com/photo-1601422407692-ec4eeec1d9b3?w=300&h=220&fit=crop" },
+        { name:"Prancha isometrica", sets:3, reps:"40s", load:"peso corporal", rest:30, method:"Serie normal", note:"Quadril alinhado com ombro e calcanhar, sem deixar a lombar cair.", cover:"https://images.unsplash.com/photo-1566241142559-40e1dab266c6?w=300&h=220&fit=crop" },
+      ]
+    },
+    B: {
+      desc: "Foco inferior, pernas e gluteo",
+      exercises: [
+        { name:"Agachamento livre", sets:4, reps:"10", load:"40kg", rest:90, method:"Serie normal", note:"Joelho seguindo a linha do pe, quadril descendo abaixo da linha do joelho quando possivel.", cover:"https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=300&h=220&fit=crop" },
+        { name:"Leg press 45", sets:4, reps:"12", load:"120kg", rest:75, method:"Bi-set", note:"Nao travar o joelho no topo, descer ate 90 graus mantendo lombar apoiada.", cover:"https://images.unsplash.com/photo-1534368959876-26bf04f2c947?w=300&h=220&fit=crop" },
+        { name:"Cadeira extensora", sets:3, reps:"15", load:"22kg", rest:45, method:"Drop set", note:"Subida controlada, pausa de 1 segundo no topo antes de descer.", cover:"https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?w=300&h=220&fit=crop" },
+        { name:"Elevacao pelvica", sets:3, reps:"15", load:"30kg", rest:45, method:"Serie normal", note:"Contrair o gluteo no topo por 2 segundos antes de descer.", cover:"https://images.unsplash.com/photo-1517963879433-6ad2b056d712?w=300&h=220&fit=crop" },
+      ]
+    },
+    C: {
+      desc: "Full body e condicionamento",
+      exercises: [
+        { name:"Levantamento terra", sets:4, reps:"8", load:"50kg", rest:120, method:"Serie normal", note:"Costas retas do inicio ao fim, barra proxima do corpo durante toda a subida.", cover:"https://images.unsplash.com/photo-1583500178690-f7fd4b1d9d78?w=300&h=220&fit=crop" },
+        { name:"Remada curvada", sets:4, reps:"10", load:"24kg", rest:60, method:"Bi-set", note:"Tronco inclinado a 45 graus, puxar o cotovelo junto ao corpo.", cover:"https://images.unsplash.com/photo-1541534401786-2077eed87a72?w=300&h=220&fit=crop" },
+        { name:"Burpee", sets:3, reps:"12", load:"peso corporal", rest:45, method:"Circuito", note:"Movimento continuo, sem pausa entre o agachamento e o salto.", cover:"https://images.unsplash.com/photo-1518611012118-696072aa579a?w=300&h=220&fit=crop" },
+        { name:"Corda naval", sets:3, reps:"30s", load:"peso corporal", rest:30, method:"Circuito", note:"Manter o core contraido, ondas vindo do ombro, nao do braco inteiro.", cover:"https://images.unsplash.com/photo-1594381898411-846e7d193883?w=300&h=220&fit=crop" },
+      ]
+    }
+  };
+
+  const videos = [
+    { name:"Supino reto", cat:"Superior", dur:"1:20", cover:"https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=220&fit=crop" },
+    { name:"Puxada frontal", cat:"Superior", dur:"0:58", cover:"https://images.unsplash.com/photo-1584863231364-2edc166de576?w=300&h=220&fit=crop" },
+    { name:"Agachamento livre", cat:"Inferior", dur:"1:45", cover:"https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=300&h=220&fit=crop" },
+    { name:"Leg press 45", cat:"Inferior", dur:"1:10", cover:"https://images.unsplash.com/photo-1534368959876-26bf04f2c947?w=300&h=220&fit=crop" },
+    { name:"Prancha isometrica", cat:"Core", dur:"0:40", cover:"https://images.unsplash.com/photo-1566241142559-40e1dab266c6?w=300&h=220&fit=crop" },
+    { name:"Levantamento terra", cat:"Inferior", dur:"2:05", cover:"https://images.unsplash.com/photo-1583500178690-f7fd4b1d9d78?w=300&h=220&fit=crop" },
+  ];
+
+  const students = [
+    { name:"Camila Duarte", plan:"Mensal", due:"Venceu ha 4 dias", status:"atrasado", avatar:"https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop" },
+    { name:"Rafael Nunes", plan:"Trimestral", due:"Vence em 3 dias", status:"pendente", avatar:"https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop" },
+    { name:"Fernanda Souza", plan:"Mensal", due:"Pago em 02/07", status:"pago", avatar:"https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100&h=100&fit=crop" },
+    { name:"Bruno Alves", plan:"Mensal", due:"Venceu ha 1 dia", status:"atrasado", avatar:"https://images.unsplash.com/photo-1500614270724-fd619edb7e46?w=100&h=100&fit=crop" },
+    { name:"Julia Prado", plan:"Semestral", due:"Pago em 05/07", status:"pago", avatar:"https://images.unsplash.com/photo-1502685104226-ee32379fefbe?w=100&h=100&fit=crop" },
+  ];
+
+  let currentDay = 'A';
+  let currentExIdx = 0;
+
+  function renderExList(){
+    const list = document.getElementById('ex-list');
+    list.innerHTML = '';
+    workouts[currentDay].exercises.forEach((ex, i) => {
+      const el = document.createElement('div');
+      el.className = 'ex-card';
+      el.onclick = () => openExercise(i);
+      el.innerHTML = `
+        <img class="ex-thumb" src="${ex.cover}" alt="">
+        <div class="ex-info">
+          <div class="t">${ex.name}</div>
+          <div class="d">${ex.sets}x ${ex.reps} - ${ex.load} - descanso ${ex.rest}s</div>
+        </div>
+        <div class="ex-tag">${ex.method}</div>`;
+      list.appendChild(el);
+    });
+  }
+
+  function switchDay(day){
+    currentDay = day;
+    document.querySelectorAll('.segment button').forEach(b => b.classList.toggle('active', b.dataset.day === day));
+    document.getElementById('day-desc').textContent = workouts[day].desc;
+    renderExList();
+  }
+
+  function goto(name){
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('screen-' + name).classList.add('active');
+  }
+
+  function switchTab(name){
+    goto(name);
+    document.querySelectorAll('.tab-btn').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  }
+
+  function attachFile(){
+    document.getElementById('file-chip').style.display = 'flex';
+    showToast('Documento anexado com sucesso');
+  }
+
+  function openExercise(i){
+    currentExIdx = i;
+    const ex = workouts[currentDay].exercises[i];
+    document.getElementById('detail-video').src = ex.cover;
+    document.getElementById('detail-title').textContent = ex.name;
+    document.getElementById('detail-method').textContent = ex.method;
+    document.getElementById('detail-rest-tag').textContent = 'Descanso ' + ex.rest + 's';
+    document.getElementById('spec-sets').textContent = ex.sets;
+    document.getElementById('spec-reps').textContent = ex.reps;
+    document.getElementById('spec-load').textContent = ex.load;
+    document.getElementById('spec-note').textContent = ex.note;
+    resetTimer(ex.rest);
+    goto('detail');
+  }
+
+  // ---- Rest timer ----
+  let timerSeconds = 60;
+  let timerTotal = 60;
+  let timerInterval = null;
+  const circleLen = 2 * Math.PI * 48;
+
+  function renderTimer(){
+    document.getElementById('timer-display').textContent = timerSeconds;
+    const circle = document.getElementById('timer-circle');
+    circle.style.strokeDasharray = circleLen;
+    const frac = timerSeconds / timerTotal;
+    circle.style.strokeDashoffset = circleLen * (1 - frac);
+  }
+
+  function toggleTimer(){
+    const btn = document.getElementById('timer-toggle');
+    if (timerInterval){
+      clearInterval(timerInterval);
+      timerInterval = null;
+      btn.textContent = 'Continuar';
+      return;
+    }
+    btn.textContent = 'Pausar';
+    timerInterval = setInterval(() => {
+      timerSeconds--;
+      renderTimer();
+      if (timerSeconds <= 0){
+        clearInterval(timerInterval);
+        timerInterval = null;
+        btn.textContent = 'Iniciar descanso';
+        showToast('Descanso concluido, proxima serie');
+      }
+    }, 1000);
+  }
+
+  function resetTimer(seconds){
+    clearInterval(timerInterval);
+    timerInterval = null;
+    if (seconds) timerTotal = seconds;
+    timerSeconds = timerTotal;
+    document.getElementById('timer-toggle').textContent = 'Iniciar descanso';
+    renderTimer();
+  }
+
+  // ---- Video library ----
+  function renderVideos(filter){
+    const grid = document.getElementById('vid-grid');
+    grid.innerHTML = '';
+    videos.filter(v => filter === 'Todos' || v.cat === filter).forEach(v => {
+      const el = document.createElement('div');
+      el.className = 'vid-card';
+      el.onclick = () => showToast('Reproduzindo ' + v.name);
+      el.innerHTML = `
+        <div class="vid-cover-wrap">
+          <img src="${v.cover}" alt="">
+          <div class="vid-dur">${v.dur}</div>
+          <div class="vid-play-mini"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>
+        </div>
+        <div class="vid-meta"><div class="t">${v.name}</div><div class="c">${v.cat}</div></div>`;
+      grid.appendChild(el);
+    });
+  }
+
+  function filterVideos(cat){
+    document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.dataset.cat === cat));
+    renderVideos(cat);
+  }
+
+  // ---- Payments ----
+  function renderPayments(){
+    const list = document.getElementById('pay-list');
+    list.innerHTML = '';
+    students.forEach((s, i) => {
+      const el = document.createElement('div');
+      el.className = 'pay-row';
+      el.innerHTML = `
+        <img class="pay-avatar" src="${s.avatar}" alt="">
+        <div class="pay-info"><div class="n">${s.name}</div><div class="d">${s.plan} - ${s.due}</div></div>
+        <div class="pay-status st-${s.status}" onclick="markPaid(${i})">${statusLabel(s.status)}</div>`;
+      list.appendChild(el);
+    });
+  }
+
+  function statusLabel(status){
+    if (status === 'pago') return 'Pago';
+    if (status === 'pendente') return 'Pendente';
+    return 'Atrasado';
+  }
+
+  function markPaid(i){
+    if (students[i].status === 'pago') return;
+    students[i].status = 'pago';
+    students[i].due = 'Pago hoje';
+    renderPayments();
+    const atrasados = students.filter(s => s.status === 'atrasado').length;
+    document.getElementById('atrasado-count').textContent = atrasados;
+    showToast('Pagamento registrado');
+  }
+
+  function showToast(text){
+    const t = document.getElementById('toast');
+    document.getElementById('toast-text').textContent = text;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2200);
+  }
+
+  function restartDemo(){
+    document.getElementById('file-chip').style.display = 'none';
+    switchDay('A');
+    filterVideos('Todos');
+    students.forEach((s, i) => {
+      if (i === 0) { s.status = 'atrasado'; s.due = 'Venceu ha 4 dias'; }
+      if (i === 3) { s.status = 'atrasado'; s.due = 'Venceu ha 1 dia'; }
+    });
+    renderPayments();
+    document.getElementById('atrasado-count').textContent = students.filter(s => s.status === 'atrasado').length;
+    document.querySelectorAll('.tab-btn').forEach(t => t.classList.toggle('active', t.dataset.tab === 'treinos'));
+    goto('onboard');
+  }
+
+  renderExList();
+  renderVideos('Todos');
+  renderPayments();
+  renderTimer();
+</script>
+</body>
+</html>
