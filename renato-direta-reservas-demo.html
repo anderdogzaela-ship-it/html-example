@@ -1,0 +1,679 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Direta - Reservas Diretas e Sincronizacao de OTAs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700;800&family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+:root{
+  --gold-50:#fffaf0; --gold-100:#fdf0da; --gold-200:#f7dfae; --gold-300:#eec87a;
+  --gold-400:#e2ac4c; --gold-500:#d1912e; --gold-600:#b3741e; --gold-700:#8f5a18;
+  --gold-800:#6b4414; --gold-900:#432b0d;
+  --teal-500:#1f8a8c; --teal-600:#166b6d; --teal-100:#e0f3f2;
+  --ink:#25201a; --ink-soft:#6e6154; --paper:#fffdf9; --line:#efe2ca;
+  --card:#ffffff; --bg:#faf5eb;
+  --green-600:#3f8a52; --green-100:#e5f4e8;
+  --red-600:#c14a34; --red-100:#f8e2dc;
+  --amber-600:#c17a15; --amber-100:#faedd4;
+  --shadow-sm: 0 1px 2px rgba(67,43,13,.07);
+  --shadow-md: 0 8px 22px rgba(67,43,13,.10);
+  --shadow-lg: 0 20px 48px rgba(67,43,13,.16);
+  --radius: 16px;
+  --spring: cubic-bezier(.34,1.56,.64,1);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --ink:#f4ecdc; --ink-soft:#c9b89c; --paper:#1c150c; --line:#3c2f1c;
+    --card:#241b10; --bg:#160f08;
+    --gold-50:#241b10; --gold-100:#2c2112; --gold-200:#3c2e17;
+    --green-100:#1c2b1e; --red-100:#331d16; --amber-100:#2e2412; --teal-100:#132726;
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#f4ecdc; --ink-soft:#c9b89c; --paper:#1c150c; --line:#3c2f1c;
+  --card:#241b10; --bg:#160f08;
+  --gold-50:#241b10; --gold-100:#2c2112; --gold-200:#3c2e17;
+  --green-100:#1c2b1e; --red-100:#331d16; --amber-100:#2e2412; --teal-100:#132726;
+}
+:root[data-theme="light"]{
+  --ink:#25201a; --ink-soft:#6e6154; --paper:#fffdf9; --line:#efe2ca;
+  --card:#ffffff; --bg:#faf5eb;
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html{-webkit-font-smoothing:antialiased;}
+body{font-family:'Nunito',sans-serif; color:var(--ink); background:#e9e2d3; overflow-x:hidden;}
+h1,h2,h3,h4,.brand,.stat-num,.btn,.nav-item,.tab{font-family:'Lexend',sans-serif;}
+img{max-width:100%; display:block;}
+button{font-family:inherit; cursor:pointer;}
+::-webkit-scrollbar{width:9px; height:9px;}
+::-webkit-scrollbar-thumb{background:var(--gold-300); border-radius:8px;}
+
+/* ---------- App shell / mode switch ---------- */
+.app-shell{max-width:1360px; margin:0 auto; padding:22px 18px 60px;}
+.mode-switch-wrap{display:flex; justify-content:center; margin-bottom:18px;}
+.mode-switch{display:inline-flex; background:var(--card); border:1px solid var(--line); border-radius:999px; padding:5px; box-shadow:var(--shadow-sm); gap:4px;}
+.mode-btn{border:none; background:transparent; padding:10px 22px; border-radius:999px; font-weight:700; font-size:.88rem; color:var(--ink-soft); display:flex; align-items:center; gap:8px; transition:all .25s var(--spring);}
+.mode-btn.active{background:var(--gold-600); color:#fff; box-shadow:var(--shadow-sm);}
+.restart-btn{position:fixed; bottom:20px; right:20px; z-index:80; background:var(--ink); color:#fdf1de; border:none; padding:12px 18px; border-radius:999px; font-weight:700; font-size:.82rem; display:flex; align-items:center; gap:8px; box-shadow:var(--shadow-lg); transition:transform .2s var(--spring);}
+.restart-btn:hover{transform:translateY(-2px) scale(1.03);}
+
+.browser-frame{background:var(--card); border-radius:20px; box-shadow:var(--shadow-lg); overflow:hidden; border:1px solid var(--line);}
+.browser-bar{display:flex; align-items:center; gap:10px; padding:12px 16px; background:var(--gold-900); }
+.browser-dots{display:flex; gap:6px;}
+.browser-dots span{width:10px; height:10px; border-radius:50%; background:rgba(255,255,255,.25);}
+.browser-url{flex:1; background:rgba(255,255,255,.1); border-radius:8px; padding:7px 14px; color:#f4e6c8; font-size:.78rem; font-family:'Lexend',sans-serif; display:flex; align-items:center; gap:8px;}
+.browser-url i{opacity:.7; font-size:.72rem;}
+
+/* ---------- Public site ---------- */
+.site-nav{display:flex; align-items:center; justify-content:space-between; padding:16px 32px; border-bottom:1px solid var(--line); background:var(--paper);}
+.site-brand{display:flex; align-items:center; gap:10px; font-weight:800; font-size:1.25rem; color:var(--gold-800);}
+.site-brand i{color:var(--gold-500); font-size:1.4rem;}
+.site-links{display:flex; gap:26px; font-size:.88rem; font-weight:600; color:var(--ink-soft);}
+.site-links a{text-decoration:none; color:inherit; cursor:default;}
+.site-cta{background:var(--gold-600); color:#fff; padding:9px 18px; border-radius:10px; font-weight:700; font-size:.85rem; border:none;}
+@media (max-width:760px){ .site-links{display:none;} }
+
+.hero{position:relative; min-height:420px; display:flex; align-items:center; justify-content:center; text-align:center; overflow:hidden; padding:70px 20px;}
+.hero-bg{position:absolute; inset:0; background:url('https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=1600&q=80') center/cover;}
+.hero-overlay{position:absolute; inset:0; background:linear-gradient(180deg, rgba(37,26,10,.35), rgba(24,16,6,.78));}
+.orb{position:absolute; border-radius:50%; filter:blur(50px); opacity:.35; animation:float 9s ease-in-out infinite;}
+.orb1{width:280px; height:280px; background:var(--gold-400); top:-80px; left:-60px;}
+.orb2{width:220px; height:220px; background:var(--teal-500); bottom:-70px; right:-40px; animation-delay:2.5s;}
+@keyframes float{0%,100%{transform:translateY(0px);}50%{transform:translateY(-22px);}}
+.hero-inner{position:relative; z-index:2; color:#fff; max-width:760px;}
+.hero-inner h1{font-size:clamp(1.9rem,4vw,2.9rem); font-weight:800; line-height:1.15; margin-bottom:14px;}
+.hero-inner p{font-size:1.02rem; opacity:.92; margin-bottom:30px;}
+.search-bar{background:rgba(255,255,255,.97); border-radius:16px; padding:14px; display:grid; grid-template-columns:1.3fr 1fr 1fr auto; gap:10px; box-shadow:var(--shadow-lg); text-align:left;}
+.search-field{display:flex; flex-direction:column; gap:4px; padding:6px 12px; border-right:1px solid var(--line);}
+.search-field:last-of-type{border-right:none;}
+.search-field label{font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-soft);}
+.search-field input{border:none; font-family:'Nunito',sans-serif; font-size:.9rem; font-weight:600; color:var(--ink); outline:none; background:transparent;}
+.search-btn{background:var(--gold-600); color:#fff; border:none; border-radius:12px; padding:0 24px; font-weight:700; display:flex; align-items:center; gap:8px; transition:transform .2s var(--spring), background .2s;}
+.search-btn:hover{background:var(--gold-700); transform:scale(1.04);}
+@media (max-width:820px){ .search-bar{grid-template-columns:1fr; } .search-field{border-right:none; border-bottom:1px solid var(--line);} }
+
+.section{padding:52px 32px;}
+.section-head{display:flex; align-items:baseline; justify-content:space-between; margin-bottom:26px; flex-wrap:wrap; gap:10px;}
+.section-head h2{font-size:1.5rem; font-weight:800;}
+.section-head span{color:var(--ink-soft); font-size:.88rem;}
+.reveal{opacity:0; transform:translateY(22px); transition:opacity .6s ease, transform .6s ease;}
+.reveal.in{opacity:1; transform:translateY(0);}
+
+.prop-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(260px,1fr)); gap:22px;}
+.prop-card{background:var(--card); border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow-sm); border:1px solid var(--line); cursor:pointer; transition:transform .25s var(--spring), box-shadow .25s;}
+.prop-card:hover{transform:translateY(-6px); box-shadow:var(--shadow-lg);}
+.prop-media{height:170px; overflow:hidden; position:relative;}
+.prop-media img{width:100%; height:100%; object-fit:cover; transition:transform .5s ease;}
+.prop-card:hover .prop-media img{transform:scale(1.08);}
+.prop-badge{position:absolute; top:10px; left:10px; background:rgba(20,14,6,.72); color:#fff; font-size:.68rem; font-weight:700; padding:5px 10px; border-radius:999px; display:flex; align-items:center; gap:5px;}
+.prop-badge i{font-size:.62rem; color:var(--gold-300);}
+.prop-body{padding:16px;}
+.prop-body h3{font-size:1rem; font-weight:700; margin-bottom:4px;}
+.prop-loc{font-size:.8rem; color:var(--ink-soft); display:flex; align-items:center; gap:6px; margin-bottom:10px;}
+.prop-meta{display:flex; gap:14px; font-size:.76rem; color:var(--ink-soft); margin-bottom:12px;}
+.prop-meta span{display:flex; align-items:center; gap:5px;}
+.prop-foot{display:flex; align-items:center; justify-content:space-between; border-top:1px solid var(--line); padding-top:12px;}
+.prop-price{font-weight:800; font-size:1.05rem; color:var(--gold-700);}
+.prop-price small{font-weight:600; font-size:.72rem; color:var(--ink-soft);}
+.avail-pill{font-size:.68rem; font-weight:700; padding:4px 9px; border-radius:999px; background:var(--green-100); color:var(--green-600); display:flex; align-items:center; gap:5px;}
+
+/* property detail */
+.detail-back{display:inline-flex; align-items:center; gap:8px; font-weight:700; font-size:.85rem; color:var(--gold-700); margin-bottom:18px; border:none; background:none;}
+.detail-grid{display:grid; grid-template-columns:1.6fr 1fr; gap:28px; align-items:start;}
+@media (max-width:900px){ .detail-grid{grid-template-columns:1fr;} }
+.gallery{display:grid; grid-template-columns:2fr 1fr; gap:8px; border-radius:var(--radius); overflow:hidden; height:340px;}
+.gallery .g-main{grid-row:span 2;}
+.gallery img{width:100%; height:100%; object-fit:cover;}
+.detail-title{font-size:1.5rem; font-weight:800; margin:20px 0 4px;}
+.detail-sub{color:var(--ink-soft); font-size:.9rem; display:flex; align-items:center; gap:8px; margin-bottom:18px;}
+.amenity-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px; margin:18px 0 26px;}
+.amenity{display:flex; align-items:center; gap:10px; font-size:.85rem; font-weight:600; color:var(--ink-soft);}
+.amenity i{color:var(--gold-500); width:16px; text-align:center;}
+.calendar-card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:18px;}
+.cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:5px; margin-top:12px;}
+.cal-cell{aspect-ratio:1; display:flex; align-items:center; justify-content:center; border-radius:8px; font-size:.76rem; font-weight:600; background:var(--gold-50); color:var(--ink);}
+.cal-cell.blocked{background:var(--red-100); color:var(--red-600); text-decoration:line-through; opacity:.7;}
+.cal-cell.blocked.airbnb::after{content:"A"; position:absolute;}
+.cal-cell.selected{background:var(--gold-600); color:#fff;}
+.cal-legend{display:flex; gap:14px; margin-top:12px; font-size:.72rem; color:var(--ink-soft); flex-wrap:wrap;}
+.cal-legend span{display:flex; align-items:center; gap:6px;}
+.dot{width:9px; height:9px; border-radius:50%;}
+
+.booking-card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:20px; box-shadow:var(--shadow-md); position:sticky; top:20px;}
+.booking-card .bp{font-size:1.4rem; font-weight:800; color:var(--gold-700);}
+.booking-card .bp small{font-size:.78rem; color:var(--ink-soft); font-weight:600;}
+.booking-row{display:flex; justify-content:space-between; font-size:.85rem; padding:9px 0; border-bottom:1px dashed var(--line); color:var(--ink-soft);}
+.booking-row b{color:var(--ink); font-weight:700;}
+.booking-total{display:flex; justify-content:space-between; padding-top:12px; font-weight:800; font-size:1.02rem;}
+.book-btn{width:100%; margin-top:16px; background:var(--gold-600); color:#fff; border:none; padding:14px; border-radius:12px; font-weight:700; font-size:.92rem; display:flex; align-items:center; justify-content:center; gap:8px; transition:transform .2s var(--spring), background .2s;}
+.book-btn:hover{background:var(--gold-700); transform:scale(1.02);}
+.trust-row{display:flex; align-items:center; gap:8px; font-size:.74rem; color:var(--ink-soft); margin-top:12px; justify-content:center;}
+
+/* confirmation modal */
+.modal-veil{position:fixed; inset:0; background:rgba(20,14,6,.55); display:flex; align-items:center; justify-content:center; z-index:200; opacity:0; pointer-events:none; transition:opacity .25s;}
+.modal-veil.show{opacity:1; pointer-events:all;}
+.modal-card{background:var(--card); border-radius:20px; padding:34px 30px; max-width:380px; text-align:center; transform:scale(.9); transition:transform .3s var(--spring); box-shadow:var(--shadow-lg);}
+.modal-veil.show .modal-card{transform:scale(1);}
+.modal-icon{width:64px; height:64px; border-radius:50%; background:var(--green-100); color:var(--green-600); display:flex; align-items:center; justify-content:center; font-size:1.6rem; margin:0 auto 16px;}
+.modal-card h3{font-size:1.2rem; margin-bottom:8px;}
+.modal-card p{color:var(--ink-soft); font-size:.86rem; margin-bottom:20px; line-height:1.5;}
+.modal-sync{background:var(--teal-100); color:var(--teal-600); border-radius:10px; padding:10px 12px; font-size:.76rem; font-weight:700; display:flex; align-items:center; gap:8px; text-align:left; margin-bottom:18px;}
+.modal-close{background:var(--ink); color:#fdf1de; border:none; padding:11px 22px; border-radius:10px; font-weight:700; width:100%;}
+
+/* ---------- Admin ---------- */
+.admin-wrap{display:grid; grid-template-columns:240px 1fr; min-height:640px;}
+@media (max-width:900px){ .admin-wrap{grid-template-columns:1fr;} .admin-sidebar{display:flex; overflow-x:auto; padding:12px;} .admin-sidebar .nav-item{white-space:nowrap;} }
+.admin-sidebar{background:var(--gold-900); color:#f4e6c8; padding:22px 14px; display:flex; flex-direction:column; gap:4px;}
+.admin-brand{display:flex; align-items:center; gap:10px; padding:6px 10px 20px; font-weight:800; font-size:1.1rem; color:#fff;}
+.admin-brand i{color:var(--gold-300);}
+.nav-item{display:flex; align-items:center; gap:12px; padding:11px 14px; border-radius:10px; color:#e7d6b1; font-size:.86rem; font-weight:600; border:none; background:none; text-align:left; transition:background .15s;}
+.nav-item i{width:18px; text-align:center; opacity:.85;}
+.nav-item:hover{background:rgba(255,255,255,.07);}
+.nav-item.active{background:var(--gold-600); color:#fff;}
+.admin-main{background:var(--bg); padding:26px 30px; overflow-y:auto; max-height:640px;}
+.admin-topbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:22px; flex-wrap:wrap; gap:10px;}
+.admin-topbar h2{font-size:1.3rem; font-weight:800;}
+.sync-chip{display:flex; align-items:center; gap:8px; background:var(--green-100); color:var(--green-600); padding:8px 14px; border-radius:999px; font-size:.78rem; font-weight:700;}
+.sync-chip.pending{background:var(--amber-100); color:var(--amber-600);}
+.pulse{width:8px; height:8px; border-radius:50%; background:currentColor; animation:pulse 1.6s infinite;}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(63,138,82,.5);}70%{box-shadow:0 0 0 8px rgba(63,138,82,0);}100%{box-shadow:0 0 0 0 rgba(63,138,82,0);}}
+
+.kpi-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:16px; margin-bottom:24px;}
+.kpi-card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px; box-shadow:var(--shadow-sm);}
+.kpi-top{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;}
+.kpi-icon{width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:.95rem;}
+.kpi-card .stat-num{font-size:1.7rem; font-weight:800;}
+.kpi-label{font-size:.78rem; color:var(--ink-soft); font-weight:600;}
+.kpi-trend{font-size:.72rem; font-weight:700; display:flex; align-items:center; gap:4px;}
+.trend-up{color:var(--green-600);}
+
+.panel{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:20px; margin-bottom:20px; box-shadow:var(--shadow-sm);}
+.panel h3{font-size:1rem; font-weight:800; margin-bottom:16px; display:flex; align-items:center; gap:8px;}
+.two-col{display:grid; grid-template-columns:1.4fr 1fr; gap:20px;}
+@media (max-width:1100px){ .two-col{grid-template-columns:1fr;} }
+
+.flow-diagram{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 4px; flex-wrap:wrap;}
+.flow-node{flex:1; min-width:110px; text-align:center; padding:14px 10px; border-radius:12px; background:var(--gold-50); border:1px solid var(--line);}
+.flow-node.center{background:var(--gold-700); color:#fff; border:none;}
+.flow-node i{font-size:1.2rem; margin-bottom:6px; display:block;}
+.flow-node span{font-size:.72rem; font-weight:700; display:block;}
+.flow-arrow{color:var(--gold-500); font-size:1.1rem;}
+
+.log-item{display:flex; gap:12px; padding:11px 0; border-bottom:1px solid var(--line); font-size:.82rem;}
+.log-item:last-child{border-bottom:none;}
+.log-dot{width:26px; height:26px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:.72rem; flex-shrink:0;}
+.log-item b{font-weight:700;}
+.log-item .log-time{color:var(--ink-soft); font-size:.72rem; margin-left:auto; white-space:nowrap;}
+
+table{width:100%; border-collapse:collapse; font-size:.84rem;}
+th{text-align:left; padding:10px 12px; color:var(--ink-soft); font-weight:700; font-size:.72rem; text-transform:uppercase; letter-spacing:.03em; border-bottom:2px solid var(--line);}
+td{padding:12px; border-bottom:1px solid var(--line);}
+tr.table-row{cursor:pointer; transition:background .15s;}
+tr.table-row:hover{background:var(--gold-50);}
+.pname{display:flex; align-items:center; gap:10px; font-weight:700;}
+.pname img{width:38px; height:38px; border-radius:9px; object-fit:cover;}
+.status-tag{font-size:.7rem; font-weight:700; padding:4px 10px; border-radius:999px;}
+.status-tag.ok{background:var(--green-100); color:var(--green-600);}
+.status-tag.pending{background:var(--amber-100); color:var(--amber-600);}
+.table-toolbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; gap:10px; flex-wrap:wrap;}
+.search-mini{display:flex; align-items:center; gap:8px; background:var(--gold-50); border:1px solid var(--line); border-radius:10px; padding:8px 12px; font-size:.82rem; color:var(--ink-soft); min-width:220px;}
+.search-mini input{border:none; background:none; outline:none; font-family:inherit; font-size:.82rem; width:100%;}
+
+.drawer-veil{position:fixed; inset:0; background:rgba(20,14,6,.4); z-index:150; opacity:0; pointer-events:none; transition:opacity .25s;}
+.drawer-veil.show{opacity:1; pointer-events:all;}
+.drawer{position:fixed; top:0; right:-420px; width:400px; max-width:92vw; height:100%; background:var(--card); z-index:160; box-shadow:-16px 0 40px rgba(0,0,0,.18); transition:right .3s var(--spring); overflow-y:auto; padding:26px;}
+.drawer.show{right:0;}
+.drawer-close{float:right; background:var(--gold-50); border:none; width:32px; height:32px; border-radius:9px; font-size:.9rem;}
+.drawer h3{font-size:1.15rem; font-weight:800; margin:8px 0 18px; clear:both;}
+.field-label{font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-soft); margin:16px 0 6px;}
+.field-box{border:1px solid var(--line); border-radius:10px; padding:10px 12px; font-size:.86rem; background:var(--gold-50);}
+.private-note{border:1px dashed var(--red-600); background:var(--red-100); border-radius:10px; padding:12px; font-size:.82rem; color:#5a2b1f; min-height:70px;}
+.private-flag{display:flex; align-items:center; gap:6px; font-size:.7rem; font-weight:700; color:var(--red-600); margin-top:16px;}
+
+.footer-note{text-align:center; padding:30px 10px 6px; font-size:.76rem; color:var(--ink-soft);}
+.footer-note i{color:var(--gold-500);}
+.hidden{display:none !important;}
+.fade-page{animation:fadeIn .4s ease;}
+@keyframes fadeIn{from{opacity:0; transform:translateY(8px);}to{opacity:1; transform:translateY(0);}}
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+  <div class="mode-switch-wrap">
+    <div class="mode-switch">
+      <button class="mode-btn active" data-mode="site"><i class="fa-solid fa-house"></i> Site Publico</button>
+      <button class="mode-btn" data-mode="admin"><i class="fa-solid fa-gauge"></i> Painel Admin</button>
+    </div>
+  </div>
+
+  <div class="browser-frame">
+    <div class="browser-bar">
+      <div class="browser-dots"><span></span><span></span><span></span></div>
+      <div class="browser-url" id="urlBar"><i class="fa-solid fa-lock"></i> direta.com.br</div>
+    </div>
+
+    <!-- ===================== SITE PUBLICO ===================== -->
+    <div id="siteView">
+      <nav class="site-nav">
+        <div class="site-brand"><i class="fa-solid fa-key"></i> Direta</div>
+        <div class="site-links"><a>Propriedades</a><a>Como funciona</a><a>Contato</a></div>
+        <button class="site-cta">Minhas reservas</button>
+      </nav>
+
+      <!-- Home page -->
+      <div id="sitePageHome" class="fade-page">
+        <div class="hero">
+          <div class="hero-bg"></div>
+          <div class="hero-overlay"></div>
+          <div class="orb orb1"></div>
+          <div class="orb orb2"></div>
+          <div class="hero-inner">
+            <h1>Reserve direto com quem cuida do imovel</h1>
+            <p>90 propriedades de temporada, disponibilidade sempre atualizada com Airbnb, Booking e Expedia.</p>
+            <div class="search-bar">
+              <div class="search-field"><label>Destino</label><input value="Florianopolis, SC" readonly></div>
+              <div class="search-field"><label>Check-in</label><input value="12 ago" readonly></div>
+              <div class="search-field"><label>Check-out</label><input value="17 ago" readonly></div>
+              <button class="search-btn"><i class="fa-solid fa-magnifying-glass"></i> Buscar</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-head reveal">
+            <h2>Propriedades em destaque</h2>
+            <span>Mostrando 8 de 90 propriedades</span>
+          </div>
+          <div class="prop-grid" id="propGrid"></div>
+        </div>
+      </div>
+
+      <!-- Detail page -->
+      <div id="sitePageDetail" class="section hidden">
+        <button class="detail-back" onclick="goHome()"><i class="fa-solid fa-arrow-left"></i> Voltar aos resultados</button>
+        <div class="gallery">
+          <div class="g-main"><img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=900&q=80"></div>
+          <img src="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=500&q=80">
+          <img src="https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?w=500&q=80">
+        </div>
+        <div class="detail-grid">
+          <div>
+            <h1 class="detail-title">Casa Vista Mar - Jurere</h1>
+            <div class="detail-sub"><i class="fa-solid fa-location-dot"></i> Florianopolis, Santa Catarina <span style="margin-left:10px;"><i class="fa-solid fa-star" style="color:var(--gold-500)"></i> 4.9 (128 avaliacoes)</span></div>
+            <p style="color:var(--ink-soft); line-height:1.6; font-size:.92rem;">Casa de frente pro mar com piscina privativa, 4 suites e varanda gourmet. Ideal pra grupos e familias que buscam temporada com privacidade total.</p>
+            <div class="amenity-grid">
+              <div class="amenity"><i class="fa-solid fa-water-ladder"></i> Piscina privativa</div>
+              <div class="amenity"><i class="fa-solid fa-wifi"></i> Wi-Fi de alta velocidade</div>
+              <div class="amenity"><i class="fa-solid fa-car"></i> 3 vagas de garagem</div>
+              <div class="amenity"><i class="fa-solid fa-fire-burner"></i> Churrasqueira</div>
+              <div class="amenity"><i class="fa-solid fa-bed"></i> 4 suites - 10 hospedes</div>
+              <div class="amenity"><i class="fa-solid fa-paw"></i> Aceita animais</div>
+            </div>
+            <div class="calendar-card reveal">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h3 style="font-size:.95rem; font-weight:800;"><i class="fa-solid fa-calendar-days"></i> Disponibilidade - agosto</h3>
+                <span style="font-size:.72rem; color:var(--ink-soft); display:flex; align-items:center; gap:6px;"><i class="fa-solid fa-rotate" style="color:var(--teal-500)"></i> sincronizado com Hostaway ha 4 min</span>
+              </div>
+              <div class="cal-grid" id="calGrid"></div>
+              <div class="cal-legend">
+                <span><span class="dot" style="background:var(--gold-50); border:1px solid var(--line);"></span> Disponivel</span>
+                <span><span class="dot" style="background:var(--gold-600);"></span> Selecionado</span>
+                <span><span class="dot" style="background:var(--red-100);"></span> Ocupado (Airbnb / Booking / Expedia via Hostaway)</span>
+              </div>
+            </div>
+          </div>
+          <div class="booking-card reveal">
+            <div class="bp">R$ 1.240 <small>/ noite</small></div>
+            <div class="booking-row"><span>12 ago - 17 ago (5 noites)</span><b>R$ 6.200</b></div>
+            <div class="booking-row"><span>Taxa de limpeza</span><b>R$ 280</b></div>
+            <div class="booking-row"><span>Servico Direta</span><b>R$ 320</b></div>
+            <div class="booking-total"><span>Total</span><span>R$ 6.800</span></div>
+            <button class="book-btn" onclick="confirmBooking()"><i class="fa-solid fa-circle-check"></i> Confirmar reserva</button>
+            <div class="trust-row"><i class="fa-solid fa-shield-halved"></i> Reserva confirmada na hora, sem sair do site</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== PAINEL ADMIN ===================== -->
+    <div id="adminView" class="hidden">
+      <div class="admin-wrap">
+        <div class="admin-sidebar">
+          <div class="admin-brand"><i class="fa-solid fa-key"></i> Direta Admin</div>
+          <button class="nav-item active" data-admin="dashboard"><i class="fa-solid fa-gauge"></i> Dashboard</button>
+          <button class="nav-item" data-admin="properties"><i class="fa-solid fa-house-chimney"></i> Propriedades</button>
+          <button class="nav-item" data-admin="sync"><i class="fa-solid fa-rotate"></i> Sincronizacao Hostaway</button>
+          <button class="nav-item" data-admin="pricing"><i class="fa-solid fa-sliders"></i> Precificacao dinamica</button>
+        </div>
+        <div class="admin-main">
+
+          <!-- Dashboard -->
+          <div id="adminDashboard" class="fade-page">
+            <div class="admin-topbar">
+              <h2>Visao geral</h2>
+              <div class="sync-chip"><span class="pulse"></span> Hostaway conectado - ultima sincronizacao ha 4 min</div>
+            </div>
+            <div class="kpi-grid">
+              <div class="kpi-card reveal">
+                <div class="kpi-top"><div class="kpi-icon" style="background:var(--gold-100); color:var(--gold-700);"><i class="fa-solid fa-house-chimney"></i></div></div>
+                <div class="stat-num" data-count="90">0</div>
+                <div class="kpi-label">Propriedades ativas</div>
+              </div>
+              <div class="kpi-card reveal">
+                <div class="kpi-top"><div class="kpi-icon" style="background:var(--green-100); color:var(--green-600);"><i class="fa-solid fa-chart-line"></i></div></div>
+                <div class="stat-num" data-count="78">0<span style="font-size:1rem;">%</span></div>
+                <div class="kpi-label">Ocupacao (30 dias)</div>
+                <div class="kpi-trend trend-up"><i class="fa-solid fa-arrow-up"></i> +6 pts vs mes anterior</div>
+              </div>
+              <div class="kpi-card reveal">
+                <div class="kpi-top"><div class="kpi-icon" style="background:var(--teal-100); color:var(--teal-600);"><i class="fa-solid fa-globe"></i></div></div>
+                <div class="stat-num" data-count="34">0</div>
+                <div class="kpi-label">Reservas diretas no site (mes)</div>
+              </div>
+              <div class="kpi-card reveal">
+                <div class="kpi-top"><div class="kpi-icon" style="background:var(--amber-100); color:var(--amber-600);"><i class="fa-solid fa-triangle-exclamation"></i></div></div>
+                <div class="stat-num" data-count="1">0</div>
+                <div class="kpi-label">Conflito de sincronizacao aberto</div>
+              </div>
+            </div>
+
+            <div class="two-col">
+              <div class="panel reveal">
+                <h3><i class="fa-solid fa-diagram-project"></i> Hostaway como fonte unica do calendario</h3>
+                <div class="flow-diagram">
+                  <div class="flow-node"><i class="fa-brands fa-airbnb"></i><span>Airbnb</span></div>
+                  <div class="flow-node"><i class="fa-solid fa-building"></i><span>Booking</span></div>
+                  <div class="flow-node"><i class="fa-solid fa-plane"></i><span>Expedia</span></div>
+                  <i class="fa-solid fa-arrow-right-long flow-arrow"></i>
+                  <div class="flow-node center"><i class="fa-solid fa-server"></i><span>Hostaway</span></div>
+                  <i class="fa-solid fa-arrow-right-long flow-arrow"></i>
+                  <div class="flow-node"><i class="fa-solid fa-key"></i><span>Site Direta</span></div>
+                </div>
+                <p style="font-size:.8rem; color:var(--ink-soft); margin-top:10px;">O site nunca fala direto com as OTAs. Ele so espelha o que o Hostaway ja consolida, e devolve pra ele toda reserva feita direto no site.</p>
+              </div>
+              <div class="panel reveal">
+                <h3><i class="fa-solid fa-list-check"></i> Ultimos eventos de sincronizacao</h3>
+                <div id="logList"></div>
+              </div>
+            </div>
+
+            <div class="panel reveal">
+              <h3><i class="fa-solid fa-calendar-check"></i> Proximos check-ins</h3>
+              <table>
+                <thead><tr><th>Propriedade</th><th>Hospede</th><th>Check-in</th><th>Origem</th><th>Status</th></tr></thead>
+                <tbody id="checkinBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Properties -->
+          <div id="adminProperties" class="fade-page hidden">
+            <div class="admin-topbar"><h2>Propriedades (90)</h2></div>
+            <div class="panel">
+              <div class="table-toolbar">
+                <div class="search-mini"><i class="fa-solid fa-magnifying-glass"></i><input placeholder="Buscar propriedade..."></div>
+                <span style="font-size:.78rem; color:var(--ink-soft);">Clique em uma linha pra ver os dados publicos e as anotacoes privadas</span>
+              </div>
+              <table>
+                <thead><tr><th>Propriedade</th><th>Cidade</th><th>Diaria</th><th>Sincronizacao</th><th></th></tr></thead>
+                <tbody id="propTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Sync page -->
+          <div id="adminSync" class="fade-page hidden">
+            <div class="admin-topbar">
+              <h2>Sincronizacao Hostaway</h2>
+              <div class="sync-chip"><span class="pulse"></span> Conectado</div>
+            </div>
+            <div class="panel">
+              <h3><i class="fa-solid fa-diagram-project"></i> Fluxo de duas vias</h3>
+              <div class="flow-diagram">
+                <div class="flow-node"><i class="fa-solid fa-key"></i><span>Reserva no site</span></div>
+                <i class="fa-solid fa-arrow-right-long flow-arrow"></i>
+                <div class="flow-node center"><i class="fa-solid fa-server"></i><span>Hostaway bloqueia a data</span></div>
+                <i class="fa-solid fa-arrow-right-long flow-arrow"></i>
+                <div class="flow-node"><i class="fa-brands fa-airbnb"></i><span>OTAs atualizadas</span></div>
+              </div>
+            </div>
+            <div class="panel">
+              <h3><i class="fa-solid fa-clock-rotate-left"></i> Historico completo de eventos</h3>
+              <div id="logListFull"></div>
+            </div>
+          </div>
+
+          <!-- Pricing teaser -->
+          <div id="adminPricing" class="fade-page hidden">
+            <div class="admin-topbar"><h2>Precificacao dinamica</h2></div>
+            <div class="panel" style="text-align:center; padding:50px 20px;">
+              <div class="kpi-icon" style="background:var(--gold-100); color:var(--gold-700); width:52px; height:52px; font-size:1.3rem; margin:0 auto 16px;"><i class="fa-solid fa-sliders"></i></div>
+              <h3 style="margin-bottom:8px;">Motor de regras por ocupacao, antecedencia e temporada</h3>
+              <p style="color:var(--ink-soft); font-size:.86rem; max-width:440px; margin:0 auto 18px;">Ajusta a diaria automaticamente por propriedade ou em lote, com minimo e maximo definidos por voce. Planejado pra fase seguinte, depois da base de reserva direta validada.</p>
+              <span class="status-tag pending" style="padding:7px 16px;">Fase 2 - em planejamento</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-note"><i class="fa-solid fa-key"></i> Direta - prototipo de produto pra avaliacao. Dados ilustrativos.</div>
+</div>
+
+<button class="restart-btn" onclick="restartDemo()"><i class="fa-solid fa-rotate-right"></i> Reiniciar demo</button>
+
+<div class="modal-veil" id="bookModal">
+  <div class="modal-card">
+    <div class="modal-icon"><i class="fa-solid fa-check"></i></div>
+    <h3>Reserva confirmada</h3>
+    <p>Casa Vista Mar - Jurere, 12 a 17 de agosto. Confirmacao enviada por e-mail.</p>
+    <div class="modal-sync"><i class="fa-solid fa-rotate"></i> Bloqueio enviado ao Hostaway - Airbnb, Booking e Expedia atualizados em instantes.</div>
+    <button class="modal-close" onclick="closeModal()">Fechar</button>
+  </div>
+</div>
+
+<script>
+const properties = [
+  {name:"Casa Vista Mar - Jurere", city:"Florianopolis, SC", img:"1600585154340-be6161a56a0c", price:1240, beds:4, guests:10, sync:"ok", t:"4 min"},
+  {name:"Chale das Palmeiras", city:"Buzios, RJ", img:"1499793983690-e29da59ef1c2", price:680, beds:2, guests:5, sync:"ok", t:"9 min"},
+  {name:"Loft Centro Historico", city:"Paraty, RJ", img:"1502672260266-1c1ef2d93688", price:410, beds:1, guests:2, sync:"ok", t:"2 min"},
+  {name:"Cobertura Beira-Mar", city:"Balneario Camboriu, SC", img:"1502672023488-70e25813eb80", price:1580, beds:3, guests:8, sync:"pending", t:"41 min"},
+  {name:"Pousada do Arvoredo", city:"Ilhabela, SP", img:"1505873242700-f289a29e1e0f", price:520, beds:2, guests:4, sync:"ok", t:"6 min"},
+  {name:"Villa Serra Verde", city:"Gramado, RS", img:"1518780664697-55e3ad937233", price:890, beds:3, guests:7, sync:"ok", t:"3 min"},
+  {name:"Studio Vista Lagoa", city:"Florianopolis, SC", img:"1522708323590-d24dbb6b0267", price:395, beds:1, guests:2, sync:"ok", t:"11 min"},
+  {name:"Casa Toca da Baleia", city:"Praia do Rosa, SC", img:"1600047509807-ba8f99d2cdde", price:730, beds:2, guests:6, sync:"ok", t:"5 min"}
+];
+
+const propGrid = document.getElementById('propGrid');
+propGrid.innerHTML = properties.map(p => `
+  <div class="prop-card reveal" onclick="openDetail()">
+    <div class="prop-media">
+      <span class="prop-badge"><i class="fa-solid fa-rotate"></i> sync ${p.t}</span>
+      <img src="https://images.unsplash.com/photo-${p.img}?w=500&q=80">
+    </div>
+    <div class="prop-body">
+      <h3>${p.name}</h3>
+      <div class="prop-loc"><i class="fa-solid fa-location-dot"></i> ${p.city}</div>
+      <div class="prop-meta"><span><i class="fa-solid fa-bed"></i> ${p.beds} suites</span><span><i class="fa-solid fa-user-group"></i> ${p.guests} hospedes</span></div>
+      <div class="prop-foot">
+        <div class="prop-price">R$ ${p.price}<small> /noite</small></div>
+        <div class="avail-pill"><i class="fa-solid fa-circle" style="font-size:6px;"></i> disponivel</div>
+      </div>
+    </div>
+  </div>
+`).join('');
+
+// property admin table (90 mock rows, generated)
+const cities = ["Florianopolis, SC","Buzios, RJ","Paraty, RJ","Balneario Camboriu, SC","Ilhabela, SP","Gramado, RS","Praia do Rosa, SC","Porto de Galinhas, PE"];
+const names = ["Casa Vista Mar","Chale das Palmeiras","Loft Centro","Cobertura Beira-Mar","Pousada Arvoredo","Villa Serra Verde","Studio Vista Lagoa","Toca da Baleia","Recanto das Aguas","Mirante do Cais"];
+let allProps = [];
+for(let i=0;i<90;i++){
+  const n = names[i%names.length] + (i>9 ? " "+(Math.floor(i/10)+1) : "");
+  allProps.push({
+    id:i+1, name:n, city:cities[i%cities.length],
+    price: 350 + (i*17)%1400,
+    sync: i%13===0 ? "pending" : "ok",
+    img: properties[i%properties.length].img,
+    note: i%13===0 ? "Chave fica com o caseiro Zeca, ligar antes de liberar acesso ao hospede." : "Sem restricao. Faxina padrao confirmada toda sexta."
+  });
+}
+const propTableBody = document.getElementById('propTableBody');
+function renderPropTable(filter){
+  const rows = allProps.filter(p => !filter || p.name.toLowerCase().includes(filter) || p.city.toLowerCase().includes(filter)).slice(0,14);
+  propTableBody.innerHTML = rows.map(p => `
+    <tr class="table-row" onclick="openDrawer(${p.id})">
+      <td><div class="pname"><img src="https://images.unsplash.com/photo-${p.img}?w=100&q=60">${p.name}</div></td>
+      <td>${p.city}</td>
+      <td>R$ ${p.price}</td>
+      <td>${p.sync==='ok' ? '<span class="status-tag ok"><i class="fa-solid fa-check"></i> sincronizado</span>' : '<span class="status-tag pending"><i class="fa-solid fa-clock"></i> pendente</span>'}</td>
+      <td><i class="fa-solid fa-chevron-right" style="color:var(--ink-soft);"></i></td>
+    </tr>
+  `).join('') + `<tr><td colspan="5" style="text-align:center; color:var(--ink-soft); font-size:.78rem; padding:16px;">mostrando 14 de 90 propriedades</td></tr>`;
+}
+renderPropTable();
+document.querySelector('.search-mini input').addEventListener('input', e => renderPropTable(e.target.value.toLowerCase()));
+
+function openDrawer(id){
+  const p = allProps.find(x=>x.id===id);
+  document.getElementById('drawerBody').innerHTML = `
+    <button class="drawer-close" onclick="closeDrawer()"><i class="fa-solid fa-xmark"></i></button>
+    <h3>${p.name}</h3>
+    <div class="field-label">Cidade</div><div class="field-box">${p.city}</div>
+    <div class="field-label">Diaria base</div><div class="field-box">R$ ${p.price}</div>
+    <div class="field-label">Status Hostaway</div><div class="field-box">${p.sync==='ok' ? 'Sincronizado - ultima atualizacao ha poucos minutos' : 'Pendente - aguardando confirmacao'}</div>
+    <div class="private-flag"><i class="fa-solid fa-lock"></i> VISIVEL SOMENTE PARA ADMINISTRADORES</div>
+    <div class="field-label">Anotacao privada</div>
+    <div class="private-note">${p.note}</div>
+  `;
+  document.getElementById('drawerVeil').classList.add('show');
+  document.getElementById('drawer').classList.add('show');
+}
+function closeDrawer(){
+  document.getElementById('drawerVeil').classList.remove('show');
+  document.getElementById('drawer').classList.remove('show');
+}
+
+// sync log
+const logEvents = [
+  {icon:"fa-solid fa-globe", color:"teal", who:"Site -> Hostaway", what:"Reserva direta bloqueou Casa Vista Mar (12-17 ago)", time:"ha 4 min"},
+  {icon:"fa-brands fa-airbnb", color:"gold", who:"Hostaway -> Site", what:"Airbnb vendeu Chale das Palmeiras (20-23 ago)", time:"ha 9 min"},
+  {icon:"fa-solid fa-building", color:"green", who:"Hostaway -> Site", what:"Booking confirmou Villa Serra Verde (1-4 set)", time:"ha 18 min"},
+  {icon:"fa-solid fa-triangle-exclamation", color:"red", who:"Conflito", what:"Cobertura Beira-Mar aguardando confirmacao do Hostaway", time:"ha 41 min"},
+  {icon:"fa-solid fa-plane", color:"gold", who:"Hostaway -> Site", what:"Expedia vendeu Pousada Arvoredo (28-30 ago)", time:"ha 1 h"}
+];
+function renderLog(target, count){
+  const colors = {teal:["var(--teal-100)","var(--teal-600)"], gold:["var(--gold-100)","var(--gold-700)"], green:["var(--green-100)","var(--green-600)"], red:["var(--red-100)","var(--red-600)"]};
+  document.getElementById(target).innerHTML = logEvents.slice(0,count).map(l => `
+    <div class="log-item">
+      <div class="log-dot" style="background:${colors[l.color][0]}; color:${colors[l.color][1]}"><i class="${l.icon}"></i></div>
+      <div><b>${l.who}</b><br><span style="color:var(--ink-soft);">${l.what}</span></div>
+      <span class="log-time">${l.time}</span>
+    </div>
+  `).join('');
+}
+renderLog('logList', 4);
+renderLog('logListFull', 5);
+
+// check-ins
+const checkins = [
+  {name:"Casa Vista Mar", guest:"Renata Souza", date:"12 ago", origin:"Site (direto)", status:"ok"},
+  {name:"Chale das Palmeiras", guest:"Airbnb #A2291", date:"20 ago", origin:"Airbnb", status:"ok"},
+  {name:"Villa Serra Verde", guest:"Booking #BK3341", date:"01 set", origin:"Booking", status:"ok"},
+  {name:"Cobertura Beira-Mar", guest:"Expedia #EX881", date:"03 set", origin:"Expedia", status:"pending"}
+];
+document.getElementById('checkinBody').innerHTML = checkins.map(c => `
+  <tr><td>${c.name}</td><td>${c.guest}</td><td>${c.date}</td><td>${c.origin}</td>
+  <td>${c.status==='ok' ? '<span class="status-tag ok">confirmado</span>' : '<span class="status-tag pending">verificando</span>'}</td></tr>
+`).join('');
+
+// calendar mock
+const calGrid = document.getElementById('calGrid');
+let calHTML = '';
+for(let d=1; d<=30; d++){
+  const blocked = [3,4,5,14,15,22,23,24,25].includes(d);
+  const selected = d>=12 && d<=17;
+  calHTML += `<div class="cal-cell ${blocked?'blocked':''} ${selected?'selected':''}">${d}</div>`;
+}
+calGrid.innerHTML = calHTML;
+
+// mode switch
+document.querySelectorAll('.mode-btn').forEach(btn => btn.addEventListener('click', () => {
+  document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const mode = btn.dataset.mode;
+  document.getElementById('siteView').classList.toggle('hidden', mode!=='site');
+  document.getElementById('adminView').classList.toggle('hidden', mode!=='admin');
+  document.getElementById('urlBar').innerHTML = mode==='site'
+    ? '<i class="fa-solid fa-lock"></i> direta.com.br'
+    : '<i class="fa-solid fa-lock"></i> admin.direta.com.br/dashboard';
+}));
+
+// admin nav
+document.querySelectorAll('[data-admin]').forEach(btn => btn.addEventListener('click', () => {
+  document.querySelectorAll('[data-admin]').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  ['dashboard','properties','sync','pricing'].forEach(p => {
+    document.getElementById('admin'+p.charAt(0).toUpperCase()+p.slice(1)).classList.toggle('hidden', p!==btn.dataset.admin);
+  });
+}));
+
+function openDetail(){
+  document.getElementById('sitePageHome').classList.add('hidden');
+  document.getElementById('sitePageDetail').classList.remove('hidden');
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+function goHome(){
+  document.getElementById('sitePageDetail').classList.add('hidden');
+  document.getElementById('sitePageHome').classList.remove('hidden');
+}
+function confirmBooking(){ document.getElementById('bookModal').classList.add('show'); }
+function closeModal(){ document.getElementById('bookModal').classList.remove('show'); }
+function restartDemo(){
+  document.querySelector('.mode-btn[data-mode="site"]').click();
+  goHome();
+  closeDrawer();
+  closeModal();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+// scroll reveal
+const io = new IntersectionObserver((entries)=>{
+  entries.forEach((e,idx)=>{
+    if(e.isIntersecting){
+      setTimeout(()=>e.target.classList.add('in'), idx*55);
+      io.unobserve(e.target);
+    }
+  });
+},{threshold:.12});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+// count-up
+const countIO = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      const el = e.target; const target = parseInt(el.dataset.count);
+      let cur = 0; const step = Math.max(1, Math.round(target/30));
+      const suffix = el.querySelector('span') ? el.querySelector('span').outerHTML : '';
+      const t = setInterval(()=>{
+        cur += step;
+        if(cur>=target){ cur = target; clearInterval(t); }
+        el.innerHTML = cur + suffix;
+      },25);
+      countIO.unobserve(el);
+    }
+  });
+},{threshold:.4});
+document.querySelectorAll('.stat-num[data-count]').forEach(el=>countIO.observe(el));
+</script>
+
+<div class="drawer-veil" id="drawerVeil" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer"><div id="drawerBody"></div></div>
+
+</body>
+</html>
