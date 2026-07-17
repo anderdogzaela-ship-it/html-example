@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bussola - Painel Corporativo com IA</title>
+<meta name="description" content="Painel corporativo com KPIs financeiros, relatorios exportaveis e assistente de IA que responde perguntas de negocio consultando os dados reais.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Lexend:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+:root{
+  --bg:#100d07;
+  --surface:#1a1610;
+  --surface-2:#221c14;
+  --surface-3:#2b2318;
+  --border:rgba(255,255,255,.08);
+  --border-2:rgba(255,255,255,.14);
+  --text:#f5efe6;
+  --text-dim:#a89a82;
+  --text-faint:#6b5f4d;
+  --gold400:#f2c14e;
+  --gold500:#e0a72e;
+  --gold600:#c48a1f;
+  --gold700:#9c6d18;
+  --glow:rgba(224,167,46,.35);
+  --success:#34d399;
+  --success-bg:rgba(52,211,153,.12);
+  --danger:#f87171;
+  --danger-bg:rgba(248,113,113,.12);
+  --warn:#fbbf24;
+  --warn-bg:rgba(251,191,36,.12);
+  --info:#60a5fa;
+  --info-bg:rgba(96,165,250,.12);
+  --series-blue:#3987e5;
+  --series-green:#3fae3f;
+  --series-magenta:#d55181;
+  --series-yellow:#c98500;
+  --r-sm:8px;--r-md:12px;--r-lg:16px;--r-xl:22px;
+  --shadow-md:0 8px 24px rgba(0,0,0,.35);
+  --shadow-lg:0 20px 50px rgba(0,0,0,.45);
+  --ease:cubic-bezier(.4,0,.2,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Nunito',sans-serif;
+  background:radial-gradient(circle at 1px 1px, rgba(255,255,255,.035) 1px, transparent 0) 0 0/28px 28px, var(--bg);
+  color:var(--text);-webkit-font-smoothing:antialiased;min-height:100vh;overflow-x:hidden;
+}
+h1,h2,h3,h4,.brand-name,.kpi-value,.stat-tile .s-val{font-family:'Lexend',sans-serif}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input{font-family:inherit}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--surface-3);border-radius:10px}
+
+.demo-badge{position:fixed;bottom:18px;right:18px;z-index:999;background:var(--surface);color:var(--gold400);
+  font-size:11.5px;font-weight:700;padding:8px 14px;border-radius:100px;box-shadow:var(--shadow-lg);
+  display:flex;align-items:center;gap:7px;border:1px solid rgba(224,167,46,.3);}
+.demo-badge i{font-size:10px}
+
+.app{display:grid;grid-template-columns:252px 1fr;min-height:100vh}
+.sidebar{background:var(--surface);border-right:1px solid var(--border);padding:20px 14px;
+  display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh;overflow-y:auto;z-index:40}
+.brand{display:flex;align-items:center;gap:10px;padding:6px 8px 18px}
+.brand-mark{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--gold400),var(--gold700));
+  display:flex;align-items:center;justify-content:center;color:#241a06;font-size:15px;
+  animation:pulseLogo 3.2s ease-in-out infinite;flex-shrink:0}
+@keyframes pulseLogo{0%,100%{box-shadow:0 0 0 0 rgba(224,167,46,0)}50%{box-shadow:0 0 20px 3px var(--glow)}}
+.brand-name{font-weight:700;font-size:16.5px;letter-spacing:.2px}
+.brand-sub{font-size:10.5px;color:var(--text-faint);margin-top:-2px}
+
+.nav-group-label{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-faint);padding:14px 10px 6px;font-weight:600}
+.nav-item{display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:var(--r-md);
+  color:var(--text-dim);font-size:14px;font-weight:500;transition:background .2s var(--ease),color .2s var(--ease);position:relative;cursor:pointer}
+.nav-item i{width:17px;text-align:center;font-size:14px;opacity:.85}
+.nav-item:hover{background:var(--surface-2);color:var(--text)}
+.nav-item.active{background:var(--surface-2);color:var(--gold400)}
+.nav-item.active::before{content:'';position:absolute;left:-14px;top:50%;transform:translateY(-50%);width:3px;height:16px;border-radius:3px;background:var(--gold500)}
+.nav-item.locked{cursor:not-allowed;opacity:.55}
+.nav-item.locked:hover{background:none;color:var(--text-dim)}
+.nav-item .lock-tag{margin-left:auto;font-size:9.5px;font-weight:700;background:var(--surface-3);color:var(--text-faint);padding:2px 6px;border-radius:20px;text-transform:uppercase;letter-spacing:.03em}
+
+.sidebar-footer{margin-top:auto;padding-top:14px;border-top:1px solid var(--border)}
+.plan-card{background:linear-gradient(160deg,var(--surface-2),var(--surface-3));border:1px solid var(--border-2);
+  border-radius:var(--r-lg);padding:13px;font-size:12px;color:var(--text-dim)}
+.plan-card strong{color:var(--text);display:flex;align-items:center;gap:6px;font-size:12.5px;margin-bottom:5px}
+.plan-card strong i{color:var(--gold400);font-size:11px}
+
+.main{min-width:0;display:flex;flex-direction:column}
+.topbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:14px;padding:14px 26px;
+  background:rgba(16,13,7,.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--border)}
+.search-box{flex:1;max-width:340px;display:flex;align-items:center;gap:9px;background:var(--surface-2);
+  border:1px solid var(--border-2);border-radius:100px;padding:8px 14px;color:var(--text-faint);font-size:13.5px}
+.search-box input{background:none;border:none;outline:none;color:var(--text);width:100%;font-size:13.5px}
+.topbar-actions{margin-left:auto;display:flex;align-items:center;gap:10px}
+.export-btn{display:flex;align-items:center;gap:7px;background:var(--surface-2);border:1px solid var(--border-2);
+  border-radius:var(--r-md);padding:8px 13px;font-size:12.5px;font-weight:700;color:var(--text-dim);transition:all .2s var(--ease)}
+.export-btn:hover{color:var(--text);border-color:var(--gold500);transform:translateY(-1px)}
+.export-btn i{color:var(--gold400)}
+.icon-btn{width:36px;height:36px;border-radius:10px;background:var(--surface-2);border:1px solid var(--border-2);
+  display:flex;align-items:center;justify-content:center;color:var(--text-dim);position:relative;font-size:14px}
+.icon-btn .dot{position:absolute;top:6px;right:6px;width:7px;height:7px;border-radius:50%;background:var(--danger);border:2px solid var(--surface)}
+.avatar-user{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--gold400),var(--gold700));
+  display:flex;align-items:center;justify-content:center;font-weight:800;color:#241a06;font-size:13px}
+
+.content{padding:24px 26px 60px}
+.page-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px}
+.page-head h1{font-size:21px;font-weight:700}
+.page-head p{font-size:13px;color:var(--text-dim);margin-top:3px}
+.domain-tag{font-size:10.5px;font-weight:700;color:var(--gold400);background:var(--warn-bg);padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:.04em}
+
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+.stat-tile{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:15px 17px;
+  display:flex;align-items:center;gap:13px}
+.stat-tile .s-ico{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.stat-tile .s-ico.gold{background:var(--warn-bg);color:var(--gold400)}
+.stat-tile .s-ico.blue{background:var(--info-bg);color:var(--info)}
+.stat-tile .s-ico.green{background:var(--success-bg);color:var(--success)}
+.stat-tile .s-ico.red{background:var(--danger-bg);color:var(--danger)}
+.stat-tile .s-val{font-size:19px;font-weight:800;line-height:1.1}
+.stat-tile .s-label{font-size:11.5px;color:var(--text-dim);margin-top:2px}
+.stat-tile .s-delta{font-size:10.5px;font-weight:700;margin-top:3px}
+.stat-tile .s-delta.up{color:var(--success)}
+.stat-tile .s-delta.down{color:var(--danger)}
+
+.section-head{display:flex;align-items:center;justify-content:space-between;margin:8px 0 14px}
+.section-head h2{font-size:16.5px;font-weight:700}
+.section-head p{font-size:12.5px;color:var(--text-dim)}
+
+.chart-row{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;margin-bottom:8px}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-xl);padding:18px 20px;box-shadow:var(--shadow-md)}
+.chart-card-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.chart-card-head h3{font-size:13.5px;font-weight:700}
+.chart-card-head span{font-size:11px;color:var(--text-faint)}
+.chart-legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px}
+.chart-legend .lg-item{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-dim)}
+.chart-legend .lg-swatch{width:9px;height:9px;border-radius:2px}
+svg text{font-family:'Nunito',sans-serif}
+.chart-tooltip{position:fixed;pointer-events:none;background:var(--surface-3);border:1px solid var(--border-2);
+  border-radius:8px;padding:7px 10px;font-size:11.5px;color:var(--text);box-shadow:var(--shadow-lg);z-index:500;opacity:0;
+  transition:opacity .12s var(--ease);white-space:nowrap}
+.chart-tooltip strong{color:var(--gold400)}
+
+.copilot-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;background:var(--surface);
+  border:1px solid var(--border);border-radius:var(--r-xl);overflow:hidden;box-shadow:var(--shadow-md)}
+.copilot-thread{border-right:1px solid var(--border);padding:18px;display:flex;flex-direction:column;gap:12px}
+.copilot-title{font-size:11.5px;font-weight:700;color:var(--text-faint);text-transform:uppercase;letter-spacing:.05em;
+  display:flex;align-items:center;gap:6px;margin-bottom:4px}
+.copilot-title i{color:var(--gold400)}
+.msg-row{display:flex;flex-direction:column;max-width:88%}
+.msg-row.in{align-self:flex-end;align-items:flex-end}
+.msg-row.out{align-self:flex-start}
+.msg-label{font-size:10px;font-weight:700;color:var(--text-faint);margin-bottom:3px;padding:0 4px;text-transform:uppercase;letter-spacing:.03em}
+.msg-row.in .msg-label{color:var(--gold500)}
+.bubble{padding:10px 14px;border-radius:14px;font-size:13.5px;line-height:1.5}
+.msg-row.out .bubble{background:var(--surface-2);border:1px solid var(--border);border-bottom-left-radius:4px}
+.msg-row.in .bubble{background:linear-gradient(135deg,var(--gold600),var(--gold700));color:#241a06;border-bottom-right-radius:4px;font-weight:600}
+.thread-input{margin-top:auto;padding-top:12px;border-top:1px solid var(--border);display:flex;gap:10px;align-items:center}
+.thread-input input{flex:1;background:var(--surface-2);border:1px solid var(--border-2);border-radius:100px;padding:10px 15px;
+  color:var(--text);outline:none;font-size:13px}
+.thread-input .send-btn{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--gold400),var(--gold600));
+  color:#241a06;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+
+.trace-panel{padding:18px;background:var(--surface-2)}
+.trace-badge{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:700;color:var(--success);
+  background:var(--success-bg);padding:4px 10px;border-radius:20px;margin-bottom:12px}
+.code-block{background:#0c0a06;border:1px solid var(--border-2);border-radius:var(--r-md);padding:13px 15px;
+  font-family:'SFMono-Regular',Consolas,monospace;font-size:12px;line-height:1.7;color:#e8dcc0;overflow-x:auto;white-space:pre}
+.code-block .kw{color:#f2c14e}
+.code-block .fn{color:#7fd1ae}
+.code-block .cm{color:#6b5f4d}
+.trace-table{width:100%;border-collapse:collapse;margin-top:13px;font-size:12px}
+.trace-table th{text-align:left;color:var(--text-faint);font-weight:700;padding:6px 8px;border-bottom:1px solid var(--border-2);text-transform:uppercase;font-size:10px;letter-spacing:.04em}
+.trace-table td{padding:7px 8px;border-bottom:1px solid var(--border);color:var(--text-dim);font-variant-numeric:tabular-nums}
+.trace-table tr:last-child td{border-bottom:none;color:var(--text);font-weight:700}
+.trace-note{margin-top:12px;font-size:11.5px;color:var(--text-faint);line-height:1.6;display:flex;gap:8px}
+.trace-note i{color:var(--gold400);margin-top:2px}
+
+.phase2-row{margin-top:28px;display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.phase2-tile{background:var(--surface);border:1px dashed var(--border-2);border-radius:var(--r-lg);padding:16px;
+  display:flex;flex-direction:column;gap:8px;opacity:.68}
+.phase2-tile i{font-size:18px;color:var(--text-faint)}
+.phase2-tile .p2-name{font-size:13px;font-weight:700;color:var(--text-dim)}
+.phase2-tile .p2-tag{font-size:10px;font-weight:700;color:var(--text-faint);text-transform:uppercase;letter-spacing:.04em;
+  background:var(--surface-3);padding:2px 8px;border-radius:20px;width:fit-content}
+
+@media(max-width:1100px){.chart-row{grid-template-columns:1fr}.copilot-grid{grid-template-columns:1fr}.copilot-thread{border-right:none;border-bottom:1px solid var(--border)}}
+@media(max-width:900px){.app{grid-template-columns:1fr}.sidebar{display:none}.stat-row{grid-template-columns:1fr 1fr}.phase2-row{grid-template-columns:1fr 1fr}}
+
+.fade-in{animation:fadeIn .5s var(--ease) both}
+.reveal{opacity:0;transform:translateY(14px);transition:opacity .55s var(--ease),transform .55s var(--ease)}
+.reveal.show{opacity:1;transform:translateY(0)}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+
+<div class="demo-badge"><i class="fa-solid fa-flask"></i> Prototipo funcional - dados ficticios</div>
+<div class="chart-tooltip" id="chartTooltip"></div>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark"><i class="fa-solid fa-compass"></i></div>
+      <div>
+        <div class="brand-name">Bussola</div>
+        <div class="brand-sub">Painel Corporativo</div>
+      </div>
+    </div>
+
+    <div class="nav-group-label">Fase 1</div>
+    <div class="nav-item active"><i class="fa-solid fa-chart-line"></i> Painel Financeiro</div>
+    <div class="nav-item"><i class="fa-solid fa-file-export"></i> Relatorios</div>
+
+    <div class="nav-group-label">Fase 2</div>
+    <div class="nav-item locked"><i class="fa-solid fa-handshake"></i> Comercial <span class="lock-tag">Fase 2</span></div>
+    <div class="nav-item locked"><i class="fa-solid fa-boxes-stacked"></i> Operacional <span class="lock-tag">Fase 2</span></div>
+    <div class="nav-item locked"><i class="fa-solid fa-calculator"></i> Contabil <span class="lock-tag">Fase 2</span></div>
+    <div class="nav-item locked"><i class="fa-solid fa-book-open"></i> Assistente de Processos <span class="lock-tag">Fase 2</span></div>
+
+    <div class="sidebar-footer">
+      <div class="plan-card">
+        <strong><i class="fa-solid fa-circle-info"></i> Fase 1</strong>
+        Um dominio de dados por vez: painel de indicadores + assistente de IA que consulta os numeros reais.
+      </div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input placeholder="Buscar indicador, relatorio..."></div>
+      <div class="topbar-actions">
+        <button class="export-btn"><i class="fa-solid fa-file-excel"></i> Excel</button>
+        <button class="export-btn"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+        <div class="icon-btn"><i class="fa-solid fa-bell"></i><span class="dot"></span></div>
+        <div class="avatar-user">PB</div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="page-head fade-in">
+        <div>
+          <h1>Painel Financeiro <span class="domain-tag">Dominio ativo - Fase 1</span></h1>
+          <p>Indicadores consolidados a partir da base financeira, atualizados diariamente.</p>
+        </div>
+      </div>
+
+      <div class="stat-row fade-in">
+        <div class="stat-tile">
+          <div class="s-ico gold"><i class="fa-solid fa-sack-dollar"></i></div>
+          <div><div class="s-val">R$ 428.500</div><div class="s-label">Receita do mes</div><div class="s-delta up"><i class="fa-solid fa-arrow-up"></i> 6,2% vs mes anterior</div></div>
+        </div>
+        <div class="stat-tile">
+          <div class="s-ico blue"><i class="fa-solid fa-percent"></i></div>
+          <div><div class="s-val">34,8%</div><div class="s-label">Margem bruta</div><div class="s-delta up"><i class="fa-solid fa-arrow-up"></i> 1,1 p.p.</div></div>
+        </div>
+        <div class="stat-tile">
+          <div class="s-ico red"><i class="fa-solid fa-triangle-exclamation"></i></div>
+          <div><div class="s-val">R$ 62.300</div><div class="s-label">Contas em atraso</div><div class="s-delta up" style="color:var(--success)"><i class="fa-solid fa-arrow-down"></i> 8% vs mes anterior</div></div>
+        </div>
+        <div class="stat-tile">
+          <div class="s-ico green"><i class="fa-solid fa-water"></i></div>
+          <div><div class="s-val">R$ 156.000</div><div class="s-label">Fluxo de caixa (30d)</div><div class="s-delta up"><i class="fa-solid fa-arrow-up"></i> projecao estavel</div></div>
+        </div>
+      </div>
+
+      <div class="chart-row fade-in reveal">
+        <div class="chart-card">
+          <div class="chart-card-head"><h3>Receita mensal</h3><span>ultimos 6 meses</span></div>
+          <svg viewBox="0 0 560 220" width="100%" height="220" id="lineChart"></svg>
+        </div>
+        <div class="chart-card">
+          <div class="chart-card-head"><h3>Receita por linha de commodity</h3><span>mes corrente</span></div>
+          <svg viewBox="0 0 380 190" width="100%" height="190" id="barChart"></svg>
+          <div class="chart-legend" id="barLegend"></div>
+        </div>
+      </div>
+
+      <div class="section-head reveal" style="margin-top:30px">
+        <h2><i class="fa-solid fa-wand-magic-sparkles" style="color:var(--gold400);margin-right:6px"></i>Assistente de IA</h2>
+        <p>Responde consultando a base real, nao resumindo texto</p>
+      </div>
+      <div class="copilot-grid reveal">
+        <div class="copilot-thread">
+          <div class="copilot-title"><i class="fa-solid fa-comments"></i> Conversa</div>
+          <div class="msg-row in"><div class="msg-label">Colaborador</div><div class="bubble">Qual foi o resultado comercial do mes passado comparado ao mes anterior?</div></div>
+          <div class="msg-row out"><div class="msg-label">Bussola IA</div><div class="bubble">A receita do mes passado foi de R$ 428.500, um crescimento de 6,2% frente aos R$ 403.200 do mes anterior. A linha de Soja puxou o resultado, respondendo por quase metade do total.</div></div>
+          <div class="msg-row in"><div class="msg-label">Colaborador</div><div class="bubble">E a margem sobre isso, piorou ou melhorou?</div></div>
+          <div class="msg-row out"><div class="msg-label">Bussola IA</div><div class="bubble">A margem bruta do mes ficou em 34,8%, 1,1 ponto percentual acima do mes anterior. Ainda dentro da faixa que a area financeira considera saudavel pra esse periodo.</div></div>
+          <div class="thread-input">
+            <input placeholder="Pergunte sobre os numeros deste dominio...">
+            <div class="send-btn"><i class="fa-solid fa-paper-plane"></i></div>
+          </div>
+        </div>
+        <div class="trace-panel">
+          <div class="copilot-title"><i class="fa-solid fa-database"></i> Consulta gerada pela IA</div>
+          <span class="trace-badge"><i class="fa-solid fa-circle-check"></i> Consulta direta na base, sem resumo de texto</span>
+          <div class="code-block"><span class="cm">-- gerado pela IA a partir da pergunta acima</span>
+<span class="kw">SELECT</span> mes, <span class="fn">SUM</span>(receita) <span class="kw">AS</span> receita_total
+<span class="kw">FROM</span> fato_financeiro
+<span class="kw">WHERE</span> mes <span class="kw">IN</span> (<span class="kw">'mes_atual'</span>, <span class="kw">'mes_anterior'</span>)
+<span class="kw">GROUP BY</span> mes
+<span class="kw">ORDER BY</span> mes;</div>
+          <table class="trace-table">
+            <tr><th>Mes</th><th>Receita</th><th>Variacao</th></tr>
+            <tr><td>Mes anterior</td><td>R$ 403.200</td><td>-</td></tr>
+            <tr><td>Mes atual</td><td>R$ 428.500</td><td>+6,2%</td></tr>
+          </table>
+          <div class="trace-note"><i class="fa-solid fa-shield-halved"></i> Esse formato evita numero inventado: a IA so responde com o que a consulta realmente retornou.</div>
+        </div>
+      </div>
+
+      <div class="section-head reveal" style="margin-top:30px">
+        <h2>Fase 2 - proxima etapa</h2>
+      </div>
+      <div class="phase2-row reveal">
+        <div class="phase2-tile"><i class="fa-solid fa-layer-group"></i><div class="p2-name">Consolidacao multi-fonte (Excel + varios bancos)</div><span class="p2-tag">Fase 2</span></div>
+        <div class="phase2-tile"><i class="fa-solid fa-book-open"></i><div class="p2-name">Assistente sobre processos internos (documentos)</div><span class="p2-tag">Fase 2</span></div>
+        <div class="phase2-tile"><i class="fa-solid fa-robot"></i><div class="p2-name">Copiloto corporativo em todos os dominios</div><span class="p2-tag">Fase 2</span></div>
+        <div class="phase2-tile"><i class="fa-solid fa-user-shield"></i><div class="p2-name">Permissoes por perfil e trilha de auditoria</div><span class="p2-tag">Fase 2</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Line chart - single series, mark spec: 2px line, round cap/join, 10% area wash, 8px end-dot w/ 2px ring, hairline gridlines
+(function(){
+  const svg = document.getElementById('lineChart');
+  const data = [
+    {m:'Jan', v:350000},{m:'Fev', v:372000},{m:'Mar', v:390000},
+    {m:'Abr', v:405000},{m:'Mai', v:398000},{m:'Jun', v:428500}
+  ];
+  const W=560,H=220,padL=54,padR=16,padT=16,padB=28;
+  const plotW=W-padL-padR, plotH=H-padT-padB;
+  const maxV = 450000, minV = 300000;
+  const x = i => padL + (i/(data.length-1))*plotW;
+  const y = v => padT + plotH - ((v-minV)/(maxV-minV))*plotH;
+  const ns='http://www.w3.org/2000/svg';
+  function el(tag,attrs){const e=document.createElementNS(ns,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);return e;}
+
+  // gridlines (hairline, recessive)
+  [300000,350000,400000,450000].forEach(v=>{
+    svg.appendChild(el('line',{x1:padL,x2:W-padR,y1:y(v),y2:y(v),stroke:'rgba(255,255,255,.08)','stroke-width':1}));
+    const t=el('text',{x:padL-10,y:y(v)+4,'text-anchor':'end','font-size':10.5,fill:'#6b5f4d'});
+    t.textContent = (v/1000)+'K'; svg.appendChild(t);
+  });
+
+  const pathD = data.map((d,i)=>(i===0?'M':'L')+x(i)+','+y(d.v)).join(' ');
+  const areaD = pathD + ` L${x(data.length-1)},${padT+plotH} L${x(0)},${padT+plotH} Z`;
+  svg.appendChild(el('path',{d:areaD, fill:'var(--series-blue)', opacity:0.1}));
+  svg.appendChild(el('path',{d:pathD, fill:'none', stroke:'var(--series-blue)','stroke-width':2,'stroke-linecap':'round','stroke-linejoin':'round'}));
+
+  data.forEach((d,i)=>{
+    const cx=x(i), cy=y(d.v);
+    const hit = el('circle',{cx:cx,cy:cy,r:12,fill:'transparent',style:'cursor:pointer'});
+    const dot = el('circle',{cx:cx,cy:cy,r:5,fill:'var(--series-blue)',stroke:'#1a1610','stroke-width':2});
+    svg.appendChild(dot); svg.appendChild(hit);
+    const lbl = el('text',{x:cx,y:H-8,'text-anchor':'middle','font-size':11,fill:'#a89a82'});
+    lbl.textContent = d.m; svg.appendChild(lbl);
+    hit.addEventListener('mousemove', e=>showTip(e, d.m, 'R$ '+d.v.toLocaleString('pt-BR')));
+    hit.addEventListener('mouseleave', hideTip);
+  });
+  // end label
+  const last = data[data.length-1];
+  const endLbl = el('text',{x:x(data.length-1)-6,y:y(last.v)-12,'text-anchor':'end','font-size':12,'font-weight':700,fill:'#f5efe6'});
+  endLbl.textContent = 'R$ '+(last.v/1000).toFixed(0)+'K'; svg.appendChild(endLbl);
+})();
+
+// Bar chart - categorical identity per commodity, mark spec: <=24px, 4px rounded cap, square baseline, 2px surface gap
+(function(){
+  const svg = document.getElementById('barChart');
+  const data = [
+    {k:'Soja', v:210000, c:'var(--series-blue)'},
+    {k:'Milho', v:95000, c:'var(--series-green)'},
+    {k:'Cafe', v:80000, c:'var(--series-magenta)'},
+    {k:'Algodao', v:43000, c:'var(--series-yellow)'}
+  ];
+  const W=380,H=190,padL=16,padR=16,padT=16,padB=30;
+  const plotW=W-padL-padR, plotH=H-padT-padB;
+  const maxV = 230000;
+  const bw = 46, gap = (plotW - bw*data.length)/(data.length-1);
+  const ns='http://www.w3.org/2000/svg';
+  function el(tag,attrs){const e=document.createElementNS(ns,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);return e;}
+
+  svg.appendChild(el('line',{x1:padL,x2:W-padR,y1:padT+plotH,y2:padT+plotH,stroke:'rgba(255,255,255,.14)','stroke-width':1}));
+
+  data.forEach((d,i)=>{
+    const bx = padL + i*(bw+gap);
+    const bh = (d.v/maxV)*plotH;
+    const by = padT+plotH-bh;
+    const rect = el('rect',{x:bx,y:by,width:bw,height:bh,rx:4,ry:4,fill:d.c,style:'cursor:pointer'});
+    svg.appendChild(rect);
+    const mask = el('rect',{x:bx,y:padT+plotH-4,width:bw,height:4,fill:d.c});
+    svg.appendChild(mask);
+    const val = el('text',{x:bx+bw/2,y:by-8,'text-anchor':'middle','font-size':11.5,'font-weight':700,fill:'#f5efe6'});
+    val.textContent = (d.v/1000)+'K'; svg.appendChild(val);
+    const lbl = el('text',{x:bx+bw/2,y:H-8,'text-anchor':'middle','font-size':11,fill:'#a89a82'});
+    lbl.textContent = d.k; svg.appendChild(lbl);
+    rect.addEventListener('mousemove', e=>showTip(e, d.k, 'R$ '+d.v.toLocaleString('pt-BR')));
+    rect.addEventListener('mouseleave', hideTip);
+  });
+
+  const legend = document.getElementById('barLegend');
+  data.forEach(d=>{
+    const item = document.createElement('div'); item.className='lg-item';
+    item.innerHTML = `<span class="lg-swatch" style="background:${d.c}"></span>${d.k}`;
+    legend.appendChild(item);
+  });
+})();
+
+function showTip(e, title, value){
+  const tip = document.getElementById('chartTooltip');
+  tip.innerHTML = `<strong>${title}</strong><br>${value}`;
+  tip.style.left = (e.clientX+14)+'px';
+  tip.style.top = (e.clientY-10)+'px';
+  tip.style.opacity = 1;
+}
+function hideTip(){ document.getElementById('chartTooltip').style.opacity = 0; }
+
+// scroll-reveal
+const io = new IntersectionObserver((entries)=>{
+  entries.forEach(en=>{ if(en.isIntersecting){ en.target.classList.add('show'); io.unobserve(en.target); } });
+},{threshold:0.15});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+</script>
+</body>
+</html>
