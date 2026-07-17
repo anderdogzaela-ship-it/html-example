@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundry - Modular Business Management Suite</title>
+<meta name="description" content="Desktop business management suite prototype: modular architecture, financial dashboard, and a database engine that runs on SQLite locally and SQL Server on the network without touching business logic.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Lexend:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+:root{
+  --bg:#0b1018;
+  --surface:#121a26;
+  --surface-2:#182231;
+  --surface-3:#202c3e;
+  --border:rgba(255,255,255,.08);
+  --border-2:rgba(255,255,255,.14);
+  --text:#eef2f7;
+  --text-dim:#9aa8bd;
+  --text-faint:#5d6c82;
+  --gold400:#f2c14e;
+  --gold500:#e0a72e;
+  --gold600:#c48a1f;
+  --gold700:#9c6d18;
+  --glow:rgba(224,167,46,.35);
+  --success:#34d399;
+  --success-bg:rgba(52,211,153,.12);
+  --danger:#f87171;
+  --danger-bg:rgba(248,113,113,.12);
+  --info:#60a5fa;
+  --info-bg:rgba(96,165,250,.12);
+  --series-blue:#3987e5;
+  --series-green:#3fae3f;
+  --series-magenta:#d55181;
+  --series-yellow:#c98500;
+  --r-sm:8px;--r-md:12px;--r-lg:16px;--r-xl:22px;
+  --shadow-md:0 8px 24px rgba(0,0,0,.35);
+  --shadow-lg:0 20px 50px rgba(0,0,0,.45);
+  --ease:cubic-bezier(.4,0,.2,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Nunito',sans-serif;
+  background:radial-gradient(circle at 1px 1px, rgba(255,255,255,.035) 1px, transparent 0) 0 0/28px 28px, var(--bg);
+  color:var(--text);-webkit-font-smoothing:antialiased;min-height:100vh;overflow-x:hidden;
+}
+h1,h2,h3,h4,.brand-name,.kpi-value,.stat-tile .s-val{font-family:'Lexend',sans-serif}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input{font-family:inherit}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--surface-3);border-radius:10px}
+
+.demo-badge{position:fixed;bottom:18px;right:18px;z-index:999;background:var(--surface);color:var(--gold400);
+  font-size:11.5px;font-weight:700;padding:8px 14px;border-radius:100px;box-shadow:var(--shadow-lg);
+  display:flex;align-items:center;gap:7px;border:1px solid rgba(224,167,46,.3);}
+.demo-badge i{font-size:10px}
+
+/* Login screen */
+.login-screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:200;
+  background:radial-gradient(circle at 20% 20%, rgba(224,167,46,.10), transparent 45%),
+             radial-gradient(circle at 80% 70%, rgba(57,135,229,.08), transparent 45%), var(--bg);
+  transition:opacity .5s var(--ease), visibility .5s var(--ease);}
+.login-screen.hidden{opacity:0;visibility:hidden;pointer-events:none}
+.orb{position:absolute;border-radius:50%;filter:blur(60px);opacity:.35;animation:float 9s ease-in-out infinite}
+.orb1{width:280px;height:280px;background:var(--gold500);top:8%;left:10%}
+.orb2{width:320px;height:320px;background:var(--series-blue);bottom:6%;right:8%;animation-delay:-4s}
+@keyframes float{0%,100%{transform:translateY(0) translateX(0)}50%{transform:translateY(-24px) translateX(14px)}}
+.login-card{position:relative;width:min(400px,92vw);background:rgba(18,26,38,.72);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border:1px solid var(--border-2);border-radius:var(--r-xl);padding:34px 30px;box-shadow:var(--shadow-lg)}
+.login-mark{width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,var(--gold400),var(--gold700));
+  display:flex;align-items:center;justify-content:center;color:#241a06;font-size:19px;margin-bottom:16px;
+  animation:pulseLogo 3.2s ease-in-out infinite}
+@keyframes pulseLogo{0%,100%{box-shadow:0 0 0 0 rgba(224,167,46,0)}50%{box-shadow:0 0 20px 3px var(--glow)}}
+.login-card h1{font-size:20px;font-weight:700;margin-bottom:4px}
+.login-card p{font-size:13px;color:var(--text-dim);margin-bottom:22px}
+.field{margin-bottom:14px}
+.field label{font-size:11.5px;font-weight:700;color:var(--text-faint);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:6px}
+.field input{width:100%;background:var(--surface-2);border:1px solid var(--border-2);border-radius:var(--r-md);
+  padding:11px 13px;color:var(--text);outline:none;font-size:14px;transition:border-color .2s var(--ease)}
+.field input:focus{border-color:var(--gold500)}
+.role-row{display:flex;gap:8px;margin-bottom:18px}
+.role-chip{flex:1;text-align:center;padding:8px;border-radius:var(--r-md);border:1px solid var(--border-2);
+  font-size:11.5px;font-weight:700;color:var(--text-dim);cursor:pointer;transition:all .2s var(--ease)}
+.role-chip.active{border-color:var(--gold500);color:var(--gold400);background:rgba(224,167,46,.08)}
+.login-btn{width:100%;background:linear-gradient(135deg,var(--gold400),var(--gold600));color:#241a06;font-weight:800;
+  font-size:14px;padding:13px;border-radius:var(--r-md);display:flex;align-items:center;justify-content:center;gap:8px;
+  transition:transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .2s var(--ease)}
+.login-btn:hover{transform:translateY(-2px);box-shadow:0 10px 26px var(--glow)}
+.login-note{margin-top:16px;font-size:11.5px;color:var(--text-faint);display:flex;align-items:flex-start;gap:7px;line-height:1.6}
+.login-note i{color:var(--success);margin-top:2px}
+
+.app{display:grid;grid-template-columns:252px 1fr;min-height:100vh}
+.sidebar{background:var(--surface);border-right:1px solid var(--border);padding:20px 14px;
+  display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh;overflow-y:auto;z-index:40}
+.brand{display:flex;align-items:center;gap:10px;padding:6px 8px 18px}
+.brand-mark{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--gold400),var(--gold700));
+  display:flex;align-items:center;justify-content:center;color:#241a06;font-size:15px;
+  animation:pulseLogo 3.2s ease-in-out infinite;flex-shrink:0}
+.brand-name{font-weight:700;font-size:16.5px;letter-spacing:.2px}
+.brand-sub{font-size:10.5px;color:var(--text-faint);margin-top:-2px}
+
+.nav-group-label{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-faint);padding:14px 10px 6px;font-weight:600}
+.nav-item{display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:var(--r-md);
+  color:var(--text-dim);font-size:14px;font-weight:500;transition:background .2s var(--ease),color .2s var(--ease);position:relative;cursor:pointer}
+.nav-item i{width:17px;text-align:center;font-size:14px;opacity:.85}
+.nav-item:hover{background:var(--surface-2);color:var(--text)}
+.nav-item.active{background:var(--surface-2);color:var(--gold400)}
+.nav-item.active::before{content:'';position:absolute;left:-14px;top:50%;transform:translateY(-50%);width:3px;height:16px;border-radius:3px;background:var(--gold500)}
+.nav-item.locked{cursor:not-allowed;opacity:.55}
+.nav-item.locked:hover{background:none;color:var(--text-dim)}
+.nav-item .lock-tag{margin-left:auto;font-size:9.5px;font-weight:700;background:var(--surface-3);color:var(--text-faint);padding:2px 6px;border-radius:20px;text-transform:uppercase;letter-spacing:.03em}
+
+.sidebar-footer{margin-top:auto;padding-top:14px;border-top:1px solid var(--border)}
+.plan-card{background:linear-gradient(160deg,var(--surface-2),var(--surface-3));border:1px solid var(--border-2);
+  border-radius:var(--r-lg);padding:13px;font-size:12px;color:var(--text-dim)}
+.plan-card strong{color:var(--text);display:flex;align-items:center;gap:6px;font-size:12.5px;margin-bottom:5px}
+.plan-card strong i{color:var(--gold400);font-size:11px}
+
+.main{min-width:0;display:flex;flex-direction:column}
+.topbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:14px;padding:14px 26px;
+  background:rgba(11,16,24,.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--border)}
+.search-box{flex:1;max-width:320px;display:flex;align-items:center;gap:9px;background:var(--surface-2);
+  border:1px solid var(--border-2);border-radius:100px;padding:8px 14px;color:var(--text-faint);font-size:13.5px}
+.search-box input{background:none;border:none;outline:none;color:var(--text);width:100%;font-size:13.5px}
+.engine-toggle{display:flex;align-items:center;gap:6px;background:var(--surface-2);border:1px solid var(--border-2);
+  border-radius:100px;padding:5px;font-size:11.5px;font-weight:700}
+.engine-opt{padding:6px 12px;border-radius:100px;color:var(--text-faint);display:flex;align-items:center;gap:6px;transition:all .2s var(--ease)}
+.engine-opt.active{background:linear-gradient(135deg,var(--gold400),var(--gold600));color:#241a06}
+.topbar-actions{margin-left:auto;display:flex;align-items:center;gap:10px}
+.export-btn{display:flex;align-items:center;gap:7px;background:var(--surface-2);border:1px solid var(--border-2);
+  border-radius:var(--r-md);padding:8px 13px;font-size:12.5px;font-weight:700;color:var(--text-dim);transition:all .2s var(--ease)}
+.export-btn:hover{color:var(--text);border-color:var(--gold500);transform:translateY(-1px)}
+.export-btn i{color:var(--gold400)}
+.icon-btn{width:36px;height:36px;border-radius:10px;background:var(--surface-2);border:1px solid var(--border-2);
+  display:flex;align-items:center;justify-content:center;color:var(--text-dim);position:relative;font-size:14px}
+.icon-btn .dot{position:absolute;top:6px;right:6px;width:7px;height:7px;border-radius:50%;background:var(--danger);border:2px solid var(--surface)}
+.avatar-user{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--gold400),var(--gold700));
+  display:flex;align-items:center;justify-content:center;font-weight:800;color:#241a06;font-size:13px}
+
+.content{padding:24px 26px 60px}
+.page-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px}
+.page-head h1{font-size:21px;font-weight:700}
+.page-head p{font-size:13px;color:var(--text-dim);margin-top:3px}
+.domain-tag{font-size:10.5px;font-weight:700;color:var(--gold400);background:rgba(224,167,46,.12);padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:.04em}
+
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+.stat-tile{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:15px 17px;
+  display:flex;align-items:center;gap:13px}
+.stat-tile .s-ico{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.stat-tile .s-ico.gold{background:rgba(224,167,46,.12);color:var(--gold400)}
+.stat-tile .s-ico.blue{background:var(--info-bg);color:var(--info)}
+.stat-tile .s-ico.green{background:var(--success-bg);color:var(--success)}
+.stat-tile .s-ico.red{background:var(--danger-bg);color:var(--danger)}
+.stat-tile .s-val{font-size:19px;font-weight:800;line-height:1.1}
+.stat-tile .s-label{font-size:11.5px;color:var(--text-dim);margin-top:2px}
+.stat-tile .s-delta{font-size:10.5px;font-weight:700;margin-top:3px}
+.stat-tile .s-delta.up{color:var(--success)}
+.stat-tile .s-delta.down{color:var(--danger)}
+
+.section-head{display:flex;align-items:center;justify-content:space-between;margin:8px 0 14px}
+.section-head h2{font-size:16.5px;font-weight:700}
+.section-head p{font-size:12.5px;color:var(--text-dim)}
+
+.chart-row{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;margin-bottom:8px}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-xl);padding:18px 20px;box-shadow:var(--shadow-md)}
+.chart-card-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.chart-card-head h3{font-size:13.5px;font-weight:700}
+.chart-card-head span{font-size:11px;color:var(--text-faint)}
+.chart-legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px}
+.chart-legend .lg-item{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-dim)}
+.chart-legend .lg-swatch{width:9px;height:9px;border-radius:2px}
+svg text{font-family:'Nunito',sans-serif}
+.chart-tooltip{position:fixed;pointer-events:none;background:var(--surface-3);border:1px solid var(--border-2);
+  border-radius:8px;padding:7px 10px;font-size:11.5px;color:var(--text);box-shadow:var(--shadow-lg);z-index:500;opacity:0;
+  transition:opacity .12s var(--ease);white-space:nowrap}
+.chart-tooltip strong{color:var(--gold400)}
+
+.arch-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.arch-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-xl);padding:18px 20px;box-shadow:var(--shadow-md)}
+.arch-card-head{display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:12.5px;font-weight:700;color:var(--text-faint);
+  text-transform:uppercase;letter-spacing:.05em}
+.arch-card-head i{color:var(--gold400)}
+.code-block{background:#0a0e15;border:1px solid var(--border-2);border-radius:var(--r-md);padding:13px 15px;
+  font-family:'SFMono-Regular',Consolas,monospace;font-size:12px;line-height:1.7;color:#dbe4f0;overflow-x:auto;white-space:pre}
+.code-block .kw{color:#f2c14e}
+.code-block .fn{color:#7fd1ae}
+.code-block .cm{color:#5d6c82}
+.trace-badge{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:700;color:var(--success);
+  background:var(--success-bg);padding:4px 10px;border-radius:20px;margin-bottom:12px}
+.trace-note{margin-top:12px;font-size:11.5px;color:var(--text-faint);line-height:1.6;display:flex;gap:8px}
+.trace-note i{color:var(--gold400);margin-top:2px}
+.module-table{width:100%;border-collapse:collapse;font-size:12px}
+.module-table th{text-align:left;color:var(--text-faint);font-weight:700;padding:6px 8px;border-bottom:1px solid var(--border-2);text-transform:uppercase;font-size:10px;letter-spacing:.04em}
+.module-table td{padding:8px 8px;border-bottom:1px solid var(--border);color:var(--text-dim)}
+.module-table tr:last-child td{border-bottom:none}
+.pill{font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px;text-transform:uppercase;letter-spacing:.03em}
+.pill.on{color:var(--success);background:var(--success-bg)}
+.pill.off{color:var(--text-faint);background:var(--surface-3)}
+
+.phase2-row{margin-top:28px;display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.phase2-tile{background:var(--surface);border:1px dashed var(--border-2);border-radius:var(--r-lg);padding:16px;
+  display:flex;flex-direction:column;gap:8px;opacity:.68}
+.phase2-tile i{font-size:18px;color:var(--text-faint)}
+.phase2-tile .p2-name{font-size:13px;font-weight:700;color:var(--text-dim)}
+.phase2-tile .p2-tag{font-size:10px;font-weight:700;color:var(--text-faint);text-transform:uppercase;letter-spacing:.04em;
+  background:var(--surface-3);padding:2px 8px;border-radius:20px;width:fit-content}
+
+@media(max-width:1100px){.chart-row{grid-template-columns:1fr}.arch-grid{grid-template-columns:1fr}}
+@media(max-width:900px){.app{grid-template-columns:1fr}.sidebar{display:none}.stat-row{grid-template-columns:1fr 1fr}.phase2-row{grid-template-columns:1fr 1fr}}
+
+.fade-in{animation:fadeIn .5s var(--ease) both}
+.reveal{opacity:0;transform:translateY(14px);transition:opacity .55s var(--ease),transform .55s var(--ease)}
+.reveal.show{opacity:1;transform:translateY(0)}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+
+<div class="demo-badge"><i class="fa-solid fa-flask"></i> Working prototype - sample data</div>
+<div class="chart-tooltip" id="chartTooltip"></div>
+
+<div class="login-screen" id="loginScreen">
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="login-card">
+    <div class="login-mark"><i class="fa-solid fa-cubes"></i></div>
+    <h1>Foundry</h1>
+    <p>Modular business management suite. Sign in to continue.</p>
+    <div class="field"><label>Username</label><input type="text" value="admin" placeholder="Username"></div>
+    <div class="field"><label>Password</label><input type="password" value="••••••••••" placeholder="Password"></div>
+    <div class="role-row">
+      <div class="role-chip active">Admin</div>
+      <div class="role-chip">Finance</div>
+      <div class="role-chip">Viewer</div>
+    </div>
+    <button class="login-btn" id="loginBtn"><i class="fa-solid fa-shield-halved"></i> Sign in</button>
+    <div class="login-note"><i class="fa-solid fa-circle-check"></i> Session-based auth with role permissions, hashed credentials, one data-access layer underneath regardless of the database engine selected.</div>
+  </div>
+</div>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark"><i class="fa-solid fa-cubes"></i></div>
+      <div>
+        <div class="brand-name">Foundry</div>
+        <div class="brand-sub">Business Suite</div>
+      </div>
+    </div>
+
+    <div class="nav-group-label">Phase 1 - active</div>
+    <div class="nav-item active"><i class="fa-solid fa-chart-line"></i> Financial Dashboard</div>
+    <div class="nav-item"><i class="fa-solid fa-table-cells"></i> Reports &amp; Excel Export</div>
+    <div class="nav-item"><i class="fa-solid fa-cubes-stacked"></i> Module Architecture</div>
+
+    <div class="nav-group-label">Phase 2 - planned</div>
+    <div class="nav-item locked"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Assistant <span class="lock-tag">Phase 2</span></div>
+    <div class="nav-item locked"><i class="fa-solid fa-file-pdf"></i> PDF Report Builder <span class="lock-tag">Phase 2</span></div>
+    <div class="nav-item locked"><i class="fa-solid fa-file-import"></i> Excel Import Sync <span class="lock-tag">Phase 2</span></div>
+    <div class="nav-item locked"><i class="fa-solid fa-plug"></i> API Integrations <span class="lock-tag">Phase 2</span></div>
+    <div class="nav-item locked"><i class="fa-solid fa-boxes-stacked"></i> Inventory Module <span class="lock-tag">Phase 2</span></div>
+
+    <div class="sidebar-footer">
+      <div class="plan-card">
+        <strong><i class="fa-solid fa-circle-info"></i> Phase 1</strong>
+        One module proven end to end, on an architecture the rest plug into without a rewrite.
+      </div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input placeholder="Search module, report, account..."></div>
+      <div class="engine-toggle">
+        <div class="engine-opt active" id="engineSqlite"><i class="fa-solid fa-hard-drive"></i> SQLite (local)</div>
+        <div class="engine-opt" id="engineSqlServer"><i class="fa-solid fa-server"></i> SQL Server (network)</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="export-btn"><i class="fa-solid fa-file-excel"></i> Excel</button>
+        <div class="icon-btn"><i class="fa-solid fa-bell"></i><span class="dot"></span></div>
+        <div class="avatar-user">FL</div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="page-head fade-in">
+        <div>
+          <h1>Financial Dashboard <span class="domain-tag">Phase 1 module</span></h1>
+          <p>Live indicators from the active data engine, same screen regardless of which one is selected above.</p>
+        </div>
+      </div>
+
+      <div class="stat-row fade-in">
+        <div class="stat-tile">
+          <div class="s-ico gold"><i class="fa-solid fa-sack-dollar"></i></div>
+          <div><div class="s-val">$182,400</div><div class="s-label">Revenue this month</div><div class="s-delta up"><i class="fa-solid fa-arrow-up"></i> 5.4% vs last month</div></div>
+        </div>
+        <div class="stat-tile">
+          <div class="s-ico blue"><i class="fa-solid fa-percent"></i></div>
+          <div><div class="s-val">31.2%</div><div class="s-label">Net margin</div><div class="s-delta up"><i class="fa-solid fa-arrow-up"></i> 0.8 pts</div></div>
+        </div>
+        <div class="stat-tile">
+          <div class="s-ico red"><i class="fa-solid fa-triangle-exclamation"></i></div>
+          <div><div class="s-val">$24,900</div><div class="s-label">Overdue balances</div><div class="s-delta up" style="color:var(--success)"><i class="fa-solid fa-arrow-down"></i> 6% vs last month</div></div>
+        </div>
+        <div class="stat-tile">
+          <div class="s-ico green"><i class="fa-solid fa-water"></i></div>
+          <div><div class="s-val">$96,700</div><div class="s-label">Cash position (30d)</div><div class="s-delta up"><i class="fa-solid fa-arrow-up"></i> stable projection</div></div>
+        </div>
+      </div>
+
+      <div class="chart-row fade-in reveal">
+        <div class="chart-card">
+          <div class="chart-card-head"><h3>Monthly revenue</h3><span>last 6 months</span></div>
+          <svg viewBox="0 0 560 220" width="100%" height="220" id="lineChart"></svg>
+        </div>
+        <div class="chart-card">
+          <div class="chart-card-head"><h3>Expenses by category</h3><span>current month</span></div>
+          <svg viewBox="0 0 380 190" width="100%" height="190" id="barChart"></svg>
+          <div class="chart-legend" id="barLegend"></div>
+        </div>
+      </div>
+
+      <div class="section-head reveal" style="margin-top:30px">
+        <h2><i class="fa-solid fa-cubes-stacked" style="color:var(--gold400);margin-right:6px"></i>Module Architecture</h2>
+        <p>What Phase 1 actually delivers underneath the screens above</p>
+      </div>
+      <div class="arch-grid reveal">
+        <div class="arch-card">
+          <div class="arch-card-head"><i class="fa-solid fa-puzzle-piece"></i> Module registration</div>
+          <span class="trace-badge"><i class="fa-solid fa-circle-check"></i> New modules attach, core shell stays untouched</span>
+          <div class="code-block"><span class="cm"># each future module (AI, PDF builder, inventory...)</span>
+<span class="cm"># registers itself, the shell never hardcodes a module list</span>
+<span class="kw">class</span> <span class="fn">FinancialDashboardModule</span>(BusinessModule):
+    slug = <span class="kw">"financial_dashboard"</span>
+    nav_icon = <span class="kw">"chart-line"</span>
+
+    <span class="kw">def</span> <span class="fn">register</span>(self, app_shell):
+        app_shell.add_route(self.slug, self.build_view())
+        app_shell.add_nav_entry(self)
+
+<span class="cm"># app startup, unaware of which modules exist</span>
+<span class="kw">for</span> module <span class="kw">in</span> discover_modules(<span class="kw">"modules/"</span>):
+    module.register(shell)</div>
+          <table class="module-table" style="margin-top:13px">
+            <tr><th>Module</th><th>Status</th></tr>
+            <tr><td>Financial Dashboard</td><td><span class="pill on">Active</span></td></tr>
+            <tr><td>Reports &amp; Excel Export</td><td><span class="pill on">Active</span></td></tr>
+            <tr><td>AI Assistant</td><td><span class="pill off">Phase 2</span></td></tr>
+            <tr><td>PDF Report Builder</td><td><span class="pill off">Phase 2</span></td></tr>
+          </table>
+        </div>
+        <div class="arch-card">
+          <div class="arch-card-head"><i class="fa-solid fa-database"></i> Data engine abstraction</div>
+          <span class="trace-badge"><i class="fa-solid fa-circle-check"></i> Same query layer, SQLite today, SQL Server on rollout</span>
+          <div class="code-block"><span class="cm"># business logic calls the repository, never raw SQL</span>
+<span class="kw">def</span> <span class="fn">monthly_revenue</span>(repo, month):
+    <span class="kw">return</span> repo.aggregate(
+        <span class="kw">"invoices"</span>, sum_field=<span class="kw">"total"</span>, month=month
+    )
+
+<span class="cm"># the engine swaps in config, not in code</span>
+repo = RepositoryFactory.build(
+    engine=<span class="kw">"sqlite"</span>  <span class="cm">, or "sqlserver" for the network rollout</span>
+)</div>
+          <div class="trace-note"><i class="fa-solid fa-shield-halved"></i> This is the real technical risk in a desktop app like this: if calculations and queries are written straight against SQLite syntax, moving the same business to SQL Server later means rewriting the data layer, not just changing a connection string.</div>
+        </div>
+      </div>
+
+      <div class="section-head reveal" style="margin-top:30px">
+        <h2>Phase 2 - next stage</h2>
+      </div>
+      <div class="phase2-row reveal">
+        <div class="phase2-tile"><i class="fa-solid fa-wand-magic-sparkles"></i><div class="p2-name">AI assistant module (scope to be confirmed)</div><span class="p2-tag">Phase 2</span></div>
+        <div class="phase2-tile"><i class="fa-solid fa-file-pdf"></i><div class="p2-name">PDF report generation</div><span class="p2-tag">Phase 2</span></div>
+        <div class="phase2-tile"><i class="fa-solid fa-file-import"></i><div class="p2-name">Two-way Excel import</div><span class="p2-tag">Phase 2</span></div>
+        <div class="phase2-tile"><i class="fa-solid fa-plug"></i><div class="p2-name">Outside API integrations</div><span class="p2-tag">Phase 2</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById('loginBtn').addEventListener('click', function(){
+  document.getElementById('loginScreen').classList.add('hidden');
+});
+document.querySelectorAll('.role-chip').forEach(chip=>{
+  chip.addEventListener('click', function(){
+    document.querySelectorAll('.role-chip').forEach(c=>c.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+document.getElementById('engineSqlite').addEventListener('click', function(){
+  this.classList.add('active'); document.getElementById('engineSqlServer').classList.remove('active');
+});
+document.getElementById('engineSqlServer').addEventListener('click', function(){
+  this.classList.add('active'); document.getElementById('engineSqlite').classList.remove('active');
+});
+
+// Line chart
+(function(){
+  const svg = document.getElementById('lineChart');
+  const data = [
+    {m:'Feb', v:148000},{m:'Mar', v:156000},{m:'Apr', v:163000},
+    {m:'May', v:171000},{m:'Jun', v:173000},{m:'Jul', v:182400}
+  ];
+  const W=560,H=220,padL=54,padR=16,padT=16,padB=28;
+  const plotW=W-padL-padR, plotH=H-padT-padB;
+  const maxV = 200000, minV = 130000;
+  const x = i => padL + (i/(data.length-1))*plotW;
+  const y = v => padT + plotH - ((v-minV)/(maxV-minV))*plotH;
+  const ns='http://www.w3.org/2000/svg';
+  function el(tag,attrs){const e=document.createElementNS(ns,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);return e;}
+
+  [130000,150000,170000,190000].forEach(v=>{
+    svg.appendChild(el('line',{x1:padL,x2:W-padR,y1:y(v),y2:y(v),stroke:'rgba(255,255,255,.08)','stroke-width':1}));
+    const t=el('text',{x:padL-10,y:y(v)+4,'text-anchor':'end','font-size':10.5,fill:'#5d6c82'});
+    t.textContent = '$'+(v/1000)+'K'; svg.appendChild(t);
+  });
+
+  const pathD = data.map((d,i)=>(i===0?'M':'L')+x(i)+','+y(d.v)).join(' ');
+  const areaD = pathD + ` L${x(data.length-1)},${padT+plotH} L${x(0)},${padT+plotH} Z`;
+  svg.appendChild(el('path',{d:areaD, fill:'var(--series-blue)', opacity:0.1}));
+  svg.appendChild(el('path',{d:pathD, fill:'none', stroke:'var(--series-blue)','stroke-width':2,'stroke-linecap':'round','stroke-linejoin':'round'}));
+
+  data.forEach((d,i)=>{
+    const cx=x(i), cy=y(d.v);
+    const hit = el('circle',{cx:cx,cy:cy,r:12,fill:'transparent',style:'cursor:pointer'});
+    const dot = el('circle',{cx:cx,cy:cy,r:5,fill:'var(--series-blue)',stroke:'#121a26','stroke-width':2});
+    svg.appendChild(dot); svg.appendChild(hit);
+    const lbl = el('text',{x:cx,y:H-8,'text-anchor':'middle','font-size':11,fill:'#9aa8bd'});
+    lbl.textContent = d.m; svg.appendChild(lbl);
+    hit.addEventListener('mousemove', e=>showTip(e, d.m, '$'+d.v.toLocaleString('en-US')));
+    hit.addEventListener('mouseleave', hideTip);
+  });
+  const last = data[data.length-1];
+  const endLbl = el('text',{x:x(data.length-1)-6,y:y(last.v)-12,'text-anchor':'end','font-size':12,'font-weight':700,fill:'#eef2f7'});
+  endLbl.textContent = '$'+(last.v/1000).toFixed(0)+'K'; svg.appendChild(endLbl);
+})();
+
+// Bar chart
+(function(){
+  const svg = document.getElementById('barChart');
+  const data = [
+    {k:'Payroll', v:64000, c:'var(--series-blue)'},
+    {k:'Vendors', v:38000, c:'var(--series-green)'},
+    {k:'Software', v:14000, c:'var(--series-magenta)'},
+    {k:'Office', v:9000, c:'var(--series-yellow)'}
+  ];
+  const W=380,H=190,padL=16,padR=16,padT=16,padB=30;
+  const plotW=W-padL-padR, plotH=H-padT-padB;
+  const maxV = 72000;
+  const bw = 46, gap = (plotW - bw*data.length)/(data.length-1);
+  const ns='http://www.w3.org/2000/svg';
+  function el(tag,attrs){const e=document.createElementNS(ns,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);return e;}
+
+  svg.appendChild(el('line',{x1:padL,x2:W-padR,y1:padT+plotH,y2:padT+plotH,stroke:'rgba(255,255,255,.14)','stroke-width':1}));
+
+  data.forEach((d,i)=>{
+    const bx = padL + i*(bw+gap);
+    const bh = (d.v/maxV)*plotH;
+    const by = padT+plotH-bh;
+    const rect = el('rect',{x:bx,y:by,width:bw,height:bh,rx:4,ry:4,fill:d.c,style:'cursor:pointer'});
+    svg.appendChild(rect);
+    const mask = el('rect',{x:bx,y:padT+plotH-4,width:bw,height:4,fill:d.c});
+    svg.appendChild(mask);
+    const val = el('text',{x:bx+bw/2,y:by-8,'text-anchor':'middle','font-size':11.5,'font-weight':700,fill:'#eef2f7'});
+    val.textContent = '$'+(d.v/1000)+'K'; svg.appendChild(val);
+    const lbl = el('text',{x:bx+bw/2,y:H-8,'text-anchor':'middle','font-size':11,fill:'#9aa8bd'});
+    lbl.textContent = d.k; svg.appendChild(lbl);
+    rect.addEventListener('mousemove', e=>showTip(e, d.k, '$'+d.v.toLocaleString('en-US')));
+    rect.addEventListener('mouseleave', hideTip);
+  });
+
+  const legend = document.getElementById('barLegend');
+  data.forEach(d=>{
+    const item = document.createElement('div'); item.className='lg-item';
+    item.innerHTML = `<span class="lg-swatch" style="background:${d.c}"></span>${d.k}`;
+    legend.appendChild(item);
+  });
+})();
+
+function showTip(e, title, value){
+  const tip = document.getElementById('chartTooltip');
+  tip.innerHTML = `<strong>${title}</strong><br>${value}`;
+  tip.style.left = (e.clientX+14)+'px';
+  tip.style.top = (e.clientY-10)+'px';
+  tip.style.opacity = 1;
+}
+function hideTip(){ document.getElementById('chartTooltip').style.opacity = 0; }
+
+const io = new IntersectionObserver((entries)=>{
+  entries.forEach(en=>{ if(en.isIntersecting){ en.target.classList.add('show'); io.unobserve(en.target); } });
+},{threshold:0.15});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+</script>
+</body>
+</html>
