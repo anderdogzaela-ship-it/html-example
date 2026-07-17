@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CampoVista - Monitoreo Remoto para Campos Ganaderos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --forest-900: #0E2016;
+    --forest-800: #123020;
+    --forest-700: #17452C;
+    --forest-600: #1D5C39;
+    --forest-500: #277A49;
+    --forest-100: #E6F1E8;
+    --gold-700: #9C6A0E;
+    --gold-600: #C48A15;
+    --gold-500: #E0A72E;
+    --gold-300: #F0CD7E;
+    --gold-100: #FBF0D9;
+    --red-600: #B7412F;
+    --red-100: #F8E3DE;
+    --cream: #FAF7EF;
+    --white: #FFFFFF;
+    --ink: #1C231D;
+    --ink-mid: #58614F;
+    --ink-light: #8B9382;
+    --border: #E2DFCE;
+    --shadow: 0 10px 30px rgba(14,32,22,0.10);
+    --shadow-lg: 0 30px 70px rgba(14,32,22,0.28);
+    --radius: 16px;
+  }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Lexend', sans-serif; color: var(--ink); background: var(--cream); overflow-x: hidden; }
+  img { max-width: 100%; display: block; }
+  button { font-family: 'Lexend', sans-serif; cursor: pointer; }
+
+  /* ---------- reveal ---------- */
+  .reveal { opacity: 0; transform: translateY(28px); transition: opacity .7s cubic-bezier(.16,1,.3,1), transform .7s cubic-bezier(.16,1,.3,1); }
+  .reveal.in { opacity: 1; transform: translateY(0); }
+
+  /* ---------- top marketing nav ---------- */
+  nav.site-nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 500;
+    background: rgba(14,32,22,0.92); backdrop-filter: blur(14px);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    padding: 14px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .site-logo { font-size: 1.15rem; font-weight: 900; color: var(--white); letter-spacing: -0.5px; display: flex; align-items: center; gap: 10px; }
+  .site-logo i { color: var(--gold-500); }
+  .site-links { display: flex; gap: 26px; align-items: center; }
+  .site-links a { color: rgba(255,255,255,0.72); text-decoration: none; font-size: 0.86rem; font-weight: 600; transition: color .2s; }
+  .site-links a:hover { color: var(--white); }
+  .site-cta {
+    background: var(--gold-500); color: var(--forest-900); border: none;
+    padding: 10px 20px; border-radius: 50px; font-weight: 800; font-size: 0.84rem;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .site-cta:hover { background: var(--gold-300); }
+  @media (max-width: 860px) { .site-links a:not(.site-cta-wrap) { display: none; } }
+
+  /* ---------- hero ---------- */
+  .hero {
+    min-height: 100vh; padding: 130px 32px 90px;
+    position: relative; overflow: hidden;
+    display: flex; align-items: center;
+  }
+  .hero-bg {
+    position: absolute; inset: 0;
+    background: linear-gradient(160deg, rgba(9,20,13,0.92) 0%, rgba(14,32,22,0.88) 45%, rgba(23,69,44,0.82) 100%),
+      url('https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=1800&q=70') center/cover;
+  }
+  .hero-wrap { max-width: 1180px; margin: 0 auto; width: 100%; position: relative; z-index: 1; }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(224,167,46,0.18); border: 1px solid rgba(224,167,46,0.45);
+    color: var(--gold-300); padding: 8px 18px; border-radius: 50px;
+    font-size: 0.74rem; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase;
+    margin-bottom: 26px;
+  }
+  .hero h1 { font-size: clamp(2.3rem, 5vw, 3.7rem); font-weight: 900; color: var(--white); line-height: 1.12; letter-spacing: -1.4px; margin-bottom: 22px; max-width: 780px; }
+  .hero h1 em { color: var(--gold-300); font-style: normal; }
+  .hero-sub { font-size: 1.08rem; color: rgba(255,255,255,0.82); line-height: 1.7; margin-bottom: 38px; max-width: 620px; }
+  .hero-actions { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 56px; }
+  .btn-primary {
+    background: var(--gold-500); color: var(--forest-900); border: none;
+    padding: 15px 28px; border-radius: 50px; font-weight: 800; font-size: 0.92rem;
+    display: inline-flex; align-items: center; gap: 10px; transition: transform .2s, background .2s;
+  }
+  .btn-primary:hover { background: var(--gold-300); transform: translateY(-2px); }
+  .btn-ghost {
+    background: rgba(255,255,255,0.06); color: var(--white); border: 1px solid rgba(255,255,255,0.25);
+    padding: 15px 28px; border-radius: 50px; font-weight: 700; font-size: 0.92rem;
+    display: inline-flex; align-items: center; gap: 10px; transition: all .2s;
+  }
+  .btn-ghost:hover { background: rgba(255,255,255,0.12); }
+  .hero-stats { display: flex; gap: 40px; flex-wrap: wrap; padding-top: 30px; border-top: 1px solid rgba(255,255,255,0.14); max-width: 720px; }
+  .hero-stat-num { font-size: 1.9rem; font-weight: 900; color: var(--white); line-height: 1; }
+  .hero-stat-label { font-size: 0.78rem; color: rgba(255,255,255,0.58); font-weight: 600; margin-top: 6px; }
+
+  /* ---------- how it works ---------- */
+  .section { padding: 100px 32px; max-width: 1180px; margin: 0 auto; }
+  .section-eyebrow { display: inline-flex; align-items: center; gap: 10px; font-size: 0.76rem; text-transform: uppercase; letter-spacing: 2px; color: var(--forest-600); font-weight: 800; margin-bottom: 16px; }
+  .section-eyebrow::before { content: ''; width: 30px; height: 2px; background: var(--gold-500); }
+  .section h2 { font-size: clamp(1.7rem, 3.4vw, 2.5rem); font-weight: 900; color: var(--ink); letter-spacing: -0.8px; margin-bottom: 16px; max-width: 640px; }
+  .section-lead { font-size: 1rem; color: var(--ink-mid); max-width: 620px; margin-bottom: 56px; line-height: 1.7; }
+
+  .flow-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+  .flow-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 26px 22px; box-shadow: var(--shadow); position: relative; }
+  .flow-num { position: absolute; top: 20px; right: 22px; font-size: 0.72rem; font-weight: 900; color: var(--ink-light); }
+  .flow-ico { width: 48px; height: 48px; border-radius: 13px; background: var(--forest-100); color: var(--forest-700); display: flex; align-items: center; justify-content: center; font-size: 1.15rem; margin-bottom: 18px; }
+  .flow-card h3 { font-size: 0.98rem; font-weight: 800; color: var(--ink); margin-bottom: 8px; }
+  .flow-card p { font-size: 0.82rem; color: var(--ink-mid); line-height: 1.55; }
+  @media (max-width: 980px) { .flow-grid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 560px) { .flow-grid { grid-template-columns: 1fr; } }
+
+  /* ---------- app demo section ---------- */
+  .demo-section { background: linear-gradient(180deg, var(--forest-900) 0%, #0A170F 100%); padding: 100px 24px 120px; }
+  .demo-section .section-eyebrow { color: var(--gold-300); }
+  .demo-section .section-eyebrow::before { background: var(--gold-500); }
+  .demo-section h2 { color: var(--white); }
+  .demo-section .section-lead { color: rgba(255,255,255,0.62); }
+  .demo-section-head { max-width: 1180px; margin: 0 auto 44px; display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+  .restart-btn {
+    background: rgba(255,255,255,0.08); color: var(--white); border: 1px solid rgba(255,255,255,0.2);
+    padding: 12px 20px; border-radius: 50px; font-weight: 700; font-size: 0.82rem;
+    display: inline-flex; align-items: center; gap: 8px; transition: all .2s; white-space: nowrap;
+  }
+  .restart-btn:hover { background: rgba(255,255,255,0.16); }
+
+  /* ---------- browser chrome ---------- */
+  .browser-wrap { max-width: 1180px; margin: 0 auto; border-radius: 18px; overflow: hidden; box-shadow: var(--shadow-lg); }
+  .browser-chrome {
+    background: #22281f; padding: 12px 16px; display: flex; align-items: center; gap: 14px;
+  }
+  .browser-dots { display: flex; gap: 7px; }
+  .browser-dots span { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
+  .browser-dots span:nth-child(1) { background: #e5645a; }
+  .browser-dots span:nth-child(2) { background: #e5b95a; }
+  .browser-dots span:nth-child(3) { background: #6cbf6c; }
+  .browser-navbtns { display: flex; gap: 6px; }
+  .browser-navbtns .bn { width: 26px; height: 26px; border-radius: 7px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.55); font-size: 11px; display: flex; align-items: center; justify-content: center; }
+  .browser-navbtns .bn:hover { color: #fff; background: rgba(255,255,255,0.12); }
+  .browser-url {
+    flex: 1; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px;
+    padding: 8px 14px; font-size: 0.78rem; color: rgba(255,255,255,0.7);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .browser-url i { color: var(--gold-500); font-size: 11px; }
+  .browser-tab-live { display: flex; align-items: center; gap: 6px; font-size: 0.7rem; color: #6cbf6c; font-weight: 700; }
+  .browser-tab-live .dot { width: 6px; height: 6px; border-radius: 50%; background: #6cbf6c; animation: pulse 1.6s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { opacity: .55; transform: scale(1); } 50% { opacity: 1; transform: scale(1.25); } }
+
+  .app-stage { background: var(--cream); min-height: 640px; position: relative; }
+
+  /* ---------- app shell (post-select) ---------- */
+  .app-shell { display: none; min-height: 640px; }
+  .app-shell.active { display: flex; }
+  .app-sidebar {
+    width: 220px; background: var(--forest-900); flex-shrink: 0;
+    padding: 22px 14px; display: flex; flex-direction: column; gap: 4px;
+  }
+  .app-sidebar .sb-logo { color: var(--white); font-weight: 900; font-size: 1rem; display: flex; align-items: center; gap: 9px; padding: 0 10px 22px; }
+  .app-sidebar .sb-logo i { color: var(--gold-500); }
+  .sb-item {
+    display: flex; align-items: center; gap: 11px; padding: 11px 14px; border-radius: 10px;
+    color: rgba(255,255,255,0.55); font-size: 0.83rem; font-weight: 600; transition: all .15s; border: none; background: none; text-align: left; width: 100%;
+  }
+  .sb-item i { width: 16px; text-align: center; font-size: 0.86rem; }
+  .sb-item:hover { color: #fff; background: rgba(255,255,255,0.06); }
+  .sb-item.active { color: var(--forest-900); background: var(--gold-500); font-weight: 800; }
+  .sb-spacer { flex: 1; }
+  .sb-foot { padding: 12px 14px; border-top: 1px solid rgba(255,255,255,0.1); margin-top: 8px; }
+  .sb-foot-label { font-size: 0.64rem; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; margin-bottom: 4px; }
+  .sb-foot-val { font-size: 0.76rem; color: rgba(255,255,255,0.75); font-weight: 700; display: flex; align-items: center; gap: 6px; }
+
+  .app-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  .app-topbar {
+    background: var(--white); border-bottom: 1px solid var(--border); padding: 16px 26px;
+    display: flex; align-items: center; justify-content: space-between; gap: 20px; position: relative;
+  }
+  .tenant-switch { display: flex; align-items: center; gap: 12px; cursor: pointer; padding: 6px 12px 6px 6px; border-radius: 12px; transition: background .15s; }
+  .tenant-switch:hover { background: var(--forest-100); }
+  .tenant-avatar { width: 38px; height: 38px; border-radius: 10px; background: var(--forest-700); color: var(--white); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.9rem; flex-shrink: 0; }
+  .tenant-name { font-size: 0.92rem; font-weight: 800; color: var(--ink); display: flex; align-items: center; gap: 8px; }
+  .tenant-loc { font-size: 0.72rem; color: var(--ink-light); font-weight: 600; }
+  .tenant-dropdown {
+    position: absolute; top: 66px; left: 20px; width: 300px; background: var(--white); border: 1px solid var(--border);
+    border-radius: 14px; box-shadow: var(--shadow-lg); z-index: 60; overflow: hidden; display: none;
+  }
+  .tenant-dropdown.open { display: block; }
+  .tenant-dropdown-head { padding: 12px 16px; font-size: 0.68rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px; color: var(--ink-light); border-bottom: 1px solid var(--border); }
+  .tenant-opt { display: flex; align-items: center; gap: 12px; padding: 12px 16px; transition: background .15s; }
+  .tenant-opt:hover { background: var(--forest-100); }
+  .tenant-opt.current { background: var(--gold-100); }
+  .tenant-opt-avatar { width: 32px; height: 32px; border-radius: 8px; background: var(--forest-700); color: #fff; font-weight: 800; font-size: 0.78rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .tenant-opt-body { flex: 1; }
+  .tenant-opt-name { font-size: 0.82rem; font-weight: 800; color: var(--ink); }
+  .tenant-opt-meta { font-size: 0.68rem; color: var(--ink-light); font-weight: 600; }
+  .tenant-opt-check { color: var(--forest-600); font-size: 0.85rem; }
+  .isolation-note { display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: var(--forest-100); font-size: 0.68rem; color: var(--forest-700); font-weight: 700; }
+
+  .topbar-right { display: flex; align-items: center; gap: 14px; }
+  .topbar-alert-pill { display: flex; align-items: center; gap: 7px; padding: 8px 14px; border-radius: 50px; font-size: 0.76rem; font-weight: 800; }
+  .topbar-alert-pill.ok { background: var(--forest-100); color: var(--forest-700); }
+  .topbar-alert-pill.warn { background: var(--gold-100); color: var(--gold-700); }
+
+  .view-body { padding: 26px; flex: 1; overflow-y: auto; max-height: 610px; }
+  .view-title { font-size: 1.25rem; font-weight: 900; color: var(--ink); letter-spacing: -0.4px; margin-bottom: 4px; }
+  .view-sub { font-size: 0.82rem; color: var(--ink-light); font-weight: 600; margin-bottom: 24px; }
+
+  /* ---------- tenant select screen ---------- */
+  .select-screen { display: none; align-items: center; justify-content: center; min-height: 640px; padding: 50px 24px; }
+  .select-screen.active { display: flex; }
+  .select-inner { max-width: 640px; width: 100%; text-align: center; }
+  .select-ico { width: 62px; height: 62px; border-radius: 16px; background: var(--forest-100); color: var(--forest-700); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin: 0 auto 20px; }
+  .select-inner h3 { font-size: 1.4rem; font-weight: 900; color: var(--ink); margin-bottom: 8px; }
+  .select-inner p { font-size: 0.86rem; color: var(--ink-mid); margin-bottom: 30px; line-height: 1.6; }
+  .select-list { display: flex; flex-direction: column; gap: 12px; text-align: left; }
+  .select-card {
+    display: flex; align-items: center; gap: 16px; background: var(--white); border: 2px solid var(--border);
+    border-radius: 14px; padding: 16px 18px; transition: all .2s; width: 100%;
+  }
+  .select-card:hover { border-color: var(--gold-500); box-shadow: var(--shadow); transform: translateY(-2px); }
+  .select-card-ico { width: 46px; height: 46px; border-radius: 12px; background: var(--forest-700); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.05rem; flex-shrink: 0; }
+  .select-card-body { flex: 1; }
+  .select-card-name { font-size: 0.94rem; font-weight: 800; color: var(--ink); }
+  .select-card-meta { font-size: 0.72rem; color: var(--ink-light); font-weight: 600; margin-top: 2px; }
+  .select-card-badge { padding: 4px 11px; border-radius: 50px; font-size: 0.7rem; font-weight: 800; white-space: nowrap; }
+  .select-card-badge.ok { background: var(--forest-100); color: var(--forest-700); }
+  .select-card-badge.warn { background: var(--gold-100); color: var(--gold-700); }
+  .select-foot { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 26px; font-size: 0.72rem; color: var(--ink-light); font-weight: 600; }
+  .select-foot i { color: var(--forest-600); }
+
+  /* ---------- dashboard tiles ---------- */
+  .tile-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  @media (max-width: 1000px) { .tile-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 600px) { .tile-grid { grid-template-columns: 1fr; } }
+  .tile {
+    background: var(--white); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 18px; box-shadow: var(--shadow); position: relative; overflow: hidden;
+  }
+  .tile.attn { border-color: rgba(183,65,47,0.35); }
+  .tile-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; }
+  .tile-label { font-size: 0.72rem; font-weight: 800; color: var(--ink-light); text-transform: uppercase; letter-spacing: 0.5px; }
+  .tile-ico { width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 0.86rem; }
+  .tile-ico.g { background: var(--forest-100); color: var(--forest-700); }
+  .tile-ico.a { background: var(--gold-100); color: var(--gold-700); }
+  .tile-ico.r { background: var(--red-100); color: var(--red-600); }
+  .tile-name { font-size: 0.92rem; font-weight: 800; color: var(--ink); margin-bottom: 10px; }
+  .tile-status { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 50px; font-size: 0.68rem; font-weight: 800; margin-bottom: 6px; }
+  .tile-status.ok { background: var(--forest-100); color: var(--forest-700); }
+  .tile-status.warn { background: var(--gold-100); color: var(--gold-700); }
+  .tile-status.crit { background: var(--red-100); color: var(--red-600); }
+
+  .gauge-wrap { display: flex; align-items: center; gap: 14px; }
+  .gauge-ring { width: 68px; height: 68px; border-radius: 50%; position: relative; flex-shrink: 0; }
+  .gauge-ring svg { transform: rotate(-90deg); }
+  .gauge-ring .g-bg { stroke: var(--border); }
+  .gauge-num { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 0.86rem; font-weight: 900; color: var(--ink); }
+  .tile-meta-row { font-size: 0.72rem; color: var(--ink-mid); font-weight: 600; }
+  .tile-meta-row b { color: var(--ink); }
+  .tile-foot { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 0.7rem; color: var(--ink-light); font-weight: 600; }
+
+  .ambient-grid { display: flex; gap: 14px; }
+  .ambient-item { flex: 1; text-align: center; background: var(--forest-100); border-radius: 12px; padding: 12px 8px; }
+  .ambient-num { font-size: 1.2rem; font-weight: 900; color: var(--forest-700); }
+  .ambient-lbl { font-size: 0.66rem; color: var(--ink-mid); font-weight: 700; margin-top: 2px; }
+
+  .attn-count { font-size: 2.1rem; font-weight: 900; line-height: 1; }
+  .attn-count.zero { color: var(--forest-700); }
+  .attn-count.some { color: var(--red-600); }
+  .attn-link { display: inline-flex; align-items: center; gap: 6px; font-size: 0.76rem; font-weight: 800; color: var(--forest-700); margin-top: 10px; background: none; border: none; }
+  .attn-link:hover { text-decoration: underline; }
+
+  .section-block { margin-top: 26px; }
+  .section-block-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .section-block-title { font-size: 0.9rem; font-weight: 800; color: var(--ink); }
+
+  /* ---------- sensor detail view ---------- */
+  .sensor-layout { display: grid; grid-template-columns: 250px 1fr; gap: 18px; }
+  @media (max-width: 860px) { .sensor-layout { grid-template-columns: 1fr; } }
+  .sensor-list { display: flex; flex-direction: column; gap: 8px; }
+  .sensor-item {
+    display: flex; align-items: center; gap: 10px; background: var(--white); border: 1px solid var(--border);
+    border-radius: 12px; padding: 11px 12px; transition: all .15s; width: 100%; text-align: left;
+  }
+  .sensor-item:hover { border-color: var(--gold-500); }
+  .sensor-item.active { background: var(--forest-700); border-color: var(--forest-700); }
+  .sensor-item.active .sensor-item-name, .sensor-item.active .sensor-item-meta { color: #fff; }
+  .sensor-item-ico { width: 30px; height: 30px; border-radius: 8px; background: var(--forest-100); color: var(--forest-700); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; flex-shrink: 0; }
+  .sensor-item.active .sensor-item-ico { background: rgba(255,255,255,0.15); color: #fff; }
+  .sensor-item-name { font-size: 0.8rem; font-weight: 800; color: var(--ink); }
+  .sensor-item-meta { font-size: 0.66rem; color: var(--ink-light); font-weight: 600; }
+
+  .sensor-panel { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
+  .sensor-panel-head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; }
+  .sensor-panel-title { font-size: 1.05rem; font-weight: 900; color: var(--ink); }
+  .sensor-panel-sub { font-size: 0.76rem; color: var(--ink-light); font-weight: 600; margin-top: 3px; }
+  .range-toggle { display: flex; gap: 6px; background: var(--forest-100); border-radius: 10px; padding: 4px; }
+  .range-btn { border: none; background: none; padding: 7px 14px; border-radius: 8px; font-size: 0.76rem; font-weight: 800; color: var(--forest-700); }
+  .range-btn.active { background: var(--forest-700); color: #fff; }
+  .sensor-stats-row { display: flex; gap: 22px; margin-bottom: 16px; flex-wrap: wrap; }
+  .sensor-stat { }
+  .sensor-stat-num { font-size: 1.15rem; font-weight: 900; color: var(--ink); }
+  .sensor-stat-lbl { font-size: 0.68rem; color: var(--ink-light); font-weight: 700; margin-top: 2px; }
+  .chart-box { position: relative; height: 260px; }
+  .threshold-legend { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 0.72rem; color: var(--ink-mid); font-weight: 600; }
+  .threshold-swatch { width: 18px; height: 3px; background: var(--red-600); border-radius: 2px; display: inline-block; }
+  .line-swatch { width: 18px; height: 3px; background: var(--forest-600); border-radius: 2px; display: inline-block; }
+
+  /* ---------- alerts view ---------- */
+  .alerts-list { display: flex; flex-direction: column; gap: 14px; }
+  .alert-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow); }
+  .alert-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 12px; flex-wrap: wrap; }
+  .alert-rule { display: flex; align-items: center; gap: 10px; }
+  .alert-rule-ico { width: 36px; height: 36px; border-radius: 10px; background: var(--red-100); color: var(--red-600); display: flex; align-items: center; justify-content: center; font-size: 0.9rem; flex-shrink: 0; }
+  .alert-rule-name { font-size: 0.88rem; font-weight: 800; color: var(--ink); }
+  .alert-rule-meta { font-size: 0.72rem; color: var(--ink-light); font-weight: 600; margin-top: 2px; }
+  .alert-time { font-size: 0.72rem; color: var(--ink-light); font-weight: 700; white-space: nowrap; }
+  .alert-value-row { display: flex; gap: 20px; margin-bottom: 14px; flex-wrap: wrap; }
+  .alert-value-item { background: var(--forest-100); border-radius: 10px; padding: 8px 14px; }
+  .alert-value-item .k { font-size: 0.64rem; color: var(--forest-700); font-weight: 800; text-transform: uppercase; letter-spacing: 0.4px; }
+  .alert-value-item .v { font-size: 0.86rem; color: var(--ink); font-weight: 800; margin-top: 2px; }
+
+  .notif-mock { background: var(--forest-900); border-radius: 12px; padding: 13px 15px; display: flex; gap: 12px; align-items: flex-start; }
+  .notif-mock-ico { width: 32px; height: 32px; border-radius: 50%; background: var(--gold-500); color: var(--forest-900); display: flex; align-items: center; justify-content: center; font-size: 0.85rem; flex-shrink: 0; }
+  .notif-mock-body { flex: 1; }
+  .notif-mock-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
+  .notif-mock-title { font-size: 0.74rem; font-weight: 800; color: rgba(255,255,255,0.55); text-transform: uppercase; letter-spacing: 0.5px; }
+  .notif-mock-status { font-size: 0.66rem; font-weight: 800; color: #6cbf6c; display: flex; align-items: center; gap: 5px; }
+  .notif-mock-text { font-size: 0.82rem; color: #fff; line-height: 1.55; }
+
+  .empty-state { text-align: center; padding: 60px 20px; }
+  .empty-state-ico { width: 60px; height: 60px; border-radius: 50%; background: var(--forest-100); color: var(--forest-700); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin: 0 auto 16px; }
+  .empty-state h4 { font-size: 1rem; font-weight: 800; color: var(--ink); margin-bottom: 6px; }
+  .empty-state p { font-size: 0.82rem; color: var(--ink-mid); max-width: 320px; margin: 0 auto; }
+
+  /* ---------- map view ---------- */
+  .map-wrap { background: linear-gradient(160deg, #DCE9DC 0%, #C6DCC6 100%); border-radius: var(--radius); border: 1px solid var(--border); padding: 20px; position: relative; height: 460px; overflow: hidden; }
+  .map-pin { position: absolute; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 0.8rem; cursor: pointer; box-shadow: 0 6px 16px rgba(0,0,0,0.25); transform: translate(-50%,-50%); transition: transform .15s; }
+  .map-pin:hover { transform: translate(-50%,-50%) scale(1.15); }
+  .map-pin.ok { background: var(--forest-600); }
+  .map-pin.warn { background: var(--gold-600); }
+  .map-pin.crit { background: var(--red-600); }
+  .map-pin::after { content: ''; position: absolute; inset: -6px; border-radius: 50%; border: 2px solid currentColor; opacity: 0.35; animation: pinpulse 2s ease-out infinite; }
+  @keyframes pinpulse { 0% { transform: scale(0.9); opacity: 0.5; } 100% { transform: scale(1.9); opacity: 0; } }
+  .map-tooltip {
+    position: absolute; background: var(--forest-900); color: #fff; border-radius: 10px; padding: 10px 13px;
+    font-size: 0.74rem; box-shadow: var(--shadow-lg); pointer-events: none; z-index: 20; white-space: nowrap; display: none;
+  }
+  .map-tooltip.show { display: block; }
+  .map-tooltip b { display: block; font-size: 0.8rem; margin-bottom: 2px; }
+  .map-legend { display: flex; gap: 18px; margin-top: 14px; flex-wrap: wrap; }
+  .map-legend-item { display: flex; align-items: center; gap: 7px; font-size: 0.74rem; color: var(--ink-mid); font-weight: 700; }
+  .map-legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .map-shed { position: absolute; width: 46px; height: 34px; background: #8a7350; border-radius: 4px; opacity: 0.8; }
+  .map-shed::before { content: ''; position: absolute; top: -12px; left: -4px; right: -4px; height: 16px; background: #6b5a3f; clip-path: polygon(0 100%, 50% 0, 100% 100%); }
+
+  /* ---------- toast ---------- */
+  .toast { position: fixed; bottom: 26px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--forest-900); color: #fff; padding: 12px 22px; border-radius: 50px; font-size: 0.82rem; font-weight: 700; box-shadow: var(--shadow-lg); opacity: 0; pointer-events: none; transition: all .3s; z-index: 900; display: flex; align-items: center; gap: 10px; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast i { color: var(--gold-500); }
+
+  footer { padding: 40px 32px; text-align: center; background: var(--forest-900); color: rgba(255,255,255,0.45); font-size: 0.8rem; }
+  footer b { color: rgba(255,255,255,0.7); }
+
+  @media (max-width: 760px) {
+    .app-shell.active { flex-direction: column; }
+    .app-sidebar { width: 100%; flex-direction: row; overflow-x: auto; padding: 12px; }
+    .app-sidebar .sb-logo { display: none; }
+    .sb-spacer, .sb-foot { display: none; }
+    .view-body { max-height: none; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="site-logo"><i class="fa-solid fa-satellite-dish"></i>CampoVista</div>
+  <div class="site-links">
+    <a href="#como-funciona">Cómo funciona</a>
+    <a href="#app-demo">Plataforma</a>
+    <button class="site-cta" onclick="document.getElementById('app-demo').scrollIntoView({behavior:'smooth'})">
+      <i class="fa-solid fa-play"></i> Ver demo interactivo
+    </button>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-wrap">
+    <div class="hero-badge"><i class="fa-solid fa-tower-broadcast"></i> Monitoreo remoto de campo</div>
+    <h1>Tus molinos, bombas y tanques, <em>controlados a distancia</em>.</h1>
+    <p class="hero-sub">Plataforma de monitoreo para campos ganaderos: los sensores ya instalados envían sus lecturas al servidor, un motor de reglas decide cuándo hay que actuar, y el productor recibe una notificación automática antes de que falte agua en el tanque.</p>
+    <div class="hero-actions">
+      <button class="btn-primary" onclick="document.getElementById('app-demo').scrollIntoView({behavior:'smooth'})">
+        <i class="fa-solid fa-desktop"></i> Entrar a la plataforma
+      </button>
+      <a href="#como-funciona" class="btn-ghost"><i class="fa-solid fa-diagram-project"></i> Cómo funciona</a>
+    </div>
+    <div class="hero-stats">
+      <div>
+        <div class="hero-stat-num">3</div>
+        <div class="hero-stat-label">Establecimientos simulados</div>
+      </div>
+      <div>
+        <div class="hero-stat-num">12</div>
+        <div class="hero-stat-label">Sensores monitoreados</div>
+      </div>
+      <div>
+        <div class="hero-stat-num">100%</div>
+        <div class="hero-stat-label">Datos aislados por cliente</div>
+      </div>
+      <div>
+        <div class="hero-stat-num">24/7</div>
+        <div class="hero-stat-label">Ingesta y evaluación de reglas</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="como-funciona">
+  <div class="section-eyebrow reveal">Arquitectura del piloto</div>
+  <h2 class="reveal">De la lectura del sensor a la notificación en el celular del productor</h2>
+  <p class="section-lead reveal">El hardware ya existe en campo. Esta plataforma es el servidor, el motor de reglas y el panel de consulta que conectan esas lecturas con una decisión y un aviso automático.</p>
+  <div class="flow-grid">
+    <div class="flow-card reveal">
+      <div class="flow-num">01</div>
+      <div class="flow-ico"><i class="fa-solid fa-satellite-dish"></i></div>
+      <h3>Ingesta de datos</h3>
+      <p>Los sensores de campo (nivel de tanque, estado de molino/bomba, temperatura y humedad) envían sus lecturas por MQTT o HTTP al servidor central.</p>
+    </div>
+    <div class="flow-card reveal">
+      <div class="flow-num">02</div>
+      <div class="flow-ico"><i class="fa-solid fa-gears"></i></div>
+      <h3>Motor de reglas</h3>
+      <p>Cada lectura se evalúa contra umbrales configurados por sensor: nivel mínimo de agua, horas de funcionamiento, temperatura fuera de rango.</p>
+    </div>
+    <div class="flow-card reveal">
+      <div class="flow-num">03</div>
+      <div class="flow-ico"><i class="fa-solid fa-bell"></i></div>
+      <h3>Notificación automática</h3>
+      <p>Cuando una regla se dispara, se genera un aviso automático al productor por mensajería instantánea, sin intervención manual.</p>
+    </div>
+    <div class="flow-card reveal">
+      <div class="flow-num">04</div>
+      <div class="flow-ico"><i class="fa-solid fa-shield-halved"></i></div>
+      <h3>Aislamiento por cliente</h3>
+      <p>La base de datos separa cada establecimiento desde el diseño inicial: ningún usuario puede ver datos de un campo que no es el suyo.</p>
+    </div>
+  </div>
+</section>
+
+<section class="demo-section" id="app-demo">
+  <div class="demo-section-head">
+    <div>
+      <div class="section-eyebrow reveal">Mockup interactivo</div>
+      <h2 class="reveal">Recorré la plataforma como la vería el productor</h2>
+      <p class="section-lead reveal" style="margin-bottom:0;">Elegí un establecimiento, mirá el panel de estado, revisá el histórico de un sensor y el registro de alertas enviadas. Cambiá de establecimiento en cualquier momento y notá que los datos son completamente distintos.</p>
+    </div>
+    <button class="restart-btn" onclick="restartDemo()"><i class="fa-solid fa-rotate-left"></i> Reiniciar demo</button>
+  </div>
+
+  <div class="browser-wrap reveal">
+    <div class="browser-chrome">
+      <div class="browser-dots"><span></span><span></span><span></span></div>
+      <div class="browser-navbtns">
+        <div class="bn"><i class="fa-solid fa-arrow-left"></i></div>
+        <div class="bn"><i class="fa-solid fa-arrow-right"></i></div>
+        <div class="bn" onclick="showToast('Página recargada')"><i class="fa-solid fa-rotate-right"></i></div>
+      </div>
+      <div class="browser-url"><i class="fa-solid fa-lock"></i><span>app.campovista.com.ar/panel</span></div>
+      <div class="browser-tab-live"><span class="dot"></span>En línea</div>
+    </div>
+
+    <div class="app-stage">
+
+      <!-- SELECT ESTABLISHMENT SCREEN -->
+      <div class="select-screen active" id="select-screen">
+        <div class="select-inner">
+          <div class="select-ico"><i class="fa-solid fa-user-lock"></i></div>
+          <h3>Seleccioná un establecimiento</h3>
+          <p>Cada usuario ve únicamente los campos a los que tiene acceso. Esta pantalla simula el cambio de cliente para mostrar que los datos nunca se mezclan entre establecimientos.</p>
+          <div class="select-list" id="select-list"></div>
+          <div class="select-foot"><i class="fa-solid fa-database"></i> Separación de datos a nivel de base de datos, no solo de interfaz</div>
+        </div>
+      </div>
+
+      <!-- APP SHELL -->
+      <div class="app-shell" id="app-shell">
+        <div class="app-sidebar">
+          <div class="sb-logo"><i class="fa-solid fa-satellite-dish"></i>CampoVista</div>
+          <button class="sb-item active" data-view="dashboard" onclick="navigateView('dashboard')"><i class="fa-solid fa-gauge-high"></i>Panel general</button>
+          <button class="sb-item" data-view="sensor" onclick="navigateView('sensor')"><i class="fa-solid fa-chart-line"></i>Sensor por sensor</button>
+          <button class="sb-item" data-view="alerts" onclick="navigateView('alerts')"><i class="fa-solid fa-bell"></i>Alertas y avisos</button>
+          <button class="sb-item" data-view="map" onclick="navigateView('map')"><i class="fa-solid fa-map-location-dot"></i>Mapa del campo</button>
+          <div class="sb-spacer"></div>
+          <div class="sb-foot">
+            <div class="sb-foot-label">Conexión</div>
+            <div class="sb-foot-val"><span class="dot" style="width:6px;height:6px;border-radius:50%;background:#6cbf6c;display:inline-block;"></span> MQTT activo</div>
+          </div>
+        </div>
+
+        <div class="app-main">
+          <div class="app-topbar">
+            <div class="tenant-switch" onclick="toggleTenantDropdown()">
+              <div class="tenant-avatar" id="topbar-avatar">EL</div>
+              <div>
+                <div class="tenant-name" id="topbar-name">Estancia La Elvira <i class="fa-solid fa-chevron-down" style="font-size:10px;color:var(--ink-light);"></i></div>
+                <div class="tenant-loc" id="topbar-loc">Corrientes, Argentina</div>
+              </div>
+            </div>
+            <div class="tenant-dropdown" id="tenant-dropdown">
+              <div class="tenant-dropdown-head">Cambiar de establecimiento</div>
+              <div id="tenant-options"></div>
+              <div class="isolation-note"><i class="fa-solid fa-shield-halved"></i> Cada establecimiento solo accede a sus propios datos</div>
+            </div>
+            <div class="topbar-right">
+              <div class="topbar-alert-pill" id="topbar-alert-pill"><i class="fa-solid fa-bell"></i><span id="topbar-alert-text">0 alertas activas</span></div>
+            </div>
+          </div>
+
+          <div class="view-body" id="view-dashboard">
+            <div class="view-title">Panel general</div>
+            <div class="view-sub" id="dash-sub">Estado actual de tanques, molinos y condiciones ambientales</div>
+            <div class="tile-grid" id="tile-grid"></div>
+          </div>
+
+          <div class="view-body" id="view-sensor" style="display:none;">
+            <div class="view-title">Sensor por sensor</div>
+            <div class="view-sub">Histórico de lecturas con umbral de alerta de referencia</div>
+            <div class="sensor-layout">
+              <div class="sensor-list" id="sensor-list"></div>
+              <div class="sensor-panel">
+                <div class="sensor-panel-head">
+                  <div>
+                    <div class="sensor-panel-title" id="sensor-title">-</div>
+                    <div class="sensor-panel-sub" id="sensor-sub">-</div>
+                  </div>
+                  <div class="range-toggle">
+                    <button class="range-btn active" data-range="7" onclick="setRange(7)">7 días</button>
+                    <button class="range-btn" data-range="30" onclick="setRange(30)">30 días</button>
+                  </div>
+                </div>
+                <div class="sensor-stats-row" id="sensor-stats"></div>
+                <div class="chart-box"><canvas id="sensor-chart"></canvas></div>
+                <div class="threshold-legend">
+                  <span class="line-swatch"></span> Lectura del sensor
+                  <span class="threshold-swatch" style="margin-left:14px;"></span> Umbral de alerta
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="view-body" id="view-alerts" style="display:none;">
+            <div class="view-title">Alertas y avisos enviados</div>
+            <div class="view-sub">Regla disparada, valor del sensor y mockup del mensaje automático enviado al productor</div>
+            <div class="alerts-list" id="alerts-list"></div>
+          </div>
+
+          <div class="view-body" id="view-map" style="display:none;">
+            <div class="view-title">Mapa del campo</div>
+            <div class="view-sub">Ubicación aproximada de cada sensor dentro del establecimiento</div>
+            <div class="map-wrap" id="map-wrap">
+              <div class="map-tooltip" id="map-tooltip"></div>
+            </div>
+            <div class="map-legend">
+              <div class="map-legend-item"><span class="map-legend-dot" style="background:var(--forest-600);"></span> Normal</div>
+              <div class="map-legend-item"><span class="map-legend-dot" style="background:var(--gold-600);"></span> Atención</div>
+              <div class="map-legend-item"><span class="map-legend-dot" style="background:var(--red-600);"></span> Crítico</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<footer>
+  Mockup de producto para un piloto de monitoreo remoto de campos ganaderos · <b>CampoVista</b> · Backend + panel de consulta, sin hardware incluido
+</footer>
+
+<div class="toast" id="toast"><i class="fa-solid fa-circle-check"></i><span id="toast-text"></span></div>
+
+<script>
+/* ===================== DATA MODEL ===================== */
+
+function seededRandom(seed) {
+  let s = seed % 2147483647;
+  if (s <= 0) s += 2147483646;
+  return function() {
+    s = (s * 16807) % 2147483647;
+    return (s - 1) / 2147483646;
+  };
+}
+
+function genSeries(seed, days, base, amplitude, trend, threshold, direction) {
+  const rand = seededRandom(seed);
+  const arr = [];
+  let val = base;
+  for (let i = 0; i < days; i++) {
+    const noise = (rand() - 0.5) * amplitude;
+    val = val + trend + noise;
+    if (direction === 'level') val = Math.max(2, Math.min(100, val));
+    if (direction === 'hours') val = Math.max(0, Math.min(12, val));
+    if (direction === 'temp') val = Math.max(5, Math.min(42, val));
+    if (direction === 'hum') val = Math.max(15, Math.min(95, val));
+    arr.push(Math.round(val * 10) / 10);
+  }
+  return arr;
+}
+
+function labelsFor(days) {
+  const arr = [];
+  const now = new Date(2026, 6, 17);
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    arr.push(d.getDate() + '/' + (d.getMonth() + 1));
+  }
+  return arr;
+}
+
+const ESTABLISHMENTS = {
+  elvira: {
+    id: 'elvira', initials: 'EL', name: 'Estancia La Elvira', location: 'Corrientes, Argentina',
+    sensors: [
+      { id: 'tk_norte', name: 'Tanque Norte', type: 'tank', unit: '%', threshold: 40, thresholdDir: 'below', seed: 101, base: 82, amp: 4, trend: -0.15 },
+      { id: 'tk_sur', name: 'Tanque Sur', type: 'tank', unit: '%', threshold: 40, thresholdDir: 'below', seed: 102, base: 60, amp: 5, trend: -0.9 },
+      { id: 'mo_1', name: 'Molino Bebida 1', type: 'pump', unit: 'hs', threshold: 6, thresholdDir: 'above', seed: 103, base: 3, amp: 1.6, trend: 0.14, on: true, hoursToday: 7.4 },
+      { id: 'mo_2', name: 'Bomba Sumergible 2', type: 'pump', unit: 'hs', threshold: 6, thresholdDir: 'above', seed: 104, base: 2.5, amp: 1.2, trend: 0, on: false, hoursToday: 0 },
+      { id: 'amb_temp', name: 'Temperatura Ambiente', type: 'temp', unit: '°C', threshold: 34, thresholdDir: 'above', seed: 105, base: 24, amp: 3, trend: 0.05 },
+      { id: 'amb_hum', name: 'Humedad Ambiente', type: 'hum', unit: '%', threshold: 30, thresholdDir: 'below', seed: 106, base: 60, amp: 5, trend: 0 }
+    ],
+    map: [
+      { sensorId: 'tk_norte', x: 22, y: 28 }, { sensorId: 'tk_sur', x: 68, y: 62 },
+      { sensorId: 'mo_1', x: 30, y: 55 }, { sensorId: 'mo_2', x: 75, y: 30 },
+      { sensorId: 'amb_temp', x: 50, y: 42 }
+    ],
+    alerts: [
+      { id: 'a1', rule: 'Nivel de tanque bajo umbral', sensorId: 'tk_sur', value: '38%', threshold: 'Umbral: 40%', time: '15/07 · 14:32', status: 'entregada', msg: 'Alerta automática: Tanque Sur en 38%, por debajo del umbral de 40%. Establecimiento: Estancia La Elvira.' },
+      { id: 'a2', rule: 'Exceso de horas de funcionamiento', sensorId: 'mo_1', value: '7.4 hs', threshold: 'Umbral: 6 hs', time: '15/07 · 09:10', status: 'leida', msg: 'Alerta automática: Molino Bebida 1 lleva 7.4 hs de funcionamiento continuo, por encima del umbral de 6 hs. Revisar posible obstrucción.' },
+      { id: 'a3', rule: 'Nivel de tanque bajo umbral', sensorId: 'tk_sur', value: '41%', threshold: 'Umbral: 40%', time: '13/07 · 18:05', status: 'leida', msg: 'Alerta automática: Tanque Sur en 41%, cerca del umbral de 40%. Establecimiento: Estancia La Elvira.' }
+    ]
+  },
+  anselmo: {
+    id: 'anselmo', initials: 'DA', name: 'Establecimiento Don Anselmo', location: 'La Pampa, Argentina',
+    sensors: [
+      { id: 'tk_principal', name: 'Tanque Principal', type: 'tank', unit: '%', threshold: 40, thresholdDir: 'below', seed: 201, base: 91, amp: 3, trend: 0 },
+      { id: 'tk_reserva', name: 'Tanque Reserva', type: 'tank', unit: '%', threshold: 20, thresholdDir: 'below', seed: 202, base: 45, amp: 4, trend: -1.3 },
+      { id: 'mo_3', name: 'Molino Aguada 3', type: 'pump', unit: 'hs', threshold: 6, thresholdDir: 'above', seed: 203, base: 4, amp: 1, trend: -0.3, on: false, hoursToday: 0 },
+      { id: 'mo_4', name: 'Bomba Eléctrica 4', type: 'pump', unit: 'hs', threshold: 6, thresholdDir: 'above', seed: 204, base: 2, amp: 1, trend: 0.05, on: true, hoursToday: 3.1 },
+      { id: 'amb_temp', name: 'Temperatura Ambiente', type: 'temp', unit: '°C', threshold: 34, thresholdDir: 'above', seed: 205, base: 27, amp: 3, trend: 0.4 },
+      { id: 'amb_hum', name: 'Humedad Ambiente', type: 'hum', unit: '%', threshold: 30, thresholdDir: 'below', seed: 206, base: 48, amp: 5, trend: -0.3 }
+    ],
+    map: [
+      { sensorId: 'tk_principal', x: 30, y: 25 }, { sensorId: 'tk_reserva', x: 72, y: 55 },
+      { sensorId: 'mo_3', x: 65, y: 25 }, { sensorId: 'mo_4', x: 25, y: 65 },
+      { sensorId: 'amb_temp', x: 48, y: 45 }
+    ],
+    alerts: [
+      { id: 'b1', rule: 'Nivel de tanque crítico', sensorId: 'tk_reserva', value: '12%', threshold: 'Umbral: 20%', time: '16/07 · 07:48', status: 'entregada', msg: 'Alerta automática: Tanque Reserva en 12%, nivel crítico, por debajo del umbral de 20%. Establecimiento: Don Anselmo.' },
+      { id: 'b2', rule: 'Molino detenido con tanque bajo', sensorId: 'mo_3', value: 'Apagado', threshold: 'Se esperaba encendido', time: '16/07 · 07:50', status: 'entregada', msg: 'Alerta automática: Molino Aguada 3 apagado mientras Tanque Reserva está en nivel crítico. Verificar viento o falla mecánica.' },
+      { id: 'b3', rule: 'Temperatura ambiente elevada', sensorId: 'amb_temp', value: '35.6°C', threshold: 'Umbral: 34°C', time: '15/07 · 15:20', status: 'leida', msg: 'Alerta automática: Temperatura ambiente en 35.6°C, por encima del umbral de 34°C. Establecimiento: Don Anselmo.' },
+      { id: 'b4', rule: 'Nivel de tanque bajo umbral', sensorId: 'tk_reserva', value: '19%', threshold: 'Umbral: 20%', time: '14/07 · 11:02', status: 'leida', msg: 'Alerta automática: Tanque Reserva en 19%, por debajo del umbral de 20%. Establecimiento: Don Anselmo.' }
+    ]
+  },
+  santarosa: {
+    id: 'santarosa', initials: 'SR', name: 'Campo Santa Rosa', location: 'San Luis, Argentina',
+    sensors: [
+      { id: 'tk_este', name: 'Tanque Este', type: 'tank', unit: '%', threshold: 40, thresholdDir: 'below', seed: 301, base: 76, amp: 3, trend: 0.05 },
+      { id: 'tk_oeste', name: 'Tanque Oeste', type: 'tank', unit: '%', threshold: 40, thresholdDir: 'below', seed: 302, base: 68, amp: 3, trend: -0.05 },
+      { id: 'mo_5', name: 'Molino 5', type: 'pump', unit: 'hs', threshold: 6, thresholdDir: 'above', seed: 303, base: 3.5, amp: 1, trend: 0.02, on: true, hoursToday: 4.0 },
+      { id: 'mo_6', name: 'Molino 6', type: 'pump', unit: 'hs', threshold: 6, thresholdDir: 'above', seed: 304, base: 2.2, amp: 0.8, trend: 0.03, on: true, hoursToday: 2.5 },
+      { id: 'amb_temp', name: 'Temperatura Ambiente', type: 'temp', unit: '°C', threshold: 34, thresholdDir: 'above', seed: 305, base: 21, amp: 2, trend: 0.02 },
+      { id: 'amb_hum', name: 'Humedad Ambiente', type: 'hum', unit: '%', threshold: 30, thresholdDir: 'below', seed: 306, base: 63, amp: 4, trend: 0 }
+    ],
+    map: [
+      { sensorId: 'tk_este', x: 68, y: 30 }, { sensorId: 'tk_oeste', x: 24, y: 32 },
+      { sensorId: 'mo_5', x: 35, y: 60 }, { sensorId: 'mo_6', x: 62, y: 62 },
+      { sensorId: 'amb_temp', x: 48, y: 46 }
+    ],
+    alerts: [
+      { id: 'c1', rule: 'Nivel de tanque bajo umbral', sensorId: 'tk_oeste', value: '39%', threshold: 'Umbral: 40%', time: '09/07 · 16:12', status: 'leida', msg: 'Alerta automática: Tanque Oeste en 39%, por debajo del umbral de 40%. Establecimiento: Campo Santa Rosa. Resuelta tras recarga.' }
+    ]
+  }
+};
+
+let state = { tenantId: null, view: 'dashboard', selectedSensorId: null, range: 7, jitterTimer: null };
+let sensorChart = null;
+
+/* ===================== HELPERS ===================== */
+
+function computeCurrent(sensor) {
+  const series30 = genSeries(sensor.seed, 30, sensor.base, sensor.amp, sensor.trend, sensor.threshold, sensor.type === 'tank' ? 'level' : (sensor.type === 'pump' ? 'hours' : (sensor.type === 'temp' ? 'temp' : 'hum')));
+  return series30[series30.length - 1];
+}
+
+function isAttention(sensor) {
+  const current = computeCurrent(sensor);
+  if (sensor.thresholdDir === 'below') return current < sensor.threshold;
+  return current > sensor.threshold;
+}
+
+function countActiveAlerts(est) {
+  return est.sensors.filter(isAttention).length;
+}
+
+function showToast(text) {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-text').textContent = text;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+/* ===================== SELECT SCREEN ===================== */
+
+function renderSelectScreen() {
+  const list = document.getElementById('select-list');
+  list.innerHTML = Object.values(ESTABLISHMENTS).map(est => {
+    const attn = countActiveAlerts(est);
+    const badge = attn === 0
+      ? '<span class="select-card-badge ok"><i class="fa-solid fa-circle-check"></i> Todo en orden</span>'
+      : `<span class="select-card-badge warn"><i class="fa-solid fa-triangle-exclamation"></i> ${attn} alerta${attn > 1 ? 's' : ''}</span>`;
+    return `
+      <button class="select-card" onclick="selectEstablishment('${est.id}')">
+        <div class="select-card-ico"><i class="fa-solid fa-cow"></i></div>
+        <div class="select-card-body">
+          <div class="select-card-name">${est.name}</div>
+          <div class="select-card-meta">${est.location} · ${est.sensors.length} sensores</div>
+        </div>
+        ${badge}
+      </button>`;
+  }).join('');
+}
+
+function selectEstablishment(id) {
+  state.tenantId = id;
+  state.selectedSensorId = ESTABLISHMENTS[id].sensors[0].id;
+  document.getElementById('select-screen').classList.remove('active');
+  document.getElementById('app-shell').classList.add('active');
+  state.view = 'dashboard';
+  renderTopbar();
+  renderAll();
+  startJitter();
+}
+
+function switchEstablishment(id) {
+  if (id === state.tenantId) { closeTenantDropdown(); return; }
+  state.tenantId = id;
+  state.selectedSensorId = ESTABLISHMENTS[id].sensors[0].id;
+  closeTenantDropdown();
+  renderTopbar();
+  renderAll();
+  showToast('Establecimiento cambiado: ' + ESTABLISHMENTS[id].name);
+}
+
+function toggleTenantDropdown() {
+  const dd = document.getElementById('tenant-dropdown');
+  dd.classList.toggle('open');
+  if (dd.classList.contains('open')) renderTenantOptions();
+}
+function closeTenantDropdown() {
+  document.getElementById('tenant-dropdown').classList.remove('open');
+}
+document.addEventListener('click', function(e) {
+  const dd = document.getElementById('tenant-dropdown');
+  const trigger = document.querySelector('.tenant-switch');
+  if (dd && dd.classList.contains('open') && !dd.contains(e.target) && !trigger.contains(e.target)) closeTenantDropdown();
+});
+
+function renderTenantOptions() {
+  const wrap = document.getElementById('tenant-options');
+  wrap.innerHTML = Object.values(ESTABLISHMENTS).map(est => {
+    const current = est.id === state.tenantId;
+    return `
+      <div class="tenant-opt ${current ? 'current' : ''}" onclick="switchEstablishment('${est.id}')" style="cursor:pointer;">
+        <div class="tenant-opt-avatar">${est.initials}</div>
+        <div class="tenant-opt-body">
+          <div class="tenant-opt-name">${est.name}</div>
+          <div class="tenant-opt-meta">${est.location}</div>
+        </div>
+        ${current ? '<i class="fa-solid fa-circle-check tenant-opt-check"></i>' : ''}
+      </div>`;
+  }).join('');
+}
+
+function renderTopbar() {
+  const est = ESTABLISHMENTS[state.tenantId];
+  document.getElementById('topbar-avatar').textContent = est.initials;
+  document.getElementById('topbar-name').innerHTML = est.name + ' <i class="fa-solid fa-chevron-down" style="font-size:10px;color:var(--ink-light);"></i>';
+  document.getElementById('topbar-loc').textContent = est.location;
+  const attn = countActiveAlerts(est);
+  const pill = document.getElementById('topbar-alert-pill');
+  pill.className = 'topbar-alert-pill ' + (attn === 0 ? 'ok' : 'warn');
+  document.getElementById('topbar-alert-text').textContent = attn === 0 ? 'Sin alertas activas' : attn + ' alerta' + (attn > 1 ? 's' : '') + ' activa' + (attn > 1 ? 's' : '');
+}
+
+/* ===================== NAVIGATION ===================== */
+
+function navigateView(view) {
+  state.view = view;
+  document.querySelectorAll('.sb-item').forEach(el => el.classList.toggle('active', el.dataset.view === view));
+  ['dashboard', 'sensor', 'alerts', 'map'].forEach(v => {
+    document.getElementById('view-' + v).style.display = v === view ? 'block' : 'none';
+  });
+  renderAll();
+}
+
+function renderAll() {
+  const est = ESTABLISHMENTS[state.tenantId];
+  if (state.view === 'dashboard') renderDashboard(est);
+  if (state.view === 'sensor') renderSensorView(est);
+  if (state.view === 'alerts') renderAlertsView(est);
+  if (state.view === 'map') renderMapView(est);
+}
+
+/* ===================== DASHBOARD ===================== */
+
+function ringSVG(pct, colorVar) {
+  const r = 28, c = 2 * Math.PI * r;
+  const offset = c - (Math.min(100, Math.max(0, pct)) / 100) * c;
+  return `<svg width="68" height="68"><circle class="g-bg" cx="34" cy="34" r="${r}" fill="none" stroke-width="7"/>
+    <circle cx="34" cy="34" r="${r}" fill="none" stroke-width="7" stroke="${colorVar}" stroke-dasharray="${c}" stroke-dashoffset="${offset}" stroke-linecap="round"/></svg>`;
+}
+
+function renderDashboard(est) {
+  document.getElementById('dash-sub').textContent = est.name + ' · ' + est.location;
+  const tanks = est.sensors.filter(s => s.type === 'tank');
+  const pumps = est.sensors.filter(s => s.type === 'pump');
+  const temp = est.sensors.find(s => s.id === 'amb_temp');
+  const hum = est.sensors.find(s => s.id === 'amb_hum');
+  const attnCount = countActiveAlerts(est);
+
+  let html = '';
+
+  tanks.forEach(t => {
+    const val = computeCurrent(t);
+    const attn = isAttention(t);
+    const color = attn ? 'var(--red-600)' : (val < t.threshold + 10 ? 'var(--gold-600)' : 'var(--forest-600)');
+    html += `<div class="tile ${attn ? 'attn' : ''}">
+      <div class="tile-top"><span class="tile-label">Tanque de agua</span><div class="tile-ico ${attn ? 'r' : 'g'}"><i class="fa-solid fa-water"></i></div></div>
+      <div class="tile-name">${t.name}</div>
+      <div class="gauge-wrap">
+        <div class="gauge-ring">${ringSVG(val, color)}<div class="gauge-num">${Math.round(val)}%</div></div>
+        <div>
+          <div class="tile-status ${attn ? 'crit' : (val < t.threshold + 10 ? 'warn' : 'ok')}">
+            <i class="fa-solid ${attn ? 'fa-triangle-exclamation' : 'fa-circle-check'}"></i> ${attn ? 'Necesita atención' : 'Nivel normal'}
+          </div>
+          <div class="tile-meta-row">Umbral: <b>${t.threshold}%</b></div>
+        </div>
+      </div>
+    </div>`;
+  });
+
+  pumps.forEach(p => {
+    const hrs = p.hoursToday;
+    const attn = isAttention(p);
+    const unexpectedOff = !p.on && p.thresholdDir === 'above' && est.sensors.some(s => s.type === 'tank' && isAttention(s));
+    const flag = attn || (p.on === false && countActiveAlerts(est) > 0 && est.alerts.some(a => a.sensorId === p.id));
+    html += `<div class="tile ${flag ? 'attn' : ''}">
+      <div class="tile-top"><span class="tile-label">Molino / bomba</span><div class="tile-ico ${flag ? 'r' : (p.on ? 'g' : 'a')}"><i class="fa-solid fa-fan"></i></div></div>
+      <div class="tile-name">${p.name}</div>
+      <div class="tile-status ${flag ? 'crit' : (p.on ? 'ok' : 'warn')}">
+        <i class="fa-solid ${p.on ? 'fa-circle-play' : 'fa-circle-pause'}"></i> ${p.on ? 'Encendido' : 'Apagado'}
+      </div>
+      <div class="tile-meta-row">Horas hoy: <b>${hrs} hs</b> · Umbral: <b>${p.threshold} hs</b></div>
+      <div class="tile-foot">${flag ? 'Requiere revisión' : 'Funcionamiento dentro de lo esperado'}</div>
+    </div>`;
+  });
+
+  const tempVal = computeCurrent(temp);
+  const humVal = computeCurrent(hum);
+  const ambientAttn = isAttention(temp) || isAttention(hum);
+  html += `<div class="tile ${ambientAttn ? 'attn' : ''}">
+    <div class="tile-top"><span class="tile-label">Condiciones ambientales</span><div class="tile-ico ${ambientAttn ? 'r' : 'g'}"><i class="fa-solid fa-cloud-sun"></i></div></div>
+    <div class="tile-name">Temperatura y humedad</div>
+    <div class="ambient-grid">
+      <div class="ambient-item"><div class="ambient-num" id="live-temp">${tempVal.toFixed(1)}°</div><div class="ambient-lbl">Temperatura</div></div>
+      <div class="ambient-item"><div class="ambient-num" id="live-hum">${Math.round(humVal)}%</div><div class="ambient-lbl">Humedad</div></div>
+    </div>
+    <div class="tile-foot">${ambientAttn ? 'Fuera de rango esperado' : 'Dentro de rango normal'}</div>
+  </div>`;
+
+  html += `<div class="tile ${attnCount > 0 ? 'attn' : ''}">
+    <div class="tile-top"><span class="tile-label">Resumen de alertas</span><div class="tile-ico ${attnCount > 0 ? 'r' : 'g'}"><i class="fa-solid fa-bell"></i></div></div>
+    <div class="tile-name">Alertas activas ahora</div>
+    <div class="attn-count ${attnCount === 0 ? 'zero' : 'some'}">${attnCount}</div>
+    <div class="tile-meta-row" style="margin-top:6px;">${attnCount === 0 ? 'Ningún sensor fuera de umbral' : 'Sensores fuera de umbral configurado'}</div>
+    <button class="attn-link" onclick="navigateView('alerts')">Ver historial de alertas <i class="fa-solid fa-arrow-right"></i></button>
+  </div>`;
+
+  document.getElementById('tile-grid').innerHTML = html;
+}
+
+/* ===================== SENSOR VIEW ===================== */
+
+function iconForSensor(s) {
+  if (s.type === 'tank') return 'fa-water';
+  if (s.type === 'pump') return 'fa-fan';
+  if (s.type === 'temp') return 'fa-temperature-half';
+  return 'fa-droplet';
+}
+
+function renderSensorView(est) {
+  const list = document.getElementById('sensor-list');
+  list.innerHTML = est.sensors.map(s => {
+    const active = s.id === state.selectedSensorId;
+    const attn = isAttention(s);
+    return `<button class="sensor-item ${active ? 'active' : ''}" onclick="selectSensor('${s.id}')">
+      <div class="sensor-item-ico"><i class="fa-solid ${iconForSensor(s)}"></i></div>
+      <div>
+        <div class="sensor-item-name">${s.name}</div>
+        <div class="sensor-item-meta">${attn ? 'Fuera de umbral' : 'Normal'}</div>
+      </div>
+    </button>`;
+  }).join('');
+  renderSensorChart(est);
+}
+
+function selectSensor(id) {
+  state.selectedSensorId = id;
+  const est = ESTABLISHMENTS[state.tenantId];
+  renderSensorView(est);
+}
+
+function setRange(days) {
+  state.range = days;
+  document.querySelectorAll('.range-btn').forEach(b => b.classList.toggle('active', parseInt(b.dataset.range) === days));
+  renderSensorChart(ESTABLISHMENTS[state.tenantId]);
+}
+
+function directionKey(type) {
+  if (type === 'tank') return 'level';
+  if (type === 'pump') return 'hours';
+  if (type === 'temp') return 'temp';
+  return 'hum';
+}
+
+function renderSensorChart(est) {
+  const sensor = est.sensors.find(s => s.id === state.selectedSensorId);
+  document.getElementById('sensor-title').textContent = sensor.name;
+  document.getElementById('sensor-sub').textContent = est.name + ' · Umbral ' + (sensor.thresholdDir === 'below' ? 'mínimo' : 'máximo') + ': ' + sensor.threshold + sensor.unit;
+
+  const days = state.range;
+  const data = genSeries(sensor.seed, days, sensor.base, sensor.amp, sensor.trend, sensor.threshold, directionKey(sensor.type));
+  const labels = labelsFor(days);
+  const thresholdLine = data.map(() => sensor.threshold);
+
+  const min = Math.min(...data), max = Math.max(...data);
+  const avg = (data.reduce((a, b) => a + b, 0) / data.length);
+  document.getElementById('sensor-stats').innerHTML = `
+    <div class="sensor-stat"><div class="sensor-stat-num">${data[data.length - 1]}${sensor.unit}</div><div class="sensor-stat-lbl">Actual</div></div>
+    <div class="sensor-stat"><div class="sensor-stat-num">${min}${sensor.unit}</div><div class="sensor-stat-lbl">Mínimo (${days}d)</div></div>
+    <div class="sensor-stat"><div class="sensor-stat-num">${max}${sensor.unit}</div><div class="sensor-stat-lbl">Máximo (${days}d)</div></div>
+    <div class="sensor-stat"><div class="sensor-stat-num">${avg.toFixed(1)}${sensor.unit}</div><div class="sensor-stat-lbl">Promedio (${days}d)</div></div>
+  `;
+
+  const ctx = document.getElementById('sensor-chart').getContext('2d');
+  if (sensorChart) sensorChart.destroy();
+  sensorChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: sensor.name,
+          data: data,
+          borderColor: '#1D5C39',
+          backgroundColor: 'rgba(29,92,57,0.08)',
+          borderWidth: 2.5,
+          tension: 0.35,
+          pointRadius: days > 14 ? 0 : 2.5,
+          pointBackgroundColor: '#1D5C39',
+          fill: true
+        },
+        {
+          label: 'Umbral de alerta',
+          data: thresholdLine,
+          borderColor: '#B7412F',
+          borderWidth: 1.5,
+          borderDash: [6, 5],
+          pointRadius: 0,
+          fill: false
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { family: 'Lexend', size: 10 }, maxTicksLimit: 8 } },
+        y: { grid: { color: '#E2DFCE' }, ticks: { font: { family: 'Lexend', size: 10 } } }
+      }
+    }
+  });
+}
+
+/* ===================== ALERTS VIEW ===================== */
+
+function renderAlertsView(est) {
+  const wrap = document.getElementById('alerts-list');
+  if (est.alerts.length === 0) {
+    wrap.innerHTML = `<div class="empty-state">
+      <div class="empty-state-ico"><i class="fa-solid fa-circle-check"></i></div>
+      <h4>Sin alertas registradas</h4>
+      <p>Este establecimiento no tiene avisos automáticos disparados en el período reciente.</p>
+    </div>`;
+    return;
+  }
+  wrap.innerHTML = est.alerts.map(a => {
+    const sensor = est.sensors.find(s => s.id === a.sensorId);
+    return `<div class="alert-card">
+      <div class="alert-card-top">
+        <div class="alert-rule">
+          <div class="alert-rule-ico"><i class="fa-solid fa-triangle-exclamation"></i></div>
+          <div>
+            <div class="alert-rule-name">${a.rule}</div>
+            <div class="alert-rule-meta">Sensor: ${sensor ? sensor.name : a.sensorId}</div>
+          </div>
+        </div>
+        <div class="alert-time"><i class="fa-regular fa-clock"></i> ${a.time}</div>
+      </div>
+      <div class="alert-value-row">
+        <div class="alert-value-item"><div class="k">Valor detectado</div><div class="v">${a.value}</div></div>
+        <div class="alert-value-item"><div class="k">Condición</div><div class="v">${a.threshold}</div></div>
+      </div>
+      <div class="notif-mock">
+        <div class="notif-mock-ico"><i class="fa-solid fa-paper-plane"></i></div>
+        <div class="notif-mock-body">
+          <div class="notif-mock-head">
+            <span class="notif-mock-title">Notificación automática enviada</span>
+            <span class="notif-mock-status"><i class="fa-solid fa-check-double"></i> ${a.status === 'entregada' ? 'Entregada' : 'Leída'}</span>
+          </div>
+          <div class="notif-mock-text">${a.msg}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ===================== MAP VIEW ===================== */
+
+function renderMapView(est) {
+  const wrap = document.getElementById('map-wrap');
+  const tooltip = document.getElementById('map-tooltip');
+  wrap.innerHTML = '<div class="map-tooltip" id="map-tooltip"></div>' +
+    '<div class="map-shed" style="left:8%; top:75%;"></div>' +
+    est.map.map(m => {
+      const sensor = est.sensors.find(s => s.id === m.sensorId);
+      const attn = isAttention(sensor);
+      let cls = 'ok';
+      if (attn) cls = (sensor.type === 'tank' && sensor.threshold - computeCurrent(sensor) > 15) ? 'crit' : (sensor.type === 'tank' ? 'crit' : 'warn');
+      const val = computeCurrent(sensor);
+      return `<div class="map-pin ${cls}" style="left:${m.x}%; top:${m.y}%;" onmouseenter="showMapTooltip(event,'${sensor.name}','${val.toFixed(1)}${sensor.unit}')" onmouseleave="hideMapTooltip()">
+        <i class="fa-solid ${iconForSensor(sensor)}" style="font-size:11px;"></i>
+      </div>`;
+    }).join('');
+}
+
+function showMapTooltip(e, name, val) {
+  const t = document.getElementById('map-tooltip');
+  const wrap = document.getElementById('map-wrap');
+  const rect = wrap.getBoundingClientRect();
+  t.innerHTML = `<b>${name}</b>${val}`;
+  t.style.left = (e.clientX - rect.left + 14) + 'px';
+  t.style.top = (e.clientY - rect.top - 10) + 'px';
+  t.classList.add('show');
+}
+function hideMapTooltip() {
+  document.getElementById('map-tooltip').classList.remove('show');
+}
+
+/* ===================== LIVE JITTER ===================== */
+
+function startJitter() {
+  if (state.jitterTimer) clearInterval(state.jitterTimer);
+  state.jitterTimer = setInterval(() => {
+    if (state.view !== 'dashboard' || !state.tenantId) return;
+    const liveTemp = document.getElementById('live-temp');
+    const liveHum = document.getElementById('live-hum');
+    if (liveTemp && liveHum) {
+      const est = ESTABLISHMENTS[state.tenantId];
+      const t = computeCurrent(est.sensors.find(s => s.id === 'amb_temp')) + (Math.random() - 0.5) * 0.6;
+      const h = computeCurrent(est.sensors.find(s => s.id === 'amb_hum')) + (Math.random() - 0.5) * 1.2;
+      liveTemp.textContent = t.toFixed(1) + '°';
+      liveHum.textContent = Math.round(h) + '%';
+    }
+  }, 3200);
+}
+
+/* ===================== RESTART ===================== */
+
+function restartDemo() {
+  if (state.jitterTimer) clearInterval(state.jitterTimer);
+  state.tenantId = null; state.view = 'dashboard'; state.selectedSensorId = null; state.range = 7;
+  document.getElementById('app-shell').classList.remove('active');
+  document.getElementById('select-screen').classList.add('active');
+  document.querySelectorAll('.sb-item').forEach(el => el.classList.toggle('active', el.dataset.view === 'dashboard'));
+  ['dashboard', 'sensor', 'alerts', 'map'].forEach(v => { document.getElementById('view-' + v).style.display = v === 'dashboard' ? 'block' : 'none'; });
+  document.querySelectorAll('.range-btn').forEach(b => b.classList.toggle('active', parseInt(b.dataset.range) === 7));
+  renderSelectScreen();
+  showToast('Demo reiniciada');
+  document.getElementById('app-demo').scrollIntoView({ behavior: 'smooth' });
+}
+
+/* ===================== INIT ===================== */
+
+renderSelectScreen();
+
+/* scroll reveal */
+const revealEls = document.querySelectorAll('.reveal');
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('in'); io.unobserve(entry.target); } });
+}, { threshold: 0.12 });
+revealEls.forEach(el => io.observe(el));
+</script>
+</body>
+</html>
