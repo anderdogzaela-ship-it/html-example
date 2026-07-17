@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AgroForce Aero - ERP para Revendas e Prestadores de Drones Agricolas</title>
+<meta name="description" content="Painel para revendas DJI e app offline-first para pilotos em campo: frota, funil comercial com trava de margem, checklists, insumos e leitura de horimetro por IA.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Lexend:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+:root{
+  --bg:#0a0f0a;
+  --surface:#111a10;
+  --surface-2:#182417;
+  --surface-3:#20301e;
+  --border:rgba(255,255,255,.08);
+  --border-2:rgba(255,255,255,.14);
+  --text:#eef2ea;
+  --text-dim:#a3b299;
+  --text-faint:#6c7c62;
+  --green300:#86efac;
+  --green400:#4ade80;
+  --green500:#22c55e;
+  --green600:#16a34a;
+  --green700:#15803d;
+  --glow:rgba(74,222,128,.32);
+  --success:#4ade80;
+  --success-bg:rgba(74,222,128,.13);
+  --danger:#f87171;
+  --danger-bg:rgba(248,113,113,.13);
+  --warn:#fbbf24;
+  --warn-bg:rgba(251,191,36,.13);
+  --info:#60a5fa;
+  --info-bg:rgba(96,165,250,.13);
+  --r-sm:8px;--r-md:12px;--r-lg:16px;--r-xl:22px;
+  --shadow-md:0 8px 24px rgba(0,0,0,.35);
+  --shadow-lg:0 20px 50px rgba(0,0,0,.5);
+  --ease:cubic-bezier(.4,0,.2,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Nunito',sans-serif;
+  background:radial-gradient(circle at 1px 1px, rgba(255,255,255,.035) 1px, transparent 0) 0 0/28px 28px, var(--bg);
+  color:var(--text);-webkit-font-smoothing:antialiased;min-height:100vh;overflow-x:hidden;
+}
+h1,h2,h3,h4,.brand-name,.kpi-value,.card-title,.phase-title{font-family:'Lexend',sans-serif}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--surface-3);border-radius:10px}
+
+.demo-badge{position:fixed;bottom:18px;right:18px;z-index:999;background:var(--surface);color:var(--green400);
+  font-size:11.5px;font-weight:700;padding:8px 14px;border-radius:100px;box-shadow:var(--shadow-lg);
+  display:flex;align-items:center;gap:7px;border:1px solid rgba(74,222,128,.3);}
+.restart-btn{position:fixed;bottom:18px;left:18px;z-index:999;background:var(--surface);color:var(--text-dim);
+  font-size:11.5px;font-weight:700;padding:8px 14px;border-radius:100px;box-shadow:var(--shadow-lg);
+  display:flex;align-items:center;gap:7px;border:1px solid var(--border-2);}
+.restart-btn:hover{color:var(--green400);border-color:var(--green600)}
+
+.mode-switch{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:900;display:flex;gap:4px;
+  background:var(--surface);border:1px solid var(--border-2);border-radius:100px;padding:4px;box-shadow:var(--shadow-lg)}
+.mode-btn{display:flex;align-items:center;gap:8px;padding:9px 16px;border-radius:100px;font-size:12.5px;font-weight:700;color:var(--text-faint);transition:.2s}
+.mode-btn.active{background:linear-gradient(135deg,var(--green400),var(--green600));color:#04220f}
+.mode-btn:not(.active):hover{color:var(--text)}
+
+.view{display:none}
+.view.active{display:block}
+
+/* ---------- WEB PANEL ---------- */
+.app{display:grid;grid-template-columns:252px 1fr;min-height:100vh}
+.sidebar{background:var(--surface);border-right:1px solid var(--border);padding:20px 14px;
+  display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh;overflow-y:auto;z-index:40}
+.brand{display:flex;align-items:center;gap:10px;padding:6px 8px 18px}
+.brand-mark{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--green400),var(--green700));
+  display:flex;align-items:center;justify-content:center;font-weight:800;color:#04220f;font-size:14px;
+  animation:pulseLogo 3.2s ease-in-out infinite;flex-shrink:0}
+@keyframes pulseLogo{0%,100%{box-shadow:0 0 0 0 rgba(74,222,128,0)}50%{box-shadow:0 0 20px 3px var(--glow)}}
+.brand-name{font-weight:700;font-size:16px;letter-spacing:.2px}
+.brand-sub{font-size:10.5px;color:var(--text-faint);margin-top:-2px}
+
+.nav-group-label{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-faint);padding:14px 10px 6px;font-weight:600}
+.nav-item{display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:var(--r-md);
+  color:var(--text-dim);font-size:14px;font-weight:500;transition:background .2s var(--ease),color .2s var(--ease);position:relative;cursor:pointer}
+.nav-item i{width:17px;text-align:center;font-size:14px;opacity:.85}
+.nav-item:hover{background:var(--surface-2);color:var(--text)}
+.nav-item.active{background:var(--surface-2);color:var(--green400)}
+.nav-item.active::before{content:'';position:absolute;left:-14px;top:50%;transform:translateY(-50%);width:3px;height:16px;border-radius:3px;background:var(--green500)}
+.nav-item .badge-count{margin-left:auto;background:var(--danger-bg);color:var(--danger);font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:20px}
+
+.sidebar-footer{margin-top:auto;padding-top:14px;border-top:1px solid var(--border)}
+.plan-mini{background:linear-gradient(160deg,var(--surface-2),var(--surface-3));border:1px solid var(--border-2);
+  border-radius:var(--r-lg);padding:13px;font-size:12px;color:var(--text-dim)}
+.plan-mini strong{color:var(--text);display:flex;align-items:center;gap:6px;font-size:12.5px;margin-bottom:5px}
+.plan-mini strong i{color:var(--green400);font-size:11px}
+
+.main{min-width:0;display:flex;flex-direction:column}
+.topbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:14px;padding:14px 26px;
+  background:rgba(10,15,10,.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--border)}
+.page-title{font-family:'Lexend',sans-serif;font-weight:700;font-size:18px}
+.page-sub{font-size:12px;color:var(--text-faint);margin-top:1px}
+.topbar-actions{margin-left:auto;display:flex;align-items:center;gap:12px}
+.icon-btn{width:36px;height:36px;border-radius:10px;background:var(--surface-2);border:1px solid var(--border-2);
+  display:flex;align-items:center;justify-content:center;color:var(--text-dim);position:relative;font-size:14px}
+.icon-btn .dot{position:absolute;top:6px;right:6px;width:7px;height:7px;border-radius:50%;background:var(--danger);border:2px solid var(--surface)}
+.avatar-user{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--green400),var(--green700));
+  display:flex;align-items:center;justify-content:center;font-weight:800;color:#04220f;font-size:13px}
+.mobile-toggle{display:none;width:36px;height:36px;border-radius:10px;background:var(--surface-2);border:1px solid var(--border-2);align-items:center;justify-content:center}
+
+.content{padding:24px 26px 60px;max-width:1440px}
+.page{display:none}
+.page.active{display:block;animation:fadeIn .45s var(--ease)}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+.reveal{opacity:0;transform:translateY(16px);transition:opacity .55s var(--ease),transform .55s var(--ease)}
+.reveal.in{opacity:1;transform:translateY(0)}
+
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px;position:relative;overflow:hidden;transition:transform .3s var(--ease),box-shadow .3s var(--ease)}
+.kpi-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-md)}
+.kpi-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.kpi-icon{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.kpi-icon.green{background:rgba(74,222,128,.14);color:var(--green400)}
+.kpi-icon.blue{background:var(--info-bg);color:var(--info)}
+.kpi-icon.warn{background:var(--warn-bg);color:var(--warn)}
+.kpi-icon.red{background:var(--danger-bg);color:var(--danger)}
+.kpi-trend{font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px}
+.kpi-trend.up{color:var(--success);background:var(--success-bg)}
+.kpi-trend.down{color:var(--danger);background:var(--danger-bg)}
+.kpi-value{font-size:26px;font-weight:800;margin-bottom:3px}
+.kpi-label{font-size:12.5px;color:var(--text-faint)}
+
+.grid-2{display:grid;grid-template-columns:1.6fr 1fr;gap:18px;margin-bottom:22px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px}
+.card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.card-title{font-size:14.5px;font-weight:700}
+.card-title i{color:var(--green400);margin-right:7px}
+.link-more{font-size:12px;color:var(--green400);font-weight:600}
+
+.chart-bars{display:flex;align-items:flex-end;gap:10px;height:150px;padding-top:10px}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px}
+.bar{width:100%;max-width:34px;border-radius:6px 6px 3px 3px;background:linear-gradient(180deg,var(--green400),var(--green700));
+  position:relative;overflow:hidden;height:0;transition:height 1s cubic-bezier(.16,1,.3,1)}
+.bar::after{content:'';position:absolute;top:0;left:0;right:0;height:40%;background:linear-gradient(180deg,rgba(255,255,255,.35),transparent)}
+.bar-label{font-size:10.5px;color:var(--text-faint)}
+
+.activity-list{display:flex;flex-direction:column;gap:2px}
+.activity-item{display:flex;align-items:center;gap:11px;padding:10px 4px;border-bottom:1px solid var(--border)}
+.activity-item:last-child{border-bottom:none}
+.act-icon{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+.act-text{font-size:12.5px;line-height:1.4}
+.act-text b{font-weight:700}
+.act-time{margin-left:auto;font-size:10.5px;color:var(--text-faint);white-space:nowrap}
+
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap}
+.filter-chip{font-size:12.5px;font-weight:600;padding:7px 14px;border-radius:20px;background:var(--surface-2);border:1px solid var(--border-2);color:var(--text-dim);transition:.2s}
+.filter-chip.active{background:rgba(74,222,128,.14);color:var(--green400);border-color:rgba(74,222,128,.4)}
+.btn-primary{margin-left:auto;background:linear-gradient(135deg,var(--green400),var(--green600));color:#04220f;font-weight:700;font-size:13px;
+  padding:10px 18px;border-radius:11px;display:flex;align-items:center;gap:8px;box-shadow:0 8px 20px rgba(74,222,128,.22);transition:transform .25s cubic-bezier(.34,1.56,.64,1)}
+.btn-primary:hover{transform:translateY(-2px) scale(1.02)}
+
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:720px}
+thead th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-faint);padding:13px 18px;border-bottom:1px solid var(--border);font-weight:700}
+tbody td{padding:13px 18px;font-size:13px;border-bottom:1px solid var(--border)}
+tbody tr{transition:background .2s}
+tbody tr:hover{background:var(--surface-2)}
+tbody tr:last-child td{border-bottom:none}
+.drone-cell{display:flex;align-items:center;gap:10px}
+.mini-avatar{width:36px;height:36px;border-radius:9px;object-fit:cover;flex-shrink:0;background:var(--surface-3)}
+.drone-name{font-weight:700;font-size:13px}
+.drone-sub{font-size:11px;color:var(--text-faint)}
+.status-badge{font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;display:inline-flex;align-items:center;gap:5px}
+.status-badge.ok{color:var(--success);background:var(--success-bg)}
+.status-badge.atencao{color:var(--warn);background:var(--warn-bg)}
+.status-badge.manutencao{color:var(--danger);background:var(--danger-bg)}
+.status-badge i{font-size:6px}
+
+.locked-card{background:var(--surface);border:1px dashed var(--border-2);border-radius:var(--r-lg);padding:20px;display:flex;gap:16px;align-items:flex-start;margin-top:18px;opacity:.82}
+.locked-ico{width:38px;height:38px;border-radius:10px;background:var(--surface-3);color:var(--text-faint);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.locked-title{font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:8px}
+.locked-tag{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;background:var(--surface-3);color:var(--text-faint);padding:3px 8px;border-radius:6px}
+.locked-desc{font-size:12px;color:var(--text-faint);margin-top:5px;line-height:1.55}
+
+.kanban{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;align-items:flex-start}
+.kanban-col{background:var(--surface-2);border-radius:var(--r-lg);padding:12px;min-height:120px}
+.kanban-col-head{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--text-faint);padding:4px 6px 10px;display:flex;justify-content:space-between}
+.deal-card{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:12px;margin-bottom:10px;transition:transform .2s var(--ease)}
+.deal-card:hover{transform:translateY(-2px)}
+.deal-client{font-size:12.5px;font-weight:700;margin-bottom:2px}
+.deal-service{font-size:11px;color:var(--text-faint);margin-bottom:9px;line-height:1.4}
+.deal-foot{display:flex;align-items:center;justify-content:space-between}
+.deal-value{font-size:12px;font-weight:700;font-family:'Lexend',sans-serif}
+.margin-tag{font-size:10px;font-weight:800;padding:3px 7px;border-radius:6px}
+.margin-tag.ok{background:var(--success-bg);color:var(--success)}
+.margin-tag.low{background:var(--danger-bg);color:var(--danger)}
+.deal-lock{margin-top:8px;font-size:10px;color:var(--danger);background:var(--danger-bg);border-radius:7px;padding:6px 8px;display:flex;align-items:center;gap:6px;font-weight:700}
+
+@media (max-width:1180px){ .kanban{grid-template-columns:repeat(3,1fr)} }
+@media (max-width:1080px){
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+  .grid-2{grid-template-columns:1fr}
+}
+@media (max-width:760px){
+  .app{grid-template-columns:1fr}
+  .sidebar{position:fixed;left:0;top:0;transform:translateX(-100%);transition:transform .3s var(--ease);width:252px;box-shadow:var(--shadow-lg)}
+  .sidebar.open{transform:translateX(0)}
+  .mobile-toggle{display:flex}
+  .kpi-grid{grid-template-columns:1fr 1fr}
+  .kanban{grid-template-columns:1fr 1fr}
+}
+
+/* ---------- MOBILE APP ---------- */
+.mobile-stage{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:90px 20px 60px}
+.phone-shell{width:320px;background:#040604;border-radius:40px;padding:12px;box-shadow:0 30px 70px rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.06);flex-shrink:0}
+.phone-notch{width:120px;height:24px;background:#040604;border-radius:0 0 16px 16px;margin:0 auto 6px;position:relative;z-index:2}
+.phone-screen{background:linear-gradient(170deg,#141f12,#0a120a);border-radius:30px;min-height:600px;position:relative;overflow:hidden;display:flex;flex-direction:column}
+.phone-topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 8px;font-size:11px;color:var(--text-faint)}
+.offline-pill{position:absolute;top:38px;left:14px;right:14px;z-index:5;background:var(--warn-bg);color:var(--warn);border:1px solid rgba(251,191,36,.35);
+  font-size:10.5px;font-weight:700;padding:7px 11px;border-radius:10px;display:flex;align-items:center;gap:7px;transition:.3s}
+.offline-pill.synced{background:var(--success-bg);color:var(--success);border-color:rgba(74,222,128,.35)}
+.phone-content{flex:1;overflow-y:auto;padding:44px 16px 90px}
+.phone-page{display:none}
+.phone-page.active{display:block;animation:fadeIn .4s var(--ease)}
+.phone-h1{font-family:'Lexend',sans-serif;font-weight:800;font-size:17px;margin-bottom:2px}
+.phone-sub{font-size:11.5px;color:var(--text-faint);margin-bottom:16px}
+
+.mission-card{background:linear-gradient(135deg,var(--green500),var(--green700));border-radius:16px;padding:16px;color:#04220f;margin-bottom:14px;position:relative;overflow:hidden}
+.mission-card::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 90% 0%,rgba(255,255,255,.3),transparent 55%)}
+.mission-farm{font-family:'Lexend',sans-serif;font-weight:800;font-size:15px;position:relative}
+.mission-detail{font-size:11.5px;opacity:.85;margin-top:2px;position:relative}
+.mission-stats{display:flex;gap:14px;margin-top:12px;position:relative}
+.mission-stat b{display:block;font-family:'Lexend',sans-serif;font-size:14px}
+.mission-stat span{font-size:9.5px;opacity:.8;text-transform:uppercase;letter-spacing:.04em}
+
+.mp-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px}
+.mp-card-head{display:flex;align-items:center;gap:9px;font-size:12.5px;font-weight:700;margin-bottom:10px}
+.mp-card-head i{color:var(--green400)}
+.quick-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.quick-tile{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 12px;text-align:center}
+.quick-tile i{font-size:18px;color:var(--green400);margin-bottom:8px;display:block}
+.quick-tile-label{font-size:11px;font-weight:700}
+
+.check-item{display:flex;align-items:center;gap:10px;padding:11px 4px;border-bottom:1px solid var(--border);font-size:12.5px}
+.check-item:last-child{border-bottom:none}
+.check-box{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--border-2);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:.2s}
+.check-box.checked{background:var(--green500);border-color:var(--green500);color:#04220f}
+.check-progress{height:6px;background:var(--surface-3);border-radius:10px;overflow:hidden;margin:10px 0 16px}
+.check-progress-fill{height:100%;background:linear-gradient(90deg,var(--green400),var(--green600));width:0%;transition:width .4s var(--ease)}
+.phone-btn{width:100%;background:linear-gradient(135deg,var(--green400),var(--green600));color:#04220f;font-weight:800;font-size:13px;
+  padding:13px;border-radius:13px;text-align:center;transition:transform .2s var(--ease)}
+.phone-btn:active{transform:scale(.97)}
+.phone-btn.disabled{background:var(--surface-3);color:var(--text-faint)}
+.phone-btn.ghost{background:var(--surface-2);color:var(--text-dim);border:1px solid var(--border-2)}
+
+.insumo-row{padding:12px 4px;border-bottom:1px solid var(--border)}
+.insumo-row:last-child{border-bottom:none}
+.insumo-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.insumo-name{font-size:12.5px;font-weight:700}
+.insumo-dose{font-size:11px;color:var(--text-faint)}
+.receituario-ok{font-size:10px;font-weight:700;color:var(--success);background:var(--success-bg);padding:3px 8px;border-radius:7px;display:inline-flex;align-items:center;gap:5px;margin-top:4px}
+.receituario-blocked{font-size:10px;font-weight:700;color:var(--danger);background:var(--danger-bg);padding:3px 8px;border-radius:7px;display:inline-flex;align-items:center;gap:5px;margin-top:4px}
+
+.cam-frame{background:#000;border-radius:16px;aspect-ratio:4/3;position:relative;overflow:hidden;margin-bottom:12px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border-2)}
+.cam-frame img{width:100%;height:100%;object-fit:cover;opacity:.75}
+.cam-flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
+.cam-flash.flashing{animation:flash .4s ease}
+@keyframes flash{0%{opacity:0}20%{opacity:.9}100%{opacity:0}}
+.cam-box{position:absolute;border:2px solid var(--green400);border-radius:6px;box-shadow:0 0 0 2000px rgba(0,0,0,.15);opacity:0;transition:opacity .3s}
+.cam-box.show{opacity:1}
+.reading-result{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;text-align:center;display:none}
+.reading-result.show{display:block;animation:fadeIn .4s var(--ease)}
+.reading-value{font-family:'Lexend',sans-serif;font-size:30px;font-weight:800;color:var(--green400)}
+.reading-label{font-size:11px;color:var(--text-faint);margin-top:2px}
+.reading-conf{margin-top:10px;font-size:11px;color:var(--text-dim);display:flex;align-items:center;justify-content:center;gap:6px}
+.reading-actions{display:flex;gap:8px;margin-top:14px}
+.reading-actions .phone-btn{padding:11px;font-size:12px}
+
+.weather-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:14px}
+.weather-row{display:flex;justify-content:space-between;margin-bottom:14px}
+.weather-metric b{display:block;font-family:'Lexend',sans-serif;font-size:19px}
+.weather-metric span{font-size:10px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.04em}
+.risk-banner{border-radius:12px;padding:13px;font-size:12px;font-weight:700;display:flex;align-items:center;gap:10px}
+.risk-banner.alto{background:var(--danger-bg);color:var(--danger)}
+.risk-banner.baixo{background:var(--success-bg);color:var(--success)}
+.risk-banner i{font-size:16px}
+
+.phone-tabbar{position:absolute;bottom:0;left:0;right:0;background:rgba(10,15,10,.92);backdrop-filter:blur(10px);border-top:1px solid var(--border);
+  display:flex;padding:8px 6px 12px;border-radius:0 0 30px 30px}
+.ptab{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:9px;color:var(--text-faint);font-weight:700;padding:4px 0}
+.ptab i{font-size:15px}
+.ptab.active{color:var(--green400)}
+
+@media (max-width:400px){ .phone-shell{width:100%;max-width:320px} }
+</style>
+</head>
+<body>
+
+<div class="mode-switch">
+  <button class="mode-btn active" data-mode="web"><i class="fa-solid fa-desktop"></i>Painel Revenda</button>
+  <button class="mode-btn" data-mode="mobile"><i class="fa-solid fa-mobile-screen-button"></i>App do Piloto</button>
+</div>
+
+<!-- ===================== WEB PANEL ===================== -->
+<div class="view view-web active" id="view-web">
+  <div class="app">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-mark"><i class="fa-solid fa-helicopter"></i></div>
+        <div>
+          <div class="brand-name">AgroForce Aero</div>
+          <div class="brand-sub">Painel da Revenda</div>
+        </div>
+      </div>
+
+      <div class="nav-group-label">Visao Geral</div>
+      <div class="nav-item active" data-page="dashboard"><i class="fa-solid fa-chart-line"></i>Dashboard</div>
+
+      <div class="nav-group-label">Gestao</div>
+      <div class="nav-item" data-page="frota"><i class="fa-solid fa-satellite-dish"></i>Frota<span class="badge-count">3</span></div>
+      <div class="nav-item" data-page="funil"><i class="fa-solid fa-diagram-project"></i>Funil Comercial</div>
+
+      <div class="sidebar-footer">
+        <div class="plan-mini">
+          <strong><i class="fa-solid fa-gauge-high"></i>Horas de voo</strong>
+          Atualizadas pela leitura de horimetro feita em campo pelo app do piloto.
+        </div>
+      </div>
+    </aside>
+
+    <div class="main">
+      <div class="topbar">
+        <button class="mobile-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')"><i class="fa-solid fa-bars"></i></button>
+        <div>
+          <div class="page-title" id="pageTitle">Dashboard</div>
+          <div class="page-sub" id="pageSub">Visao geral da operacao em tempo real</div>
+        </div>
+        <div class="topbar-actions">
+          <div class="icon-btn"><i class="fa-solid fa-bell"></i><span class="dot"></span></div>
+          <div class="avatar-user">ZJ</div>
+        </div>
+      </div>
+
+      <div class="content">
+
+        <!-- DASHBOARD -->
+        <div class="page active" id="page-dashboard">
+          <div class="kpi-grid">
+            <div class="kpi-card reveal">
+              <div class="kpi-top"><div class="kpi-icon green"><i class="fa-solid fa-satellite-dish"></i></div><span class="kpi-trend up">+3</span></div>
+              <div class="kpi-value" data-count="34">0</div>
+              <div class="kpi-label">Drones sob gestao</div>
+            </div>
+            <div class="kpi-card reveal">
+              <div class="kpi-top"><div class="kpi-icon blue"><i class="fa-solid fa-user-astronaut"></i></div><span class="kpi-trend up">+2</span></div>
+              <div class="kpi-value" data-count="11">0</div>
+              <div class="kpi-label">Equipes em campo hoje</div>
+            </div>
+            <div class="kpi-card reveal">
+              <div class="kpi-top"><div class="kpi-icon warn"><i class="fa-solid fa-triangle-exclamation"></i></div><span class="kpi-trend up">+2</span></div>
+              <div class="kpi-value" data-count="4">0</div>
+              <div class="kpi-label">Alertas de revisao pendentes</div>
+            </div>
+            <div class="kpi-card reveal">
+              <div class="kpi-top"><div class="kpi-icon green"><i class="fa-solid fa-diagram-project"></i></div><span class="kpi-trend up">+18%</span></div>
+              <div class="kpi-value" data-count="7">0</div>
+              <div class="kpi-label">Oportunidades ativas no funil</div>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="card reveal">
+              <div class="card-head"><div class="card-title"><i class="fa-solid fa-chart-column"></i>Horas de voo acumuladas por mes</div><span class="link-more">Ultimos 6 meses</span></div>
+              <div class="chart-bars" id="chartBars">
+                <div class="bar-col"><div class="bar" data-h="52"></div><div class="bar-label">Fev</div></div>
+                <div class="bar-col"><div class="bar" data-h="61"></div><div class="bar-label">Mar</div></div>
+                <div class="bar-col"><div class="bar" data-h="68"></div><div class="bar-label">Abr</div></div>
+                <div class="bar-col"><div class="bar" data-h="75"></div><div class="bar-label">Mai</div></div>
+                <div class="bar-col"><div class="bar" data-h="84"></div><div class="bar-label">Jun</div></div>
+                <div class="bar-col"><div class="bar" data-h="100"></div><div class="bar-label">Jul</div></div>
+              </div>
+            </div>
+            <div class="card reveal">
+              <div class="card-head"><div class="card-title"><i class="fa-solid fa-clock-rotate-left"></i>Atividade recente</div></div>
+              <div class="activity-list">
+                <div class="activity-item"><div class="act-icon" style="background:var(--success-bg);color:var(--success)"><i class="fa-solid fa-camera"></i></div><div class="act-text"><b>Rafael Costa</b> leu o horimetro do T25 #14 por foto</div><div class="act-time">6 min</div></div>
+                <div class="activity-item"><div class="act-icon" style="background:var(--warn-bg);color:var(--warn)"><i class="fa-solid fa-clipboard-check"></i></div><div class="act-text">Checklist de saida com item pendente na equipe Fazenda Bonanza</div><div class="act-time">22 min</div></div>
+                <div class="activity-item"><div class="act-icon" style="background:rgba(74,222,128,.14);color:var(--green400)"><i class="fa-solid fa-diagram-project"></i></div><div class="act-text">Oportunidade <b>Fazenda Sao Bento</b> avancou para Proposta</div><div class="act-time">1 h</div></div>
+                <div class="activity-item"><div class="act-icon" style="background:var(--info-bg);color:var(--info)"><i class="fa-solid fa-seedling"></i></div><div class="act-text">Insumo registrado com receituario vinculado no Talhao 7</div><div class="act-time">2 h</div></div>
+                <div class="activity-item"><div class="act-icon" style="background:var(--danger-bg);color:var(--danger)"><i class="fa-solid fa-gauge-high"></i></div><div class="act-text">Drone T40 #08 atingiu limite de horas para revisao de bicos</div><div class="act-time">5 h</div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card reveal">
+            <div class="card-head"><div class="card-title"><i class="fa-solid fa-lightbulb"></i>O que precisa da sua atencao</div></div>
+            <div class="activity-list">
+              <div class="activity-item"><div class="act-icon" style="background:var(--danger-bg);color:var(--danger)"><i class="fa-solid fa-screwdriver-wrench"></i></div><div class="act-text">Drone <b>Agras T40 #08</b> passou de 190h desde a ultima revisao de bicos. Acionar cliente antes da proxima missao.</div></div>
+              <div class="activity-item"><div class="act-icon" style="background:var(--warn-bg);color:var(--warn)"><i class="fa-solid fa-scale-balanced"></i></div><div class="act-text">Oportunidade <b>Fazenda Alvorada</b> esta com margem abaixo do minimo, revisar antes de enviar proposta.</div></div>
+              <div class="activity-item"><div class="act-icon" style="background:var(--info-bg);color:var(--info)"><i class="fa-solid fa-cloud-sun-rain"></i></div><div class="act-text">3 equipes com alerta de vento acima do limite de seguranca hoje.</div></div>
+            </div>
+          </div>
+
+          <div class="locked-card reveal">
+            <div class="locked-ico"><i class="fa-solid fa-lock"></i></div>
+            <div>
+              <div class="locked-title">Integracao direta com a nuvem DJI (telemetria automatica)<span class="locked-tag">Fase 2</span></div>
+              <div class="locked-desc">O acesso a essa telemetria depende de aprovacao da conta enterprise da DJI e o formato dos dados muda por modelo de aeronave. Nesta fase as horas ja alimentam o painel pela leitura de horimetro por foto feita no app, sem depender dessa aprovacao para o sistema funcionar desde o dia um.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- FROTA -->
+        <div class="page" id="page-frota">
+          <div class="toolbar">
+            <div class="filter-chip active">Todos (34)</div>
+            <div class="filter-chip">Ok (26)</div>
+            <div class="filter-chip">Atencao (4)</div>
+            <div class="filter-chip">Manutencao (4)</div>
+            <div class="btn-primary"><i class="fa-solid fa-plus"></i>Cadastrar drone</div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Drone</th><th>Cliente</th><th>Horas totais</th><th>Ultima leitura</th><th>Status</th></tr></thead>
+              <tbody id="fleetTable"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- FUNIL -->
+        <div class="page" id="page-funil">
+          <div class="toolbar">
+            <div class="filter-chip active">Todas as oportunidades</div>
+            <div class="btn-primary"><i class="fa-solid fa-plus"></i>Nova oportunidade</div>
+          </div>
+          <div class="kanban" id="kanbanBoard"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MOBILE APP ===================== -->
+<div class="view view-mobile" id="view-mobile">
+  <div class="mobile-stage">
+    <div class="phone-shell">
+      <div class="phone-notch"></div>
+      <div class="phone-screen">
+        <div class="phone-topbar"><span>9:41</span><span><i class="fa-solid fa-signal" style="opacity:.5"></i> <i class="fa-solid fa-battery-three-quarters"></i></span></div>
+        <div class="offline-pill" id="offlinePill"><i class="fa-solid fa-cloud-arrow-up"></i><span id="offlineText">Sem conexao - 3 registros aguardando sincronizacao</span></div>
+
+        <div class="phone-content">
+
+          <!-- HOME -->
+          <div class="phone-page active" id="mp-home">
+            <div class="phone-h1">Ola, Rafael</div>
+            <div class="phone-sub">Missao de hoje</div>
+            <div class="mission-card">
+              <div class="mission-farm">Fazenda Bonanza - Talhao 7</div>
+              <div class="mission-detail">Pulverizacao - Agras T25 #14</div>
+              <div class="mission-stats">
+                <div class="mission-stat"><b>42 ha</b><span>Area</span></div>
+                <div class="mission-stat"><b>247.5 h</b><span>Horimetro</span></div>
+                <div class="mission-stat"><b>2/4</b><span>Checklist</span></div>
+              </div>
+            </div>
+            <div class="quick-grid">
+              <div class="quick-tile" onclick="gotoPage('mp-checklist')"><i class="fa-solid fa-clipboard-check"></i><div class="quick-tile-label">Checklist</div></div>
+              <div class="quick-tile" onclick="gotoPage('mp-insumos')"><i class="fa-solid fa-seedling"></i><div class="quick-tile-label">Insumos</div></div>
+              <div class="quick-tile" onclick="gotoPage('mp-horimetro')"><i class="fa-solid fa-camera"></i><div class="quick-tile-label">Horimetro</div></div>
+              <div class="quick-tile" onclick="gotoPage('mp-clima')"><i class="fa-solid fa-cloud-sun-rain"></i><div class="quick-tile-label">Clima</div></div>
+            </div>
+            <div class="mp-card" style="margin-top:14px">
+              <div class="mp-card-head"><i class="fa-solid fa-database"></i>Registros pendentes de sincronizacao</div>
+              <div style="font-size:11.5px;color:var(--text-dim);line-height:1.6">Checklist, leitura de horimetro e registro de insumo continuam salvos no aparelho e sobem sozinhos assim que o sinal voltar.</div>
+              <button class="phone-btn" style="margin-top:12px" onclick="simulateSync()"><i class="fa-solid fa-rotate"></i> Simular retorno de sinal</button>
+            </div>
+          </div>
+
+          <!-- CHECKLIST -->
+          <div class="phone-page" id="mp-checklist">
+            <div class="phone-h1">Checklist de saida</div>
+            <div class="phone-sub">Fazenda Bonanza - Talhao 7</div>
+            <div class="check-progress"><div class="check-progress-fill" id="checkFill"></div></div>
+            <div class="mp-card" style="padding:4px 14px">
+              <div class="check-item"><div class="check-box checked" onclick="toggleCheck(this)"><i class="fa-solid fa-check" style="font-size:10px"></i></div>Helices sem trincas ou danos</div>
+              <div class="check-item"><div class="check-box checked" onclick="toggleCheck(this)"><i class="fa-solid fa-check" style="font-size:10px"></i></div>Bateria acima de 80%</div>
+              <div class="check-item"><div class="check-box" onclick="toggleCheck(this)"></div>Area livre de pessoas e animais</div>
+              <div class="check-item"><div class="check-box" onclick="toggleCheck(this)"></div>Sinal GPS/RTK estavel</div>
+            </div>
+            <button class="phone-btn disabled" id="checklistBtn" style="margin-top:16px">Concluir checklist de saida</button>
+          </div>
+
+          <!-- INSUMOS -->
+          <div class="phone-page" id="mp-insumos">
+            <div class="phone-h1">Insumos aplicados</div>
+            <div class="phone-sub">Talhao 7 - registro por voo</div>
+            <div class="mp-card">
+              <div class="insumo-row">
+                <div class="insumo-top"><span class="insumo-name">Fungicida XR-12</span><span class="insumo-dose">2.5 L/ha</span></div>
+                <span class="receituario-ok"><i class="fa-solid fa-check"></i>Receituario agronomico vinculado</span>
+              </div>
+              <div class="insumo-row">
+                <div class="insumo-top"><span class="insumo-name">Adjuvante SB-4</span><span class="insumo-dose">0.4 L/ha</span></div>
+                <span class="receituario-ok"><i class="fa-solid fa-check"></i>Receituario agronomico vinculado</span>
+              </div>
+              <div class="insumo-row">
+                <div class="insumo-top"><span class="insumo-name">Inseticida DK-9</span><span class="insumo-dose">1.2 L/ha</span></div>
+                <span class="receituario-blocked"><i class="fa-solid fa-ban"></i>Receituario nao localizado - aplicacao bloqueada</span>
+              </div>
+            </div>
+            <button class="phone-btn ghost" style="margin-top:14px"><i class="fa-solid fa-plus"></i> Registrar novo insumo</button>
+          </div>
+
+          <!-- HORIMETRO -->
+          <div class="phone-page" id="mp-horimetro">
+            <div class="phone-h1">Leitura de horimetro</div>
+            <div class="phone-sub">Aponte a camera para o painel do drone</div>
+            <div class="cam-frame">
+              <img src="https://images.unsplash.com/photo-1473968512647-3e447244af8f?w=500&h=380&fit=crop" onerror="this.style.display='none'">
+              <div class="cam-box" id="camBox" style="left:38%;top:42%;width:24%;height:18%"></div>
+              <div class="cam-flash" id="camFlash"></div>
+            </div>
+            <div class="reading-result" id="readingResult">
+              <div class="reading-value" id="readingValue">247.5 h</div>
+              <div class="reading-label">Leitura reconhecida por IA</div>
+              <div class="reading-conf"><i class="fa-solid fa-circle-check" style="color:var(--success)"></i>Confianca de 96%</div>
+              <div class="reading-actions">
+                <div class="phone-btn" style="flex:1">Confirmar leitura</div>
+                <div class="phone-btn ghost" style="flex:1">Corrigir manualmente</div>
+              </div>
+            </div>
+            <button class="phone-btn" id="captureBtn" style="margin-top:12px" onclick="captureReading()"><i class="fa-solid fa-camera"></i> Capturar foto do horimetro</button>
+          </div>
+
+          <!-- CLIMA -->
+          <div class="phone-page" id="mp-clima">
+            <div class="phone-h1">Clima e seguranca</div>
+            <div class="phone-sub">Fazenda Bonanza - agora</div>
+            <div class="weather-card">
+              <div class="weather-row">
+                <div class="weather-metric"><b>13 km/h</b><span>Vento</span></div>
+                <div class="weather-metric"><b>68%</b><span>Umidade</span></div>
+                <div class="weather-metric"><b>27 C</b><span>Temperatura</span></div>
+              </div>
+              <div class="risk-banner alto"><i class="fa-solid fa-triangle-exclamation"></i>Risco de deriva ALTO - vento acima do limite seguro para pulverizacao</div>
+            </div>
+            <div class="mp-card">
+              <div class="mp-card-head"><i class="fa-solid fa-clock"></i>Previsao das proximas horas</div>
+              <div style="font-size:11.5px;color:var(--text-dim);line-height:1.7">
+                10h - 13 km/h, risco alto<br>
+                11h - 9 km/h, risco moderado<br>
+                12h - 6 km/h, <b style="color:var(--success)">janela segura</b>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="phone-tabbar">
+          <div class="ptab active" data-mp="mp-home"><i class="fa-solid fa-house"></i>Inicio</div>
+          <div class="ptab" data-mp="mp-checklist"><i class="fa-solid fa-clipboard-check"></i>Checklist</div>
+          <div class="ptab" data-mp="mp-insumos"><i class="fa-solid fa-seedling"></i>Insumos</div>
+          <div class="ptab" data-mp="mp-horimetro"><i class="fa-solid fa-camera"></i>Horimetro</div>
+          <div class="ptab" data-mp="mp-clima"><i class="fa-solid fa-cloud-sun-rain"></i>Clima</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="demo-badge"><i class="fa-solid fa-circle-info"></i>Prototipo AgroForce Aero - dados ilustrativos</div>
+<div class="restart-btn" onclick="location.reload()"><i class="fa-solid fa-rotate-left"></i>Reiniciar demo</div>
+
+<script>
+// ---------- Mode switch ----------
+document.querySelectorAll('.mode-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    document.getElementById('view-'+btn.dataset.mode).classList.add('active');
+    window.scrollTo(0,0);
+  });
+});
+
+// ---------- Web panel data ----------
+const fleet = [
+  {name:'Agras T25 #14',client:'Fazenda Bonanza',hours:'247.5 h',last:'Hoje, 08:12',status:'ok',img:'https://images.unsplash.com/photo-1473968512647-3e447244af8f?w=100&h=100&fit=crop'},
+  {name:'Agras T40 #08',client:'Fazenda Sao Bento',hours:'196.0 h',last:'Ontem, 17:40',status:'manutencao',img:'https://images.unsplash.com/photo-1473968512647-3e447244af8f?w=100&h=100&fit=crop'},
+  {name:'Agras T50 #21',client:'Fazenda Alvorada',hours:'88.5 h',last:'Hoje, 07:55',status:'ok',img:'https://images.unsplash.com/photo-1473968512647-3e447244af8f?w=100&h=100&fit=crop'},
+  {name:'Agras T25 #05',client:'Fazenda Vale Verde',hours:'163.2 h',last:'2 dias atras',status:'atencao',img:'https://images.unsplash.com/photo-1473968512647-3e447244af8f?w=100&h=100&fit=crop'},
+  {name:'Agras T40 #11',client:'Fazenda Bonanza',hours:'54.8 h',last:'Hoje, 06:30',status:'ok',img:'https://images.unsplash.com/photo-1473968512647-3e447244af8f?w=100&h=100&fit=crop'},
+  {name:'Agras T25 #19',client:'Fazenda Sao Bento',hours:'201.4 h',last:'3 dias atras',status:'atencao',img:'https://images.unsplash.com/photo-1473968512647-3e447244af8f?w=100&h=100&fit=crop'}
+];
+const statusLabel = {ok:'Ok',atencao:'Atencao',manutencao:'Manutencao'};
+function renderFleet(){
+  const tbody = document.getElementById('fleetTable');
+  tbody.innerHTML = fleet.map(f=>`
+    <tr>
+      <td><div class="drone-cell"><img class="mini-avatar" src="${f.img}" onerror="this.style.display='none'"><div><div class="drone-name">${f.name}</div><div class="drone-sub">DJI Agricola</div></div></div></td>
+      <td>${f.client}</td>
+      <td>${f.hours}</td>
+      <td>${f.last}</td>
+      <td><span class="status-badge ${f.status}"><i class="fa-solid fa-circle"></i>${statusLabel[f.status]}</span></td>
+    </tr>`).join('');
+}
+
+const kanban = {
+  'Novo Lead':[{c:'Fazenda Esperanca',s:'Pulverizacao - 60 ha soja',v:'R$ 9.200',m:22,ok:true}],
+  'Qualificado':[{c:'Fazenda Vale Verde',s:'Pulverizacao - 120 ha milho',v:'R$ 18.500',m:24,ok:true},{c:'Fazenda Alvorada',s:'Venda de equipamento T40',v:'R$ 142.000',m:9,ok:false}],
+  'Proposta':[{c:'Fazenda Sao Bento',s:'Contrato anual - 400 ha',v:'R$ 61.000',m:19,ok:true}],
+  'Negociacao':[{c:'Fazenda Bonanza',s:'Pulverizacao - 42 ha',v:'R$ 6.400',m:27,ok:true}],
+  'Fechado':[{c:'Fazenda Ouro Verde',s:'Manutencao preventiva',v:'R$ 3.100',m:31,ok:true}]
+};
+function renderKanban(){
+  const board = document.getElementById('kanbanBoard');
+  board.innerHTML = Object.entries(kanban).map(([col,deals])=>`
+    <div class="kanban-col">
+      <div class="kanban-col-head">${col}<span>${deals.length}</span></div>
+      ${deals.map(d=>`
+        <div class="deal-card">
+          <div class="deal-client">${d.c}</div>
+          <div class="deal-service">${d.s}</div>
+          <div class="deal-foot"><span class="deal-value">${d.v}</span><span class="margin-tag ${d.ok?'ok':'low'}">${d.m}% margem</span></div>
+          ${!d.ok?'<div class="deal-lock"><i class="fa-solid fa-lock"></i>Abaixo da margem minima - trava ate revisar</div>':''}
+        </div>`).join('')}
+    </div>`).join('');
+}
+renderFleet();
+renderKanban();
+
+// Web nav
+const titles = {
+  dashboard:['Dashboard','Visao geral da operacao em tempo real'],
+  frota:['Frota','Drones sob gestao da revenda'],
+  funil:['Funil Comercial','Oportunidades de servico e equipamento']
+};
+document.querySelectorAll('#view-web .nav-item').forEach(item=>{
+  item.addEventListener('click', ()=>{
+    document.querySelectorAll('#view-web .nav-item').forEach(n=>n.classList.remove('active'));
+    item.classList.add('active');
+    document.querySelectorAll('#view-web .page').forEach(p=>p.classList.remove('active'));
+    const key = item.dataset.page;
+    document.getElementById('page-'+key).classList.add('active');
+    document.getElementById('pageTitle').textContent = titles[key][0];
+    document.getElementById('pageSub').textContent = titles[key][1];
+    document.getElementById('sidebar').classList.remove('open');
+    requestAnimationFrame(()=>observeReveal());
+    if(key==='dashboard'){ animateBars(); animateCounts(); }
+  });
+});
+
+function animateBars(){
+  document.querySelectorAll('#chartBars .bar').forEach((b,i)=>{
+    b.style.height='0';
+    setTimeout(()=>{ b.style.height = b.dataset.h+'px'; }, 80*i);
+  });
+}
+function animateCounts(){
+  document.querySelectorAll('.kpi-value[data-count]').forEach(el=>{
+    const target = parseInt(el.dataset.count,10);
+    let cur = 0; const step = Math.max(1, Math.round(target/30));
+    const t = setInterval(()=>{
+      cur += step;
+      if(cur >= target){ cur = target; clearInterval(t); }
+      el.textContent = cur;
+    }, 25);
+  });
+}
+function observeReveal(){
+  const els = document.querySelectorAll('.reveal:not(.in)');
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach((e,i)=>{
+      if(e.isIntersecting){
+        setTimeout(()=>e.target.classList.add('in'), i*55);
+        io.unobserve(e.target);
+      }
+    });
+  }, {threshold:.12});
+  els.forEach(el=>io.observe(el));
+}
+observeReveal();
+animateBars();
+animateCounts();
+
+// ---------- Mobile app logic ----------
+function gotoPage(id){
+  document.querySelectorAll('.phone-page').forEach(p=>p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.ptab').forEach(t=>t.classList.toggle('active', t.dataset.mp===id));
+}
+document.querySelectorAll('.ptab').forEach(tab=>{
+  tab.addEventListener('click', ()=>gotoPage(tab.dataset.mp));
+});
+
+function toggleCheck(el){
+  el.classList.toggle('checked');
+  el.innerHTML = el.classList.contains('checked') ? '<i class="fa-solid fa-check" style="font-size:10px"></i>' : '';
+  const total = document.querySelectorAll('#mp-checklist .check-box').length;
+  const done = document.querySelectorAll('#mp-checklist .check-box.checked').length;
+  document.getElementById('checkFill').style.width = (done/total*100)+'%';
+  const btn = document.getElementById('checklistBtn');
+  if(done===total){ btn.classList.remove('disabled'); btn.textContent='Concluir checklist de saida'; }
+  else { btn.classList.add('disabled'); }
+}
+toggleCheck.init = (()=>{
+  const total = document.querySelectorAll('#mp-checklist .check-box').length;
+  const done = document.querySelectorAll('#mp-checklist .check-box.checked').length;
+  document.getElementById('checkFill').style.width = (done/total*100)+'%';
+})();
+
+let syncCount = 3;
+function simulateSync(){
+  const pill = document.getElementById('offlinePill');
+  const text = document.getElementById('offlineText');
+  text.textContent = 'Sincronizando registros...';
+  setTimeout(()=>{
+    pill.classList.add('synced');
+    pill.querySelector('i').className = 'fa-solid fa-cloud-check';
+    text.textContent = 'Todos os registros sincronizados';
+  }, 900);
+}
+
+function captureReading(){
+  const flash = document.getElementById('camFlash');
+  const box = document.getElementById('camBox');
+  const result = document.getElementById('readingResult');
+  const btn = document.getElementById('captureBtn');
+  flash.classList.add('flashing');
+  box.classList.add('show');
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Lendo horimetro...';
+  setTimeout(()=>{
+    result.classList.add('show');
+    btn.innerHTML = '<i class="fa-solid fa-camera"></i> Capturar nova foto';
+    flash.classList.remove('flashing');
+  }, 1000);
+}
+</script>
+</body>
+</html>
