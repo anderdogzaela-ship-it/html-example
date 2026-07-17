@@ -1,0 +1,1383 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alianza — Demo interactivo de app de anillos de compromiso</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+:root{
+  --bg-deep:#0b0906;
+  --bg-surface:#16110b;
+  --bg-elevated:#1e170f;
+  --bg-card:#221a11;
+  --gold-100:#fbe6bf;
+  --gold-300:#f3c876;
+  --gold-500:#f59e0b;
+  --gold-600:#d97706;
+  --gold-700:#b45309;
+  --text-primary:#f6efe2;
+  --text-secondary:#c9bca3;
+  --text-muted:#8d8172;
+  --border-subtle:rgba(245,158,11,0.16);
+  --border-strong:rgba(245,158,11,0.4);
+  --success:#4ade80;
+  --danger:#f87171;
+  --radius-sm:8px;
+  --radius-md:14px;
+  --radius-lg:22px;
+  --radius-full:999px;
+  --shadow-gold:0 10px 30px -8px rgba(245,158,11,0.35);
+  --font:'Lexend', sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{
+  font-family:var(--font);
+  background:
+    radial-gradient(ellipse 900px 500px at 50% -10%, rgba(245,158,11,0.10), transparent 60%),
+    radial-gradient(ellipse 700px 500px at 100% 100%, rgba(180,83,9,0.10), transparent 55%),
+    #060504;
+  color:var(--text-primary);
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:40px 16px;
+  overflow-x:hidden;
+}
+button, input{font-family:var(--font);}
+img{display:block;max-width:100%;}
+::-webkit-scrollbar{width:0;height:0;}
+
+/* ===== Restart control ===== */
+.restart-btn{
+  position:fixed;
+  top:20px;
+  right:20px;
+  z-index:500;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  background:var(--bg-elevated);
+  border:1px solid var(--border-subtle);
+  color:var(--gold-300);
+  font-family:var(--font);
+  font-weight:600;
+  font-size:13px;
+  padding:10px 16px;
+  border-radius:var(--radius-full);
+  cursor:pointer;
+  transition:transform .15s ease, border-color .2s ease, background .2s ease;
+}
+.restart-btn:hover{border-color:var(--border-strong); background:var(--bg-card);}
+.restart-btn:active{transform:scale(0.94);}
+.restart-btn i{transition:transform .4s ease;}
+.restart-btn.spin i{transform:rotate(-360deg);}
+
+.page-caption{
+  position:fixed;
+  bottom:18px;
+  left:0; right:0;
+  text-align:center;
+  font-size:12px;
+  color:var(--text-muted);
+  letter-spacing:.04em;
+  z-index:5;
+}
+.page-caption strong{color:var(--gold-300);}
+
+/* ===== Phone shell ===== */
+.phone-frame{
+  width:400px;
+  min-width:340px;
+  max-width:92vw;
+  position:relative;
+}
+.phone-chassis{
+  background:linear-gradient(160deg,#1a1a1a,#050505);
+  border-radius:54px;
+  padding:14px;
+  box-shadow:0 50px 100px -20px rgba(0,0,0,0.7), inset 0 0 0 2px rgba(255,255,255,0.05);
+}
+.phone-screen{
+  position:relative;
+  width:100%;
+  height:812px;
+  max-height:86vh;
+  background:var(--bg-deep);
+  border-radius:40px;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  box-shadow:inset 0 0 0 1px rgba(245,158,11,0.08);
+}
+.dynamic-island{
+  position:absolute;
+  top:12px; left:50%; transform:translateX(-50%);
+  width:110px; height:28px;
+  background:#000;
+  border-radius:var(--radius-full);
+  z-index:60;
+}
+.status-bar{
+  flex-shrink:0;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:16px 28px 6px;
+  font-size:13px;
+  font-weight:700;
+  color:var(--text-primary);
+  letter-spacing:.02em;
+}
+.status-bar .status-icons{display:flex; gap:6px; font-size:12px; color:var(--text-primary);}
+
+.app-shell{flex:1; position:relative; overflow:hidden;}
+
+/* ===== Screens ===== */
+.screen{
+  position:absolute; inset:0;
+  display:flex; flex-direction:column;
+  opacity:0; transform:translateY(14px) scale(0.985);
+  pointer-events:none;
+  transition:opacity .4s ease, transform .4s ease;
+  z-index:1;
+  background:var(--bg-deep);
+}
+.screen.active{opacity:1; transform:translateY(0) scale(1); pointer-events:auto; z-index:2;}
+
+.screen-scroll{flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch;}
+
+.topbar{
+  flex-shrink:0;
+  display:flex; align-items:center; gap:12px;
+  padding:6px 20px 14px;
+  border-bottom:1px solid var(--border-subtle);
+}
+.topbar .back-btn{
+  width:36px; height:36px; border-radius:var(--radius-full);
+  background:var(--bg-elevated); border:1px solid var(--border-subtle);
+  display:flex; align-items:center; justify-content:center;
+  color:var(--gold-300); cursor:pointer; flex-shrink:0;
+  transition:transform .15s ease, background .2s ease;
+}
+.topbar .back-btn:active{transform:scale(0.9);}
+.topbar-title{font-size:16px; font-weight:700; color:var(--text-primary);}
+.topbar-sub{font-size:11px; color:var(--text-muted); font-weight:500;}
+
+/* ===== Splash ===== */
+#screen-splash{
+  align-items:center; justify-content:center;
+  background:
+    radial-gradient(circle at 50% 38%, rgba(245,158,11,0.22), transparent 55%),
+    linear-gradient(180deg, #0b0906 0%, #050403 100%);
+  text-align:center;
+  padding:40px;
+}
+.splash-glow{
+  position:absolute;
+  width:280px; height:280px;
+  border-radius:50%;
+  top:26%; left:50%;
+  transform:translate(-50%,-50%);
+  background:radial-gradient(circle, rgba(245,158,11,0.35), transparent 70%);
+  filter:blur(10px);
+  animation:pulseGlow 3.2s ease-in-out infinite;
+}
+@keyframes pulseGlow{
+  0%,100%{opacity:.5; transform:translate(-50%,-50%) scale(0.9);}
+  50%{opacity:1; transform:translate(-50%,-50%) scale(1.12);}
+}
+.splash-mark{
+  position:relative; z-index:2;
+  width:84px; height:84px;
+  border-radius:50%;
+  border:1.5px solid var(--border-strong);
+  display:flex; align-items:center; justify-content:center;
+  font-size:32px;
+  color:var(--gold-300);
+  margin:0 auto 26px;
+  background:rgba(245,158,11,0.06);
+  animation:floatRing 3.6s ease-in-out infinite;
+}
+@keyframes floatRing{
+  0%,100%{transform:translateY(0);}
+  50%{transform:translateY(-8px);}
+}
+.splash-brand{
+  position:relative; z-index:2;
+  font-size:38px; font-weight:800; letter-spacing:.14em;
+  background:linear-gradient(100deg, var(--gold-700), var(--gold-100), var(--gold-500));
+  background-size:220% auto;
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+  animation:shimmer 3.6s linear infinite;
+  margin-bottom:12px;
+}
+@keyframes shimmer{
+  0%{background-position:0% center;}
+  100%{background-position:220% center;}
+}
+.splash-tagline{
+  position:relative; z-index:2;
+  font-size:13.5px; color:var(--text-secondary); font-weight:400;
+  max-width:260px; margin:0 auto 40px; line-height:1.6;
+}
+.splash-cta{
+  position:relative; z-index:2;
+  background:linear-gradient(135deg, var(--gold-500), var(--gold-700));
+  color:#1c1104; border:none; font-weight:700; font-size:14px;
+  padding:14px 34px; border-radius:var(--radius-full);
+  display:inline-flex; align-items:center; gap:10px;
+  cursor:pointer; box-shadow:var(--shadow-gold);
+  transition:transform .15s ease;
+}
+.splash-cta:active{transform:scale(0.95);}
+.splash-progress{
+  position:relative; z-index:2;
+  width:120px; height:3px; background:rgba(245,158,11,0.15);
+  border-radius:2px; margin:22px auto 0; overflow:hidden;
+}
+.splash-progress span{
+  display:block; height:100%; width:0%;
+  background:linear-gradient(90deg, var(--gold-600), var(--gold-300));
+  animation:fillBar 2.3s ease forwards;
+}
+@keyframes fillBar{ to{width:100%;} }
+
+/* ===== Home / Catalog ===== */
+.home-topbar{padding:16px 20px 12px;}
+.home-brand-row{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;}
+.home-brand{display:flex; align-items:center; gap:10px; font-size:19px; font-weight:800; letter-spacing:.03em; color:var(--text-primary);}
+.home-brand i{color:var(--gold-400, var(--gold-500)); font-size:17px;}
+.home-greeting{font-size:11.5px; color:var(--text-muted);}
+.search-bar{
+  display:flex; align-items:center; gap:10px;
+  background:var(--bg-elevated); border:1px solid var(--border-subtle);
+  border-radius:var(--radius-full); padding:11px 16px;
+}
+.search-bar i{color:var(--gold-300); font-size:13px;}
+.search-bar input{
+  background:none; border:none; outline:none; color:var(--text-primary);
+  font-size:13.5px; width:100%;
+}
+.search-bar input::placeholder{color:var(--text-muted);}
+
+.filter-scroll{display:flex; gap:8px; overflow-x:auto; padding:14px 20px 4px;}
+.filter-group-label{font-size:10.5px; text-transform:uppercase; letter-spacing:.08em; color:var(--text-muted); font-weight:700; padding:10px 20px 0;}
+.chip{
+  flex-shrink:0;
+  padding:8px 15px;
+  border-radius:var(--radius-full);
+  border:1px solid var(--border-subtle);
+  background:var(--bg-elevated);
+  color:var(--text-secondary);
+  font-size:12.5px; font-weight:600;
+  cursor:pointer; white-space:nowrap;
+  transition:all .18s ease;
+}
+.chip:active{transform:scale(0.94);}
+.chip.active{
+  background:linear-gradient(135deg, var(--gold-500), var(--gold-700));
+  color:#1c1104; border-color:transparent;
+  box-shadow:0 4px 14px -4px rgba(245,158,11,0.5);
+}
+
+.catalog-grid{
+  display:grid; grid-template-columns:1fr 1fr; gap:14px;
+  padding:16px 20px 100px;
+}
+.product-card{
+  background:var(--bg-card);
+  border:1px solid var(--border-subtle);
+  border-radius:var(--radius-md);
+  overflow:hidden;
+  cursor:pointer;
+  opacity:0; transform:translateY(20px);
+  transition:opacity .5s ease, transform .5s ease, border-color .2s ease, box-shadow .2s ease;
+}
+.product-card.visible{opacity:1; transform:translateY(0);}
+.product-card:hover{border-color:var(--border-strong); box-shadow:0 14px 28px -12px rgba(245,158,11,0.28); transform:translateY(-4px);}
+.product-card.visible:hover{transform:translateY(-4px);}
+.product-card:active{transform:scale(0.97);}
+.thumb{position:relative; width:100%; aspect-ratio:1/1; background:var(--bg-elevated);}
+.thumb img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover;}
+.thumb-fallback{
+  position:absolute; inset:0;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
+  background:linear-gradient(150deg, #2a2013, #171009);
+  color:var(--gold-300);
+}
+.thumb-fallback i{font-size:26px; opacity:.85;}
+.thumb-fallback span{font-size:10px; font-weight:700; letter-spacing:.12em; color:var(--text-muted);}
+.thumb-badge{
+  position:absolute; top:8px; left:8px;
+  background:rgba(6,5,4,0.72); backdrop-filter:blur(4px);
+  color:var(--gold-300); font-size:9.5px; font-weight:700;
+  padding:4px 9px; border-radius:var(--radius-full);
+  letter-spacing:.03em; z-index:2;
+}
+.card-info{padding:11px 12px 13px;}
+.card-name{font-size:13px; font-weight:700; color:var(--text-primary); margin-bottom:3px; line-height:1.3;}
+.card-meta{font-size:10.5px; color:var(--text-muted); margin-bottom:8px;}
+.card-price-label{font-size:9px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.06em;}
+.card-price{font-size:14.5px; font-weight:800; color:var(--gold-300);}
+
+.empty-state{
+  grid-column:1/-1;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding:60px 20px; text-align:center; color:var(--text-muted);
+}
+.empty-state i{font-size:32px; color:var(--gold-700); margin-bottom:14px;}
+.empty-state p{font-size:13px; max-width:220px; line-height:1.6;}
+
+/* ===== Product detail ===== */
+.hero-wrap{position:relative; width:100%; aspect-ratio:1/1; overflow:hidden; background:var(--bg-elevated); cursor:zoom-in;}
+.hero-wrap img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; transition:transform .45s ease, object-position .3s ease;}
+.hero-wrap.zoomed img{transform:scale(1.55); cursor:zoom-out;}
+.hero-wrap .thumb-fallback i{font-size:42px;}
+.zoom-hint{
+  position:absolute; bottom:12px; right:12px; z-index:3;
+  background:rgba(6,5,4,0.7); color:var(--gold-100); font-size:10.5px; font-weight:600;
+  padding:6px 11px; border-radius:var(--radius-full); display:flex; align-items:center; gap:6px;
+  pointer-events:none;
+}
+.gallery-dots{position:absolute; bottom:12px; left:0; right:0; display:flex; justify-content:center; gap:6px; z-index:3;}
+.gallery-dots .dot{width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,0.35); cursor:pointer; transition:.2s;}
+.gallery-dots .dot.active{background:var(--gold-400, var(--gold-500)); width:16px; border-radius:3px;}
+
+.detail-body{padding:20px 20px 140px;}
+.detail-tipo{font-size:10.5px; color:var(--gold-300); font-weight:700; text-transform:uppercase; letter-spacing:.08em; margin-bottom:6px;}
+.detail-name{font-size:21px; font-weight:800; margin-bottom:8px; line-height:1.25;}
+.detail-desc{font-size:12.5px; color:var(--text-secondary); line-height:1.7; margin-bottom:18px;}
+
+.price-row{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 16px; background:var(--bg-card); border:1px solid var(--border-subtle);
+  border-radius:var(--radius-md); margin-bottom:22px;
+}
+.price-row .price-block .price-label{font-size:10px; color:var(--text-muted); margin-bottom:2px;}
+.price-row .price-block .price-value{font-size:22px; font-weight:800; color:var(--gold-300); transition:color .2s ease;}
+.avail-badge{
+  display:flex; align-items:center; gap:6px;
+  font-size:11px; font-weight:700; padding:7px 12px; border-radius:var(--radius-full);
+}
+.avail-badge.ok{background:rgba(74,222,128,0.12); color:var(--success);}
+.avail-badge.no{background:rgba(248,113,113,0.12); color:var(--danger);}
+
+.variant-section{margin-bottom:22px;}
+.variant-title{font-size:12.5px; font-weight:700; color:var(--text-primary); margin-bottom:10px; display:flex; align-items:center; gap:8px;}
+.variant-title i{color:var(--gold-500); font-size:11px;}
+.variant-row{display:flex; gap:9px; flex-wrap:wrap;}
+.variant-row.scroll{flex-wrap:nowrap; overflow-x:auto; padding-bottom:4px;}
+.opt-chip{
+  flex-shrink:0;
+  padding:9px 14px; border-radius:var(--radius-sm);
+  border:1.5px solid var(--border-subtle); background:var(--bg-elevated);
+  color:var(--text-secondary); font-size:12.5px; font-weight:600; cursor:pointer;
+  transition:all .16s ease; display:flex; align-items:center; gap:8px;
+}
+.opt-chip:active{transform:scale(0.93);}
+.opt-chip.active{border-color:var(--gold-500); background:rgba(245,158,11,0.1); color:var(--gold-100);}
+.opt-chip.unavailable{opacity:.4;}
+.swatch{width:14px; height:14px; border-radius:50%; border:1px solid rgba(255,255,255,0.25); flex-shrink:0;}
+
+.engrave-input{
+  width:100%; background:var(--bg-elevated); border:1.5px solid var(--border-subtle);
+  border-radius:var(--radius-sm); padding:12px 14px; color:var(--text-primary);
+  font-size:13px; outline:none; transition:border-color .2s ease;
+}
+.engrave-input:focus{border-color:var(--gold-500);}
+.engrave-meta{display:flex; justify-content:space-between; margin-top:7px; font-size:10.5px; color:var(--text-muted);}
+.engrave-fee{color:var(--gold-300); font-weight:600;}
+
+.sticky-bar{
+  position:absolute; left:0; right:0; bottom:0; z-index:10;
+  background:linear-gradient(180deg, transparent, var(--bg-deep) 30%);
+  padding:22px 20px 20px;
+  display:flex; align-items:center; gap:14px;
+}
+.sticky-price{flex-shrink:0;}
+.sticky-price .lbl{font-size:9.5px; color:var(--text-muted);}
+.sticky-price .val{font-size:17px; font-weight:800; color:var(--gold-300);}
+.btn-add{
+  flex:1;
+  background:linear-gradient(135deg, var(--gold-500), var(--gold-700));
+  color:#1c1104; border:none; font-weight:700; font-size:13.5px;
+  padding:15px 18px; border-radius:var(--radius-md);
+  display:flex; align-items:center; justify-content:center; gap:9px;
+  cursor:pointer; box-shadow:var(--shadow-gold);
+  transition:transform .15s ease, background .2s ease, box-shadow .2s ease;
+}
+.btn-add:active{transform:scale(0.96);}
+.btn-add.disabled{
+  background:var(--bg-elevated); color:var(--text-muted); box-shadow:none; cursor:not-allowed;
+  border:1px solid var(--border-subtle);
+}
+.btn-add.pulse{animation:addPulse .4s ease;}
+@keyframes addPulse{ 0%{transform:scale(1);} 40%{transform:scale(0.93);} 100%{transform:scale(1);} }
+
+.toast{
+  position:absolute; top:16px; left:50%; transform:translate(-50%,-140%);
+  background:var(--bg-elevated); border:1px solid var(--border-strong);
+  color:var(--gold-100); font-size:12.5px; font-weight:600;
+  padding:11px 18px; border-radius:var(--radius-full);
+  display:flex; align-items:center; gap:9px; z-index:80;
+  transition:transform .35s cubic-bezier(.34,1.56,.64,1);
+  box-shadow:0 12px 26px rgba(0,0,0,0.4);
+}
+.toast.show{transform:translate(-50%,0);}
+.toast i{color:var(--success);}
+
+/* ===== Cart / checkout ===== */
+.cart-step{display:none; flex-direction:column; flex:1; min-height:0;}
+.cart-step.active{display:flex;}
+
+.cart-list{padding:16px 20px 4px; display:flex; flex-direction:column; gap:12px;}
+.cart-item{
+  display:flex; gap:12px; background:var(--bg-card); border:1px solid var(--border-subtle);
+  border-radius:var(--radius-md); padding:11px;
+}
+.cart-item .thumb{width:64px; height:64px; flex-shrink:0; border-radius:var(--radius-sm); aspect-ratio:auto;}
+.cart-item-info{flex:1; min-width:0;}
+.cart-item-name{font-size:12.5px; font-weight:700; margin-bottom:3px;}
+.cart-item-variant{font-size:10.5px; color:var(--text-muted); line-height:1.5; margin-bottom:6px;}
+.cart-item-bottom{display:flex; align-items:center; justify-content:space-between;}
+.cart-item-price{font-size:13px; font-weight:800; color:var(--gold-300);}
+.qty-stepper{display:flex; align-items:center; gap:8px; background:var(--bg-elevated); border-radius:var(--radius-full); padding:4px;}
+.qty-stepper button{
+  width:20px; height:20px; border-radius:50%; border:none; background:var(--bg-elevated);
+  color:var(--gold-300); display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:10px;
+}
+.qty-stepper button:active{transform:scale(0.85);}
+.qty-stepper span{font-size:11.5px; font-weight:700; min-width:14px; text-align:center;}
+.remove-btn{background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:11px; padding:4px;}
+.remove-btn:hover{color:var(--danger);}
+
+.summary-card{
+  margin:18px 20px; padding:16px; background:var(--bg-card); border:1px solid var(--border-subtle);
+  border-radius:var(--radius-md);
+}
+.summary-row{display:flex; justify-content:space-between; font-size:12.5px; color:var(--text-secondary); margin-bottom:9px;}
+.summary-row.total{
+  border-top:1px solid var(--border-subtle); margin-top:10px; padding-top:12px;
+  font-size:15px; font-weight:800; color:var(--text-primary);
+}
+.summary-row.total span:last-child{color:var(--gold-300);}
+.free-ship{color:var(--success); font-weight:700;}
+
+.cart-cta{padding:0 20px 24px;}
+.btn-primary-full{
+  width:100%; background:linear-gradient(135deg, var(--gold-500), var(--gold-700));
+  color:#1c1104; border:none; font-weight:700; font-size:14px;
+  padding:15px; border-radius:var(--radius-md);
+  display:flex; align-items:center; justify-content:center; gap:9px; cursor:pointer;
+  box-shadow:var(--shadow-gold); transition:transform .15s ease;
+}
+.btn-primary-full:active{transform:scale(0.96);}
+.btn-primary-full.disabled{background:var(--bg-elevated); color:var(--text-muted); box-shadow:none; cursor:not-allowed; border:1px solid var(--border-subtle);}
+
+.form-field{padding:0 20px; margin-bottom:12px;}
+.form-field label{display:block; font-size:11px; font-weight:600; color:var(--text-muted); margin-bottom:6px;}
+.form-field input{
+  width:100%; background:var(--bg-elevated); border:1.5px solid var(--border-subtle);
+  border-radius:var(--radius-sm); padding:12px 14px; color:var(--text-primary); font-size:13px; outline:none;
+}
+.form-field input:focus{border-color:var(--gold-500);}
+.form-row-2{display:flex; gap:12px; padding:0 20px; margin-bottom:12px;}
+.form-row-2 .form-field{padding:0; flex:1; margin-bottom:0;}
+
+.pay-methods{padding:4px 20px 8px; display:flex; flex-direction:column; gap:10px;}
+.pay-card{
+  display:flex; align-items:center; gap:13px; padding:13px 15px;
+  background:var(--bg-card); border:1.5px solid var(--border-subtle); border-radius:var(--radius-md);
+  cursor:pointer; transition:all .18s ease;
+}
+.pay-card:active{transform:scale(0.98);}
+.pay-card.active{border-color:var(--gold-500); background:rgba(245,158,11,0.08);}
+.pay-card i.pay-icon{width:34px; height:34px; border-radius:var(--radius-sm); background:var(--bg-elevated); display:flex; align-items:center; justify-content:center; color:var(--gold-300); font-size:14px;}
+.pay-card .pay-name{font-size:12.5px; font-weight:700;}
+.pay-card .pay-sub{font-size:10px; color:var(--text-muted);}
+.pay-check{margin-left:auto; color:var(--gold-500); font-size:15px; opacity:0; transition:opacity .2s ease;}
+.pay-card.active .pay-check{opacity:1;}
+
+.section-label{font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:var(--text-muted); padding:16px 20px 8px;}
+
+/* Confirmation */
+.confirm-wrap{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:30px; text-align:center;}
+.confirm-icon{
+  width:78px; height:78px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  background:radial-gradient(circle, rgba(74,222,128,0.18), transparent 70%);
+  color:var(--success); font-size:44px; margin-bottom:20px;
+  animation:confirmPulse 1.8s ease-in-out infinite;
+}
+@keyframes confirmPulse{ 0%,100%{transform:scale(1);} 50%{transform:scale(1.08);} }
+.confirm-title{font-size:19px; font-weight:800; margin-bottom:8px;}
+.confirm-sub{font-size:12.5px; color:var(--text-secondary); margin-bottom:22px; line-height:1.6;}
+.confirm-card{
+  width:100%; background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:var(--radius-md);
+  padding:16px; text-align:left; margin-bottom:24px;
+}
+.confirm-card .row{display:flex; justify-content:space-between; font-size:12px; color:var(--text-secondary); margin-bottom:8px;}
+.confirm-card .row:last-child{margin-bottom:0; padding-top:8px; border-top:1px solid var(--border-subtle); font-weight:800; color:var(--text-primary); font-size:13.5px;}
+.confirm-card .row span:last-child{color:var(--gold-300); font-weight:700;}
+.confirm-actions{display:flex; gap:10px; width:100%;}
+.btn-ghost{
+  flex:1; background:var(--bg-elevated); border:1px solid var(--border-subtle); color:var(--text-primary);
+  font-weight:700; font-size:12.5px; padding:13px; border-radius:var(--radius-md); cursor:pointer;
+}
+.btn-ghost:active{transform:scale(0.96);}
+
+/* Empty cart */
+.cart-empty{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px; text-align:center;}
+.cart-empty i{font-size:38px; color:var(--gold-700); margin-bottom:16px;}
+.cart-empty p{font-size:13px; color:var(--text-muted); margin-bottom:20px; max-width:220px; line-height:1.6;}
+.cart-empty button{
+  background:linear-gradient(135deg, var(--gold-500), var(--gold-700)); color:#1c1104; border:none;
+  font-weight:700; font-size:12.5px; padding:12px 22px; border-radius:var(--radius-full); cursor:pointer;
+}
+
+/* ===== Account ===== */
+.account-header{padding:26px 20px 20px; display:flex; align-items:center; gap:14px; border-bottom:1px solid var(--border-subtle);}
+.account-avatar{
+  width:56px; height:56px; border-radius:50%;
+  background:linear-gradient(135deg, var(--gold-500), var(--gold-700));
+  display:flex; align-items:center; justify-content:center; color:#1c1104; font-size:22px; flex-shrink:0;
+}
+.account-name{font-size:15.5px; font-weight:800;}
+.account-email{font-size:11.5px; color:var(--text-muted);}
+
+.menu-list{padding:6px 20px;}
+.menu-row{
+  display:flex; align-items:center; gap:13px; padding:14px 4px;
+  border-bottom:1px solid var(--border-subtle); cursor:pointer;
+}
+.menu-row:last-child{border-bottom:none;}
+.menu-row i.left{color:var(--gold-300); width:18px; text-align:center; font-size:14px;}
+.menu-row span{flex:1; font-size:13px; font-weight:600;}
+.menu-row i.right{color:var(--text-muted); font-size:11px;}
+
+.order-card{
+  background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:var(--radius-md);
+  padding:14px; margin-bottom:12px;
+}
+.order-card-top{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
+.order-id{font-size:12.5px; font-weight:800;}
+.order-date{font-size:10.5px; color:var(--text-muted);}
+.order-status{font-size:10px; font-weight:700; background:rgba(245,158,11,0.12); color:var(--gold-300); padding:4px 10px; border-radius:var(--radius-full);}
+.order-meta{display:flex; justify-content:space-between; font-size:11.5px; color:var(--text-secondary);}
+.order-meta strong{color:var(--gold-300); font-size:13px;}
+
+/* ===== Bottom nav ===== */
+.bottom-nav{
+  flex-shrink:0;
+  display:flex; align-items:center; justify-content:space-around;
+  padding:10px 10px 6px;
+  border-top:1px solid var(--border-subtle);
+  background:rgba(11,9,6,0.85);
+  backdrop-filter:blur(10px);
+}
+.nav-btn{
+  display:flex; flex-direction:column; align-items:center; gap:4px;
+  background:none; border:none; color:var(--text-muted); cursor:pointer;
+  padding:6px 18px; position:relative; transition:color .2s ease;
+}
+.nav-btn i{font-size:17px;}
+.nav-btn span{font-size:9.5px; font-weight:700;}
+.nav-btn.active{color:var(--gold-300);}
+.nav-badge{
+  position:absolute; top:0; right:8px;
+  background:var(--gold-500); color:#1c1104; font-size:9px; font-weight:800;
+  width:16px; height:16px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+}
+.home-indicator{width:120px; height:4px; background:var(--text-muted); border-radius:2px; margin:8px auto; opacity:.5;}
+.app-shell[data-hide-nav="true"] ~ .bottom-nav,
+.bottom-nav.hidden{display:none;}
+</style>
+</head>
+<body>
+
+<button class="restart-btn" onclick="restartDemo(this)"><i class="fa-solid fa-rotate-left"></i>Restart</button>
+
+<div class="phone-frame">
+  <div class="phone-chassis">
+    <div class="phone-screen">
+      <div class="dynamic-island"></div>
+      <div class="status-bar">
+        <span>9:41</span>
+        <span class="status-icons"><i class="fa-solid fa-signal"></i><i class="fa-solid fa-wifi"></i><i class="fa-solid fa-battery-full"></i></span>
+      </div>
+
+      <div class="app-shell" id="app-shell">
+
+        <!-- ===== SPLASH ===== -->
+        <div class="screen active" id="screen-splash">
+          <div class="splash-glow"></div>
+          <div class="splash-mark"><i class="fa-solid fa-ring"></i></div>
+          <div class="splash-brand">ALIANZA</div>
+          <p class="splash-tagline">Anillos de compromiso y alianzas de boda, elegidos con calma y hechos para durar toda la vida.</p>
+          <button class="splash-cta" onclick="skipSplash()">Comenzar <i class="fa-solid fa-arrow-right"></i></button>
+          <div class="splash-progress" id="splash-progress"><span></span></div>
+        </div>
+
+        <!-- ===== HOME / CATALOG ===== -->
+        <div class="screen" id="screen-home">
+          <div class="screen-scroll" id="home-scroll">
+            <div class="home-topbar">
+              <div class="home-brand-row">
+                <div class="home-brand"><i class="fa-solid fa-ring"></i>Alianza</div>
+                <div class="home-greeting">Barcelona, ES</div>
+              </div>
+              <div class="search-bar">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="search-input" placeholder="Busca tu anillo ideal..." oninput="setSearch(this.value)">
+              </div>
+            </div>
+
+            <div class="filter-group-label">Metal</div>
+            <div class="filter-scroll" id="filter-metal">
+              <div class="chip active" data-value="all" onclick="setFilter('metal','all',this)">Todos</div>
+              <div class="chip" data-value="blanco" onclick="setFilter('metal','blanco',this)">Oro Blanco</div>
+              <div class="chip" data-value="amarillo" onclick="setFilter('metal','amarillo',this)">Oro Amarillo</div>
+              <div class="chip" data-value="platino" onclick="setFilter('metal','platino',this)">Platino</div>
+            </div>
+
+            <div class="filter-group-label">Tipo</div>
+            <div class="filter-scroll" id="filter-tipo">
+              <div class="chip active" data-value="all" onclick="setFilter('tipo','all',this)">Todos</div>
+              <div class="chip" data-value="Solitario" onclick="setFilter('tipo','Solitario',this)">Solitario</div>
+              <div class="chip" data-value="Alianza Clásica" onclick="setFilter('tipo','Alianza Clásica',this)">Alianza Clásica</div>
+              <div class="chip" data-value="Con Diamantes" onclick="setFilter('tipo','Con Diamantes',this)">Con Diamantes</div>
+            </div>
+
+            <div class="filter-group-label">Precio</div>
+            <div class="filter-scroll" id="filter-price">
+              <div class="chip active" data-value="all" onclick="setFilter('price','all',this)">Todos</div>
+              <div class="chip" data-value="low" onclick="setFilter('price','low',this)">Hasta 1.000€</div>
+              <div class="chip" data-value="mid" onclick="setFilter('price','mid',this)">1.000€ - 2.500€</div>
+              <div class="chip" data-value="high" onclick="setFilter('price','high',this)">Más de 2.500€</div>
+            </div>
+
+            <div class="catalog-grid" id="catalog-grid"></div>
+          </div>
+        </div>
+
+        <!-- ===== PRODUCT DETAIL ===== -->
+        <div class="screen" id="screen-product">
+          <div class="screen-scroll" id="product-scroll">
+            <div class="topbar">
+              <div class="back-btn" onclick="navigate('home')"><i class="fa-solid fa-chevron-left"></i></div>
+              <div>
+                <div class="topbar-title" id="detail-topbar-title">Detalle</div>
+                <div class="topbar-sub">Alianza · Catálogo</div>
+              </div>
+            </div>
+
+            <div class="hero-wrap" id="hero-wrap" onclick="toggleZoom()">
+              <div class="thumb-fallback"><i class="fa-solid fa-gem"></i><span id="hero-fallback-label">AL</span></div>
+              <img id="hero-img" src="" alt="" onerror="this.style.display='none'">
+              <div class="zoom-hint"><i class="fa-solid fa-magnifying-glass-plus"></i>Toca para acercar</div>
+              <div class="gallery-dots" id="gallery-dots">
+                <div class="dot active" onclick="event.stopPropagation();setGalleryDot(0)"></div>
+                <div class="dot" onclick="event.stopPropagation();setGalleryDot(1)"></div>
+                <div class="dot" onclick="event.stopPropagation();setGalleryDot(2)"></div>
+              </div>
+            </div>
+
+            <div class="detail-body">
+              <div class="detail-tipo" id="detail-tipo">Tipo</div>
+              <div class="detail-name" id="detail-name">Nombre del anillo</div>
+              <div class="detail-desc" id="detail-desc">Descripción</div>
+
+              <div class="price-row">
+                <div class="price-block">
+                  <div class="price-label">Precio con tu configuración</div>
+                  <div class="price-value" id="detail-price">0 €</div>
+                </div>
+                <div class="avail-badge" id="detail-avail"><i class="fa-solid fa-circle-check"></i><span>Disponible</span></div>
+              </div>
+
+              <div class="variant-section">
+                <div class="variant-title"><i class="fa-solid fa-circle-half-stroke"></i>Metal</div>
+                <div class="variant-row" id="variant-metal"></div>
+              </div>
+
+              <div class="variant-section">
+                <div class="variant-title"><i class="fa-solid fa-gem"></i>Quilate (aprox.)</div>
+                <div class="variant-row" id="variant-carat"></div>
+              </div>
+
+              <div class="variant-section">
+                <div class="variant-title"><i class="fa-solid fa-ruler"></i>Talla (EU)</div>
+                <div class="variant-row scroll" id="variant-size"></div>
+              </div>
+
+              <div class="variant-section">
+                <div class="variant-title"><i class="fa-solid fa-pen"></i>Grabado (opcional)</div>
+                <input type="text" class="engrave-input" id="engraving-input" maxlength="20" placeholder="Ej: J &amp; M · 12.06.2026" oninput="onEngravingInput(this.value)">
+                <div class="engrave-meta">
+                  <span id="engrave-counter">0 / 20</span>
+                  <span class="engrave-fee" id="engrave-fee-note" style="visibility:hidden;">Grabado personalizado +25€</span>
+                </div>
+              </div>
+
+              <div id="unavailable-hint" style="display:none; font-size:11.5px; color:var(--text-muted); background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:var(--radius-sm); padding:10px 12px; line-height:1.6;">
+                <i class="fa-solid fa-circle-info" style="color:var(--gold-500); margin-right:6px;"></i>Esta combinación no está disponible ahora mismo. Prueba con otra talla o quilate.
+              </div>
+            </div>
+
+            <div class="sticky-bar">
+              <div class="sticky-price">
+                <div class="lbl">Total</div>
+                <div class="val" id="sticky-price">0 €</div>
+              </div>
+              <button class="btn-add" id="add-to-cart-btn" onclick="addToCart()"><i class="fa-solid fa-cart-plus"></i><span id="add-to-cart-label">Añadir al carrito</span></button>
+            </div>
+            <div class="toast" id="toast"><i class="fa-solid fa-circle-check"></i><span id="toast-text">Añadido al carrito</span></div>
+          </div>
+        </div>
+
+        <!-- ===== CART / CHECKOUT ===== -->
+        <div class="screen" id="screen-cart">
+          <!-- Step 1: items -->
+          <div class="cart-step active" id="cart-step-items">
+            <div class="topbar">
+              <div></div>
+              <div>
+                <div class="topbar-title">Tu carrito</div>
+                <div class="topbar-sub" id="cart-count-sub">0 artículos</div>
+              </div>
+            </div>
+            <div class="screen-scroll" id="cart-scroll">
+              <div id="cart-empty-state" class="cart-empty" style="display:none;">
+                <i class="fa-solid fa-cart-shopping"></i>
+                <p>Tu carrito está vacío. Explora el catálogo y encuentra el anillo perfecto.</p>
+                <button onclick="navigate('home')">Explorar catálogo</button>
+              </div>
+              <div class="cart-list" id="cart-items-list"></div>
+              <div class="summary-card" id="cart-summary" style="display:none;">
+                <div class="summary-row"><span>Subtotal</span><span id="sum-subtotal">0 €</span></div>
+                <div class="summary-row"><span>Envío</span><span id="sum-shipping">0 €</span></div>
+                <div class="summary-row total"><span>Total</span><span id="sum-total">0 €</span></div>
+              </div>
+              <div class="cart-cta" id="cart-cta" style="display:none;">
+                <button class="btn-primary-full" onclick="goCartStep('shipping')"><i class="fa-solid fa-lock"></i>Continuar al pago</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 2: shipping + payment -->
+          <div class="cart-step" id="cart-step-shipping">
+            <div class="topbar">
+              <div class="back-btn" onclick="goCartStep('items')"><i class="fa-solid fa-chevron-left"></i></div>
+              <div>
+                <div class="topbar-title">Envío y pago</div>
+                <div class="topbar-sub">Paso 2 de 3</div>
+              </div>
+            </div>
+            <div class="screen-scroll">
+              <div class="section-label">Dirección de envío</div>
+              <div class="form-field"><label>Nombre completo</label><input type="text" placeholder="Nombre y apellidos" id="ship-name"></div>
+              <div class="form-field"><label>Dirección</label><input type="text" placeholder="Calle y número" id="ship-address"></div>
+              <div class="form-row-2">
+                <div class="form-field"><label>Ciudad</label><input type="text" placeholder="Ciudad" id="ship-city"></div>
+                <div class="form-field"><label>Código Postal</label><input type="text" placeholder="00000" id="ship-zip"></div>
+              </div>
+
+              <div class="section-label">Método de pago</div>
+              <div class="pay-methods" id="pay-methods">
+                <div class="pay-card" data-method="tarjeta" onclick="selectPayment('tarjeta',this)">
+                  <i class="fa-solid fa-credit-card pay-icon"></i>
+                  <div><div class="pay-name">Tarjeta de crédito o débito</div><div class="pay-sub">Visa, Mastercard, American Express</div></div>
+                  <i class="fa-solid fa-circle-check pay-check"></i>
+                </div>
+                <div class="pay-card" data-method="paypal" onclick="selectPayment('paypal',this)">
+                  <i class="fa-solid fa-wallet pay-icon"></i>
+                  <div><div class="pay-name">PayPal</div><div class="pay-sub">Paga con tu cuenta PayPal</div></div>
+                  <i class="fa-solid fa-circle-check pay-check"></i>
+                </div>
+                <div class="pay-card" data-method="bizum" onclick="selectPayment('bizum',this)">
+                  <i class="fa-solid fa-mobile-screen-button pay-icon"></i>
+                  <div><div class="pay-name">Bizum</div><div class="pay-sub">Pago instantáneo desde el móvil</div></div>
+                  <i class="fa-solid fa-circle-check pay-check"></i>
+                </div>
+                <div class="pay-card" data-method="transferencia" onclick="selectPayment('transferencia',this)">
+                  <i class="fa-solid fa-building-columns pay-icon"></i>
+                  <div><div class="pay-name">Transferencia bancaria</div><div class="pay-sub">SEPA, 1 a 2 días hábiles</div></div>
+                  <i class="fa-solid fa-circle-check pay-check"></i>
+                </div>
+              </div>
+
+              <div class="summary-card">
+                <div class="summary-row"><span>Subtotal</span><span id="pay-subtotal">0 €</span></div>
+                <div class="summary-row"><span>Envío</span><span id="pay-shipping">0 €</span></div>
+                <div class="summary-row total"><span>Total</span><span id="pay-total">0 €</span></div>
+              </div>
+              <div class="cart-cta">
+                <button class="btn-primary-full disabled" id="confirm-order-btn" onclick="placeOrder()"><i class="fa-solid fa-ring"></i>Confirmar pedido</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 3: confirmation -->
+          <div class="cart-step" id="cart-step-confirm">
+            <div class="confirm-wrap">
+              <div class="confirm-icon"><i class="fa-solid fa-circle-check"></i></div>
+              <div class="confirm-title">¡Pedido confirmado!</div>
+              <div class="confirm-sub">Hemos recibido tu pedido y empezamos a prepararlo con mucho cuidado.</div>
+              <div class="confirm-card">
+                <div class="row"><span>Número de pedido</span><span id="confirm-order-id">AL-00000</span></div>
+                <div class="row"><span>Artículos</span><span id="confirm-items-count">0</span></div>
+                <div class="row"><span>Entrega estimada</span><span>5 a 7 días hábiles</span></div>
+                <div class="row"><span>Total pagado</span><span id="confirm-total">0 €</span></div>
+              </div>
+              <div class="confirm-actions">
+                <button class="btn-ghost" onclick="navigate('account')">Ver mis pedidos</button>
+                <button class="btn-primary-full" style="flex:1;" onclick="finishCheckout()">Volver al inicio</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== ACCOUNT ===== -->
+        <div class="screen" id="screen-account">
+          <div class="screen-scroll">
+            <div class="account-header">
+              <div class="account-avatar"><i class="fa-solid fa-user"></i></div>
+              <div>
+                <div class="account-name">Mi cuenta</div>
+                <div class="account-email">cliente@alianza-demo.com</div>
+              </div>
+            </div>
+            <div class="section-label">Historial de pedidos</div>
+            <div style="padding:0 20px;" id="orders-list"></div>
+
+            <div class="menu-list">
+              <div class="menu-row"><i class="fa-solid fa-location-dot left"></i><span>Direcciones de envío</span><i class="fa-solid fa-chevron-right right"></i></div>
+              <div class="menu-row"><i class="fa-solid fa-credit-card left"></i><span>Métodos de pago guardados</span><i class="fa-solid fa-chevron-right right"></i></div>
+              <div class="menu-row"><i class="fa-solid fa-gear left"></i><span>Ajustes de la cuenta</span><i class="fa-solid fa-chevron-right right"></i></div>
+              <div class="menu-row"><i class="fa-solid fa-right-from-bracket left"></i><span>Cerrar sesión</span><i class="fa-solid fa-chevron-right right"></i></div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /app-shell -->
+
+      <div class="bottom-nav" id="bottom-nav">
+        <button class="nav-btn active" data-screen="home" onclick="navigate('home')"><i class="fa-solid fa-house"></i><span>Inicio</span></button>
+        <button class="nav-btn" data-screen="cart" onclick="navigate('cart')">
+          <i class="fa-solid fa-cart-shopping"></i><span>Carrito</span>
+          <span class="nav-badge" id="cart-badge" style="display:none;">0</span>
+        </button>
+        <button class="nav-btn" data-screen="account" onclick="navigate('account')"><i class="fa-solid fa-user"></i><span>Cuenta</span></button>
+      </div>
+      <div class="home-indicator" id="home-indicator-bar"></div>
+
+    </div>
+  </div>
+</div>
+
+<div class="page-caption">Prototipo interactivo · <strong>Alianza</strong> · app de anillos de compromiso y alianzas de boda</div>
+
+<script>
+/* ============ DATA ============ */
+const METALS = [
+  {key:'blanco',   label:'Oro Blanco',   mult:1.00, swatch:'#e9e6df'},
+  {key:'amarillo', label:'Oro Amarillo', mult:0.97, swatch:'#e6bd53'},
+  {key:'platino',  label:'Platino',      mult:1.28, swatch:'#d3d7da'}
+];
+const CARATS = [
+  {key:'025', label:'0.25 ct', add:0},
+  {key:'05',  label:'0.5 ct',  add:320},
+  {key:'075', label:'0.75 ct', add:680},
+  {key:'10',  label:'1.0 ct',  add:1150}
+];
+const SIZES = [12,13,14,15,16,17,18,19,20,21,22];
+
+const PRODUCTS = [
+  {id:1, name:'Solitario Elegance', tipo:'Solitario', metals:['blanco','platino'], basePrice:890,
+    img:'1605100804763-247f67b3557e',
+    desc:'Diseño clásico de solitario con montura de cuatro garras que realza la piedra central. Atemporal y minimalista.'},
+  {id:2, name:'Alianza Clásica Oro', tipo:'Alianza Clásica', metals:['amarillo','blanco'], basePrice:420,
+    img:'1611591437281-460bfbe1220a',
+    desc:'Alianza de perfil abombado, acabado pulido espejo. La opción más tradicional para el día de la boda.'},
+  {id:3, name:'Halo Diamante Real', tipo:'Con Diamantes', metals:['blanco','platino'], basePrice:1650,
+    img:'1602751584547-5ca777518870',
+    desc:'Piedra central rodeada de un halo de diamantes pequeños que multiplica el brillo. Diseño de aire vintage.'},
+  {id:4, name:'Eternity Brillante', tipo:'Con Diamantes', metals:['platino','blanco'], basePrice:2900,
+    img:'1587467512961-120760940315',
+    desc:'Banda completa de diamantes engastados en canal. Simboliza un amor sin principio ni fin.'},
+  {id:5, name:'Alianza Minimalista', tipo:'Alianza Clásica', metals:['amarillo','blanco'], basePrice:380,
+    img:'1550684376-efcbd6e3f031',
+    desc:'Perfil plano y fino, pensado para llevarse a diario junto a otros anillos sin competir con ellos.'},
+  {id:6, name:'Solitario Vintage', tipo:'Solitario', metals:['amarillo'], basePrice:1240,
+    img:'1523293182086-7651a899d37f',
+    desc:'Montura con detalles labrados a mano inspirados en la joyería de principios de siglo.'},
+  {id:7, name:'Trilogy Diamantes', tipo:'Con Diamantes', metals:['blanco','platino'], basePrice:3200,
+    img:'1519748771451-a94c596fad67',
+    desc:'Tres piedras que representan pasado, presente y futuro. Nuestra pieza más exclusiva.'},
+  {id:8, name:'Alianza Trenzada', tipo:'Alianza Clásica', metals:['amarillo','blanco'], basePrice:560,
+    img:'1515562141207-7a88fb7ce338',
+    desc:'Dos bandas entrelazadas en un mismo anillo, símbolo de dos caminos que se convierten en uno.'}
+];
+
+/* ============ STATE ============ */
+const state = {
+  filters:{metal:'all', tipo:'all', price:'all', search:''},
+  currentProductId:null,
+  sel:{metal:'blanco', carat:'05', size:14, engraving:''},
+  galleryDot:0,
+  cart:[],
+  cartSeq:1,
+  orders:[],
+  selectedPayment:null
+};
+let catalogObserver = null;
+let splashTimer = null;
+
+/* ============ HELPERS ============ */
+function fmt(n){ return n.toLocaleString('es-ES') + ' €'; }
+function metalObj(k){ return METALS.find(m=>m.key===k); }
+function caratObj(k){ return CARATS.find(c=>c.key===k); }
+function productById(id){ return PRODUCTS.find(p=>p.id===id); }
+function imgUrl(id, w){ return 'https://images.unsplash.com/photo-'+id+'?ixlib=rb-4.0.3&auto=format&fit=crop&w='+w+'&q=80'; }
+function initials(name){ return name.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
+
+function computePrice(product, sel){
+  const m = metalObj(sel.metal), c = caratObj(sel.carat);
+  let price = Math.round(product.basePrice * m.mult + c.add);
+  if(sel.engraving && sel.engraving.trim().length > 0) price += 25;
+  return price;
+}
+function isAvailable(metal, carat, size){
+  if(metal === 'platino' && carat === '10' && size >= 18) return false;
+  if(metal === 'amarillo' && carat === '075' && (size === 12 || size === 13)) return false;
+  return true;
+}
+
+/* ============ NAVIGATION ============ */
+function navigate(screen){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+screen).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active', b.dataset.screen===screen));
+
+  const bottomNav = document.getElementById('bottom-nav');
+  const homeIndicator = document.getElementById('home-indicator-bar');
+  const hideNav = (screen==='splash' || screen==='product');
+  bottomNav.style.display = hideNav ? 'none' : 'flex';
+  homeIndicator.style.display = hideNav ? 'none' : 'block';
+
+  if(screen==='cart'){ goCartStep('items'); renderCart(); }
+  if(screen==='account'){ renderAccount(); }
+}
+
+function skipSplash(){
+  clearTimeout(splashTimer);
+  navigate('home');
+}
+
+/* ============ CATALOG ============ */
+function setFilter(group, value, el){
+  state.filters[group] = value;
+  document.querySelectorAll('#filter-'+group+' .chip').forEach(c=>c.classList.toggle('active', c===el));
+  renderCatalog();
+}
+function setSearch(value){
+  state.filters.search = value;
+  renderCatalog();
+}
+
+function renderCatalog(){
+  const f = state.filters;
+  const list = PRODUCTS.filter(p=>{
+    if(f.metal!=='all' && !p.metals.includes(f.metal)) return false;
+    if(f.tipo!=='all' && p.tipo!==f.tipo) return false;
+    if(f.price==='low' && !(p.basePrice<=1000)) return false;
+    if(f.price==='mid' && !(p.basePrice>1000 && p.basePrice<=2500)) return false;
+    if(f.price==='high' && !(p.basePrice>2500)) return false;
+    if(f.search && !p.name.toLowerCase().includes(f.search.toLowerCase().trim())) return false;
+    return true;
+  });
+
+  const grid = document.getElementById('catalog-grid');
+  if(list.length===0){
+    grid.innerHTML = '<div class="empty-state"><i class="fa-solid fa-magnifying-glass"></i><p>No encontramos anillos con esos filtros. Prueba a cambiar el metal o el rango de precio.</p></div>';
+    return;
+  }
+
+  grid.innerHTML = list.map(p=>`
+    <div class="product-card" onclick="openProduct(${p.id})">
+      <div class="thumb">
+        <div class="thumb-fallback"><i class="fa-solid fa-gem"></i><span>${initials(p.name)}</span></div>
+        <img src="${imgUrl(p.img,500)}" alt="${p.name}" loading="lazy" onerror="this.style.display='none'">
+        <div class="thumb-badge">${p.tipo}</div>
+      </div>
+      <div class="card-info">
+        <div class="card-name">${p.name}</div>
+        <div class="card-meta">${p.metals.map(m=>metalObj(m).label).join(' · ')}</div>
+        <div class="card-price-label">Desde</div>
+        <div class="card-price">${fmt(p.basePrice)}</div>
+      </div>
+    </div>
+  `).join('');
+
+  setupScrollReveal();
+}
+
+function setupScrollReveal(){
+  const cards = document.querySelectorAll('#catalog-grid .product-card');
+  cards.forEach((card, i)=>{ card.style.transitionDelay = (i*55)+'ms'; });
+  if(catalogObserver) catalogObserver.disconnect();
+  catalogObserver = new IntersectionObserver((entries)=>{
+    entries.forEach(entry=>{
+      if(entry.isIntersecting){
+        entry.target.classList.add('visible');
+        catalogObserver.unobserve(entry.target);
+      }
+    });
+  }, {root: document.getElementById('home-scroll'), threshold:0.1});
+  cards.forEach(c=>catalogObserver.observe(c));
+}
+
+/* ============ PRODUCT DETAIL ============ */
+function openProduct(id){
+  const p = productById(id);
+  state.currentProductId = id;
+  state.sel = {metal: p.metals[0], carat:'05', size:14, engraving:''};
+  state.galleryDot = 0;
+
+  document.getElementById('detail-topbar-title').textContent = p.name;
+  document.getElementById('detail-tipo').textContent = p.tipo;
+  document.getElementById('detail-name').textContent = p.name;
+  document.getElementById('detail-desc').textContent = p.desc;
+  document.getElementById('hero-fallback-label').textContent = initials(p.name);
+
+  const heroImg = document.getElementById('hero-img');
+  heroImg.style.display = 'block';
+  heroImg.src = imgUrl(p.img, 900);
+  heroImg.alt = p.name;
+  heroImg.style.objectPosition = 'center';
+  document.getElementById('hero-wrap').classList.remove('zoomed');
+  document.querySelectorAll('#gallery-dots .dot').forEach((d,i)=>d.classList.toggle('active', i===0));
+
+  document.getElementById('engraving-input').value = '';
+  document.getElementById('engrave-counter').textContent = '0 / 20';
+  document.getElementById('engrave-fee-note').style.visibility = 'hidden';
+
+  renderVariantOptions(p);
+  refreshVariantUI();
+
+  document.getElementById('product-scroll').scrollTop = 0;
+  navigate('product');
+}
+
+function renderVariantOptions(p){
+  document.getElementById('variant-metal').innerHTML = METALS.map(m=>`
+    <div class="opt-chip" data-variant="metal" data-value="${m.key}" onclick="selectVariant('metal','${m.key}')">
+      <span class="swatch" style="background:${m.swatch};"></span>${m.label}
+    </div>
+  `).join('');
+
+  document.getElementById('variant-carat').innerHTML = CARATS.map(c=>`
+    <div class="opt-chip" data-variant="carat" data-value="${c.key}" onclick="selectVariant('carat','${c.key}')">${c.label}</div>
+  `).join('');
+
+  document.getElementById('variant-size').innerHTML = SIZES.map(s=>`
+    <div class="opt-chip" data-variant="size" data-value="${s}" onclick="selectVariant('size','${s}')">${s}</div>
+  `).join('');
+}
+
+function selectVariant(group, value){
+  if(group==='size') value = Number(value);
+  state.sel[group] = value;
+  refreshVariantUI();
+}
+
+function onEngravingInput(value){
+  state.sel.engraving = value;
+  document.getElementById('engrave-counter').textContent = value.length + ' / 20';
+  document.getElementById('engrave-fee-note').style.visibility = value.trim().length>0 ? 'visible' : 'hidden';
+  refreshVariantUI();
+}
+
+function refreshVariantUI(){
+  const p = productById(state.currentProductId);
+  const sel = state.sel;
+
+  document.querySelectorAll('#variant-metal .opt-chip').forEach(el=>el.classList.toggle('active', el.dataset.value===sel.metal));
+  document.querySelectorAll('#variant-carat .opt-chip').forEach(el=>el.classList.toggle('active', el.dataset.value===sel.carat));
+  document.querySelectorAll('#variant-size .opt-chip').forEach(el=>{
+    const val = Number(el.dataset.value);
+    el.classList.toggle('active', val===sel.size);
+    el.classList.toggle('unavailable', !isAvailable(sel.metal, sel.carat, val));
+  });
+
+  const price = computePrice(p, sel);
+  const available = isAvailable(sel.metal, sel.carat, sel.size);
+
+  document.getElementById('detail-price').textContent = fmt(price);
+  document.getElementById('sticky-price').textContent = fmt(price);
+
+  const badge = document.getElementById('detail-avail');
+  const addBtn = document.getElementById('add-to-cart-btn');
+  const addLabel = document.getElementById('add-to-cart-label');
+  const hint = document.getElementById('unavailable-hint');
+
+  if(available){
+    badge.className = 'avail-badge ok';
+    badge.innerHTML = '<i class="fa-solid fa-circle-check"></i><span>Disponible</span>';
+    addBtn.classList.remove('disabled');
+    addBtn.disabled = false;
+    addLabel.textContent = 'Añadir al carrito';
+    hint.style.display = 'none';
+  } else {
+    badge.className = 'avail-badge no';
+    badge.innerHTML = '<i class="fa-solid fa-circle-xmark"></i><span>Sin stock</span>';
+    addBtn.classList.add('disabled');
+    addBtn.disabled = true;
+    addLabel.textContent = 'Sin stock ahora mismo';
+    hint.style.display = 'block';
+  }
+}
+
+function toggleZoom(){
+  document.getElementById('hero-wrap').classList.toggle('zoomed');
+}
+function setGalleryDot(i){
+  state.galleryDot = i;
+  document.querySelectorAll('#gallery-dots .dot').forEach((d,idx)=>d.classList.toggle('active', idx===i));
+  const positions = ['center','top','bottom'];
+  document.getElementById('hero-img').style.objectPosition = positions[i];
+}
+
+/* ============ CART ============ */
+function addToCart(){
+  const p = productById(state.currentProductId);
+  const sel = state.sel;
+  if(!isAvailable(sel.metal, sel.carat, sel.size)) return;
+
+  const price = computePrice(p, sel);
+  const engraving = (sel.engraving||'').trim();
+  const existing = state.cart.find(i=>
+    i.productId===p.id && i.metal===sel.metal && i.carat===sel.carat && i.size===sel.size && i.engraving===engraving
+  );
+  if(existing){
+    existing.qty++;
+  } else {
+    state.cart.push({
+      cartId: state.cartSeq++,
+      productId: p.id, name: p.name, img: p.img,
+      metal: sel.metal, carat: sel.carat, size: sel.size, engraving: engraving,
+      unitPrice: price, qty: 1
+    });
+  }
+  updateCartBadge();
+  showToast('Añadido al carrito');
+
+  const btn = document.getElementById('add-to-cart-btn');
+  btn.classList.add('pulse');
+  setTimeout(()=>btn.classList.remove('pulse'), 400);
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  document.getElementById('toast-text').textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._hideTimer);
+  t._hideTimer = setTimeout(()=>t.classList.remove('show'), 1700);
+}
+
+function updateCartBadge(){
+  const count = state.cart.reduce((s,i)=>s+i.qty, 0);
+  const badge = document.getElementById('cart-badge');
+  badge.textContent = count;
+  badge.style.display = count>0 ? 'flex' : 'none';
+}
+
+function cartLine(item){
+  const bits = [metalObj(item.metal).label, caratObj(item.carat).label, 'Talla '+item.size];
+  let line = bits.join(' · ');
+  if(item.engraving) line += ' · Grabado: "'+item.engraving+'"';
+  return line;
+}
+
+function renderCart(){
+  const listEl = document.getElementById('cart-items-list');
+  const emptyEl = document.getElementById('cart-empty-state');
+  const summaryEl = document.getElementById('cart-summary');
+  const ctaEl = document.getElementById('cart-cta');
+  const subEl = document.getElementById('cart-count-sub');
+
+  const count = state.cart.reduce((s,i)=>s+i.qty,0);
+  subEl.textContent = count + (count===1 ? ' artículo' : ' artículos');
+
+  if(state.cart.length===0){
+    listEl.innerHTML = '';
+    emptyEl.style.display = 'flex';
+    summaryEl.style.display = 'none';
+    ctaEl.style.display = 'none';
+    return;
+  }
+  emptyEl.style.display = 'none';
+  summaryEl.style.display = 'block';
+  ctaEl.style.display = 'block';
+
+  listEl.innerHTML = state.cart.map(item=>`
+    <div class="cart-item">
+      <div class="thumb">
+        <div class="thumb-fallback"><i class="fa-solid fa-gem"></i><span>${initials(item.name)}</span></div>
+        <img src="${imgUrl(item.img,200)}" alt="${item.name}" loading="lazy" onerror="this.style.display='none'">
+      </div>
+      <div class="cart-item-info">
+        <div class="cart-item-name">${item.name}</div>
+        <div class="cart-item-variant">${cartLine(item)}</div>
+        <div class="cart-item-bottom">
+          <div class="cart-item-price">${fmt(item.unitPrice * item.qty)}</div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div class="qty-stepper">
+              <button onclick="changeQty(${item.cartId},-1)"><i class="fa-solid fa-minus"></i></button>
+              <span>${item.qty}</span>
+              <button onclick="changeQty(${item.cartId},1)"><i class="fa-solid fa-plus"></i></button>
+            </div>
+            <button class="remove-btn" onclick="removeFromCart(${item.cartId})"><i class="fa-solid fa-trash"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  const subtotal = state.cart.reduce((s,i)=>s+i.unitPrice*i.qty, 0);
+  const shipping = subtotal>=1000 ? 0 : 15;
+  const total = subtotal + shipping;
+
+  document.getElementById('sum-subtotal').textContent = fmt(subtotal);
+  document.getElementById('sum-shipping').innerHTML = shipping===0 ? '<span class="free-ship">Gratis</span>' : fmt(shipping);
+  document.getElementById('sum-total').textContent = fmt(total);
+
+  document.getElementById('pay-subtotal').textContent = fmt(subtotal);
+  document.getElementById('pay-shipping').innerHTML = shipping===0 ? '<span class="free-ship">Gratis</span>' : fmt(shipping);
+  document.getElementById('pay-total').textContent = fmt(total);
+}
+
+function changeQty(cartId, delta){
+  const item = state.cart.find(i=>i.cartId===cartId);
+  if(!item) return;
+  item.qty += delta;
+  if(item.qty<=0) state.cart = state.cart.filter(i=>i.cartId!==cartId);
+  renderCart();
+  updateCartBadge();
+}
+function removeFromCart(cartId){
+  state.cart = state.cart.filter(i=>i.cartId!==cartId);
+  renderCart();
+  updateCartBadge();
+}
+
+/* ============ CHECKOUT STEPS ============ */
+function goCartStep(step){
+  document.querySelectorAll('.cart-step').forEach(s=>s.classList.remove('active'));
+  document.getElementById('cart-step-'+step).classList.add('active');
+  if(step==='shipping') renderCart();
+}
+
+function selectPayment(method, el){
+  state.selectedPayment = method;
+  document.querySelectorAll('.pay-card').forEach(c=>c.classList.toggle('active', c===el));
+  document.getElementById('confirm-order-btn').classList.remove('disabled');
+}
+
+function placeOrder(){
+  if(!state.selectedPayment || state.cart.length===0) return;
+  const orderId = 'AL-' + Math.floor(10000 + Math.random()*89999);
+  const items = state.cart.map(i=>({...i}));
+  const subtotal = items.reduce((s,i)=>s+i.unitPrice*i.qty, 0);
+  const shipping = subtotal>=1000 ? 0 : 15;
+  const total = subtotal + shipping;
+  const itemCount = items.reduce((s,i)=>s+i.qty, 0);
+
+  const order = {id:orderId, date:new Date(), items, subtotal, shipping, total, itemCount, status:'Confirmado'};
+  state.orders.unshift(order);
+  state.cart = [];
+  state.selectedPayment = null;
+  updateCartBadge();
+
+  document.getElementById('confirm-order-id').textContent = orderId;
+  document.getElementById('confirm-items-count').textContent = itemCount;
+  document.getElementById('confirm-total').textContent = fmt(total);
+
+  goCartStep('confirm');
+}
+
+function finishCheckout(){
+  goCartStep('items');
+  navigate('home');
+}
+
+/* ============ ACCOUNT ============ */
+function renderAccount(){
+  const el = document.getElementById('orders-list');
+  if(state.orders.length===0){
+    el.innerHTML = `
+      <div style="text-align:center; padding:26px 10px; color:var(--text-muted);">
+        <i class="fa-solid fa-box-open" style="font-size:26px; color:var(--gold-700); margin-bottom:10px; display:block;"></i>
+        <p style="font-size:12.5px; line-height:1.6;">Aún no has hecho ningún pedido.</p>
+      </div>`;
+    return;
+  }
+  el.innerHTML = state.orders.map(o=>`
+    <div class="order-card">
+      <div class="order-card-top">
+        <div class="order-id">${o.id}</div>
+        <div class="order-status">${o.status}</div>
+      </div>
+      <div class="order-date" style="margin-bottom:8px;">${o.date.toLocaleDateString('es-ES', {day:'numeric', month:'long', year:'numeric'})}</div>
+      <div class="order-meta"><span>${o.itemCount} artículo${o.itemCount===1?'':'s'}</span><strong>${fmt(o.total)}</strong></div>
+    </div>
+  `).join('');
+}
+
+/* ============ RESTART ============ */
+function restartDemo(btn){
+  btn.classList.add('spin');
+  setTimeout(()=>btn.classList.remove('spin'), 500);
+
+  clearTimeout(splashTimer);
+  state.filters = {metal:'all', tipo:'all', price:'all', search:''};
+  state.currentProductId = null;
+  state.sel = {metal:'blanco', carat:'05', size:14, engraving:''};
+  state.cart = [];
+  state.orders = [];
+  state.selectedPayment = null;
+  updateCartBadge();
+
+  document.getElementById('search-input').value = '';
+  document.querySelectorAll('#filter-metal .chip').forEach(c=>c.classList.toggle('active', c.dataset.value==='all'));
+  document.querySelectorAll('#filter-tipo .chip').forEach(c=>c.classList.toggle('active', c.dataset.value==='all'));
+  document.querySelectorAll('#filter-price .chip').forEach(c=>c.classList.toggle('active', c.dataset.value==='all'));
+  renderCatalog();
+  goCartStep('items');
+
+  navigate('splash');
+  startSplashTimer();
+}
+
+function startSplashTimer(){
+  const bar = document.getElementById('splash-progress').querySelector('span');
+  bar.style.animation = 'none';
+  void bar.offsetWidth;
+  bar.style.animation = 'fillBar 2.3s ease forwards';
+  clearTimeout(splashTimer);
+  splashTimer = setTimeout(()=>navigate('home'), 2300);
+}
+
+/* ============ INIT ============ */
+document.addEventListener('DOMContentLoaded', function(){
+  renderCatalog();
+  updateCartBadge();
+  startSplashTimer();
+});
+</script>
+</body>
+</html>
