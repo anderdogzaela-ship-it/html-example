@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AnatoFlash · Flashcards de Anatomia com Repeticao Espacada</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0f1115; --bg2:#151821; --bg3:#1b1f2a;
+  --gold:#d4a24e; --gold-lt:#eac57e; --gold-dk:#a9782e;
+  --gold-glow:rgba(212,162,78,.22); --gold-dim:rgba(212,162,78,.09);
+  --teal:#3f7d7a; --teal-lt:#6fa9a6;
+  --cream:#f7f3e8; --paper:#fffdf8;
+  --ink:#1c1f24; --ink2:#474d57; --ink3:#7c8290;
+  --line:rgba(28,31,36,.1); --line-dk:rgba(212,162,78,.22);
+  --ok:#3f8f5f; --warn:#c0762a; --danger:#c0432a;
+  --ease-spring:cubic-bezier(.34,1.56,.64,1); --ease-out:cubic-bezier(.22,1,.36,1);
+  --shadow-gold:0 0 40px rgba(212,162,78,.16),0 4px 24px rgba(0,0,0,.08);
+  --shadow-card:0 4px 24px rgba(28,31,36,.08);
+  --r-sm:8px; --r-md:14px; --r-lg:22px; --r-xl:30px;
+}
+html{scroll-behavior:smooth}
+body{font-family:'Lexend',sans-serif;background:var(--cream);color:var(--ink);overflow-x:hidden;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:8px}::-webkit-scrollbar-track{background:var(--cream)}::-webkit-scrollbar-thumb{background:var(--gold);border-radius:4px}
+a{color:inherit;text-decoration:none}
+img{max-width:100%;display:block}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+.wrap{max-width:1240px;margin:0 auto;padding:0 28px}
+
+/* NAV */
+.nav{position:fixed;top:0;left:0;right:0;z-index:900;padding:18px 0;transition:all .35s var(--ease-out)}
+.nav.scrolled{background:rgba(247,243,232,.88);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 2px 24px rgba(28,31,36,.06);padding:12px 0}
+.nav-inner{display:flex;align-items:center;justify-content:space-between}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.3rem;letter-spacing:.3px}
+.logo-mark{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--gold-lt),var(--gold-dk));display:flex;align-items:center;justify-content:center;color:#1c1f24;font-size:1rem;box-shadow:var(--shadow-gold);animation:pulseLogo 3.2s ease-in-out infinite}
+@keyframes pulseLogo{0%,100%{box-shadow:0 0 0 0 rgba(212,162,78,.35)}50%{box-shadow:0 0 0 10px rgba(212,162,78,0)}}
+.nav-links{display:flex;gap:34px;align-items:center}
+.nav-links a{font-size:.93rem;font-weight:600;color:var(--ink2);transition:color .25s}
+.nav-links a:hover{color:var(--gold-dk)}
+.nav-cta{display:flex;gap:10px;align-items:center}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:11px 22px;border-radius:999px;font-weight:700;font-size:.88rem;transition:all .3s var(--ease-spring);white-space:nowrap}
+.btn-gold{background:linear-gradient(135deg,var(--gold-lt),var(--gold));color:#1c1f24;box-shadow:0 4px 18px rgba(212,162,78,.35);position:relative;overflow:hidden}
+.btn-gold::after{content:'';position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(120deg,transparent,rgba(255,255,255,.5),transparent);transform:skewX(-20deg);animation:shimmer 3s infinite}
+@keyframes shimmer{0%{left:-60%}100%{left:140%}}
+.btn-gold:hover{transform:translateY(-2px) scale(1.03);box-shadow:0 8px 26px rgba(212,162,78,.45)}
+.btn-outline{border:1.5px solid var(--line-dk);color:var(--ink);background:rgba(255,255,255,.5)}
+.btn-outline:hover{border-color:var(--gold);background:var(--gold-dim);transform:translateY(-2px)}
+.hamburger{display:none;font-size:1.4rem;color:var(--ink)}
+
+/* SURFACE TABS */
+.surface-switch{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:950;display:flex;gap:4px;background:rgba(15,17,21,.94);backdrop-filter:blur(14px);padding:6px;border-radius:999px;box-shadow:0 10px 32px rgba(0,0,0,.3);max-width:94vw;overflow-x:auto}
+.surface-switch button{padding:9px 16px;border-radius:999px;font-size:.8rem;font-weight:700;color:rgba(247,243,232,.65);transition:all .3s var(--ease-spring);white-space:nowrap}
+.surface-switch button.active{background:linear-gradient(135deg,var(--gold-lt),var(--gold));color:#1c1f24}
+
+/* PAGES */
+.page{display:none}
+.page.active{display:block;animation:fadeInPage .5s var(--ease-out)}
+@keyframes fadeInPage{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+
+/* HERO */
+.hero{position:relative;min-height:100vh;display:flex;align-items:center;overflow:hidden;background:linear-gradient(180deg,#151821,#0f1115)}
+.hero-bg{position:absolute;inset:0;background:url('https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=1800&q=80') center/cover;opacity:.22;animation:kenburns 22s ease-in-out infinite alternate}
+@keyframes kenburns{from{transform:scale(1) translate(0,0)}to{transform:scale(1.12) translate(-1%,-2%)}}
+.hero::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(15,17,21,.55),rgba(15,17,21,.94) 80%)}
+.orb{position:absolute;border-radius:50%;filter:blur(60px);opacity:.5;animation:floatOrb 9s ease-in-out infinite}
+.orb1{width:340px;height:340px;background:radial-gradient(circle,var(--gold-glow),transparent 70%);top:-8%;right:8%;animation-delay:0s}
+.orb2{width:260px;height:260px;background:radial-gradient(circle,rgba(63,125,122,.18),transparent 70%);bottom:0;left:2%;animation-delay:2.5s}
+@keyframes floatOrb{0%,100%{transform:translate(0,0)}50%{transform:translate(24px,-30px)}}
+.grid-overlay{position:absolute;inset:0;background-image:linear-gradient(rgba(234,197,126,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(234,197,126,.05) 1px,transparent 1px);background-size:44px 44px;opacity:.4}
+.hero-content{position:relative;z-index:2;color:var(--cream);text-align:center;padding-top:70px}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;padding:8px 18px;border-radius:999px;background:rgba(212,162,78,.14);border:1px solid rgba(234,197,126,.3);font-size:.82rem;font-weight:700;color:var(--gold-lt);margin-bottom:26px}
+.hero h1{font-size:clamp(2.2rem,5vw,4rem);font-weight:800;line-height:1.12;max-width:900px;margin:0 auto 22px;letter-spacing:-1px}
+.hero h1 span{color:var(--gold-lt);font-style:italic;font-weight:300}
+.hero p{font-size:clamp(1rem,1.6vw,1.15rem);color:rgba(247,243,232,.74);max-width:620px;margin:0 auto 38px;line-height:1.65}
+.hero-actions{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-bottom:64px}
+.hero-stats{display:flex;justify-content:center;gap:56px;flex-wrap:wrap;border-top:1px solid rgba(247,243,232,.1);padding-top:36px;max-width:820px;margin:0 auto}
+.stat-num{font-size:2rem;font-weight:800;color:var(--gold-lt)}
+.stat-label{font-size:.8rem;color:rgba(247,243,232,.55);margin-top:4px;text-transform:uppercase;letter-spacing:.6px}
+
+/* SECTIONS */
+.section{padding:100px 0}
+.section-alt{background:var(--paper)}
+.sec-head{text-align:center;max-width:660px;margin:0 auto 56px}
+.sec-tag{display:inline-block;font-size:.8rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold-dk);margin-bottom:14px}
+.sec-head h2{font-size:clamp(1.7rem,3.2vw,2.5rem);font-weight:800;letter-spacing:-.5px;margin-bottom:14px}
+.sec-head p{color:var(--ink3);font-size:1.02rem;line-height:1.65}
+.reveal{opacity:0;transform:translateY(28px);transition:all .7s var(--ease-out)}
+.reveal.in{opacity:1;transform:translateY(0)}
+
+.value-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:24px}
+.value-card{background:var(--cream);border:1px solid var(--line);border-radius:var(--r-lg);padding:30px 24px;transition:all .4s var(--ease-spring)}
+.value-card:hover{transform:translateY(-8px);box-shadow:var(--shadow-card);border-color:var(--gold)}
+.value-icon{width:46px;height:46px;border-radius:14px;background:linear-gradient(135deg,var(--gold-lt),var(--gold));display:flex;align-items:center;justify-content:center;color:#1c1f24;font-size:1.15rem;margin-bottom:18px}
+.value-card h3{font-size:1.05rem;font-weight:800;margin-bottom:8px}
+.value-card p{color:var(--ink3);font-size:.88rem;line-height:1.55}
+
+.steps3{display:grid;grid-template-columns:repeat(3,1fr);gap:28px}
+.step-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-lg);padding:34px 28px;position:relative;transition:all .4s var(--ease-spring)}
+.step-card:hover{transform:translateY(-8px);box-shadow:var(--shadow-card);border-color:var(--gold)}
+.step-num{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--gold-lt),var(--gold));display:flex;align-items:center;justify-content:center;font-weight:800;color:#1c1f24;margin-bottom:18px}
+.step-card h3{font-size:1.12rem;font-weight:800;margin-bottom:8px}
+.step-card p{color:var(--ink3);font-size:.92rem;line-height:1.55}
+
+.diff-grid{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+.diff-card{background:#171b21;border-radius:var(--r-xl);padding:34px;color:var(--cream);position:relative;overflow:hidden}
+.diff-card::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(234,197,126,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(234,197,126,.05) 1px,transparent 1px);background-size:36px 36px}
+.diff-card > *{position:relative;z-index:1}
+.diff-icon{width:46px;height:46px;border-radius:14px;background:rgba(234,197,126,.14);display:flex;align-items:center;justify-content:center;color:var(--gold-lt);font-size:1.2rem;margin-bottom:16px}
+.diff-card h3{font-size:1.25rem;font-weight:800;margin-bottom:10px}
+.diff-card p{color:rgba(247,243,232,.68);font-size:.9rem;line-height:1.6;margin-bottom:20px}
+.diff-mini{background:rgba(247,243,232,.05);border:1px solid rgba(234,197,126,.18);border-radius:var(--r-md);padding:12px 14px;display:flex;justify-content:space-between;align-items:center;font-size:.8rem;margin-bottom:8px}
+.diff-mini .lbl{display:flex;align-items:center;gap:8px;font-weight:700}
+.diff-mini .val{color:var(--gold-lt);font-weight:800}
+
+.footer{background:#0f1115;color:rgba(247,243,232,.7);padding:60px 0 26px}
+.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:40px}
+.footer h5{color:var(--cream);font-size:.85rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:16px}
+.footer ul{list-style:none}
+.footer li{margin-bottom:10px;font-size:.88rem}
+.footer li a:hover{color:var(--gold-lt)}
+.footer-bottom{border-top:1px solid rgba(247,243,232,.1);padding-top:22px;display:flex;justify-content:space-between;font-size:.8rem;color:rgba(247,243,232,.45);flex-wrap:wrap;gap:10px}
+
+/* SCREEN PAGE LAYOUT */
+.screen-wrap{padding-top:130px;padding-bottom:120px}
+.screen-head{text-align:left;max-width:640px;margin-bottom:44px}
+.screen-layout{display:grid;grid-template-columns:340px 1fr;gap:48px;align-items:flex-start}
+.annotation-stack{display:flex;flex-direction:column;gap:18px}
+.note-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-lg);padding:24px}
+.note-card.warn{background:rgba(192,118,42,.07);border-color:rgba(192,118,42,.25)}
+.note-card.ok{background:rgba(63,143,95,.07);border-color:rgba(63,143,95,.25)}
+.note-card h4{display:flex;align-items:center;gap:10px;font-size:1rem;font-weight:800;margin-bottom:10px}
+.note-card h4 i{width:34px;height:34px;border-radius:10px;background:var(--gold-dim);color:var(--gold-dk);display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0}
+.note-card.warn h4 i{background:rgba(192,118,42,.14);color:var(--warn)}
+.note-card.ok h4 i{background:rgba(63,143,95,.14);color:var(--ok)}
+.note-card p{color:var(--ink2);font-size:.88rem;line-height:1.6}
+.note-card ul{margin-top:10px;padding-left:18px;color:var(--ink2);font-size:.86rem;line-height:1.7}
+
+/* PHONE FRAME */
+.phone-frame{width:300px;background:#111;border-radius:44px;padding:13px;box-shadow:0 30px 60px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.18),inset 0 0 0 2px #2a2a2a;flex-shrink:0;margin:0 auto}
+.phone-frame.floating{animation:phonefloat 5.5s ease-in-out infinite}
+@keyframes phonefloat{0%,100%{transform:translateY(0) rotate(-.6deg)}50%{transform:translateY(-12px) rotate(.6deg)}}
+.phone-screen{position:relative;background:var(--paper);border-radius:32px;overflow:hidden;height:610px;display:flex;flex-direction:column}
+.phone-notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:120px;height:26px;background:#111;border-radius:0 0 18px 18px;z-index:20}
+.phone-status{display:flex;justify-content:space-between;align-items:center;padding:16px 22px 6px;font-size:.72rem;font-weight:700;color:var(--ink)}
+.phone-body{flex:1;overflow-y:auto;overflow-x:hidden;padding:14px 16px 10px;display:flex;flex-direction:column}
+.phone-body::-webkit-scrollbar{display:none}
+.phone-tabbar{display:flex;justify-content:space-around;padding:10px 6px 16px;border-top:1px solid var(--line);margin-top:auto}
+.pt-item{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:.6rem;font-weight:700;color:var(--ink3)}
+.pt-item.active{color:var(--gold-dk)}
+.pt-item i{font-size:.95rem}
+
+/* GRUPOS LIST */
+.ph-greet{font-size:1.05rem;font-weight:800;margin-bottom:2px}
+.ph-sub{font-size:.76rem;color:var(--ink3);margin-bottom:16px}
+.grp-list{display:flex;flex-direction:column;gap:10px}
+.grp-card{display:flex;align-items:center;gap:12px;background:var(--cream);border:1px solid var(--line);border-radius:16px;padding:12px 14px;transition:all .2s}
+.grp-card:active{transform:scale(.98)}
+.grp-icon{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+.grp-info{flex:1;min-width:0}
+.grp-name{font-size:.83rem;font-weight:800}
+.grp-meta{font-size:.66rem;color:var(--ink3);margin-top:2px}
+.grp-due{font-size:.64rem;font-weight:800;padding:4px 9px;border-radius:999px;background:rgba(212,162,78,.16);color:var(--gold-dk);white-space:nowrap}
+.grp-due.zero{background:rgba(63,143,95,.14);color:var(--ok)}
+
+/* REVISAO / FLASHCARD */
+.rev-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.rev-back{display:flex;align-items:center;gap:8px;font-weight:800;font-size:.85rem}
+.rev-count{font-size:.66rem;font-weight:800;color:var(--ink3);background:var(--cream);padding:5px 10px;border-radius:999px}
+.rev-progress{display:flex;gap:4px;margin-bottom:18px}
+.rev-progress span{flex:1;height:4px;border-radius:99px;background:var(--line)}
+.rev-progress span.done{background:var(--gold)}
+.card-stage{flex:1;display:flex;align-items:center;justify-content:center;perspective:1000px;min-height:280px}
+.flashcard{width:100%;max-width:230px;height:270px;position:relative;transform-style:preserve-3d;transition:transform .55s var(--ease-spring);cursor:pointer}
+.flashcard.flipped{transform:rotateY(180deg)}
+.fc-face{position:absolute;inset:0;border-radius:20px;backface-visibility:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:22px;box-shadow:0 10px 30px rgba(28,31,36,.14)}
+.fc-front{background:linear-gradient(160deg,var(--paper),var(--cream));border:1px solid var(--line)}
+.fc-back{background:linear-gradient(160deg,#171b21,#0f1115);color:var(--cream);transform:rotateY(180deg)}
+.fc-tag{position:absolute;top:14px;left:14px;font-size:.6rem;font-weight:800;text-transform:uppercase;letter-spacing:.4px;padding:4px 9px;border-radius:999px;background:rgba(212,162,78,.16);color:var(--gold-dk)}
+.fc-back .fc-tag{background:rgba(234,197,126,.16);color:var(--gold-lt)}
+.fc-icon{font-size:2.1rem;color:var(--gold-dk);margin-bottom:14px}
+.fc-term{font-size:1.15rem;font-weight:800;line-height:1.25}
+.fc-hint{font-size:.66rem;color:var(--ink3);margin-top:14px}
+.fc-def{font-size:.86rem;line-height:1.55;color:rgba(247,243,232,.88)}
+.fc-back .fc-hint{color:rgba(247,243,232,.4)}
+.rev-actions{display:flex;gap:8px;margin-top:16px}
+.rev-btn{flex:1;padding:11px 4px;border-radius:12px;font-size:.7rem;font-weight:800;text-align:center;transition:all .2s}
+.rev-btn i{display:block;margin-bottom:3px;font-size:.85rem}
+.rev-btn.dificil{background:rgba(192,67,42,.1);color:var(--danger)}
+.rev-btn.bom{background:rgba(192,118,42,.12);color:var(--warn)}
+.rev-btn.facil{background:rgba(63,143,95,.12);color:var(--ok)}
+.rev-btn:active{transform:scale(.95)}
+.rev-done{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px}
+.rev-done i{font-size:2.4rem;color:var(--gold-dk);margin-bottom:14px}
+.rev-done h4{font-size:1.05rem;font-weight:800;margin-bottom:6px}
+.rev-done p{font-size:.78rem;color:var(--ink3);margin-bottom:18px;line-height:1.5}
+.rev-restart{background:linear-gradient(135deg,var(--gold-lt),var(--gold));color:#1c1f24;padding:11px 22px;border-radius:999px;font-weight:800;font-size:.8rem}
+
+/* PROGRESSO */
+.prog-summary{display:flex;gap:10px;margin-bottom:16px}
+.prog-chip{flex:1;background:var(--cream);border-radius:14px;padding:12px;text-align:center}
+.prog-chip .n{font-size:1.15rem;font-weight:800;color:var(--gold-dk)}
+.prog-chip .l{font-size:.6rem;color:var(--ink3);margin-top:2px;text-transform:uppercase;letter-spacing:.3px}
+.prog-list{display:flex;flex-direction:column;gap:14px}
+.prog-row .prow-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.prow-name{display:flex;align-items:center;gap:8px;font-size:.78rem;font-weight:800}
+.prow-name i{width:24px;height:24px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.68rem}
+.prow-pct{font-size:.72rem;font-weight:800;color:var(--gold-dk)}
+.prow-bar{height:7px;border-radius:99px;background:var(--line);overflow:hidden}
+.prow-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--gold-lt),var(--gold))}
+
+@media(max-width:980px){
+  .nav-links,.nav-cta .btn-outline{display:none}
+  .hamburger{display:block}
+  .value-grid{grid-template-columns:repeat(2,1fr)}
+  .steps3,.footer-grid,.diff-grid{grid-template-columns:1fr}
+  .screen-layout{grid-template-columns:1fr}
+  .surface-switch{transform:translateX(-50%) scale(.9)}
+}
+@media(max-width:600px){
+  .value-grid{grid-template-columns:1fr}
+  .hero-stats{gap:26px}
+  .phone-frame{width:260px}
+  .phone-screen{height:560px}
+}
+</style>
+</head>
+<body>
+
+<nav class="nav" id="mainNav">
+  <div class="wrap nav-inner">
+    <div class="logo"><div class="logo-mark"><i class="fa-solid fa-brain"></i></div>AnatoFlash</div>
+    <div class="nav-links">
+      <a href="#" onclick="showPage('landing');return false;">Inicio</a>
+      <a href="#como-funciona" onclick="showPage('landing')">Como funciona</a>
+      <a href="#diferenciais" onclick="showPage('landing')">Diferenciais</a>
+      <a href="#" onclick="showPage('grupos');return false;">Grupos</a>
+    </div>
+    <div class="nav-cta">
+      <button class="btn btn-outline" onclick="showPage('revisao')"><i class="fa-solid fa-layer-group"></i> Ver revisao</button>
+      <button class="btn btn-gold" onclick="showPage('grupos')"><i class="fa-solid fa-mobile-screen-button"></i> Ver o app</button>
+      <button class="hamburger" onclick="showPage('grupos')"><i class="fa-solid fa-bars"></i></button>
+    </div>
+  </div>
+</nav>
+
+<div class="surface-switch">
+  <button class="active" data-surface="landing" onclick="showPage('landing')"><i class="fa-solid fa-house"></i> Visao geral</button>
+  <button data-surface="grupos" onclick="showPage('grupos')"><i class="fa-solid fa-layer-group"></i> Grupos</button>
+  <button data-surface="revisao" onclick="showPage('revisao')"><i class="fa-solid fa-repeat"></i> Revisao</button>
+  <button data-surface="progresso" onclick="showPage('progresso')"><i class="fa-solid fa-chart-line"></i> Progresso</button>
+</div>
+
+<!-- 1. LANDING -->
+<section class="page active" id="page-landing">
+  <div class="hero">
+    <div class="hero-bg"></div>
+    <div class="grid-overlay"></div>
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+    <div class="wrap hero-content">
+      <div class="eyebrow"><i class="fa-solid fa-graduation-cap"></i> Estudo de anatomia · flashcards adaptativos</div>
+      <h1>Anatomia grava mais rapido quando a revisao <span>respeita a sua memoria</span></h1>
+      <p>AnatoFlash organiza o estudo por grupo anatomico e decide sozinho quando cada carta deve voltar, com base no que voce realmente lembra.</p>
+      <div class="hero-actions">
+        <button class="btn btn-gold" onclick="showPage('grupos')"><i class="fa-solid fa-layer-group"></i> Explorar grupos</button>
+        <button class="btn btn-outline" style="color:var(--cream);border-color:rgba(247,243,232,.3)" onclick="document.getElementById('como-funciona').scrollIntoView({behavior:'smooth'})"><i class="fa-solid fa-circle-play"></i> Como funciona</button>
+      </div>
+      <div class="hero-stats">
+        <div><div class="stat-num" data-count="5">0</div><div class="stat-label">Grupos anatomicos</div></div>
+        <div><div class="stat-num">SM2</div><div class="stat-label">Motor adaptativo</div></div>
+        <div><div class="stat-num" data-count="100" data-suffix="%">0</div><div class="stat-label">Funciona offline</div></div>
+      </div>
+    </div>
+  </div>
+
+  <section class="section" id="como-funciona">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <div class="sec-tag">Por que AnatoFlash</div>
+        <h2>Um app pensado para retencao, nao so para folhear cartas</h2>
+        <p>Cada tela existe para responder a mesma pergunta. essa estrutura ja esta pronta, ainda nao lembra bem?</p>
+      </div>
+      <div class="value-grid">
+        <div class="value-card reveal"><div class="value-icon"><i class="fa-solid fa-layer-group"></i></div><h3>Abas por grupo</h3><p>Osseo, muscular, cardiovascular, nervoso e respiratorio, cada um com seu proprio baralho.</p></div>
+        <div class="value-card reveal"><div class="value-icon"><i class="fa-solid fa-repeat"></i></div><h3>Repeticao adaptativa</h3><p>O intervalo de cada carta muda conforme a sua propria nota de dificuldade, carta por carta.</p></div>
+        <div class="value-card reveal"><div class="value-icon"><i class="fa-solid fa-database"></i></div><h3>Base local</h3><p>Conteudo e progresso ficam salvos no aparelho, sem depender de internet para estudar.</p></div>
+        <div class="value-card reveal"><div class="value-icon"><i class="fa-solid fa-chart-line"></i></div><h3>Progresso visivel</h3><p>Uma tela mostra o dominio real de cada grupo, nao so quantas cartas existem.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-alt">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <div class="sec-tag">Fluxo de estudo</div>
+        <h2>Do grupo a carta dominada em 3 passos</h2>
+        <p>O aluno abre o app, sabe exatamente o que revisar hoje e sai com a memoria mais forte.</p>
+      </div>
+      <div class="steps3">
+        <div class="step-card reveal"><div class="step-num">1</div><h3>Escolha o grupo</h3><p>A tela inicial mostra quantas cartas estao vencidas em cada grupo anatomico.</p></div>
+        <div class="step-card reveal"><div class="step-num">2</div><h3>Vire a carta e avalie</h3><p>Toque para revelar a resposta e marque dificil, bom ou facil.</p></div>
+        <div class="step-card reveal"><div class="step-num">3</div><h3>O motor reorganiza a fila</h3><p>Cartas dificeis voltam logo. Cartas faceis somem da fila por mais tempo.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="diferenciais">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <div class="sec-tag">O que a maioria dos apps de flashcard erra</div>
+        <h2>Intervalo fixo cansa o aluno antes da prova</h2>
+        <p>Um baralho generico repete toda carta no mesmo ritmo, dominada ou nao.</p>
+      </div>
+      <div class="diff-grid">
+        <div class="diff-card reveal">
+          <div class="diff-icon"><i class="fa-solid fa-arrows-rotate"></i></div>
+          <h3>Intervalo fixo (o problema comum)</h3>
+          <p>Sem ajuste por carta, umero e labirinto do ouvido voltam com a mesma frequencia mesmo se um ja esta dominado.</p>
+          <div class="diff-mini"><span class="lbl"><i class="fa-solid fa-bone"></i> Umero (dominado)</span><span class="val">revisa amanha</span></div>
+          <div class="diff-mini"><span class="lbl"><i class="fa-solid fa-brain"></i> Labirinto (dificil)</span><span class="val">revisa amanha</span></div>
+        </div>
+        <div class="diff-card reveal">
+          <div class="diff-icon"><i class="fa-solid fa-sliders"></i></div>
+          <h3>Intervalo adaptativo (o que o AnatoFlash faz)</h3>
+          <p>Cada carta guarda sua propria facilidade. O intervalo cresce ou encolhe conforme a nota dada na ultima revisao.</p>
+          <div class="diff-mini"><span class="lbl"><i class="fa-solid fa-bone"></i> Umero (dominado)</span><span class="val">revisa em 12 dias</span></div>
+          <div class="diff-mini"><span class="lbl"><i class="fa-solid fa-brain"></i> Labirinto (dificil)</span><span class="val">revisa em 1 dia</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="wrap">
+      <div class="footer-grid">
+        <div>
+          <div class="logo" style="color:var(--cream);margin-bottom:14px"><div class="logo-mark"><i class="fa-solid fa-brain"></i></div>AnatoFlash</div>
+          <p style="font-size:.88rem;max-width:280px;line-height:1.6">Flashcards de anatomia organizados por grupo, com um motor de repeticao que aprende com cada revisao.</p>
+        </div>
+        <div><h5>App</h5><ul><li><a href="#" onclick="showPage('grupos');return false;">Grupos anatomicos</a></li><li><a href="#" onclick="showPage('revisao');return false;">Sessao de revisao</a></li><li><a href="#" onclick="showPage('progresso');return false;">Progresso</a></li></ul></div>
+        <div><h5>Estudo</h5><ul><li>Motor adaptativo por carta</li><li>Base local, funciona offline</li></ul></div>
+        <div><h5>Contato</h5><ul><li><i class="fa-regular fa-envelope"></i> ola@anatoflash.app</li></ul></div>
+      </div>
+      <div class="footer-bottom"><span>2026 AnatoFlash.</span><span>Prototipo de produto para validacao visual</span></div>
+    </div>
+  </footer>
+</section>
+
+<!-- 2. GRUPOS -->
+<section class="page" id="page-grupos">
+  <div class="wrap screen-wrap">
+    <div class="screen-head">
+      <div class="sec-tag">Tela 1 · Inicio do app</div>
+      <h2 style="font-size:1.8rem;font-weight:800;margin-bottom:8px">Grupos anatomicos com cartas vencidas visiveis</h2>
+      <p style="color:var(--ink3);font-size:.98rem">O aluno ve de cara onde precisa estudar hoje, sem abrir um baralho generico.</p>
+    </div>
+    <div class="screen-layout">
+      <div class="phone-frame floating">
+        <div class="phone-screen">
+          <div class="phone-notch"></div>
+          <div class="phone-status"><span>9:41</span><span><i class="fa-solid fa-signal"></i> <i class="fa-solid fa-wifi"></i> <i class="fa-solid fa-battery-full"></i></span></div>
+          <div class="phone-body">
+            <div class="ph-greet">Boa tarde, Marcos</div>
+            <div class="ph-sub">Voce tem 14 cartas vencidas hoje</div>
+            <div class="grp-list">
+              <div class="grp-card" onclick="showPage('revisao')">
+                <div class="grp-icon" style="background:rgba(212,162,78,.14);color:var(--gold-dk)"><i class="fa-solid fa-bone"></i></div>
+                <div class="grp-info"><div class="grp-name">Sistema Osseo</div><div class="grp-meta">42 cartas no grupo</div></div>
+                <div class="grp-due">5 vencidas</div>
+              </div>
+              <div class="grp-card" onclick="showPage('revisao')">
+                <div class="grp-icon" style="background:rgba(192,67,42,.1);color:var(--danger)"><i class="fa-solid fa-dumbbell"></i></div>
+                <div class="grp-info"><div class="grp-name">Sistema Muscular</div><div class="grp-meta">58 cartas no grupo</div></div>
+                <div class="grp-due">4 vencidas</div>
+              </div>
+              <div class="grp-card" onclick="showPage('revisao')">
+                <div class="grp-icon" style="background:rgba(63,143,95,.12);color:var(--ok)"><i class="fa-solid fa-heart-pulse"></i></div>
+                <div class="grp-info"><div class="grp-name">Sistema Cardiovascular</div><div class="grp-meta">31 cartas no grupo</div></div>
+                <div class="grp-due">3 vencidas</div>
+              </div>
+              <div class="grp-card" onclick="showPage('revisao')">
+                <div class="grp-icon" style="background:rgba(63,111,143,.12);color:#3f6f8f"><i class="fa-solid fa-brain"></i></div>
+                <div class="grp-info"><div class="grp-name">Sistema Nervoso</div><div class="grp-meta">37 cartas no grupo</div></div>
+                <div class="grp-due">2 vencidas</div>
+              </div>
+              <div class="grp-card">
+                <div class="grp-icon" style="background:rgba(111,63,143,.1);color:#6f3f8f"><i class="fa-solid fa-lungs"></i></div>
+                <div class="grp-info"><div class="grp-name">Sistema Respiratorio</div><div class="grp-meta">19 cartas no grupo</div></div>
+                <div class="grp-due zero">em dia</div>
+              </div>
+            </div>
+            <div class="phone-tabbar">
+              <div class="pt-item active"><i class="fa-solid fa-layer-group"></i>Grupos</div>
+              <div class="pt-item" onclick="showPage('revisao')"><i class="fa-solid fa-repeat"></i>Revisao</div>
+              <div class="pt-item" onclick="showPage('progresso')"><i class="fa-solid fa-chart-line"></i>Progresso</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="annotation-stack">
+        <div class="note-card">
+          <h4><i class="fa-solid fa-layer-group"></i> Navegacao focada por grupo</h4>
+          <p>Nada de baralho unico misturando ossos com nervos. O aluno entra direto no grupo que esta estudando na aula daquele dia.</p>
+        </div>
+        <div class="note-card">
+          <h4><i class="fa-solid fa-bell"></i> Contagem de vencidas por grupo</h4>
+          <p>O selo de cartas vencidas usa a mesma logica do motor de repeticao, entao o numero muda sozinho conforme o aluno estuda.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 3. REVISAO / FLASHCARD -->
+<section class="page" id="page-revisao">
+  <div class="wrap screen-wrap">
+    <div class="screen-head">
+      <div class="sec-tag">Tela 2 · O motor de repeticao</div>
+      <h2 style="font-size:1.8rem;font-weight:800;margin-bottom:8px">Cada carta recebe uma nota, e o intervalo muda na hora</h2>
+      <p style="color:var(--ink3);font-size:.98rem">Toque na carta para virar. Depois escolha dificil, bom ou facil e veja a fila andar.</p>
+    </div>
+    <div class="screen-layout">
+      <div class="phone-frame floating">
+        <div class="phone-screen">
+          <div class="phone-notch"></div>
+          <div class="phone-status"><span>9:41</span><span><i class="fa-solid fa-signal"></i> <i class="fa-solid fa-wifi"></i> <i class="fa-solid fa-battery-full"></i></span></div>
+          <div class="phone-body">
+            <div class="rev-top">
+              <div class="rev-back"><i class="fa-solid fa-arrow-left"></i> Revisao</div>
+              <div class="rev-count" id="revCount">Carta 1 de 6</div>
+            </div>
+            <div class="rev-progress" id="revProgress"></div>
+
+            <div id="revDeckStage" class="card-stage">
+              <div class="flashcard" id="flashcard" onclick="flipCard()">
+                <div class="fc-face fc-front">
+                  <div class="fc-tag" id="fcTag">Sistema Osseo</div>
+                  <i class="fa-solid fa-bone fc-icon" id="fcIcon"></i>
+                  <div class="fc-term" id="fcTerm">Umero</div>
+                  <div class="fc-hint">toque para virar</div>
+                </div>
+                <div class="fc-face fc-back">
+                  <div class="fc-tag">Resposta</div>
+                  <div class="fc-def" id="fcDef">Osso longo do braco, entre o ombro e o cotovelo.</div>
+                  <div class="fc-hint">avalie abaixo</div>
+                </div>
+              </div>
+            </div>
+
+            <div id="revDoneStage" class="rev-done" style="display:none">
+              <i class="fa-solid fa-circle-check"></i>
+              <h4>Sessao concluida</h4>
+              <p>As 6 cartas foram revisadas. As proximas datas ja foram recalculadas por carta.</p>
+              <button class="rev-restart" onclick="restartDeck()"><i class="fa-solid fa-rotate-right"></i> Reiniciar demo</button>
+            </div>
+
+            <div class="rev-actions" id="revActions">
+              <div class="rev-btn dificil" onclick="gradeCard('dificil')"><i class="fa-solid fa-face-frown"></i>Dificil</div>
+              <div class="rev-btn bom" onclick="gradeCard('bom')"><i class="fa-solid fa-face-meh"></i>Bom</div>
+              <div class="rev-btn facil" onclick="gradeCard('facil')"><i class="fa-solid fa-face-smile"></i>Facil</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="annotation-stack">
+        <div class="note-card warn">
+          <h4><i class="fa-solid fa-gauge-high"></i> O ponto que a maioria erra</h4>
+          <p>Um baralho sem nota por carta revisa umero e labirinto do ouvido no mesmo dia, mesmo que um ja esteja dominado. Isso incha a fila e faz o aluno desistir.</p>
+        </div>
+        <div class="note-card ok">
+          <h4><i class="fa-solid fa-sliders"></i> Como o AnatoFlash resolve</h4>
+          <p>Cada nota dada aqui (dificil, bom, facil) recalcula o proximo intervalo daquela carta especifica, tipo SM2. Cartas faceis somem da fila por semanas. Cartas dificeis voltam no dia seguinte.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 4. PROGRESSO -->
+<section class="page" id="page-progresso">
+  <div class="wrap screen-wrap">
+    <div class="screen-head">
+      <div class="sec-tag">Tela 3 · Depois da revisao</div>
+      <h2 style="font-size:1.8rem;font-weight:800;margin-bottom:8px">Progresso real por grupo, nao so contagem de cartas</h2>
+      <p style="color:var(--ink3);font-size:.98rem">O aluno enxerga onde esta forte e onde ainda precisa de mais sessoes.</p>
+    </div>
+    <div class="screen-layout">
+      <div class="phone-frame floating">
+        <div class="phone-screen">
+          <div class="phone-notch"></div>
+          <div class="phone-status"><span>9:41</span><span><i class="fa-solid fa-signal"></i> <i class="fa-solid fa-wifi"></i> <i class="fa-solid fa-battery-full"></i></span></div>
+          <div class="phone-body">
+            <div class="ph-greet">Seu progresso</div>
+            <div class="ph-sub">Dominio medio de todos os grupos</div>
+            <div class="prog-summary">
+              <div class="prog-chip"><div class="n">187</div><div class="l">cartas</div></div>
+              <div class="prog-chip"><div class="n">61%</div><div class="l">dominadas</div></div>
+              <div class="prog-chip"><div class="n">14</div><div class="l">vencidas hoje</div></div>
+            </div>
+            <div class="prog-list">
+              <div class="prog-row">
+                <div class="prow-top"><div class="prow-name"><i style="background:rgba(212,162,78,.14);color:var(--gold-dk)" class="fa-solid fa-bone"></i>Sistema Osseo</div><div class="prow-pct">78%</div></div>
+                <div class="prow-bar"><div class="prow-fill" style="width:78%"></div></div>
+              </div>
+              <div class="prog-row">
+                <div class="prow-top"><div class="prow-name"><i style="background:rgba(192,67,42,.1);color:var(--danger)" class="fa-solid fa-dumbbell"></i>Sistema Muscular</div><div class="prow-pct">54%</div></div>
+                <div class="prow-bar"><div class="prow-fill" style="width:54%"></div></div>
+              </div>
+              <div class="prog-row">
+                <div class="prow-top"><div class="prow-name"><i style="background:rgba(63,143,95,.12);color:var(--ok)" class="fa-solid fa-heart-pulse"></i>Sistema Cardiovascular</div><div class="prow-pct">69%</div></div>
+                <div class="prow-bar"><div class="prow-fill" style="width:69%"></div></div>
+              </div>
+              <div class="prog-row">
+                <div class="prow-top"><div class="prow-name"><i style="background:rgba(63,111,143,.12);color:#3f6f8f" class="fa-solid fa-brain"></i>Sistema Nervoso</div><div class="prow-pct">41%</div></div>
+                <div class="prow-bar"><div class="prow-fill" style="width:41%"></div></div>
+              </div>
+              <div class="prog-row">
+                <div class="prow-top"><div class="prow-name"><i style="background:rgba(111,63,143,.1);color:#6f3f8f" class="fa-solid fa-lungs"></i>Sistema Respiratorio</div><div class="prow-pct">88%</div></div>
+                <div class="prow-bar"><div class="prow-fill" style="width:88%"></div></div>
+              </div>
+            </div>
+            <div class="phone-tabbar">
+              <div class="pt-item" onclick="showPage('grupos')"><i class="fa-solid fa-layer-group"></i>Grupos</div>
+              <div class="pt-item" onclick="showPage('revisao')"><i class="fa-solid fa-repeat"></i>Revisao</div>
+              <div class="pt-item active"><i class="fa-solid fa-chart-line"></i>Progresso</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="annotation-stack">
+        <div class="note-card">
+          <h4><i class="fa-solid fa-chart-line"></i> Dominio, nao so volume</h4>
+          <p>A porcentagem por grupo vem da nota media das ultimas revisoes daquele grupo, entao mostra retencao real e nao apenas quantas cartas existem.</p>
+        </div>
+        <div class="note-card">
+          <h4><i class="fa-solid fa-bullseye"></i> Motivacao para continuar</h4>
+          <p>Ver um grupo subir de 41% para 60% depois de uma semana de revisao e o que faz o aluno manter o habito diario.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+function showPage(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.querySelectorAll('.surface-switch button').forEach(b=>b.classList.toggle('active', b.dataset.surface===name));
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+window.addEventListener('scroll', ()=>{
+  document.getElementById('mainNav').classList.toggle('scrolled', window.scrollY>40);
+});
+
+const revealEls = document.querySelectorAll('.reveal');
+const io = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('in'); });
+},{threshold:.15});
+revealEls.forEach(el=>io.observe(el));
+
+document.querySelectorAll('.stat-num[data-count]').forEach(el=>{
+  const target = parseFloat(el.dataset.count);
+  const decimal = el.dataset.decimal ? 1 : 0;
+  const suffix = el.dataset.suffix || '';
+  const statIo = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){
+        let cur = 0; const step = target/40;
+        const t = setInterval(()=>{
+          cur += step;
+          if(cur>=target){ cur = target; clearInterval(t); }
+          el.textContent = cur.toFixed(decimal)+suffix;
+        },25);
+        statIo.unobserve(el);
+      }
+    });
+  },{threshold:.5});
+  statIo.observe(el);
+});
+
+const deck = [
+  {grupo:'Sistema Osseo', icon:'fa-bone', termo:'Umero', def:'Osso longo do braco, entre o ombro e o cotovelo.'},
+  {grupo:'Sistema Muscular', icon:'fa-dumbbell', termo:'Biceps braquial', def:'Musculo da face anterior do braco, flexiona o cotovelo.'},
+  {grupo:'Sistema Cardiovascular', icon:'fa-heart-pulse', termo:'Ventriculo esquerdo', def:'Camara do coracao que bombeia sangue para o corpo todo.'},
+  {grupo:'Sistema Nervoso', icon:'fa-brain', termo:'Cerebelo', def:'Estrutura responsavel pelo equilibrio e coordenacao motora.'},
+  {grupo:'Sistema Respiratorio', icon:'fa-lungs', termo:'Bronquiolo', def:'Ramificacao fina dos bronquios que leva ar aos alveolos.'},
+  {grupo:'Sistema Osseo', icon:'fa-bone', termo:'Labirinto osseo', def:'Estrutura do ouvido interno ligada ao equilibrio, dificil de fixar.'},
+];
+let deckIndex = 0;
+let flipped = false;
+
+function renderCard(){
+  const card = deck[deckIndex];
+  document.getElementById('fcTag').textContent = card.grupo;
+  document.getElementById('fcIcon').className = 'fa-solid ' + card.icon + ' fc-icon';
+  document.getElementById('fcTerm').textContent = card.termo;
+  document.getElementById('fcDef').textContent = card.def;
+  document.getElementById('revCount').textContent = 'Carta ' + (deckIndex+1) + ' de ' + deck.length;
+  flipped = false;
+  document.getElementById('flashcard').classList.remove('flipped');
+  renderProgress();
+}
+
+function renderProgress(){
+  const bar = document.getElementById('revProgress');
+  bar.innerHTML = '';
+  deck.forEach((c,i)=>{
+    const s = document.createElement('span');
+    if(i < deckIndex) s.classList.add('done');
+    bar.appendChild(s);
+  });
+}
+
+function flipCard(){
+  flipped = !flipped;
+  document.getElementById('flashcard').classList.toggle('flipped', flipped);
+}
+
+function gradeCard(){
+  deckIndex++;
+  if(deckIndex >= deck.length){
+    document.getElementById('revDeckStage').style.display = 'none';
+    document.getElementById('revActions').style.display = 'none';
+    document.getElementById('revDoneStage').style.display = 'flex';
+    document.getElementById('revProgress').querySelectorAll('span').forEach(s=>s.classList.add('done'));
+    document.getElementById('revCount').textContent = 'Sessao concluida';
+    return;
+  }
+  renderCard();
+}
+
+function restartDeck(){
+  deckIndex = 0;
+  document.getElementById('revDeckStage').style.display = 'flex';
+  document.getElementById('revActions').style.display = 'flex';
+  document.getElementById('revDoneStage').style.display = 'none';
+  renderCard();
+}
+
+renderCard();
+</script>
+</body>
+</html>
