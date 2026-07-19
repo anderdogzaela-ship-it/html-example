@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cualifica — IA de atencion y precalificacion de leads</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f6f7f2;
+    --surface:#ffffff;
+    --surface-2:#f0f2ea;
+    --border:#e1e5d8;
+    --text:#1c2318;
+    --text-dim:#5b6355;
+    --text-faint:#8b937f;
+    --green-900:#123524;
+    --green-700:#1c6b4f;
+    --green-600:#237a5a;
+    --green-500:#2f9e73;
+    --green-400:#5cbd8f;
+    --lime:#a8c66c;
+    --lime-soft:#eef4de;
+    --amber:#c98a2f;
+    --amber-soft:#faf0dd;
+    --red:#c65d4a;
+    --red-soft:#f9e9e4;
+    --shadow-sm:0 1px 2px rgba(18,53,36,0.06);
+    --shadow-md:0 4px 16px rgba(18,53,36,0.08);
+    --shadow-lg:0 12px 32px rgba(18,53,36,0.14);
+    --radius:14px;
+    --radius-sm:9px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0e1410;
+      --surface:#161d17;
+      --surface-2:#1c241c;
+      --border:#2a332a;
+      --text:#eef1e9;
+      --text-dim:#a7b09d;
+      --text-faint:#707a67;
+      --lime-soft:#22301f;
+      --amber-soft:#2e2417;
+      --red-soft:#301d19;
+      --shadow-sm:0 1px 2px rgba(0,0,0,0.3);
+      --shadow-md:0 4px 16px rgba(0,0,0,0.35);
+      --shadow-lg:0 12px 32px rgba(0,0,0,0.5);
+    }
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:'Nunito',system-ui,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+  .app{
+    max-width:1320px;
+    margin:0 auto;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+  }
+  /* ---- Topbar ---- */
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:16px 28px;
+    border-bottom:1px solid var(--border);
+    background:var(--surface);
+    position:sticky;
+    top:0;
+    z-index:20;
+    flex-wrap:wrap;
+    gap:12px;
+  }
+  .brand{display:flex;align-items:center;gap:10px;}
+  .brand-mark{
+    width:36px;height:36px;border-radius:10px;
+    background:linear-gradient(135deg,var(--green-600),var(--green-900));
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-weight:800;font-size:16px;
+    box-shadow:var(--shadow-sm);
+  }
+  .brand-name{font-weight:800;font-size:18px;letter-spacing:-0.02em;}
+  .brand-sub{font-size:11px;color:var(--text-faint);font-weight:600;letter-spacing:0.03em;text-transform:uppercase;}
+  .tabs{display:flex;gap:4px;background:var(--surface-2);padding:4px;border-radius:11px;}
+  .tab-btn{
+    border:none;background:transparent;padding:9px 18px;border-radius:8px;
+    font-family:inherit;font-weight:700;font-size:13.5px;color:var(--text-dim);
+    cursor:pointer;transition:all .18s ease;
+  }
+  .tab-btn.active{background:var(--surface);color:var(--green-700);box-shadow:var(--shadow-sm);}
+  .topbar-actions{display:flex;align-items:center;gap:10px;}
+  .restart-btn{
+    display:flex;align-items:center;gap:7px;
+    border:1px solid var(--border);background:var(--surface);
+    color:var(--text-dim);font-family:inherit;font-weight:700;font-size:13px;
+    padding:9px 14px;border-radius:9px;cursor:pointer;transition:all .18s ease;
+  }
+  .restart-btn:hover{border-color:var(--green-500);color:var(--green-700);}
+  .avatar-user{
+    width:34px;height:34px;border-radius:50%;
+    background:var(--surface-2);border:1px solid var(--border);
+    display:flex;align-items:center;justify-content:center;
+    font-weight:800;font-size:12.5px;color:var(--green-700);
+  }
+
+  /* ---- Views ---- */
+  .view{display:none;flex:1;}
+  .view.active{display:flex;}
+
+  /* ==== Bandeja ==== */
+  #view-inbox{height:calc(100vh - 69px);}
+  .inbox-list{
+    width:340px;flex-shrink:0;
+    border-right:1px solid var(--border);
+    background:var(--surface);
+    overflow-y:auto;
+  }
+  .inbox-list-header{padding:16px 18px 10px;}
+  .inbox-list-header h2{font-size:14px;font-weight:800;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.04em;}
+  .search-box{
+    margin:8px 14px 12px;padding:9px 12px;background:var(--surface-2);
+    border-radius:9px;font-size:13px;color:var(--text-faint);display:flex;align-items:center;gap:8px;
+  }
+  .convo-item{
+    display:flex;gap:11px;padding:13px 16px;cursor:pointer;
+    border-bottom:1px solid var(--border);transition:background .15s ease;
+    position:relative;
+  }
+  .convo-item:hover{background:var(--surface-2);}
+  .convo-item.selected{background:var(--lime-soft);}
+  .convo-item.selected::before{
+    content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--green-600);
+  }
+  .convo-avatar{
+    width:42px;height:42px;border-radius:50%;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:#fff;
+  }
+  .convo-meta{flex:1;min-width:0;}
+  .convo-top{display:flex;justify-content:space-between;align-items:baseline;gap:6px;}
+  .convo-name{font-weight:800;font-size:14px;}
+  .convo-time{font-size:11px;color:var(--text-faint);font-weight:600;flex-shrink:0;}
+  .convo-preview{font-size:12.5px;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;}
+  .convo-tags{display:flex;gap:6px;margin-top:7px;flex-wrap:wrap;}
+  .chip{
+    font-size:10.5px;font-weight:800;padding:3px 8px;border-radius:100px;
+    text-transform:uppercase;letter-spacing:0.03em;
+  }
+  .chip-bot{background:var(--surface-2);color:var(--text-dim);}
+  .chip-qualifying{background:var(--amber-soft);color:var(--amber);}
+  .chip-ready{background:var(--lime-soft);color:var(--green-700);}
+  .chip-human{background:#e4ecf5;color:#3a5f8a;}
+  .score{font-size:10.5px;font-weight:800;padding:3px 8px;border-radius:100px;}
+  .score-caliente{background:var(--red-soft);color:var(--red);}
+  .score-tibio{background:var(--amber-soft);color:var(--amber);}
+  .score-frio{background:var(--surface-2);color:var(--text-faint);}
+
+  /* Chat panel */
+  .chat-panel{flex:1;display:flex;flex-direction:column;min-width:0;background:var(--bg);}
+  .chat-header{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:14px 22px;background:var(--surface);border-bottom:1px solid var(--border);
+  }
+  .chat-header-left{display:flex;align-items:center;gap:12px;}
+  .chat-header h3{font-size:15px;font-weight:800;}
+  .chat-header .sub{font-size:12px;color:var(--text-faint);font-weight:600;}
+  .handoff-btn{
+    background:var(--text-faint);color:#fff;border:none;font-family:inherit;
+    font-weight:800;font-size:12.5px;padding:10px 16px;border-radius:9px;
+    cursor:not-allowed;opacity:.5;transition:all .25s ease;white-space:nowrap;
+  }
+  .handoff-btn.enabled{background:var(--green-600);cursor:pointer;opacity:1;box-shadow:var(--shadow-sm);}
+  .handoff-btn.enabled:hover{background:var(--green-700);}
+  .chat-body{flex:1;display:flex;overflow:hidden;}
+  .messages{
+    flex:1;overflow-y:auto;padding:22px 26px;display:flex;flex-direction:column;gap:12px;
+  }
+  .msg-row{display:flex;max-width:78%;}
+  .msg-row.in{align-self:flex-start;}
+  .msg-row.out{align-self:flex-end;margin-left:auto;}
+  .bubble{
+    padding:11px 15px;border-radius:14px;font-size:13.8px;line-height:1.48;box-shadow:var(--shadow-sm);
+  }
+  .msg-row.in .bubble{background:var(--surface);border-bottom-left-radius:4px;color:var(--text);}
+  .msg-row.out .bubble{background:var(--green-600);color:#fff;border-bottom-right-radius:4px;}
+  .bubble-label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.03em;margin-bottom:4px;opacity:.7;}
+  .typing{display:flex;gap:4px;padding:4px 2px;}
+  .typing span{width:6px;height:6px;border-radius:50%;background:var(--text-faint);animation:blink 1.2s infinite ease-in-out;}
+  .typing span:nth-child(2){animation-delay:.2s;}
+  .typing span:nth-child(3){animation-delay:.4s;}
+  @keyframes blink{0%,80%,100%{opacity:.25;}40%{opacity:1;}}
+
+  /* Qualification sidebar */
+  .qual-panel{
+    width:300px;flex-shrink:0;border-left:1px solid var(--border);
+    background:var(--surface);padding:20px;overflow-y:auto;
+  }
+  .qual-panel h4{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-faint);margin-bottom:14px;}
+  .qual-item{
+    display:flex;align-items:flex-start;gap:10px;padding:11px 0;border-bottom:1px solid var(--border);
+  }
+  .qual-item:last-of-type{border-bottom:none;}
+  .qual-dot{
+    width:20px;height:20px;border-radius:50%;flex-shrink:0;margin-top:1px;
+    display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;
+    background:var(--surface-2);color:var(--text-faint);transition:all .3s ease;
+  }
+  .qual-dot.done{background:var(--green-600);color:#fff;}
+  .qual-text{flex:1;}
+  .qual-text .label{font-weight:700;font-size:13px;}
+  .qual-text .val{font-size:11.5px;color:var(--text-faint);margin-top:2px;font-weight:600;}
+  .qual-item.done .qual-text .val{color:var(--green-700);}
+  .score-card{
+    margin-top:18px;padding:16px;border-radius:var(--radius-sm);background:var(--surface-2);text-align:center;
+  }
+  .score-card .num{font-size:32px;font-weight:900;color:var(--green-700);line-height:1;}
+  .score-card .lbl{font-size:11px;color:var(--text-faint);font-weight:700;margin-top:4px;text-transform:uppercase;letter-spacing:0.03em;}
+  .assigned-box{
+    margin-top:14px;padding:12px 14px;border-radius:var(--radius-sm);background:var(--lime-soft);
+    display:none;align-items:center;gap:10px;
+  }
+  .assigned-box.show{display:flex;}
+  .assigned-avatar{width:32px;height:32px;border-radius:50%;background:var(--green-600);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;flex-shrink:0;}
+  .assigned-box .t1{font-size:12px;font-weight:800;color:var(--green-700);}
+  .assigned-box .t2{font-size:11px;color:var(--text-dim);font-weight:600;}
+
+  /* ==== Reportes ==== */
+  #view-reports{flex-direction:column;padding:28px;gap:22px;overflow-y:auto;height:calc(100vh - 69px);}
+  .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+  .kpi-card{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    padding:18px 20px;box-shadow:var(--shadow-sm);
+  }
+  .kpi-card .lbl{font-size:12px;color:var(--text-faint);font-weight:700;text-transform:uppercase;letter-spacing:0.03em;}
+  .kpi-card .val{font-size:28px;font-weight:900;margin-top:8px;letter-spacing:-0.02em;}
+  .kpi-card .delta{font-size:12px;font-weight:700;margin-top:6px;color:var(--green-600);}
+  .panel-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:20px;}
+  .panel{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    padding:22px;box-shadow:var(--shadow-sm);
+  }
+  .panel h3{font-size:15px;font-weight:800;margin-bottom:4px;}
+  .panel .panel-sub{font-size:12.5px;color:var(--text-faint);font-weight:600;margin-bottom:18px;}
+  .funnel-row{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+  .funnel-label{width:150px;font-size:12.5px;font-weight:700;color:var(--text-dim);flex-shrink:0;}
+  .funnel-bar-bg{flex:1;height:26px;background:var(--surface-2);border-radius:7px;overflow:hidden;}
+  .funnel-bar{height:100%;border-radius:7px;background:linear-gradient(90deg,var(--green-600),var(--green-400));display:flex;align-items:center;justify-content:flex-end;padding-right:10px;transition:width 1s ease;}
+  .funnel-bar span{color:#fff;font-size:11px;font-weight:800;}
+  table{width:100%;border-collapse:collapse;}
+  th{text-align:left;font-size:11px;color:var(--text-faint);font-weight:800;text-transform:uppercase;letter-spacing:0.03em;padding:8px 6px;border-bottom:1px solid var(--border);}
+  td{padding:11px 6px;font-size:13px;border-bottom:1px solid var(--border);}
+  .rep-name{display:flex;align-items:center;gap:9px;font-weight:700;}
+  .rep-avatar{width:26px;height:26px;border-radius:50%;background:var(--green-600);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:800;flex-shrink:0;}
+  .bar-mini-bg{width:70px;height:6px;background:var(--surface-2);border-radius:4px;overflow:hidden;display:inline-block;vertical-align:middle;margin-right:8px;}
+  .bar-mini{height:100%;background:var(--green-500);border-radius:4px;}
+
+  @media (max-width:920px){
+    .inbox-list{width:100%;}
+    #view-inbox{flex-direction:column;height:auto;}
+    .chat-panel{min-height:520px;}
+    .qual-panel{width:100%;}
+    .kpi-row{grid-template-columns:repeat(2,1fr);}
+    .panel-grid{grid-template-columns:1fr;}
+    .chat-body{flex-direction:column;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark">C</div>
+      <div>
+        <div class="brand-name">Cualifica</div>
+        <div class="brand-sub">IA de atencion y precalificacion</div>
+      </div>
+    </div>
+    <div class="tabs">
+      <button class="tab-btn active" data-view="inbox">Bandeja</button>
+      <button class="tab-btn" data-view="reports">Reportes</button>
+    </div>
+    <div class="topbar-actions">
+      <button class="restart-btn" onclick="restartDemo()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+        Reiniciar demo
+      </button>
+      <div class="avatar-user">MC</div>
+    </div>
+  </div>
+
+  <!-- ==================== BANDEJA ==================== -->
+  <div class="view active" id="view-inbox">
+    <div class="inbox-list" id="inboxList">
+      <div class="inbox-list-header"><h2>Conversaciones (4)</h2></div>
+      <div class="search-box">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        Buscar contacto o mensaje
+      </div>
+      <!-- items injected by JS -->
+    </div>
+
+    <div class="chat-panel">
+      <div class="chat-header">
+        <div class="chat-header-left">
+          <div class="convo-avatar" id="chatAvatar" style="width:38px;height:38px;font-size:13px;"></div>
+          <div>
+            <h3 id="chatName"></h3>
+            <div class="sub" id="chatSub"></div>
+          </div>
+        </div>
+        <button class="handoff-btn" id="handoffBtn">Transferir a vendedor</button>
+      </div>
+      <div class="chat-body">
+        <div class="messages" id="messages"></div>
+        <div class="qual-panel">
+          <h4>Precalificacion en vivo</h4>
+          <div id="qualList"></div>
+          <div class="score-card">
+            <div class="num" id="scoreNum">-</div>
+            <div class="lbl">Puntaje del lead</div>
+          </div>
+          <div class="assigned-box" id="assignedBox">
+            <div class="assigned-avatar">RM</div>
+            <div>
+              <div class="t1">Asignado a Renata M.</div>
+              <div class="t2">Contexto completo transferido</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== REPORTES ==================== -->
+  <div class="view" id="view-reports">
+    <div class="kpi-row">
+      <div class="kpi-card"><div class="lbl">Leads totales (30d)</div><div class="val">312</div><div class="delta">+18% vs mes anterior</div></div>
+      <div class="kpi-card"><div class="lbl">Leads calificados</div><div class="val">187</div><div class="delta">60% del total</div></div>
+      <div class="kpi-card"><div class="lbl">Tasa de conversion</div><div class="val">24.5%</div><div class="delta">+6.1 pts</div></div>
+      <div class="kpi-card"><div class="lbl">Tiempo de 1a respuesta</div><div class="val">8 seg</div><div class="delta">antes 14 min</div></div>
+    </div>
+    <div class="panel-grid">
+      <div class="panel">
+        <h3>Embudo de calificacion</h3>
+        <div class="panel-sub">De la primera respuesta del bot hasta el cierre de venta</div>
+        <div class="funnel-row"><div class="funnel-label">Contacto inicial</div><div class="funnel-bar-bg"><div class="funnel-bar" style="width:100%"><span>312</span></div></div></div>
+        <div class="funnel-row"><div class="funnel-label">Respondio al bot</div><div class="funnel-bar-bg"><div class="funnel-bar" style="width:81%"><span>253</span></div></div></div>
+        <div class="funnel-row"><div class="funnel-label">Precalificado</div><div class="funnel-bar-bg"><div class="funnel-bar" style="width:60%"><span>187</span></div></div></div>
+        <div class="funnel-row"><div class="funnel-label">Con vendedor</div><div class="funnel-bar-bg"><div class="funnel-bar" style="width:47%"><span>146</span></div></div></div>
+        <div class="funnel-row"><div class="funnel-label">Venta cerrada</div><div class="funnel-bar-bg"><div class="funnel-bar" style="width:24%"><span>76</span></div></div></div>
+      </div>
+      <div class="panel">
+        <h3>Rendimiento por vendedor</h3>
+        <div class="panel-sub">Leads calificados asignados este mes</div>
+        <table>
+          <thead><tr><th>Vendedor</th><th>Asignados</th><th>Cerrados</th></tr></thead>
+          <tbody>
+            <tr><td class="rep-name"><div class="rep-avatar">RM</div>Renata M.</td><td>52</td><td><span class="bar-mini-bg"><span class="bar-mini" style="width:70%"></span></span>29</td></tr>
+            <tr><td class="rep-name"><div class="rep-avatar">JF</div>Julio F.</td><td>48</td><td><span class="bar-mini-bg"><span class="bar-mini" style="width:52%"></span></span>21</td></tr>
+            <tr><td class="rep-name"><div class="rep-avatar">CA</div>Carla A.</td><td>44</td><td><span class="bar-mini-bg"><span class="bar-mini" style="width:38%"></span></span>15</td></tr>
+            <tr><td class="rep-name"><div class="rep-avatar">DS</div>Diego S.</td><td>43</td><td><span class="bar-mini-bg"><span class="bar-mini" style="width:26%"></span></span>11</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const LEADS = [
+  {
+    id:1, name:"Marcela Ibarra", init:"MI", color:"#237a5a", time:"09:41", score:88, tier:"caliente",
+    status:"ready", statusLabel:"Listo para vendedor", sub:"Ultimo mensaje hace 2 min",
+    preview:"Si, necesitamos algo funcionando antes de fin de mes",
+    quals:[
+      {label:"Interes confirmado", val:"Pregunto por planes disponibles", delay:900},
+      {label:"Presupuesto identificado", val:"Rango medio confirmado en la charla", delay:2000},
+      {label:"Urgencia confirmada", val:"Necesita resolverlo antes de fin de mes", delay:3200},
+      {label:"Decisor identificado", val:"Ella misma aprueba la compra", delay:4300}
+    ],
+    thread:[
+      {who:"in", label:"Marcela", text:"Hola, vi el anuncio. Como funciona el servicio?"},
+      {who:"out", bot:true, text:"Hola Marcela! Te cuento en 30 segundos. Que problema estas resolviendo hoy con tu equipo?"},
+      {who:"in", label:"Marcela", text:"Perdemos muchos leads porque respondemos tarde"},
+      {who:"out", bot:true, text:"Entiendo. Tenes ya un presupuesto estimado para resolver esto este trimestre?"},
+      {who:"in", label:"Marcela", text:"Si, tenemos un rango aprobado para este trimestre"},
+      {who:"out", bot:true, text:"Perfecto. Y hay urgencia por resolverlo pronto o es algo para mas adelante?"},
+      {who:"in", label:"Marcela", text:"Si, necesitamos algo funcionando antes de fin de mes"},
+      {who:"out", bot:true, text:"Genial Marcela. Con eso ya tengo lo necesario, te paso ahora con Renata de nuestro equipo comercial."}
+    ]
+  },
+  {
+    id:2, name:"Bruno Salcedo", init:"BS", color:"#3a5f8a", time:"09:22", score:64, tier:"tibio",
+    status:"qualifying", statusLabel:"Calificando", sub:"El bot esta conversando",
+    preview:"Todavia no se el presupuesto exacto",
+    quals:[
+      {label:"Interes confirmado", val:"Pregunto por integraciones", delay:900},
+      {label:"Presupuesto identificado", val:"Pendiente de confirmar", delay:2000, pending:true},
+      {label:"Urgencia confirmada", val:"Pendiente de confirmar", delay:0, pending:true},
+      {label:"Decisor identificado", val:"Pendiente de confirmar", delay:0, pending:true}
+    ],
+    thread:[
+      {who:"in", label:"Bruno", text:"Hola, esto se puede conectar con lo que ya usamos?"},
+      {who:"out", bot:true, text:"Hola Bruno! Si, se integra con la mayoria de herramientas comerciales. Contame, cual es el objetivo principal que buscas?"},
+      {who:"in", label:"Bruno", text:"Bajar el tiempo de respuesta del equipo"},
+      {who:"out", bot:true, text:"Tiene sentido. Ya tenes un rango de inversion definido para esto?"},
+      {who:"in", label:"Bruno", text:"Todavia no se el presupuesto exacto"}
+    ]
+  },
+  {
+    id:3, name:"Felipe Duarte", init:"FD", color:"#c98a2f", time:"08:57", score:31, tier:"frio",
+    status:"bot", statusLabel:"Bot respondiendo", sub:"Consulta general",
+    preview:"Solo estaba viendo precios, gracias",
+    quals:[
+      {label:"Interes confirmado", val:"Consulta exploratoria", delay:900},
+      {label:"Presupuesto identificado", val:"Sin intencion de compra por ahora", delay:2000, pending:true},
+      {label:"Urgencia confirmada", val:"Pendiente de confirmar", delay:0, pending:true},
+      {label:"Decisor identificado", val:"Pendiente de confirmar", delay:0, pending:true}
+    ],
+    thread:[
+      {who:"in", label:"Felipe", text:"Cuanto sale mas o menos esto?"},
+      {who:"out", bot:true, text:"Hola Felipe! Depende del alcance. Me contas brevemente que estas necesitando resolver?"},
+      {who:"in", label:"Felipe", text:"Solo estaba viendo precios, gracias"}
+    ]
+  },
+  {
+    id:4, name:"Antonia Reyes", init:"AR", color:"#237a5a", time:"ayer", score:92, tier:"caliente",
+    status:"human", statusLabel:"Con vendedor", sub:"Asignado a Julio F.",
+    preview:"Renata: perfecto, coordinamos la llamada mañana",
+    quals:[
+      {label:"Interes confirmado", val:"Solicito demo en vivo", delay:600},
+      {label:"Presupuesto identificado", val:"Rango alto confirmado", delay:1200},
+      {label:"Urgencia confirmada", val:"Quiere arrancar esta semana", delay:1800},
+      {label:"Decisor identificado", val:"Aprueba junto a su socio", delay:2400}
+    ],
+    thread:[
+      {who:"in", label:"Antonia", text:"Buenas, quiero avanzar con esto lo antes posible"},
+      {who:"out", bot:true, text:"Hola Antonia! Con gusto. Contame el contexto para dirigirte con la persona indicada"},
+      {who:"in", label:"Antonia", text:"Queremos arrancar esta misma semana si es posible"},
+      {who:"out", bot:true, text:"Te transfiero ahora con Julio, tiene todo el contexto de esta charla."},
+      {who:"in", label:"Julio F.", text:"Hola Antonia, soy Julio. Vi tu conversacion, coordinamos la llamada manana?"}
+    ]
+  }
+];
+
+let currentId = null;
+let qualTimers = [];
+
+function initInbox(){
+  const list = document.getElementById('inboxList');
+  document.querySelectorAll('.convo-item').forEach(n=>n.remove());
+  LEADS.forEach(l=>{
+    const el = document.createElement('div');
+    el.className='convo-item';
+    el.id='convo-'+l.id;
+    el.onclick=()=>selectLead(l.id);
+    const chipClass = l.status==='bot'?'chip-bot':l.status==='qualifying'?'chip-qualifying':l.status==='ready'?'chip-ready':'chip-human';
+    const scoreClass = 'score-'+l.tier;
+    el.innerHTML = `
+      <div class="convo-avatar" style="background:${l.color}">${l.init}</div>
+      <div class="convo-meta">
+        <div class="convo-top"><span class="convo-name">${l.name}</span><span class="convo-time">${l.time}</span></div>
+        <div class="convo-preview">${l.preview}</div>
+        <div class="convo-tags">
+          <span class="chip ${chipClass}">${l.statusLabel}</span>
+          <span class="score ${scoreClass}">${l.score} pts</span>
+        </div>
+      </div>`;
+    list.appendChild(el);
+  });
+}
+
+function selectLead(id){
+  currentId = id;
+  qualTimers.forEach(t=>clearTimeout(t));
+  qualTimers = [];
+  document.querySelectorAll('.convo-item').forEach(n=>n.classList.remove('selected'));
+  document.getElementById('convo-'+id).classList.add('selected');
+
+  const l = LEADS.find(x=>x.id===id);
+  document.getElementById('chatAvatar').style.background = l.color;
+  document.getElementById('chatAvatar').textContent = l.init;
+  document.getElementById('chatName').textContent = l.name;
+  document.getElementById('chatSub').textContent = l.sub;
+
+  const msgBox = document.getElementById('messages');
+  msgBox.innerHTML='';
+  l.thread.forEach(m=>{
+    const row=document.createElement('div');
+    row.className='msg-row '+(m.who==='in'?'in':'out');
+    row.innerHTML=`<div class="bubble">${m.bot?'<div class="bubble-label">IA</div>':''}${m.text}</div>`;
+    msgBox.appendChild(row);
+  });
+  msgBox.scrollTop = msgBox.scrollHeight;
+
+  const qualBox = document.getElementById('qualList');
+  qualBox.innerHTML='';
+  l.quals.forEach((q,i)=>{
+    const item=document.createElement('div');
+    item.className='qual-item';
+    item.id='qual-'+id+'-'+i;
+    item.innerHTML=`<div class="qual-dot">${i+1}</div><div class="qual-text"><div class="label">${q.label}</div><div class="val">Pendiente de confirmar</div></div>`;
+    qualBox.appendChild(item);
+  });
+
+  document.getElementById('scoreNum').textContent = '-';
+  const handoff = document.getElementById('handoffBtn');
+  handoff.classList.remove('enabled');
+  handoff.textContent = 'Transferir a vendedor';
+  document.getElementById('assignedBox').classList.remove('show');
+
+  if(l.status==='human'){
+    handoff.textContent='Transferido';
+    document.getElementById('assignedBox').classList.add('show');
+  }
+
+  l.quals.forEach((q,i)=>{
+    if(q.pending) return;
+    const t = setTimeout(()=>{
+      const item = document.getElementById('qual-'+id+'-'+i);
+      if(!item) return;
+      item.classList.add('done');
+      item.querySelector('.qual-dot').classList.add('done');
+      item.querySelector('.qual-dot').innerHTML='&#10003;';
+      item.querySelector('.val').textContent = q.val;
+      const doneCount = l.quals.filter((qq,ii)=>!qq.pending && ii<=i).length;
+      document.getElementById('scoreNum').textContent = l.score;
+      if(doneCount === l.quals.filter(qq=>!qq.pending).length && l.status!=='human'){
+        if(l.status==='ready' || l.status==='human'){
+          handoff.classList.add('enabled');
+          handoff.textContent='Transferir a vendedor';
+        }
+      }
+    }, q.delay);
+    qualTimers.push(t);
+  });
+}
+
+document.getElementById('handoffBtn').addEventListener('click', function(){
+  if(!this.classList.contains('enabled')) return;
+  this.textContent='Transferido';
+  this.classList.remove('enabled');
+  document.getElementById('assignedBox').classList.add('show');
+  const l = LEADS.find(x=>x.id===currentId);
+  const item = document.getElementById('convo-'+l.id);
+  if(item){
+    const chip = item.querySelector('.chip');
+    chip.className='chip chip-human';
+    chip.textContent='Con vendedor';
+  }
+});
+
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    document.getElementById('view-'+btn.dataset.view).classList.add('active');
+  });
+});
+
+function restartDemo(){
+  qualTimers.forEach(t=>clearTimeout(t));
+  qualTimers=[];
+  initInbox();
+  selectLead(1);
+}
+
+initInbox();
+selectLead(1);
+</script>
+</body>
+</html>
