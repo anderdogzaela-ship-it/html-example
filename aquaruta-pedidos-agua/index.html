@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AquaRuta - Prototipo Fase 1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --blue-50:#f0f8fc; --blue-100:#dcf0f8; --blue-200:#b3e0ef;
+  --blue-400:#4bafd6; --blue-500:#2596c2; --blue-600:#1b7a9f; --blue-700:#155e7a;
+  --ink-900:#122530; --ink-700:#3a5765; --ink-500:#6d8894; --ink-300:#b9cbd3;
+  --paper:#f7fbfd; --card:#ffffff; --line:#dceaf0;
+  --green:#3f9457; --green-bg:#e5f4e8; --amber:#c9861f; --amber-bg:#fbf0dc;
+  --red:#c14a3a; --red-bg:#fbe6e2;
+  --shadow: 0 10px 26px -10px rgba(18,37,48,.28); --radius:16px;
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+body{font-family:'Lexend',sans-serif; background:var(--paper); color:var(--ink-900); overflow:hidden;}
+button{font-family:inherit;}
+
+/* ===== top switcher ===== */
+.topbar{position:fixed; top:0; left:0; right:0; height:56px; background:var(--ink-900); display:flex; align-items:center; gap:14px; padding:0 20px; z-index:500; color:#fff;}
+.topbar .logo{display:flex; align-items:center; gap:8px; font-weight:800; font-size:17px;}
+.topbar .logo svg{width:22px; height:22px; color:var(--blue-400);}
+.switcher{display:flex; gap:4px; margin-left:auto; background:rgba(255,255,255,.08); padding:4px; border-radius:999px;}
+.switcher button{border:none; background:transparent; color:rgba(255,255,255,.7); font-size:12.5px; font-weight:600; padding:8px 16px; border-radius:999px; cursor:pointer; transition:.15s;}
+.switcher button.active{background:var(--blue-500); color:#fff;}
+.stage{position:fixed; top:56px; left:0; right:0; bottom:0; overflow:hidden;}
+
+/* ===== client phone shell ===== */
+.phonewrap{width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:radial-gradient(circle at 50% 20%, #eaf6fb, var(--paper)); display:none;}
+.phonewrap.show{display:flex;}
+.phone{width:340px; height:680px; background:#000; border-radius:42px; padding:12px; box-shadow:var(--shadow);}
+.screen{width:100%; height:100%; background:var(--card); border-radius:32px; overflow:hidden; position:relative; display:flex; flex-direction:column;}
+.notch{height:26px; display:flex; align-items:center; justify-content:center;}
+.notch .bar{width:90px; height:5px; background:#0002; border-radius:3px;}
+.step{display:none; flex-direction:column; height:100%; padding:0 22px 22px; overflow-y:auto;}
+.step.active{display:flex;}
+.step h2{font-size:20px; font-weight:800; margin-top:6px;}
+.step .sub{font-size:13px; color:var(--ink-500); margin-top:4px; line-height:1.5;}
+.step-brand{display:flex; align-items:center; gap:8px; font-weight:800; color:var(--blue-600); font-size:15px; margin-top:10px;}
+.step-brand svg{width:20px; height:20px;}
+.field{margin-top:16px;}
+.field label{font-size:12px; font-weight:700; color:var(--ink-700); display:block; margin-bottom:6px;}
+.field input{width:100%; border:1.5px solid var(--line); border-radius:10px; padding:11px 13px; font-family:inherit; font-size:14px; outline:none; background:var(--paper);}
+.field input:focus{border-color:var(--blue-400);}
+.primary{margin-top:auto; background:var(--blue-500); color:#fff; border:none; border-radius:12px; padding:14px; font-size:14.5px; font-weight:700; cursor:pointer;}
+.primary:hover{background:var(--blue-600);}
+.ghostbtn{background:transparent; border:1.5px solid var(--line); color:var(--ink-700); border-radius:12px; padding:12px; font-size:13.5px; font-weight:600; cursor:pointer; margin-top:10px;}
+
+.photobox{margin-top:14px; height:130px; border-radius:14px; border:2px dashed var(--blue-200); background:var(--blue-50); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; color:var(--blue-600); font-size:12.5px; font-weight:600; cursor:pointer; overflow:hidden; position:relative;}
+.photobox img{width:100%; height:100%; object-fit:cover; display:none;}
+.photobox svg{width:26px; height:26px;}
+.photobox.taken svg, .photobox.taken span{display:none;}
+.photobox.taken img{display:block;}
+
+.pinmap{margin-top:12px; height:170px; border-radius:14px; position:relative; overflow:hidden; background:
+  linear-gradient(#e4f2f7,#e4f2f7),
+  repeating-linear-gradient(0deg, transparent, transparent 26px, rgba(90,150,175,.16) 26px, rgba(90,150,175,.16) 28px),
+  repeating-linear-gradient(90deg, transparent, transparent 26px, rgba(90,150,175,.16) 26px, rgba(90,150,175,.16) 28px);
+  cursor:crosshair;
+}
+.pinmap .droppin{position:absolute; left:50%; top:50%; transform:translate(-50%,-100%); pointer-events:none; transition:.12s;}
+.pinmap .droppin svg{width:30px; height:30px; color:var(--blue-600); filter:drop-shadow(0 3px 5px rgba(0,0,0,.3));}
+.pinhint{position:absolute; bottom:8px; left:8px; right:8px; background:#fff; border-radius:8px; padding:6px 10px; font-size:11px; color:var(--ink-500); text-align:center; box-shadow:0 3px 8px rgba(0,0,0,.12);}
+
+.stepper{display:flex; align-items:center; justify-content:space-between; margin-top:16px; background:var(--paper); border:1.5px solid var(--line); border-radius:12px; padding:12px 16px;}
+.stepper .qbtn{width:32px; height:32px; border-radius:8px; border:1.5px solid var(--line); background:#fff; font-size:17px; font-weight:700; cursor:pointer; color:var(--blue-600);}
+.stepper .qval{font-size:16px; font-weight:800;}
+.sizeopt{display:flex; gap:8px; margin-top:14px;}
+.sizeopt .opt{flex:1; border:1.5px solid var(--line); border-radius:12px; padding:12px 8px; text-align:center; font-size:12.5px; font-weight:700; cursor:pointer; color:var(--ink-700);}
+.sizeopt .opt.active{border-color:var(--blue-500); background:var(--blue-50); color:var(--blue-700);}
+
+.okwrap{align-items:center; text-align:center; justify-content:center;}
+.okcircle{width:74px; height:74px; border-radius:50%; background:var(--green-bg); display:flex; align-items:center; justify-content:center; margin:0 auto;}
+.okcircle svg{width:36px; height:36px; color:var(--green);}
+.orderid{font-size:13px; color:var(--ink-500); margin-top:6px;}
+.statuspill{display:inline-flex; align-items:center; gap:6px; background:var(--amber-bg); color:var(--amber); font-size:12px; font-weight:700; padding:6px 14px; border-radius:999px; margin-top:14px;}
+.statuspill .dot{width:6px; height:6px; border-radius:50%; background:var(--amber); animation:pulse 1.5s infinite;}
+@keyframes pulse{0%,100%{opacity:1;} 50%{opacity:.3;}}
+
+/* ===== admin browser view ===== */
+.adminwrap{width:100%; height:100%; display:none; flex-direction:column;}
+.adminwrap.show{display:flex;}
+.chrome{background:#e6eef1; padding:9px 16px; display:flex; align-items:center; gap:10px; border-bottom:1px solid #d3e0e5; flex-shrink:0;}
+.dots{display:flex; gap:6px;}
+.dot2{width:10px; height:10px; border-radius:50%;}
+.dot2.r{background:#ec6a5e;} .dot2.y{background:#f4bf4f;} .dot2.g{background:#61c454;}
+.urlbar{flex:1; background:#fff; border-radius:8px; padding:6px 14px; font-size:12px; color:var(--ink-500);}
+.adm-head{background:var(--card); border-bottom:1px solid var(--line); padding:14px 24px; display:flex; align-items:center; gap:16px; flex-shrink:0;}
+.adm-head .logo{display:flex; align-items:center; gap:8px; font-weight:800; font-size:18px; color:var(--blue-700);}
+.adm-head .logo svg{width:22px; height:22px;}
+.livebadge{margin-left:auto; display:flex; align-items:center; gap:8px; background:var(--green-bg); color:var(--green); font-size:12.5px; font-weight:700; padding:8px 14px; border-radius:999px;}
+.livebadge .dot{width:7px; height:7px; border-radius:50%; background:var(--green); animation:pulse 1.6s infinite;}
+
+.toast{position:fixed; top:70px; right:24px; background:var(--ink-900); color:#fff; padding:14px 18px; border-radius:12px; box-shadow:var(--shadow); display:flex; align-items:center; gap:12px; z-index:600; transform:translateX(420px); transition:.35s ease; max-width:320px;}
+.toast.show{transform:translateX(0);}
+.toast svg{width:20px; height:20px; color:var(--blue-400); flex-shrink:0;}
+.toast .tt{font-size:13px; font-weight:700;}
+.toast .td{font-size:11.5px; color:rgba(255,255,255,.65); margin-top:2px;}
+
+.adm-body{flex:1; display:flex; overflow:hidden;}
+.orderlist{width:400px; min-width:340px; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:12px; background:var(--paper); border-right:1px solid var(--line);}
+.ocard{background:var(--card); border:1.5px solid var(--line); border-radius:var(--radius); padding:14px; cursor:pointer; transition:.15s; display:flex; gap:12px;}
+.ocard:hover, .ocard.highlight{border-color:var(--blue-400); box-shadow:var(--shadow);}
+.ocard.urgent{border-color:var(--red); background:var(--red-bg);}
+.ocard.entregado{opacity:.55;}
+.ocard img{width:54px; height:54px; border-radius:10px; object-fit:cover; flex-shrink:0; background:var(--blue-100);}
+.oc-body{flex:1; min-width:0;}
+.oc-top{display:flex; justify-content:space-between; align-items:flex-start; gap:6px;}
+.oc-name{font-weight:700; font-size:14px;}
+.elapsed{font-size:11.5px; font-weight:700; color:var(--ink-500); white-space:nowrap;}
+.elapsed.urgent{color:var(--red);}
+.oc-addr{font-size:12px; color:var(--ink-500); margin-top:2px;}
+.oc-qty{font-size:11.5px; color:var(--ink-500); margin-top:4px;}
+.statuschip{display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:700; padding:4px 10px; border-radius:999px; margin-top:8px; cursor:pointer; border:none;}
+.statuschip.pendiente{background:var(--amber-bg); color:var(--amber);}
+.statuschip.preparando{background:var(--blue-100); color:var(--blue-700);}
+.statuschip.camino{background:#e4e9fb; color:#4c5fc2;}
+.statuschip.entregado{background:var(--green-bg); color:var(--green);}
+.statuschip .dot{width:5px; height:5px; border-radius:50%; background:currentColor;}
+
+.mappane{flex:1; position:relative; background:
+  linear-gradient(#e9f4f8,#e9f4f8),
+  repeating-linear-gradient(0deg, transparent, transparent 56px, rgba(90,150,175,.13) 56px, rgba(90,150,175,.13) 58px),
+  repeating-linear-gradient(90deg, transparent, transparent 56px, rgba(90,150,175,.13) 56px, rgba(90,150,175,.13) 58px);
+  overflow:hidden;
+}
+.mappane::before{content:''; position:absolute; inset:0; background:
+  radial-gradient(circle at 25% 30%, rgba(150,190,190,.3) 0, transparent 20%),
+  radial-gradient(circle at 75% 65%, rgba(150,175,210,.3) 0, transparent 18%);
+}
+.marker{position:absolute; transform:translate(-50%,-100%); cursor:pointer; transition:.18s; z-index:5;}
+.marker.enter{animation:drop .4s ease;}
+@keyframes drop{from{transform:translate(-50%,-160%); opacity:0;} to{transform:translate(-50%,-100%); opacity:1;}}
+.marker .mpin{width:34px; height:34px; border-radius:50% 50% 50% 4px; transform:rotate(45deg); display:flex; align-items:center; justify-content:center; box-shadow:0 3px 10px rgba(0,0,0,.25); background:var(--amber);}
+.marker .mpin svg{transform:rotate(-45deg); width:16px; height:16px; color:#fff;}
+.marker.preparando .mpin{background:var(--blue-500);}
+.marker.camino .mpin{background:#4c5fc2;}
+.marker.entregado .mpin{background:var(--green); opacity:.5;}
+.marker.urgent .mpin{background:var(--red);}
+.marker.active .mpin{transform:rotate(45deg) scale(1.15);}
+.mapctrls{position:absolute; right:16px; bottom:16px; display:flex; flex-direction:column; gap:2px; background:#fff; border-radius:10px; box-shadow:var(--shadow); overflow:hidden; z-index:15;}
+.mapctrls button{width:36px; height:36px; border:none; background:#fff; font-size:17px; font-weight:700; cursor:pointer; color:var(--ink-700); border-bottom:1px solid var(--line);}
+.maplegend{position:absolute; top:14px; left:14px; background:#fff; border-radius:12px; padding:10px 14px; box-shadow:var(--shadow); font-size:11.5px; color:var(--ink-700); z-index:15; display:flex; flex-direction:column; gap:6px;}
+.maplegend .li{display:flex; align-items:center; gap:7px;}
+.maplegend .sw{width:9px; height:9px; border-radius:50%;}
+
+.restartbtn{position:fixed; bottom:18px; left:18px; z-index:300; background:var(--ink-900); color:#fff; border:none; border-radius:999px; padding:10px 18px; font-size:12.5px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:7px; box-shadow:var(--shadow);}
+.restartbtn svg{width:13px; height:13px;}
+
+@media (max-width:880px){
+  .orderlist{width:100%; min-width:0;}
+  .mappane{display:none;}
+  .phone{width:300px; height:610px;}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C9 6 5 10.5 5 14.5A7 7 0 0019 14.5C19 10.5 15 6 12 2z"/></svg>
+    AquaRuta
+  </div>
+  <div class="switcher">
+    <button class="active" id="btnClient" onclick="setView('client')">App cliente</button>
+    <button id="btnAdmin" onclick="setView('admin')">Panel de reparto</button>
+  </div>
+</div>
+
+<div class="stage">
+
+  <!-- ===== CLIENT PHONE ===== -->
+  <div class="phonewrap show" id="phonewrap">
+    <div class="phone">
+      <div class="screen">
+        <div class="notch"><div class="bar"></div></div>
+
+        <!-- step 1: registro -->
+        <div class="step active" id="s1">
+          <div class="step-brand">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C9 6 5 10.5 5 14.5A7 7 0 0019 14.5C19 10.5 15 6 12 2z"/></svg>
+            AquaRuta
+          </div>
+          <h2>Crea tu cuenta</h2>
+          <div class="sub">Solo lo necesario para que tu pedido llegue al lugar correcto.</div>
+          <div class="field"><label>Nombre completo</label><input placeholder="Ej. Marta Elena Diaz" value="Marta Elena Diaz"></div>
+          <div class="field"><label>Numero de telefono</label><input placeholder="55 1234 5678" value="55 8823 4471"></div>
+          <div class="field"><label>Direccion de entrega</label><input placeholder="Calle, colonia, ciudad" value="Av. Reforma 214, Col. Centro"></div>
+          <button class="primary" onclick="goStep('s2')">Continuar</button>
+        </div>
+
+        <!-- step 2: foto + pin -->
+        <div class="step" id="s2">
+          <h2>Punto exacto de entrega</h2>
+          <div class="sub">Sube una foto del lugar y ajusta el pin: eso evita que el repartidor llegue a la puerta equivocada.</div>
+          <div class="photobox" id="photobox" onclick="takePhoto()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h3l2-2h6l2 2h3a1 1 0 011 1v11a1 1 0 01-1 1H4a1 1 0 01-1-1V8a1 1 0 011-1z"/><circle cx="12" cy="13" r="3.5"/></svg>
+            <span>Toca para tomar la foto</span>
+            <img id="photoimg" src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=500&q=80" alt="Punto de entrega">
+          </div>
+          <div class="pinmap" id="pinmap" onclick="movePin(event)">
+            <div class="droppin" id="droppin">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C9 6 5 10.5 5 14.5A7 7 0 0019 14.5C19 10.5 15 6 12 2z"/></svg>
+            </div>
+            <div class="pinhint">Arrastra el mapa y toca para corregir el pin exacto</div>
+          </div>
+          <button class="primary" onclick="goStep('s3')">Confirmar ubicacion</button>
+        </div>
+
+        <!-- step 3: pedido -->
+        <div class="step" id="s3">
+          <h2>Tu pedido</h2>
+          <div class="sub">Elige el tamano y la cantidad de garrafones.</div>
+          <div class="sizeopt">
+            <div class="opt active" data-size="20L" onclick="pickSize(this)">Garrafon 20L</div>
+            <div class="opt" data-size="10L" onclick="pickSize(this)">Garrafon 10L</div>
+            <div class="opt" data-size="1L" onclick="pickSize(this)">Botellas 1L (x12)</div>
+          </div>
+          <div class="stepper">
+            <span style="font-size:13px; font-weight:600; color:var(--ink-700);">Cantidad</span>
+            <div style="display:flex; align-items:center; gap:14px;">
+              <button class="qbtn" onclick="changeQty(-1)">-</button>
+              <span class="qval" id="qtyval">2</span>
+              <button class="qbtn" onclick="changeQty(1)">+</button>
+            </div>
+          </div>
+          <button class="primary" onclick="goStep('s4'); prepareOrder();">Confirmar pedido</button>
+        </div>
+
+        <!-- step 4: confirmacion -->
+        <div class="step okwrap" id="s4">
+          <div class="okcircle">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg>
+          </div>
+          <h2 style="margin-top:16px;">Pedido enviado</h2>
+          <div class="orderid" id="orderIdLabel">Pedido #AR-2291</div>
+          <div class="statuspill"><span class="dot"></span>Pendiente de preparacion</div>
+          <div class="sub" style="margin-top:16px;">El equipo de reparto ya recibio tu foto y tu ubicacion exacta. Te avisamos cuando el pedido salga en ruta.</div>
+          <button class="ghostbtn" onclick="sendToAdmin()">Ver como llega al panel de reparto</button>
+          <button class="ghostbtn" onclick="resetClient()">Hacer otro pedido</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== ADMIN PANEL ===== -->
+  <div class="adminwrap" id="adminwrap">
+    <div class="chrome">
+      <div class="dots"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span></div>
+      <div class="urlbar">reparto.aquaruta.mx/panel</div>
+    </div>
+    <div class="adm-head">
+      <div class="logo">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C9 6 5 10.5 5 14.5A7 7 0 0019 14.5C19 10.5 15 6 12 2z"/></svg>
+        AquaRuta - Panel de reparto
+      </div>
+      <div class="livebadge"><span class="dot"></span><span id="activeCount">4</span> pedidos activos</div>
+    </div>
+    <div class="adm-body">
+      <div class="orderlist" id="orderlist"></div>
+      <div class="mappane" id="mappane">
+        <div class="maplegend">
+          <div class="li"><span class="sw" style="background:var(--red)"></span>Pendiente (urgente)</div>
+          <div class="li"><span class="sw" style="background:var(--amber)"></span>Pendiente</div>
+          <div class="li"><span class="sw" style="background:var(--blue-500)"></span>Preparando</div>
+          <div class="li"><span class="sw" style="background:#4c5fc2"></span>En camino</div>
+          <div class="li"><span class="sw" style="background:var(--green)"></span>Entregado</div>
+        </div>
+        <div class="mapctrls"><button onclick="pulseMap(1)">+</button><button onclick="pulseMap(-1)">-</button></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg>
+  <div>
+    <div class="tt" id="toastTitle">Nuevo pedido</div>
+    <div class="td" id="toastDesc">-</div>
+  </div>
+</div>
+
+<button class="restartbtn" onclick="location.reload()">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 11-3-6.7"/><path d="M21 3v6h-6"/></svg>
+  Reiniciar demo
+</button>
+
+<script>
+const PINSVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C9 6 5 10.5 5 14.5A7 7 0 0019 14.5C19 10.5 15 6 12 2z"/></svg>';
+const STATUSES = ['pendiente','preparando','camino','entregado'];
+const STATUSLABEL = {pendiente:'Pendiente', preparando:'Preparando', camino:'En camino', entregado:'Entregado'};
+
+let orders = [
+  {id:'AR-2264', name:'Roberto Nunez', addr:'Calz. Independencia 88', qty:'3 garrafones 20L', x:34, y:40, status:'pendiente', started: Date.now()-38*60000, urgent:true,
+   img:'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=200&q=80'},
+  {id:'AR-2287', name:'Familia Gutierrez', addr:'Priv. Las Flores 12', qty:'1 garrafon 20L', x:58, y:24, status:'preparando', started: Date.now()-11*60000, urgent:false,
+   img:'https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=200&q=80'},
+  {id:'AR-2289', name:'Carlos Beltran', addr:'Av. Juarez 501', qty:'6 garrafones 20L', x:72, y:60, status:'camino', started: Date.now()-22*60000, urgent:false,
+   img:'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=200&q=80'},
+  {id:'AR-2201', name:'Lucia Fernandez', addr:'Calle Hidalgo 77', qty:'2 garrafones 10L', x:47, y:72, status:'entregado', started: Date.now()-95*60000, urgent:false,
+   img:'https://images.unsplash.com/photo-1523217582562-09d0def993a6?w=200&q=80'},
+];
+
+let pendingOrder = null;
+let qty = 2;
+let selSize = '20L';
+
+function goStep(id){
+  document.querySelectorAll('.step').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function takePhoto(){ document.getElementById('photobox').classList.add('taken'); }
+function movePin(e){
+  const rect = e.currentTarget.getBoundingClientRect();
+  const x = ((e.clientX-rect.left)/rect.width)*100;
+  const y = ((e.clientY-rect.top)/rect.height)*100;
+  document.getElementById('droppin').style.left = x+'%';
+  document.getElementById('droppin').style.top = y+'%';
+}
+function pickSize(el){
+  document.querySelectorAll('.sizeopt .opt').forEach(o=>o.classList.remove('active'));
+  el.classList.add('active');
+  selSize = el.dataset.size;
+}
+function changeQty(d){
+  qty = Math.max(1, qty+d);
+  document.getElementById('qtyval').textContent = qty;
+}
+function prepareOrder(){
+  const id = 'AR-'+(2290+Math.floor(Math.random()*90));
+  document.getElementById('orderIdLabel').textContent = 'Pedido #'+id;
+  pendingOrder = {
+    id, name:'Marta Elena Diaz', addr:'Av. Reforma 214, Col. Centro',
+    qty:(selSize==='1L' ? qty+' cajas botellas 1L' : qty+' garrafones '+selSize),
+    x: 20+Math.random()*60, y: 20+Math.random()*60, status:'pendiente', started: null, urgent:false,
+    img:'https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=200&q=80'
+  };
+}
+function resetClient(){
+  goStep('s1');
+  document.getElementById('photobox').classList.remove('taken');
+}
+
+function setView(v){
+  document.getElementById('phonewrap').classList.toggle('show', v==='client');
+  document.getElementById('adminwrap').classList.toggle('show', v==='admin');
+  document.getElementById('btnClient').classList.toggle('active', v==='client');
+  document.getElementById('btnAdmin').classList.toggle('active', v==='admin');
+}
+
+function sendToAdmin(){
+  if(pendingOrder){
+    pendingOrder.started = Date.now();
+    orders.unshift(pendingOrder);
+    pendingOrder = null;
+    setView('admin');
+    renderOrders();
+    showToast('Nuevo pedido recibido', 'Marta Elena Diaz - Av. Reforma 214');
+    setTimeout(()=>{
+      const m = document.getElementById('marker-'+orders[0].id);
+      if(m) m.classList.add('enter');
+    }, 60);
+  } else {
+    setView('admin');
+  }
+}
+function showToast(title, desc){
+  document.getElementById('toastTitle').textContent = title;
+  document.getElementById('toastDesc').textContent = desc;
+  const t = document.getElementById('toast');
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 3800);
+}
+
+function elapsedLabel(o){
+  if(!o.started) return '-';
+  const mins = Math.max(0, Math.floor((Date.now()-o.started)/60000));
+  return mins < 1 ? 'Hace instantes' : 'Hace '+mins+' min';
+}
+function isUrgent(o){
+  if(!o.started) return false;
+  const mins = (Date.now()-o.started)/60000;
+  return o.status==='pendiente' && mins > 25;
+}
+
+function renderOrders(){
+  const list = document.getElementById('orderlist');
+  const map = document.getElementById('mappane');
+  list.querySelectorAll('.ocard').forEach(c=>c.remove());
+  map.querySelectorAll('.marker').forEach(m=>m.remove());
+
+  let active = 0;
+  orders.forEach(o=>{
+    if(o.status!=='entregado') active++;
+    const urgent = isUrgent(o);
+    const card = document.createElement('div');
+    card.className = 'ocard '+(o.status==='entregado'?'entregado':'')+(urgent?' urgent':'');
+    card.id = 'card-'+o.id;
+    card.innerHTML = `
+      <img src="${o.img}" alt="${o.name}">
+      <div class="oc-body">
+        <div class="oc-top">
+          <div class="oc-name">${o.name}</div>
+          <div class="elapsed ${urgent?'urgent':''}">${elapsedLabel(o)}</div>
+        </div>
+        <div class="oc-addr">${o.addr}</div>
+        <div class="oc-qty">${o.qty} &middot; #${o.id}</div>
+        <button class="statuschip ${o.status}" onclick="advanceStatus('${o.id}', event)"><span class="dot"></span>${STATUSLABEL[o.status]}</button>
+      </div>`;
+    card.addEventListener('mouseenter', ()=>highlight(o.id));
+    list.appendChild(card);
+
+    const m = document.createElement('div');
+    m.className = 'marker '+o.status+(urgent?' urgent':'');
+    m.id = 'marker-'+o.id;
+    m.style.left = o.x+'%';
+    m.style.top = o.y+'%';
+    m.innerHTML = `<div class="mpin">${PINSVG}</div>`;
+    m.addEventListener('mouseenter', ()=>highlight(o.id));
+    map.appendChild(m);
+  });
+  document.getElementById('activeCount').textContent = active;
+}
+
+function highlight(id){
+  document.querySelectorAll('.ocard').forEach(c=>c.classList.remove('highlight'));
+  document.querySelectorAll('.marker').forEach(m=>m.classList.remove('active'));
+  const c = document.getElementById('card-'+id);
+  const m = document.getElementById('marker-'+id);
+  if(c) c.classList.add('highlight');
+  if(m) m.classList.add('active');
+}
+
+function advanceStatus(id, e){
+  e.stopPropagation();
+  const o = orders.find(x=>x.id===id);
+  const idx = STATUSES.indexOf(o.status);
+  o.status = STATUSES[Math.min(idx+1, STATUSES.length-1)];
+  renderOrders();
+}
+
+function pulseMap(dir){
+  document.querySelectorAll('.marker').forEach(m=>{
+    m.style.transition='.2s';
+    m.style.transform = dir>0 ? 'translate(-50%,-100%) scale(1.12)' : 'translate(-50%,-100%) scale(1)';
+  });
+}
+
+setInterval(renderOrders, 15000);
+renderOrders();
+</script>
+</body>
+</html>
