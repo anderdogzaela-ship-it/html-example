@@ -1,0 +1,454 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GasJa - Prototipo Fase 1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+:root{
+  --amber-50:#fff8ec; --amber-100:#feecc8; --amber-200:#fbd68a;
+  --amber-400:#f0a83d; --amber-500:#e8871f; --amber-600:#c26a10; --amber-700:#9a520c;
+  --ink-900:#241a10; --ink-700:#4a3826; --ink-500:#7a6650; --ink-300:#c9bba8;
+  --paper:#fffaf3; --card:#ffffff; --line:#f0e2c8;
+  --green:#3f9457; --green-bg:#e5f4e8; --red:#c14a3a; --red-bg:#fbe6e2;
+  --blue:#2f6fa8; --blue-bg:#e7f0f8;
+  --shadow: 0 10px 26px -10px rgba(36,26,16,.3); --radius:16px;
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+body{font-family:'Lexend',sans-serif; background:var(--paper); color:var(--ink-900); overflow:hidden; -webkit-font-smoothing:antialiased;}
+button{font-family:inherit;}
+
+.topbar{position:fixed; top:0; left:0; right:0; height:56px; background:var(--ink-900); display:flex; align-items:center; gap:14px; padding:0 20px; z-index:500; color:#fff;}
+.topbar .logo{display:flex; align-items:center; gap:8px; font-weight:800; font-size:17px;}
+.topbar .logo i{color:var(--amber-400); font-size:19px;}
+.switcher{display:flex; gap:4px; margin-left:auto; background:rgba(255,255,255,.08); padding:4px; border-radius:999px;}
+.switcher button{border:none; background:transparent; color:rgba(255,255,255,.7); font-size:12.5px; font-weight:600; padding:8px 16px; border-radius:999px; cursor:pointer; transition:.15s;}
+.switcher button.active{background:var(--amber-500); color:#fff;}
+.restartbtn{border:1.5px solid rgba(255,255,255,.25); background:transparent; color:#fff; font-size:12px; font-weight:600; padding:7px 14px; border-radius:999px; cursor:pointer; transition:.15s; display:flex; align-items:center; gap:6px;}
+.restartbtn:hover{background:rgba(255,255,255,.1);}
+.stage{position:fixed; top:56px; left:0; right:0; bottom:0; overflow:hidden;}
+
+/* ===== phone shell ===== */
+.phonewrap{width:100%; height:100%; display:none; align-items:center; justify-content:center; background:radial-gradient(circle at 50% 15%, #fef0d9, var(--paper));}
+.phonewrap.show{display:flex;}
+.phone{width:340px; height:680px; background:#141414; border-radius:42px; padding:12px; box-shadow:var(--shadow);}
+.screen{width:100%; height:100%; background:var(--card); border-radius:32px; overflow:hidden; position:relative; display:flex; flex-direction:column;}
+.notch{height:26px; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+.notch .bar{width:90px; height:5px; background:#0002; border-radius:3px;}
+.step{display:none; flex-direction:column; height:100%; padding:0 20px 20px; overflow-y:auto;}
+.step.active{display:flex; animation:fadeIn .25s ease;}
+@keyframes fadeIn{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+.step h2{font-size:19px; font-weight:800; margin-top:4px;}
+.step .sub{font-size:12.5px; color:var(--ink-500); margin-top:4px; line-height:1.5;}
+.step-brand{display:flex; align-items:center; gap:7px; font-weight:800; color:var(--amber-600); font-size:14px; margin-top:8px;}
+.step-brand i{font-size:16px;}
+.primary{margin-top:auto; background:var(--amber-500); color:#fff; border:none; border-radius:12px; padding:14px; font-size:14px; font-weight:700; cursor:pointer; transition:.15s;}
+.primary:hover{background:var(--amber-600); transform:translateY(-1px);}
+.primary:active{transform:scale(.98);}
+.ghostbtn{background:transparent; border:1.5px solid var(--line); color:var(--ink-700); border-radius:12px; padding:11px; font-size:12.5px; font-weight:600; cursor:pointer; margin-top:8px;}
+.ghostbtn:hover{background:var(--amber-50);}
+
+/* address card */
+.addrcard{margin-top:14px; background:var(--amber-50); border:1.5px solid var(--amber-200); border-radius:14px; padding:14px; display:flex; gap:10px; align-items:flex-start;}
+.addrcard i{color:var(--amber-600); font-size:16px; margin-top:2px;}
+.addrcard div b{font-size:13px;} .addrcard div span{font-size:12px; color:var(--ink-500); display:block; margin-top:2px;}
+.heroimg{margin-top:16px; height:150px; border-radius:16px; background-size:cover; background-position:center; position:relative; overflow:hidden;}
+.heroimg::after{content:''; position:absolute; inset:0; background:linear-gradient(180deg, rgba(20,15,8,0), rgba(20,15,8,.45));}
+
+/* filters */
+.sortrow{display:flex; gap:8px; margin-top:14px; overflow-x:auto; padding-bottom:2px;}
+.chip{font-size:11.5px; font-weight:700; padding:8px 13px; border-radius:999px; border:1.5px solid var(--line); background:var(--paper); color:var(--ink-700); cursor:pointer; white-space:nowrap; transition:.15s; flex-shrink:0;}
+.chip.active{background:var(--ink-900); color:#fff; border-color:var(--ink-900);}
+.entlist{display:flex; flex-direction:column; gap:10px; margin-top:12px;}
+.entcard{border:1.5px solid var(--line); border-radius:14px; padding:12px; display:flex; gap:10px; align-items:center; cursor:pointer; transition:.15s; background:var(--card);}
+.entcard:hover{border-color:var(--amber-400); box-shadow:var(--shadow);}
+.entcard.picked{border-color:var(--amber-500); background:var(--amber-50);}
+.entcard img{width:52px; height:52px; border-radius:12px; object-fit:cover; flex-shrink:0;}
+.entcard .eb{flex:1; min-width:0;}
+.entcard .eb b{font-size:13.5px;}
+.entcard .eb .co{font-size:11.5px; color:var(--ink-500); display:block; margin-top:1px;}
+.badgerow{display:flex; gap:6px; margin-top:5px; flex-wrap:wrap;}
+.badge{font-size:10px; font-weight:700; padding:3px 8px; border-radius:999px;}
+.badge.fast{background:var(--green-bg); color:var(--green);}
+.badge.eco{background:var(--blue-bg); color:var(--blue);}
+.eta{text-align:right; flex-shrink:0;}
+.eta b{font-size:16px; color:var(--amber-600); display:block;}
+.eta span{font-size:10px; color:var(--ink-500);}
+
+/* confirm */
+.summarycard{margin-top:16px; border:1.5px solid var(--line); border-radius:14px; padding:14px; background:var(--paper);}
+.summarycard .row{display:flex; justify-content:space-between; align-items:center; padding:7px 0; font-size:13px;}
+.summarycard .row:not(:last-child){border-bottom:1px dashed var(--line);}
+.summarycard .row b{font-size:13.5px;}
+
+/* tracking */
+.mapbox{margin-top:14px; height:280px; border-radius:16px; position:relative; overflow:hidden; background:
+  linear-gradient(#eef4f8,#eef4f8),
+  repeating-linear-gradient(0deg, transparent, transparent 24px, rgba(120,150,170,.18) 24px, rgba(120,150,170,.18) 26px),
+  repeating-linear-gradient(90deg, transparent, transparent 24px, rgba(120,150,170,.18) 24px, rgba(120,150,170,.18) 26px);
+}
+.routeline{position:absolute; left:15%; top:78%; width:70%; height:2px; background:repeating-linear-gradient(90deg, var(--amber-400) 0 6px, transparent 6px 12px); transform-origin:left; z-index:1;}
+.pinme{position:absolute; left:85%; top:20%; transform:translate(-50%,-50%); z-index:3;}
+.pinme .dot{width:16px; height:16px; border-radius:50%; background:var(--blue); border:3px solid #fff; box-shadow:0 2px 8px rgba(0,0,0,.3);}
+.pincourier{position:absolute; left:15%; top:78%; transform:translate(-50%,-50%); z-index:2; transition:left 1.4s linear, top 1.4s linear;}
+.pincourier i{font-size:26px; color:var(--amber-600); filter:drop-shadow(0 3px 5px rgba(0,0,0,.35));}
+.statuspill{display:inline-flex; align-items:center; gap:7px; background:var(--amber-100); color:var(--amber-700); font-size:12px; font-weight:700; padding:7px 14px; border-radius:999px; margin-top:14px;}
+.statuspill .dot2{width:6px; height:6px; border-radius:50%; background:var(--amber-600); animation:pulse 1.3s infinite;}
+@keyframes pulse{0%,100%{opacity:1;} 50%{opacity:.25;}}
+.etabig{text-align:center; margin-top:10px;}
+.etabig b{font-size:30px; color:var(--ink-900);}
+.etabig span{font-size:11.5px; color:var(--ink-500); display:block; margin-top:-2px;}
+
+.okwrap{align-items:center; text-align:center; justify-content:center;}
+.okcircle{width:76px; height:76px; border-radius:50%; background:var(--green-bg); display:flex; align-items:center; justify-content:center; margin:0 auto;}
+.okcircle i{font-size:34px; color:var(--green);}
+.starsrow{display:flex; gap:8px; justify-content:center; margin-top:16px;}
+.starsrow i{font-size:24px; color:var(--amber-400); cursor:pointer;}
+
+/* incoming order (courier) */
+.ringwrap{width:84px; height:84px; border-radius:50%; margin:6px auto 0; display:flex; align-items:center; justify-content:center; position:relative; background:conic-gradient(var(--amber-500) var(--ringpct,70%), var(--line) 0);}
+.ringwrap::before{content:''; position:absolute; inset:7px; background:#fff; border-radius:50%;}
+.ringwrap b{position:relative; font-size:22px; z-index:2;}
+.orderoffer{margin-top:14px; border:1.5px solid var(--amber-200); background:var(--amber-50); border-radius:14px; padding:14px;}
+.orderoffer .row{display:flex; justify-content:space-between; font-size:13px; padding:5px 0;}
+.actionrow{display:flex; gap:10px; margin-top:auto;}
+.actionrow .decline{flex:1; border:1.5px solid var(--red); color:var(--red); background:#fff; border-radius:12px; padding:13px; font-weight:700; font-size:13.5px; cursor:pointer;}
+.actionrow .accept{flex:1.4; border:none; background:var(--green); color:#fff; border-radius:12px; padding:13px; font-weight:700; font-size:13.5px; cursor:pointer;}
+.lockednote{margin-top:10px; font-size:11.5px; color:var(--ink-500); display:flex; gap:6px; align-items:center;}
+.lockednote i{color:var(--green);}
+
+/* ===== admin browser view ===== */
+.adminwrap{width:100%; height:100%; display:none; flex-direction:column;}
+.adminwrap.show{display:flex;}
+.chrome{background:#eee3cd; padding:9px 16px; display:flex; align-items:center; gap:10px; border-bottom:1px solid #ddcfae; flex-shrink:0;}
+.dots{display:flex; gap:6px;}
+.dot3{width:10px; height:10px; border-radius:50%;}
+.dot3.r{background:#ec6a5e;} .dot3.y{background:#f4bf4f;} .dot3.g{background:#61c454;}
+.urlbar{flex:1; background:#fff; border-radius:8px; padding:6px 14px; font-size:12px; color:var(--ink-500); max-width:340px;}
+.adminbody{flex:1; overflow-y:auto; padding:24px 32px; background:var(--paper);}
+.adminhead{display:flex; align-items:center; gap:12px; margin-bottom:20px;}
+.adminhead h1{font-size:22px; font-weight:800;}
+.adminhead .badge2{margin-left:auto; background:var(--green-bg); color:var(--green); font-size:12px; font-weight:700; padding:6px 14px; border-radius:999px;}
+.kpirow{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:22px;}
+.kpi{background:var(--card); border:1.5px solid var(--line); border-radius:14px; padding:16px 18px; box-shadow:0 2px 8px rgba(36,26,16,.05);}
+.kpi .lbl{font-size:11.5px; color:var(--ink-500); font-weight:600; text-transform:uppercase; letter-spacing:.3px;}
+.kpi .val{font-size:26px; font-weight:800; margin-top:4px;}
+.kpi .val i{font-size:15px; color:var(--amber-500); margin-right:4px;}
+.panelgrid{display:grid; grid-template-columns:1.3fr 1fr; gap:18px;}
+.panel{background:var(--card); border:1.5px solid var(--line); border-radius:16px; padding:18px; box-shadow:0 2px 10px rgba(36,26,16,.05);}
+.panel h3{font-size:14.5px; font-weight:700; margin-bottom:12px; display:flex; align-items:center; gap:8px;}
+.panel h3 i{color:var(--amber-500);}
+.orow{display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--line); font-size:13px;}
+.orow:last-child{border-bottom:none;}
+.orow .oid{font-weight:700; width:56px; flex-shrink:0;}
+.orow .name{flex:1; min-width:0; color:var(--ink-700);}
+.st{font-size:10.5px; font-weight:700; padding:4px 10px; border-radius:999px; flex-shrink:0;}
+.st.andamento{background:var(--amber-100); color:var(--amber-700);}
+.st.aceito{background:var(--blue-bg); color:var(--blue);}
+.st.entregue{background:var(--green-bg); color:var(--green);}
+.crow{display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid var(--line); font-size:13px;}
+.crow:last-child{border-bottom:none;}
+.crow img{width:32px; height:32px; border-radius:8px; object-fit:cover;}
+.crow .cname{flex:1;}
+.dotstatus{width:8px; height:8px; border-radius:50%; flex-shrink:0;}
+.dotstatus.livre{background:var(--green);}
+.dotstatus.ocupado{background:var(--amber-500);}
+.statlbl{font-size:11px; font-weight:700; color:var(--ink-500);}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo"><i class="fa-solid fa-fire-flame-curved"></i>GasJa</div>
+  <div class="switcher">
+    <button class="active" data-view="cliente">App Cliente</button>
+    <button data-view="entregador">App Entregador</button>
+    <button data-view="painel">Painel Admin</button>
+  </div>
+  <button class="restartbtn" onclick="restartAll()"><i class="fa-solid fa-rotate-left"></i>Reiniciar</button>
+</div>
+
+<div class="stage">
+
+  <!-- ===== CLIENTE ===== -->
+  <div class="phonewrap show" id="view-cliente">
+    <div class="phone"><div class="screen">
+      <div class="notch"><div class="bar"></div></div>
+
+      <div class="step active" id="c-1">
+        <div class="step-brand"><i class="fa-solid fa-fire-flame-curved"></i>GasJa</div>
+        <h2>Precisando de gas?</h2>
+        <div class="sub">Encontre entregadores disponiveis perto de voce agora.</div>
+        <div class="addrcard">
+          <i class="fa-solid fa-location-dot"></i>
+          <div><b>Entregar em</b><span>Rua das Palmeiras, 214 - Vila Nova</span></div>
+        </div>
+        <div class="heroimg" style="background-image:url('https://images.unsplash.com/photo-1585687433492-905a1a1d9f5c?w=600&h=400&fit=crop')"></div>
+        <button class="primary" onclick="goStep('c',2)">Pedir gas agora</button>
+      </div>
+
+      <div class="step" id="c-2">
+        <h2>Entregadores disponiveis</h2>
+        <div class="sub">6 entregadores na sua area agora</div>
+        <div class="sortrow">
+          <div class="chip active" data-c-sort="rapido" onclick="sortEnt(this,'rapido')">Mais rapido</div>
+          <div class="chip" data-c-sort="economico" onclick="sortEnt(this,'economico')">Mais economico</div>
+          <div class="chip" data-c-sort="empresa" onclick="sortEnt(this,'empresa')">Por empresa</div>
+        </div>
+        <div class="entlist" id="entlist"></div>
+        <button class="primary" style="margin-top:14px;" onclick="confirmPick()">Confirmar entregador</button>
+      </div>
+
+      <div class="step" id="c-3">
+        <h2>Confirme seu pedido</h2>
+        <div class="sub">Revise antes de enviar a solicitacao</div>
+        <div class="summarycard">
+          <div class="row"><span>Entregador</span><b id="sum-nome">-</b></div>
+          <div class="row"><span>Empresa</span><b id="sum-empresa">-</b></div>
+          <div class="row"><span>Tempo estimado</span><b id="sum-eta">-</b></div>
+          <div class="row"><span>Botijao</span><b>P13 - unidade</b></div>
+        </div>
+        <button class="primary" onclick="goStep('c',4); startTracking();">Confirmar e acompanhar</button>
+        <button class="ghostbtn" onclick="goStep('c',2)">Voltar para a lista</button>
+      </div>
+
+      <div class="step" id="c-4">
+        <h2>Entregador a caminho</h2>
+        <div class="statuspill" id="c-status"><span class="dot2"></span>Saiu para entrega</div>
+        <div class="mapbox">
+          <div class="routeline"></div>
+          <div class="pincourier" id="pin-courier"><i class="fa-solid fa-motorcycle"></i></div>
+          <div class="pinme"><div class="dot"></div></div>
+        </div>
+        <div class="etabig"><b id="eta-count">8 min</b><span>tempo estimado de chegada</span></div>
+      </div>
+
+      <div class="step okwrap" id="c-5">
+        <div class="okcircle"><i class="fa-solid fa-check"></i></div>
+        <h2 style="margin-top:16px;">Gas entregue!</h2>
+        <div class="sub">Pedido #GJ-4821 concluido em 7 min</div>
+        <div class="starsrow">
+          <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-regular fa-star"></i>
+        </div>
+        <button class="primary" style="margin-top:20px;" onclick="goStep('c',1)">Pedir novamente</button>
+      </div>
+
+    </div></div>
+  </div>
+
+  <!-- ===== ENTREGADOR ===== -->
+  <div class="phonewrap" id="view-entregador">
+    <div class="phone"><div class="screen">
+      <div class="notch"><div class="bar"></div></div>
+
+      <div class="step active" id="e-1">
+        <div class="step-brand"><i class="fa-solid fa-motorcycle"></i>GasJa Entregador</div>
+        <h2>Novo pedido disponivel</h2>
+        <div class="sub">Responda rapido, a oferta e exclusiva e expira em segundos.</div>
+        <div class="ringwrap" style="--ringpct:70%;"><b id="ringnum">8</b></div>
+        <div class="orderoffer">
+          <div class="row"><span>Cliente</span><b>Vila Nova, 1.8 km</b></div>
+          <div class="row"><span>Botijao</span><b>P13 - unidade</b></div>
+          <div class="row"><span>Estimativa</span><b>8 min</b></div>
+        </div>
+        <div class="actionrow">
+          <button class="decline" onclick="declineOrder()">Recusar</button>
+          <button class="accept" onclick="acceptOrder()">Aceitar pedido</button>
+        </div>
+        <div class="lockednote"><i class="fa-solid fa-lock"></i>Aceite exclusivo: assim que voce confirma, os outros entregadores param de receber esta oferta.</div>
+      </div>
+
+      <div class="step" id="e-2">
+        <h2>A caminho do cliente</h2>
+        <div class="sub">Rua das Palmeiras, 214 - Vila Nova</div>
+        <div class="mapbox" style="height:230px;">
+          <div class="routeline"></div>
+          <div class="pincourier" style="left:15%; top:78%;"><i class="fa-solid fa-motorcycle"></i></div>
+          <div class="pinme"><div class="dot"></div></div>
+        </div>
+        <div class="etabig"><b>8 min</b><span>ate o destino</span></div>
+        <button class="primary" onclick="goStep('e',3)">Cheguei ao destino</button>
+      </div>
+
+      <div class="step okwrap" id="e-3">
+        <div class="okcircle"><i class="fa-solid fa-box-open"></i></div>
+        <h2 style="margin-top:16px;">Confirmar entrega</h2>
+        <div class="sub">Marque como entregue para concluir o pedido</div>
+        <button class="primary" style="margin-top:20px;" onclick="goStep('e',4)">Marcar como entregue</button>
+      </div>
+
+      <div class="step okwrap" id="e-4">
+        <div class="okcircle"><i class="fa-solid fa-check"></i></div>
+        <h2 style="margin-top:16px;">Entrega concluida</h2>
+        <div class="sub">Voce esta disponivel para o proximo pedido</div>
+        <button class="primary" style="margin-top:20px;" onclick="goStep('e',1)">Ver proximo pedido</button>
+      </div>
+
+    </div></div>
+  </div>
+
+  <!-- ===== PAINEL ===== -->
+  <div class="adminwrap" id="view-painel">
+    <div class="chrome">
+      <div class="dots"><div class="dot3 r"></div><div class="dot3 y"></div><div class="dot3 g"></div></div>
+      <div class="urlbar"><i class="fa-solid fa-lock" style="font-size:10px; margin-right:6px;"></i>painel.gasja.app.br</div>
+    </div>
+    <div class="adminbody">
+      <div class="adminhead">
+        <h1>Operacao ao vivo</h1>
+        <span class="badge2"><i class="fa-solid fa-circle" style="font-size:7px; margin-right:6px;"></i>Atualizando em tempo real</span>
+      </div>
+      <div class="kpirow">
+        <div class="kpi"><div class="lbl">Pedidos ativos</div><div class="val"><i class="fa-solid fa-box"></i>12</div></div>
+        <div class="kpi"><div class="lbl">Entregadores disponiveis</div><div class="val"><i class="fa-solid fa-motorcycle"></i>9</div></div>
+        <div class="kpi"><div class="lbl">Entregadores ocupados</div><div class="val"><i class="fa-solid fa-truck-fast"></i>4</div></div>
+        <div class="kpi"><div class="lbl">Tempo medio de entrega</div><div class="val"><i class="fa-solid fa-clock"></i>11 min</div></div>
+      </div>
+      <div class="panelgrid">
+        <div class="panel">
+          <h3><i class="fa-solid fa-list-check"></i>Pedidos ativos</h3>
+          <div class="orow"><span class="oid">#4821</span><span class="name">Vila Nova - Marcos T.</span><span class="st andamento">A caminho</span></div>
+          <div class="orow"><span class="oid">#4822</span><span class="name">Jardim Sul - Renata F.</span><span class="st aceito">Aceito</span></div>
+          <div class="orow"><span class="oid">#4823</span><span class="name">Centro - Paulo A.</span><span class="st entregue">Entregue</span></div>
+          <div class="orow"><span class="oid">#4824</span><span class="name">Bela Vista - Camila O.</span><span class="st andamento">A caminho</span></div>
+          <div class="orow"><span class="oid">#4825</span><span class="name">Sao Judas - Elias R.</span><span class="st aceito">Aceito</span></div>
+        </div>
+        <div class="panel">
+          <h3><i class="fa-solid fa-motorcycle"></i>Entregadores</h3>
+          <div class="crow"><img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=faces"><span class="cname">Junior S. - GasExpress</span><span class="dotstatus ocupado"></span><span class="statlbl">Ocupado</span></div>
+          <div class="crow"><img src="https://images.unsplash.com/photo-1600180758890-6b94519a8ba6?w=100&h=100&fit=crop&crop=faces"><span class="cname">Marcia L. - Independente</span><span class="dotstatus livre"></span><span class="statlbl">Disponivel</span></div>
+          <div class="crow"><img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100&h=100&fit=crop&crop=faces"><span class="cname">Bruno K. - GasExpress</span><span class="dotstatus livre"></span><span class="statlbl">Disponivel</span></div>
+          <div class="crow"><img src="https://images.unsplash.com/photo-1552058544-f2b08422138a?w=100&h=100&fit=crop&crop=faces"><span class="cname">Diego M. - Independente</span><span class="dotstatus ocupado"></span><span class="statlbl">Ocupado</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const entregadores = [
+  {nome:"Junior S.", empresa:"GasExpress", foto:"https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&h=120&fit=crop&crop=faces", eta:6, fast:true, eco:false},
+  {nome:"Marcia L.", empresa:"Independente", foto:"https://images.unsplash.com/photo-1600180758890-6b94519a8ba6?w=120&h=120&fit=crop&crop=faces", eta:8, fast:false, eco:true},
+  {nome:"Bruno K.", empresa:"GasExpress", foto:"https://images.unsplash.com/photo-1517841905240-472988babdf9?w=120&h=120&fit=crop&crop=faces", eta:9, fast:false, eco:true},
+  {nome:"Diego M.", empresa:"Independente", foto:"https://images.unsplash.com/photo-1552058544-f2b08422138a?w=120&h=120&fit=crop&crop=faces", eta:12, fast:false, eco:false},
+];
+let picked = null;
+
+function renderEnt(sort){
+  let list = [...entregadores];
+  if(sort==='rapido') list.sort((a,b)=>a.eta-b.eta);
+  if(sort==='economico') list.sort((a,b)=>(b.eco-a.eco));
+  if(sort==='empresa') list.sort((a,b)=>a.empresa.localeCompare(b.empresa));
+  const el = document.getElementById('entlist');
+  el.innerHTML = list.map((e,i)=>`
+    <div class="entcard" onclick="pickEnt(this,${entregadores.indexOf(e)})">
+      <img src="${e.foto}">
+      <div class="eb">
+        <b>${e.nome}</b><span class="co">${e.empresa}</span>
+        <div class="badgerow">
+          ${e.fast?'<span class="badge fast">Mais rapido</span>':''}
+          ${e.eco?'<span class="badge eco">Mais economico</span>':''}
+        </div>
+      </div>
+      <div class="eta"><b>${e.eta} min</b><span>chegada</span></div>
+    </div>`).join('');
+}
+function sortEnt(btn, key){
+  document.querySelectorAll('[data-c-sort]').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderEnt(key);
+}
+function pickEnt(card, idx){
+  document.querySelectorAll('.entcard').forEach(c=>c.classList.remove('picked'));
+  card.classList.add('picked');
+  picked = entregadores[idx];
+}
+function confirmPick(){
+  if(!picked) picked = entregadores[0];
+  document.getElementById('sum-nome').textContent = picked.nome;
+  document.getElementById('sum-empresa').textContent = picked.empresa;
+  document.getElementById('sum-eta').textContent = picked.eta + ' min';
+  goStep('c',3);
+}
+
+function goStep(prefix, n){
+  document.querySelectorAll(`[id^="${prefix}-"]`).forEach(s=>s.classList.remove('active'));
+  document.getElementById(`${prefix}-${n}`).classList.add('active');
+  if(prefix==='c' && n===2) renderEnt('rapido');
+}
+
+let trackTimer = null;
+function startTracking(){
+  clearInterval(trackTimer);
+  const pin = document.getElementById('pin-courier');
+  const statusEl = document.getElementById('c-status');
+  const etaEl = document.getElementById('eta-count');
+  const stages = [
+    {left:'15%', top:'78%'}, {left:'32%', top:'62%'}, {left:'50%', top:'50%'},
+    {left:'66%', top:'38%'}, {left:'80%', top:'26%'}, {left:'85%', top:'20%'}
+  ];
+  let i=0, eta=8;
+  pin.style.left = stages[0].left; pin.style.top = stages[0].top;
+  trackTimer = setInterval(()=>{
+    i++;
+    if(i < stages.length){
+      pin.style.left = stages[i].left; pin.style.top = stages[i].top;
+      eta = Math.max(1, eta-1.5)|0;
+      etaEl.textContent = eta + ' min';
+      statusEl.innerHTML = i < stages.length-2 ? '<span class="dot2"></span>A caminho' : '<span class="dot2"></span>Chegando';
+    } else {
+      clearInterval(trackTimer);
+      statusEl.innerHTML = '<span class="dot2"></span>Entregando';
+      setTimeout(()=>goStep('c',5), 1300);
+    }
+  }, 1500);
+}
+
+let ringTimer = null;
+function startRing(){
+  clearInterval(ringTimer);
+  let pct = 100;
+  const ring = document.querySelector('#e-1 .ringwrap');
+  const num = document.getElementById('ringnum');
+  let secs = 8;
+  ringTimer = setInterval(()=>{
+    secs--; pct -= 12.5;
+    if(ring) ring.style.setProperty('--ringpct', Math.max(0,pct)+'%');
+    if(num) num.textContent = Math.max(0,secs);
+    if(secs<=0){ clearInterval(ringTimer); }
+  },1000);
+}
+function acceptOrder(){
+  clearInterval(ringTimer);
+  goStep('e',2);
+}
+function declineOrder(){
+  clearInterval(ringTimer);
+  goStep('e',1);
+  startRing();
+}
+
+document.querySelectorAll('.switcher button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.switcher button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.phonewrap, .adminwrap').forEach(v=>{v.classList.remove('show');});
+    document.getElementById('view-'+btn.dataset.view).classList.add('show');
+  });
+});
+
+function restartAll(){
+  clearInterval(trackTimer); clearInterval(ringTimer);
+  goStep('c',1); goStep('e',1);
+  picked = null;
+  startRing();
+}
+renderEnt('rapido');
+startRing();
+</script>
+</body>
+</html>
