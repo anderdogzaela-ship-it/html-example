@@ -1,0 +1,347 @@
+<title>Indaga — Consultas en Lenguaje Natural sobre SQL Server</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+:root{
+  --g50:#fffbeb;--g100:#fef3c7;--g200:#fde68a;--g300:#fcd34d;--g400:#fbbf24;
+  --g500:#f59e0b;--g600:#d97706;--g700:#b45309;--g800:#92400e;--g900:#78350f;
+  --n50:#faf9f7;--n100:#f2efe9;--n200:#e6e1d6;--n300:#d1c9b8;--n400:#a89d85;
+  --n500:#7d735c;--n600:#5c5340;--n700:#403a2c;--n800:#2a251a;--n900:#1a160e;
+  --ink:#1c1710;--paper:#fffdf9;--panel:#ffffff;--line:#eae3d3;
+  --ok:#16a34a;--warn:#dc2626;--info:#2563eb;
+  --shadow-sm:0 1px 2px rgba(28,23,16,.06);
+  --shadow-md:0 6px 20px -4px rgba(120,90,20,.14);
+  --shadow-lg:0 20px 48px -12px rgba(120,90,20,.22);
+  --radius:16px;--radius-sm:10px;
+  --ease:cubic-bezier(.34,1.56,.64,1);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:'Lexend',sans-serif;background:var(--n50);color:var(--ink);-webkit-font-smoothing:antialiased;overflow-x:hidden;}
+img{max-width:100%;display:block;}
+::-webkit-scrollbar{width:9px;height:9px;}
+::-webkit-scrollbar-thumb{background:var(--n300);border-radius:8px;}
+::-webkit-scrollbar-track{background:transparent;}
+
+.app{display:grid;grid-template-columns:260px 1fr;min-height:100vh;}
+.sidebar{background:linear-gradient(180deg,var(--n900),#241f14 60%,var(--n900));color:var(--n100);padding:24px 18px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:6px;z-index:40;}
+.brand{display:flex;align-items:center;gap:10px;padding:6px 8px 22px;}
+.brand-mark{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,var(--g400),var(--g600));display:flex;align-items:center;justify-content:center;color:#1a160e;font-weight:800;font-size:15px;animation:pulseLogo 2.8s ease-in-out infinite;}
+@keyframes pulseLogo{0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,.35);}50%{box-shadow:0 0 0 9px rgba(245,158,11,0);}}
+.brand-name{font-weight:700;font-size:18px;letter-spacing:.2px;}
+.brand-sub{font-size:10.5px;color:var(--n400);letter-spacing:.6px;text-transform:uppercase;margin-top:1px;}
+
+.nav-group{margin-top:10px;}
+.nav-label{font-size:10.5px;text-transform:uppercase;letter-spacing:1px;color:var(--n500);padding:14px 10px 8px;}
+.nav-item{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:11px;color:var(--n300);text-decoration:none;font-size:14.5px;font-weight:500;cursor:pointer;transition:.2s;position:relative;}
+.nav-item i{width:18px;text-align:center;font-size:15px;}
+.nav-item:hover{background:rgba(251,191,36,.08);color:var(--n100);}
+.nav-item.active{background:linear-gradient(135deg,rgba(251,191,36,.18),rgba(217,119,6,.1));color:var(--g300);}
+.nav-item.active::before{content:'';position:absolute;left:-6px;top:50%;transform:translateY(-50%);width:4px;height:60%;background:var(--g400);border-radius:4px;}
+
+.sb-foot{margin-top:auto;padding:14px 12px;border-top:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:10px;}
+.sb-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--g300),var(--g600));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12.5px;color:#1a160e;flex-shrink:0;}
+.sb-foot-name{font-size:13px;font-weight:600;color:var(--n100);}
+.sb-foot-role{font-size:11px;color:var(--n500);}
+
+.main{padding:26px 34px 60px;min-width:0;}
+.topbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;margin-bottom:22px;}
+.topbar h1{font-size:22px;font-weight:700;}
+.topbar p{font-size:13px;color:var(--n500);margin-top:2px;}
+.status-pill{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:8px 16px;box-shadow:var(--shadow-sm);font-size:12.5px;font-weight:600;}
+.status-pill .dot{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px rgba(22,163,74,.18);}
+.status-pill .divider{width:1px;height:14px;background:var(--line);}
+.status-pill i{color:var(--g600);}
+
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow-sm);}
+.kpi-label{font-size:11.5px;color:var(--n500);text-transform:uppercase;letter-spacing:.5px;font-weight:600;}
+.kpi-val{font-size:24px;font-weight:800;margin-top:6px;}
+.kpi-sub{font-size:11.5px;color:var(--n500);margin-top:3px;}
+.kpi-sub.ok{color:var(--ok);}
+.kpi-sub.warn{color:var(--warn);}
+
+.view{display:none;}
+.view.active{display:block;animation:fadeIn .35s var(--ease);}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+/* ===== CHAT VIEW ===== */
+.chat-shell{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-md);display:flex;flex-direction:column;height:calc(100vh - 240px);min-height:520px;}
+.chat-thread{flex:1;overflow-y:auto;padding:26px 28px;display:flex;flex-direction:column;gap:20px;}
+.msg{max-width:82%;display:flex;flex-direction:column;gap:8px;}
+.msg.user{align-self:flex-end;align-items:flex-end;}
+.msg.ai{align-self:flex-start;align-items:flex-start;}
+.bubble{padding:13px 16px;border-radius:14px;font-size:14px;line-height:1.55;}
+.msg.user .bubble{background:var(--n900);color:#fff;border-bottom-right-radius:4px;}
+.msg.ai .bubble{background:var(--n100);border:1px solid var(--line);border-bottom-left-radius:4px;color:var(--ink);}
+.ai-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow-sm);padding:16px 18px;width:100%;max-width:440px;}
+.ai-card h4{font-size:12.5px;text-transform:uppercase;letter-spacing:.4px;color:var(--n500);font-weight:700;margin-bottom:10px;}
+.bar-chart{display:flex;align-items:flex-end;gap:10px;height:110px;margin-bottom:6px;}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;}
+.bar{width:100%;border-radius:6px 6px 0 0;background:linear-gradient(180deg,var(--g400),var(--g600));box-shadow:0 4px 10px -2px rgba(217,119,6,.35);}
+.bar-lbl{font-size:10.5px;color:var(--n500);font-weight:600;}
+.bar-val{font-size:11px;font-weight:700;color:var(--ink);}
+.ai-total{font-size:20px;font-weight:800;margin-top:8px;}
+.ai-total span{font-size:12px;font-weight:500;color:var(--n500);display:block;}
+
+table.result-tbl{width:100%;border-collapse:collapse;font-size:12.5px;}
+table.result-tbl th{text-align:left;color:var(--n500);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.3px;padding:6px 8px;border-bottom:1px solid var(--line);}
+table.result-tbl td{padding:8px;border-bottom:1px solid var(--n100);}
+
+.sql-toggle{margin-top:12px;font-size:12px;color:var(--g700);font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;user-select:none;}
+.sql-toggle i{transition:.2s;font-size:10px;}
+.sql-toggle.open i{transform:rotate(90deg);}
+.sql-box{display:none;margin-top:8px;background:var(--n900);color:#e6e1d6;border-radius:10px;padding:12px 14px;font-family:'SFMono-Regular',Consolas,monospace;font-size:11.5px;line-height:1.6;overflow-x:auto;}
+.sql-box.show{display:block;}
+.scope-note{margin-top:10px;font-size:11.5px;color:var(--n500);display:flex;align-items:center;gap:6px;}
+.scope-note i{color:var(--ok);font-size:11px;}
+.scope-note.blocked{color:var(--warn);}
+.scope-note.blocked i{color:var(--warn);}
+
+.chat-input-row{border-top:1px solid var(--line);padding:16px 20px;display:flex;gap:10px;align-items:center;}
+.chat-input{flex:1;border:1px solid var(--line);border-radius:12px;padding:13px 16px;font-family:inherit;font-size:14px;background:var(--n50);}
+.chat-input:focus{outline:2px solid var(--g400);outline-offset:1px;}
+.send-btn{background:linear-gradient(135deg,var(--g400),var(--g600));color:#1a160e;border:none;border-radius:12px;padding:13px 20px;font-weight:700;font-size:13.5px;cursor:pointer;display:flex;align-items:center;gap:8px;box-shadow:var(--shadow-sm);transition:.2s;}
+.send-btn:hover{transform:translateY(-1px);box-shadow:var(--shadow-md);}
+.suggest-row{display:flex;gap:8px;flex-wrap:wrap;padding:0 20px 14px;}
+.suggest-chip{font-size:12px;background:var(--n100);border:1px solid var(--line);border-radius:999px;padding:6px 13px;cursor:pointer;color:var(--n600);font-weight:500;transition:.15s;}
+.suggest-chip:hover{background:var(--g100);border-color:var(--g300);color:var(--g800);}
+
+/* ===== HISTORY VIEW ===== */
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-md);overflow:hidden;}
+.panel-head{padding:18px 22px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;}
+.panel-head h3{font-size:15.5px;font-weight:700;}
+table.audit{width:100%;border-collapse:collapse;font-size:13px;}
+table.audit th{text-align:left;padding:11px 22px;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--n500);background:var(--n50);border-bottom:1px solid var(--line);}
+table.audit td{padding:13px 22px;border-bottom:1px solid var(--n100);vertical-align:top;}
+table.audit tr:last-child td{border-bottom:none;}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:700;}
+.badge.ok{background:#dcfce7;color:#15803d;}
+.badge.blocked{background:#fee2e2;color:#b91c1c;}
+.mono{font-family:'SFMono-Regular',Consolas,monospace;font-size:11px;color:var(--n600);background:var(--n100);padding:2px 6px;border-radius:5px;}
+
+/* ===== SCOPE VIEW ===== */
+.scope-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;}
+.scope-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow-sm);}
+.scope-card.disabled{opacity:.6;background:var(--n50);}
+.scope-card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
+.scope-card-top h4{font-size:14.5px;font-weight:700;font-family:'SFMono-Regular',Consolas,monospace;}
+.scope-cols{font-size:12px;color:var(--n500);line-height:1.6;margin-top:8px;}
+.scope-cols b{color:var(--ink);font-weight:600;}
+.pii-tag{display:inline-block;font-size:10px;font-weight:700;background:#fef3c7;color:var(--g800);padding:2px 7px;border-radius:5px;margin-left:5px;}
+
+.restart-btn{position:fixed;bottom:22px;right:28px;background:var(--n900);color:#fff;border:none;border-radius:12px;padding:12px 18px;font-weight:600;font-size:13px;cursor:pointer;box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:8px;z-index:50;}
+.restart-btn:hover{background:var(--n800);}
+
+@media(max-width:920px){
+  .app{grid-template-columns:1fr;}
+  .sidebar{position:relative;height:auto;flex-direction:row;overflow-x:auto;padding:14px;}
+  .nav-group{display:flex;gap:6px;margin-top:0;}
+  .nav-label{display:none;}
+  .sb-foot{display:none;}
+  .kpi-row{grid-template-columns:repeat(2,1fr);}
+  .main{padding:20px;}
+}
+</style>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">IA</div>
+      <div><div class="brand-name">Indaga</div><div class="brand-sub">SQL Server · Lenguaje Natural</div></div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-label">Consultar</div>
+      <div class="nav-item active" data-view="chat"><i class="fa-solid fa-comments"></i>Nueva Consulta</div>
+      <div class="nav-label">Gobernanza</div>
+      <div class="nav-item" data-view="history"><i class="fa-solid fa-clock-rotate-left"></i>Historial y Auditoria</div>
+      <div class="nav-item" data-view="scope"><i class="fa-solid fa-shield-halved"></i>Alcance de Datos</div>
+    </div>
+    <div class="sb-foot">
+      <div class="sb-avatar">MR</div>
+      <div><div class="sb-foot-name">Miriam Roldan</div><div class="sb-foot-role">Gerencia Comercial</div></div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <!-- CHAT VIEW -->
+    <section class="view active" id="view-chat">
+      <div class="topbar">
+        <div><h1>Nueva Consulta</h1><p>Pregunta en espanol, Indaga traduce a SQL sobre tu base historica.</p></div>
+        <div class="status-pill"><span class="dot"></span>Rol de BD: Solo Lectura<span class="divider"></span><i class="fa-solid fa-database"></i>SQL Server · DistribuidoraNortumDB</div>
+      </div>
+
+      <div class="kpi-row">
+        <div class="kpi"><div class="kpi-label">Consultas este mes</div><div class="kpi-val">312</div><div class="kpi-sub ok">Reemplazan ~40 hrs de Excel/mes</div></div>
+        <div class="kpi"><div class="kpi-label">Tiempo promedio</div><div class="kpi-val">2.1s</div><div class="kpi-sub">Generacion SQL + ejecucion</div></div>
+        <div class="kpi"><div class="kpi-label">Tablas en alcance</div><div class="kpi-val">6 de 41</div><div class="kpi-sub">Capa semantica curada</div></div>
+        <div class="kpi"><div class="kpi-label">Bloqueadas por alcance</div><div class="kpi-val">9</div><div class="kpi-sub warn">Fuera de las tablas permitidas</div></div>
+      </div>
+
+      <div class="chat-shell">
+        <div class="chat-thread" id="chatThread">
+
+          <div class="msg user"><div class="bubble">Cuales fueron las ventas totales del mes pasado por region?</div></div>
+
+          <div class="msg ai">
+            <div class="bubble">Junio cerro en $2.84M MXN. Norte y Bajio concentran el 61% del total.</div>
+            <div class="ai-card">
+              <h4>Ventas por region · Junio 2026</h4>
+              <div class="bar-chart">
+                <div class="bar-col"><div class="bar-val">980K</div><div class="bar" style="height:100%"></div><div class="bar-lbl">Norte</div></div>
+                <div class="bar-col"><div class="bar-val">760K</div><div class="bar" style="height:78%"></div><div class="bar-lbl">Bajio</div></div>
+                <div class="bar-col"><div class="bar-val">610K</div><div class="bar" style="height:62%"></div><div class="bar-lbl">Centro</div></div>
+                <div class="bar-col"><div class="bar-val">490K</div><div class="bar" style="height:50%"></div><div class="bar-lbl">Sureste</div></div>
+              </div>
+              <div class="ai-total">$2,840,000 MXN<span>Total consolidado, junio 2026</span></div>
+              <div class="sql-toggle" onclick="toggleSql(this)"><i class="fa-solid fa-chevron-right"></i>Ver consulta SQL generada</div>
+              <div class="sql-box">SELECT r.NombreRegion, SUM(v.MontoTotal) AS Total
+FROM dbo.Ventas v
+JOIN dbo.Regiones r ON r.RegionID = v.RegionID
+WHERE v.FechaVenta >= '2026-06-01' AND v.FechaVenta &lt; '2026-07-01'
+GROUP BY r.NombreRegion
+ORDER BY Total DESC;</div>
+              <div class="scope-note"><i class="fa-solid fa-circle-check"></i>Tablas dentro del alcance permitido: dbo.Ventas, dbo.Regiones</div>
+            </div>
+          </div>
+
+          <div class="msg user"><div class="bubble">Y cual fue el margen promedio por categoria en el mismo periodo?</div></div>
+
+          <div class="msg ai">
+            <div class="bubble">Ese calculo necesita costo por producto, y esa tabla todavia no esta habilitada en tu capa de datos.</div>
+            <div class="ai-card">
+              <h4>Alcance insuficiente</h4>
+              <p style="font-size:13px;color:var(--n600);line-height:1.6;">dbo.CostosProducto contiene costo de adquisicion por SKU y no forma parte del alcance de solo lectura activo. Indaga no genero ninguna consulta sobre esa tabla.</p>
+              <div class="scope-note blocked"><i class="fa-solid fa-triangle-exclamation"></i>Bloqueado antes de ejecutar. Solicita ampliacion de alcance en la pestana "Alcance de Datos".</div>
+            </div>
+          </div>
+
+        </div>
+        <div class="suggest-row">
+          <div class="suggest-chip" onclick="askSample(this)">Top 5 clientes por volumen este trimestre</div>
+          <div class="suggest-chip" onclick="askSample(this)">Comparar ventas Norte vs Sureste, ultimos 6 meses</div>
+          <div class="suggest-chip" onclick="askSample(this)">Pedidos con retraso mayor a 3 dias</div>
+        </div>
+        <div class="chat-input-row">
+          <input class="chat-input" id="chatInput" type="text" placeholder="Escribe tu pregunta en lenguaje natural...">
+          <button class="send-btn" onclick="sendMsg()"><i class="fa-solid fa-paper-plane"></i>Enviar</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- HISTORY VIEW -->
+    <section class="view" id="view-history">
+      <div class="topbar">
+        <div><h1>Historial y Auditoria</h1><p>Cada pregunta, su SQL generado y su resultado quedan registrados.</p></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h3>Actividad reciente</h3><span style="font-size:12px;color:var(--n500);">Ultimos 7 dias</span></div>
+        <table class="audit">
+          <thead><tr><th>Fecha</th><th>Usuario</th><th>Pregunta</th><th>SQL ejecutado</th><th>Estado</th></tr></thead>
+          <tbody>
+            <tr><td>18 Jul, 11:42</td><td>Miriam Roldan</td><td>Ventas totales por region, junio</td><td><span class="mono">SELECT ... FROM dbo.Ventas JOIN dbo.Regiones</span></td><td><span class="badge ok"><i class="fa-solid fa-check"></i>Ejecutada</span></td></tr>
+            <tr><td>18 Jul, 11:44</td><td>Miriam Roldan</td><td>Margen promedio por categoria</td><td><span class="mono">-- bloqueada, fuera de alcance</span></td><td><span class="badge blocked"><i class="fa-solid fa-ban"></i>Bloqueada</span></td></tr>
+            <tr><td>17 Jul, 16:05</td><td>Ruben Castaneda</td><td>Pedidos con retraso mayor a 3 dias</td><td><span class="mono">SELECT ... FROM dbo.Pedidos WHERE ...</span></td><td><span class="badge ok"><i class="fa-solid fa-check"></i>Ejecutada</span></td></tr>
+            <tr><td>17 Jul, 09:21</td><td>Ruben Castaneda</td><td>Actualizar precio de lista producto 4021</td><td><span class="mono">-- intento de UPDATE, no permitido</span></td><td><span class="badge blocked"><i class="fa-solid fa-ban"></i>Bloqueada</span></td></tr>
+            <tr><td>16 Jul, 14:50</td><td>Miriam Roldan</td><td>Top 5 clientes por volumen, Q2</td><td><span class="mono">SELECT TOP 5 ... FROM dbo.Ventas</span></td><td><span class="badge ok"><i class="fa-solid fa-check"></i>Ejecutada</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SCOPE VIEW -->
+    <section class="view" id="view-scope">
+      <div class="topbar">
+        <div><h1>Alcance de Datos</h1><p>La capa semantica que Indaga puede ver y consultar. Todo lo demas queda fuera por diseno.</p></div>
+      </div>
+      <div class="scope-grid">
+        <div class="scope-card">
+          <div class="scope-card-top"><h4>dbo.Ventas</h4><span class="badge ok"><i class="fa-solid fa-check"></i>Activo</span></div>
+          <div class="scope-cols">Columnas expuestas: <b>FechaVenta, MontoTotal, RegionID, ClienteID, ProductoID</b></div>
+        </div>
+        <div class="scope-card">
+          <div class="scope-card-top"><h4>dbo.Regiones</h4><span class="badge ok"><i class="fa-solid fa-check"></i>Activo</span></div>
+          <div class="scope-cols">Columnas expuestas: <b>RegionID, NombreRegion</b></div>
+        </div>
+        <div class="scope-card">
+          <div class="scope-card-top"><h4>dbo.Pedidos</h4><span class="badge ok"><i class="fa-solid fa-check"></i>Activo</span></div>
+          <div class="scope-cols">Columnas expuestas: <b>PedidoID, FechaEntregaEstimada, FechaEntregaReal, Estatus</b></div>
+        </div>
+        <div class="scope-card">
+          <div class="scope-card-top"><h4>dbo.Clientes</h4><span class="badge ok"><i class="fa-solid fa-check"></i>Activo</span></div>
+          <div class="scope-cols">Columnas expuestas: <b>ClienteID, Segmento</b><span class="pii-tag">Nombre y correo ocultos</span></div>
+        </div>
+        <div class="scope-card disabled">
+          <div class="scope-card-top"><h4>dbo.CostosProducto</h4><span class="badge blocked"><i class="fa-solid fa-lock"></i>Fuera de alcance</span></div>
+          <div class="scope-cols">No expuesto. Requiere aprobacion explicita antes de habilitarse para consultas de IA.</div>
+        </div>
+        <div class="scope-card disabled">
+          <div class="scope-card-top"><h4>dbo.Empleados</h4><span class="badge blocked"><i class="fa-solid fa-lock"></i>Fuera de alcance</span></div>
+          <div class="scope-cols">No expuesto. Contiene datos sensibles de nomina, excluido de la capa semantica.</div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<button class="restart-btn" onclick="location.reload()"><i class="fa-solid fa-rotate-left"></i>Reiniciar demo</button>
+
+<script>
+document.querySelectorAll('.nav-item').forEach(item=>{
+  item.addEventListener('click',()=>{
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    item.classList.add('active');
+    document.getElementById('view-'+item.dataset.view).classList.add('active');
+  });
+});
+
+function toggleSql(el){
+  el.classList.toggle('open');
+  el.nextElementSibling.classList.toggle('show');
+}
+
+function askSample(chip){
+  document.getElementById('chatInput').value = chip.textContent;
+  sendMsg();
+}
+
+function sendMsg(){
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if(!text) return;
+  const thread = document.getElementById('chatThread');
+
+  const userMsg = document.createElement('div');
+  userMsg.className = 'msg user';
+  userMsg.innerHTML = '<div class="bubble">'+text+'</div>';
+  thread.appendChild(userMsg);
+  input.value = '';
+  thread.scrollTop = thread.scrollHeight;
+
+  setTimeout(()=>{
+    const aiMsg = document.createElement('div');
+    aiMsg.className = 'msg ai';
+    aiMsg.innerHTML = '<div class="bubble">Generando consulta sobre las tablas permitidas...</div>'+
+      '<div class="ai-card"><h4>Resultado</h4>'+
+      '<table class="result-tbl"><thead><tr><th>Cliente</th><th>Volumen</th></tr></thead><tbody>'+
+      '<tr><td>Ferreteria del Bajio</td><td>$412,000</td></tr>'+
+      '<tr><td>Comercial Nortum</td><td>$389,500</td></tr>'+
+      '<tr><td>Grupo Sureste SA</td><td>$301,200</td></tr></tbody></table>'+
+      '<div class="sql-toggle" onclick="toggleSql(this)"><i class="fa-solid fa-chevron-right"></i>Ver consulta SQL generada</div>'+
+      '<div class="sql-box">SELECT TOP 3 c.ClienteID, SUM(v.MontoTotal) AS Volumen\nFROM dbo.Ventas v\nJOIN dbo.Clientes c ON c.ClienteID = v.ClienteID\nGROUP BY c.ClienteID\nORDER BY Volumen DESC;</div>'+
+      '<div class="scope-note"><i class="fa-solid fa-circle-check"></i>Tablas dentro del alcance permitido: dbo.Ventas, dbo.Clientes</div></div>';
+    thread.appendChild(aiMsg);
+    thread.scrollTop = thread.scrollHeight;
+  }, 500);
+}
+
+document.getElementById('chatInput').addEventListener('keydown',e=>{
+  if(e.key==='Enter') sendMsg();
+});
+</script>
