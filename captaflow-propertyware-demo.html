@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CaptaFlow | Captura inteligente para Propertyware</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+:root{
+  --g50:#fdf8ee; --g100:#faeecb; --g200:#f3d98e; --g300:#eabb4f; --g400:#e0a52f;
+  --g500:#d4941e; --g600:#b47418; --g700:#8f5714; --g800:#6b3f10; --g900:#4a2c0b;
+  --n50:#fbf9f6; --n100:#f3ede2; --n200:#e6dcc9; --n300:#cdbfa2; --n400:#a4937a;
+  --n500:#7d6e59; --n600:#5c5040; --n700:#413828; --n800:#2b241a; --n900:#181410;
+  --ok:#1e8e5a; --ok-bg:#e7f6ee; --warn:#c2760f; --warn-bg:#fdf1de; --danger:#c0392b;
+  --radius:14px; --shadow-sm:0 2px 8px rgba(74,44,11,.08); --shadow-md:0 10px 30px rgba(74,44,11,.14);
+  --shadow-lg:0 24px 60px rgba(74,44,11,.22);
+  --ease-spring:cubic-bezier(.34,1.56,.64,1);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:'Lexend',sans-serif; background:linear-gradient(160deg,var(--n50),var(--g50) 60%,var(--n50));
+  color:var(--n800); -webkit-font-smoothing:antialiased; min-height:100vh; overflow-x:hidden;
+}
+.grid-overlay{
+  position:fixed; inset:0; z-index:0; opacity:.35; pointer-events:none;
+  background-image:linear-gradient(var(--n200) 1px,transparent 1px),linear-gradient(90deg,var(--n200) 1px,transparent 1px);
+  background-size:42px 42px; mask-image:radial-gradient(ellipse 80% 60% at 50% 0%,#000 30%,transparent 80%);
+}
+.orb{position:fixed;border-radius:50%;filter:blur(60px);opacity:.35;z-index:0;pointer-events:none;animation:float 12s ease-in-out infinite;}
+.orb1{width:340px;height:340px;background:var(--g300);top:-100px;right:-80px;}
+.orb2{width:260px;height:260px;background:var(--g400);bottom:-60px;left:-60px;animation-delay:-6s;}
+@keyframes float{0%,100%{transform:translate(0,0)}50%{transform:translate(-18px,22px)}}
+
+.wrap{position:relative;z-index:1;max-width:1240px;margin:0 auto;padding:40px 24px 80px;}
+
+header.top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:34px;flex-wrap:wrap;opacity:0;animation:fadeUp .6s var(--ease-spring) forwards;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.brand{display:flex;align-items:center;gap:12px;}
+.brand-mark{
+  width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--g400),var(--g600));
+  display:flex;align-items:center;justify-content:center;color:#fff;font-size:19px;box-shadow:var(--shadow-sm);
+  animation:pulseLogo 3.2s ease-in-out infinite;
+}
+@keyframes pulseLogo{0%,100%{box-shadow:0 0 0 0 rgba(212,148,30,.35)}50%{box-shadow:0 0 0 10px rgba(212,148,30,0)}}
+.brand-name{font-weight:800;font-size:20px;letter-spacing:-.02em;color:var(--n900);}
+.brand-tag{font-size:12.5px;color:var(--n500);font-weight:500;}
+.badge-pill{
+  display:inline-flex;align-items:center;gap:6px;background:var(--g100);color:var(--g700);
+  border:1px solid var(--g200);padding:6px 13px;border-radius:99px;font-size:12.5px;font-weight:600;
+}
+
+.hero-copy{margin-bottom:30px;opacity:0;animation:fadeUp .6s var(--ease-spring) .08s forwards;}
+.hero-copy h1{font-size:clamp(22px,3vw,30px);font-weight:800;letter-spacing:-.02em;color:var(--n900);max-width:760px;line-height:1.25;}
+.hero-copy p{margin-top:8px;color:var(--n600);font-size:15px;max-width:620px;}
+
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:28px;}
+.stat-card{
+  background:rgba(255,255,255,.72); backdrop-filter:blur(10px); border:1px solid var(--n200);
+  border-radius:var(--radius); padding:16px 18px; box-shadow:var(--shadow-sm);
+  opacity:0; animation:fadeUp .55s var(--ease-spring) forwards;
+}
+.stat-card:nth-child(1){animation-delay:.12s}.stat-card:nth-child(2){animation-delay:.18s}.stat-card:nth-child(3){animation-delay:.24s}
+.stat-label{font-size:12px;color:var(--n500);font-weight:600;text-transform:uppercase;letter-spacing:.04em;}
+.stat-value{font-size:26px;font-weight:800;color:var(--n900);margin-top:4px;display:flex;align-items:baseline;gap:8px;}
+.stat-value .old{font-size:14px;color:var(--n400);text-decoration:line-through;font-weight:600;}
+.stat-value .unit{font-size:13px;color:var(--n500);font-weight:600;}
+.stat-value.accent{color:var(--g600);}
+
+.panels{
+  display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:start;
+  opacity:0; animation:fadeUp .6s var(--ease-spring) .3s forwards;
+}
+@media (max-width:880px){.panels{grid-template-columns:1fr;} .stat-row{grid-template-columns:1fr;}}
+
+.panel{
+  background:rgba(255,255,255,.85); backdrop-filter:blur(14px); border:1px solid var(--n200);
+  border-radius:18px; box-shadow:var(--shadow-md); overflow:hidden;
+}
+.panel-head{
+  display:flex; align-items:center; gap:10px; padding:14px 18px; border-bottom:1px solid var(--n200);
+  background:linear-gradient(180deg,#fff,var(--n50));
+}
+.panel-head i{color:var(--g600);font-size:15px;}
+.panel-head span{font-weight:700;font-size:14px;color:var(--n800);}
+.panel-head .sub{margin-left:auto;font-size:11.5px;color:var(--n400);font-weight:500;}
+.panel-body{padding:18px;}
+
+.dropzone{
+  border:2px dashed var(--g300); border-radius:12px; padding:26px 16px; text-align:center;
+  cursor:pointer; transition:all .25s var(--ease-spring); background:var(--g50);
+}
+.dropzone:hover{border-color:var(--g500); background:var(--g100); transform:translateY(-2px);}
+.dropzone i{font-size:26px;color:var(--g500);margin-bottom:8px;display:block;}
+.dropzone .dz-title{font-weight:700;font-size:14px;color:var(--n800);}
+.dropzone .dz-sub{font-size:12.5px;color:var(--n500);margin-top:3px;}
+.dropzone .chip-row{display:flex;gap:6px;justify-content:center;margin-top:10px;flex-wrap:wrap;}
+.chip{background:#fff;border:1px solid var(--n200);border-radius:99px;padding:4px 10px;font-size:11px;font-weight:600;color:var(--n600);}
+
+.scan-box{
+  display:none; align-items:center; gap:12px; background:#fff; border:1px solid var(--n200);
+  border-radius:12px; padding:14px 16px; margin-top:0;
+}
+.scan-box.show{display:flex;animation:fadeUp .4s var(--ease-spring);}
+.scan-icon{
+  width:38px;height:38px;border-radius:9px;background:var(--g100);display:flex;align-items:center;justify-content:center;
+  color:var(--g600);font-size:16px;flex-shrink:0;position:relative;overflow:hidden;
+}
+.scan-icon.spin i{animation:spin 1s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.scan-text{flex:1;}
+.scan-title{font-weight:700;font-size:13.5px;color:var(--n800);}
+.scan-bar{height:5px;background:var(--n200);border-radius:99px;margin-top:6px;overflow:hidden;}
+.scan-bar-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--g400),var(--g600));border-radius:99px;transition:width 1.4s ease;}
+
+.field-list{margin-top:14px;display:flex;flex-direction:column;gap:8px;}
+.field-row{
+  display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:10px;
+  border:1px solid var(--n200); background:#fff; opacity:0; transform:translateX(-10px);
+  transition:box-shadow .2s;
+}
+.field-row.reveal{animation:slideIn .4s var(--ease-spring) forwards;}
+@keyframes slideIn{to{opacity:1;transform:translateX(0)}}
+.field-row:hover{box-shadow:var(--shadow-sm);}
+.field-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.field-dot.ok{background:var(--ok);box-shadow:0 0 0 3px var(--ok-bg);}
+.field-dot.warn{background:var(--warn);box-shadow:0 0 0 3px var(--warn-bg);animation:pulseDot 1.6s ease-in-out infinite;}
+@keyframes pulseDot{0%,100%{box-shadow:0 0 0 3px var(--warn-bg)}50%{box-shadow:0 0 0 6px var(--warn-bg)}}
+.field-info{flex:1;min-width:0;}
+.field-name{font-size:12.5px;font-weight:600;color:var(--n800);}
+.field-val{font-size:12px;color:var(--n500);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.field-conf{font-size:11px;font-weight:700;padding:3px 8px;border-radius:99px;flex-shrink:0;}
+.field-conf.ok{background:var(--ok-bg);color:var(--ok);}
+.field-conf.warn{background:var(--warn-bg);color:var(--warn);}
+
+.inject-btn{
+  margin-top:16px; width:100%; padding:13px; border:none; border-radius:11px; cursor:pointer;
+  background:linear-gradient(135deg,var(--g500),var(--g700)); color:#fff; font-family:inherit;
+  font-weight:700; font-size:14px; display:flex; align-items:center; justify-content:center; gap:8px;
+  box-shadow:var(--shadow-sm); transition:transform .15s var(--ease-spring),box-shadow .2s; opacity:.4; pointer-events:none;
+}
+.inject-btn.ready{opacity:1;pointer-events:auto;}
+.inject-btn:hover{transform:translateY(-2px) scale(1.01);box-shadow:var(--shadow-md);}
+.inject-btn:active{transform:scale(.98);}
+
+.restart-link{
+  display:inline-flex;align-items:center;gap:6px;margin-top:12px;font-size:12.5px;color:var(--n500);
+  font-weight:600;cursor:pointer;background:none;border:none;font-family:inherit;
+}
+.restart-link:hover{color:var(--g600);}
+
+/* Propertyware mock form */
+.pw-chrome{background:var(--n800);padding:8px 12px;display:flex;align-items:center;gap:6px;}
+.pw-dot{width:9px;height:9px;border-radius:50%;}
+.pw-dot.r{background:#e5675f}.pw-dot.y{background:#e6b94d}.pw-dot.g{background:#5cc267}
+.pw-url{margin-left:10px;background:rgba(255,255,255,.08);color:var(--n300);font-size:10.5px;padding:3px 10px;border-radius:6px;flex:1;font-family:monospace;}
+.pw-topbar{background:#1f3d5c;color:#fff;padding:10px 16px;font-size:12px;font-weight:700;letter-spacing:.03em;display:flex;align-items:center;gap:8px;}
+.pw-body{padding:16px 18px;background:#f4f6f8;}
+.pw-form-title{font-size:13px;font-weight:700;color:var(--n700);margin-bottom:12px;}
+.pw-field{margin-bottom:12px;}
+.pw-label{font-size:11px;color:var(--n500);font-weight:600;margin-bottom:4px;display:flex;align-items:center;gap:6px;}
+.pw-review-tag{font-size:9.5px;background:var(--warn-bg);color:var(--warn);padding:1px 6px;border-radius:99px;font-weight:700;opacity:0;transition:opacity .3s;}
+.pw-review-tag.show{opacity:1;}
+.pw-input{
+  width:100%; padding:9px 11px; border:1px solid #d7dee5; border-radius:7px; font-family:inherit;
+  font-size:12.5px; background:#fff; color:var(--n800); transition:all .35s var(--ease-spring);
+}
+.pw-input.filled-ok{background:var(--ok-bg);border-color:var(--ok);box-shadow:0 0 0 3px rgba(30,142,90,.12);}
+.pw-input.filled-warn{background:var(--warn-bg);border-color:var(--warn);box-shadow:0 0 0 3px rgba(194,118,15,.15);}
+
+.toast{
+  position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px); z-index:50;
+  background:var(--n900); color:#fff; padding:13px 20px; border-radius:12px; font-size:13.5px; font-weight:600;
+  display:flex; align-items:center; gap:10px; box-shadow:var(--shadow-lg); opacity:0; pointer-events:none;
+  transition:all .4s cubic-bezier(.34,1.56,.64,1);
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto;}
+.toast i{color:var(--g300);}
+
+footer{text-align:center;margin-top:36px;font-size:12px;color:var(--n400);}
+</style>
+</head>
+<body>
+<div class="grid-overlay"></div>
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <div class="brand-mark"><i class="fa-solid fa-layer-group"></i></div>
+      <div>
+        <div class="brand-name">CaptaFlow</div>
+        <div class="brand-tag">Captura inteligente de contratos para Propertyware</div>
+      </div>
+    </div>
+    <div class="badge-pill"><i class="fa-solid fa-bolt"></i> Extension de captura con revision asistida</div>
+  </header>
+
+  <div class="hero-copy">
+    <h1>Arrastra el contrato. Revisa lo que necesita ojo humano. Inyecta con un clic.</h1>
+    <p>Prototipo del flujo completo: extraccion del PDF del contrato, coloreado por nivel de confianza, e inyeccion directa en el formulario de Propertyware.</p>
+  </div>
+
+  <div class="stat-row">
+    <div class="stat-card">
+      <div class="stat-label">Tiempo de captura</div>
+      <div class="stat-value accent"><span id="timeStat">45-60</span><span class="unit">min hoy</span></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Con CaptaFlow</div>
+      <div class="stat-value"><span id="timeAfter">--</span><span class="unit">min por contrato</span></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Errores de transcripcion</div>
+      <div class="stat-value" id="errStat"><span class="unit">se miden al cerrar cada revision</span></div>
+    </div>
+  </div>
+
+  <div class="panels">
+    <!-- LEFT: extraction panel -->
+    <div class="panel">
+      <div class="panel-head"><i class="fa-solid fa-wand-magic-sparkles"></i><span>Panel de captura</span><span class="sub">Paso 1 de 2</span></div>
+      <div class="panel-body">
+        <div class="dropzone" id="dropzone" onclick="loadSample()">
+          <i class="fa-solid fa-file-arrow-up"></i>
+          <div class="dz-title">Suelta el contrato aqui o haz clic para probar</div>
+          <div class="dz-sub">PDF, JSON u hoja de calculo. Cualquier colaborador puede usarlo, sin configurar nada.</div>
+          <div class="chip-row">
+            <span class="chip"><i class="fa-solid fa-file-pdf"></i> PDF</span>
+            <span class="chip"><i class="fa-solid fa-file-code"></i> JSON</span>
+            <span class="chip"><i class="fa-solid fa-file-excel"></i> XLSX</span>
+          </div>
+        </div>
+
+        <div class="scan-box" id="scanBox">
+          <div class="scan-icon" id="scanIcon"><i class="fa-solid fa-file-pdf"></i></div>
+          <div class="scan-text">
+            <div class="scan-title" id="scanTitle">Leyendo contrato_arrendamiento_042.pdf</div>
+            <div class="scan-bar"><div class="scan-bar-fill" id="scanFill"></div></div>
+          </div>
+        </div>
+
+        <div class="field-list" id="fieldList"></div>
+
+        <button class="inject-btn" id="injectBtn" onclick="injectData()">
+          <i class="fa-solid fa-plug-circle-bolt"></i> Inyectar en Propertyware con un clic
+        </button>
+        <button class="restart-link" onclick="resetDemo()"><i class="fa-solid fa-rotate-left"></i> Reiniciar demo</button>
+      </div>
+    </div>
+
+    <!-- RIGHT: propertyware mock -->
+    <div class="panel">
+      <div class="pw-chrome">
+        <div class="pw-dot r"></div><div class="pw-dot y"></div><div class="pw-dot g"></div>
+        <div class="pw-url">app.propertyware.com/leases/new</div>
+      </div>
+      <div class="pw-topbar"><i class="fa-solid fa-building"></i> Propertyware &middot; New Lease</div>
+      <div class="pw-body">
+        <div class="pw-form-title">Lease Details</div>
+        <div class="pw-field">
+          <div class="pw-label">Property Address</div>
+          <input class="pw-input" id="f-address" placeholder="--" readonly>
+        </div>
+        <div class="pw-field">
+          <div class="pw-label">Tenant Name <span class="pw-review-tag" id="tag-tenant">Revisar</span></div>
+          <input class="pw-input" id="f-tenant" placeholder="--" readonly>
+        </div>
+        <div class="pw-field">
+          <div class="pw-label">Monthly Rent</div>
+          <input class="pw-input" id="f-rent" placeholder="--" readonly>
+        </div>
+        <div class="pw-field">
+          <div class="pw-label">Security Deposit</div>
+          <input class="pw-input" id="f-deposit" placeholder="--" readonly>
+        </div>
+        <div class="pw-field">
+          <div class="pw-label">Lease Start Date</div>
+          <input class="pw-input" id="f-start" placeholder="--" readonly>
+        </div>
+        <div class="pw-field">
+          <div class="pw-label">Renewal Clause <span class="pw-review-tag" id="tag-renewal">Revisar</span></div>
+          <input class="pw-input" id="f-renewal" placeholder="--" readonly>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>Prototipo de flujo. Los datos del contrato son de ejemplo, con fines de demostracion.</footer>
+</div>
+
+<div class="toast" id="toast"><i class="fa-solid fa-circle-check"></i> <span id="toastText"></span></div>
+
+<script>
+const FIELDS = [
+  {key:'address', label:'Property Address', value:'4821 Camino Real, Suite 3B', conf:98, level:'ok', target:'f-address'},
+  {key:'rent', label:'Monthly Rent', value:'$1,850.00 USD', conf:96, level:'ok', target:'f-rent'},
+  {key:'deposit', label:'Security Deposit', value:'$1,850.00 USD', conf:95, level:'ok', target:'f-deposit'},
+  {key:'start', label:'Lease Start Date', value:'08/01/2026', conf:93, level:'ok', target:'f-start'},
+  {key:'tenant', label:'Tenant Name', value:'M. Alvarez Torres (baja nitidez)', conf:61, level:'warn', target:'f-tenant', tag:'tag-tenant'},
+  {key:'renewal', label:'Renewal Clause', value:'Clausula ambigua, 2 lecturas posibles', conf:58, level:'warn', target:'f-renewal', tag:'tag-renewal'},
+];
+
+let extracted = false;
+
+function loadSample(){
+  if(extracted) return;
+  document.getElementById('dropzone').style.display = 'none';
+  const scanBox = document.getElementById('scanBox');
+  scanBox.classList.add('show');
+  const icon = document.getElementById('scanIcon');
+  icon.classList.add('spin');
+  icon.innerHTML = '<i class="fa-solid fa-circle-notch"></i>';
+  requestAnimationFrame(()=>{ document.getElementById('scanFill').style.width = '100%'; });
+
+  setTimeout(()=>{
+    icon.classList.remove('spin');
+    icon.innerHTML = '<i class="fa-solid fa-check"></i>';
+    document.getElementById('scanTitle').textContent = 'Contrato leido: 6 campos detectados';
+    revealFields();
+  }, 1500);
+}
+
+function revealFields(){
+  const list = document.getElementById('fieldList');
+  FIELDS.forEach((f, i)=>{
+    setTimeout(()=>{
+      const row = document.createElement('div');
+      row.className = 'field-row reveal';
+      row.innerHTML = `
+        <div class="field-dot ${f.level}"></div>
+        <div class="field-info">
+          <div class="field-name">${f.label}</div>
+          <div class="field-val">${f.value}</div>
+        </div>
+        <div class="field-conf ${f.level}">${f.conf}%</div>
+      `;
+      list.appendChild(row);
+      if(i === FIELDS.length - 1){
+        extracted = true;
+        document.getElementById('injectBtn').classList.add('ready');
+      }
+    }, i * 160);
+  });
+}
+
+function injectData(){
+  const btn = document.getElementById('injectBtn');
+  if(!btn.classList.contains('ready')) return;
+  btn.classList.remove('ready');
+  btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Inyectando...';
+
+  FIELDS.forEach((f, i)=>{
+    setTimeout(()=>{
+      const input = document.getElementById(f.target);
+      input.value = f.value;
+      input.classList.add(f.level === 'ok' ? 'filled-ok' : 'filled-warn');
+      if(f.tag){ document.getElementById(f.tag).classList.add('show'); }
+    }, i * 220);
+  });
+
+  const total = FIELDS.length * 220 + 300;
+  setTimeout(()=>{
+    btn.innerHTML = '<i class="fa-solid fa-check"></i> Inyectado en Propertyware';
+    showToast('4 campos con alta confianza inyectados. 2 marcados en naranja para revision.');
+    animateStats();
+  }, total);
+}
+
+function showToast(msg){
+  const toast = document.getElementById('toast');
+  document.getElementById('toastText').textContent = msg;
+  toast.classList.add('show');
+  setTimeout(()=> toast.classList.remove('show'), 3600);
+}
+
+function animateStats(){
+  let n = 0;
+  const el = document.getElementById('timeAfter');
+  const iv = setInterval(()=>{
+    n += 1;
+    el.textContent = n;
+    if(n >= 6){ clearInterval(iv); }
+  }, 90);
+  document.getElementById('errStat').innerHTML = '<span style="color:var(--ok);font-size:20px;">0</span><span class="unit"> en campos verdes</span>';
+}
+
+function resetDemo(){
+  extracted = false;
+  document.getElementById('dropzone').style.display = 'block';
+  document.getElementById('scanBox').classList.remove('show');
+  document.getElementById('scanFill').style.width = '0%';
+  document.getElementById('fieldList').innerHTML = '';
+  const btn = document.getElementById('injectBtn');
+  btn.classList.remove('ready');
+  btn.innerHTML = '<i class="fa-solid fa-plug-circle-bolt"></i> Inyectar en Propertyware con un clic';
+  FIELDS.forEach(f=>{
+    const input = document.getElementById(f.target);
+    input.value = '';
+    input.classList.remove('filled-ok','filled-warn');
+    if(f.tag) document.getElementById(f.tag).classList.remove('show');
+  });
+  document.getElementById('timeAfter').textContent = '--';
+  document.getElementById('errStat').innerHTML = '<span class="unit">se miden al cerrar cada revision</span>';
+}
+</script>
+</body>
+</html>
