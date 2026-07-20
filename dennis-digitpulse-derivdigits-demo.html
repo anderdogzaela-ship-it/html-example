@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DigitPulse — Deriv Digits Market Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+<style>
+:root{
+  --bg:#0a0e14; --bg2:#0f1420; --panel:#121826; --panel2:#161d2e;
+  --border:rgba(255,255,255,.07); --border2:rgba(255,255,255,.12);
+  --text:#e8ecf4; --sub:#8b93a7; --sub2:#5c6478;
+  --amber:#f59e0b; --amber2:#d97706; --amber-glow:rgba(245,158,11,.35);
+  --cold:#3b82f6; --cold2:#2563eb;
+  --up:#22c55e; --down:#ef4444;
+  --radius:16px; --radius-sm:10px;
+  --ease:cubic-bezier(.34,1.56,.64,1);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:'Lexend',sans-serif; background:
+    radial-gradient(1200px 600px at 10% -10%, rgba(245,158,11,.08), transparent 60%),
+    radial-gradient(1000px 500px at 100% 0%, rgba(59,130,246,.08), transparent 60%),
+    var(--bg);
+  color:var(--text); min-height:100vh; -webkit-font-smoothing:antialiased;
+  background-attachment:fixed;
+}
+body::before{
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background-image:linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
+  background-size:34px 34px; mask-image:radial-gradient(ellipse 80% 60% at 50% 0%, #000 40%, transparent 100%);
+}
+.wrap{position:relative; z-index:1; max-width:1440px; margin:0 auto; padding:22px 26px 60px;}
+
+/* Header */
+header{display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:22px;}
+.brand{display:flex; align-items:center; gap:12px;}
+.brand-mark{
+  width:42px; height:42px; border-radius:12px; display:flex; align-items:center; justify-content:center;
+  background:linear-gradient(135deg,var(--amber),var(--amber2)); box-shadow:0 0 0 1px rgba(255,255,255,.1) inset, 0 8px 24px var(--amber-glow);
+  animation:pulseLogo 3.2s ease-in-out infinite;
+}
+@keyframes pulseLogo{0%,100%{box-shadow:0 0 0 1px rgba(255,255,255,.1) inset,0 8px 24px var(--amber-glow);}50%{box-shadow:0 0 0 1px rgba(255,255,255,.1) inset,0 8px 34px rgba(245,158,11,.55);}}
+.brand-mark i{color:#0a0e14; font-size:19px;}
+.brand-text h1{font-size:19px; font-weight:700; letter-spacing:.2px;}
+.brand-text span{font-size:12px; color:var(--sub); font-weight:400;}
+.status-pill{
+  display:flex; align-items:center; gap:8px; padding:8px 14px; border-radius:999px;
+  background:var(--panel); border:1px solid var(--border); font-size:12.5px; font-weight:500; color:var(--sub);
+}
+.dot{width:8px; height:8px; border-radius:50%; background:var(--sub2); transition:background .3s;}
+.dot.live{background:var(--up); box-shadow:0 0 10px var(--up); animation:blink 1.6s ease-in-out infinite;}
+.dot.bad{background:var(--down); box-shadow:0 0 10px var(--down);}
+.dot.wait{background:var(--amber); box-shadow:0 0 10px var(--amber); animation:blink 1s ease-in-out infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.35;}}
+
+/* Market chips */
+.market-row{display:flex; gap:9px; flex-wrap:wrap; margin-bottom:20px;}
+.chip{
+  padding:9px 15px; border-radius:11px; background:var(--panel); border:1px solid var(--border);
+  font-size:13px; font-weight:600; color:var(--sub); cursor:pointer; transition:all .2s var(--ease);
+  display:flex; align-items:center; gap:8px; user-select:none;
+}
+.chip:hover{border-color:var(--border2); color:var(--text); transform:translateY(-1px);}
+.chip.active{background:linear-gradient(135deg, rgba(245,158,11,.18), rgba(217,119,6,.1)); border-color:rgba(245,158,11,.5); color:#fbbf24; box-shadow:0 4px 16px rgba(245,158,11,.15);}
+.chip .tick-led{width:6px; height:6px; border-radius:50%; background:var(--sub2);}
+.chip.active .tick-led{background:#fbbf24; animation:blink 1s ease-in-out infinite;}
+
+/* Grid */
+.grid{display:grid; grid-template-columns:1.55fr 1fr; gap:18px;}
+@media (max-width:1100px){.grid{grid-template-columns:1fr;}}
+.card{
+  background:linear-gradient(180deg, var(--panel), var(--panel2)); border:1px solid var(--border); border-radius:var(--radius);
+  padding:20px 22px; position:relative; overflow:hidden;
+}
+.card::before{content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg, transparent, rgba(255,255,255,.15), transparent);}
+.card-title{display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;}
+.card-title h2{font-size:14.5px; font-weight:700; display:flex; align-items:center; gap:9px;}
+.card-title h2 i{color:#fbbf24; font-size:13px;}
+.card-title .hint{font-size:11.5px; color:var(--sub2);}
+
+/* Digit stream */
+.stream-row{display:flex; gap:7px; flex-wrap:wrap; min-height:52px; margin-bottom:6px;}
+.digit-tile{
+  width:42px; height:42px; border-radius:10px; display:flex; align-items:center; justify-content:center;
+  font-weight:700; font-size:17px; background:var(--bg2); border:1px solid var(--border); color:var(--text);
+  animation:pop .35s var(--ease);
+}
+.digit-tile.even{color:#60a5fa;} .digit-tile.odd{color:#fbbf24;}
+.digit-tile.newest{border-color:#fbbf24; box-shadow:0 0 0 1px rgba(245,158,11,.4), 0 6px 18px rgba(245,158,11,.25); background:rgba(245,158,11,.08);}
+@keyframes pop{0%{transform:scale(.4); opacity:0;}70%{transform:scale(1.12);}100%{transform:scale(1); opacity:1;}}
+.price-line{font-size:12.5px; color:var(--sub); margin-top:8px; display:flex; gap:18px; flex-wrap:wrap;}
+.price-line b{color:var(--text); font-weight:600;}
+
+/* Frequency bars */
+.freq-grid{display:grid; grid-template-columns:repeat(10,1fr); gap:8px; margin-top:6px;}
+.freq-col{display:flex; flex-direction:column; align-items:center; gap:8px;}
+.freq-track{width:100%; height:130px; background:var(--bg2); border-radius:8px; display:flex; align-items:flex-end; overflow:hidden; border:1px solid var(--border);}
+.freq-fill{width:100%; border-radius:8px 8px 0 0; background:linear-gradient(180deg,#fbbf24,#d97706); transition:height .5s var(--ease); position:relative; min-height:2px;}
+.freq-fill.cold-fill{background:linear-gradient(180deg,#60a5fa,#2563eb);}
+.freq-fill::after{content:''; position:absolute; top:0; left:0; right:0; height:40%; background:linear-gradient(180deg, rgba(255,255,255,.35), transparent);}
+.freq-label{font-size:12px; font-weight:700; color:var(--sub);}
+.freq-pct{font-size:10px; color:var(--sub2);}
+.freq-col.hot .freq-label{color:#fbbf24;}
+.freq-col.cold .freq-label{color:#60a5fa;}
+
+/* Stat grid */
+.stat-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-bottom:6px;}
+.stat-box{background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:14px 16px;}
+.stat-box .lbl{font-size:11px; color:var(--sub2); text-transform:uppercase; letter-spacing:.6px; margin-bottom:8px; font-weight:600;}
+.bar-duo{display:flex; height:10px; border-radius:6px; overflow:hidden; margin-bottom:8px; background:var(--border);}
+.bar-duo .seg-a{background:linear-gradient(90deg,#fbbf24,#d97706); transition:width .5s var(--ease);}
+.bar-duo .seg-b{background:linear-gradient(90deg,#2563eb,#60a5fa); transition:width .5s var(--ease);}
+.duo-labels{display:flex; justify-content:space-between; font-size:12.5px;}
+.duo-labels span b{font-size:15px;}
+
+/* Hot/cold + streak */
+.badge-row{display:flex; gap:10px; flex-wrap:wrap;}
+.badge{padding:9px 13px; border-radius:10px; font-size:12.5px; font-weight:600; display:flex; align-items:center; gap:7px; border:1px solid var(--border);}
+.badge.hot{background:rgba(239,68,68,.1); color:#f87171; border-color:rgba(239,68,68,.3);}
+.badge.cold{background:rgba(59,130,246,.1); color:#60a5fa; border-color:rgba(59,130,246,.3);}
+.badge.streak{background:rgba(245,158,11,.1); color:#fbbf24; border-color:rgba(245,158,11,.3);}
+
+/* Scanner table */
+.scan-table{width:100%; border-collapse:collapse; font-size:12.5px;}
+.scan-table th{text-align:left; color:var(--sub2); font-weight:600; font-size:10.5px; text-transform:uppercase; letter-spacing:.5px; padding:0 10px 10px; border-bottom:1px solid var(--border);}
+.scan-table td{padding:11px 10px; border-bottom:1px solid var(--border); color:var(--sub);}
+.scan-table tr:last-child td{border-bottom:none;}
+.scan-table tr{cursor:pointer; transition:background .15s;}
+.scan-table tr:hover{background:rgba(255,255,255,.03);}
+.scan-table tr.focus-row{background:rgba(245,158,11,.06);}
+.sym-name{color:var(--text); font-weight:600;}
+.mini-dom{display:inline-flex; align-items:center; gap:6px; font-weight:700;}
+.mini-dom .arr-up{color:#f87171;} .mini-dom .arr-cold{color:#60a5fa;}
+.pulse-count{font-variant-numeric:tabular-nums;}
+
+/* Insight */
+.insight-box{
+  background:linear-gradient(135deg, rgba(245,158,11,.08), rgba(59,130,246,.05)); border:1px solid rgba(245,158,11,.2);
+  border-radius:var(--radius-sm); padding:16px 18px; font-size:13.5px; line-height:1.65; color:#dfe4ee; min-height:70px;
+}
+.insight-box i{color:#fbbf24; margin-right:8px;}
+.insight-tag{display:inline-block; font-size:10px; font-weight:700; letter-spacing:.6px; text-transform:uppercase; color:#fbbf24; background:rgba(245,158,11,.12); padding:3px 8px; border-radius:6px; margin-bottom:10px;}
+
+/* Alerts */
+.alert-item{display:flex; gap:11px; align-items:flex-start; padding:11px 0; border-bottom:1px solid var(--border);}
+.alert-item:last-child{border-bottom:none;}
+.alert-ic{width:30px; height:30px; border-radius:8px; background:rgba(245,158,11,.12); display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+.alert-ic i{color:#fbbf24; font-size:12px;}
+.alert-txt{font-size:12.5px; color:var(--sub);}
+.alert-txt b{color:var(--text); font-weight:600;}
+.alert-time{font-size:10.5px; color:var(--sub2); margin-top:2px;}
+.empty-alerts{color:var(--sub2); font-size:12.5px; text-align:center; padding:24px 0;}
+
+/* History window buttons */
+.win-row{display:flex; gap:8px; margin-bottom:12px;}
+.win-btn{padding:6px 13px; border-radius:8px; background:var(--bg2); border:1px solid var(--border); color:var(--sub); font-size:12px; font-weight:600; cursor:pointer; transition:all .2s;}
+.win-btn.active{background:rgba(245,158,11,.15); border-color:rgba(245,158,11,.4); color:#fbbf24;}
+
+.foot-note{margin-top:26px; text-align:center; font-size:11.5px; color:var(--sub2); line-height:1.7;}
+.foot-note b{color:var(--sub);}
+
+::-webkit-scrollbar{width:8px; height:8px;} ::-webkit-scrollbar-thumb{background:var(--border2); border-radius:4px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand">
+      <div class="brand-mark"><i class="fa-solid fa-chart-line"></i></div>
+      <div class="brand-text">
+        <h1>DigitPulse <span style="color:#fbbf24;">Live</span></h1>
+        <span>Deriv Digits Market Intelligence — read-only analysis, no login, no trading</span>
+      </div>
+    </div>
+    <div class="status-pill">
+      <span class="dot wait" id="connDot"></span>
+      <span id="connText">Connecting to Deriv feed...</span>
+    </div>
+  </header>
+
+  <div class="market-row" id="marketRow"></div>
+
+  <div class="grid">
+    <div class="col-main">
+
+      <div class="card" style="margin-bottom:18px;">
+        <div class="card-title">
+          <h2><i class="fa-solid fa-wave-square"></i> Live Digit Stream — <span id="focusSymName">Volatility 100 Index</span></h2>
+          <span class="hint" id="tickCount">0 ticks</span>
+        </div>
+        <div class="stream-row" id="streamRow"></div>
+        <div class="price-line">
+          <span>Last quote: <b id="lastQuote">—</b></span>
+          <span>Last digit: <b id="lastDigit">—</b></span>
+          <span>Since: <b id="sinceTime">—</b></span>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:18px;">
+        <div class="card-title">
+          <h2><i class="fa-solid fa-chart-bar"></i> Digit Frequency &amp; Dominance</h2>
+          <span class="hint" id="freqWindowLabel">last 100 ticks</span>
+        </div>
+        <div class="win-row" id="winRow">
+          <button class="win-btn active" data-win="100">Last 100</button>
+          <button class="win-btn" data-win="200">Last 200</button>
+          <button class="win-btn" data-win="500">Last 500</button>
+          <button class="win-btn" data-win="1000">Last 1000</button>
+        </div>
+        <div class="freq-grid" id="freqGrid"></div>
+      </div>
+
+      <div class="grid" style="grid-template-columns:1fr 1fr; gap:18px;">
+        <div class="card">
+          <div class="card-title"><h2><i class="fa-solid fa-arrows-up-down"></i> Over / Under 5</h2></div>
+          <div class="bar-duo"><div class="seg-a" id="overBar" style="width:50%;"></div><div class="seg-b" id="underBar" style="width:50%;"></div></div>
+          <div class="duo-labels"><span>Over (5-9) <b id="overPct" style="color:#fbbf24;">—</b></span><span>Under (0-4) <b id="underPct" style="color:#60a5fa;">—</b></span></div>
+        </div>
+        <div class="card">
+          <div class="card-title"><h2><i class="fa-solid fa-code-compare"></i> Even / Odd</h2></div>
+          <div class="bar-duo"><div class="seg-a" id="evenBar" style="width:50%; background:linear-gradient(90deg,#2563eb,#60a5fa);"></div><div class="seg-b" id="oddBar" style="width:50%; background:linear-gradient(90deg,#d97706,#fbbf24);"></div></div>
+          <div class="duo-labels"><span>Even <b id="evenPct" style="color:#60a5fa;">—</b></span><span>Odd <b id="oddPct" style="color:#fbbf24;">—</b></span></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:18px;">
+        <div class="card-title"><h2><i class="fa-solid fa-fire"></i> Hot / Cold Digits &amp; Streaks</h2></div>
+        <div class="badge-row" id="badgeRow"></div>
+      </div>
+
+    </div>
+
+    <div class="col-side">
+
+      <div class="card" style="margin-bottom:18px;">
+        <div class="card-title"><h2><i class="fa-solid fa-sparkles"></i> Pattern Insight</h2></div>
+        <div class="insight-box">
+          <span class="insight-tag">Auto-generated</span><br/>
+          <span id="insightText">Gathering live ticks to build the first read...</span>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:18px;">
+        <div class="card-title">
+          <h2><i class="fa-solid fa-satellite-dish"></i> Market Scanner</h2>
+          <span class="hint">click to focus</span>
+        </div>
+        <table class="scan-table">
+          <thead><tr><th>Market</th><th>Dominant</th><th>Streak</th><th>Ticks</th></tr></thead>
+          <tbody id="scanBody"></tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><h2><i class="fa-solid fa-bell"></i> Real-time Alerts</h2></div>
+        <div id="alertList"><div class="empty-alerts">No alerts yet — triggers on streaks ≥ 5 and dominance ≥ 22%</div></div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="foot-note">
+    <b>DigitPulse</b> connects directly to Deriv's public WebSocket tick feed in your browser — no account, no login, no API token, no trades placed.<br/>
+    This prototype streams real live ticks for the demo. Prepared as a working preview, not the final production build.
+  </div>
+
+</div>
+
+<script>
+// Discovered live from Deriv's active_symbols feed on connect, not hardcoded —
+// Deriv periodically retires/adds volatility indices (e.g. V10/V25 are currently
+// off the live random_index list, V90 1s is a newer addition), so the market list
+// below is built dynamically instead of assuming a fixed lineup.
+let SYMBOLS = [];
+const PREFERRED_ORDER = ['R_10','R_25','R_50','R_75','R_100','R_150','R_200','1HZ10V','1HZ25V','1HZ50V','1HZ75V','1HZ90V','1HZ100V','1HZ150V','1HZ200V'];
+
+let ws = null, reconnectDelay = 1500, focusSymbol = null, activeWindow = 100;
+const pipDecimals = {};
+const state = {};
+
+function buildMarketRow(){
+  const row = document.getElementById('marketRow');
+  row.innerHTML = '';
+  SYMBOLS.forEach(s => {
+    const el = document.createElement('div');
+    el.className = 'chip' + (s.sym === focusSymbol ? ' active' : '');
+    el.dataset.sym = s.sym;
+    el.innerHTML = `<span class="tick-led"></span>${s.name.replace('Volatility ','V').replace(' Index','')}`;
+    el.onclick = () => { focusSymbol = s.sym; document.getElementById('focusSymName').textContent = s.name; buildMarketRow(); renderAll(); };
+    row.appendChild(el);
+  });
+}
+
+function connect(){
+  document.getElementById('connDot').className = 'dot wait';
+  document.getElementById('connText').textContent = 'Connecting to Deriv feed...';
+  ws = new WebSocket('wss://ws.derivws.com/websockets/v3?app_id=1089');
+
+  ws.onopen = () => {
+    document.getElementById('connDot').className = 'dot live';
+    document.getElementById('connText').textContent = 'Live — connected to Deriv';
+    reconnectDelay = 1500;
+    ws.send(JSON.stringify({ active_symbols: 'brief', product_type: 'basic' }));
+  };
+
+  ws.onmessage = (msg) => {
+    const data = JSON.parse(msg.data);
+    if (data.msg_type === 'active_symbols') {
+      const found = (data.active_symbols || []).filter(s => s.submarket === 'random_index');
+      found.forEach(s => {
+        const parts = String(s.pip).split('.');
+        pipDecimals[s.symbol] = parts[1] ? parts[1].length : 2;
+      });
+      SYMBOLS = found
+        .map(s => ({ sym: s.symbol, name: s.display_name }))
+        .sort((a,b) => {
+          const ia = PREFERRED_ORDER.indexOf(a.sym), ib = PREFERRED_ORDER.indexOf(b.sym);
+          return (ia===-1?999:ia) - (ib===-1?999:ib);
+        });
+      SYMBOLS.forEach(s => state[s.sym] = { digits: [], lastQuote: null, lastEpoch: null, tickCount: 0, streakDigit: null, streakLen: 0 });
+      focusSymbol = (SYMBOLS.find(s => s.sym === 'R_100') || SYMBOLS[0] || {}).sym || null;
+      if (focusSymbol) document.getElementById('focusSymName').textContent = SYMBOLS.find(s => s.sym===focusSymbol).name;
+      buildMarketRow();
+      SYMBOLS.forEach(s => ws.send(JSON.stringify({ ticks: s.sym, subscribe: 1 })));
+    }
+    if (data.msg_type === 'tick' && data.tick) {
+      handleTick(data.tick);
+    }
+  };
+
+  ws.onerror = () => { document.getElementById('connDot').className = 'dot bad'; };
+
+  ws.onclose = () => {
+    document.getElementById('connDot').className = 'dot bad';
+    document.getElementById('connText').textContent = 'Disconnected — reconnecting...';
+    setTimeout(connect, reconnectDelay);
+    reconnectDelay = Math.min(reconnectDelay * 1.6, 15000);
+  };
+}
+
+function handleTick(tick){
+  const sym = tick.symbol;
+  const st = state[sym];
+  if (!st) return;
+  const decimals = pipDecimals[sym] !== undefined ? pipDecimals[sym] : 2;
+  const quoteStr = Number(tick.quote).toFixed(decimals);
+  const digit = Number(quoteStr[quoteStr.length - 1]);
+
+  st.digits.push(digit);
+  if (st.digits.length > 1000) st.digits.shift();
+  st.lastQuote = quoteStr;
+  st.lastEpoch = tick.epoch;
+  st.tickCount++;
+
+  if (st.streakDigit === digit) st.streakLen++;
+  else { st.streakDigit = digit; st.streakLen = 1; }
+
+  checkAlerts(sym, st, digit);
+
+  if (sym === focusSymbol) renderFocus();
+  renderScanner();
+}
+
+function digitParity(d){ return d % 2 === 0 ? 'even' : 'odd'; }
+
+function windowSlice(st){
+  const n = Math.min(activeWindow, st.digits.length);
+  return st.digits.slice(st.digits.length - n);
+}
+
+function freqOf(arr){
+  const f = Array(10).fill(0);
+  arr.forEach(d => f[d]++);
+  return f;
+}
+
+function renderFocus(){
+  const st = state[focusSymbol];
+  document.getElementById('tickCount').textContent = st.tickCount.toLocaleString() + ' ticks';
+  document.getElementById('lastQuote').textContent = st.lastQuote ?? '—';
+  document.getElementById('lastDigit').textContent = st.digits.length ? st.digits[st.digits.length-1] : '—';
+  document.getElementById('sinceTime').textContent = st.lastEpoch ? new Date(st.lastEpoch*1000).toLocaleTimeString() : '—';
+
+  const stream = document.getElementById('streamRow');
+  const last30 = st.digits.slice(-30);
+  stream.innerHTML = last30.map((d,i) => {
+    const isNewest = i === last30.length - 1;
+    return `<div class="digit-tile ${digitParity(d)} ${isNewest?'newest':''}">${d}</div>`;
+  }).join('');
+
+  const win = windowSlice(st);
+  const freq = freqOf(win);
+  const total = win.length || 1;
+  const maxF = Math.max(...freq, 1);
+  const hotDigit = freq.indexOf(maxF);
+  const minF = Math.min(...freq);
+  const coldDigit = freq.indexOf(minF);
+
+  const grid = document.getElementById('freqGrid');
+  grid.innerHTML = freq.map((f,d) => {
+    const pct = ((f/total)*100).toFixed(1);
+    const h = Math.max(4, (f/maxF)*130);
+    const cls = d === hotDigit ? 'hot' : (d === coldDigit ? 'cold' : '');
+    const fillCls = (d===coldDigit && win.length>0) ? 'freq-fill cold-fill' : 'freq-fill';
+    return `<div class="freq-col ${cls}">
+      <div class="freq-track"><div class="${fillCls}" style="height:${h}px;"></div></div>
+      <div class="freq-label">${d}</div>
+      <div class="freq-pct">${pct}%</div>
+    </div>`;
+  }).join('');
+  document.getElementById('freqWindowLabel').textContent = `last ${win.length} ticks`;
+
+  const overCount = win.filter(d => d >= 5).length;
+  const underCount = win.length - overCount;
+  const overPct = win.length ? (overCount/win.length*100) : 50;
+  document.getElementById('overBar').style.width = overPct + '%';
+  document.getElementById('underBar').style.width = (100-overPct) + '%';
+  document.getElementById('overPct').textContent = overPct.toFixed(1) + '%';
+  document.getElementById('underPct').textContent = (100-overPct).toFixed(1) + '%';
+
+  const evenCount = win.filter(d => d%2===0).length;
+  const evenPct = win.length ? (evenCount/win.length*100) : 50;
+  document.getElementById('evenBar').style.width = evenPct + '%';
+  document.getElementById('oddBar').style.width = (100-evenPct) + '%';
+  document.getElementById('evenPct').textContent = evenPct.toFixed(1) + '%';
+  document.getElementById('oddPct').textContent = (100-evenPct).toFixed(1) + '%';
+
+  const badgeRow = document.getElementById('badgeRow');
+  badgeRow.innerHTML = `
+    <div class="badge hot"><i class="fa-solid fa-fire"></i> Hot: ${hotDigit} (${((maxF/total)*100).toFixed(1)}%)</div>
+    <div class="badge cold"><i class="fa-solid fa-snowflake"></i> Cold: ${coldDigit} (${((minF/total)*100).toFixed(1)}%)</div>
+    <div class="badge streak"><i class="fa-solid fa-bolt"></i> Current streak: digit ${st.streakDigit ?? '—'} × ${st.streakLen}</div>
+  `;
+
+  updateInsight(st, freq, total, hotDigit, coldDigit, overPct, evenPct);
+}
+
+function updateInsight(st, freq, total, hotDigit, coldDigit, overPct, evenPct){
+  if (total < 15) return;
+  const dom = ((freq[hotDigit]/total)*100).toFixed(1);
+  let bias = 'balanced';
+  if (Math.abs(overPct-50) > 8) bias = overPct > 50 ? 'leaning Over' : 'leaning Under';
+  let parity = 'balanced';
+  if (Math.abs(evenPct-50) > 8) parity = evenPct > 50 ? 'favoring Even' : 'favoring Odd';
+  let streakNote = st.streakLen >= 4 ? ` Digit ${st.streakDigit} has repeated ${st.streakLen} times in a row, worth watching for a reversal.` : '';
+  document.getElementById('insightText').textContent =
+    `Over the last ${total} ticks, digit ${hotDigit} is dominant at ${dom}% while digit ${coldDigit} has barely appeared. `+
+    `The market is currently ${bias} and ${parity}.${streakNote} Read as short-term pattern context, not a prediction.`;
+}
+
+function renderScanner(){
+  const tbody = document.getElementById('scanBody');
+  tbody.innerHTML = SYMBOLS.map(s => {
+    const st = state[s.sym];
+    const win = windowSlice(st);
+    if (!win.length) {
+      return `<tr data-sym="${s.sym}" class="${s.sym===focusSymbol?'focus-row':''}"><td class="sym-name">${s.name.replace('Volatility ','V').replace(' Index','')}</td><td colspan="3" style="color:var(--sub2);">waiting for ticks...</td></tr>`;
+    }
+    const freq = freqOf(win);
+    const total = win.length;
+    const maxF = Math.max(...freq);
+    const dom = freq.indexOf(maxF);
+    const domPct = ((maxF/total)*100).toFixed(0);
+    return `<tr data-sym="${s.sym}" class="${s.sym===focusSymbol?'focus-row':''}">
+      <td class="sym-name">${s.name.replace('Volatility ','V').replace(' Index','')}</td>
+      <td><span class="mini-dom">${dom} <i class="fa-solid fa-caret-up arr-up" style="font-size:10px;"></i> ${domPct}%</span></td>
+      <td>${st.streakDigit ?? '—'}×${st.streakLen}</td>
+      <td class="pulse-count">${st.tickCount}</td>
+    </tr>`;
+  }).join('');
+  tbody.querySelectorAll('tr[data-sym]').forEach(tr => {
+    tr.onclick = () => {
+      focusSymbol = tr.dataset.sym;
+      const s = SYMBOLS.find(x => x.sym === focusSymbol);
+      document.getElementById('focusSymName').textContent = s.name;
+      buildMarketRow(); renderAll();
+    };
+  });
+}
+
+function checkAlerts(sym, st, digit){
+  const win = windowSlice(st);
+  if (win.length < 20) return;
+  const freq = freqOf(win);
+  const total = win.length;
+  const maxF = Math.max(...freq);
+  const dom = freq.indexOf(maxF);
+  const domPct = (maxF/total)*100;
+  let msg = null;
+  if (st.streakLen === 5) msg = { icon:'fa-bolt', text:`<b>${sym}</b> — digit ${digit} just streaked 5 times in a row.` };
+  else if (domPct >= 22 && domPct < 22.6) msg = { icon:'fa-fire', text:`<b>${sym}</b> — digit ${dom} dominance crossed 22% of the last ${total} ticks.` };
+  if (msg) pushAlert(msg);
+}
+
+function pushAlert(msg){
+  const list = document.getElementById('alertList');
+  if (list.querySelector('.empty-alerts')) list.innerHTML = '';
+  const item = document.createElement('div');
+  item.className = 'alert-item';
+  item.innerHTML = `<div class="alert-ic"><i class="fa-solid ${msg.icon}"></i></div>
+    <div><div class="alert-txt">${msg.text}</div><div class="alert-time">${new Date().toLocaleTimeString()}</div></div>`;
+  list.insertBefore(item, list.firstChild);
+  while (list.children.length > 8) list.removeChild(list.lastChild);
+}
+
+document.getElementById('winRow').addEventListener('click', (e) => {
+  const btn = e.target.closest('.win-btn');
+  if (!btn) return;
+  document.querySelectorAll('.win-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  activeWindow = Number(btn.dataset.win);
+  renderFocus();
+});
+
+function renderAll(){ renderFocus(); renderScanner(); }
+
+buildMarketRow();
+connect();
+setInterval(renderScanner, 4000);
+</script>
+</body>
+</html>
