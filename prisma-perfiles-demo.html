@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prisma - Gestor de Perfiles Aislados</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+  :root{
+    --bg:#0e1013;
+    --panel:#15181d;
+    --panel-2:#1b1f26;
+    --border:#262b33;
+    --text:#e9ebef;
+    --text-dim:#8b93a1;
+    --gold:#d4af5f;
+    --gold-soft:rgba(212,175,95,0.12);
+    --green:#4ade80;
+    --blue:#5b9dd9;
+    --purple:#b18cf0;
+    --red:#f0685b;
+    --radius:12px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:'Lexend',sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    height:100vh;
+    overflow:hidden;
+    font-size:14px;
+  }
+  .app{
+    display:flex;
+    flex-direction:column;
+    height:100vh;
+    max-width:1400px;
+    margin:0 auto;
+    border-left:1px solid var(--border);
+    border-right:1px solid var(--border);
+  }
+  /* Title bar */
+  .titlebar{
+    height:44px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:0 16px;
+    background:var(--panel);
+    border-bottom:1px solid var(--border);
+    flex-shrink:0;
+  }
+  .dots{display:flex;gap:7px;}
+  .dot{width:11px;height:11px;border-radius:50%;}
+  .dot.red{background:#f0685b;} .dot.yellow{background:#e8b84b;} .dot.green{background:#4ade80;}
+  .titlebar-title{
+    flex:1;text-align:center;color:var(--text-dim);font-size:12.5px;font-weight:500;
+    letter-spacing:0.3px;
+  }
+  .titlebar-actions{display:flex;gap:14px;color:var(--text-dim);font-size:13px;}
+  .titlebar-actions i{cursor:pointer;}
+  .titlebar-actions i:hover{color:var(--gold);}
+
+  .main{display:flex;flex:1;min-height:0;}
+
+  /* Sidebar */
+  .sidebar{
+    width:230px;
+    background:var(--panel);
+    border-right:1px solid var(--border);
+    display:flex;
+    flex-direction:column;
+    padding:16px 12px;
+    flex-shrink:0;
+  }
+  .brand{display:flex;align-items:center;gap:10px;padding:4px 8px 18px;}
+  .brand-mark{
+    width:30px;height:30px;border-radius:8px;
+    background:linear-gradient(135deg,var(--gold),#8a6a2f);
+    display:flex;align-items:center;justify-content:center;color:#151515;font-weight:800;font-size:14px;
+  }
+  .brand-name{font-weight:700;font-size:16px;letter-spacing:0.2px;}
+  .newbtn{
+    background:var(--gold);color:#1a1408;border:none;border-radius:9px;
+    padding:10px 12px;font-weight:600;font-size:13px;display:flex;align-items:center;justify-content:center;gap:8px;
+    cursor:pointer;margin-bottom:18px;transition:filter .15s;
+  }
+  .newbtn:hover{filter:brightness(1.08);}
+  .nav-label{font-size:11px;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-dim);margin:14px 8px 8px;}
+  .nav-item{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:8px 10px;border-radius:8px;color:var(--text-dim);cursor:pointer;font-size:13.5px;
+    transition:background .12s,color .12s;
+  }
+  .nav-item i:first-child{width:16px;text-align:center;}
+  .nav-item:hover{background:var(--panel-2);color:var(--text);}
+  .nav-item.active{background:var(--gold-soft);color:var(--gold);}
+  .nav-count{font-size:11px;color:var(--text-dim);background:var(--panel-2);padding:1px 7px;border-radius:10px;}
+  .nav-item.active .nav-count{background:rgba(212,175,95,0.18);color:var(--gold);}
+
+  .sidebar-footer{margin-top:auto;padding-top:12px;border-top:1px solid var(--border);}
+  .sync-status{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--text-dim);padding:8px 10px;}
+  .sync-status i{color:var(--text-dim);}
+
+  /* Content */
+  .content{flex:1;display:flex;flex-direction:column;min-width:0;background:var(--bg);}
+  .topbar{
+    height:64px;flex-shrink:0;display:flex;align-items:center;gap:16px;
+    padding:0 22px;border-bottom:1px solid var(--border);
+  }
+  .search{
+    flex:1;max-width:360px;display:flex;align-items:center;gap:10px;
+    background:var(--panel-2);border:1px solid var(--border);border-radius:9px;padding:9px 12px;color:var(--text-dim);
+  }
+  .search input{background:transparent;border:none;outline:none;color:var(--text);font-family:inherit;font-size:13px;width:100%;}
+  .view-title{font-size:15px;font-weight:600;}
+  .view-sub{font-size:12px;color:var(--text-dim);margin-top:2px;}
+  .topbar-right{display:flex;align-items:center;gap:14px;margin-left:auto;}
+  .icon-btn{
+    width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+    color:var(--text-dim);background:var(--panel-2);border:1px solid var(--border);cursor:pointer;font-size:13px;
+    transition:color .12s,border-color .12s;
+  }
+  .icon-btn:hover{color:var(--gold);border-color:var(--gold);}
+  .avatar{
+    width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,var(--purple),#5b3fa0);
+    display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12.5px;
+  }
+
+  .scroll{flex:1;overflow-y:auto;padding:22px;}
+
+  /* Stats row */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px;}
+  .stat-card{
+    background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;
+    opacity:0;transform:translateY(8px);animation:rise .4s ease forwards;
+  }
+  .stat-card:nth-child(1){animation-delay:.02s;} .stat-card:nth-child(2){animation-delay:.08s;}
+  .stat-card:nth-child(3){animation-delay:.14s;} .stat-card:nth-child(4){animation-delay:.2s;}
+  .stat-top{display:flex;align-items:center;justify-content:space-between;color:var(--text-dim);font-size:12px;margin-bottom:10px;}
+  .stat-top i{font-size:13px;}
+  .stat-value{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;}
+  .stat-delta{font-size:11.5px;color:var(--green);margin-top:4px;}
+  @keyframes rise{to{opacity:1;transform:translateY(0);}}
+
+  /* Grid of profiles */
+  .grid-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;}
+  .chip{
+    padding:6px 13px;border-radius:20px;font-size:12px;border:1px solid var(--border);color:var(--text-dim);cursor:pointer;
+    background:var(--panel);transition:all .12s;
+  }
+  .chip.active,.chip:hover{border-color:var(--gold);color:var(--gold);}
+
+  .profiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(255px,1fr));gap:14px;}
+  .card{
+    background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:16px;cursor:pointer;
+    transition:border-color .15s,transform .15s;opacity:0;transform:translateY(10px);animation:rise .35s ease forwards;
+  }
+  .card:hover{border-color:var(--gold);transform:translateY(-2px);}
+  .card-top{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+  .card-avatar{
+    width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+    font-weight:700;font-size:13px;flex-shrink:0;
+  }
+  .card-name{font-weight:600;font-size:13.5px;}
+  .card-group{font-size:11px;color:var(--text-dim);}
+  .card-badges{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
+  .badge{font-size:10.5px;padding:3px 8px;border-radius:6px;display:flex;align-items:center;gap:5px;font-weight:500;}
+  .badge.http{background:rgba(91,157,217,0.14);color:var(--blue);}
+  .badge.socks{background:rgba(177,140,240,0.14);color:var(--purple);}
+  .badge.iso{background:rgba(74,222,128,0.14);color:var(--green);}
+  .card-meta{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--text-dim);padding-top:10px;border-top:1px solid var(--border);}
+  .launch{color:var(--gold);font-weight:600;display:flex;align-items:center;gap:5px;}
+
+  /* Audit view */
+  .audit-table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+  .audit-table th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-dim);padding:12px 16px;background:var(--panel-2);font-weight:600;}
+  .audit-table td{padding:12px 16px;font-size:12.5px;border-top:1px solid var(--border);}
+  .ok{color:var(--green);display:flex;align-items:center;gap:6px;}
+
+  /* Activity log */
+  .log-panel{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:8px 0;}
+  .log-item{display:flex;gap:12px;padding:11px 18px;border-bottom:1px solid var(--border);font-size:12.5px;}
+  .log-item:last-child{border-bottom:none;}
+  .log-dot{width:7px;height:7px;border-radius:50%;margin-top:5px;flex-shrink:0;}
+  .log-time{color:var(--text-dim);font-size:11px;white-space:nowrap;margin-left:auto;}
+
+  /* Modal */
+  .overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,0.55);display:none;align-items:center;justify-content:center;z-index:50;
+  }
+  .overlay.show{display:flex;}
+  .modal{
+    background:var(--panel);border:1px solid var(--border);border-radius:14px;width:420px;padding:22px;
+    animation:pop .18s ease;
+  }
+  @keyframes pop{from{opacity:0;transform:scale(0.96);}to{opacity:1;transform:scale(1);}}
+  .modal h3{font-size:16px;margin-bottom:4px;}
+  .modal-sub{font-size:12px;color:var(--text-dim);margin-bottom:18px;}
+  .field{margin-bottom:14px;}
+  .field label{font-size:11.5px;color:var(--text-dim);display:block;margin-bottom:6px;}
+  .field input,.field select{
+    width:100%;background:var(--panel-2);border:1px solid var(--border);border-radius:8px;padding:9px 11px;
+    color:var(--text);font-family:inherit;font-size:13px;outline:none;
+  }
+  .field input:focus,.field select:focus{border-color:var(--gold);}
+  .modal-actions{display:flex;gap:10px;margin-top:18px;}
+  .btn{flex:1;padding:10px;border-radius:8px;border:none;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;}
+  .btn-primary{background:var(--gold);color:#1a1408;}
+  .btn-ghost{background:var(--panel-2);color:var(--text-dim);border:1px solid var(--border);}
+  .isolation-note{
+    display:flex;gap:9px;background:var(--gold-soft);border:1px solid rgba(212,175,95,0.25);border-radius:9px;padding:11px 12px;
+    font-size:11.5px;color:var(--gold);margin-top:14px;line-height:1.5;
+  }
+
+  ::-webkit-scrollbar{width:8px;} ::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+  .hidden{display:none !important;}
+  .toast{
+    position:fixed;bottom:24px;right:24px;background:var(--panel);border:1px solid var(--gold);color:var(--text);
+    padding:12px 18px;border-radius:10px;font-size:13px;display:flex;align-items:center;gap:10px;z-index:60;
+    transform:translateY(20px);opacity:0;transition:all .25s;
+  }
+  .toast.show{transform:translateY(0);opacity:1;}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="titlebar">
+    <div class="dots"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div></div>
+    <div class="titlebar-title">Prisma - Gestor de Perfiles</div>
+    <div class="titlebar-actions">
+      <i class="fa-solid fa-minus"></i>
+      <i class="fa-regular fa-square"></i>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">P</div>
+        <div class="brand-name">Prisma</div>
+      </div>
+      <button class="newbtn" onclick="openModal()"><i class="fa-solid fa-plus"></i> Nuevo Perfil</button>
+
+      <div class="nav-label">Vistas</div>
+      <div class="nav-item active" data-view="profiles"><span><i class="fa-solid fa-table-cells"></i> Perfiles</span><span class="nav-count" id="countProfiles">7</span></div>
+      <div class="nav-item" data-view="audit"><span><i class="fa-solid fa-shield-halved"></i> Auditoria de Aislamiento</span></div>
+      <div class="nav-item" data-view="activity"><span><i class="fa-solid fa-clock-rotate-left"></i> Actividad</span></div>
+
+      <div class="nav-label">Grupos</div>
+      <div class="nav-item group-filter active" data-group="todos"><span><i class="fa-solid fa-layer-group"></i> Todos</span><span class="nav-count">7</span></div>
+      <div class="nav-item group-filter" data-group="ventas"><span><i class="fa-solid fa-folder"></i> Ventas</span><span class="nav-count">3</span></div>
+      <div class="nav-item group-filter" data-group="soporte"><span><i class="fa-solid fa-folder"></i> Soporte</span><span class="nav-count">2</span></div>
+      <div class="nav-item group-filter" data-group="investigacion"><span><i class="fa-solid fa-folder"></i> Investigacion</span><span class="nav-count">2</span></div>
+
+      <div class="sidebar-footer">
+        <div class="sync-status"><i class="fa-solid fa-circle" style="color:var(--green);font-size:7px;"></i> Sesion local activa</div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="topbar">
+        <div>
+          <div class="view-title" id="viewTitle">Perfiles</div>
+          <div class="view-sub" id="viewSub">7 perfiles, cada uno con su propia sesion aislada</div>
+        </div>
+        <div class="search" style="margin-left:24px;">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" placeholder="Buscar perfil o grupo...">
+        </div>
+        <div class="topbar-right">
+          <div class="icon-btn" title="Reiniciar demo" onclick="resetDemo()"><i class="fa-solid fa-rotate-left"></i></div>
+          <div class="icon-btn"><i class="fa-solid fa-gear"></i></div>
+          <div class="avatar">CN</div>
+        </div>
+      </div>
+
+      <div class="scroll">
+
+        <!-- PROFILES VIEW -->
+        <div id="view-profiles">
+          <div class="stats">
+            <div class="stat-card">
+              <div class="stat-top"><span>Perfiles activos</span><i class="fa-solid fa-user-group"></i></div>
+              <div class="stat-value" id="statTotal">7</div>
+              <div class="stat-delta">Aislamiento verificado en 100%</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-top"><span>Proxies conectados</span><i class="fa-solid fa-globe"></i></div>
+              <div class="stat-value">6</div>
+              <div class="stat-delta">HTTP, HTTPS y SOCKS5</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-top"><span>Memoria en uso</span><i class="fa-solid fa-microchip"></i></div>
+              <div class="stat-value">312 MB</div>
+              <div class="stat-delta">Solo 2 sesiones activas ahora</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-top"><span>Fugas WebRTC</span><i class="fa-solid fa-lock"></i></div>
+              <div class="stat-value">0</div>
+              <div class="stat-delta">Bloqueadas por diseno</div>
+            </div>
+          </div>
+
+          <div class="grid-header">
+            <div class="chips">
+              <div class="chip active" data-group="todos">Todos (7)</div>
+              <div class="chip" data-group="ventas">Ventas (3)</div>
+              <div class="chip" data-group="soporte">Soporte (2)</div>
+              <div class="chip" data-group="investigacion">Investigacion (2)</div>
+            </div>
+          </div>
+
+          <div class="profiles" id="profileGrid"></div>
+        </div>
+
+        <!-- AUDIT VIEW -->
+        <div id="view-audit" class="hidden">
+          <table class="audit-table">
+            <thead>
+              <tr><th>Perfil</th><th>Cookies</th><th>Cache</th><th>Almacenamiento local</th><th>Extensiones</th><th>Fuga WebRTC</th></tr>
+            </thead>
+            <tbody id="auditBody"></tbody>
+          </table>
+        </div>
+
+        <!-- ACTIVITY VIEW -->
+        <div id="view-activity" class="hidden">
+          <div class="log-panel" id="logPanel"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- New profile modal -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h3>Nuevo perfil aislado</h3>
+    <div class="modal-sub">Se crea con su propia particion de sesion desde el inicio</div>
+    <div class="field">
+      <label>Nombre del perfil</label>
+      <input type="text" id="fName" placeholder="Ej. Cliente Norte 03">
+    </div>
+    <div class="field">
+      <label>Grupo</label>
+      <select id="fGroup">
+        <option value="ventas">Ventas</option>
+        <option value="soporte">Soporte</option>
+        <option value="investigacion">Investigacion</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Tipo de proxy</label>
+      <select id="fProxy">
+        <option value="http">HTTP</option>
+        <option value="https">HTTPS</option>
+        <option value="socks">SOCKS5</option>
+      </select>
+    </div>
+    <div class="isolation-note"><i class="fa-solid fa-circle-info" style="margin-top:2px;"></i> Cookies, cache, almacenamiento local y extensiones quedan aislados por perfil desde la creacion, sin depender de una configuracion posterior.</div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="createProfile()">Crear perfil</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><i class="fa-solid fa-circle-check" style="color:var(--green);"></i> <span id="toastMsg"></span></div>
+
+<script>
+const groupColors = {ventas:'#5b9dd9', soporte:'#b18cf0', investigacion:'#d4af5f'};
+const groupNames = {ventas:'Ventas', soporte:'Soporte', investigacion:'Investigacion'};
+
+let profiles = [
+  {name:'Cuenta Norte 01', group:'ventas', proxy:'socks', last:'hace 4 min'},
+  {name:'Cuenta Norte 02', group:'ventas', proxy:'http', last:'hace 22 min'},
+  {name:'Distribuidor MX', group:'ventas', proxy:'socks', last:'hace 1 h'},
+  {name:'Soporte Turno A', group:'soporte', proxy:'https', last:'hace 3 h'},
+  {name:'Soporte Turno B', group:'soporte', proxy:'http', last:'ayer'},
+  {name:'Analisis Regional', group:'investigacion', proxy:'socks', last:'hace 2 dias'},
+  {name:'Analisis Competencia', group:'investigacion', proxy:'https', last:'hace 2 dias'},
+];
+
+let logs = [
+  {icon:'fa-plus',color:'var(--green)',text:'Perfil <b>Distribuidor MX</b> creado con proxy SOCKS5',time:'10:42'},
+  {icon:'fa-lock',color:'var(--gold)',text:'Auditoria de aislamiento completada sin observaciones',time:'10:20'},
+  {icon:'fa-play',color:'var(--blue)',text:'Perfil <b>Cuenta Norte 01</b> lanzado',time:'09:58'},
+  {icon:'fa-globe',color:'var(--purple)',text:'Proxy SOCKS5 reasignado en <b>Analisis Regional</b>',time:'09:15'},
+  {icon:'fa-box-archive',color:'var(--text-dim)',text:'Perfil <b>Soporte Turno B</b> exportado',time:'ayer, 18:03'},
+];
+
+function renderProfiles(filter){
+  const grid = document.getElementById('profileGrid');
+  grid.innerHTML = '';
+  const list = filter && filter!=='todos' ? profiles.filter(p=>p.group===filter) : profiles;
+  list.forEach((p,i)=>{
+    const initials = p.name.split(' ').map(w=>w[0]).slice(0,2).join('');
+    const proxyLabel = p.proxy==='socks' ? 'SOCKS5' : p.proxy.toUpperCase();
+    const proxyClass = p.proxy==='socks' ? 'socks' : 'http';
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.style.animationDelay = (i*0.04)+'s';
+    card.innerHTML = `
+      <div class="card-top">
+        <div class="card-avatar" style="background:${groupColors[p.group]}22;color:${groupColors[p.group]};">${initials}</div>
+        <div>
+          <div class="card-name">${p.name}</div>
+          <div class="card-group">${groupNames[p.group]}</div>
+        </div>
+      </div>
+      <div class="card-badges">
+        <span class="badge ${proxyClass}"><i class="fa-solid fa-globe"></i> ${proxyLabel}</span>
+        <span class="badge iso"><i class="fa-solid fa-shield-halved"></i> Aislado</span>
+      </div>
+      <div class="card-meta">
+        <span>${p.last}</span>
+        <span class="launch"><i class="fa-solid fa-play"></i> Abrir</span>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function renderAudit(){
+  const body = document.getElementById('auditBody');
+  body.innerHTML = profiles.map(p=>`
+    <tr>
+      <td>${p.name}</td>
+      <td><span class="ok"><i class="fa-solid fa-check"></i> Aisladas</span></td>
+      <td><span class="ok"><i class="fa-solid fa-check"></i> Aislada</span></td>
+      <td><span class="ok"><i class="fa-solid fa-check"></i> Aislado</span></td>
+      <td><span class="ok"><i class="fa-solid fa-check"></i> Aisladas</span></td>
+      <td><span class="ok"><i class="fa-solid fa-check"></i> Bloqueada</span></td>
+    </tr>
+  `).join('');
+}
+
+function renderLogs(){
+  const panel = document.getElementById('logPanel');
+  panel.innerHTML = logs.map(l=>`
+    <div class="log-item">
+      <div style="color:${l.color};margin-top:1px;"><i class="fa-solid ${l.icon}"></i></div>
+      <div>${l.text}</div>
+      <div class="log-time">${l.time}</div>
+    </div>
+  `).join('');
+}
+
+document.querySelectorAll('.nav-item[data-view]').forEach(item=>{
+  item.addEventListener('click', ()=>{
+    document.querySelectorAll('.nav-item[data-view]').forEach(i=>i.classList.remove('active'));
+    item.classList.add('active');
+    const view = item.dataset.view;
+    document.getElementById('view-profiles').classList.toggle('hidden', view!=='profiles');
+    document.getElementById('view-audit').classList.toggle('hidden', view!=='audit');
+    document.getElementById('view-activity').classList.toggle('hidden', view!=='activity');
+    const titles = {profiles:['Perfiles','7 perfiles, cada uno con su propia sesion aislada'],
+                    audit:['Auditoria de Aislamiento','Verificacion por perfil de cookies, cache, almacenamiento y fugas'],
+                    activity:['Actividad','Registro de acciones recientes sobre los perfiles']};
+    document.getElementById('viewTitle').textContent = titles[view][0];
+    document.getElementById('viewSub').textContent = titles[view][1];
+  });
+});
+
+document.querySelectorAll('.group-filter').forEach(item=>{
+  item.addEventListener('click', ()=>{
+    document.querySelectorAll('.group-filter').forEach(i=>i.classList.remove('active'));
+    item.classList.add('active');
+    const g = item.dataset.group;
+    document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('active', c.dataset.group===g));
+    renderProfiles(g);
+  });
+});
+document.querySelectorAll('.chip').forEach(chip=>{
+  chip.addEventListener('click', ()=>{
+    document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+    chip.classList.add('active');
+    const g = chip.dataset.group;
+    document.querySelectorAll('.group-filter').forEach(i=>i.classList.toggle('active', i.dataset.group===g));
+    renderProfiles(g);
+  });
+});
+
+function openModal(){ document.getElementById('overlay').classList.add('show'); }
+function closeModal(){ document.getElementById('overlay').classList.remove('show'); document.getElementById('fName').value=''; }
+
+function createProfile(){
+  const name = document.getElementById('fName').value.trim() || 'Perfil sin nombre';
+  const group = document.getElementById('fGroup').value;
+  const proxy = document.getElementById('fProxy').value;
+  profiles.unshift({name, group, proxy, last:'recien creado'});
+  logs.unshift({icon:'fa-plus',color:'var(--green)',text:`Perfil <b>${name}</b> creado con particion de sesion propia`,time:'ahora'});
+  closeModal();
+  renderProfiles(document.querySelector('.chip.active').dataset.group);
+  renderAudit();
+  renderLogs();
+  document.getElementById('statTotal').textContent = profiles.length;
+  document.getElementById('countProfiles').textContent = profiles.length;
+  showToast(`Perfil "${name}" creado y aislado`);
+}
+
+function showToast(msg){
+  document.getElementById('toastMsg').textContent = msg;
+  const t = document.getElementById('toast');
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2600);
+}
+
+function resetDemo(){ location.reload(); }
+
+renderProfiles('todos');
+renderAudit();
+renderLogs();
+</script>
+</body>
+</html>
