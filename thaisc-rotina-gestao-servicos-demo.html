@@ -1,0 +1,1032 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rotina - Gestao de Servicos Recorrentes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+:root{
+  --bg:#0a1410; --bg-alt:#0e1a15; --surface:#12211b; --surface-2:#182c23; --border:rgba(255,255,255,.09);
+  --green-50:#eafbf2; --green-100:#c8f2dc; --green-300:#5ecf95; --green-500:#22a866; --green-600:#188a52; --green-700:#116b3f;
+  --text:#f2f7f4; --text-dim:#a3b6ac; --text-faint:#69796f;
+  --blue:#4d9bf0; --blue-bg:rgba(77,155,240,.14);
+  --amber:#f0b429; --amber-bg:rgba(240,180,41,.14);
+  --red:#ef5757; --red-bg:rgba(239,87,87,.14);
+  --teal:#3fc7ad; --teal-bg:rgba(63,199,173,.14);
+  --radius:14px; --radius-lg:22px; --radius-sm:10px;
+  --shadow:0 10px 30px rgba(0,0,0,.4);
+  --ease:cubic-bezier(.34,1.56,.64,1);
+}
+*,*::before,*::after{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:'Nunito',sans-serif; background:var(--bg); color:var(--text);
+  -webkit-font-smoothing:antialiased; overflow-x:hidden; min-height:100vh;
+  display:flex; flex-direction:column; align-items:center;
+}
+body::before{
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background-image:linear-gradient(rgba(255,255,255,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.02) 1px,transparent 1px);
+  background-size:46px 46px;
+}
+.orb{position:fixed;border-radius:50%;filter:blur(90px);opacity:.16;z-index:0;animation:floatOrb 13s ease-in-out infinite;pointer-events:none;}
+.orb1{width:440px;height:440px;background:var(--green-500);top:-160px;right:-120px;}
+.orb2{width:340px;height:340px;background:var(--teal);bottom:-120px;left:-100px;animation-delay:-6s;}
+@keyframes floatOrb{0%,100%{transform:translateY(0) translateX(0);}50%{transform:translateY(-28px) translateX(18px);}}
+::-webkit-scrollbar{width:7px;height:7px;}
+::-webkit-scrollbar-thumb{background:var(--surface-2);border-radius:8px;}
+
+.page-header{position:relative;z-index:5;text-align:center;padding:clamp(28px,5vw,52px) 20px 8px;}
+.brand-badge{display:inline-flex;align-items:center;gap:9px;background:var(--green-500);color:#04210f;padding:7px 8px 7px 8px;border-radius:14px;margin-bottom:20px;box-shadow:0 0 24px rgba(34,168,102,.45);animation:pulseLogo 3.2s ease-in-out infinite;}
+@keyframes pulseLogo{0%,100%{box-shadow:0 0 14px rgba(34,168,102,.35);}50%{box-shadow:0 0 28px rgba(34,168,102,.6);}}
+.brand-badge .mark{width:30px;height:30px;border-radius:9px;background:rgba(0,0,0,.18);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:15px;}
+.brand-badge .name{font-weight:800;font-size:16px;letter-spacing:.2px;padding-right:6px;}
+.brand-tag{display:inline-block;font-size:11px;font-weight:700;color:var(--green-300);background:rgba(34,168,102,.12);border:1px solid rgba(34,168,102,.3);padding:3px 11px;border-radius:999px;text-transform:uppercase;letter-spacing:.06em;margin-left:8px;vertical-align:middle;}
+.page-title{font-size:clamp(1.7rem,4.4vw,2.6rem);font-weight:800;line-height:1.18;letter-spacing:-.5px;margin:4px 0 10px;}
+.page-title span{background:linear-gradient(135deg,var(--green-300),var(--green-600));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.page-subtitle{font-size:clamp(14px,1.8vw,16px);color:var(--text-dim);max-width:480px;margin:0 auto;line-height:1.6;font-weight:400;}
+
+.role-toggle-wrap{position:relative;z-index:5;display:flex;justify-content:center;margin:22px 0 6px;}
+.role-toggle{display:flex;gap:3px;background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:4px;box-shadow:var(--shadow);}
+.role-toggle-btn{font-family:inherit;border:none;background:transparent;color:var(--text-dim);font-weight:700;font-size:13.5px;padding:10px 22px;border-radius:999px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .25s var(--ease);white-space:nowrap;}
+.role-toggle-btn i{font-size:12px;}
+.role-toggle-btn.active{background:linear-gradient(135deg,var(--green-300),var(--green-600));color:#04210f;box-shadow:0 4px 16px rgba(34,168,102,.4);}
+.role-toggle-btn:hover:not(.active){color:var(--text);}
+
+.demo-area{position:relative;z-index:5;display:flex;flex-direction:column;align-items:center;padding:14px 20px 70px;width:100%;}
+.phone-wrapper{position:relative;width:375px;max-width:100%;}
+.phone-shell{background:#081008;border-radius:46px;border:2px solid #1b2a20;box-shadow:0 0 0 1px #0d1610,0 40px 90px rgba(0,0,0,.7),0 0 130px rgba(34,168,102,.07);overflow:hidden;position:relative;}
+.phone-notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:126px;height:30px;background:#081008;border-radius:0 0 20px 20px;z-index:60;}
+.phone-notch::after{content:'';position:absolute;top:8px;left:50%;transform:translateX(-50%);width:56px;height:5px;background:#18241b;border-radius:99px;}
+.phone-screen{height:734px;overflow:hidden;position:relative;background:var(--bg);}
+.status-bar{position:absolute;top:0;left:0;right:0;height:42px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;z-index:55;background:linear-gradient(to bottom,rgba(10,20,16,.96),rgba(10,20,16,0));}
+.status-time{font-size:13.5px;font-weight:800;}
+.status-icons{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text);}
+
+.screen{position:absolute;inset:42px 0 64px;overflow-y:auto;overflow-x:hidden;display:none;flex-direction:column;scrollbar-width:none;}
+.screen::-webkit-scrollbar{display:none;}
+.screen.active{display:flex;animation:fadeSlideIn .35s var(--ease);}
+.screen.no-nav{inset:42px 0 0;}
+@keyframes fadeSlideIn{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:none;}}
+.reveal-item{animation:itemIn .4s var(--ease) both;}
+@keyframes itemIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+
+.bottom-nav{position:absolute;bottom:0;left:0;right:0;height:64px;background:rgba(18,33,27,.95);backdrop-filter:blur(20px);border-top:1px solid var(--border);display:flex;align-items:center;z-index:55;}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;padding:9px 0;transition:all .25s var(--ease);color:var(--text-faint);font-size:10px;font-weight:700;}
+.nav-item i{font-size:17px;}
+.nav-item.active{color:var(--green-300);transform:translateY(-2px);}
+
+.onboard-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:38px 26px;text-align:center;gap:6px;}
+.onboard-mark{width:64px;height:64px;border-radius:20px;background:linear-gradient(135deg,var(--green-300),var(--green-700));display:flex;align-items:center;justify-content:center;font-size:26px;color:#04210f;box-shadow:0 10px 30px rgba(34,168,102,.4);margin-bottom:18px;animation:floatOrb 5s ease-in-out infinite;}
+.onboard-title{font-size:23px;font-weight:800;margin-bottom:8px;}
+.onboard-sub{font-size:13.5px;color:var(--text-dim);line-height:1.6;margin-bottom:30px;max-width:280px;}
+.role-card{width:100%;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-lg);padding:20px;display:flex;align-items:center;gap:16px;text-align:left;cursor:pointer;margin-bottom:14px;transition:all .25s var(--ease);}
+.role-card:hover{border-color:var(--green-500);transform:translateY(-2px);box-shadow:var(--shadow);}
+.role-card-icon{width:48px;height:48px;flex-shrink:0;border-radius:14px;background:rgba(34,168,102,.14);color:var(--green-300);display:flex;align-items:center;justify-content:center;font-size:19px;}
+.role-card-title{font-weight:800;font-size:15.5px;margin-bottom:3px;}
+.role-card-sub{font-size:12.5px;color:var(--text-faint);line-height:1.4;}
+
+.screen-topbar{display:flex;align-items:center;gap:12px;padding:18px 18px 6px;flex-shrink:0;}
+.back-btn{width:34px;height:34px;border-radius:10px;background:var(--surface-2);border:1px solid var(--border);color:var(--text);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all .18s;}
+.back-btn:hover{background:var(--surface);border-color:var(--green-500);color:var(--green-300);}
+.screen-title{font-size:16.5px;font-weight:800;}
+.screen-title-sub{font-size:11.5px;color:var(--text-faint);font-weight:600;margin-top:1px;}
+.screen-body{padding:8px 18px 26px;flex:1;}
+.screen-actions{margin-left:auto;display:flex;gap:8px;}
+.icon-btn{width:34px;height:34px;border-radius:10px;background:var(--surface-2);border:1px solid var(--border);color:var(--text);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all .18s;}
+.icon-btn:hover{border-color:var(--green-500);color:var(--green-300);}
+
+.home-head{padding:16px 18px 4px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.home-greet{font-size:12.5px;color:var(--text-faint);font-weight:600;}
+.home-name{font-size:19px;font-weight:800;}
+.tenant-badge{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:8px 12px;margin:8px 18px 4px;}
+.tenant-badge i{color:var(--green-300);font-size:13px;}
+.tenant-badge .t1{font-size:9.5px;color:var(--text-faint);font-weight:700;text-transform:uppercase;letter-spacing:.05em;}
+.tenant-badge .t2{font-size:12.5px;font-weight:800;}
+
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;padding:0 18px;margin-bottom:6px;}
+.stat-tile{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:13px 10px;text-align:center;}
+.stat-num{font-size:19px;font-weight:800;color:var(--green-300);}
+.stat-label-sm{font-size:9.5px;color:var(--text-faint);font-weight:700;margin-top:3px;text-transform:uppercase;letter-spacing:.03em;}
+
+.section-head{display:flex;align-items:center;justify-content:space-between;padding:18px 18px 8px;}
+.section-head h3{margin:0;font-size:13.5px;font-weight:800;}
+.section-link{font-size:11.5px;font-weight:700;color:var(--green-300);cursor:pointer;}
+
+.cat-row{display:flex;gap:8px;padding:14px 18px;overflow-x:auto;scrollbar-width:none;}
+.cat-row::-webkit-scrollbar{display:none;}
+.cat-chip{flex-shrink:0;display:flex;align-items:center;gap:7px;padding:8px 14px;border-radius:999px;font-size:12px;font-weight:700;border:1.5px solid var(--border);color:var(--text-dim);cursor:pointer;transition:all .2s;background:var(--surface);white-space:nowrap;}
+.cat-chip i{font-size:11px;}
+.cat-chip.active{background:rgba(34,168,102,.16);border-color:var(--green-500);color:var(--green-300);}
+
+.req-list{padding:0 18px 10px;display:flex;flex-direction:column;gap:11px;}
+.req-row{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 15px;cursor:pointer;transition:all .2s var(--ease);}
+.req-row:hover{border-color:var(--green-700);transform:translateY(-2px);}
+.req-row-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;}
+.req-row-name{font-weight:800;font-size:13.5px;display:flex;align-items:center;gap:9px;}
+.avatar-init{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--green-300),var(--green-700));color:#04210f;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11.5px;flex-shrink:0;}
+.avatar-init.lg{width:52px;height:52px;border-radius:14px;font-size:18px;}
+.req-row-meta{display:flex;flex-wrap:wrap;gap:7px;font-size:11px;color:var(--text-faint);font-weight:600;}
+.meta-chip{font-size:11px;color:var(--text-dim);font-weight:600;background:var(--surface-2);padding:4px 9px;border-radius:8px;display:flex;align-items:center;gap:5px;}
+.meta-chip i{font-size:9.5px;color:var(--green-300);}
+
+.day-switcher{display:flex;align-items:center;justify-content:space-between;padding:4px 18px 14px;gap:10px;}
+.day-switcher .day-label{font-size:14.5px;font-weight:800;text-align:center;flex:1;}
+.day-switcher .day-sub{font-size:10.5px;color:var(--text-faint);font-weight:600;display:block;}
+
+.week-section{padding:0 18px 6px;}
+.week-section-head{font-size:11.5px;font-weight:800;color:var(--text-dim);text-transform:uppercase;letter-spacing:.04em;padding:12px 0 6px;display:flex;align-items:center;gap:8px;}
+.week-section-head .cnt{background:var(--surface-2);color:var(--green-300);border-radius:999px;padding:1px 8px;font-size:10px;}
+
+.month-row{display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:13px 15px;margin:0 18px 10px;cursor:pointer;transition:all .2s;}
+.month-row:hover{border-color:var(--green-700);}
+.month-row .md-date{font-weight:800;font-size:13.5px;}
+.month-row .md-count{background:rgba(34,168,102,.16);color:var(--green-300);font-weight:800;font-size:11.5px;padding:4px 11px;border-radius:999px;}
+
+.badge{font-size:10.5px;font-weight:800;padding:5px 11px;border-radius:999px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;}
+.badge i{font-size:9px;}
+.badge-blue{background:var(--blue-bg);color:var(--blue);}
+.badge-amber{background:var(--amber-bg);color:var(--amber);}
+.badge-teal{background:var(--teal-bg);color:var(--teal);}
+.badge-green{background:var(--green-bg,rgba(34,168,102,.14));color:var(--green-300);}
+.badge-red{background:var(--red-bg);color:var(--red);}
+
+.empty-state{text-align:center;padding:44px 24px;color:var(--text-faint);margin:0 18px;background:var(--surface);border:1px dashed var(--border);border-radius:var(--radius-lg);}
+.empty-state i{font-size:28px;color:var(--green-700);margin-bottom:12px;display:block;}
+.empty-state p{font-weight:700;font-size:13px;margin:0 0 4px;color:var(--text-dim);}
+.empty-state span{font-size:11.5px;}
+
+.field{margin-bottom:15px;}
+.field label{display:block;font-size:12px;font-weight:700;color:var(--text-dim);margin-bottom:7px;text-transform:uppercase;letter-spacing:.03em;}
+.field input,.field select,.field textarea{width:100%;font-family:inherit;font-size:13.5px;font-weight:500;color:var(--text);border:1.5px solid var(--border);border-radius:11px;padding:11px 13px;background:var(--surface-2);transition:border-color .18s;outline:none;}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--green-500);}
+.field select{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2322a866' stroke-width='1.6' fill='none' fill-rule='evenodd'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;padding-right:32px;}
+.helper-note{font-size:11.5px;color:var(--text-faint);margin-top:5px;line-height:1.4;}
+.radio-row{display:flex;gap:8px;flex-wrap:wrap;}
+.radio-chip{flex:1;min-width:76px;text-align:center;padding:10px 8px;border-radius:11px;border:1.5px solid var(--border);background:var(--surface-2);font-size:12px;font-weight:700;color:var(--text-dim);cursor:pointer;transition:all .18s;}
+.radio-chip.active{border-color:var(--green-500);background:rgba(34,168,102,.14);color:var(--green-300);}
+
+.btn{font-family:inherit;border:none;cursor:pointer;font-weight:700;font-size:13.5px;border-radius:12px;padding:12px 20px;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:all .18s var(--ease);white-space:nowrap;width:100%;}
+.btn-green{background:linear-gradient(135deg,var(--green-300),var(--green-600));color:#04210f;box-shadow:0 6px 18px rgba(34,168,102,.3);}
+.btn-green:hover{transform:translateY(-1px);box-shadow:0 8px 22px rgba(34,168,102,.4);}
+.btn-ghost{background:var(--surface-2);color:var(--text);border:1px solid var(--border);}
+.btn-ghost:hover{border-color:var(--green-500);}
+.btn-danger-ghost{background:transparent;color:var(--red);border:1px solid rgba(239,87,87,.35);}
+.btn-danger-ghost:hover{background:var(--red-bg);}
+.btn-row{display:flex;gap:10px;}
+.btn-sm{padding:9px 14px;font-size:12px;width:auto;}
+.fab{position:absolute;right:18px;bottom:80px;z-index:70;width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,var(--green-300),var(--green-600));color:#04210f;display:flex;align-items:center;justify-content:center;font-size:19px;box-shadow:0 10px 26px rgba(34,168,102,.45);cursor:pointer;border:none;}
+
+.stepper{display:flex;gap:0;margin:0 18px 4px;}
+.step{flex:1;text-align:center;position:relative;padding-bottom:12px;}
+.step::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--surface-2);border-radius:3px;}
+.step.done::after{background:var(--green-500);}
+.step.now::after{background:var(--amber);}
+.step-num{width:26px;height:26px;border-radius:50%;background:var(--surface-2);display:flex;align-items:center;justify-content:center;margin:0 auto 7px;font-weight:800;font-size:11px;color:var(--text-dim);}
+.step.done .step-num{background:var(--green-500);color:#04210f;}
+.step.now .step-num{background:var(--amber);color:#241a02;}
+.step-label{font-size:9px;color:var(--text-faint);font-weight:700;}
+.step.done .step-label,.step.now .step-label{color:var(--text);}
+
+.detail-hero{padding:20px 18px 4px;}
+.detail-title{font-size:18px;font-weight:800;margin-bottom:4px;}
+.detail-sub{font-size:12.5px;color:var(--text-faint);font-weight:600;}
+.info-list{margin:0 18px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.info-row{display:flex;align-items:flex-start;gap:12px;padding:13px 15px;border-bottom:1px solid var(--border);}
+.info-row:last-child{border-bottom:none;}
+.info-row i{color:var(--green-300);font-size:14px;margin-top:2px;width:16px;flex-shrink:0;}
+.info-row .il1{font-size:10.5px;color:var(--text-faint);font-weight:700;text-transform:uppercase;letter-spacing:.03em;}
+.info-row .il2{font-size:13.5px;font-weight:700;margin-top:2px;}
+
+.series-panel{background:linear-gradient(135deg,rgba(34,168,102,.1),rgba(34,168,102,.03));border:1px solid rgba(34,168,102,.28);border-radius:var(--radius);margin:16px 18px 0;padding:15px 16px;}
+.series-panel h4{margin:0 0 6px;font-size:13px;font-weight:800;display:flex;align-items:center;gap:8px;color:var(--green-300);}
+.series-panel p{margin:0;font-size:12px;color:var(--text-dim);line-height:1.55;}
+
+.timeline{margin:16px 18px 0;padding:2px 0;}
+.tl-row{display:flex;gap:12px;position:relative;padding-bottom:18px;}
+.tl-row:last-child{padding-bottom:0;}
+.tl-row::before{content:'';position:absolute;left:5px;top:14px;bottom:-4px;width:1.5px;background:var(--border);}
+.tl-row:last-child::before{display:none;}
+.tl-dot{width:11px;height:11px;border-radius:50%;background:var(--green-500);margin-top:2px;flex-shrink:0;box-shadow:0 0 0 3px rgba(34,168,102,.18);}
+.tl-status{font-size:12.5px;font-weight:700;color:var(--text);}
+.tl-when{font-size:11px;color:var(--text-faint);margin-top:2px;}
+
+.svc-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;padding:6px 18px 10px;}
+.svc-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;cursor:pointer;transition:all .25s var(--ease);}
+.svc-card:hover{transform:translateY(-3px);box-shadow:var(--shadow);border-color:var(--green-700);}
+.svc-card-img{height:78px;position:relative;}
+.svc-card-img img{width:100%;height:100%;object-fit:cover;}
+.svc-card-body{padding:11px 12px 13px;}
+.svc-card-title{font-weight:800;font-size:12.5px;margin-bottom:5px;line-height:1.3;}
+.svc-card-meta{font-size:10.5px;color:var(--text-faint);font-weight:700;}
+
+.avail-row{display:flex;gap:6px;flex-wrap:wrap;margin:0 18px 4px;}
+.avail-chip{padding:6px 11px;border-radius:9px;font-size:11px;font-weight:800;background:var(--surface-2);color:var(--text-faint);border:1px solid var(--border);}
+.avail-chip.on{background:rgba(34,168,102,.16);color:var(--green-300);border-color:var(--green-500);}
+
+.account-head{display:flex;flex-direction:column;align-items:center;text-align:center;padding:30px 24px 10px;}
+.account-name{font-size:17.5px;font-weight:800;margin-top:14px;}
+.account-role{font-size:12px;color:var(--green-300);font-weight:700;margin-top:3px;}
+.account-stat{font-size:12px;color:var(--text-faint);margin-top:8px;}
+.account-actions{padding:22px 18px 8px;display:flex;flex-direction:column;gap:10px;}
+
+#toast-container{position:fixed;bottom:26px;right:26px;z-index:400;display:flex;flex-direction:column;gap:10px;align-items:flex-end;}
+.toast{background:var(--surface);border:1px solid var(--border);color:#fff;padding:13px 20px;border-radius:var(--radius-sm);font-weight:700;font-size:13px;box-shadow:var(--shadow);display:flex;align-items:center;gap:10px;max-width:320px;opacity:0;transform:translateY(10px);transition:opacity .25s ease,transform .25s ease;}
+.toast.show{opacity:1;transform:translateY(0);}
+.toast i{color:var(--green-500);}
+.restart-btn{position:fixed;bottom:24px;left:24px;z-index:300;background:var(--surface);color:var(--text);border:1.5px solid var(--border);padding:11px 18px;border-radius:999px;font-family:inherit;font-weight:800;font-size:12.5px;cursor:pointer;box-shadow:var(--shadow);display:flex;align-items:center;gap:8px;transition:all .18s ease;}
+.restart-btn:hover{background:var(--green-500);color:#04210f;border-color:var(--green-500);transform:translateY(-1px);}
+
+@media (max-width:460px){
+  .demo-area{padding:10px 10px 70px;}
+  .phone-wrapper{width:100%;max-width:375px;}
+  .restart-btn span.label{display:none;}
+}
+</style>
+</head>
+<body>
+
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+
+<div class="page-header">
+  <div class="brand-badge"><span class="mark"><i class="fa-solid fa-rotate"></i></span><span class="name">Rotina</span></div>
+  <span class="brand-tag">MVP Fase 1</span>
+  <div class="page-title">Gestao completa para empresas de <span>servicos recorrentes</span></div>
+  <div class="page-subtitle">Clientes, funcionarios, agendamentos e recorrencia em um so lugar, com cada empresa isolada na sua propria area. Explora as duas visoes: gestor e funcionario.</div>
+</div>
+
+<div class="role-toggle-wrap">
+  <div class="role-toggle" id="role-toggle">
+    <button class="role-toggle-btn" data-action="switch-role" data-role="gestor"><i class="fa-solid fa-briefcase"></i> Visao Gestor</button>
+    <button class="role-toggle-btn" data-action="switch-role" data-role="funcionario"><i class="fa-solid fa-person-digging"></i> Visao Funcionario</button>
+  </div>
+</div>
+
+<div class="demo-area">
+  <div class="phone-wrapper">
+    <div class="phone-shell">
+      <div class="phone-notch"></div>
+      <div class="phone-screen" id="phone-screen">
+        <div class="status-bar">
+          <div class="status-time">9:41</div>
+          <div class="status-icons"><i class="fa-solid fa-signal"></i><i class="fa-solid fa-wifi"></i><i class="fa-solid fa-battery-full"></i></div>
+        </div>
+
+        <div class="screen active no-nav" id="screen-onboarding">
+          <div class="onboard-wrap">
+            <div class="onboard-mark"><i class="fa-solid fa-rotate"></i></div>
+            <div class="onboard-title">Bem-vindo ao Rotina</div>
+            <div class="onboard-sub">Organize clientes, funcionarios e agendamentos da sua empresa de servicos, com recorrencia de verdade.</div>
+            <div class="role-card" data-action="select-role" data-role="gestor">
+              <div class="role-card-icon"><i class="fa-solid fa-briefcase"></i></div>
+              <div><div class="role-card-title">Sou Gestor</div><div class="role-card-sub">Administro a empresa: clientes, equipe e a agenda completa</div></div>
+            </div>
+            <div class="role-card" data-action="select-role" data-role="funcionario">
+              <div class="role-card-icon"><i class="fa-solid fa-person-digging"></i></div>
+              <div><div class="role-card-title">Sou Funcionario</div><div class="role-card-sub">Vejo so os servicos que ficaram atribuidos a mim</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen" id="screen-gestor-dashboard"></div>
+        <div class="screen" id="screen-gestor-agenda"></div>
+        <div class="screen" id="screen-gestor-novo-agendamento"></div>
+        <div class="screen" id="screen-gestor-agendamento-detail"></div>
+        <div class="screen" id="screen-gestor-clientes"></div>
+        <div class="screen" id="screen-gestor-cliente-detail"></div>
+        <div class="screen" id="screen-gestor-funcionarios"></div>
+        <div class="screen" id="screen-gestor-funcionario-detail"></div>
+        <div class="screen" id="screen-gestor-servicos"></div>
+        <div class="screen" id="screen-gestor-perfil"></div>
+
+        <div class="screen" id="screen-funcionario-agenda"></div>
+        <div class="screen" id="screen-funcionario-job-detail"></div>
+        <div class="screen" id="screen-funcionario-perfil"></div>
+
+        <div class="bottom-nav" id="bottom-nav" style="display:none;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<button class="restart-btn" data-action="restart" title="Reiniciar Demo">
+  <i class="fa-solid fa-rotate-left"></i><span class="label">Reiniciar Demo</span>
+</button>
+<div id="toast-container"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ============================================================
+   IMAGES (curl-verified images.unsplash.com IDs, all 200)
+   ============================================================ */
+var IMG = {
+  limpeza:'https://images.unsplash.com/photo-1563453392212-326f5e854473',
+  jardinagem:'https://images.unsplash.com/photo-1416879595882-3373a0480b5b',
+  manutencao:'https://images.unsplash.com/photo-1607472586893-edb57bdc0e39',
+  eletrica:'https://images.unsplash.com/photo-1517646287270-a5a9ca602e5c',
+  pintura:'https://images.unsplash.com/photo-1562259949-e8e7689d7828',
+  marcenaria:'https://images.unsplash.com/photo-1503387762-592deb58ef4e',
+  reformas:'https://images.unsplash.com/photo-1626806787461-102c1bfaaea1'
+};
+function img(key,w,q){ return IMG[key]+'?w='+(w||400)+'&q='+(q||70)+'&auto=format&fit=crop'; }
+
+/* ============================================================
+   STATIC DATA
+   ============================================================ */
+var EMPRESA = { nome:'Zelo Limpeza e Manutencao', segmento:'Limpeza, jardinagem e manutencao residencial' };
+
+var CATS = [
+  {id:'limpeza', label:'Limpeza', icon:'fa-spray-can-sparkles'},
+  {id:'jardinagem', label:'Jardinagem', icon:'fa-seedling'},
+  {id:'manutencao', label:'Manutencao', icon:'fa-faucet-drip'},
+  {id:'eletrica', label:'Eletrica', icon:'fa-bolt'},
+  {id:'pintura', label:'Pintura', icon:'fa-paint-roller'},
+  {id:'marcenaria', label:'Marcenaria', icon:'fa-hammer'},
+  {id:'reformas', label:'Reformas', icon:'fa-trowel-bricks'}
+];
+function catInfo(id){ for(var i=0;i<CATS.length;i++){ if(CATS[i].id===id) return CATS[i]; } return CATS[0]; }
+
+var CLIENTES = [
+  {id:'c1', nome:'Ana Ferreira', endereco:'Rua das Camelias 245, Jardim Primavera', fone:'(11) 98888-1010', obs:'Prefere atendimento pela manha', historico:6},
+  {id:'c2', nome:'Marcos Tavares', endereco:'Avenida Sao Joao 1120, Vila Nova', fone:'(11) 97777-2020', obs:'Tem cachorro no quintal, avisar antes de entrar', historico:3},
+  {id:'c3', nome:'Condominio Aurora', endereco:'Rua Aurora 500, areas comuns', fone:'(11) 96666-3030', obs:'Contrato fixo mensal para areas comuns', historico:14},
+  {id:'c4', nome:'Beatriz Lima', endereco:'Rua dos Ipes 88, Bairro Central', fone:'(11) 95555-4040', obs:'', historico:2},
+  {id:'c5', nome:'Sofia Nascimento', endereco:'Alameda Santos 310, Jardim Europa', fone:'(11) 94444-5050', obs:'Sensivel a produtos com cheiro forte', historico:5}
+];
+function findCliente(id){ for(var i=0;i<CLIENTES.length;i++){ if(CLIENTES[i].id===id) return CLIENTES[i]; } return null; }
+
+var FUNCIONARIOS = [
+  {id:'f1', nome:'Joao Pereira', especialidade:'limpeza', dias:[1,2,3,4,5], status:'ativo'},
+  {id:'f2', nome:'Camila Souza', especialidade:'jardinagem', dias:[1,3,5], status:'ativo'},
+  {id:'f3', nome:'Eduardo Ramos', especialidade:'manutencao', dias:[2,4,6], status:'ativo'},
+  {id:'f4', nome:'Patricia Alves', especialidade:'pintura', dias:[1,2,3], status:'ativo'},
+  {id:'f5', nome:'Lucas Martins', especialidade:'marcenaria', dias:[4,5,6], status:'inativo'}
+];
+function findFuncionario(id){ for(var i=0;i<FUNCIONARIOS.length;i++){ if(FUNCIONARIOS[i].id===id) return FUNCIONARIOS[i]; } return null; }
+var DIA_LABELS = ['Dom','Seg','Ter','Qua','Qui','Sex','Sab'];
+
+var SERVICOS = [
+  {id:'s1', nome:'Limpeza Residencial Completa', cat:'limpeza', duracaoMin:120, valorNota:'campo pronto, sem ativacao nesta fase'},
+  {id:'s2', nome:'Jardinagem e Poda', cat:'jardinagem', duracaoMin:90, valorNota:'campo pronto, sem ativacao nesta fase'},
+  {id:'s3', nome:'Manutencao Hidraulica', cat:'manutencao', duracaoMin:120, valorNota:'a definir por visita'},
+  {id:'s4', nome:'Instalacao e Reparo Eletrico', cat:'eletrica', duracaoMin:60, valorNota:'a definir por visita'},
+  {id:'s5', nome:'Pintura de Ambiente', cat:'pintura', duracaoMin:240, valorNota:'a definir por m2'},
+  {id:'s6', nome:'Marcenaria Sob Medida', cat:'marcenaria', duracaoMin:180, valorNota:'a definir por projeto'},
+  {id:'s7', nome:'Reforma e Pequenos Reparos', cat:'reformas', duracaoMin:180, valorNota:'a definir por escopo'}
+];
+function findServico(id){ for(var i=0;i<SERVICOS.length;i++){ if(SERVICOS[i].id===id) return SERVICOS[i]; } return null; }
+
+var STEPS = ['Agendado','Confirmado','Em andamento','Concluido'];
+var RECORRENCIAS = [
+  {id:'unica', label:'Unica'},
+  {id:'semanal', label:'Semanal'},
+  {id:'quinzenal', label:'Quinzenal'},
+  {id:'mensal', label:'Mensal'}
+];
+function recLabel(id){ for(var i=0;i<RECORRENCIAS.length;i++){ if(RECORRENCIAS[i].id===id) return RECORRENCIAS[i].label; } return id; }
+
+var SERIES_SEED = [
+  {id:'sr1', clienteId:'c1', funcionarioId:'f1', servicoId:'s1', tipo:'semanal', weekday:1, hora:'09:00'},
+  {id:'sr2', clienteId:'c3', funcionarioId:'f1', servicoId:'s1', tipo:'semanal', weekday:3, hora:'08:00'},
+  {id:'sr3', clienteId:'c3', funcionarioId:'f2', servicoId:'s2', tipo:'quinzenal', weekday:3, parity:0, hora:'14:00'},
+  {id:'sr4', clienteId:'c2', funcionarioId:'f3', servicoId:'s3', tipo:'mensal', diaDoMes:null, hora:'11:00'}
+];
+var UNICA_SEED = [
+  {id:'u1', clienteId:'c5', funcionarioId:'f4', servicoId:'s5', offsetDias:2, hora:'10:00', statusFixo:'confirmado'},
+  {id:'u2', clienteId:'c4', funcionarioId:'f3', servicoId:'s4', offsetDias:-1, hora:'11:00', statusFixo:'concluido'},
+  {id:'u3', clienteId:'c1', funcionarioId:'f1', servicoId:'s1', offsetDias:0, hora:'15:00', statusFixo:'em_andamento'}
+];
+
+function addDays(d,n){ var r = new Date(d); r.setDate(r.getDate()+n); return r; }
+function isoDate(d){ var y=d.getFullYear(), m=('0'+(d.getMonth()+1)).slice(-2), day=('0'+d.getDate()).slice(-2); return y+'-'+m+'-'+day; }
+function todayStart(){ var d = new Date(); d.setHours(0,0,0,0); return d; }
+function fmtDateShort(iso){
+  var meses=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  var p = iso.split('-'); var d = new Date(parseInt(p[0],10), parseInt(p[1],10)-1, parseInt(p[2],10));
+  return DIA_LABELS[d.getDay()]+', '+parseInt(p[2],10)+' '+meses[parseInt(p[1],10)-1];
+}
+function isToday(iso){ return iso === isoDate(todayStart()); }
+function isPast(iso){ return iso < isoDate(todayStart()); }
+
+function buildOccurrences(){
+  var occs = [];
+  var today = todayStart();
+  var startWindow = addDays(today,-3);
+  var endWindow = addDays(today,17);
+  var counter = 1;
+  var todayIso = isoDate(today);
+
+  SERIES_SEED.forEach(function(sr){
+    var cursor = new Date(startWindow);
+    var diaDoMes = sr.diaDoMes || today.getDate();
+    while(cursor <= endWindow){
+      var match = false;
+      if(sr.tipo==='semanal' && cursor.getDay()===sr.weekday) match = true;
+      if(sr.tipo==='quinzenal' && cursor.getDay()===sr.weekday){
+        var weekNum = Math.floor(cursor.getTime()/(7*86400000));
+        match = (weekNum % 2 === (sr.parity||0));
+      }
+      if(sr.tipo==='mensal' && cursor.getDate()===diaDoMes) match = true;
+      if(match){
+        var dIso = isoDate(cursor);
+        occs.push({
+          id:'o'+(counter++), seriesId:sr.id, seriesTipo:sr.tipo,
+          clienteId:sr.clienteId, funcionarioId:sr.funcionarioId, servicoId:sr.servicoId,
+          date:dIso, hora:sr.hora,
+          status: dIso < todayIso ? 'concluido' : 'agendado',
+          cancelReason:null
+        });
+      }
+      cursor = addDays(cursor,1);
+    }
+  });
+
+  UNICA_SEED.forEach(function(u){
+    var d = addDays(today, u.offsetDias);
+    occs.push({
+      id:'o'+(counter++), seriesId:null, seriesTipo:'unica',
+      clienteId:u.clienteId, funcionarioId:u.funcionarioId, servicoId:u.servicoId,
+      date:isoDate(d), hora:u.hora, status:u.statusFixo, cancelReason:null
+    });
+  });
+
+  occs.sort(function(a,b){ return (a.date+a.hora) < (b.date+b.hora) ? -1 : 1; });
+  return occs;
+}
+var nextOccCounter = 100;
+
+function seriesLabel(seriesTipo, weekday){
+  if(seriesTipo==='unica') return 'Agendamento unico';
+  var base = seriesTipo==='semanal' ? 'Serie semanal' : (seriesTipo==='quinzenal' ? 'Serie quinzenal' : 'Serie mensal');
+  return base;
+}
+function siblingCount(occ){
+  if(!occ.seriesId) return 0;
+  return state.occs.filter(function(o){ return o.seriesId===occ.seriesId && o.date >= isoDate(todayStart()) && o.status!=='cancelado'; }).length;
+}
+
+function freshState(){ return { occs: buildOccurrences() }; }
+function freshUI(){
+  return { role:null, onboarded:false, screen:'onboarding',
+    agendaView:'dia', agendaDate: isoDate(todayStart()), agendaFuncionarioId:'f1',
+    activeOccId:null, selectedClienteId:null, selectedFuncionarioId:null,
+    formCliente:'c1', formFuncionario:'', formServico:'s1', formRecorrencia:'semanal',
+    gestorLastScreen:'gestor-dashboard', funcionarioLastScreen:'funcionario-agenda' };
+}
+var state = freshState();
+var ui = freshUI();
+var YOU_FUNCIONARIO_ID = 'f1';
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+function esc(str){
+  return String(str==null?'':str).replace(/[&<>"']/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+function initials(name){
+  return String(name||'').split(' ').filter(Boolean).slice(0,2).map(function(w){return w[0];}).join('').toUpperCase();
+}
+function findOcc(id){ for(var i=0;i<state.occs.length;i++){ if(state.occs[i].id===id) return state.occs[i]; } return null; }
+function statusBadge(status){
+  var map = {
+    agendado:{cls:'badge-amber', icon:'fa-clock', label:'Agendado'},
+    confirmado:{cls:'badge-blue', icon:'fa-check', label:'Confirmado'},
+    em_andamento:{cls:'badge-teal', icon:'fa-person-running', label:'Em andamento'},
+    concluido:{cls:'badge-green', icon:'fa-circle-check', label:'Concluido'},
+    cancelado:{cls:'badge-red', icon:'fa-ban', label:'Cancelado'}
+  };
+  var m = map[status] || map.agendado;
+  return '<span class="badge '+m.cls+'"><i class="fa-solid '+m.icon+'"></i>'+m.label+'</span>';
+}
+function occRowHtml(o){
+  var cli = findCliente(o.clienteId), fun = findFuncionario(o.funcionarioId), svc = findServico(o.servicoId);
+  return '<div class="req-row reveal-item" data-action="open-occ" data-id="'+o.id+'">'+
+    '<div class="req-row-top"><div class="req-row-name"><div class="avatar-init">'+initials(cli.nome)+'</div>'+esc(cli.nome)+'</div>'+statusBadge(o.status)+'</div>'+
+    '<div class="req-row-meta">'+
+      '<span class="meta-chip"><i class="fa-solid fa-clock"></i>'+o.hora+'</span>'+
+      '<span class="meta-chip"><i class="fa-solid '+catInfo(svc.cat).icon+'"></i>'+esc(svc.nome)+'</span>'+
+      '<span class="meta-chip"><i class="fa-solid fa-user-gear"></i>'+esc(fun.nome)+'</span>'+
+      (o.seriesId ? '<span class="meta-chip"><i class="fa-solid fa-rotate"></i>'+seriesLabel(o.seriesTipo)+'</span>' : '')+
+    '</div></div>';
+}
+function showToast(msg){
+  var container = document.getElementById('toast-container');
+  var el = document.createElement('div');
+  el.className = 'toast';
+  el.innerHTML = '<i class="fa-solid fa-circle-check"></i><span>'+esc(msg)+'</span>';
+  container.appendChild(el);
+  requestAnimationFrame(function(){ el.classList.add('show'); });
+  setTimeout(function(){ el.classList.remove('show'); setTimeout(function(){ el.remove(); },300); }, 2600);
+}
+function scrollTop(){ var el = document.querySelector('.screen.active'); if(el) el.scrollTop = 0; }
+
+function go(screenId, patch){
+  if(patch) Object.assign(ui, patch);
+  ui.screen = screenId;
+  if(screenId.indexOf('gestor-')===0) ui.gestorLastScreen = screenId;
+  if(screenId.indexOf('funcionario-')===0) ui.funcionarioLastScreen = screenId;
+  render();
+  scrollTop();
+}
+function switchRole(role, opts){
+  ui.role = role;
+  ui.onboarded = true;
+  go(role==='gestor' ? ui.gestorLastScreen : ui.funcionarioLastScreen, opts||{});
+}
+
+/* ============================================================
+   RENDER DISPATCH
+   ============================================================ */
+function render(){
+  document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+  var el = document.getElementById('screen-'+ui.screen);
+  if(el){ el.classList.add('active'); }
+
+  document.querySelectorAll('#role-toggle .role-toggle-btn').forEach(function(b){
+    b.classList.toggle('active', ui.onboarded && b.dataset.role===ui.role);
+  });
+
+  renderBottomNav();
+
+  switch(ui.screen){
+    case 'gestor-dashboard': renderGestorDashboard(); break;
+    case 'gestor-agenda': renderGestorAgenda(); break;
+    case 'gestor-novo-agendamento': renderNovoAgendamento(); break;
+    case 'gestor-agendamento-detail': renderAgendamentoDetail(); break;
+    case 'gestor-clientes': renderGestorClientes(); break;
+    case 'gestor-cliente-detail': renderClienteDetail(); break;
+    case 'gestor-funcionarios': renderGestorFuncionarios(); break;
+    case 'gestor-funcionario-detail': renderFuncionarioDetail(); break;
+    case 'gestor-servicos': renderGestorServicos(); break;
+    case 'gestor-perfil': renderGestorPerfil(); break;
+    case 'funcionario-agenda': renderFuncionarioAgenda(); break;
+    case 'funcionario-job-detail': renderFuncionarioJobDetail(); break;
+    case 'funcionario-perfil': renderFuncionarioPerfil(); break;
+  }
+}
+
+function renderBottomNav(){
+  var nav = document.getElementById('bottom-nav');
+  if(!ui.onboarded){ nav.style.display='none'; return; }
+  nav.style.display='flex';
+  var items;
+  if(ui.role==='gestor'){
+    items = [
+      {screen:'gestor-dashboard', icon:'fa-house', label:'Inicio'},
+      {screen:'gestor-agenda', icon:'fa-calendar-days', label:'Agenda'},
+      {screen:'gestor-clientes', icon:'fa-address-book', label:'Clientes'},
+      {screen:'gestor-funcionarios', icon:'fa-users', label:'Equipe'},
+      {screen:'gestor-servicos', icon:'fa-list-check', label:'Servicos'}
+    ];
+  } else {
+    items = [
+      {screen:'funcionario-agenda', icon:'fa-calendar-days', label:'Minha Agenda'},
+      {screen:'funcionario-perfil', icon:'fa-user', label:'Perfil'}
+    ];
+  }
+  var groupMap = {
+    'gestor-novo-agendamento':'gestor-agenda', 'gestor-agendamento-detail':'gestor-agenda',
+    'gestor-cliente-detail':'gestor-clientes', 'gestor-funcionario-detail':'gestor-funcionarios',
+    'funcionario-job-detail':'funcionario-agenda'
+  };
+  var activeGroup = groupMap[ui.screen] || ui.screen;
+  nav.innerHTML = items.map(function(it){
+    var active = it.screen===activeGroup;
+    return '<div class="nav-item '+(active?'active':'')+'" data-action="nav-go" data-screen="'+it.screen+'"><i class="fa-solid '+it.icon+'"></i>'+it.label+'</div>';
+  }).join('');
+}
+
+/* ============================================================
+   SHARED
+   ============================================================ */
+function stepperHtml(status){
+  var order = ['agendado','confirmado','em_andamento','concluido'];
+  var idx = status==='cancelado' ? -1 : order.indexOf(status);
+  var html = '<div class="stepper">';
+  STEPS.forEach(function(label,i){
+    var cls = status==='cancelado' ? '' : (i < idx ? 'done' : (i===idx ? 'now' : ''));
+    var inner = (i < idx) ? '<i class="fa-solid fa-check"></i>' : String(i+1);
+    if(status==='cancelado') inner = '<i class="fa-solid fa-ban"></i>';
+    html += '<div class="step '+cls+'"><div class="step-num">'+inner+'</div><div class="step-label">'+label+'</div></div>';
+  });
+  html += '</div>';
+  return html;
+}
+function topbar(title, sub, backScreen, extraBtn){
+  return '<div class="screen-topbar">'+
+    (backScreen ? '<div class="back-btn" data-action="nav-go" data-screen="'+backScreen+'"><i class="fa-solid fa-arrow-left"></i></div>' : '')+
+    '<div><div class="screen-title">'+title+'</div>'+(sub?'<div class="screen-title-sub">'+sub+'</div>':'')+'</div>'+
+    '<div class="screen-actions">'+(extraBtn||'')+'</div>'+
+  '</div>';
+}
+
+/* ============================================================
+   GESTOR - DASHBOARD
+   ============================================================ */
+function renderGestorDashboard(){
+  var root = document.getElementById('screen-gestor-dashboard');
+  var todayIso = isoDate(todayStart());
+  var hoje = state.occs.filter(function(o){ return o.date===todayIso && o.status!=='cancelado'; });
+  var pendentes = state.occs.filter(function(o){ return o.status==='agendado' && o.date>=todayIso; });
+  var ativos = FUNCIONARIOS.filter(function(f){ return f.status==='ativo'; });
+
+  var html = '<div class="home-head"><div><div class="home-greet">Boa tarde,</div><div class="home-name">Gestor</div></div></div>';
+  html += '<div class="tenant-badge"><i class="fa-solid fa-shield-halved"></i><div><div class="t1">Empresa atual</div><div class="t2">'+esc(EMPRESA.nome)+'</div></div></div>';
+  html += '<div class="stat-row">'+
+    '<div class="stat-tile"><div class="stat-num">'+hoje.length+'</div><div class="stat-label-sm">Hoje</div></div>'+
+    '<div class="stat-tile"><div class="stat-num">'+pendentes.length+'</div><div class="stat-label-sm">Pendentes</div></div>'+
+    '<div class="stat-tile"><div class="stat-num">'+ativos.length+'</div><div class="stat-label-sm">Equipe ativa</div></div>'+
+  '</div>';
+  html += '<div class="section-head"><h3>Agenda de hoje</h3><span class="section-link" data-action="nav-go" data-screen="gestor-agenda">ver agenda</span></div>';
+  if(hoje.length){
+    html += '<div class="req-list">'+hoje.map(occRowHtml).join('')+'</div>';
+  } else {
+    html += '<div class="empty-state"><i class="fa-solid fa-mug-hot"></i><p>Nada agendado para hoje</p><span>A agenda dessa empresa esta livre</span></div>';
+  }
+  html += '<div class="section-head"><h3>Atalhos</h3></div>';
+  html += '<div class="cat-row">'+
+    '<div class="cat-chip" data-action="nav-go" data-screen="gestor-novo-agendamento"><i class="fa-solid fa-plus"></i>Novo agendamento</div>'+
+    '<div class="cat-chip" data-action="nav-go" data-screen="gestor-clientes"><i class="fa-solid fa-address-book"></i>Clientes</div>'+
+    '<div class="cat-chip" data-action="nav-go" data-screen="gestor-funcionarios"><i class="fa-solid fa-users"></i>Equipe</div>'+
+  '</div>';
+  root.innerHTML = html;
+}
+
+/* ============================================================
+   GESTOR - AGENDA (dia / semana / mes / funcionario)
+   ============================================================ */
+function renderGestorAgenda(){
+  var root = document.getElementById('screen-gestor-agenda');
+  var html = topbar('Agenda', 'Visao completa da empresa', null);
+  html += '<div class="cat-row">'+
+    ['dia','semana','mes','funcionario'].map(function(v){
+      var labels = {dia:'Diaria', semana:'Semanal', mes:'Mensal', funcionario:'Por funcionario'};
+      var icons = {dia:'fa-calendar-day', semana:'fa-calendar-week', mes:'fa-calendar', funcionario:'fa-user-gear'};
+      return '<div class="cat-chip '+(ui.agendaView===v?'active':'')+'" data-action="agenda-view" data-view="'+v+'"><i class="fa-solid '+icons[v]+'"></i>'+labels[v]+'</div>';
+    }).join('')+
+  '</div>';
+
+  if(ui.agendaView==='dia'){
+    var todayIso = isoDate(todayStart());
+    var list = state.occs.filter(function(o){ return o.date===ui.agendaDate; });
+    html += '<div class="day-switcher"><div class="icon-btn" data-action="day-shift" data-n="-1"><i class="fa-solid fa-chevron-left"></i></div>'+
+      '<div><div class="day-label">'+fmtDateShort(ui.agendaDate)+'</div><span class="day-sub">'+(ui.agendaDate===todayIso?'Hoje':'')+'</span></div>'+
+      '<div class="icon-btn" data-action="day-shift" data-n="1"><i class="fa-solid fa-chevron-right"></i></div></div>';
+    html += list.length ? '<div class="req-list">'+list.map(occRowHtml).join('')+'</div>' :
+      '<div class="empty-state"><i class="fa-solid fa-calendar-xmark"></i><p>Nenhum agendamento nesse dia</p><span>Toque nas setas para navegar</span></div>';
+  }
+
+  if(ui.agendaView==='semana'){
+    var today = todayStart();
+    for(var i=0;i<7;i++){
+      var d = addDays(today,i);
+      var dIso = isoDate(d);
+      var dayList = state.occs.filter(function(o){ return o.date===dIso; });
+      html += '<div class="week-section"><div class="week-section-head">'+fmtDateShort(dIso)+(i===0?' - hoje':'')+'<span class="cnt">'+dayList.length+'</span></div>';
+      html += dayList.length ? '<div class="req-list">'+dayList.map(occRowHtml).join('')+'</div>' :
+        '<div class="empty-state" style="padding:16px;"><span>Sem agendamentos</span></div>';
+      html += '</div>';
+    }
+  }
+
+  if(ui.agendaView==='mes'){
+    var byDate = {};
+    state.occs.forEach(function(o){ byDate[o.date] = (byDate[o.date]||0)+1; });
+    var dates = Object.keys(byDate).sort();
+    html += dates.map(function(dIso){
+      return '<div class="month-row" data-action="month-pick" data-date="'+dIso+'"><div class="md-date">'+fmtDateShort(dIso)+'</div><div class="md-count">'+byDate[dIso]+' servico'+(byDate[dIso]>1?'s':'')+'</div></div>';
+    }).join('');
+  }
+
+  if(ui.agendaView==='funcionario'){
+    html += '<div class="cat-row">'+FUNCIONARIOS.map(function(f){
+      return '<div class="cat-chip '+(ui.agendaFuncionarioId===f.id?'active':'')+'" data-action="pick-func-filter" data-id="'+f.id+'"><i class="fa-solid '+(f.status==='ativo'?'fa-user':'fa-user-slash')+'"></i>'+esc(f.nome)+'</div>';
+    }).join('')+'</div>';
+    var flist = state.occs.filter(function(o){ return o.funcionarioId===ui.agendaFuncionarioId && o.date>=isoDate(todayStart()); });
+    html += flist.length ? '<div class="req-list">'+flist.map(occRowHtml).join('')+'</div>' :
+      '<div class="empty-state"><i class="fa-solid fa-calendar-xmark"></i><p>Nada futuro para essa pessoa</p></div>';
+  }
+
+  root.innerHTML = html;
+  var fab = document.createElement('button');
+  fab.className='fab'; fab.setAttribute('data-action','nav-go'); fab.setAttribute('data-screen','gestor-novo-agendamento');
+  fab.innerHTML = '<i class="fa-solid fa-plus"></i>';
+  root.appendChild(fab);
+}
+
+/* ============================================================
+   GESTOR - NOVO AGENDAMENTO
+   ============================================================ */
+function renderNovoAgendamento(){
+  var root = document.getElementById('screen-gestor-novo-agendamento');
+  var html = topbar('Novo agendamento', 'Crie um servico unico ou recorrente', 'gestor-agenda');
+  html += '<div class="screen-body">';
+  html += '<form data-form="novo-agendamento">';
+  html += '<div class="field"><label>Cliente</label><select name="clienteId">'+CLIENTES.map(function(c){ return '<option value="'+c.id+'">'+esc(c.nome)+'</option>'; }).join('')+'</select></div>';
+  html += '<div class="field"><label>Servico</label><select name="servicoId" id="novo-servico-select">'+SERVICOS.map(function(s){ return '<option value="'+s.id+'">'+esc(s.nome)+'</option>'; }).join('')+'</select></div>';
+  html += '<div class="field"><label>Funcionario</label><select name="funcionarioId">'+FUNCIONARIOS.filter(function(f){return f.status==='ativo';}).map(function(f){ return '<option value="'+f.id+'">'+esc(f.nome)+' - '+catInfo(f.especialidade).label+'</option>'; }).join('')+'</select>'+
+    '<div class="helper-note">Mostra so quem esta ativo. Funcionarios de ferias ou inativos nao aparecem aqui.</div></div>';
+  html += '<div class="field"><label>Data</label><input type="date" name="data" value="'+isoDate(todayStart())+'"></div>';
+  html += '<div class="field"><label>Hora</label><input type="time" name="hora" value="09:00"></div>';
+  html += '<div class="field"><label>Recorrencia</label><div class="radio-row">'+RECORRENCIAS.map(function(r){
+    return '<div class="radio-chip '+(ui.formRecorrencia===r.id?'active':'')+'" data-action="pick-rec" data-rec="'+r.id+'">'+r.label+'</div>';
+  }).join('')+'</div>'+
+  '<div class="helper-note">Cada opcao gera um registro proprio por ocorrencia no banco, nao so uma regra generica - por isso da pra cancelar so um dia especifico depois, sem mexer no resto da serie.</div></div>';
+  html += '<button type="submit" class="btn btn-green"><i class="fa-solid fa-check"></i> Criar agendamento</button>';
+  html += '</form></div>';
+  root.innerHTML = html;
+}
+
+/* ============================================================
+   GESTOR - AGENDAMENTO DETAIL (o coracao do diferencial)
+   ============================================================ */
+function renderAgendamentoDetail(){
+  var root = document.getElementById('screen-gestor-agendamento-detail');
+  var o = findOcc(ui.activeOccId);
+  if(!o){ root.innerHTML=''; return; }
+  var cli = findCliente(o.clienteId), fun = findFuncionario(o.funcionarioId), svc = findServico(o.servicoId);
+
+  var html = topbar('Detalhe do servico', fmtDateShort(o.date)+' as '+o.hora, 'gestor-agenda');
+  html += '<div class="detail-hero"><div class="detail-title">'+esc(svc.nome)+'</div><div class="detail-sub">'+esc(cli.nome)+'</div></div>';
+  html += stepperHtml(o.status);
+  if(o.status==='cancelado'){
+    html += '<div style="margin:14px 18px 0;"><span class="badge badge-red"><i class="fa-solid fa-ban"></i>'+esc(o.cancelReason||'Cancelado')+'</span></div>';
+  }
+  html += '<div class="info-list" style="margin-top:16px;">'+
+    '<div class="info-row"><i class="fa-solid fa-location-dot"></i><div><div class="il1">Endereco</div><div class="il2">'+esc(cli.endereco)+'</div></div></div>'+
+    '<div class="info-row"><i class="fa-solid fa-user-gear"></i><div><div class="il1">Funcionario responsavel</div><div class="il2">'+esc(fun.nome)+'</div></div></div>'+
+    '<div class="info-row"><i class="fa-solid fa-hourglass-half"></i><div><div class="il1">Duracao estimada</div><div class="il2">'+svc.duracaoMin+' minutos</div></div></div>'+
+  '</div>';
+
+  if(o.seriesId){
+    html += '<div class="series-panel"><h4><i class="fa-solid fa-rotate"></i>'+seriesLabel(o.seriesTipo)+'</h4>'+
+      '<p>Essa data faz parte de uma serie '+o.seriesTipo+'. Ainda restam '+siblingCount(o)+' ocorrencia(s) futura(s) dessa serie no banco, cada uma com seu proprio registro e status independente.</p></div>';
+  } else {
+    html += '<div class="series-panel"><h4><i class="fa-solid fa-calendar-check"></i>Agendamento unico</h4><p>Esse servico nao faz parte de nenhuma serie recorrente.</p></div>';
+  }
+
+  if(o.status!=='cancelado' && o.status!=='concluido'){
+    html += '<div class="screen-body"><div class="btn-row">';
+    if(o.seriesId){
+      html += '<button class="btn btn-danger-ghost btn-sm" data-action="cancel-occ" data-id="'+o.id+'" data-scope="single">Cancelar so esse dia</button>';
+      html += '<button class="btn btn-danger-ghost btn-sm" data-action="cancel-occ" data-id="'+o.id+'" data-scope="series">Cancelar toda a serie</button>';
+    } else {
+      html += '<button class="btn btn-danger-ghost" data-action="cancel-occ" data-id="'+o.id+'" data-scope="single">Cancelar agendamento</button>';
+    }
+    html += '</div></div>';
+  }
+  root.innerHTML = html;
+}
+
+/* ============================================================
+   GESTOR - CLIENTES
+   ============================================================ */
+function renderGestorClientes(){
+  var root = document.getElementById('screen-gestor-clientes');
+  var html = topbar('Clientes', CLIENTES.length+' cadastrados', null);
+  html += '<div class="req-list" style="padding-top:8px;">'+CLIENTES.map(function(c){
+    return '<div class="req-row reveal-item" data-action="open-cliente" data-id="'+c.id+'">'+
+      '<div class="req-row-top"><div class="req-row-name"><div class="avatar-init">'+initials(c.nome)+'</div>'+esc(c.nome)+'</div><span class="meta-chip"><i class="fa-solid fa-clock-rotate-left"></i>'+c.historico+' servicos</span></div>'+
+      '<div class="req-row-meta"><span class="meta-chip"><i class="fa-solid fa-location-dot"></i>'+esc(c.endereco)+'</span></div></div>';
+  }).join('')+'</div>';
+  root.innerHTML = html;
+}
+function renderClienteDetail(){
+  var root = document.getElementById('screen-gestor-cliente-detail');
+  var c = findCliente(ui.selectedClienteId);
+  if(!c){ root.innerHTML=''; return; }
+  var html = topbar(c.nome, 'Cliente desde o cadastro da empresa', 'gestor-clientes');
+  html += '<div class="info-list">'+
+    '<div class="info-row"><i class="fa-solid fa-location-dot"></i><div><div class="il1">Endereco</div><div class="il2">'+esc(c.endereco)+'</div></div></div>'+
+    '<div class="info-row"><i class="fa-solid fa-phone"></i><div><div class="il1">Telefone</div><div class="il2">'+esc(c.fone)+'</div></div></div>'+
+    (c.obs ? '<div class="info-row"><i class="fa-solid fa-note-sticky"></i><div><div class="il1">Observacoes</div><div class="il2">'+esc(c.obs)+'</div></div></div>' : '')+
+  '</div>';
+  var hist = state.occs.filter(function(o){ return o.clienteId===c.id && (o.status==='concluido' || isPast(o.date)); });
+  html += '<div class="section-head"><h3>Historico de servicos</h3></div>';
+  if(hist.length){
+    html += '<div class="timeline">'+hist.map(function(o){
+      var svc = findServico(o.servicoId);
+      return '<div class="tl-row"><div class="tl-dot"></div><div><div class="tl-status">'+esc(svc.nome)+'</div><div class="tl-when">'+fmtDateShort(o.date)+'</div></div></div>';
+    }).join('')+'</div>';
+  } else {
+    html += '<div class="empty-state"><i class="fa-solid fa-clock-rotate-left"></i><p>Sem servicos concluidos ainda</p></div>';
+  }
+  root.innerHTML = html;
+}
+
+/* ============================================================
+   GESTOR - FUNCIONARIOS
+   ============================================================ */
+function renderGestorFuncionarios(){
+  var root = document.getElementById('screen-gestor-funcionarios');
+  var html = topbar('Equipe', FUNCIONARIOS.length+' cadastrados', null);
+  html += '<div class="req-list" style="padding-top:8px;">'+FUNCIONARIOS.map(function(f){
+    return '<div class="req-row reveal-item" data-action="open-funcionario" data-id="'+f.id+'">'+
+      '<div class="req-row-top"><div class="req-row-name"><div class="avatar-init">'+initials(f.nome)+'</div>'+esc(f.nome)+'</div>'+
+      '<span class="badge '+(f.status==='ativo'?'badge-green':'badge-red')+'"><i class="fa-solid '+(f.status==='ativo'?'fa-check':'fa-pause')+'"></i>'+(f.status==='ativo'?'Ativo':'Inativo')+'</span></div>'+
+      '<div class="req-row-meta"><span class="meta-chip"><i class="fa-solid '+catInfo(f.especialidade).icon+'"></i>'+catInfo(f.especialidade).label+'</span></div></div>';
+  }).join('')+'</div>';
+  root.innerHTML = html;
+}
+function renderFuncionarioDetail(){
+  var root = document.getElementById('screen-gestor-funcionario-detail');
+  var f = findFuncionario(ui.selectedFuncionarioId);
+  if(!f){ root.innerHTML=''; return; }
+  var html = topbar(f.nome, catInfo(f.especialidade).label, 'gestor-funcionarios');
+  html += '<div style="margin:0 18px 4px;">'+statusBadge(f.status==='ativo'?'confirmado':'cancelado').replace('Confirmado','Ativo').replace('Cancelado','Inativo')+'</div>';
+  html += '<div class="section-head"><h3>Disponibilidade</h3></div>';
+  html += '<div class="avail-row">'+DIA_LABELS.map(function(lbl,i){
+    return '<span class="avail-chip '+(f.dias.indexOf(i)>=0?'on':'')+'">'+lbl+'</span>';
+  }).join('')+'</div>';
+  var upcoming = state.occs.filter(function(o){ return o.funcionarioId===f.id && o.date>=isoDate(todayStart()) && o.status!=='cancelado'; });
+  html += '<div class="section-head"><h3>Proximos servicos</h3></div>';
+  html += upcoming.length ? '<div class="req-list">'+upcoming.map(occRowHtml).join('')+'</div>' :
+    '<div class="empty-state"><i class="fa-solid fa-calendar-xmark"></i><p>Nada futuro atribuido</p></div>';
+  root.innerHTML = html;
+}
+
+/* ============================================================
+   GESTOR - SERVICOS
+   ============================================================ */
+function renderGestorServicos(){
+  var root = document.getElementById('screen-gestor-servicos');
+  var html = topbar('Servicos', SERVICOS.length+' tipos cadastrados', null);
+  html += '<div class="svc-grid">'+SERVICOS.map(function(s){
+    return '<div class="svc-card"><div class="svc-card-img"><img src="'+img(s.cat,400,65)+'" alt="'+esc(s.nome)+'" loading="lazy"></div>'+
+      '<div class="svc-card-body"><div class="svc-card-title">'+esc(s.nome)+'</div><div class="svc-card-meta">'+s.duracaoMin+' min - '+esc(s.valorNota)+'</div></div></div>';
+  }).join('')+'</div>';
+  root.innerHTML = html;
+}
+
+/* ============================================================
+   GESTOR - PERFIL
+   ============================================================ */
+function renderGestorPerfil(){
+  var root = document.getElementById('screen-gestor-perfil');
+  var html = '<div class="account-head"><div class="avatar-init lg">GE</div><div class="account-name">Gestor da empresa</div><div class="account-role">'+esc(EMPRESA.nome)+'</div><div class="account-stat">'+esc(EMPRESA.segmento)+'</div></div>';
+  html += '<div class="account-actions">'+
+    '<button class="btn btn-ghost"><i class="fa-solid fa-building"></i> Configuracoes da empresa</button>'+
+    '<button class="btn btn-ghost"><i class="fa-solid fa-shield-halved"></i> Isolamento multi-empresa ativo</button>'+
+  '</div>';
+  root.innerHTML = html;
+}
+
+/* ============================================================
+   FUNCIONARIO - AGENDA (so o que foi atribuido a ele)
+   ============================================================ */
+function renderFuncionarioAgenda(){
+  var root = document.getElementById('screen-funcionario-agenda');
+  var fun = findFuncionario(YOU_FUNCIONARIO_ID);
+  var html = '<div class="home-head"><div><div class="home-greet">Ola,</div><div class="home-name">'+esc(fun.nome)+'</div></div></div>';
+  html += '<div class="tenant-badge"><i class="fa-solid fa-'+catInfo(fun.especialidade).icon.replace('fa-','')+'"></i><div><div class="t1">Especialidade</div><div class="t2">'+catInfo(fun.especialidade).label+'</div></div></div>';
+  html += '<div class="day-switcher"><div class="icon-btn" data-action="day-shift" data-n="-1"><i class="fa-solid fa-chevron-left"></i></div>'+
+    '<div><div class="day-label">'+fmtDateShort(ui.agendaDate)+'</div></div>'+
+    '<div class="icon-btn" data-action="day-shift" data-n="1"><i class="fa-solid fa-chevron-right"></i></div></div>';
+  var list = state.occs.filter(function(o){ return o.funcionarioId===fun.id && o.date===ui.agendaDate; });
+  html += list.length ? '<div class="req-list">'+list.map(function(o){
+    var cli = findCliente(o.clienteId), svc = findServico(o.servicoId);
+    return '<div class="req-row reveal-item" data-action="open-func-job" data-id="'+o.id+'">'+
+      '<div class="req-row-top"><div class="req-row-name"><div class="avatar-init">'+initials(cli.nome)+'</div>'+esc(cli.nome)+'</div>'+statusBadge(o.status)+'</div>'+
+      '<div class="req-row-meta"><span class="meta-chip"><i class="fa-solid fa-clock"></i>'+o.hora+'</span><span class="meta-chip"><i class="fa-solid fa-location-dot"></i>'+esc(cli.endereco)+'</span></div></div>';
+  }).join('')+'</div>' : '<div class="empty-state"><i class="fa-solid fa-mug-hot"></i><p>Sem servicos nesse dia</p></div>';
+  root.innerHTML = html;
+}
+function renderFuncionarioJobDetail(){
+  var root = document.getElementById('screen-funcionario-job-detail');
+  var o = findOcc(ui.activeOccId);
+  if(!o){ root.innerHTML=''; return; }
+  var cli = findCliente(o.clienteId), svc = findServico(o.servicoId);
+  var html = topbar('Detalhe do servico', fmtDateShort(o.date)+' as '+o.hora, 'funcionario-agenda');
+  html += '<div class="detail-hero"><div class="detail-title">'+esc(svc.nome)+'</div><div class="detail-sub">'+esc(cli.nome)+'</div></div>';
+  html += stepperHtml(o.status);
+  html += '<div class="info-list" style="margin-top:16px;">'+
+    '<div class="info-row"><i class="fa-solid fa-location-dot"></i><div><div class="il1">Endereco</div><div class="il2">'+esc(cli.endereco)+'</div></div></div>'+
+    (cli.obs ? '<div class="info-row"><i class="fa-solid fa-note-sticky"></i><div><div class="il1">Observacoes</div><div class="il2">'+esc(cli.obs)+'</div></div></div>' : '')+
+  '</div>';
+  html += '<div class="screen-body">';
+  if(o.status==='agendado') html += '<button class="btn btn-green" data-action="advance-status" data-id="'+o.id+'" data-next="confirmado"><i class="fa-solid fa-check"></i> Confirmar presenca</button>';
+  else if(o.status==='confirmado') html += '<button class="btn btn-green" data-action="advance-status" data-id="'+o.id+'" data-next="em_andamento"><i class="fa-solid fa-play"></i> Iniciar servico</button>';
+  else if(o.status==='em_andamento') html += '<button class="btn btn-green" data-action="advance-status" data-id="'+o.id+'" data-next="concluido"><i class="fa-solid fa-flag-checkered"></i> Concluir servico</button>';
+  else if(o.status==='concluido') html += '<div class="empty-state"><i class="fa-solid fa-circle-check"></i><p>Servico concluido</p></div>';
+  else html += '<div class="empty-state"><i class="fa-solid fa-ban"></i><p>Servico cancelado</p></div>';
+  html += '</div>';
+  root.innerHTML = html;
+}
+function renderFuncionarioPerfil(){
+  var root = document.getElementById('screen-funcionario-perfil');
+  var fun = findFuncionario(YOU_FUNCIONARIO_ID);
+  var html = '<div class="account-head"><div class="avatar-init lg">'+initials(fun.nome)+'</div><div class="account-name">'+esc(fun.nome)+'</div><div class="account-role">'+catInfo(fun.especialidade).label+'</div><div class="account-stat">'+esc(EMPRESA.nome)+'</div></div>';
+  html += '<div class="section-head"><h3>Disponibilidade</h3></div>';
+  html += '<div class="avail-row">'+DIA_LABELS.map(function(lbl,i){
+    return '<span class="avail-chip '+(fun.dias.indexOf(i)>=0?'on':'')+'">'+lbl+'</span>';
+  }).join('')+'</div>';
+  root.innerHTML = html;
+}
+
+/* ============================================================
+   EVENT DELEGATION
+   ============================================================ */
+document.addEventListener('click', function(e){
+  var t = e.target.closest('[data-action]');
+  if(!t) return;
+  var action = t.dataset.action;
+
+  if(action==='select-role'){ switchRole(t.dataset.role); return; }
+  if(action==='switch-role'){ switchRole(t.dataset.role); return; }
+  if(action==='nav-go'){ go(t.dataset.screen); return; }
+
+  if(action==='agenda-view'){ ui.agendaView = t.dataset.view; renderGestorAgenda(); return; }
+  if(action==='day-shift'){
+    ui.agendaDate = isoDate(addDays(new Date(ui.agendaDate+'T00:00:00'), parseInt(t.dataset.n,10)));
+    render(); return;
+  }
+  if(action==='month-pick'){ ui.agendaDate = t.dataset.date; ui.agendaView='dia'; renderGestorAgenda(); return; }
+  if(action==='pick-func-filter'){ ui.agendaFuncionarioId = t.dataset.id; renderGestorAgenda(); return; }
+  if(action==='pick-rec'){ ui.formRecorrencia = t.dataset.rec; renderNovoAgendamento(); return; }
+
+  if(action==='open-occ'){ go('gestor-agendamento-detail', {activeOccId:t.dataset.id}); return; }
+  if(action==='open-func-job'){ go('funcionario-job-detail', {activeOccId:t.dataset.id}); return; }
+  if(action==='open-cliente'){ go('gestor-cliente-detail', {selectedClienteId:t.dataset.id}); return; }
+  if(action==='open-funcionario'){ go('gestor-funcionario-detail', {selectedFuncionarioId:t.dataset.id}); return; }
+
+  if(action==='advance-status'){
+    var o1 = findOcc(t.dataset.id);
+    o1.status = t.dataset.next;
+    showToast(t.dataset.next==='concluido' ? 'Servico marcado como concluido' : 'Status atualizado');
+    render(); scrollTop(); return;
+  }
+
+  if(action==='cancel-occ'){
+    var o2 = findOcc(t.dataset.id);
+    if(t.dataset.scope==='single'){
+      o2.status='cancelado'; o2.cancelReason='Cancelado - apenas essa data';
+      showToast('Essa data foi cancelada. O resto da serie continua normal.');
+    } else {
+      var affected = 0;
+      state.occs.forEach(function(o){
+        if(o.seriesId===o2.seriesId && o.date>=isoDate(todayStart()) && o.status!=='cancelado'){
+          o.status='cancelado'; o.cancelReason='Serie cancelada'; affected++;
+        }
+      });
+      showToast(affected+' ocorrencia(s) futura(s) da serie foram canceladas');
+    }
+    go('gestor-agenda');
+    return;
+  }
+
+  if(action==='restart'){
+    state = freshState(); ui = freshUI();
+    render(); showToast('Demo reiniciada'); return;
+  }
+});
+
+document.addEventListener('submit', function(e){
+  e.preventDefault();
+  var form = e.target;
+  if(form.dataset.form==='novo-agendamento'){
+    var fd = new FormData(form);
+    var clienteId = fd.get('clienteId'), servicoId = fd.get('servicoId'), funcionarioId = fd.get('funcionarioId');
+    var dataVal = fd.get('data'), hora = fd.get('hora');
+    var rec = ui.formRecorrencia;
+    var baseDate = new Date(dataVal+'T00:00:00');
+    var seriesId = rec==='unica' ? null : 'srn'+(nextOccCounter);
+    var count = 0;
+    var occurDates = [];
+    if(rec==='unica'){
+      occurDates.push(baseDate);
+    } else {
+      var stepDays = rec==='semanal' ? 7 : (rec==='quinzenal' ? 14 : 30);
+      for(var i=0;i<4;i++){ occurDates.push(addDays(baseDate, i*stepDays)); }
+    }
+    occurDates.forEach(function(d){
+      state.occs.push({
+        id:'o'+(nextOccCounter++), seriesId:seriesId, seriesTipo:rec,
+        clienteId:clienteId, funcionarioId:funcionarioId, servicoId:servicoId,
+        date:isoDate(d), hora:hora, status:'agendado', cancelReason:null
+      });
+      count++;
+    });
+    state.occs.sort(function(a,b){ return (a.date+a.hora) < (b.date+b.hora) ? -1 : 1; });
+    showToast(rec==='unica' ? 'Agendamento criado' : count+' ocorrencias criadas para essa serie');
+    go('gestor-agenda', {agendaView:'dia', agendaDate:isoDate(baseDate)});
+  }
+});
+
+/* ============================================================
+   INIT
+   ============================================================ */
+render();
+
+})();
+</script>
+</body>
+</html>
