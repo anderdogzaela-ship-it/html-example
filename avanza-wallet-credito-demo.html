@@ -1,0 +1,677 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Avanza — Billetera y Linea de Credito</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+:root{
+  --g50:#ecfdf5; --g100:#d1fae5; --g200:#a7f3d0; --g300:#6ee7b7; --g400:#34d399;
+  --g500:#10b981; --g600:#059669; --g700:#047857; --g800:#065f46; --g900:#064e3b;
+  --n900:#0a1512; --n800:#0f1f1a; --n700:#162a23; --n600:#20372e; --n500:#39493f;
+  --n400:#6b7d72; --n300:#9faea3; --n200:#cfd9d2; --n100:#e8efe9; --n50:#f5f9f6;
+  --amber:#f59e0b; --red:#ef4444;
+  --radius-lg:24px; --radius-md:16px; --radius-sm:10px;
+  --ease-spring:cubic-bezier(.34,1.56,.64,1);
+  --shadow-card:0 8px 24px -8px rgba(6,20,15,.35);
+  --shadow-lift:0 16px 40px -12px rgba(6,20,15,.5);
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+body{
+  font-family:'Lexend',sans-serif; -webkit-font-smoothing:antialiased;
+  background:linear-gradient(160deg,#08110d,#0d1b16 60%,#0a1512);
+  min-height:100vh; display:flex; align-items:center; justify-content:center;
+  padding:32px 16px; color:var(--n100); overflow-x:hidden;
+}
+.stage{display:flex; flex-direction:column; align-items:center; gap:18px;}
+.stage-label{color:var(--g300); font-size:13px; letter-spacing:.08em; text-transform:uppercase; font-weight:600; opacity:.8;}
+
+/* Phone shell */
+.phone{
+  position:relative; width:390px; height:820px; border-radius:52px;
+  background:#000; padding:14px; box-shadow:var(--shadow-lift), 0 0 0 2px rgba(255,255,255,.04);
+}
+.phone-screen{
+  position:relative; width:100%; height:100%; border-radius:38px; overflow:hidden;
+  background:var(--n900);
+}
+.notch{
+  position:absolute; top:14px; left:50%; transform:translateX(-50%); width:120px; height:26px;
+  background:#000; border-radius:20px; z-index:50;
+}
+.status-bar{
+  position:absolute; top:0; left:0; right:0; height:50px; display:flex; align-items:center;
+  justify-content:space-between; padding:16px 26px 0; font-size:13px; font-weight:600; z-index:40; color:var(--n50);
+}
+.status-bar i{font-size:12px; margin-left:4px;}
+
+.screen{
+  position:absolute; inset:0; opacity:0; pointer-events:none; transform:translateY(8px);
+  transition:opacity .35s ease, transform .35s ease; display:flex; flex-direction:column;
+}
+.screen.active{opacity:1; pointer-events:auto; transform:translateY(0);}
+.screen-content{flex:1; overflow-y:auto; padding:66px 20px 100px; scrollbar-width:none;}
+.screen-content::-webkit-scrollbar{display:none;}
+
+/* Bottom nav */
+.bottom-nav{
+  position:absolute; bottom:0; left:0; right:0; height:84px; display:flex;
+  background:rgba(15,31,26,.72); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+  border-top:1px solid rgba(255,255,255,.06); z-index:60; padding-bottom:14px;
+}
+.nav-item{
+  flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:5px; color:var(--n400); font-size:10.5px; font-weight:500; cursor:pointer; transition:color .25s ease;
+}
+.nav-item i{font-size:18px; transition:transform .25s var(--ease-spring);}
+.nav-item.active{color:var(--g300);}
+.nav-item.active i{transform:translateY(-2px);}
+
+/* Glass card */
+.glass-card{
+  background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08);
+  backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+  border-radius:var(--radius-lg); box-shadow:var(--shadow-card);
+}
+.solid-card{
+  background:var(--n800); border:1px solid var(--n600); border-radius:var(--radius-md);
+}
+
+/* Orbs (login screen) */
+.orb{position:absolute; border-radius:50%; filter:blur(50px); opacity:.55; animation:floatOrb 9s ease-in-out infinite;}
+@keyframes floatOrb{0%,100%{transform:translate(0,0) scale(1);} 50%{transform:translate(14px,-18px) scale(1.08);}}
+
+/* Login screen */
+.login-screen{padding:0; position:relative;}
+.login-hero{
+  height:340px; position:relative; background:linear-gradient(180deg,var(--g800),var(--n900) 90%);
+  display:flex; align-items:flex-end; padding:0 26px 30px; overflow:hidden;
+}
+.login-hero img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:.28; mix-blend-mode:luminosity;}
+.brand-mark{
+  position:relative; z-index:2; display:flex; flex-direction:column; gap:8px;
+}
+.brand-logo{
+  width:52px; height:52px; border-radius:16px; background:linear-gradient(135deg,var(--g400),var(--g700));
+  display:flex; align-items:center; justify-content:center; font-size:22px; color:#fff;
+  box-shadow:0 0 30px rgba(16,185,129,.5); animation:pulseLogo 3s ease-in-out infinite;
+}
+@keyframes pulseLogo{0%,100%{box-shadow:0 0 24px rgba(16,185,129,.4);} 50%{box-shadow:0 0 40px rgba(16,185,129,.65);}}
+.brand-title{font-size:26px; font-weight:800; color:#fff; letter-spacing:-.01em;}
+.brand-sub{font-size:13px; color:var(--g200); font-weight:400;}
+.login-form{padding:30px 26px; display:flex; flex-direction:column; gap:14px;}
+.field{display:flex; flex-direction:column; gap:6px;}
+.field label{font-size:12px; color:var(--n300); font-weight:500;}
+.field input{
+  background:var(--n800); border:1px solid var(--n600); border-radius:var(--radius-sm);
+  padding:14px 16px; color:var(--n50); font-family:'Lexend'; font-size:14px; outline:none;
+  transition:border-color .2s ease;
+}
+.field input:focus{border-color:var(--g500);}
+.btn-primary{
+  background:linear-gradient(135deg,var(--g500),var(--g700)); color:#fff; border:none;
+  padding:15px; border-radius:var(--radius-sm); font-family:'Lexend'; font-weight:600; font-size:14.5px;
+  cursor:pointer; margin-top:6px; transition:transform .18s var(--ease-spring), box-shadow .2s ease;
+  box-shadow:0 8px 20px -6px rgba(16,185,129,.5);
+}
+.btn-primary:active{transform:scale(.97);}
+.login-foot{text-align:center; font-size:11.5px; color:var(--n400); margin-top:8px;}
+.login-foot b{color:var(--g300);}
+
+/* Home */
+.greeting{display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;}
+.greeting-text .hi{font-size:12.5px; color:var(--n400); font-weight:400;}
+.greeting-text .name{font-size:19px; font-weight:700; color:#fff;}
+.member-badge{
+  width:40px; height:40px; border-radius:12px; background:var(--n700); display:flex;
+  align-items:center; justify-content:center; color:var(--g300); font-size:14px; border:1px solid var(--n600);
+}
+.balance-card{
+  padding:24px; margin-bottom:16px; position:relative; overflow:hidden;
+  background:linear-gradient(135deg,var(--g700),var(--g900));
+}
+.balance-card .label{font-size:12px; color:var(--g200); font-weight:500; display:flex; align-items:center; gap:6px;}
+.balance-card .amount{font-size:32px; font-weight:800; color:#fff; margin:8px 0 18px; letter-spacing:-.02em;}
+.quick-actions{display:flex; gap:10px;}
+.qa-btn{
+  flex:1; background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.18); border-radius:var(--radius-sm);
+  padding:10px 6px; display:flex; flex-direction:column; align-items:center; gap:6px; font-size:10.5px;
+  color:#fff; font-weight:500; cursor:pointer; transition:transform .18s var(--ease-spring), background .2s ease;
+}
+.qa-btn:hover{background:rgba(255,255,255,.22); transform:translateY(-2px);}
+.qa-btn i{font-size:15px;}
+
+.mini-row{display:flex; gap:12px; margin-bottom:18px;}
+.mini-card{flex:1; padding:16px; display:flex; flex-direction:column; gap:8px;}
+.mini-card .mini-label{font-size:11px; color:var(--n400); font-weight:500; display:flex; align-items:center; gap:6px;}
+.mini-card .mini-value{font-size:18px; font-weight:700; color:#fff;}
+.ring-wrap{position:relative; width:38px; height:38px;}
+.ring-wrap svg{transform:rotate(-90deg);}
+.ring-bg{fill:none; stroke:var(--n600); stroke-width:4;}
+.ring-fg{fill:none; stroke:var(--g400); stroke-width:4; stroke-linecap:round; stroke-dasharray:100; transition:stroke-dashoffset 1.2s var(--ease-spring);}
+
+.section-title{font-size:14px; font-weight:600; color:var(--n100); margin:4px 0 12px; display:flex; justify-content:space-between; align-items:center;}
+.section-title span.link{font-size:11.5px; color:var(--g300); font-weight:500; cursor:pointer;}
+
+.activity-item{
+  display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--n700);
+}
+.activity-item:last-child{border-bottom:none;}
+.activity-icon{
+  width:38px; height:38px; border-radius:11px; display:flex; align-items:center; justify-content:center;
+  font-size:14px; flex-shrink:0;
+}
+.icon-in{background:rgba(16,185,129,.15); color:var(--g400);}
+.icon-out{background:rgba(239,68,68,.13); color:var(--red);}
+.icon-cuota{background:rgba(245,158,11,.14); color:var(--amber);}
+.activity-info{flex:1; min-width:0;}
+.activity-info .t{font-size:13px; font-weight:600; color:var(--n100);}
+.activity-info .d{font-size:11px; color:var(--n400); margin-top:2px;}
+.activity-amt{font-size:13px; font-weight:700; white-space:nowrap;}
+.amt-pos{color:var(--g300);}
+.amt-neg{color:var(--n200);}
+
+/* Card screen */
+.credit-card-visual{
+  height:200px; border-radius:22px; position:relative; overflow:hidden; margin-bottom:20px;
+  background:linear-gradient(135deg,#0e2a20,#04120d 60%,#031a12);
+  padding:22px; display:flex; flex-direction:column; justify-content:space-between;
+  box-shadow:var(--shadow-lift); border:1px solid rgba(255,255,255,.08);
+}
+.credit-card-visual::before{
+  content:''; position:absolute; width:220px; height:220px; border-radius:50%;
+  background:radial-gradient(circle,rgba(16,185,129,.35),transparent 70%); top:-80px; right:-60px;
+}
+.cc-top{display:flex; justify-content:space-between; align-items:flex-start; position:relative; z-index:2;}
+.cc-chip{width:38px; height:28px; border-radius:6px; background:linear-gradient(135deg,var(--g300),var(--g600));}
+.cc-brand{font-size:13px; font-weight:700; color:var(--g200); letter-spacing:.05em;}
+.cc-number{font-size:18px; letter-spacing:.12em; color:#fff; font-weight:500; position:relative; z-index:2;}
+.cc-bottom{display:flex; justify-content:space-between; align-items:flex-end; position:relative; z-index:2;}
+.cc-holder{font-size:11px; color:var(--n300); text-transform:uppercase;}
+.cc-holder b{display:block; font-size:13px; color:#fff; font-weight:600; margin-top:2px;}
+.toggle-row{
+  display:flex; justify-content:space-between; align-items:center; padding:16px; margin-bottom:12px;
+}
+.toggle-row .tlabel{font-size:13.5px; font-weight:500; color:var(--n100);}
+.toggle-row .tsub{font-size:11px; color:var(--n400); margin-top:2px;}
+.switch{width:46px; height:26px; border-radius:14px; background:var(--n600); position:relative; cursor:pointer; transition:background .25s ease; flex-shrink:0;}
+.switch::after{content:''; position:absolute; width:20px; height:20px; border-radius:50%; background:#fff; top:3px; left:3px; transition:transform .25s var(--ease-spring);}
+.switch.on{background:var(--g600);}
+.switch.on::after{transform:translateX(20px);}
+
+/* Credito screen */
+.credit-hero{padding:22px; margin-bottom:18px; display:flex; gap:18px; align-items:center;}
+.gauge{position:relative; width:96px; height:96px; flex-shrink:0;}
+.gauge svg{transform:rotate(-90deg);}
+.gauge-bg{fill:none; stroke:var(--n600); stroke-width:9;}
+.gauge-fg{fill:none; stroke:url(#gaugeGrad); stroke-width:9; stroke-linecap:round; stroke-dasharray:264; transition:stroke-dashoffset 1.4s var(--ease-spring);}
+.gauge-label{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;}
+.gauge-label .pct{font-size:18px; font-weight:800; color:#fff;}
+.gauge-label .txt{font-size:9px; color:var(--n400);}
+.credit-hero-info .l1{font-size:11px; color:var(--n400);}
+.credit-hero-info .l2{font-size:20px; font-weight:800; color:#fff; margin:3px 0;}
+.credit-hero-info .l3{font-size:11.5px; color:var(--g300);}
+
+.next-payment{
+  display:flex; align-items:center; gap:14px; padding:16px; margin-bottom:18px;
+  border-left:3px solid var(--amber);
+}
+.next-payment i{font-size:20px; color:var(--amber);}
+.next-payment .np-t{font-size:12.5px; color:var(--n400);}
+.next-payment .np-v{font-size:16px; font-weight:700; color:#fff; margin-top:2px;}
+
+.amort-table{width:100%; border-collapse:collapse;}
+.amort-table th{
+  font-size:10px; text-transform:uppercase; letter-spacing:.04em; color:var(--n400);
+  text-align:left; padding:0 6px 10px; font-weight:600;
+}
+.amort-table td{padding:11px 6px; font-size:12px; color:var(--n100); border-top:1px solid var(--n700);}
+.badge{display:inline-block; padding:3px 9px; border-radius:20px; font-size:10px; font-weight:600;}
+.badge-paid{background:rgba(16,185,129,.15); color:var(--g400);}
+.badge-pending{background:rgba(255,255,255,.08); color:var(--n300);}
+.badge-next{background:rgba(245,158,11,.15); color:var(--amber);}
+
+.sim-btn-row{margin-top:6px;}
+
+/* Simulator sheet */
+.sheet-overlay{
+  position:absolute; inset:0; background:rgba(4,10,8,.6); z-index:80; opacity:0; pointer-events:none;
+  transition:opacity .3s ease;
+}
+.sheet-overlay.open{opacity:1; pointer-events:auto;}
+.sheet{
+  position:absolute; left:0; right:0; bottom:0; background:var(--n800); border-radius:28px 28px 0 0;
+  padding:22px 22px 30px; transform:translateY(100%); transition:transform .4s var(--ease-spring);
+  border-top:1px solid var(--n600); max-height:88%; overflow-y:auto;
+}
+.sheet-overlay.open .sheet{transform:translateY(0);}
+.sheet-handle{width:40px; height:4px; background:var(--n500); border-radius:4px; margin:0 auto 18px;}
+.sheet-title{font-size:16px; font-weight:700; color:#fff; margin-bottom:4px;}
+.sheet-sub{font-size:12px; color:var(--n400); margin-bottom:20px;}
+.slider-value{font-size:26px; font-weight:800; color:var(--g300); margin-bottom:6px;}
+input[type=range]{
+  width:100%; height:6px; border-radius:4px; background:var(--n600); appearance:none; margin:14px 0 20px; cursor:pointer;
+}
+input[type=range]::-webkit-slider-thumb{
+  appearance:none; width:22px; height:22px; border-radius:50%; background:var(--g400);
+  box-shadow:0 0 0 5px rgba(52,211,153,.2); cursor:pointer;
+}
+.chip-row{display:flex; gap:8px; margin-bottom:20px;}
+.chip{
+  flex:1; text-align:center; padding:10px 4px; border-radius:var(--radius-sm); background:var(--n700);
+  border:1px solid var(--n600); font-size:12.5px; font-weight:600; color:var(--n300); cursor:pointer; transition:all .2s ease;
+}
+.chip.active{background:var(--g700); border-color:var(--g500); color:#fff;}
+.sim-result{display:flex; justify-content:space-between; padding:12px 0; border-top:1px solid var(--n700); font-size:12.5px;}
+.sim-result .rl{color:var(--n400);}
+.sim-result .rv{color:#fff; font-weight:600;}
+.sim-result.total .rv{color:var(--g300); font-size:15px;}
+
+/* Filter chips (activity) */
+.filter-row{display:flex; gap:8px; margin-bottom:16px; overflow-x:auto;}
+.filter-chip{
+  padding:8px 16px; border-radius:20px; background:var(--n700); border:1px solid var(--n600);
+  font-size:11.5px; font-weight:500; color:var(--n300); white-space:nowrap; cursor:pointer; transition:all .2s ease;
+}
+.filter-chip.active{background:var(--g600); border-color:var(--g500); color:#fff;}
+
+/* Profile */
+.profile-head{display:flex; flex-direction:column; align-items:center; padding:10px 0 24px;}
+.avatar{width:82px; height:82px; border-radius:50%; object-fit:cover; border:3px solid var(--g500); margin-bottom:12px;}
+.profile-head .pname{font-size:17px; font-weight:700; color:#fff;}
+.profile-head .pid{font-size:11.5px; color:var(--n400); margin-top:3px;}
+.list-row{
+  display:flex; align-items:center; gap:14px; padding:15px 4px; border-bottom:1px solid var(--n700); cursor:pointer;
+}
+.list-row:last-child{border-bottom:none;}
+.list-row i.li{width:20px; text-align:center; color:var(--g300); font-size:15px;}
+.list-row .lt{flex:1; font-size:13.5px; color:var(--n100); font-weight:500;}
+.list-row i.chev{color:var(--n500); font-size:12px;}
+
+/* Toast */
+.toast{
+  position:absolute; bottom:100px; left:24px; right:24px; background:var(--n700); border:1px solid var(--g500);
+  border-radius:var(--radius-sm); padding:13px 16px; display:flex; align-items:center; gap:10px; z-index:90;
+  transform:translateY(20px); opacity:0; transition:transform .4s cubic-bezier(.34,1.56,.64,1), opacity .3s ease; pointer-events:none;
+}
+.toast.show{transform:translateY(0); opacity:1;}
+.toast i{color:var(--g400); font-size:16px;}
+.toast span{font-size:12.5px; color:var(--n100); font-weight:500;}
+
+/* Restart button */
+.restart-btn{
+  display:flex; align-items:center; gap:8px; background:var(--n800); border:1px solid var(--n600);
+  color:var(--n200); padding:10px 18px; border-radius:24px; font-family:'Lexend'; font-size:12.5px;
+  cursor:pointer; transition:all .2s ease;
+}
+.restart-btn:hover{border-color:var(--g500); color:var(--g300);}
+
+@keyframes fadeUp{from{opacity:0; transform:translateY(14px);} to{opacity:1; transform:translateY(0);}}
+.fade-up{animation:fadeUp .5s ease both;}
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <span class="stage-label">Avanza · Billetera y Linea de Credito Cooperativa</span>
+  <div class="phone">
+    <div class="phone-screen" id="phoneScreen">
+      <div class="notch"></div>
+      <div class="status-bar"><span>9:41</span><span><i class="fa-solid fa-signal"></i><i class="fa-solid fa-wifi"></i><i class="fa-solid fa-battery-full"></i></span></div>
+
+      <!-- LOGIN -->
+      <div class="screen active login-screen" data-screen="login">
+        <div class="login-hero">
+          <img src="https://picsum.photos/seed/avanza-coop-worker/800/900" alt="">
+          <div class="brand-mark">
+            <div class="brand-logo"><i class="fa-solid fa-seedling"></i></div>
+            <div class="brand-title">Avanza</div>
+            <div class="brand-sub">Cooperativa Progreso · Billetera digital</div>
+          </div>
+        </div>
+        <div class="login-form">
+          <div class="field">
+            <label>Numero de cedula</label>
+            <input type="text" value="1 032 xxx 445" readonly>
+          </div>
+          <div class="field">
+            <label>Clave</label>
+            <input type="password" value="••••••">
+          </div>
+          <button class="btn-primary" onclick="goTo('home')">Ingresar <i class="fa-solid fa-arrow-right" style="margin-left:6px"></i></button>
+          <div class="login-foot">Miembro activo de <b>Cooperativa Progreso</b></div>
+        </div>
+      </div>
+
+      <!-- HOME -->
+      <div class="screen" data-screen="home">
+        <div class="screen-content">
+          <div class="greeting fade-up">
+            <div class="greeting-text"><div class="hi">Hola de nuevo</div><div class="name">Marcela Rios</div></div>
+            <div class="member-badge"><i class="fa-solid fa-bell"></i></div>
+          </div>
+
+          <div class="glass-card balance-card fade-up" style="animation-delay:.05s">
+            <div class="label"><i class="fa-solid fa-wallet"></i> Saldo disponible</div>
+            <div class="amount" id="balanceAmt">$0</div>
+            <div class="quick-actions">
+              <div class="qa-btn" onclick="showToast('Recarga simulada con exito')"><i class="fa-solid fa-plus"></i>Recargar</div>
+              <div class="qa-btn" onclick="goTo('card')"><i class="fa-solid fa-credit-card"></i>Tarjeta</div>
+              <div class="qa-btn" onclick="goTo('credit')"><i class="fa-solid fa-hand-holding-dollar"></i>Credito</div>
+              <div class="qa-btn" onclick="goTo('activity')"><i class="fa-solid fa-clock-rotate-left"></i>Historial</div>
+            </div>
+          </div>
+
+          <div class="mini-row fade-up" style="animation-delay:.1s">
+            <div class="glass-card mini-card">
+              <div class="mini-label"><i class="fa-solid fa-chart-pie" style="color:var(--g400)"></i>Cupo usado</div>
+              <div style="display:flex; align-items:center; justify-content:space-between;">
+                <div class="mini-value">60%</div>
+                <div class="ring-wrap"><svg width="38" height="38"><circle class="ring-bg" cx="19" cy="19" r="15"></circle><circle class="ring-fg" id="miniRing" cx="19" cy="19" r="15" stroke-dashoffset="100"></circle></svg></div>
+              </div>
+            </div>
+            <div class="glass-card mini-card">
+              <div class="mini-label"><i class="fa-solid fa-calendar-days" style="color:var(--amber)"></i>Proxima cuota</div>
+              <div class="mini-value">5 dias</div>
+            </div>
+          </div>
+
+          <div class="section-title fade-up" style="animation-delay:.15s">Actividad reciente <span class="link" onclick="goTo('activity')">Ver todo</span></div>
+          <div class="glass-card fade-up" style="padding:6px 16px; animation-delay:.2s">
+            <div class="activity-item">
+              <div class="activity-icon icon-in"><i class="fa-solid fa-arrow-down"></i></div>
+              <div class="activity-info"><div class="t">Recarga desde nomina</div><div class="d">Hoy · 8:14 am</div></div>
+              <div class="activity-amt amt-pos">+$180.000</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon icon-out"><i class="fa-solid fa-basket-shopping"></i></div>
+              <div class="activity-info"><div class="t">Compra en supermercado</div><div class="d">Ayer · 6:40 pm</div></div>
+              <div class="activity-amt amt-neg">-$64.200</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon icon-cuota"><i class="fa-solid fa-file-invoice"></i></div>
+              <div class="activity-info"><div class="t">Cuota 7 de linea de credito</div><div class="d">18 jul · Descuento automatico</div></div>
+              <div class="activity-amt amt-neg">-$156.400</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CARD -->
+      <div class="screen" data-screen="card">
+        <div class="screen-content">
+          <div class="section-title fade-up" style="margin-top:0">Mi tarjeta</div>
+          <div class="credit-card-visual fade-up">
+            <div class="cc-top"><div class="cc-chip"></div><div class="cc-brand">AVANZA</div></div>
+            <div class="cc-number">•••• •••• •••• 8842</div>
+            <div class="cc-bottom">
+              <div class="cc-holder">Titular<b>Marcela Rios</b></div>
+              <div class="cc-holder" style="text-align:right">Vence<b>09/29</b></div>
+            </div>
+          </div>
+
+          <div class="glass-card toggle-row fade-up" style="animation-delay:.05s">
+            <div><div class="tlabel">Bloquear tarjeta</div><div class="tsub">Suspende movimientos al instante</div></div>
+            <div class="switch" id="freezeSwitch" onclick="toggleSwitch(this,'freeze')"></div>
+          </div>
+          <div class="glass-card toggle-row fade-up" style="animation-delay:.1s">
+            <div><div class="tlabel">Compras internacionales</div><div class="tsub">Permitir uso fuera de Colombia</div></div>
+            <div class="switch on" id="intlSwitch" onclick="toggleSwitch(this,'intl')"></div>
+          </div>
+          <div class="glass-card toggle-row fade-up" style="animation-delay:.15s">
+            <div><div class="tlabel">Ver numero completo</div><div class="tsub">Requiere confirmacion biometrica</div></div>
+            <div class="switch" onclick="showToast('Verificacion biometrica solicitada')"><i class="fa-solid fa-eye" style="position:absolute; right:6px; top:6px; font-size:11px; color:var(--n400)"></i></div>
+          </div>
+
+          <div class="section-title fade-up" style="animation-delay:.2s">Limite de la tarjeta</div>
+          <div class="glass-card fade-up" style="padding:18px; animation-delay:.25s">
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:12px; color:var(--n400)">
+              <span>Usado: $420.000</span><span>Limite: $1.200.000</span>
+            </div>
+            <div style="height:8px; background:var(--n600); border-radius:8px; overflow:hidden;">
+              <div style="height:100%; width:35%; background:linear-gradient(90deg,var(--g500),var(--g300)); border-radius:8px;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CREDIT -->
+      <div class="screen" data-screen="credit">
+        <div class="screen-content">
+          <div class="section-title fade-up" style="margin-top:0">Linea de credito</div>
+
+          <div class="glass-card credit-hero fade-up">
+            <div class="gauge">
+              <svg width="96" height="96">
+                <defs><linearGradient id="gaugeGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#6ee7b7"/><stop offset="100%" stop-color="#059669"/></linearGradient></defs>
+                <circle class="gauge-bg" cx="48" cy="48" r="42"></circle>
+                <circle class="gauge-fg" id="creditGauge" cx="48" cy="48" r="42" stroke-dashoffset="264"></circle>
+              </svg>
+              <div class="gauge-label"><div class="pct">60%</div><div class="txt">usado</div></div>
+            </div>
+            <div class="credit-hero-info">
+              <div class="l1">Cupo total</div>
+              <div class="l2">$2.000.000</div>
+              <div class="l3">Disponible: $800.000</div>
+            </div>
+          </div>
+
+          <div class="glass-card next-payment fade-up" style="animation-delay:.05s">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            <div><div class="np-t">Proxima cuota vence el 27 de julio</div><div class="np-v">$156.400</div></div>
+          </div>
+
+          <div class="section-title fade-up" style="animation-delay:.1s">Tabla de amortizacion</div>
+          <div class="glass-card fade-up" style="padding:14px 16px 4px; animation-delay:.15s">
+            <table class="amort-table">
+              <thead><tr><th>Cuota</th><th>Fecha</th><th>Valor</th><th>Estado</th></tr></thead>
+              <tbody id="amortBody"></tbody>
+            </table>
+          </div>
+
+          <div class="sim-btn-row fade-up" style="animation-delay:.2s">
+            <button class="btn-primary" style="width:100%" onclick="openSheet()"><i class="fa-solid fa-calculator" style="margin-right:8px"></i>Simular nuevo credito</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ACTIVITY -->
+      <div class="screen" data-screen="activity">
+        <div class="screen-content">
+          <div class="section-title fade-up" style="margin-top:0">Historial de movimientos</div>
+          <div class="filter-row fade-up">
+            <div class="filter-chip active" onclick="filterActivity(this)">Todas</div>
+            <div class="filter-chip" onclick="filterActivity(this)">Recargas</div>
+            <div class="filter-chip" onclick="filterActivity(this)">Compras</div>
+            <div class="filter-chip" onclick="filterActivity(this)">Cuotas</div>
+          </div>
+          <div class="glass-card fade-up" style="padding:6px 16px;">
+            <div class="activity-item"><div class="activity-icon icon-in"><i class="fa-solid fa-arrow-down"></i></div><div class="activity-info"><div class="t">Recarga desde nomina</div><div class="d">Hoy · 8:14 am</div></div><div class="activity-amt amt-pos">+$180.000</div></div>
+            <div class="activity-item"><div class="activity-icon icon-out"><i class="fa-solid fa-basket-shopping"></i></div><div class="activity-info"><div class="t">Compra en supermercado</div><div class="d">Ayer · 6:40 pm</div></div><div class="activity-amt amt-neg">-$64.200</div></div>
+            <div class="activity-item"><div class="activity-icon icon-cuota"><i class="fa-solid fa-file-invoice"></i></div><div class="activity-info"><div class="t">Cuota 7 de linea de credito</div><div class="d">18 jul · Descuento automatico</div></div><div class="activity-amt amt-neg">-$156.400</div></div>
+            <div class="activity-item"><div class="activity-icon icon-in"><i class="fa-solid fa-arrow-down"></i></div><div class="activity-info"><div class="t">Recarga manual</div><div class="d">15 jul · 11:02 am</div></div><div class="activity-amt amt-pos">+$100.000</div></div>
+            <div class="activity-item"><div class="activity-icon icon-out"><i class="fa-solid fa-gas-pump"></i></div><div class="activity-info"><div class="t">Estacion de servicio</div><div class="d">14 jul · 3:20 pm</div></div><div class="activity-amt amt-neg">-$38.000</div></div>
+            <div class="activity-item"><div class="activity-icon icon-cuota"><i class="fa-solid fa-file-invoice"></i></div><div class="activity-info"><div class="t">Cuota 6 de linea de credito</div><div class="d">18 jun · Descuento automatico</div></div><div class="activity-amt amt-neg">-$156.400</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROFILE -->
+      <div class="screen" data-screen="profile">
+        <div class="screen-content">
+          <div class="profile-head fade-up">
+            <img class="avatar" src="https://picsum.photos/seed/avanza-member-marcela/200/200" alt="">
+            <div class="pname">Marcela Rios</div>
+            <div class="pid">Miembro Cooperativa Progreso · No. 04821</div>
+          </div>
+          <div class="glass-card fade-up" style="padding:6px 16px; margin-bottom:14px;">
+            <div class="list-row"><i class="fa-solid fa-user li"></i><div class="lt">Datos personales</div><i class="fa-solid fa-chevron-right chev"></i></div>
+            <div class="list-row"><i class="fa-solid fa-fingerprint li"></i><div class="lt">Biometria y clave</div><i class="fa-solid fa-chevron-right chev"></i></div>
+            <div class="list-row"><i class="fa-solid fa-bell li"></i><div class="lt">Notificaciones</div><i class="fa-solid fa-chevron-right chev"></i></div>
+            <div class="list-row"><i class="fa-solid fa-shield-halved li"></i><div class="lt">Seguridad de la cuenta</div><i class="fa-solid fa-chevron-right chev"></i></div>
+          </div>
+          <div class="glass-card fade-up" style="padding:6px 16px; animation-delay:.05s">
+            <div class="list-row"><i class="fa-solid fa-circle-question li"></i><div class="lt">Ayuda y soporte</div><i class="fa-solid fa-chevron-right chev"></i></div>
+            <div class="list-row"><i class="fa-solid fa-right-from-bracket li" style="color:var(--red)"></i><div class="lt" style="color:var(--red)">Cerrar sesion</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SIMULATOR SHEET -->
+      <div class="sheet-overlay" id="sheetOverlay" onclick="closeSheetBg(event)">
+        <div class="sheet" onclick="event.stopPropagation()">
+          <div class="sheet-handle"></div>
+          <div class="sheet-title">Simulador de credito</div>
+          <div class="sheet-sub">Ajusta el monto y el numero de cuotas</div>
+          <div class="slider-value" id="simAmountLabel">$1.000.000</div>
+          <input type="range" id="simAmount" min="200000" max="2000000" step="50000" value="1000000" oninput="updateSim()">
+          <div class="chip-row" id="chipRow">
+            <div class="chip" data-n="6" onclick="setCuotas(this)">6 cuotas</div>
+            <div class="chip active" data-n="12" onclick="setCuotas(this)">12 cuotas</div>
+            <div class="chip" data-n="18" onclick="setCuotas(this)">18 cuotas</div>
+          </div>
+          <div class="sim-result"><span class="rl">Tasa mensual</span><span class="rv">1.8%</span></div>
+          <div class="sim-result"><span class="rl">Valor por cuota</span><span class="rv" id="simCuota">$94.560</span></div>
+          <div class="sim-result total"><span class="rl">Total a pagar</span><span class="rv" id="simTotal">$1.134.720</span></div>
+          <button class="btn-primary" style="width:100%; margin-top:14px" onclick="confirmSim()">Confirmar solicitud</button>
+        </div>
+      </div>
+
+      <div class="toast" id="toast"><i class="fa-solid fa-circle-check"></i><span id="toastMsg">Listo</span></div>
+
+      <!-- BOTTOM NAV -->
+      <div class="bottom-nav" id="bottomNav" style="display:none">
+        <div class="nav-item active" data-nav="home" onclick="goTo('home')"><i class="fa-solid fa-house"></i>Inicio</div>
+        <div class="nav-item" data-nav="card" onclick="goTo('card')"><i class="fa-solid fa-credit-card"></i>Tarjeta</div>
+        <div class="nav-item" data-nav="credit" onclick="goTo('credit')"><i class="fa-solid fa-hand-holding-dollar"></i>Credito</div>
+        <div class="nav-item" data-nav="activity" onclick="goTo('activity')"><i class="fa-solid fa-clock-rotate-left"></i>Actividad</div>
+        <div class="nav-item" data-nav="profile" onclick="goTo('profile')"><i class="fa-solid fa-user"></i>Perfil</div>
+      </div>
+    </div>
+  </div>
+  <button class="restart-btn" onclick="restartDemo()"><i class="fa-solid fa-rotate-left"></i> Reiniciar demo</button>
+</div>
+
+<script>
+const amortSchedule = [
+  {n:1, fecha:'27 ene', valor:156400, estado:'paid'},
+  {n:2, fecha:'27 feb', valor:156400, estado:'paid'},
+  {n:3, fecha:'27 mar', valor:156400, estado:'paid'},
+  {n:4, fecha:'27 abr', valor:156400, estado:'paid'},
+  {n:5, fecha:'27 may', valor:156400, estado:'paid'},
+  {n:6, fecha:'27 jun', valor:156400, estado:'paid'},
+  {n:7, fecha:'27 jul', valor:156400, estado:'next'},
+  {n:8, fecha:'27 ago', valor:156400, estado:'pending'},
+  {n:9, fecha:'27 sep', valor:156400, estado:'pending'},
+  {n:10, fecha:'27 oct', valor:156400, estado:'pending'},
+  {n:11, fecha:'27 nov', valor:156400, estado:'pending'},
+  {n:12, fecha:'27 dic', valor:156400, estado:'pending'},
+];
+
+function fmt(n){ return '$' + Math.round(n).toLocaleString('es-CO'); }
+
+function renderAmort(){
+  const body = document.getElementById('amortBody');
+  body.innerHTML = amortSchedule.map(r => {
+    const badge = r.estado === 'paid' ? '<span class="badge badge-paid">Pagada</span>'
+      : r.estado === 'next' ? '<span class="badge badge-next">Proxima</span>'
+      : '<span class="badge badge-pending">Pendiente</span>';
+    return `<tr><td>${r.n}/12</td><td>${r.fecha}</td><td>${fmt(r.valor)}</td><td>${badge}</td></tr>`;
+  }).join('');
+}
+renderAmort();
+
+function countUp(el, target, prefix){
+  let cur = 0; const step = target / 40;
+  const iv = setInterval(() => {
+    cur += step;
+    if(cur >= target){ cur = target; clearInterval(iv); }
+    el.textContent = (prefix||'') + '$' + Math.round(cur).toLocaleString('es-CO');
+  }, 20);
+}
+
+let firstHomeVisit = true;
+function goTo(screen){
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelector(`.screen[data-screen="${screen}"]`).classList.add('active');
+  const nav = document.getElementById('bottomNav');
+  if(screen === 'login'){ nav.style.display = 'none'; } else { nav.style.display = 'flex'; }
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.nav === screen));
+
+  if(screen === 'home' && firstHomeVisit){
+    firstHomeVisit = false;
+    setTimeout(() => {
+      countUp(document.getElementById('balanceAmt'), 842300);
+      document.getElementById('miniRing').style.strokeDashoffset = 40;
+    }, 200);
+  }
+  if(screen === 'credit'){
+    setTimeout(() => { document.getElementById('creditGauge').style.strokeDashoffset = 105; }, 150);
+  }
+}
+
+function toggleSwitch(el, type){
+  el.classList.toggle('on');
+  if(type === 'freeze'){
+    showToast(el.classList.contains('on') ? 'Tarjeta bloqueada' : 'Tarjeta activa de nuevo');
+  } else {
+    showToast(el.classList.contains('on') ? 'Compras internacionales activadas' : 'Compras internacionales desactivadas');
+  }
+}
+
+let toastTimer;
+function showToast(msg){
+  const t = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+function filterActivity(el){
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+}
+
+let simCuotasCount = 12;
+function setCuotas(el){
+  document.querySelectorAll('#chipRow .chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  simCuotasCount = parseInt(el.dataset.n);
+  updateSim();
+}
+
+function updateSim(){
+  const monto = parseInt(document.getElementById('simAmount').value);
+  document.getElementById('simAmountLabel').textContent = fmt(monto);
+  const tasa = 0.018;
+  const n = simCuotasCount;
+  const cuota = monto * tasa / (1 - Math.pow(1+tasa, -n));
+  document.getElementById('simCuota').textContent = fmt(cuota);
+  document.getElementById('simTotal').textContent = fmt(cuota * n);
+}
+updateSim();
+
+function openSheet(){ document.getElementById('sheetOverlay').classList.add('open'); }
+function closeSheetBg(e){ if(e.target.id === 'sheetOverlay') e.currentTarget.classList.remove('open'); }
+function confirmSim(){
+  document.getElementById('sheetOverlay').classList.remove('open');
+  showToast('Solicitud enviada para revision');
+}
+
+function restartDemo(){
+  firstHomeVisit = true;
+  document.getElementById('balanceAmt').textContent = '$0';
+  document.getElementById('miniRing').style.strokeDashoffset = 100;
+  document.getElementById('creditGauge').style.strokeDashoffset = 264;
+  document.querySelectorAll('.switch').forEach(s => s.classList.remove('on'));
+  document.getElementById('intlSwitch').classList.add('on');
+  goTo('login');
+}
+</script>
+</body>
+</html>
