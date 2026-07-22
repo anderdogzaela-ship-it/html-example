@@ -1,0 +1,782 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SobraZero - Otimização de Corte de Acrílico</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+:root{
+  --g50:#fffbeb; --g100:#fef3c7; --g200:#fde68a; --g300:#fcd34d; --g400:#fbbf24;
+  --g500:#f59e0b; --g600:#d97706; --g700:#b45309; --g800:#92400e; --g900:#78350f;
+  --n50:#fafaf9; --n100:#f5f5f4; --n200:#e7e5e4; --n300:#d6d3d1; --n400:#a8a29e;
+  --n500:#78716c; --n600:#57534e; --n700:#44403c; --n800:#292524; --n900:#1c1917;
+  --ok:#16a34a; --ok-bg:#dcfce7; --info:#2563eb; --info-bg:#dbeafe;
+  --radius-sm:8px; --radius-md:14px; --radius-lg:22px;
+  --shadow-sm:0 1px 2px rgba(28,25,17,.06), 0 1px 1px rgba(28,25,17,.04);
+  --shadow-md:0 4px 14px rgba(120,83,9,.10), 0 2px 4px rgba(28,25,17,.05);
+  --shadow-lg:0 16px 40px rgba(120,83,9,.16), 0 4px 10px rgba(28,25,17,.06);
+  --ease-spring: cubic-bezier(.34,1.56,.64,1);
+  --sidebar-w: 248px;
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+body{
+  font-family:'Lexend', sans-serif; -webkit-font-smoothing:antialiased;
+  background:var(--n50); color:var(--n800); overflow-x:hidden;
+}
+a{color:inherit; text-decoration:none;}
+button{font-family:inherit; cursor:pointer; border:none; background:none;}
+img{max-width:100%; display:block;}
+
+/* ---------- Layout shell ---------- */
+.app{display:flex; min-height:100vh;}
+.sidebar{
+  width:var(--sidebar-w); flex-shrink:0; background:linear-gradient(180deg,var(--n900),#241d13 70%);
+  color:var(--n100); display:flex; flex-direction:column; padding:24px 16px;
+  position:fixed; top:0; left:0; bottom:0; z-index:40; transition:transform .35s var(--ease-spring);
+}
+.brand{display:flex; align-items:center; gap:10px; padding:4px 8px 28px;}
+.brand-mark{
+  width:38px; height:38px; border-radius:11px; display:flex; align-items:center; justify-content:center;
+  background:linear-gradient(135deg,var(--g400),var(--g700)); box-shadow:0 0 0 1px rgba(251,191,36,.3), 0 6px 16px rgba(217,119,6,.35);
+  animation:pulseLogo 3.2s ease-in-out infinite;
+}
+.brand-mark i{color:#241d13; font-size:17px;}
+@keyframes pulseLogo{0%,100%{box-shadow:0 0 0 1px rgba(251,191,36,.3),0 6px 16px rgba(217,119,6,.35);} 50%{box-shadow:0 0 0 5px rgba(251,191,36,.12),0 6px 22px rgba(217,119,6,.5);}}
+.brand-name{font-weight:700; font-size:17px; letter-spacing:.2px;}
+.brand-sub{font-size:10.5px; color:var(--n400); text-transform:uppercase; letter-spacing:1.1px; margin-top:1px;}
+
+.nav-group-label{font-size:10.5px; text-transform:uppercase; letter-spacing:1.2px; color:var(--n500); padding:14px 12px 8px;}
+.nav-item{
+  display:flex; align-items:center; gap:12px; padding:11px 12px; border-radius:var(--radius-sm);
+  color:var(--n300); font-size:14.5px; font-weight:500; transition:background .18s, color .18s, transform .18s;
+}
+.nav-item i{width:18px; text-align:center; font-size:15px; color:var(--n500); transition:color .18s;}
+.nav-item:hover{background:rgba(251,191,36,.08); color:var(--n50); transform:translateX(2px);}
+.nav-item:hover i{color:var(--g400);}
+.nav-item.active{background:linear-gradient(90deg,rgba(251,191,36,.16),rgba(251,191,36,.03)); color:#fff; box-shadow:inset 3px 0 0 var(--g400);}
+.nav-item.active i{color:var(--g400);}
+.nav-badge{margin-left:auto; background:var(--g500); color:#241d13; font-size:10.5px; font-weight:700; padding:2px 7px; border-radius:20px;}
+
+.sidebar-footer{margin-top:auto; padding:14px 12px; border-radius:var(--radius-md); background:rgba(255,255,255,.04); display:flex; gap:10px; align-items:center;}
+.avatar{
+  width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg,var(--g400),var(--g600));
+  display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; color:#241d13; flex-shrink:0;
+}
+.sidebar-footer-name{font-size:13px; font-weight:600; color:#fff;}
+.sidebar-footer-role{font-size:11px; color:var(--n500);}
+
+.main{margin-left:var(--sidebar-w); flex:1; min-width:0; display:flex; flex-direction:column;}
+.topbar{
+  display:flex; align-items:center; gap:16px; padding:14px 32px; background:rgba(250,250,249,.85);
+  backdrop-filter:blur(10px); position:sticky; top:0; z-index:30; border-bottom:1px solid var(--n200);
+}
+.hamburger{display:none; font-size:19px; color:var(--n700);}
+.search-box{
+  flex:1; max-width:420px; display:flex; align-items:center; gap:10px; background:#fff; border:1px solid var(--n200);
+  border-radius:10px; padding:9px 14px; box-shadow:var(--shadow-sm); transition:box-shadow .2s, border-color .2s;
+}
+.search-box:focus-within{border-color:var(--g400); box-shadow:0 0 0 3px rgba(251,191,36,.18);}
+.search-box i{color:var(--n400); font-size:13.5px;}
+.search-box input{border:none; outline:none; font-family:inherit; font-size:13.5px; width:100%; background:transparent;}
+.topbar-right{margin-left:auto; display:flex; align-items:center; gap:18px;}
+.icon-btn{position:relative; width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; color:var(--n600); transition:background .18s, color .18s;}
+.icon-btn:hover{background:var(--n100); color:var(--n800);}
+.icon-btn .dot{position:absolute; top:7px; right:8px; width:7px; height:7px; border-radius:50%; background:#dc2626; box-shadow:0 0 0 2px #fff;}
+
+.page{display:none; padding:28px 32px 60px; animation:fadeUp .45s var(--ease-spring);}
+.page.active{display:block;}
+@keyframes fadeUp{from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);}}
+.page-head{display:flex; align-items:flex-end; justify-content:space-between; gap:16px; margin-bottom:22px; flex-wrap:wrap;}
+.page-title{font-size:23px; font-weight:700; color:var(--n900);}
+.page-sub{font-size:13.5px; color:var(--n500); margin-top:3px;}
+.btn{
+  display:inline-flex; align-items:center; gap:8px; font-weight:600; font-size:13.5px; padding:10px 18px;
+  border-radius:10px; transition:transform .16s var(--ease-spring), box-shadow .16s; white-space:nowrap;
+}
+.btn:active{transform:scale(.96);}
+.btn-primary{background:linear-gradient(135deg,var(--g400),var(--g600)); color:#2b1a04; box-shadow:0 4px 14px rgba(217,119,6,.35);}
+.btn-primary:hover{box-shadow:0 6px 20px rgba(217,119,6,.48); transform:translateY(-1px);}
+.btn-ghost{background:#fff; border:1px solid var(--n200); color:var(--n700);}
+.btn-ghost:hover{border-color:var(--g400); color:var(--g700);}
+.btn-ghost.active{background:var(--g50); border-color:var(--g400); color:var(--g800);}
+
+/* ---------- Welcome banner ---------- */
+.banner{
+  position:relative; overflow:hidden; border-radius:var(--radius-lg); padding:26px 30px; margin-bottom:26px;
+  background:linear-gradient(120deg,#241d13 0%,#3a2a10 55%, #4a3410 100%); color:#fff; box-shadow:var(--shadow-lg);
+}
+.orb{position:absolute; border-radius:50%; filter:blur(30px); opacity:.5; animation:float 7s ease-in-out infinite;}
+.orb1{width:180px; height:180px; background:var(--g400); top:-60px; right:40px;}
+.orb2{width:120px; height:120px; background:var(--g600); bottom:-50px; right:180px; animation-delay:-3s;}
+@keyframes float{0%,100%{transform:translateY(0) scale(1);} 50%{transform:translateY(-16px) scale(1.06);}}
+.banner-inner{position:relative; z-index:2; display:flex; align-items:center; justify-content:space-between; gap:24px; flex-wrap:wrap;}
+.banner-inner h2{font-size:20px; font-weight:700; margin-bottom:6px;}
+.banner-inner p{font-size:13.5px; color:var(--n300); max-width:520px; line-height:1.5;}
+.banner-stat{text-align:center; padding:0 18px;}
+.banner-stat b{font-size:26px; font-weight:800; color:var(--g300); display:block;}
+.banner-stat span{font-size:11px; color:var(--n400); text-transform:uppercase; letter-spacing:.6px;}
+
+/* ---------- KPI grid ---------- */
+.kpi-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:26px;}
+.kpi-card{
+  background:#fff; border:1px solid var(--n200); border-radius:var(--radius-md); padding:18px 20px;
+  box-shadow:var(--shadow-sm); transition:box-shadow .2s, transform .2s;
+}
+.kpi-card:hover{box-shadow:var(--shadow-md); transform:translateY(-2px);}
+.kpi-top{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;}
+.kpi-icon{width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:15px;}
+.kpi-trend{font-size:11.5px; font-weight:700; display:flex; align-items:center; gap:4px;}
+.trend-up{color:var(--ok);} .trend-down{color:#dc2626;}
+.kpi-value{font-size:27px; font-weight:800; color:var(--n900); letter-spacing:-.5px;}
+.kpi-label{font-size:12.5px; color:var(--n500); margin-top:2px;}
+
+/* ---------- Grid two-col ---------- */
+.grid-2{display:grid; grid-template-columns:1.5fr 1fr; gap:18px; align-items:start;}
+.card{background:#fff; border:1px solid var(--n200); border-radius:var(--radius-md); box-shadow:var(--shadow-sm); overflow:hidden;}
+.card-head{display:flex; align-items:center; justify-content:space-between; padding:18px 20px 4px;}
+.card-head h3{font-size:15px; font-weight:700; color:var(--n900);}
+.card-head span{font-size:12px; color:var(--n500);}
+.card-body{padding:16px 20px 20px;}
+
+/* AI suggestion card */
+.ai-card{background:linear-gradient(160deg,var(--g50),#fff); border:1px solid var(--g200);}
+.ai-head{display:flex; gap:12px; align-items:flex-start; padding:18px 20px 0;}
+.ai-badge{
+  width:38px; height:38px; border-radius:11px; flex-shrink:0; display:flex; align-items:center; justify-content:center;
+  background:linear-gradient(135deg,var(--g400),var(--g700)); color:#2b1a04; font-size:16px; box-shadow:var(--shadow-sm);
+}
+.ai-title{font-size:14px; font-weight:700; color:var(--n900);}
+.ai-confidence{font-size:11px; color:var(--g700); font-weight:700; background:var(--g100); padding:2px 8px; border-radius:20px; display:inline-block; margin-top:3px;}
+.ai-body{padding:12px 20px 20px; font-size:13px; color:var(--n700); line-height:1.55;}
+.ai-actions{display:flex; gap:10px; padding:0 20px 20px;}
+
+/* bars chart */
+.bars{display:flex; align-items:flex-end; gap:10px; height:120px; padding:10px 4px 0;}
+.bar-col{flex:1; display:flex; flex-direction:column; align-items:center; gap:6px;}
+.bar{width:100%; border-radius:6px 6px 3px 3px; background:linear-gradient(180deg,var(--g300),var(--g600)); position:relative; overflow:hidden; height:0; transition:height 1s var(--ease-spring);}
+.bar::after{content:''; position:absolute; inset:0; background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.45) 50%,transparent 70%); background-size:200% 100%; animation:shimmer 2.6s infinite;}
+@keyframes shimmer{0%{background-position:150% 0;} 100%{background-position:-50% 0;}}
+.bar-label{font-size:10.5px; color:var(--n500);}
+
+/* table */
+.table{width:100%; border-collapse:collapse; font-size:13px;}
+.table th{text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.5px; color:var(--n500); padding:10px 8px; border-bottom:1px solid var(--n200);}
+.table td{padding:12px 8px; border-bottom:1px solid var(--n100); color:var(--n700);}
+.table tr:last-child td{border-bottom:none;}
+.pill{font-size:11px; font-weight:700; padding:4px 10px; border-radius:20px; display:inline-block;}
+.pill-queue{background:var(--n100); color:var(--n600);}
+.pill-cutting{background:var(--info-bg); color:var(--info);}
+.pill-done{background:var(--ok-bg); color:var(--ok);}
+
+/* ---------- Peças (catalog) ---------- */
+.piece-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:18px;}
+.piece-card{background:#fff; border:1px solid var(--n200); border-radius:var(--radius-md); overflow:hidden; box-shadow:var(--shadow-sm); transition:box-shadow .2s, transform .2s;}
+.piece-card:hover{box-shadow:var(--shadow-md); transform:translateY(-3px);}
+.piece-media{height:150px; position:relative; overflow:hidden; background:var(--n100);}
+.piece-media img{width:100%; height:100%; object-fit:cover; transition:transform .5s;}
+.piece-card:hover .piece-media img{transform:scale(1.08);}
+.piece-tag{position:absolute; top:10px; left:10px; background:rgba(28,25,17,.72); backdrop-filter:blur(4px); color:#fff; font-size:10.5px; font-weight:600; padding:4px 10px; border-radius:20px;}
+.piece-body{padding:14px 16px 16px;}
+.piece-name{font-size:14.5px; font-weight:700; color:var(--n900); margin-bottom:3px;}
+.piece-meta{font-size:12px; color:var(--n500); display:flex; align-items:center; gap:6px; margin-bottom:2px;}
+.piece-meta i{width:13px; color:var(--n400);}
+
+/* ---------- Corte / nesting ---------- */
+.sheet-toolbar{display:flex; align-items:center; gap:10px; margin-bottom:16px; flex-wrap:wrap;}
+.toggle-group{display:flex; background:var(--n100); border-radius:10px; padding:4px; gap:2px;}
+.toggle-btn{padding:8px 16px; font-size:13px; font-weight:600; border-radius:8px; color:var(--n600); transition:background .2s, color .2s;}
+.toggle-btn.active{background:#fff; color:var(--g800); box-shadow:var(--shadow-sm);}
+.sheet-wrap{display:grid; grid-template-columns:1.4fr 1fr; gap:20px; align-items:start;}
+.sheet-frame{
+  position:relative; background:
+    repeating-linear-gradient(90deg, rgba(217,119,6,.06) 0 1px, transparent 1px 40px),
+    repeating-linear-gradient(0deg, rgba(217,119,6,.06) 0 1px, transparent 1px 40px),
+    linear-gradient(160deg,#fffdf5,#fef8e7);
+  border:2px solid var(--g300); border-radius:16px; aspect-ratio:4/3; overflow:hidden; box-shadow:var(--shadow-md);
+}
+.sheet-label{position:absolute; top:10px; left:14px; font-size:11px; font-weight:700; color:var(--g700); background:rgba(255,255,255,.85); padding:3px 10px; border-radius:20px; z-index:5;}
+.sheet-fill{position:absolute; bottom:10px; right:14px; font-size:22px; font-weight:800; color:var(--g800); z-index:5;}
+.sheet-fill span{font-size:11px; font-weight:600; color:var(--n500); display:block; text-align:right;}
+.piece-icon{
+  position:absolute; display:flex; align-items:center; justify-content:center; background:rgba(251,191,36,.22);
+  border:1.5px solid rgba(180,83,9,.55); border-radius:6px; color:var(--g800); transition:opacity .4s;
+}
+.layout-set{position:absolute; inset:0; opacity:0; transition:opacity .4s; pointer-events:none;}
+.layout-set.visible{opacity:1; pointer-events:auto;}
+.sheet2-badge{
+  position:absolute; bottom:-14px; right:-14px; width:64px; height:64px; border:2px dashed var(--g500); border-radius:10px;
+  background:#fff; display:flex; align-items:center; justify-content:center; flex-direction:column; font-size:9.5px; color:var(--g700); font-weight:700; box-shadow:var(--shadow-sm);
+  transition:opacity .3s, transform .3s;
+}
+.kerf-note{display:flex; gap:10px; align-items:flex-start; background:var(--n50); border:1px solid var(--n200); border-radius:12px; padding:14px 16px; font-size:12.5px; color:var(--n600); margin-top:16px; line-height:1.5;}
+.kerf-note i{color:var(--g600); margin-top:2px;}
+
+/* ---------- Retalhos ---------- */
+.remnant-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:14px;}
+.remnant-card{background:#fff; border:1px solid var(--n200); border-radius:var(--radius-md); padding:16px; box-shadow:var(--shadow-sm); transition:transform .2s, box-shadow .2s;}
+.remnant-card:hover{transform:translateY(-2px); box-shadow:var(--shadow-md);}
+.remnant-swatch{width:100%; height:64px; border-radius:8px; margin-bottom:12px; position:relative; overflow:hidden;}
+.remnant-id{font-size:11px; color:var(--n500); font-weight:600;}
+.remnant-dim{font-size:14.5px; font-weight:700; color:var(--n900); margin:2px 0 6px;}
+.status-pill{font-size:10.5px; font-weight:700; padding:3px 9px; border-radius:20px;}
+.status-available{background:var(--ok-bg); color:var(--ok);}
+.status-reserved{background:var(--g100); color:var(--g800);}
+
+/* ---------- Empty/loading/toast ---------- */
+.toast{
+  position:fixed; bottom:26px; left:50%; transform:translateX(-50%) translateY(120%); background:var(--n900); color:#fff;
+  padding:13px 22px; border-radius:12px; font-size:13.5px; font-weight:500; display:flex; align-items:center; gap:10px;
+  box-shadow:0 12px 30px rgba(0,0,0,.25); transition:transform .5s var(--ease-spring); z-index:100;
+}
+.toast.show{transform:translateX(-50%) translateY(0);}
+.toast i{color:var(--g400);}
+
+.mobile-overlay{display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:35;}
+
+/* ---------- Responsive ---------- */
+@media (max-width:1080px){
+  .kpi-grid{grid-template-columns:repeat(2,1fr);}
+  .grid-2{grid-template-columns:1fr;}
+  .sheet-wrap{grid-template-columns:1fr;}
+  .piece-grid{grid-template-columns:repeat(2,1fr);}
+  .remnant-grid{grid-template-columns:repeat(2,1fr);}
+}
+@media (max-width:760px){
+  .sidebar{transform:translateX(-100%);}
+  .sidebar.open{transform:translateX(0);}
+  .main{margin-left:0;}
+  .hamburger{display:block;}
+  .search-box{display:none;}
+  .kpi-grid{grid-template-columns:1fr 1fr;}
+  .piece-grid{grid-template-columns:1fr;}
+  .remnant-grid{grid-template-columns:1fr 1fr;}
+  .banner-inner{flex-direction:column; align-items:flex-start;}
+  .page{padding:20px 16px 50px;}
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-mark"><i class="fa-solid fa-scissors"></i></div>
+      <div>
+        <div class="brand-name">SobraZero</div>
+        <div class="brand-sub">Corte &amp; Encaixe</div>
+      </div>
+    </div>
+
+    <div class="nav-group-label">Operação</div>
+    <a class="nav-item active" data-page="dashboard"><i class="fa-solid fa-gauge-high"></i>Painel</a>
+    <a class="nav-item" data-page="pedidos"><i class="fa-solid fa-clipboard-list"></i>Pedidos</a>
+    <a class="nav-item" data-page="corte"><i class="fa-solid fa-diagram-project"></i>Layout de Corte</a>
+    <a class="nav-item" data-page="retalhos"><i class="fa-solid fa-recycle"></i>Retalhos<span class="nav-badge">12</span></a>
+
+    <div class="nav-group-label">Catálogo</div>
+    <a class="nav-item" data-page="pecas"><i class="fa-solid fa-boxes-stacked"></i>Peças</a>
+    <a class="nav-item" data-page="chapas"><i class="fa-solid fa-layer-group"></i>Chapas</a>
+
+    <div class="sidebar-footer">
+      <div class="avatar">FA</div>
+      <div>
+        <div class="sidebar-footer-name">Fábrica Acrílica</div>
+        <div class="sidebar-footer-role">Produção</div>
+      </div>
+    </div>
+  </aside>
+
+  <div class="mobile-overlay" id="overlay"></div>
+
+  <div class="main">
+    <div class="topbar">
+      <button class="hamburger" id="hamburger"><i class="fa-solid fa-bars"></i></button>
+      <div class="search-box">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" placeholder="Buscar pedido, peça ou chapa...">
+      </div>
+      <div class="topbar-right">
+        <button class="icon-btn"><i class="fa-solid fa-bell"></i><span class="dot"></span></button>
+        <button class="icon-btn"><i class="fa-solid fa-gear"></i></button>
+        <div class="avatar" style="width:34px;height:34px;font-size:12px;">FA</div>
+      </div>
+    </div>
+
+    <!-- ================= DASHBOARD ================= -->
+    <section class="page active" id="page-dashboard">
+      <div class="banner">
+        <div class="orb orb1"></div>
+        <div class="orb orb2"></div>
+        <div class="banner-inner">
+          <div>
+            <h2>Bom dia. A produção de hoje precisa de 6 chapas em vez de 9.</h2>
+            <p>O motor de encaixe já reorganizou os pedidos da fila e liberou 3 chapas inteiras pra próxima semana, sem tocar em nenhum pedido manualmente.</p>
+          </div>
+          <div style="display:flex; gap:22px;">
+            <div class="banner-stat"><b data-count="34">0</b><span>Chapas poupadas / mês</span></div>
+            <div class="banner-stat"><b data-count="86">0</b><span>% aproveitamento médio</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-top">
+            <div class="kpi-icon" style="background:var(--g100); color:var(--g700);"><i class="fa-solid fa-clipboard-list"></i></div>
+            <div class="kpi-trend trend-up"><i class="fa-solid fa-arrow-up"></i>12%</div>
+          </div>
+          <div class="kpi-value" data-count="18">0</div>
+          <div class="kpi-label">Pedidos na fila hoje</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-top">
+            <div class="kpi-icon" style="background:var(--info-bg); color:var(--info);"><i class="fa-solid fa-layer-group"></i></div>
+            <div class="kpi-trend trend-down"><i class="fa-solid fa-arrow-down"></i>33%</div>
+          </div>
+          <div class="kpi-value" data-count="6">0</div>
+          <div class="kpi-label">Chapas necessárias hoje</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-top">
+            <div class="kpi-icon" style="background:var(--ok-bg); color:var(--ok);"><i class="fa-solid fa-chart-simple"></i></div>
+            <div class="kpi-trend trend-up"><i class="fa-solid fa-arrow-up"></i>28pts</div>
+          </div>
+          <div class="kpi-value"><span data-count="86">0</span>%</div>
+          <div class="kpi-label">Aproveitamento médio</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-top">
+            <div class="kpi-icon" style="background:var(--g100); color:var(--g700);"><i class="fa-solid fa-recycle"></i></div>
+            <div class="kpi-trend trend-up"><i class="fa-solid fa-arrow-up"></i>4</div>
+          </div>
+          <div class="kpi-value" data-count="12">0</div>
+          <div class="kpi-label">Retalhos disponíveis</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-head">
+            <h3>Fila de produção de hoje</h3>
+            <span>18 pedidos</span>
+          </div>
+          <div class="card-body">
+            <table class="table">
+              <thead><tr><th>Pedido</th><th>Peças</th><th>Chapa sugerida</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr><td>Formatura Colégio Ipê</td><td>40 troféus</td><td>Chapa #C-118 (5mm)</td><td><span class="pill pill-cutting">Em corte</span></td></tr>
+                <tr><td>Loja Presente Bom</td><td>120 chaveiros</td><td>Retalho #R-014</td><td><span class="pill pill-queue">Na fila</span></td></tr>
+                <tr><td>Funerária Paz Eterna</td><td>15 urnas</td><td>Chapa #C-119 (5mm)</td><td><span class="pill pill-queue">Na fila</span></td></tr>
+                <tr><td>Doceria Caixa Doce</td><td>200 caixas</td><td>Chapa #C-117 (3mm)</td><td><span class="pill pill-done">Concluído</span></td></tr>
+                <tr><td>Evento Corp. Aurora</td><td>60 troféus</td><td>Chapa #C-120 (5mm)</td><td><span class="pill pill-queue">Na fila</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card ai-card">
+          <div class="ai-head">
+            <div class="ai-badge"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+            <div>
+              <div class="ai-title">Sugestão automática</div>
+              <div class="ai-confidence">92% de confiança</div>
+            </div>
+          </div>
+          <div class="ai-body">
+            Use o retalho <b>#R-014 (310 x 220mm)</b> para o próximo lote de 120 chaveiros da Loja Presente Bom. Ele cobre o lote inteiro sem abrir uma chapa nova.
+          </div>
+          <div class="ai-actions">
+            <button class="btn btn-primary" onclick="showToast('Retalho #R-014 reservado pro pedido.')"><i class="fa-solid fa-check"></i>Aplicar</button>
+            <button class="btn btn-ghost" data-page-link="retalhos">Ver retalho</button>
+          </div>
+          <div class="card-head" style="margin-top:6px;"><h3 style="font-size:13.5px;">Aproveitamento - últimos 7 dias</h3></div>
+          <div class="card-body">
+            <div class="bars" id="bars">
+              <div class="bar-col"><div class="bar" data-h="61"></div><div class="bar-label">Seg</div></div>
+              <div class="bar-col"><div class="bar" data-h="68"></div><div class="bar-label">Ter</div></div>
+              <div class="bar-col"><div class="bar" data-h="74"></div><div class="bar-label">Qua</div></div>
+              <div class="bar-col"><div class="bar" data-h="79"></div><div class="bar-label">Qui</div></div>
+              <div class="bar-col"><div class="bar" data-h="83"></div><div class="bar-label">Sex</div></div>
+              <div class="bar-col"><div class="bar" data-h="86"></div><div class="bar-label">Sáb</div></div>
+              <div class="bar-col"><div class="bar" data-h="86"></div><div class="bar-label">Hoje</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= PEDIDOS ================= -->
+    <section class="page" id="page-pedidos">
+      <div class="page-head">
+        <div><div class="page-title">Pedidos</div><div class="page-sub">Pedidos recebidos, aguardando ou já em corte na fábrica.</div></div>
+        <button class="btn btn-primary" onclick="showToast('Novo pedido criado.')"><i class="fa-solid fa-plus"></i>Novo pedido</button>
+      </div>
+      <div class="card">
+        <div class="card-body">
+          <table class="table">
+            <thead><tr><th>Cliente</th><th>Itens</th><th>Prazo</th><th>Chapa / retalho</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td>Formatura Colégio Ipê</td><td>40 troféus estrela</td><td>3 dias</td><td>Chapa #C-118</td><td><span class="pill pill-cutting">Em corte</span></td></tr>
+              <tr><td>Loja Presente Bom</td><td>120 chaveiros redondos</td><td>2 dias</td><td>Retalho #R-014</td><td><span class="pill pill-queue">Na fila</span></td></tr>
+              <tr><td>Funerária Paz Eterna</td><td>15 urnas clássicas</td><td>5 dias</td><td>Chapa #C-119</td><td><span class="pill pill-queue">Na fila</span></td></tr>
+              <tr><td>Doceria Caixa Doce</td><td>200 caixas premium</td><td>Entregue</td><td>Chapa #C-117</td><td><span class="pill pill-done">Concluído</span></td></tr>
+              <tr><td>Evento Corp. Aurora</td><td>60 troféus coroa</td><td>6 dias</td><td>Chapa #C-120</td><td><span class="pill pill-queue">Na fila</span></td></tr>
+              <tr><td>Papelaria Vitrine</td><td>80 chaveiros personalizados</td><td>4 dias</td><td>Retalho #R-009</td><td><span class="pill pill-queue">Na fila</span></td></tr>
+              <tr><td>Clube Recreativo Sul</td><td>25 troféus estrela</td><td>Entregue</td><td>Chapa #C-115</td><td><span class="pill pill-done">Concluído</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= LAYOUT DE CORTE ================= -->
+    <section class="page" id="page-corte">
+      <div class="page-head">
+        <div><div class="page-title">Layout de Corte</div><div class="page-sub">Formatura Colégio Ipê — 40 troféus, 1 chapa de acrílico 1200 x 900mm, 5mm.</div></div>
+      </div>
+
+      <div class="sheet-toolbar">
+        <div class="toggle-group">
+          <button class="toggle-btn active" data-layout="naive">Layout simples (grade)</button>
+          <button class="toggle-btn" data-layout="otimizado">Layout SobraZero</button>
+        </div>
+      </div>
+
+      <div class="sheet-wrap">
+        <div class="sheet-frame" id="sheetFrame">
+          <div class="sheet-label" id="sheetLabel">Chapa #C-118 · 1200 x 900mm</div>
+          <div class="sheet-fill" id="sheetFill">61%<span>aproveitado</span></div>
+
+          <div class="layout-set visible" id="layoutNaive"></div>
+          <div class="layout-set" id="layoutOtimizado"></div>
+
+          <div class="sheet2-badge" id="sheet2Badge"><i class="fa-solid fa-layer-group" style="font-size:14px;margin-bottom:2px;"></i>+1 chapa</div>
+        </div>
+
+        <div>
+          <div class="card">
+            <div class="card-head"><h3>O que muda entre os dois layouts</h3></div>
+            <div class="card-body" style="font-size:13px; color:var(--n700); line-height:1.6;">
+              <p style="margin-bottom:10px;"><b>Layout simples:</b> encaixa cada troféu dentro de um retângulo do tamanho da peça, sempre na mesma direção. Sobra espaço em volta de cada peça e o lote de 40 troféus não cabe numa chapa só.</p>
+              <p><b>Layout SobraZero:</b> o motor gira e reposiciona cada peça pelo contorno real (não pelo retângulo em volta dela), respeitando a folga do corte a laser entre uma peça e outra. O mesmo lote de 40 troféus cabe inteiro numa única chapa.</p>
+            </div>
+          </div>
+          <div class="kerf-note">
+            <i class="fa-solid fa-ruler-combined"></i>
+            <div>O espaçamento entre peças já reserva a largura do corte a laser (kerf). Sem essa folga, o layout parece ótimo na tela mas as peças saem coladas ou distorcidas na chapa real.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= RETALHOS ================= -->
+    <section class="page" id="page-retalhos">
+      <div class="page-head">
+        <div><div class="page-title">Retalhos</div><div class="page-sub">Sobras de chapas já cortadas, guardadas pra entrar em pedidos futuros antes de abrir chapa nova.</div></div>
+      </div>
+
+      <div class="card ai-card" style="margin-bottom:20px;">
+        <div class="ai-head">
+          <div class="ai-badge"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+          <div><div class="ai-title">Sugestão automática</div><div class="ai-confidence">92% de confiança</div></div>
+        </div>
+        <div class="ai-body">O retalho <b>#R-014</b>, sobra da Chapa #C-110 (5mm), cobre sozinho o lote de 120 chaveiros da Loja Presente Bom. Sem essa combinação, esse pedido abriria uma chapa nova de 5mm quase pro seu tamanho inteiro.</div>
+        <div class="ai-actions"><button class="btn btn-primary" onclick="showToast('Retalho #R-014 reservado pro pedido.')"><i class="fa-solid fa-check"></i>Aplicar ao pedido</button></div>
+      </div>
+
+      <div class="remnant-grid">
+        <div class="remnant-card">
+          <div class="remnant-swatch" style="background:linear-gradient(135deg,var(--g100),var(--g300));"></div>
+          <div class="remnant-id">#R-014 · origem Chapa #C-110</div>
+          <div class="remnant-dim">310 x 220mm · 5mm</div>
+          <span class="status-pill status-reserved">Sugerido agora</span>
+        </div>
+        <div class="remnant-card">
+          <div class="remnant-swatch" style="background:linear-gradient(135deg,#fef3c7,#fde68a);"></div>
+          <div class="remnant-id">#R-011 · origem Chapa #C-104</div>
+          <div class="remnant-dim">180 x 260mm · 3mm</div>
+          <span class="status-pill status-available">Disponível</span>
+        </div>
+        <div class="remnant-card">
+          <div class="remnant-swatch" style="background:linear-gradient(135deg,#fde68a,#fbbf24);"></div>
+          <div class="remnant-id">#R-009 · origem Chapa #C-098</div>
+          <div class="remnant-dim">400 x 150mm · 3mm</div>
+          <span class="status-pill status-available">Disponível</span>
+        </div>
+        <div class="remnant-card">
+          <div class="remnant-swatch" style="background:linear-gradient(135deg,#fef3c7,#fcd34d);"></div>
+          <div class="remnant-id">#R-006 · origem Chapa #C-091</div>
+          <div class="remnant-dim">210 x 210mm · 5mm</div>
+          <span class="status-pill status-available">Disponível</span>
+        </div>
+        <div class="remnant-card">
+          <div class="remnant-swatch" style="background:linear-gradient(135deg,#fde68a,#f59e0b);"></div>
+          <div class="remnant-id">#R-003 · origem Chapa #C-085</div>
+          <div class="remnant-dim">260 x 90mm · 3mm</div>
+          <span class="status-pill status-available">Disponível</span>
+        </div>
+        <div class="remnant-card">
+          <div class="remnant-swatch" style="background:linear-gradient(135deg,#fef9e0,#fde68a);"></div>
+          <div class="remnant-id">#R-002 · origem Chapa #C-080</div>
+          <div class="remnant-dim">150 x 150mm · 5mm</div>
+          <span class="status-pill status-available">Disponível</span>
+        </div>
+        <div class="remnant-card">
+          <div class="remnant-swatch" style="background:linear-gradient(135deg,#fbbf24,#d97706);"></div>
+          <div class="remnant-id">#R-015 · origem Chapa #C-118</div>
+          <div class="remnant-dim">340 x 110mm · 5mm</div>
+          <span class="status-pill status-available">Disponível</span>
+        </div>
+        <div class="remnant-card">
+          <div class="remnant-swatch" style="background:linear-gradient(135deg,#fef3c7,#fbbf24);"></div>
+          <div class="remnant-id">#R-016 · origem Chapa #C-119</div>
+          <div class="remnant-dim">190 x 130mm · 3mm</div>
+          <span class="status-pill status-available">Disponível</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= PEÇAS ================= -->
+    <section class="page" id="page-pecas">
+      <div class="page-head">
+        <div><div class="page-title">Catálogo de Peças</div><div class="page-sub">Modelos cadastrados com o contorno real usado pelo motor de encaixe.</div></div>
+        <button class="btn btn-primary" onclick="showToast('Nova peça cadastrada.')"><i class="fa-solid fa-plus"></i>Nova peça</button>
+      </div>
+      <div class="piece-grid">
+        <div class="piece-card">
+          <div class="piece-media"><span class="piece-tag">Troféu</span><img src="https://picsum.photos/seed/trofeu-estrela/480/320" alt="Troféu Estrela"></div>
+          <div class="piece-body">
+            <div class="piece-name">Troféu Estrela</div>
+            <div class="piece-meta"><i class="fa-solid fa-ruler"></i>120 x 180mm</div>
+            <div class="piece-meta"><i class="fa-solid fa-layer-group"></i>Acrílico 5mm</div>
+          </div>
+        </div>
+        <div class="piece-card">
+          <div class="piece-media"><span class="piece-tag">Troféu</span><img src="https://picsum.photos/seed/trofeu-coroa/480/320" alt="Troféu Coroa"></div>
+          <div class="piece-body">
+            <div class="piece-name">Troféu Coroa</div>
+            <div class="piece-meta"><i class="fa-solid fa-ruler"></i>100 x 200mm</div>
+            <div class="piece-meta"><i class="fa-solid fa-layer-group"></i>Acrílico 5mm</div>
+          </div>
+        </div>
+        <div class="piece-card">
+          <div class="piece-media"><span class="piece-tag">Caixa</span><img src="https://picsum.photos/seed/caixa-premium/480/320" alt="Caixa Premium"></div>
+          <div class="piece-body">
+            <div class="piece-name">Caixa Premium</div>
+            <div class="piece-meta"><i class="fa-solid fa-ruler"></i>150 x 100mm</div>
+            <div class="piece-meta"><i class="fa-solid fa-layer-group"></i>Acrílico 3mm</div>
+          </div>
+        </div>
+        <div class="piece-card">
+          <div class="piece-media"><span class="piece-tag">Urna</span><img src="https://picsum.photos/seed/urna-classica/480/320" alt="Urna Clássica"></div>
+          <div class="piece-body">
+            <div class="piece-name">Urna Clássica</div>
+            <div class="piece-meta"><i class="fa-solid fa-ruler"></i>180 x 220mm</div>
+            <div class="piece-meta"><i class="fa-solid fa-layer-group"></i>Acrílico 5mm</div>
+          </div>
+        </div>
+        <div class="piece-card">
+          <div class="piece-media"><span class="piece-tag">Chaveiro</span><img src="https://picsum.photos/seed/chaveiro-redondo/480/320" alt="Chaveiro Redondo"></div>
+          <div class="piece-body">
+            <div class="piece-name">Chaveiro Redondo</div>
+            <div class="piece-meta"><i class="fa-solid fa-ruler"></i>40 x 40mm</div>
+            <div class="piece-meta"><i class="fa-solid fa-layer-group"></i>Acrílico 3mm</div>
+          </div>
+        </div>
+        <div class="piece-card">
+          <div class="piece-media"><span class="piece-tag">Chaveiro</span><img src="https://picsum.photos/seed/chaveiro-personalizado/480/320" alt="Chaveiro Personalizado"></div>
+          <div class="piece-body">
+            <div class="piece-name">Chaveiro Personalizado</div>
+            <div class="piece-meta"><i class="fa-solid fa-ruler"></i>50 x 30mm</div>
+            <div class="piece-meta"><i class="fa-solid fa-layer-group"></i>Acrílico 3mm</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= CHAPAS ================= -->
+    <section class="page" id="page-chapas">
+      <div class="page-head">
+        <div><div class="page-title">Chapas de Estoque</div><div class="page-sub">Tipos de chapa cadastrados, usados como base pro motor de encaixe.</div></div>
+        <button class="btn btn-primary" onclick="showToast('Nova chapa cadastrada.')"><i class="fa-solid fa-plus"></i>Nova chapa</button>
+      </div>
+      <div class="card">
+        <div class="card-body">
+          <table class="table">
+            <thead><tr><th>Chapa</th><th>Dimensões</th><th>Espessura</th><th>Em estoque</th><th>Uso recomendado</th></tr></thead>
+            <tbody>
+              <tr><td>Acrílico Cristal</td><td>1200 x 900mm</td><td>5mm</td><td>18 un.</td><td>Troféus, urnas</td></tr>
+              <tr><td>Acrílico Cristal</td><td>1200 x 900mm</td><td>3mm</td><td>22 un.</td><td>Caixas, chaveiros</td></tr>
+              <tr><td>Acrílico Fumê</td><td>1000 x 800mm</td><td>5mm</td><td>7 un.</td><td>Urnas, peças especiais</td></tr>
+              <tr><td>Acrílico Branco Leitoso</td><td>1200 x 900mm</td><td>3mm</td><td>10 un.</td><td>Caixas personalizadas</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"><i class="fa-solid fa-circle-check"></i><span id="toastMsg"></span></div>
+
+<script>
+// ---------- Nav / page switching ----------
+const navItems = document.querySelectorAll('.nav-item');
+const pages = document.querySelectorAll('.page');
+function goToPage(name){
+  navItems.forEach(n=>n.classList.toggle('active', n.dataset.page===name));
+  pages.forEach(p=>p.classList.toggle('active', p.id==='page-'+name));
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').style.display='none';
+}
+navItems.forEach(item=>{
+  item.addEventListener('click', ()=>goToPage(item.dataset.page));
+});
+document.querySelectorAll('[data-page-link]').forEach(el=>{
+  el.addEventListener('click', ()=>goToPage(el.dataset.pageLink));
+});
+
+// ---------- Mobile sidebar ----------
+const sidebar = document.getElementById('sidebar');
+const overlay = document.getElementById('overlay');
+document.getElementById('hamburger').addEventListener('click', ()=>{
+  sidebar.classList.add('open');
+  overlay.style.display='block';
+});
+overlay.addEventListener('click', ()=>{
+  sidebar.classList.remove('open');
+  overlay.style.display='none';
+});
+
+// ---------- Count-up ----------
+function animateCount(el){
+  const target = parseInt(el.dataset.count, 10);
+  const dur = 1100;
+  const start = performance.now();
+  function step(t){
+    const p = Math.min((t-start)/dur, 1);
+    const eased = 1 - Math.pow(1-p, 3);
+    el.textContent = Math.round(target*eased);
+    if(p<1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+const countObserver = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){ animateCount(e.target); countObserver.unobserve(e.target); }
+  });
+},{threshold:.4});
+document.querySelectorAll('[data-count]').forEach(el=>countObserver.observe(el));
+
+// ---------- Bars ----------
+const barObserver = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      e.target.querySelectorAll('.bar').forEach((b,i)=>{
+        setTimeout(()=>{ b.style.height = b.dataset.h + '%'; }, i*80);
+      });
+      barObserver.unobserve(e.target);
+    }
+  });
+},{threshold:.3});
+const barsEl = document.getElementById('bars');
+if(barsEl) barObserver.observe(barsEl);
+
+// ---------- Toast ----------
+let toastTimer;
+function showToast(msg){
+  const toast = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>toast.classList.remove('show'), 2600);
+}
+
+// ---------- Nesting layouts ----------
+// naive: uniform grid, same orientation, big gaps -> 40 trophies need 2 sheets, fill 61%
+const naivePieces = [];
+(function(){
+  const cols=6, rows=5;
+  const cellW = 100/cols, cellH = 100/rows;
+  let count=0;
+  for(let r=0;r<rows;r++){
+    for(let c=0;c<cols;c++){
+      if(count>=27) break; // only ~27 fit in this sheet at this spacing -> rest overflow to sheet 2
+      naivePieces.push({
+        top: (r*cellH)+6, left:(c*cellW)+4,
+        w: cellW*0.62, h: cellH*0.62, rot:0
+      });
+      count++;
+    }
+  }
+})();
+
+// otimizado: rotated, tightly packed, all 40 fit in 1 sheet -> fill 87%
+const otimPieces = [];
+(function(){
+  const cols=8, rows=6;
+  const cellW = 100/cols, cellH = 100/rows;
+  let count=0;
+  for(let r=0;r<rows;r++){
+    for(let c=0;c<cols;c++){
+      if(count>=40) break;
+      const jitterTop = (r%2===0)?2:6;
+      const jitterLeft = (c%2===0)?1:3;
+      otimPieces.push({
+        top:(r*cellH)+jitterTop*0.5, left:(c*cellW)+jitterLeft*0.4,
+        w:cellW*0.86, h:cellH*0.86, rot:(c+r)%2===0? -14 : 12
+      });
+      count++;
+    }
+  }
+})();
+
+function renderPieces(containerId, arr){
+  const container = document.getElementById(containerId);
+  container.innerHTML='';
+  arr.forEach(p=>{
+    const div = document.createElement('div');
+    div.className='piece-icon';
+    div.style.top = p.top+'%';
+    div.style.left = p.left+'%';
+    div.style.width = p.w+'%';
+    div.style.height = p.h+'%';
+    div.style.transform = 'rotate('+p.rot+'deg)';
+    div.innerHTML = '<i class="fa-solid fa-trophy" style="font-size:min(2.4vw,14px);"></i>';
+    container.appendChild(div);
+  });
+}
+renderPieces('layoutNaive', naivePieces);
+renderPieces('layoutOtimizado', otimPieces);
+
+const toggleBtns = document.querySelectorAll('.toggle-btn');
+const sheetFill = document.getElementById('sheetFill');
+const sheet2Badge = document.getElementById('sheet2Badge');
+const layoutNaive = document.getElementById('layoutNaive');
+const layoutOtim = document.getElementById('layoutOtimizado');
+toggleBtns.forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    toggleBtns.forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const mode = btn.dataset.layout;
+    if(mode==='naive'){
+      layoutNaive.classList.add('visible');
+      layoutOtim.classList.remove('visible');
+      sheetFill.innerHTML = '61%<span>aproveitado</span>';
+      sheet2Badge.style.opacity='1'; sheet2Badge.style.transform='scale(1)';
+    } else {
+      layoutNaive.classList.remove('visible');
+      layoutOtim.classList.add('visible');
+      sheetFill.innerHTML = '87%<span>aproveitado</span>';
+      sheet2Badge.style.opacity='0'; sheet2Badge.style.transform='scale(.7)';
+    }
+  });
+});
+</script>
+</body>
+</html>
