@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fabrica - Gestao de Producao e Vendas</title>
+<meta name="description" content="Fabrica: painel de gestao de producao e vendas, pedidos consolidados automaticamente por produto.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='24' fill='%23d97706'/%3E%3Cpath d='M24 68V40l14-10 14 10v28M56 68V40l14-10 14 10v28' stroke='white' stroke-width='7' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<style>
+:root{
+  --go50:#fffbeb; --go100:#fef3c7; --go200:#fde68a; --go300:#fcd34d; --go400:#fbbf24;
+  --go500:#f59e0b; --go600:#d97706; --go700:#b45309; --go800:#92400e; --go900:#78350f;
+  --em500:#0ea5e9; --em600:#0284c7;
+  --n50:#fafaf9; --n100:#f5f5f4; --n200:#e7e5e4; --n300:#d6d3d1; --n400:#a8a29e;
+  --n500:#78716c; --n600:#57534e; --n700:#44403c; --n800:#292524; --n900:#1c1917;
+  --danger:#dc2626; --danger-bg:#fef2f2; --danger-border:#fecaca;
+  --ok:#15803d; --ok-bg:#f0fdf4; --ok-border:#bbf7d0;
+  --info:#0369a1; --info-bg:#f0f9ff;
+  --radius-sm:8px; --radius-md:12px; --radius-lg:16px; --radius-xl:22px;
+  --shadow-sm:0 1px 2px rgba(28,25,23,0.06), 0 1px 1px rgba(28,25,23,0.04);
+  --shadow-md:0 6px 16px -4px rgba(28,25,23,0.10), 0 2px 6px -2px rgba(28,25,23,0.06);
+  --shadow-lg:0 20px 40px -12px rgba(120,53,15,0.20), 0 8px 16px -8px rgba(28,25,23,0.10);
+  --shadow-focus:0 0 0 4px rgba(217,119,6,0.16);
+  --ease:cubic-bezier(.4,0,.2,1);
+  --ease-spring:cubic-bezier(.34,1.56,.64,1);
+  --sidebar-w:264px;
+}
+*,*::before,*::after{box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%;}
+body{
+  margin:0; font-family:'Nunito',system-ui,sans-serif; background:var(--n50); color:var(--n800);
+  -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; line-height:1.5; overflow-x:hidden;
+}
+h1,h2,h3,h4{margin:0; font-weight:800; color:var(--n900); letter-spacing:-0.01em;}
+p{margin:0;}
+button{font-family:inherit;}
+ul{list-style:none;margin:0;padding:0;}
+input,select,textarea{font-family:inherit;}
+a{color:inherit;}
+::selection{background:var(--go200); color:var(--go900);}
+::-webkit-scrollbar{height:8px;width:8px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--n300); border-radius:99px;}
+::-webkit-scrollbar-thumb:hover{background:var(--n400);}
+
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  padding:10px 18px; border-radius:var(--radius-md); border:1px solid transparent;
+  font-size:0.9rem; font-weight:700; cursor:pointer;
+  transition:transform .12s var(--ease), box-shadow .2s var(--ease), background .2s var(--ease), border-color .2s var(--ease), color .2s var(--ease);
+  white-space:nowrap;
+}
+.btn:active{transform:scale(.96);}
+.btn-primary{background:linear-gradient(135deg,var(--go600),var(--go700)); color:#fff; box-shadow:var(--shadow-sm);}
+.btn-primary:hover{box-shadow:var(--shadow-md); transform:translateY(-1px);}
+.btn-ghost{background:transparent; color:var(--n600); border-color:var(--n200);}
+.btn-ghost:hover{background:var(--n100); color:var(--n800);}
+.btn-outline{background:#fff; color:var(--go700); border-color:var(--go200);}
+.btn-outline:hover{background:var(--go50); border-color:var(--go300);}
+.btn-sm{padding:7px 12px; font-size:0.82rem; border-radius:var(--radius-sm);}
+.btn-block{width:100%;}
+.btn:disabled{opacity:.5; cursor:not-allowed;}
+
+.icon-btn{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:36px; height:36px; border-radius:var(--radius-sm); border:1px solid var(--n200);
+  background:#fff; color:var(--n500); cursor:pointer; font-size:0.9rem;
+  transition:transform .12s var(--ease), background .2s var(--ease), color .2s var(--ease), border-color .2s var(--ease), box-shadow .2s var(--ease);
+}
+.icon-btn:hover{background:var(--n100); color:var(--n800); box-shadow:var(--shadow-sm);}
+.icon-btn:active{transform:scale(.92);}
+.icon-btn.plain{border-color:transparent; background:transparent;}
+
+.badge{
+  display:inline-flex; align-items:center; gap:6px; padding:4px 10px;
+  border-radius:99px; font-size:0.76rem; font-weight:700; line-height:1.4; white-space:nowrap;
+}
+.badge i{font-size:0.7rem;}
+.badge-open{background:var(--ok-bg); color:var(--ok);}
+.badge-closed{background:var(--n100); color:var(--n600);}
+.badge-warn{background:var(--go100); color:var(--go800);}
+.badge-danger{background:var(--danger-bg); color:var(--danger);}
+.badge-info{background:var(--info-bg); color:var(--info);}
+
+.form-group{display:flex; flex-direction:column; gap:6px; margin-bottom:16px;}
+.form-group label{font-size:0.82rem; font-weight:700; color:var(--n600);}
+.form-row{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group input[type="email"],
+.form-group input[type="password"],
+.form-group input[type="time"],
+.form-group select,
+.form-group textarea{
+  width:100%; padding:11px 14px; border-radius:var(--radius-sm); border:1.5px solid var(--n200);
+  background:#fff; color:var(--n800); font-size:0.92rem;
+  transition:border-color .2s var(--ease), box-shadow .2s var(--ease);
+}
+.form-group textarea{resize:vertical; min-height:80px; font-family:inherit;}
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus{
+  outline:none; border-color:var(--go500); box-shadow:var(--shadow-focus);
+}
+.input-icon-wrap{position:relative;}
+.input-icon-wrap i{position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--n400); font-size:0.85rem;}
+.input-icon-wrap input{padding-left:38px !important;}
+
+.card{background:#fff; border:1px solid var(--n200); border-radius:var(--radius-lg); box-shadow:var(--shadow-sm);}
+.avatar{
+  width:38px; height:38px; border-radius:50%; flex:0 0 38px; display:flex; align-items:center; justify-content:center;
+  font-weight:800; font-size:0.82rem; color:#fff; text-transform:uppercase;
+}
+
+.empty-state{
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding:56px 20px; text-align:center; color:var(--n500); gap:12px;
+}
+.empty-state i{font-size:2.2rem; color:var(--n300);}
+.empty-state h4{color:var(--n700); font-size:1rem;}
+.empty-state p{font-size:0.86rem; max-width:320px;}
+
+/* AUTH */
+#authScreen{min-height:100vh; display:flex; align-items:stretch; background:var(--n50);}
+.auth-brand{
+  flex:1 1 46%; position:relative; display:flex; flex-direction:column; justify-content:center;
+  padding:clamp(32px,6vw,80px); color:#fff; overflow:hidden;
+  background:linear-gradient(155deg,var(--go800) 0%, var(--go700) 45%, var(--go600) 100%);
+}
+.auth-brand::before{
+  content:''; position:absolute; inset:0;
+  background-image:radial-gradient(circle at 15% 20%, rgba(255,255,255,0.10) 0, transparent 45%),
+                    radial-gradient(circle at 85% 80%, rgba(255,255,255,0.10) 0, transparent 45%);
+  pointer-events:none;
+}
+.grid-overlay{position:absolute; inset:0; opacity:.12; background-image:linear-gradient(rgba(255,255,255,.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.5) 1px, transparent 1px); background-size:34px 34px;}
+.auth-brand-content{position:relative; z-index:2; max-width:440px;}
+.brand-mark{display:inline-flex; align-items:center; gap:10px; margin-bottom:48px;}
+.brand-mark .mark-icon{
+  width:40px; height:40px; border-radius:12px; background:rgba(255,255,255,0.16);
+  display:flex; align-items:center; justify-content:center; font-size:1.1rem; backdrop-filter:blur(6px);
+}
+.brand-mark span{font-size:1.25rem; font-weight:800; letter-spacing:-0.02em;}
+.auth-brand h1{color:#fff; font-size:clamp(1.7rem,1.2rem+2vw,2.4rem); line-height:1.2; margin-bottom:16px;}
+.auth-brand p.lead{font-size:1rem; color:rgba(255,255,255,0.85); margin-bottom:36px;}
+.brand-features{display:flex; flex-direction:column; gap:18px;}
+.brand-feature{display:flex; align-items:flex-start; gap:14px;}
+.brand-feature .f-icon{
+  width:34px; height:34px; flex:0 0 34px; border-radius:10px; background:rgba(255,255,255,0.14);
+  display:flex; align-items:center; justify-content:center; font-size:0.85rem;
+}
+.brand-feature strong{display:block; font-size:0.92rem; margin-bottom:2px;}
+.brand-feature span{font-size:0.82rem; color:rgba(255,255,255,0.75);}
+.mockup-float{
+  position:absolute; width:150px; padding:12px; border-radius:14px; background:rgba(255,255,255,0.95);
+  box-shadow:var(--shadow-lg); color:var(--n800);
+}
+.mockup-float .mf-bar{height:8px; border-radius:4px; background:var(--go200); margin-bottom:6px;}
+.mockup-float .mf-bar:nth-child(2){width:70%; background:var(--n200);}
+.mockup-float .mf-bar:nth-child(3){width:45%; background:var(--n200);}
+.mockup-1{top:8%; right:8%; transform:rotate(6deg); animation:floatY 6s ease-in-out infinite;}
+.mockup-2{bottom:10%; right:16%; transform:rotate(-5deg); animation:floatY 7s ease-in-out infinite .8s;}
+@keyframes floatY{0%,100%{transform:translateY(0) rotate(var(--r,6deg));} 50%{transform:translateY(-10px) rotate(var(--r,6deg));}}
+.auth-form-side{flex:1 1 54%; display:flex; align-items:center; justify-content:center; padding:32px;}
+.auth-form-card{width:100%; max-width:400px;}
+.auth-form-card h2{font-size:1.5rem; margin-bottom:6px;}
+.auth-form-card .sub{color:var(--n500); font-size:0.9rem; margin-bottom:28px;}
+.auth-footer-text{text-align:center; margin-top:22px; font-size:0.86rem; color:var(--n500);}
+
+/* APP SHELL */
+#appShell{display:none; min-height:100vh;}
+#appShell.active{display:flex;}
+.sidebar{
+  width:var(--sidebar-w); flex:0 0 var(--sidebar-w); background:#fff; border-right:1px solid var(--n200);
+  display:flex; flex-direction:column; height:100vh; position:fixed; top:0; left:0; z-index:60;
+  transition:transform .3s var(--ease);
+}
+.sidebar-header{padding:22px 22px 18px; display:flex; align-items:center; gap:10px; border-bottom:1px solid var(--n100);}
+.sidebar-header .mark-icon{
+  width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg,var(--go600),var(--go700));
+  display:flex; align-items:center; justify-content:center; color:#fff; font-size:1rem; flex:0 0 36px; box-shadow:var(--shadow-sm);
+}
+.sidebar-header span{font-size:1.15rem; font-weight:800; color:var(--n900); letter-spacing:-0.02em;}
+.sidebar-close-btn{margin-left:auto; display:none;}
+.sidebar-nav{flex:1; padding:18px 14px; overflow-y:auto;}
+.nav-label{font-size:0.7rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--n400); font-weight:800; padding:0 10px; margin-bottom:8px;}
+.nav-item{
+  display:flex; align-items:center; gap:12px; padding:11px 12px; border-radius:var(--radius-sm);
+  color:var(--n600); font-weight:700; font-size:0.92rem; cursor:pointer; margin-bottom:2px;
+  transition:background .18s var(--ease), color .18s var(--ease);
+  border:none; background:transparent; width:100%; text-align:left;
+}
+.nav-item i{width:18px; text-align:center; font-size:1rem; color:var(--n400); transition:color .18s var(--ease);}
+.nav-item:hover{background:var(--n100); color:var(--n800);}
+.nav-item.active{background:var(--go50); color:var(--go800);}
+.nav-item.active i{color:var(--go600);}
+.nav-item .nav-count{margin-left:auto; font-size:0.72rem; background:var(--n100); color:var(--n500); padding:2px 8px; border-radius:99px; font-weight:800;}
+.nav-item.active .nav-count{background:var(--go100); color:var(--go700);}
+.sidebar-footer{padding:16px 14px; border-top:1px solid var(--n100); display:flex; flex-direction:column; gap:8px;}
+.sidebar-user{display:flex; align-items:center; gap:10px; padding:8px; border-radius:var(--radius-sm);}
+.sidebar-user .u-info{overflow:hidden;}
+.sidebar-user .u-name{font-size:0.86rem; font-weight:700; color:var(--n800); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.sidebar-user .u-role{font-size:0.74rem; color:var(--n400); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.sidebar-footer .btn{justify-content:flex-start;}
+.sidebar-backdrop{display:none; position:fixed; inset:0; background:rgba(28,25,23,0.42); z-index:55; backdrop-filter:blur(1px);}
+.main-content{flex:1; margin-left:var(--sidebar-w); min-height:100vh; display:flex; flex-direction:column; min-width:0;}
+.topbar{
+  position:sticky; top:0; z-index:40; background:rgba(250,250,249,0.88); backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--n200); padding:16px 28px; display:flex; align-items:center; gap:16px;
+}
+.hamburger-btn{display:none;}
+.topbar-titles{flex:1; min-width:0;}
+.topbar-titles h1{font-size:clamp(1.15rem,1rem+0.6vw,1.5rem);}
+.topbar-titles p{font-size:0.84rem; color:var(--n500); margin-top:2px;}
+.topbar-actions{display:flex; align-items:center; gap:10px;}
+.bell-wrap{position:relative;}
+.bell-dot{position:absolute; top:5px; right:5px; width:8px; height:8px; border-radius:50%; background:var(--danger); border:2px solid #fff;}
+.view{display:none; padding:26px 28px 60px;}
+.view.active{display:block; animation:fadeSlideIn .35s var(--ease) both;}
+@keyframes fadeSlideIn{from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);}}
+
+/* DASHBOARD */
+.kpi-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:16px; margin-bottom:24px;}
+.kpi-card{padding:20px; display:flex; flex-direction:column; gap:12px; cursor:default; transition:transform .2s var(--ease), box-shadow .2s var(--ease);}
+.kpi-card:hover{transform:translateY(-3px); box-shadow:var(--shadow-md);}
+.kpi-top{display:flex; align-items:center; justify-content:space-between;}
+.kpi-icon{width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:0.95rem;}
+.kpi-icon.a{background:var(--go100); color:var(--go700);}
+.kpi-icon.b{background:var(--info-bg); color:var(--info);}
+.kpi-icon.c{background:var(--n100); color:var(--n600);}
+.kpi-icon.d{background:var(--ok-bg); color:var(--ok);}
+.kpi-value{font-size:clamp(1.7rem,1.3rem+1.4vw,2.3rem); font-weight:900; color:var(--n900); letter-spacing:-0.02em;}
+.kpi-label{font-size:0.82rem; color:var(--n500); font-weight:700;}
+.kpi-sub{font-size:0.74rem; font-weight:700; display:flex; align-items:center; gap:4px;}
+.kpi-sub.good{color:var(--ok);}
+.kpi-sub.warn{color:var(--go700);}
+.kpi-sub.neutral{color:var(--n400);}
+.cutoff-banner{
+  display:flex; align-items:center; gap:14px; padding:16px 20px; border-radius:var(--radius-lg); margin-bottom:24px;
+  background:linear-gradient(135deg, var(--go50), #fff); border:1px solid var(--go200);
+}
+.cutoff-banner .ci{width:40px; height:40px; border-radius:10px; background:var(--go600); color:#fff; display:flex; align-items:center; justify-content:center; font-size:1rem; flex:0 0 40px;}
+.cutoff-banner strong{font-size:0.94rem; color:var(--n900);}
+.cutoff-banner span{font-size:0.82rem; color:var(--n500);}
+.dash-grid{display:grid; grid-template-columns:1.4fr 1fr; gap:20px; align-items:start;}
+.panel{padding:22px;}
+.panel-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;}
+.panel-head h3{font-size:1.02rem;}
+.panel-head .count-tag{font-size:0.76rem; background:var(--go100); color:var(--go800); padding:3px 10px; border-radius:99px; font-weight:800;}
+.rank-row{display:flex; align-items:center; gap:14px; padding:12px 0; border-bottom:1px solid var(--n100);}
+.rank-row:last-child{border-bottom:none;}
+.rank-num{width:26px; height:26px; border-radius:8px; background:var(--n100); color:var(--n600); font-size:0.78rem; font-weight:800; display:flex; align-items:center; justify-content:center; flex:0 0 26px;}
+.rank-main{flex:1; min-width:0;}
+.rank-main .r-title{font-size:0.9rem; font-weight:700; color:var(--n800);}
+.rank-bar-wrap{height:6px; border-radius:99px; background:var(--n100); margin-top:6px; overflow:hidden;}
+.rank-bar{height:100%; border-radius:99px; background:linear-gradient(90deg,var(--go500),var(--go600)); width:0; transition:width 1s var(--ease-spring);}
+.rank-val{font-size:0.86rem; font-weight:800; color:var(--n800); flex:0 0 auto;}
+.attention-row{display:flex; align-items:center; gap:14px; padding:13px 10px; border-radius:var(--radius-sm); border-bottom:1px solid var(--n100);}
+.attention-row:last-child{border-bottom:none;}
+.attention-dot{width:8px; height:8px; border-radius:50%; flex:0 0 8px;}
+.attention-dot.warn{background:var(--go600);}
+.attention-dot.ok{background:var(--ok);}
+.attention-dot.info{background:var(--info);}
+.attention-main{flex:1; min-width:0;}
+.attention-main .a-title{font-size:0.88rem; font-weight:700; color:var(--n800);}
+.attention-main .a-meta{font-size:0.78rem; color:var(--n500); margin-top:2px;}
+
+/* TOOLBAR / TABLE */
+.toolbar{display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin-bottom:18px; padding:16px;}
+.search-wrap{position:relative; flex:1 1 220px; min-width:180px;}
+.search-wrap i{position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--n400); font-size:0.85rem;}
+.search-wrap input{
+  width:100%; padding:10px 14px 10px 38px; border-radius:var(--radius-sm); border:1.5px solid var(--n200);
+  font-size:0.88rem; background:var(--n50); transition:border-color .2s var(--ease), box-shadow .2s var(--ease), background .2s var(--ease);
+}
+.search-wrap input:focus{outline:none; border-color:var(--go500); box-shadow:var(--shadow-focus); background:#fff;}
+.filter-select-wrap{position:relative;}
+.filter-select-wrap select{
+  padding:9px 32px 9px 14px; border-radius:var(--radius-sm); border:1.5px solid var(--n200); background:#fff;
+  font-size:0.84rem; font-weight:600; color:var(--n700); cursor:pointer; appearance:none; transition:border-color .2s var(--ease);
+}
+.filter-select-wrap select:focus{outline:none; border-color:var(--go500);}
+.filter-select-wrap i.chevron{position:absolute; right:12px; top:50%; transform:translateY(-50%); color:var(--n400); font-size:0.72rem; pointer-events:none;}
+.table-wrap{overflow-x:auto;}
+table.data-table{width:100%; border-collapse:collapse;}
+.data-table thead th{text-align:left; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--n400); font-weight:800; padding:0 16px 12px; white-space:nowrap;}
+.data-table tbody tr{background:#fff; transition:background .15s var(--ease);}
+.data-table tbody tr:hover{background:var(--n50);}
+.data-table tbody td{padding:14px 16px; border-top:1px solid var(--n100); vertical-align:middle; font-size:0.88rem;}
+.data-table tbody tr:first-child td{border-top:none;}
+.cell-title .t-title{font-weight:700; color:var(--n800); margin-bottom:2px;}
+.cell-title .t-desc{font-size:0.78rem; color:var(--n500);}
+.cell-actions{display:flex; gap:6px;}
+
+/* PEDIDOS SPLIT VIEW */
+.pedidos-grid{display:grid; grid-template-columns:1.5fr 1fr; gap:20px; align-items:start;}
+.seller-card{padding:18px; margin-bottom:14px;}
+.seller-card:last-child{margin-bottom:0;}
+.seller-head{display:flex; align-items:center; gap:12px; margin-bottom:14px;}
+.seller-head .s-name{font-weight:800; font-size:0.96rem; color:var(--n900);}
+.seller-head .s-meta{font-size:0.78rem; color:var(--n500);}
+.seller-items{display:flex; flex-direction:column; gap:8px;}
+.seller-item{display:flex; align-items:center; justify-content:space-between; font-size:0.88rem; padding:8px 10px; border-radius:var(--radius-sm); background:var(--n50);}
+.seller-item .qty{font-weight:800; color:var(--go700); background:var(--go50); padding:2px 10px; border-radius:99px; font-size:0.82rem;}
+.consolidado-panel{position:sticky; top:100px;}
+.consol-row{display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--n100); gap:10px;}
+.consol-row:last-child{border-bottom:none;}
+.consol-row .c-name{font-size:0.88rem; font-weight:700; color:var(--n800);}
+.consol-row .c-src{font-size:0.74rem; color:var(--n400);}
+.consol-row .c-total{font-size:1.05rem; font-weight:900; color:var(--go700); flex:0 0 auto;}
+.consol-total-bar{display:flex; align-items:center; justify-content:space-between; padding:16px; margin-top:6px; border-radius:var(--radius-md); background:var(--go50); border:1px solid var(--go200);}
+.consol-total-bar strong{font-size:1.3rem; color:var(--go800);}
+
+/* PRODUCAO */
+.prod-list{display:flex; flex-direction:column; gap:10px;}
+.prod-row{display:flex; align-items:center; gap:16px; padding:16px 18px;}
+.prod-check{width:26px; height:26px; border-radius:8px; border:2px solid var(--n300); display:flex; align-items:center; justify-content:center; cursor:pointer; flex:0 0 26px; transition:all .18s var(--ease); color:transparent; font-size:0.78rem;}
+.prod-check.done{background:var(--ok); border-color:var(--ok); color:#fff;}
+.prod-main{flex:1; min-width:0;}
+.prod-main .p-name{font-weight:800; font-size:0.94rem; color:var(--n800);}
+.prod-main .p-name.done{text-decoration:line-through; color:var(--n400);}
+.prod-main .p-meta{font-size:0.78rem; color:var(--n500); margin-top:2px;}
+.prod-qty{font-size:1.15rem; font-weight:900; color:var(--go700); background:var(--go50); padding:6px 16px; border-radius:99px; flex:0 0 auto;}
+.locked-banner{display:flex; align-items:center; gap:12px; padding:14px 18px; border-radius:var(--radius-md); background:var(--n100); color:var(--n600); font-size:0.86rem; font-weight:700; margin-bottom:18px;}
+
+/* CAIXA */
+.caixa-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px; margin-bottom:20px;}
+.canal-card{padding:22px; text-align:center;}
+.canal-icon{width:52px; height:52px; border-radius:14px; margin:0 auto 14px; display:flex; align-items:center; justify-content:center; font-size:1.3rem; color:#fff;}
+.canal-icon.dinheiro{background:linear-gradient(135deg,#16a34a,#15803d);}
+.canal-icon.cartao{background:linear-gradient(135deg,#0ea5e9,#0284c7);}
+.canal-icon.pix{background:linear-gradient(135deg,var(--go500),var(--go700));}
+.canal-label{font-size:0.84rem; color:var(--n500); font-weight:700; margin-bottom:6px;}
+.canal-total{font-size:1.5rem; font-weight:900; color:var(--n900);}
+.caixa-summary{display:flex; align-items:center; justify-content:space-between; padding:22px 26px; border-radius:var(--radius-lg); background:linear-gradient(135deg,var(--go800),var(--go700)); color:#fff; margin-bottom:20px;}
+.caixa-summary .cs-label{font-size:0.86rem; color:rgba(255,255,255,0.8); font-weight:700;}
+.caixa-summary .cs-value{font-size:2rem; font-weight:900; letter-spacing:-0.02em;}
+
+/* MODAL */
+.modal-backdrop{display:none; position:fixed; inset:0; background:rgba(28,25,23,0.5); z-index:100; align-items:center; justify-content:center; padding:20px; backdrop-filter:blur(2px);}
+.modal-backdrop.active{display:flex; animation:fadeIn .2s var(--ease);}
+@keyframes fadeIn{from{opacity:0;} to{opacity:1;}}
+.modal{background:#fff; border-radius:var(--radius-lg); width:100%; max-width:460px; max-height:88vh; overflow-y:auto; box-shadow:var(--shadow-lg); animation:modalIn .25s var(--ease-spring);}
+@keyframes modalIn{from{opacity:0; transform:translateY(16px) scale(.98);} to{opacity:1; transform:translateY(0) scale(1);}}
+.modal-head{display:flex; align-items:center; justify-content:space-between; padding:20px 22px; border-bottom:1px solid var(--n100);}
+.modal-head h3{font-size:1.08rem;}
+.modal-body{padding:22px;}
+.modal-foot{display:flex; justify-content:flex-end; gap:10px; padding:16px 22px; border-top:1px solid var(--n100);}
+
+/* TOAST */
+#toastWrap{position:fixed; bottom:26px; right:26px; z-index:200; display:flex; flex-direction:column; gap:10px;}
+.toast{
+  display:flex; align-items:center; gap:12px; padding:14px 18px; border-radius:var(--radius-md); background:var(--n900); color:#fff;
+  box-shadow:var(--shadow-lg); font-size:0.88rem; font-weight:700; transform:translateY(20px); opacity:0;
+  animation:toastIn .4s cubic-bezier(.34,1.56,.64,1) forwards;
+}
+.toast i{color:var(--go400);}
+@keyframes toastIn{to{transform:translateY(0); opacity:1;}}
+
+@media (max-width:980px){
+  .dash-grid, .pedidos-grid{grid-template-columns:1fr;}
+  .consolidado-panel{position:static;}
+}
+@media (max-width:860px){
+  .sidebar{transform:translateX(-100%);}
+  .sidebar.open{transform:translateX(0);}
+  .sidebar-close-btn{display:inline-flex;}
+  .main-content{margin-left:0;}
+  .hamburger-btn{display:inline-flex;}
+  .sidebar-backdrop.open{display:block;}
+  .auth-brand{display:none;}
+}
+@media (max-width:640px){
+  .form-row{grid-template-columns:1fr;}
+  .kpi-grid{grid-template-columns:repeat(2,1fr);}
+}
+</style>
+</head>
+<body>
+
+<!-- AUTH SCREEN -->
+<div id="authScreen">
+  <div class="auth-brand">
+    <div class="grid-overlay"></div>
+    <div class="auth-brand-content">
+      <div class="brand-mark">
+        <span class="mark-icon"><i class="fa-solid fa-industry"></i></span>
+        <span>Fabrica</span>
+      </div>
+      <h1>Do pedido do vendedor a producao do dia, sem contagem manual.</h1>
+      <p class="lead">Cadastro, pedidos, producao consolidada e fechamento de caixa num unico painel.</p>
+      <div class="brand-features">
+        <div class="brand-feature">
+          <span class="f-icon"><i class="fa-solid fa-layer-group"></i></span>
+          <div><strong>Pedidos consolidados por produto</strong><span>A soma sai sozinha, direto dos pedidos de cada vendedor.</span></div>
+        </div>
+        <div class="brand-feature">
+          <span class="f-icon"><i class="fa-solid fa-clock"></i></span>
+          <div><strong>Corte de horario fixo</strong><span>Pedido depois do corte entra so na producao do dia seguinte.</span></div>
+        </div>
+        <div class="brand-feature">
+          <span class="f-icon"><i class="fa-solid fa-cash-register"></i></span>
+          <div><strong>Fechamento por canal</strong><span>O caixa fecha sozinho, sem conferir tudo na mao no fim do dia.</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="mockup-float mockup-1"><div class="mf-bar"></div><div class="mf-bar"></div><div class="mf-bar"></div></div>
+    <div class="mockup-float mockup-2"><div class="mf-bar"></div><div class="mf-bar"></div><div class="mf-bar"></div></div>
+  </div>
+  <div class="auth-form-side">
+    <div class="auth-form-card">
+      <h2>Entrar no painel</h2>
+      <p class="sub">Prototipo Fabrica - dados de demonstracao.</p>
+      <form id="loginForm" onsubmit="return handleLogin(event)">
+        <div class="form-group">
+          <label>Usuario</label>
+          <div class="input-icon-wrap"><i class="fa-solid fa-user"></i><input type="text" placeholder="admin" value="admin"></div>
+        </div>
+        <div class="form-group">
+          <label>Senha</label>
+          <div class="input-icon-wrap"><i class="fa-solid fa-lock"></i><input type="password" placeholder="********" value="demo1234"></div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-arrow-right-to-bracket"></i> Entrar</button>
+      </form>
+      <p class="auth-footer-text">Prototipo de demonstracao - nenhum dado real e enviado.</p>
+    </div>
+  </div>
+</div>
+
+<!-- APP SHELL -->
+<div id="appShell">
+  <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar(false)"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <span class="mark-icon"><i class="fa-solid fa-industry"></i></span>
+      <span>Fabrica</span>
+      <button class="icon-btn sidebar-close-btn" onclick="toggleSidebar(false)"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-label">Operacao</div>
+      <button class="nav-item active" data-view="dashboard" onclick="showView('dashboard',this)"><i class="fa-solid fa-gauge-high"></i> Dashboard</button>
+      <button class="nav-item" data-view="pedidos" onclick="showView('pedidos',this)"><i class="fa-solid fa-clipboard-list"></i> Pedidos <span class="nav-count" id="navCountPedidos">0</span></button>
+      <button class="nav-item" data-view="producao" onclick="showView('producao',this)"><i class="fa-solid fa-layer-group"></i> Producao</button>
+      <button class="nav-item" data-view="caixa" onclick="showView('caixa',this)"><i class="fa-solid fa-cash-register"></i> Caixa</button>
+      <div class="nav-label" style="margin-top:20px;">Cadastros</div>
+      <button class="nav-item" data-view="produtos" onclick="showView('produtos',this)"><i class="fa-solid fa-boxes-stacked"></i> Produtos</button>
+      <button class="nav-item" data-view="vendedores" onclick="showView('vendedores',this)"><i class="fa-solid fa-people-carry-box"></i> Vendedores</button>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <span class="avatar" style="background:linear-gradient(135deg,var(--go600),var(--go800));">RM</span>
+        <div class="u-info"><div class="u-name">Rodrigo M.</div><div class="u-role">Administrador</div></div>
+      </div>
+      <button class="btn btn-ghost btn-block btn-sm" onclick="location.reload()"><i class="fa-solid fa-rotate-left"></i> Reiniciar demo</button>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <div class="topbar">
+      <button class="icon-btn hamburger-btn" onclick="toggleSidebar(true)"><i class="fa-solid fa-bars"></i></button>
+      <div class="topbar-titles">
+        <h1 id="viewTitle">Dashboard</h1>
+        <p id="viewSubtitle">Resumo do dia, terca-feira, 22 de julho</p>
+      </div>
+      <div class="topbar-actions">
+        <span class="bell-wrap"><button class="icon-btn"><i class="fa-solid fa-bell"></i></button><span class="bell-dot"></span></span>
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <section class="view active" id="view-dashboard">
+      <div class="cutoff-banner">
+        <span class="ci"><i class="fa-solid fa-clock"></i></span>
+        <div><strong id="cutoffStatusText">Pedidos abertos ate as 14:00</strong><br><span id="cutoffSubText">Faltam 47 minutos pro corte de horario de hoje.</span></div>
+        <span class="badge badge-open" style="margin-left:auto;" id="cutoffBadge"><i class="fa-solid fa-circle"></i> Aberto</span>
+      </div>
+      <div class="kpi-grid">
+        <div class="card kpi-card">
+          <div class="kpi-top"><span class="kpi-icon a"><i class="fa-solid fa-clipboard-list"></i></span></div>
+          <div class="kpi-value" id="kpiPedidosHoje" data-count="0">0</div>
+          <div class="kpi-label">Pedidos hoje</div>
+          <div class="kpi-sub good"><i class="fa-solid fa-arrow-up"></i> <span id="kpiVendedoresLancaram">0</span> vendedores lancaram</div>
+        </div>
+        <div class="card kpi-card">
+          <div class="kpi-top"><span class="kpi-icon b"><i class="fa-solid fa-boxes-stacked"></i></span></div>
+          <div class="kpi-value" id="kpiProdutosProducao" data-count="0">0</div>
+          <div class="kpi-label">Produtos na producao</div>
+          <div class="kpi-sub neutral"><i class="fa-solid fa-layer-group"></i> Consolidado automatico</div>
+        </div>
+        <div class="card kpi-card">
+          <div class="kpi-top"><span class="kpi-icon c"><i class="fa-solid fa-cubes"></i></span></div>
+          <div class="kpi-value" id="kpiUnidades" data-count="0">0</div>
+          <div class="kpi-label">Unidades pra produzir</div>
+          <div class="kpi-sub warn"><i class="fa-solid fa-fire"></i> <span id="kpiTopProduto">-</span> lidera</div>
+        </div>
+        <div class="card kpi-card">
+          <div class="kpi-top"><span class="kpi-icon d"><i class="fa-solid fa-cash-register"></i></span></div>
+          <div class="kpi-value" style="font-size:1.5rem;">Aberto</div>
+          <div class="kpi-label">Status do fechamento</div>
+          <div class="kpi-sub neutral"><i class="fa-solid fa-circle-info"></i> Fecha as 19:00</div>
+        </div>
+      </div>
+      <div class="dash-grid">
+        <div class="card panel">
+          <div class="panel-head"><h3>Mais pedidos hoje</h3><span class="count-tag">7 produtos</span></div>
+          <div id="rankList"></div>
+        </div>
+        <div class="card panel">
+          <div class="panel-head"><h3>Atencao</h3></div>
+          <div class="attention-row"><span class="attention-dot warn"></span><div class="attention-main"><div class="a-title">Corte de horario as 14:00</div><div class="a-meta">Pedido depois disso entra amanha</div></div></div>
+          <div class="attention-row"><span class="attention-dot ok"></span><div class="attention-main"><div class="a-title">4 de 4 vendedores ja lancaram</div><div class="a-meta">Nenhum pendente pra hoje</div></div></div>
+          <div class="attention-row"><span class="attention-dot info"></span><div class="attention-main"><div class="a-title">Coxinha de Frango em alta</div><div class="a-meta">120 unidades, maior volume do dia</div></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PRODUTOS -->
+    <section class="view" id="view-produtos">
+      <div class="card toolbar">
+        <div class="search-wrap"><i class="fa-solid fa-magnifying-glass"></i><input type="text" placeholder="Buscar produto..."></div>
+        <div class="filter-select-wrap"><select><option>Todas as categorias</option><option>Salgados</option><option>Doces</option><option>Bebidas</option></select><i class="fa-solid fa-chevron-down chevron"></i></div>
+        <button class="btn btn-primary" style="margin-left:auto;" onclick="openModal('modalProduto')"><i class="fa-solid fa-plus"></i> Novo produto</button>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Produto</th><th>Categoria</th><th>Unidade</th><th>Lote minimo</th><th>Status</th><th></th></tr></thead>
+            <tbody id="produtosBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- VENDEDORES -->
+    <section class="view" id="view-vendedores">
+      <div class="card toolbar">
+        <div class="search-wrap"><i class="fa-solid fa-magnifying-glass"></i><input type="text" placeholder="Buscar vendedor..."></div>
+        <button class="btn btn-primary" style="margin-left:auto;" onclick="openModal('modalVendedor')"><i class="fa-solid fa-plus"></i> Novo vendedor</button>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Vendedor</th><th>Rota / regiao</th><th>Pedidos hoje</th><th>Status</th><th></th></tr></thead>
+            <tbody id="vendedoresBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- PEDIDOS -->
+    <section class="view" id="view-pedidos">
+      <div class="card toolbar">
+        <div class="filter-select-wrap"><select id="pedidoDateFilter"><option>Hoje, 22/07</option><option>Ontem, 21/07</option></select><i class="fa-solid fa-chevron-down chevron"></i></div>
+        <span class="badge badge-open"><i class="fa-solid fa-circle"></i> Corte as 14:00</span>
+      </div>
+      <div class="pedidos-grid">
+        <div id="pedidosPorVendedor"></div>
+        <div class="card panel consolidado-panel">
+          <div class="panel-head"><h3>Consolidado por produto</h3><span class="count-tag">automatico</span></div>
+          <div id="consolidadoList"></div>
+          <div class="consol-total-bar"><span>Total geral</span><strong id="consolTotalGeral">0 un</strong></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PRODUCAO -->
+    <section class="view" id="view-producao">
+      <div class="locked-banner"><i class="fa-solid fa-clock"></i> Lista gerada automaticamente as 14:00, direto da soma dos pedidos de hoje.</div>
+      <div class="card panel">
+        <div class="panel-head"><h3>Producao do dia</h3><span class="count-tag" id="producaoCount">0 itens</span></div>
+        <div class="prod-list" id="producaoList"></div>
+      </div>
+    </section>
+
+    <!-- CAIXA -->
+    <section class="view" id="view-caixa">
+      <div class="caixa-summary">
+        <div><div class="cs-label">Total do dia</div><div class="cs-value" id="caixaTotalGeral">R$ 1.556,50</div></div>
+        <span class="badge badge-open" id="caixaStatusBadge" style="font-size:0.86rem; padding:8px 16px;"><i class="fa-solid fa-circle"></i> Aberto</span>
+      </div>
+      <div class="caixa-grid">
+        <div class="card canal-card"><span class="canal-icon dinheiro"><i class="fa-solid fa-money-bill-wave"></i></span><div class="canal-label">Dinheiro</div><div class="canal-total">R$ 486,00</div></div>
+        <div class="card canal-card"><span class="canal-icon cartao"><i class="fa-solid fa-credit-card"></i></span><div class="canal-label">Cartao</div><div class="canal-total">R$ 712,50</div></div>
+        <div class="card canal-card"><span class="canal-icon pix"><i class="fa-solid fa-qrcode"></i></span><div class="canal-label">Pix</div><div class="canal-total">R$ 358,00</div></div>
+      </div>
+      <div class="card panel">
+        <div class="panel-head"><h3>Fechamento</h3></div>
+        <p style="font-size:0.9rem; color:var(--n600); margin-bottom:18px;">Os tres canais somam sozinhos direto dos pedidos do dia. Confira e feche quando estiver pronto.</p>
+        <button class="btn btn-primary" onclick="fecharCaixa()"><i class="fa-solid fa-lock"></i> Fechar o dia</button>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- MODAL PRODUTO -->
+<div class="modal-backdrop" id="modalProduto">
+  <div class="modal">
+    <div class="modal-head"><h3>Novo produto</h3><button class="icon-btn plain" onclick="closeModal('modalProduto')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-body">
+      <div class="form-group"><label>Nome do produto</label><input type="text" placeholder="Ex: Coxinha de Frango"></div>
+      <div class="form-row">
+        <div class="form-group"><label>Categoria</label><select><option>Salgados</option><option>Doces</option><option>Bebidas</option></select></div>
+        <div class="form-group"><label>Unidade</label><select><option>Unidade</option><option>Caixa</option><option>Litro</option></select></div>
+      </div>
+      <div class="form-group"><label>Lote minimo de producao</label><input type="number" placeholder="Ex: 20"></div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal('modalProduto')">Cancelar</button><button class="btn btn-primary" onclick="fakeSave('modalProduto','Produto cadastrado com sucesso')">Salvar produto</button></div>
+  </div>
+</div>
+
+<!-- MODAL VENDEDOR -->
+<div class="modal-backdrop" id="modalVendedor">
+  <div class="modal">
+    <div class="modal-head"><h3>Novo vendedor</h3><button class="icon-btn plain" onclick="closeModal('modalVendedor')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-body">
+      <div class="form-group"><label>Nome completo</label><input type="text" placeholder="Ex: Marcos Silva"></div>
+      <div class="form-group"><label>Rota / regiao</label><input type="text" placeholder="Ex: Zona Norte"></div>
+      <div class="form-group"><label>Corte de horario individual (opcional)</label><input type="time" value="14:00"></div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal('modalVendedor')">Cancelar</button><button class="btn btn-primary" onclick="fakeSave('modalVendedor','Vendedor cadastrado com sucesso')">Salvar vendedor</button></div>
+  </div>
+</div>
+
+<div id="toastWrap"></div>
+
+<script>
+const PRODUTOS = [
+  {nome:'Coxinha de Frango', categoria:'Salgados', unidade:'Unidade', lote:20, status:'Ativo'},
+  {nome:'Pao de Queijo', categoria:'Salgados', unidade:'Caixa', lote:10, status:'Ativo'},
+  {nome:'Empada de Palmito', categoria:'Salgados', unidade:'Unidade', lote:15, status:'Ativo'},
+  {nome:'Kibe', categoria:'Salgados', unidade:'Unidade', lote:20, status:'Ativo'},
+  {nome:'Risoles de Carne', categoria:'Salgados', unidade:'Unidade', lote:20, status:'Ativo'},
+  {nome:'Bolo de Cenoura', categoria:'Doces', unidade:'Unidade', lote:5, status:'Ativo'},
+  {nome:'Suco de Laranja 500ml', categoria:'Bebidas', unidade:'Litro', lote:10, status:'Ativo'},
+];
+
+const VENDEDORES = [
+  {nome:'Carlos Mendes', rota:'Zona Norte', cor:'#d97706'},
+  {nome:'Juliana Alves', rota:'Zona Sul', cor:'#0ea5e9'},
+  {nome:'Marcos Silva', rota:'Centro', cor:'#16a34a'},
+  {nome:'Patricia Souza', rota:'Zona Leste', cor:'#a855f7'},
+];
+
+const PEDIDOS = [
+  {vendedor:'Carlos Mendes', itens:[{produto:'Coxinha de Frango', qtd:50},{produto:'Pao de Queijo', qtd:30},{produto:'Kibe', qtd:20}]},
+  {vendedor:'Juliana Alves', itens:[{produto:'Coxinha de Frango', qtd:40},{produto:'Empada de Palmito', qtd:25},{produto:'Bolo de Cenoura', qtd:10}]},
+  {vendedor:'Marcos Silva', itens:[{produto:'Pao de Queijo', qtd:60},{produto:'Risoles de Carne', qtd:35}]},
+  {vendedor:'Patricia Souza', itens:[{produto:'Coxinha de Frango', qtd:30},{produto:'Kibe', qtd:15},{produto:'Suco de Laranja 500ml', qtd:40}]},
+];
+
+function initial(name){return name.split(' ').map(w=>w[0]).slice(0,2).join('');}
+
+function consolidarPedidos(){
+  const totais = {};
+  const fontes = {};
+  PEDIDOS.forEach(p=>{
+    p.itens.forEach(it=>{
+      totais[it.produto] = (totais[it.produto]||0) + it.qtd;
+      fontes[it.produto] = (fontes[it.produto]||0) + 1;
+    });
+  });
+  return {totais, fontes};
+}
+
+function renderProdutos(){
+  const body = document.getElementById('produtosBody');
+  body.innerHTML = PRODUTOS.map(p=>`
+    <tr>
+      <td class="cell-title"><div class="t-title">${p.nome}</div></td>
+      <td>${p.categoria}</td>
+      <td>${p.unidade}</td>
+      <td>${p.lote} un</td>
+      <td><span class="badge badge-open"><i class="fa-solid fa-circle"></i> ${p.status}</span></td>
+      <td class="cell-actions"><button class="icon-btn"><i class="fa-solid fa-pen"></i></button></td>
+    </tr>`).join('');
+}
+
+function renderVendedores(){
+  const {totais} = consolidarPedidos();
+  const body = document.getElementById('vendedoresBody');
+  body.innerHTML = VENDEDORES.map(v=>{
+    const pedido = PEDIDOS.find(p=>p.vendedor===v.nome);
+    const qtdPedidos = pedido ? pedido.itens.reduce((a,b)=>a+b.qtd,0) : 0;
+    return `<tr>
+      <td class="cell-title"><div style="display:flex;align-items:center;gap:10px;"><span class="avatar" style="background:${v.cor}">${initial(v.nome)}</span><div class="t-title">${v.nome}</div></div></td>
+      <td>${v.rota}</td>
+      <td>${pedido ? pedido.itens.length + ' itens / ' + qtdPedidos + ' un' : 'Sem pedido'}</td>
+      <td><span class="badge ${pedido?'badge-open':'badge-closed'}"><i class="fa-solid fa-circle"></i> ${pedido?'Lancado':'Pendente'}</span></td>
+      <td class="cell-actions"><button class="icon-btn"><i class="fa-solid fa-pen"></i></button></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderPedidos(){
+  const wrap = document.getElementById('pedidosPorVendedor');
+  wrap.innerHTML = PEDIDOS.map(p=>{
+    const v = VENDEDORES.find(x=>x.nome===p.vendedor);
+    const total = p.itens.reduce((a,b)=>a+b.qtd,0);
+    return `<div class="card seller-card">
+      <div class="seller-head">
+        <span class="avatar" style="background:${v.cor}">${initial(v.nome)}</span>
+        <div><div class="s-name">${p.vendedor}</div><div class="s-meta">${v.rota} - ${total} unidades no pedido</div></div>
+      </div>
+      <div class="seller-items">
+        ${p.itens.map(it=>`<div class="seller-item"><span>${it.produto}</span><span class="qty">${it.qtd} un</span></div>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+
+  const {totais, fontes} = consolidarPedidos();
+  const ordenado = Object.entries(totais).sort((a,b)=>b[1]-a[1]);
+  const consolWrap = document.getElementById('consolidadoList');
+  consolWrap.innerHTML = ordenado.map(([nome,qtd])=>`
+    <div class="consol-row">
+      <div><div class="c-name">${nome}</div><div class="c-src">somado de ${fontes[nome]} vendedor${fontes[nome]>1?'es':''}</div></div>
+      <div class="c-total">${qtd} un</div>
+    </div>`).join('');
+  const totalGeral = ordenado.reduce((a,[,q])=>a+q,0);
+  document.getElementById('consolTotalGeral').textContent = totalGeral + ' un';
+  return {ordenado, totalGeral};
+}
+
+function renderRankDashboard(){
+  const {totais} = consolidarPedidos();
+  const ordenado = Object.entries(totais).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const max = ordenado[0] ? ordenado[0][1] : 1;
+  const wrap = document.getElementById('rankList');
+  wrap.innerHTML = ordenado.map(([nome,qtd],i)=>`
+    <div class="rank-row">
+      <span class="rank-num">${i+1}</span>
+      <div class="rank-main"><div class="r-title">${nome}</div><div class="rank-bar-wrap"><div class="rank-bar" data-w="${Math.round(qtd/max*100)}"></div></div></div>
+      <span class="rank-val">${qtd} un</span>
+    </div>`).join('');
+  setTimeout(()=>{document.querySelectorAll('.rank-bar').forEach(b=>b.style.width=b.dataset.w+'%');},80);
+}
+
+function renderProducao(){
+  const {ordenado} = renderPedidos();
+  const wrap = document.getElementById('producaoList');
+  document.getElementById('producaoCount').textContent = ordenado.length + ' itens';
+  wrap.innerHTML = ordenado.map(([nome,qtd],i)=>`
+    <div class="card prod-row">
+      <button class="prod-check" onclick="toggleProd(this)"><i class="fa-solid fa-check"></i></button>
+      <div class="prod-main"><div class="p-name">${nome}</div><div class="p-meta">Consolidado automaticamente dos pedidos de hoje</div></div>
+      <span class="prod-qty">${qtd} un</span>
+    </div>`).join('');
+}
+
+function toggleProd(btn){
+  btn.classList.toggle('done');
+  const name = btn.nextElementSibling.querySelector('.p-name');
+  name.classList.toggle('done');
+}
+
+function showView(view, el){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+view).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  el.classList.add('active');
+  const titles = {
+    dashboard:['Dashboard','Resumo do dia, terca-feira, 22 de julho'],
+    produtos:['Produtos','Cadastro completo de produtos'],
+    vendedores:['Vendedores','Cadastro de vendedores e rotas'],
+    pedidos:['Pedidos','Lista diaria por vendedor, consolidada por produto'],
+    producao:['Producao','Lista diaria gerada a partir dos pedidos'],
+    caixa:['Caixa','Fechamento do dia por canal'],
+  };
+  document.getElementById('viewTitle').textContent = titles[view][0];
+  document.getElementById('viewSubtitle').textContent = titles[view][1];
+  if(view==='pedidos') renderPedidos();
+  if(view==='producao') renderProducao();
+  toggleSidebar(false);
+}
+
+function toggleSidebar(open){
+  document.getElementById('sidebar').classList.toggle('open', open);
+  document.getElementById('sidebarBackdrop').classList.toggle('open', open);
+}
+
+function openModal(id){document.getElementById(id).classList.add('active');}
+function closeModal(id){document.getElementById(id).classList.remove('active');}
+function fakeSave(id, msg){closeModal(id); showToast(msg,'fa-circle-check');}
+
+function showToast(msg, icon){
+  const wrap = document.getElementById('toastWrap');
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.innerHTML = `<i class="fa-solid ${icon||'fa-circle-check'}"></i> ${msg}`;
+  wrap.appendChild(t);
+  setTimeout(()=>{t.style.transition='all .3s ease'; t.style.opacity='0'; t.style.transform='translateY(10px)'; setTimeout(()=>t.remove(),300);},3200);
+}
+
+function fecharCaixa(){
+  document.getElementById('caixaStatusBadge').className = 'badge badge-closed';
+  document.getElementById('caixaStatusBadge').innerHTML = '<i class="fa-solid fa-lock"></i> Fechado as 19:02';
+  showToast('Dia fechado. Total consolidado por canal.', 'fa-lock');
+}
+
+function countUp(el){
+  const target = parseInt(el.dataset.count,10);
+  let cur = 0;
+  const step = Math.max(1, Math.round(target/40));
+  const timer = setInterval(()=>{
+    cur += step;
+    if(cur>=target){cur=target; clearInterval(timer);}
+    el.textContent = cur;
+  },20);
+}
+
+function updateDashboardKpis(){
+  const {totais} = consolidarPedidos();
+  const entradas = Object.entries(totais);
+  const totalUnidades = entradas.reduce((a,[,q])=>a+q,0);
+  const top = entradas.sort((a,b)=>b[1]-a[1])[0];
+  document.getElementById('kpiPedidosHoje').dataset.count = PEDIDOS.length;
+  document.getElementById('kpiVendedoresLancaram').textContent = PEDIDOS.length;
+  document.getElementById('kpiProdutosProducao').dataset.count = entradas.length;
+  document.getElementById('kpiUnidades').dataset.count = totalUnidades;
+  document.getElementById('kpiTopProduto').textContent = top ? top[0] : '-';
+}
+
+function handleLogin(e){
+  e.preventDefault();
+  document.getElementById('authScreen').style.display='none';
+  document.getElementById('appShell').classList.add('active');
+  document.getElementById('navCountPedidos').textContent = PEDIDOS.length;
+  renderProdutos();
+  renderVendedores();
+  renderRankDashboard();
+  updateDashboardKpis();
+  document.querySelectorAll('.kpi-value[data-count]').forEach(countUp);
+  return false;
+}
+</script>
+</body>
+</html>
