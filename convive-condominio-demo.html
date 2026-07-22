@@ -1,0 +1,857 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Convive - Gestao de Condominio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+:root{
+  --g50:#f0fdf4; --g100:#dcfce7; --g200:#bbf7d0; --g300:#86efac; --g400:#4ade80;
+  --g500:#22c55e; --g600:#16a34a; --g700:#15803d; --g800:#166534; --g900:#14532d;
+  --em500:#10b981; --em600:#059669;
+  --n0:#ffffff; --n50:#f7f8f6; --n100:#eef1ec; --n200:#dfe4db; --n300:#c3cabd;
+  --n400:#98a38e; --n500:#71806a; --n600:#54614e; --n700:#3d473a; --n800:#28302a;
+  --n900:#161c14;
+  --radius:14px; --radius-lg:20px; --radius-sm:9px;
+  --shadow-sm:0 1px 2px rgba(20,30,15,.06);
+  --shadow-md:0 6px 20px rgba(20,30,15,.08);
+  --shadow-lg:0 20px 50px rgba(20,30,15,.14);
+  --ease-spring:cubic-bezier(.34,1.56,.64,1);
+  --bg:var(--n50); --surface:var(--n0); --surface-2:var(--n50);
+  --text:var(--n900); --text-2:var(--n600); --text-3:var(--n500);
+  --border:var(--n200);
+}
+:root[data-theme="dark"]{
+  --bg:#0d130c; --surface:#161d14; --surface-2:#1c241a;
+  --text:#eef4ea; --text-2:#a9b6a2; --text-3:#7c8a75;
+  --border:#2a3426;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.3);
+  --shadow-md:0 6px 20px rgba(0,0,0,.35);
+  --shadow-lg:0 20px 50px rgba(0,0,0,.5);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0d130c; --surface:#161d14; --surface-2:#1c241a;
+    --text:#eef4ea; --text-2:#a9b6a2; --text-3:#7c8a75;
+    --border:#2a3426;
+    --shadow-sm:0 1px 2px rgba(0,0,0,.3);
+    --shadow-md:0 6px 20px rgba(0,0,0,.35);
+    --shadow-lg:0 20px 50px rgba(0,0,0,.5);
+  }
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  font-family:'Lexend',sans-serif; background:var(--bg); color:var(--text);
+  -webkit-font-smoothing:antialiased; overflow-x:hidden;
+}
+a{text-decoration:none;color:inherit;}
+button{font-family:inherit; cursor:pointer; border:none; background:none;}
+.app{display:flex; min-height:100vh;}
+
+/* SIDEBAR */
+.sidebar{
+  width:252px; background:var(--surface); border-right:1px solid var(--border);
+  display:flex; flex-direction:column; padding:22px 16px; flex-shrink:0;
+  position:sticky; top:0; height:100vh; transition:transform .3s var(--ease-spring);
+  z-index:200;
+}
+.brand{display:flex; align-items:center; gap:10px; padding:4px 8px 22px 8px;}
+.brand-mark{
+  width:38px; height:38px; border-radius:11px;
+  background:linear-gradient(135deg,var(--g500),var(--em600));
+  display:flex; align-items:center; justify-content:center; color:#fff; font-size:18px;
+  box-shadow:0 4px 14px rgba(22,163,74,.35);
+  animation:pulseLogo 3.5s ease-in-out infinite;
+}
+@keyframes pulseLogo{0%,100%{box-shadow:0 4px 14px rgba(22,163,74,.35);}50%{box-shadow:0 4px 22px rgba(22,163,74,.55);}}
+.brand-name{font-weight:800; font-size:19px; letter-spacing:-.02em;}
+.brand-sub{font-size:11px; color:var(--text-3); font-weight:500;}
+
+.role-switcher{margin-bottom:20px;}
+.role-label{font-size:10.5px; text-transform:uppercase; letter-spacing:.08em; color:var(--text-3); font-weight:700; padding:0 8px 8px;}
+.role-pill{
+  display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:var(--radius-sm);
+  cursor:pointer; font-size:13.5px; font-weight:500; color:var(--text-2); margin-bottom:3px;
+  transition:background .18s, color .18s, transform .12s;
+}
+.role-pill i{width:18px; text-align:center; font-size:14px;}
+.role-pill:hover{background:var(--surface-2); transform:translateX(2px);}
+.role-pill.active{background:var(--g600); color:#fff; box-shadow:var(--shadow-sm);}
+
+.nav{flex:1; overflow-y:auto;}
+.nav-section-label{font-size:10.5px; text-transform:uppercase; letter-spacing:.08em; color:var(--text-3); font-weight:700; padding:14px 8px 8px;}
+.nav-item{
+  display:flex; align-items:center; gap:12px; padding:10px 11px; border-radius:var(--radius-sm);
+  color:var(--text-2); font-size:14px; font-weight:500; margin-bottom:2px; position:relative;
+  transition:background .18s,color .18s,transform .12s;
+}
+.nav-item i{width:18px; text-align:center; font-size:15px;}
+.nav-item:hover{background:var(--surface-2); color:var(--text); transform:translateX(2px);}
+.nav-item.active{background:var(--g50); color:var(--g700); font-weight:600;}
+:root[data-theme="dark"] .nav-item.active{background:rgba(34,197,94,.14); color:var(--g300);}
+.nav-item .lock-badge{
+  margin-left:auto; font-size:9.5px; font-weight:700; background:var(--n200); color:var(--text-3);
+  padding:2px 6px; border-radius:20px; letter-spacing:.03em;
+}
+:root[data-theme="dark"] .nav-item .lock-badge{background:var(--surface-2);}
+.nav-item.disabled{opacity:.55; cursor:not-allowed;}
+.nav-item.disabled:hover{background:none; transform:none;}
+
+.sidebar-foot{border-top:1px solid var(--border); padding-top:14px; margin-top:10px;}
+.user-chip{display:flex; align-items:center; gap:10px; padding:6px 4px;}
+.user-avatar{width:34px; height:34px; border-radius:10px; object-fit:cover; box-shadow:var(--shadow-sm);}
+.user-name{font-size:13px; font-weight:600;}
+.user-role{font-size:11px; color:var(--text-3);}
+
+/* MAIN */
+.main{flex:1; min-width:0;}
+.topbar{
+  display:flex; align-items:center; justify-content:space-between; gap:16px;
+  padding:16px 28px; border-bottom:1px solid var(--border);
+  background:rgba(255,255,255,.7); backdrop-filter:blur(14px); position:sticky; top:0; z-index:150;
+}
+:root[data-theme="dark"] .topbar{background:rgba(13,19,12,.7);}
+.topbar-title{font-size:20px; font-weight:700; letter-spacing:-.01em;}
+.topbar-sub{font-size:12.5px; color:var(--text-3); margin-top:2px;}
+.topbar-actions{display:flex; align-items:center; gap:10px;}
+.icon-btn{
+  width:38px; height:38px; border-radius:11px; display:flex; align-items:center; justify-content:center;
+  background:var(--surface-2); color:var(--text-2); font-size:15px; border:1px solid var(--border);
+  transition:transform .15s var(--ease-spring), background .15s;
+}
+.icon-btn:hover{transform:translateY(-2px); background:var(--g50); color:var(--g700);}
+.hamburger{display:none;}
+
+.content{padding:26px 28px 60px;}
+.page{display:none; animation:fadeIn .4s ease;}
+.page.active{display:block;}
+@keyframes fadeIn{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);}}
+
+.reveal{opacity:0; transform:translateY(16px); transition:opacity .55s ease, transform .55s ease;}
+.reveal.in{opacity:1; transform:translateY(0);}
+
+/* KPI GRID */
+.kpi-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px;}
+.kpi-card{
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg);
+  padding:18px 20px; box-shadow:var(--shadow-sm); transition:transform .2s var(--ease-spring), box-shadow .2s;
+}
+.kpi-card:hover{transform:translateY(-3px); box-shadow:var(--shadow-md);}
+.kpi-top{display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;}
+.kpi-icon{width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:15px;}
+.kpi-value{font-size:28px; font-weight:800; letter-spacing:-.02em;}
+.kpi-label{font-size:12.5px; color:var(--text-3); margin-top:3px; font-weight:500;}
+.kpi-trend{font-size:11.5px; font-weight:700; padding:3px 8px; border-radius:20px;}
+.trend-up{background:var(--g50); color:var(--g700);}
+.trend-flat{background:var(--n100); color:var(--text-3);}
+:root[data-theme="dark"] .trend-up{background:rgba(34,197,94,.14); color:var(--g300);}
+:root[data-theme="dark"] .trend-flat{background:var(--surface-2);}
+
+.grid-2{display:grid; grid-template-columns:1.4fr 1fr; gap:18px;}
+
+.card{
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg);
+  padding:20px 22px; box-shadow:var(--shadow-sm);
+}
+.card-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;}
+.card-title{font-size:15.5px; font-weight:700;}
+.card-title span{color:var(--text-3); font-weight:500; font-size:12.5px;}
+.link-btn{font-size:12.5px; font-weight:600; color:var(--g700);}
+:root[data-theme="dark"] .link-btn{color:var(--g300);}
+
+/* attention list */
+.attn-row{
+  display:flex; align-items:center; gap:12px; padding:11px 0; border-bottom:1px solid var(--border);
+}
+.attn-row:last-child{border-bottom:none;}
+.attn-dot{width:8px; height:8px; border-radius:50%; flex-shrink:0;}
+.dot-open{background:#f59e0b;} .dot-prog{background:#3b82f6;} .dot-done{background:var(--g500);}
+.attn-body{flex:1; min-width:0;}
+.attn-title{font-size:13.5px; font-weight:600;}
+.attn-meta{font-size:11.5px; color:var(--text-3); margin-top:2px;}
+.status-badge{font-size:10.5px; font-weight:700; padding:3px 9px; border-radius:20px; white-space:nowrap;}
+.badge-open{background:#fef3c7; color:#92400e;}
+.badge-prog{background:#dbeafe; color:#1e40af;}
+.badge-done{background:var(--g100); color:var(--g800);}
+:root[data-theme="dark"] .badge-open{background:rgba(245,158,11,.16); color:#fbbf24;}
+:root[data-theme="dark"] .badge-prog{background:rgba(59,130,246,.16); color:#93c5fd;}
+:root[data-theme="dark"] .badge-done{background:rgba(34,197,94,.16); color:var(--g300);}
+
+.mini-list-row{display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--border);}
+.mini-list-row:last-child{border-bottom:none;}
+.mini-ico{width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0;}
+
+.btn{
+  display:inline-flex; align-items:center; gap:8px; padding:10px 17px; border-radius:11px;
+  font-size:13.5px; font-weight:600; transition:transform .15s var(--ease-spring), box-shadow .15s;
+}
+.btn-primary{background:var(--g600); color:#fff; box-shadow:0 4px 14px rgba(22,163,74,.3);}
+.btn-primary:hover{transform:translateY(-2px); box-shadow:0 8px 22px rgba(22,163,74,.4);}
+.btn-ghost{background:var(--surface-2); color:var(--text); border:1px solid var(--border);}
+.btn-ghost:hover{transform:translateY(-2px);}
+.btn-sm{padding:7px 12px; font-size:12px;}
+
+/* toolbar */
+.toolbar{display:flex; align-items:center; justify-content:space-between; gap:14px; margin-bottom:18px; flex-wrap:wrap;}
+.chip-row{display:flex; gap:8px; flex-wrap:wrap;}
+.chip{
+  padding:7px 13px; border-radius:20px; font-size:12.5px; font-weight:600; border:1px solid var(--border);
+  color:var(--text-2); transition:background .15s, color .15s, transform .12s;
+}
+.chip:hover{transform:translateY(-1px);}
+.chip.active{background:var(--g600); color:#fff; border-color:var(--g600);}
+
+/* avisos */
+.aviso-card{
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg);
+  padding:18px 20px; margin-bottom:12px; box-shadow:var(--shadow-sm); transition:transform .2s var(--ease-spring), box-shadow .2s;
+}
+.aviso-card:hover{transform:translateY(-2px); box-shadow:var(--shadow-md);}
+.aviso-top{display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;}
+.aviso-target{font-size:11px; font-weight:700; padding:3px 9px; border-radius:20px; background:var(--em500); color:#fff;}
+.aviso-date{font-size:11.5px; color:var(--text-3);}
+.aviso-title{font-size:15px; font-weight:700; margin-bottom:5px;}
+.aviso-body{font-size:13px; color:var(--text-2); line-height:1.55;}
+
+/* ocorrencias */
+.ocor-card{
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg);
+  padding:18px 20px; margin-bottom:12px; box-shadow:var(--shadow-sm);
+}
+.ocor-head{display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:8px;}
+.ocor-title{font-size:14.5px; font-weight:700;}
+.ocor-meta{font-size:12px; color:var(--text-3); margin-top:4px;}
+.ocor-trail{
+  margin-top:12px; padding-top:12px; border-top:1px dashed var(--border);
+  font-size:11.5px; color:var(--text-3); display:flex; align-items:center; gap:8px;
+}
+.ocor-trail i{color:var(--g600); font-size:11px;}
+.status-select{display:flex; gap:6px; margin-top:10px;}
+
+/* documentos */
+.doc-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:16px;}
+.doc-card{
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg);
+  padding:18px; box-shadow:var(--shadow-sm); transition:transform .2s var(--ease-spring), box-shadow .2s;
+}
+.doc-card:hover{transform:translateY(-3px); box-shadow:var(--shadow-md);}
+.doc-ico{width:42px; height:42px; border-radius:11px; background:var(--g50); color:var(--g700); display:flex; align-items:center; justify-content:center; font-size:18px; margin-bottom:12px;}
+:root[data-theme="dark"] .doc-ico{background:rgba(34,197,94,.14); color:var(--g300);}
+.doc-name{font-size:13.5px; font-weight:700; margin-bottom:4px;}
+.doc-meta{font-size:11.5px; color:var(--text-3); margin-bottom:10px;}
+.doc-tags{display:flex; gap:6px; flex-wrap:wrap;}
+.doc-tag{font-size:10px; font-weight:700; padding:3px 8px; border-radius:20px; background:var(--n100); color:var(--text-2);}
+:root[data-theme="dark"] .doc-tag{background:var(--surface-2);}
+.doc-locked{opacity:.5; filter:grayscale(.4);}
+
+/* locked page */
+.locked-wrap{
+  position:relative; border-radius:var(--radius-lg); overflow:hidden; border:1px solid var(--border);
+  min-height:420px; display:flex; align-items:center; justify-content:center;
+}
+.locked-bg{position:absolute; inset:0; background-size:cover; background-position:center; filter:blur(3px) brightness(.55);}
+.locked-panel{
+  position:relative; text-align:center; color:#fff; padding:34px; max-width:420px;
+}
+.locked-badge{
+  display:inline-flex; align-items:center; gap:7px; background:rgba(255,255,255,.14); backdrop-filter:blur(10px);
+  border:1px solid rgba(255,255,255,.25); padding:6px 14px; border-radius:20px; font-size:11.5px; font-weight:700;
+  margin-bottom:14px; letter-spacing:.03em;
+}
+.locked-title{font-size:22px; font-weight:800; margin-bottom:10px;}
+.locked-desc{font-size:13.5px; opacity:.9; line-height:1.6;}
+
+/* toast */
+.toast{
+  position:fixed; bottom:26px; right:26px; background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius); padding:14px 18px; box-shadow:var(--shadow-lg); display:flex; align-items:center;
+  gap:12px; transform:translateY(20px) scale(.95); opacity:0; pointer-events:none; transition:transform .4s var(--ease-spring), opacity .3s;
+  z-index:500; max-width:320px;
+}
+.toast.show{transform:translateY(0) scale(1); opacity:1;}
+.toast-ico{width:34px; height:34px; border-radius:9px; background:var(--g100); color:var(--g700); display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+:root[data-theme="dark"] .toast-ico{background:rgba(34,197,94,.16); color:var(--g300);}
+.toast-title{font-size:13px; font-weight:700;}
+.toast-sub{font-size:11.5px; color:var(--text-3); margin-top:1px;}
+
+.restart-fab{
+  position:fixed; bottom:26px; left:26px; z-index:400; display:flex; align-items:center; gap:8px;
+  background:var(--surface); border:1px solid var(--border); box-shadow:var(--shadow-md);
+  padding:11px 16px; border-radius:30px; font-size:12.5px; font-weight:600; color:var(--text-2);
+  transition:transform .15s var(--ease-spring);
+}
+.restart-fab:hover{transform:translateY(-2px);}
+
+.empty-note{
+  display:flex; align-items:center; gap:10px; padding:12px 16px; border-radius:var(--radius);
+  background:var(--g50); color:var(--g800); font-size:12.5px; font-weight:500; margin-bottom:18px;
+  border:1px solid var(--g200);
+}
+:root[data-theme="dark"] .empty-note{background:rgba(34,197,94,.1); color:var(--g300); border-color:rgba(34,197,94,.25);}
+
+@media (max-width:1080px){
+  .kpi-grid{grid-template-columns:repeat(2,1fr);}
+  .grid-2{grid-template-columns:1fr;}
+}
+@media (max-width:820px){
+  .sidebar{position:fixed; left:0; transform:translateX(-100%); box-shadow:var(--shadow-lg);}
+  .sidebar.open{transform:translateX(0);}
+  .hamburger{display:flex;}
+  .content{padding:20px 16px 60px;}
+  .topbar{padding:14px 16px;}
+  .kpi-grid{grid-template-columns:1fr 1fr;}
+  .restart-fab span{display:none;}
+}
+@media (max-width:520px){
+  .kpi-grid{grid-template-columns:1fr;}
+  .doc-grid{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-mark"><i class="fa-solid fa-house-chimney-window"></i></div>
+      <div>
+        <div class="brand-name">Convive</div>
+        <div class="brand-sub">Gestao de Condominio</div>
+      </div>
+    </div>
+
+    <div class="role-switcher">
+      <div class="role-label">Ver como</div>
+      <div class="role-pill active" data-role="morador"><i class="fa-solid fa-user"></i> Morador</div>
+      <div class="role-pill" data-role="sindico"><i class="fa-solid fa-user-tie"></i> Sindico</div>
+      <div class="role-pill" data-role="administrador"><i class="fa-solid fa-user-shield"></i> Administrador</div>
+      <div class="role-pill" data-role="porteiro"><i class="fa-solid fa-user-lock"></i> Porteiro</div>
+    </div>
+
+    <nav class="nav">
+      <div class="nav-section-label">Painel</div>
+      <div class="nav-item active" data-page="dashboard"><i class="fa-solid fa-gauge-high"></i> Dashboard</div>
+      <div class="nav-item" data-page="avisos"><i class="fa-solid fa-bullhorn"></i> Avisos</div>
+      <div class="nav-item" data-page="ocorrencias"><i class="fa-solid fa-triangle-exclamation"></i> Ocorrencias</div>
+      <div class="nav-item" data-page="documentos"><i class="fa-solid fa-folder-open"></i> Documentos</div>
+      <div class="nav-section-label">Fase 2</div>
+      <div class="nav-item disabled" data-page="areas"><i class="fa-solid fa-champagne-glasses"></i> Areas Comuns <span class="lock-badge">FASE 2</span></div>
+      <div class="nav-item disabled" data-page="portaria"><i class="fa-solid fa-shield-halved"></i> Portaria <span class="lock-badge">FASE 2</span></div>
+    </nav>
+
+    <div class="sidebar-foot">
+      <div class="user-chip">
+        <img class="user-avatar" id="userAvatar" src="https://picsum.photos/seed/moradorface/80/80" alt="">
+        <div>
+          <div class="user-name" id="userName">Camila Duarte</div>
+          <div class="user-role" id="userRoleLabel">Unidade 302 - Bloco A</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div style="display:flex; align-items:center; gap:14px;">
+        <button class="icon-btn hamburger" id="hamburgerBtn"><i class="fa-solid fa-bars"></i></button>
+        <div>
+          <div class="topbar-title" id="pageTitle">Dashboard</div>
+          <div class="topbar-sub" id="pageSub">Visao geral de hoje</div>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <button class="icon-btn" id="themeToggle"><i class="fa-solid fa-moon"></i></button>
+        <button class="icon-btn"><i class="fa-solid fa-bell"></i></button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div class="page active" id="page-dashboard">
+        <div class="empty-note" id="roleNote" style="display:none;"></div>
+
+        <div class="kpi-grid">
+          <div class="card kpi-card reveal">
+            <div class="kpi-top">
+              <div class="kpi-icon" style="background:var(--g100); color:var(--g700);"><i class="fa-solid fa-triangle-exclamation"></i></div>
+              <span class="kpi-trend trend-flat" id="kpi1trend">3 abertas</span>
+            </div>
+            <div class="kpi-value" data-count="3" id="kpi1val">0</div>
+            <div class="kpi-label" id="kpi1label">Minhas ocorrencias</div>
+          </div>
+          <div class="card kpi-card reveal" style="transition-delay:.06s">
+            <div class="kpi-top">
+              <div class="kpi-icon" style="background:#dbeafe; color:#1e40af;"><i class="fa-solid fa-bullhorn"></i></div>
+              <span class="kpi-trend trend-up">+2 hoje</span>
+            </div>
+            <div class="kpi-value" data-count="12" id="kpi2val">0</div>
+            <div class="kpi-label" id="kpi2label">Avisos recebidos este mes</div>
+          </div>
+          <div class="card kpi-card reveal" style="transition-delay:.12s">
+            <div class="kpi-top">
+              <div class="kpi-icon" style="background:#fef3c7; color:#92400e;"><i class="fa-solid fa-folder-open"></i></div>
+              <span class="kpi-trend trend-flat">4 liberados</span>
+            </div>
+            <div class="kpi-value" data-count="4" id="kpi3val">0</div>
+            <div class="kpi-label" id="kpi3label">Documentos disponiveis</div>
+          </div>
+          <div class="card kpi-card reveal" style="transition-delay:.18s">
+            <div class="kpi-icon" style="background:var(--em500); color:#fff; width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;"><i class="fa-solid fa-shield-check"></i></div>
+            <div class="kpi-value" id="kpi4val">100%</div>
+            <div class="kpi-label" id="kpi4label">Acesso restrito a sua unidade</div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card reveal">
+            <div class="card-head">
+              <div class="card-title">Precisa de atencao <span>&nbsp;- ordenado por urgencia</span></div>
+              <span class="link-btn" onclick="goPage('ocorrencias')">Ver tudo</span>
+            </div>
+            <div id="attentionList"></div>
+          </div>
+          <div class="card reveal" style="transition-delay:.08s">
+            <div class="card-head">
+              <div class="card-title">Avisos recentes</div>
+              <span class="link-btn" onclick="goPage('avisos')">Ver tudo</span>
+            </div>
+            <div id="miniAvisos"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AVISOS -->
+      <div class="page" id="page-avisos">
+        <div class="toolbar">
+          <div class="chip-row" id="avisoFilters">
+            <div class="chip active" data-target="todos">Todos</div>
+            <div class="chip" data-target="condominio">Condominio inteiro</div>
+            <div class="chip" data-target="blocoA">Bloco A</div>
+            <div class="chip" data-target="blocoB">Bloco B</div>
+          </div>
+          <button class="btn btn-primary" id="novoAvisoBtn"><i class="fa-solid fa-plus"></i> Novo aviso</button>
+        </div>
+        <div id="avisosList"></div>
+      </div>
+
+      <!-- OCORRENCIAS -->
+      <div class="page" id="page-ocorrencias">
+        <div class="toolbar">
+          <div class="chip-row" id="ocorFilters">
+            <div class="chip active" data-status="todos">Todas</div>
+            <div class="chip" data-status="aberta">Aberta</div>
+            <div class="chip" data-status="andamento">Em andamento</div>
+            <div class="chip" data-status="resolvida">Resolvida</div>
+          </div>
+          <button class="btn btn-primary" id="novaOcorBtn"><i class="fa-solid fa-plus"></i> Nova ocorrencia</button>
+        </div>
+        <div id="ocorList"></div>
+      </div>
+
+      <!-- DOCUMENTOS -->
+      <div class="page" id="page-documentos">
+        <div class="toolbar">
+          <div class="topbar-sub" id="docNote" style="font-size:13px;">Documentos liberados para o seu perfil</div>
+          <button class="btn btn-ghost btn-sm" id="uploadDocBtn"><i class="fa-solid fa-upload"></i> Enviar documento</button>
+        </div>
+        <div class="doc-grid" id="docGrid"></div>
+      </div>
+
+      <!-- AREAS COMUNS (locked) -->
+      <div class="page" id="page-areas">
+        <div class="locked-wrap">
+          <div class="locked-bg" style="background-image:url('https://picsum.photos/seed/condopool/1200/700');"></div>
+          <div class="locked-panel">
+            <div class="locked-badge"><i class="fa-solid fa-lock"></i> Disponivel na Fase 2</div>
+            <div class="locked-title">Agendamento de Areas Comuns</div>
+            <div class="locked-desc">Calendario de reservas do salao de festas, churrasqueira e demais espacos, com deteccao automatica de conflito de horario entre unidades. Entra direto em cima da base de perfis e permissoes da Fase 1.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PORTARIA (locked) -->
+      <div class="page" id="page-portaria">
+        <div class="locked-wrap">
+          <div class="locked-bg" style="background-image:url('https://picsum.photos/seed/condogate/1200/700');"></div>
+          <div class="locked-panel">
+            <div class="locked-badge"><i class="fa-solid fa-lock"></i> Disponivel na Fase 2</div>
+            <div class="locked-title">Controle de Acesso e Portaria</div>
+            <div class="locked-desc">Cadastro de visitantes e prestadores com historico completo de entrada e saida, vinculado a unidade que autorizou o acesso. Construido sobre o mesmo modelo de perfis da Fase 1.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="restart-fab" id="restartBtn"><i class="fa-solid fa-rotate-left"></i> <span>Reiniciar demo</span></div>
+<div class="toast" id="toast">
+  <div class="toast-ico"><i class="fa-solid fa-check"></i></div>
+  <div>
+    <div class="toast-title" id="toastTitle">Feito</div>
+    <div class="toast-sub" id="toastSub">Acao registrada</div>
+  </div>
+</div>
+
+<script>
+// ---------- DATA ----------
+const ROLES = {
+  morador:{
+    name:'Camila Duarte', roleLabel:'Unidade 302 - Bloco A', avatarSeed:'moradorface',
+    note:'Voce esta vendo apenas o que pertence a sua unidade. Ocorrencias, avisos e documentos de outras unidades nao aparecem aqui.',
+    kpis:{ocor:'Minhas ocorrencias', avisos:'Avisos recebidos este mes', docs:'Documentos disponiveis', last:'Acesso restrito a sua unidade'},
+    canCompose:false, canChangeStatus:false, canUpload:false,
+    ocorScope:'own', docScope:'morador'
+  },
+  sindico:{
+    name:'Ana Beatriz Souza', roleLabel:'Sindica - Condominio', avatarSeed:'sindicaface',
+    note:'Visao completa do condominio: todas as unidades, ocorrencias e documentos internos.',
+    kpis:{ocor:'Ocorrencias abertas no condominio', avisos:'Avisos enviados este mes', docs:'Documentos no repositorio', last:'12 unidades ativas'},
+    canCompose:true, canChangeStatus:true, canUpload:true,
+    ocorScope:'all', docScope:'sindico'
+  },
+  administrador:{
+    name:'Rafael Nunes', roleLabel:'Administrador - Condominio', avatarSeed:'adminface',
+    note:'Acesso administrativo completo: gestao de perfis, avisos, ocorrencias e documentos.',
+    kpis:{ocor:'Ocorrencias abertas no condominio', avisos:'Avisos enviados este mes', docs:'Documentos no repositorio', last:'12 unidades ativas'},
+    canCompose:true, canChangeStatus:true, canUpload:true,
+    ocorScope:'all', docScope:'sindico'
+  },
+  porteiro:{
+    name:'Jose Carlos Lima', roleLabel:'Porteiro - Turno Diurno', avatarSeed:'porteiroface',
+    note:'Perfil de portaria: acesso apenas aos avisos gerais. Ocorrencias e documentos internos do condominio nao ficam visiveis para esse perfil.',
+    kpis:{ocor:'Ocorrencias visiveis', avisos:'Avisos gerais', docs:'Documentos disponiveis', last:'Sem acesso a documentos internos'},
+    canCompose:false, canChangeStatus:false, canUpload:false,
+    ocorScope:'none', docScope:'none'
+  }
+};
+
+const AVISOS = [
+  {title:'Manutencao do elevador social - Bloco A', body:'O elevador social do Bloco A ficara indisponivel na quinta-feira das 9h as 12h para manutencao preventiva. Utilizem o elevador de servico nesse periodo.', target:'blocoA', targetLabel:'Bloco A', date:'2 dias atras'},
+  {title:'Assembleia ordinaria - votacao do orcamento anual', body:'Assembleia marcada para o dia 30, no salao de festas, para aprovacao do orcamento do proximo ano. Presenca de pelo menos um responsavel por unidade e importante.', target:'condominio', targetLabel:'Condominio inteiro', date:'3 dias atras'},
+  {title:'Dedetizacao das areas comuns', body:'Equipe de dedetizacao passara pelas areas comuns na proxima segunda-feira pela manha. Nao havera necessidade de deixar as unidades.', target:'condominio', targetLabel:'Condominio inteiro', date:'5 dias atras'},
+  {title:'Vazamento identificado na garagem - Bloco B', body:'Foi identificado um pequeno vazamento na garagem do Bloco B. Equipe de manutencao ja foi acionada e o reparo esta agendado para essa semana.', target:'blocoB', targetLabel:'Bloco B', date:'6 dias atras'},
+  {title:'Novo horario de funcionamento do salao de festas', body:'A partir do proximo mes, o salao de festas passa a funcionar ate as 23h aos finais de semana. Reservas seguem o processo atual.', target:'condominio', targetLabel:'Condominio inteiro', date:'1 semana atras'}
+];
+
+const OCORRENCIAS = [
+  {title:'Barulho excessivo apos as 22h - Unidade 405', unit:'Unidade 405 - Bloco A', status:'aberta', by:'Camila Duarte', date:'hoje', trail:'Registrada pelo morador'},
+  {title:'Vazamento no teto da garagem - vaga 12', unit:'Area comum - Garagem', status:'andamento', by:'Ricardo Alves', date:'ontem', trail:'Sindica Ana Beatriz atualizou para Em andamento'},
+  {title:'Lampada queimada no corredor do 3 andar', unit:'Bloco B - 3 andar', status:'aberta', by:'Marcos Vinicius', date:'2 dias atras', trail:'Registrada pelo morador'},
+  {title:'Portao da garagem travando', unit:'Area comum - Garagem', status:'resolvida', by:'Fernanda Lima', date:'4 dias atras', trail:'Administrador Rafael marcou como Resolvida'},
+  {title:'Infiltracao na parede da sala - Unidade 210', unit:'Unidade 210 - Bloco A', status:'andamento', by:'Camila Duarte', date:'5 dias atras', trail:'Sindica Ana Beatriz atualizou para Em andamento'},
+  {title:'Interfone da portaria com falha', unit:'Area comum - Portaria', status:'resolvida', by:'Jose Carlos Lima', date:'1 semana atras', trail:'Administrador Rafael marcou como Resolvida'}
+];
+
+const DOCS = [
+  {name:'Regimento Interno 2026', meta:'PDF - atualizado em Jan 2026', icon:'fa-file-lines', tags:['Morador','Sindico','Administrador']},
+  {name:'Ata de Assembleia - Marco 2026', meta:'PDF - 8 paginas', icon:'fa-file-signature', tags:['Sindico','Administrador']},
+  {name:'Ata de Assembleia - Abril 2026', meta:'PDF - 6 paginas', icon:'fa-file-signature', tags:['Sindico','Administrador']},
+  {name:'Manual de Convivencia', meta:'PDF - atualizado em Fev 2026', icon:'fa-book', tags:['Morador','Sindico','Administrador']},
+  {name:'Plano de Manutencao Predial', meta:'PDF - uso interno', icon:'fa-toolbox', tags:['Sindico','Administrador']},
+  {name:'Contrato - empresa de limpeza', meta:'PDF - uso interno', icon:'fa-file-contract', tags:['Administrador']}
+];
+
+let currentRole = 'morador';
+let currentPage = 'dashboard';
+
+// ---------- RENDER ----------
+function renderAll(){
+  const r = ROLES[currentRole];
+  document.getElementById('userName').textContent = r.name;
+  document.getElementById('userRoleLabel').textContent = r.roleLabel;
+  document.getElementById('userAvatar').src = 'https://picsum.photos/seed/'+r.avatarSeed+'/80/80';
+
+  const note = document.getElementById('roleNote');
+  note.style.display = 'flex';
+  note.innerHTML = '<i class="fa-solid fa-circle-info"></i> ' + r.note;
+
+  document.getElementById('kpi1label').textContent = r.kpis.ocor;
+  document.getElementById('kpi2label').textContent = r.kpis.avisos;
+  document.getElementById('kpi3label').textContent = r.kpis.docs;
+  document.getElementById('kpi4label').textContent = r.kpis.last;
+
+  renderAttention();
+  renderMiniAvisos();
+  renderAvisos('todos');
+  renderOcorrencias('todos');
+  renderDocs();
+
+  document.querySelectorAll('.nav-item[data-page]').forEach(el=>{
+    if(el.classList.contains('disabled')) return;
+  });
+}
+
+function renderAttention(){
+  const r = ROLES[currentRole];
+  let list = OCORRENCIAS.filter(o=>o.status!=='resolvida');
+  if(r.ocorScope==='own') list = list.filter(o=>o.by===r.name);
+  if(r.ocorScope==='none') list = [];
+  const wrap = document.getElementById('attentionList');
+  if(list.length===0){
+    wrap.innerHTML = '<div style="padding:20px 0; text-align:center; color:var(--text-3); font-size:13px;">Nada pendente para esse perfil no momento.</div>';
+    return;
+  }
+  wrap.innerHTML = list.slice(0,4).map(o=>`
+    <div class="attn-row">
+      <div class="attn-dot ${o.status==='aberta'?'dot-open':'dot-prog'}"></div>
+      <div class="attn-body">
+        <div class="attn-title">${o.title}</div>
+        <div class="attn-meta">${o.unit} - ${o.date}</div>
+      </div>
+      <span class="status-badge ${o.status==='aberta'?'badge-open':'badge-prog'}">${o.status==='aberta'?'Aberta':'Em andamento'}</span>
+    </div>
+  `).join('');
+}
+
+function renderMiniAvisos(){
+  const wrap = document.getElementById('miniAvisos');
+  wrap.innerHTML = AVISOS.slice(0,4).map(a=>`
+    <div class="mini-list-row">
+      <div class="mini-ico" style="background:var(--g100); color:var(--g700);"><i class="fa-solid fa-bullhorn"></i></div>
+      <div style="flex:1; min-width:0;">
+        <div class="attn-title" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${a.title}</div>
+        <div class="attn-meta">${a.targetLabel} - ${a.date}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderAvisos(filter){
+  const wrap = document.getElementById('avisosList');
+  let list = AVISOS;
+  if(filter && filter!=='todos') list = AVISOS.filter(a=>a.target===filter);
+  wrap.innerHTML = list.map(a=>`
+    <div class="aviso-card reveal in">
+      <div class="aviso-top">
+        <span class="aviso-target">${a.targetLabel}</span>
+        <span class="aviso-date">${a.date}</span>
+      </div>
+      <div class="aviso-title">${a.title}</div>
+      <div class="aviso-body">${a.body}</div>
+    </div>
+  `).join('');
+}
+
+function renderOcorrencias(filter){
+  const r = ROLES[currentRole];
+  let list = OCORRENCIAS;
+  if(r.ocorScope==='own') list = list.filter(o=>o.by===r.name);
+  if(r.ocorScope==='none') list = [];
+  if(filter && filter!=='todos'){
+    const map = {aberta:'aberta', andamento:'andamento', resolvida:'resolvida'};
+    list = list.filter(o=>o.status===map[filter]);
+  }
+  const wrap = document.getElementById('ocorList');
+  if(list.length===0){
+    wrap.innerHTML = '<div class="card" style="text-align:center; color:var(--text-3); font-size:13.5px; padding:40px;">Esse perfil nao tem acesso as ocorrencias do condominio.</div>';
+    return;
+  }
+  const statusBadge = {aberta:['badge-open','Aberta'], andamento:['badge-prog','Em andamento'], resolvida:['badge-done','Resolvida']};
+  wrap.innerHTML = list.map(o=>`
+    <div class="ocor-card reveal in">
+      <div class="ocor-head">
+        <div>
+          <div class="ocor-title">${o.title}</div>
+          <div class="ocor-meta">${o.unit} - registrada por ${o.by} - ${o.date}</div>
+        </div>
+        <span class="status-badge ${statusBadge[o.status][0]}">${statusBadge[o.status][1]}</span>
+      </div>
+      ${r.canChangeStatus ? `<div class="status-select">
+        <button class="btn btn-ghost btn-sm" onclick="updateStatus(this)">Marcar Em andamento</button>
+        <button class="btn btn-ghost btn-sm" onclick="updateStatus(this)">Marcar Resolvida</button>
+      </div>` : ''}
+      <div class="ocor-trail"><i class="fa-solid fa-clock-rotate-left"></i> ${o.trail}</div>
+    </div>
+  `).join('');
+}
+
+function renderDocs(){
+  const r = ROLES[currentRole];
+  const wrap = document.getElementById('docGrid');
+  const noteEl = document.getElementById('docNote');
+  const uploadBtn = document.getElementById('uploadDocBtn');
+  uploadBtn.style.display = r.canUpload ? 'inline-flex' : 'none';
+
+  if(r.docScope==='none'){
+    noteEl.textContent = 'Esse perfil nao tem acesso ao repositorio de documentos do condominio.';
+    wrap.innerHTML = '';
+    return;
+  }
+  noteEl.textContent = r.docScope==='morador' ? 'Documentos liberados para o perfil de morador' : 'Repositorio completo de documentos do condominio';
+
+  let list = DOCS;
+  if(r.docScope==='morador') list = DOCS.filter(d=>d.tags.includes('Morador'));
+
+  wrap.innerHTML = list.map(d=>`
+    <div class="doc-card reveal in">
+      <div class="doc-ico"><i class="fa-solid ${d.icon}"></i></div>
+      <div class="doc-name">${d.name}</div>
+      <div class="doc-meta">${d.meta}</div>
+      <div class="doc-tags">${d.tags.map(t=>`<span class="doc-tag">${t}</span>`).join('')}</div>
+    </div>
+  `).join('');
+}
+
+function updateStatus(btn){
+  const card = btn.closest('.ocor-card');
+  const badge = card.querySelector('.status-badge');
+  const label = btn.textContent.replace('Marcar ','');
+  badge.textContent = label;
+  badge.className = 'status-badge ' + (label==='Resolvida' ? 'badge-done' : 'badge-prog');
+  const trail = card.querySelector('.ocor-trail');
+  const roleName = ROLES[currentRole].name;
+  trail.innerHTML = `<i class="fa-solid fa-clock-rotate-left"></i> ${roleName} atualizou para ${label} agora`;
+  showToast('Status atualizado', roleName + ' registrou essa alteracao');
+}
+
+// ---------- NAV ----------
+function goPage(page){
+  currentPage = page;
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  document.querySelectorAll('.nav-item[data-page]').forEach(n=>n.classList.toggle('active', n.dataset.page===page));
+
+  const titles = {
+    dashboard:['Dashboard','Visao geral de hoje'],
+    avisos:['Avisos','Comunicados enviados aos moradores'],
+    ocorrencias:['Ocorrencias','Registro e acompanhamento de solicitacoes'],
+    documentos:['Documentos','Regimento, atas e arquivos do condominio'],
+    areas:['Areas Comuns','Agendamento de espacos compartilhados'],
+    portaria:['Portaria','Controle de acesso e historico de visitantes']
+  };
+  document.getElementById('pageTitle').textContent = titles[page][0];
+  document.getElementById('pageSub').textContent = titles[page][1];
+
+  if(window.innerWidth<=820) document.getElementById('sidebar').classList.remove('open');
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+document.querySelectorAll('.nav-item[data-page]').forEach(el=>{
+  el.addEventListener('click', ()=>{
+    if(el.classList.contains('disabled')){
+      showToast('Disponivel na Fase 2', 'Esse modulo entra na proxima etapa do projeto');
+      goPage(el.dataset.page);
+      return;
+    }
+    goPage(el.dataset.page);
+  });
+});
+
+document.querySelectorAll('.role-pill').forEach(el=>{
+  el.addEventListener('click', ()=>{
+    document.querySelectorAll('.role-pill').forEach(p=>p.classList.remove('active'));
+    el.classList.add('active');
+    currentRole = el.dataset.role;
+    renderAll();
+    showToast('Perfil alterado', 'Visualizando como ' + ROLES[currentRole].roleLabel);
+  });
+});
+
+document.getElementById('avisoFilters').addEventListener('click', (e)=>{
+  const chip = e.target.closest('.chip');
+  if(!chip) return;
+  document.querySelectorAll('#avisoFilters .chip').forEach(c=>c.classList.remove('active'));
+  chip.classList.add('active');
+  renderAvisos(chip.dataset.target);
+});
+
+document.getElementById('ocorFilters').addEventListener('click', (e)=>{
+  const chip = e.target.closest('.chip');
+  if(!chip) return;
+  document.querySelectorAll('#ocorFilters .chip').forEach(c=>c.classList.remove('active'));
+  chip.classList.add('active');
+  renderOcorrencias(chip.dataset.status);
+});
+
+document.getElementById('novoAvisoBtn').addEventListener('click', ()=>{
+  if(!ROLES[currentRole].canCompose){
+    showToast('Sem permissao', 'Esse perfil nao pode publicar avisos');
+    return;
+  }
+  showToast('Aviso publicado', 'Enviado para o publico selecionado');
+});
+
+document.getElementById('novaOcorBtn').addEventListener('click', ()=>{
+  showToast('Ocorrencia registrada', 'Sindico e administrador foram notificados');
+});
+
+document.getElementById('uploadDocBtn').addEventListener('click', ()=>{
+  showToast('Documento enviado', 'Disponivel para os perfis selecionados');
+});
+
+// ---------- TOAST ----------
+let toastTimer;
+function showToast(title, sub){
+  const t = document.getElementById('toast');
+  document.getElementById('toastTitle').textContent = title;
+  document.getElementById('toastSub').textContent = sub;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 3200);
+}
+
+// ---------- THEME ----------
+const themeToggle = document.getElementById('themeToggle');
+themeToggle.addEventListener('click', ()=>{
+  const root = document.documentElement;
+  const isDark = root.getAttribute('data-theme')==='dark' || (!root.getAttribute('data-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  root.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  themeToggle.innerHTML = isDark ? '<i class="fa-solid fa-moon"></i>' : '<i class="fa-solid fa-sun"></i>';
+});
+
+// ---------- HAMBURGER ----------
+document.getElementById('hamburgerBtn').addEventListener('click', ()=>{
+  document.getElementById('sidebar').classList.toggle('open');
+});
+
+// ---------- RESTART ----------
+document.getElementById('restartBtn').addEventListener('click', ()=>{
+  currentRole = 'morador';
+  document.querySelectorAll('.role-pill').forEach(p=>p.classList.remove('active'));
+  document.querySelector('.role-pill[data-role="morador"]').classList.add('active');
+  renderAll();
+  goPage('dashboard');
+  showToast('Demo reiniciada', 'Voltando ao perfil de morador');
+});
+
+// ---------- COUNT UP ----------
+function countUp(el, target){
+  let cur = 0;
+  const step = Math.max(1, Math.ceil(target/30));
+  const iv = setInterval(()=>{
+    cur += step;
+    if(cur>=target){cur=target; clearInterval(iv);}
+    el.textContent = cur;
+  }, 28);
+}
+function triggerCounts(){
+  document.querySelectorAll('[data-count]').forEach(el=>{
+    if(el.dataset.done) return;
+    el.dataset.done = '1';
+    countUp(el, parseInt(el.dataset.count,10));
+  });
+}
+
+// ---------- SCROLL REVEAL ----------
+const io = new IntersectionObserver((entries)=>{
+  entries.forEach(en=>{ if(en.isIntersecting) en.target.classList.add('in'); });
+},{threshold:.1});
+function observeReveals(){
+  document.querySelectorAll('.reveal:not(.in)').forEach(el=>io.observe(el));
+}
+
+// ---------- INIT ----------
+renderAll();
+observeReveals();
+setTimeout(triggerCounts, 250);
+</script>
+</body>
+</html>
