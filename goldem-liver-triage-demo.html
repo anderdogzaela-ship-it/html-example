@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Liver Lab Triage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* VOICE clinical work: calm, exact, few hues, a lab report a hepatologist would trust
+   IDEA a printed liver function panel with reference ranges and flags, read by a model
+   PICTURE the live four-condition result drawn large beside the panel, then the honest scorecard
+   COLOUR white ground, ink, liver maroon leads, slate support, amber marks out-of-range values
+   TYPE Source Serif 4 for titles, Inter for text and figures
+   LAYOUT laptop: panel left, result right; below, scorecard then the full-system plan; phone: title, result, panel */
+:root{color-scheme:light dark;--bg:light-dark(#ffffff,#141011);--ink:light-dark(#1d1517,#f2eaeb);--mute:light-dark(#62585a,#b3a7a9);--line:light-dark(#e6dfe0,#33292b);--panel:light-dark(#faf6f6,#1d1719);--liver:light-dark(#8c1c2e,#e8778a);--slate:light-dark(#3d5a6c,#8fb3c8);--amber:light-dark(#b26b00,#f0b04a);--c0:light-dark(#7d8f9a,#8fa3ae);--c1:light-dark(#d9962e,#e9ad4f);--c2:light-dark(#c45a34,#e47f56);--c3:light-dark(#8c1c2e,#e8778a)}
+:root[data-theme=light]{color-scheme:light}
+:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.55 Inter,system-ui,sans-serif;overflow-x:clip}
+h1,h2{font-family:"Source Serif 4",Georgia,serif;font-weight:600;line-height:1.05;letter-spacing:-.02em;text-wrap:balance;margin:0}
+h1{font-size:clamp(32px,4.4vw,46px)}
+h2{font-size:clamp(24px,3vw,32px);margin-bottom:12px}
+h3{font-size:17px;margin:0 0 6px}
+p{margin:0 0 12px;max-width:68ch}
+.band{padding-block:clamp(28px,4vw,56px);padding-inline:max(5vw,16px)}
+.wrap{max-width:1240px;margin:0 auto}
+.top{background:var(--liver);color:#fff}
+.top p{color:#fbe9ec;margin-top:12px}
+.note{font-size:13px;color:var(--mute)}
+.top .note{color:#f3cfd5}
+.tool{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:clamp(20px,3vw,40px);align-items:start}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px}
+.presets{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+button{font:inherit;font-size:15px;min-height:44px;padding:0 14px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
+button:hover{border-color:var(--liver)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid color-mix(in srgb,var(--liver) 55%,transparent);outline-offset:2px}
+button[aria-pressed=true]{background:var(--liver);border-color:var(--liver);color:#fff}
+table{border-collapse:collapse;width:100%}
+th,td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+th{font-size:13px;font-weight:600;color:var(--mute)}
+td.n,th.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.lab input,.lab select{width:6.2em;font:inherit;font-size:16px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);text-align:right;font-variant-numeric:tabular-nums}
+.lab select{text-align:left;width:7em}
+.flag{display:inline-block;width:1.6em;font-weight:600;color:var(--amber)}
+.unit{color:var(--mute);font-size:14px;white-space:nowrap}
+.res{position:sticky;top:12px}
+.big{font-family:"Source Serif 4",Georgia,serif;font-size:clamp(34px,5vw,52px);line-height:1;margin:4px 0 6px}
+.rows{display:grid;gap:10px;margin:16px 0}
+.row{display:grid;grid-template-columns:7.5em minmax(0,1fr) 3.2em;gap:10px;align-items:center}
+.track{height:22px;background:color-mix(in srgb,var(--ink) 7%,transparent);border-radius:4px;overflow:hidden}
+.fill{height:100%;border-radius:4px;transition:width .35s ease}
+.val{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.why .row{grid-template-columns:5.5em minmax(0,1fr) 3.6em}
+.why .fill{background:var(--slate)}
+.fib{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(20px,3vw,40px)}
+.cm{display:grid;grid-template-columns:7.5em repeat(4,minmax(0,1fr));gap:3px;font-variant-numeric:tabular-nums}
+.cm div{padding:8px 4px;text-align:center;border-radius:4px;font-size:14px}
+.cm .h{color:var(--mute);font-size:13px;background:none}
+.cm .rl{text-align:left}
+.pair .row{grid-template-columns:7.5em minmax(0,1fr) 3.2em}
+.pair .t2{height:8px;margin-top:3px}
+.route{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;margin:18px 0 8px}
+.st{position:relative;padding:14px 12px 14px 0}
+.st::before{content:"";display:block;height:6px;background:var(--liver);margin-bottom:12px}
+.st:first-child::before{border-radius:3px 0 0 3px}
+.st:last-child::before{border-radius:0 3px 3px 0}
+.st b{display:block;font-size:16px}
+.st span{font-size:14px;color:var(--mute);display:block}
+.st i{position:absolute;top:6px;left:0;width:18px;height:18px;border-radius:50%;background:var(--bg);border:4px solid var(--liver)}
+.plan td{vertical-align:top}
+.scroll{overflow-x:auto}
+ul{margin:0 0 12px;padding-left:1.2em}
+li{margin-bottom:4px}
+@media(max-width:860px){.tool,.grid2{grid-template-columns:minmax(0,1fr)}.res{position:static;order:-1}.route{grid-template-columns:minmax(0,1fr)}.st{padding:4px 0 10px 30px}.st::before{position:absolute;left:7px;top:0;bottom:0;width:4px;height:auto;margin:0;border-radius:0}.st i{top:4px;left:0}}
+@media(max-width:600px){table{font-size:14px}th,td{padding:6px 3px}.lab input{width:5em}.row,.pair .row{grid-template-columns:6.4em minmax(0,1fr) 3em}.cm{grid-template-columns:5.6em repeat(4,minmax(0,1fr))}.stack thead{display:none}.stack tr{display:grid;padding-block:10px}.stack td{display:flex;justify-content:space-between;gap:12px;border:0;padding:3px 0}.stack td::before{content:attr(data-l);color:var(--mute);font-size:13px}}
+@media(prefers-reduced-motion:reduce){.fill{transition:none}}
+</style>
+</head>
+<body>
+<header class="band top"><div class="wrap">
+<h1>Liver lab triage, a working sample</h1>
+<p>A small neural network trained on 608 real, anonymised patients from a public dataset reads one blood panel and ranks four outcomes: healthy blood donor, hepatitis C, fibrosis or cirrhosis. Change any value and the result updates in your browser; nothing is sent anywhere.</p>
+<p class="note">Research sample on the public HCV dataset (UCI, CC BY 4.0). Not a medical device and not for clinical use.</p>
+</div></header>
+
+<main>
+<section class="band"><div class="wrap tool">
+<div class="card">
+<h3>Patient panel</h3>
+<div class="presets" id="presets"></div>
+<div class="scroll"><table class="lab"><thead><tr><th>Test</th><th class="n">Value</th><th>Unit</th><th class="n">Donor 95% range</th></tr></thead><tbody id="panel"></tbody></table></div>
+<p class="note" style="margin-top:10px">Example patients are the median values of each group in the dataset. Amber H or L marks a value outside the range seen in 95% of the healthy donors.</p>
+</div>
+
+<div class="card res" aria-live="polite">
+<div class="note">Most likely</div>
+<div class="big" id="top">-</div>
+<div id="conf" class="note"></div>
+<div class="rows" id="probs"></div>
+<h3>What moved this result</h3>
+<p class="note">Each bar shows how much the top answer drops when that one value is reset to a typical healthy donor's.</p>
+<div class="rows why" id="why"></div>
+<div class="fib">
+<h3>FIB-4 fibrosis score</h3>
+<p class="note">A standard bedside formula (age, AST, ALT, platelets), shown beside the model because a real system should always be compared with the score clinicians already use.</p>
+<label for="plt">Platelets (10<sup>9</sup>/L)</label> <span class="lab"><input id="plt" type="number" inputmode="decimal" value="220" step="1" min="10"></span>
+<div class="big" style="font-size:30px;margin-top:8px" id="fib4">-</div>
+<div class="note" id="fib4t"></div>
+</div>
+</div>
+</div></section>
+
+<section class="band" style="background:var(--panel);border-block:1px solid var(--line)"><div class="wrap">
+<h2>Labs alone spot liver disease well, but cannot tell its stage apart</h2>
+<p>Scored the honest way: 5-fold cross-validation repeated five times, so every patient is judged by a model that never saw them. The network is compared with a plain statistical baseline, because a deep model has to earn its place.</p>
+<div class="grid2" style="margin-top:18px">
+<div>
+<h3>Where the network's answers land (out-of-fold)</h3>
+<p class="note">Rows are the true diagnosis, columns the model's answer. The diagonal is correct.</p>
+<div class="cm" id="cm"></div>
+<p style="margin-top:14px" id="cmtext"></p>
+</div>
+<div>
+<h3>Share of each group recognised</h3>
+<p class="note">Thick bar: neural network. Thin bar: baseline.</p>
+<div class="rows pair" id="pair"></div>
+<p id="pairtext"></p>
+</div>
+</div>
+</div></section>
+
+<section class="band"><div class="wrap">
+<h2>The full system adds imaging where the labs run out</h2>
+<p>Hepatitis, fatty liver, fibrosis, cirrhosis and cancer leave different traces: some in blood, some only in ultrasound, CT or MRI. The design below lets each kind of data do what it does best and keeps a clinician in charge of the final call.</p>
+<div class="route">
+<div class="st"><i></i><b>1. Intake</b><span>Symptoms, history, risk factors and labs as structured forms; images uploaded or pulled from the hospital PACS.</span></div>
+<div class="st"><i></i><b>2. Clinical model</b><span>Gradient-boosted trees on labs and history, with FIB-4 and APRI as fixed reference scores.</span></div>
+<div class="st"><i></i><b>3. Imaging models</b><span>CNNs for ultrasound (steatosis grade), CT and MRI (liver and lesion segmentation, nodule classification).</span></div>
+<div class="st"><i></i><b>4. Fusion</b><span>Combines the outputs into one ranked differential with calibrated probabilities.</span></div>
+<div class="st"><i></i><b>5. Clinician review</b><span>Heat maps over the image and the lab values that drove the result; the doctor confirms or corrects, and that is logged.</span></div>
+</div>
+
+<div class="grid2" style="margin-top:22px">
+<div>
+<h3>Models and public data to start from</h3>
+<ul>
+<li>Lab and history model: gradient boosting (XGBoost or LightGBM) with SHAP explanations; public starting data ILPD and HCV (UCI).</li>
+<li>CT liver and tumour segmentation: nnU-Net style 3D U-Net, trained on LiTS (131 scans) and Medical Segmentation Decathlon Task 03.</li>
+<li>CT and MRI organ segmentation: CHAOS challenge data.</li>
+<li>Ultrasound fatty liver grading: transfer learning (EfficientNet or ResNet, TensorFlow/Keras) on published B-mode datasets, then the client's own images.</li>
+<li>Cancer lesion classification (for example LI-RADS categories) only once enough labelled local cases exist.</li>
+</ul>
+<h3>Validation before anyone relies on it</h3>
+<ul>
+<li>Split by patient and by hospital, never by image, so no patient leaks between training and testing.</li>
+<li>External test on a site the model has never seen; report sensitivity, specificity, AUC with confidence intervals and calibration.</li>
+<li>Compare against FIB-4, APRI and the radiologist's report, then a reader study: clinicians with and without the tool.</li>
+<li>Silent pilot: the system runs beside real cases without showing results, until the numbers hold.</li>
+</ul>
+</div>
+<div>
+<h3>Technology</h3>
+<ul>
+<li>AI service in Python: TensorFlow/Keras for imaging, scikit-learn and XGBoost for tabular models, served behind a REST API (FastAPI).</li>
+<li>Images: DICOM handled with an Orthanc server and shown in the OHIF web viewer, so doctors see the overlay on the real scan.</li>
+<li>Web app for clinicians: React, with role-based access, audit log of every prediction and every correction.</li>
+<li>Data: PostgreSQL for records, object storage for images, encryption at rest and in transit, de-identification before training.</li>
+<li>Every model versioned with its training data and metrics (MLflow), so any result can be traced to the exact model that produced it.</li>
+</ul>
+<h3>Plan</h3>
+<div class="scroll"><table class="plan stack"><thead><tr><th>Phase</th><th>What you can test</th><th class="n">Weeks</th></tr></thead><tbody>
+<tr><td data-l="Phase">1. Data and baseline</td><td data-l="What you can test">Data inventory, labelling guide, lab model with honest scores like the ones above</td><td data-l="Weeks" class="n">2</td></tr>
+<tr><td data-l="Phase">2. Imaging model</td><td data-l="What you can test">First imaging model (one modality), with heat maps and its own test report</td><td data-l="Weeks" class="n">4</td></tr>
+<tr><td data-l="Phase">3. Platform</td><td data-l="What you can test">Clinician web app, image viewer, patient records, roles and audit log</td><td data-l="Weeks" class="n">3</td></tr>
+<tr><td data-l="Phase">4. Fusion and validation</td><td data-l="What you can test">Combined differential, external test, validation report</td><td data-l="Weeks" class="n">3</td></tr>
+</tbody></table></div>
+</div>
+</div>
+<p class="note" style="margin-top:18px">How this sample was made: Python, repeated stratified cross-validation, one hidden layer of 16 units trained on class-balanced resamples, exported to run in the browser. The training scripts are available on request.</p>
+</div></section>
+</main>
+
+<script>
+{
+const M = {"dataset": {"name": "HCV data (UCI)", "n": 608, "per_class": {"Blood donor": 533, "Hepatitis": 24, "Fibrosis": 21, "Cirrhosis": 30}, "license": "CC BY 4.0"}, "features": ["Age", "Sex", "ALB", "ALP", "ALT", "AST", "BIL", "CHE", "CHOL", "CREA", "GGT", "PROT"], "log": ["ALP", "ALT", "AST", "BIL", "CREA", "GGT"], "classes": ["Blood donor", "Hepatitis", "Fibrosis", "Cirrhosis"], "median": {"Age": 47.0, "Sex": 1.0, "ALB": 42.0, "ALP": 66.0, "ALT": 23.0, "AST": 25.85, "BIL": 7.3, "CHE": 8.27, "CHOL": 5.3, "CREA": 77.0, "GGT": 23.25, "PROT": 72.2}, "mean": {"Age": 47.291118, "Sex": 0.610197, "ALB": 41.819079, "ALP": 4.179275, "ALT": 3.172322, "AST": 3.398745, "BIL": 2.225985, "CHE": 8.204885, "CHOL": 5.377533, "CREA": 4.36597, "GGT": 3.328431, "PROT": 72.253125}, "std": {"Age": 9.992705, "Sex": 0.488107, "ALB": 5.402266, "ALP": 0.320556, "ALT": 0.599206, "AST": 0.481992, "BIL": 0.624215, "CHE": 2.1684, "CHOL": 1.11018, "CREA": 0.256436, "GGT": 0.725103, "PROT": 4.928188}, "layers": [{"W": [[0.05932, 0.68163, 0.15469, -0.23827, -0.09422, -0.09237, 0.13591, -0.15668, 0.10899, -0.38826, 0.08285, -0.07269, 0.43488, 0.03572, -0.84682, -0.11484], [-0.26161, 0.49299, 0.18066, -0.16287, -0.04026, -0.07352, -0.44427, -0.1409, -0.81576, 0.27789, -0.11811, 0.42105, 0.08582, -0.21282, 0.32126, 0.23345], [-0.0461, 0.12547, -0.27752, -0.21147, 0.08303, 0.74187, -0.16693, -0.31591, -0.6981, 0.38988, -0.24506, -0.00812, 0.42203, -0.18973, -0.0646, 0.13446], [-0.46878, 0.55591, 0.04501, 0.30464, 0.10851, -0.71405, 0.18224, -0.12632, -0.0248, -0.55577, -0.49304, -0.13424, 0.01663, -0.37176, -0.44878, -0.33989], [-0.33463, 0.20676, 0.43374, -0.52288, 0.49211, 0.22075, 0.12884, 0.03922, 0.87999, -0.07639, 0.2884, -0.51084, -0.2543, -0.61496, 0.31607, -0.46327], [0.23752, -0.56261, 0.13639, 0.40751, 0.34989, -0.24816, -0.17216, -0.29255, -0.19451, 0.09197, 0.84643, -0.02783, -0.15764, 0.25471, -0.84903, 0.2001], [0.3346, -0.50611, 0.17423, 0.23839, 0.09849, -0.50434, 0.06958, 0.51342, -0.18599, 0.0778, 0.3386, 0.25436, 0.22273, 0.07237, -0.03083, 0.07804], [0.39295, -0.27146, -0.23666, -0.76514, 0.21101, 0.62211, 0.70326, -0.09025, 0.33651, 0.66977, -0.17207, 0.07942, -0.05373, -0.18016, -0.31826, 0.10221], [-0.36387, -0.17372, -0.10795, -0.31997, -0.58832, 0.35303, 0.07114, -0.1622, -0.04429, 0.07452, -0.12131, -0.08563, 0.20581, -0.06494, 0.60139, 0.11601], [0.15973, -0.35081, -0.408, 0.4404, 0.57952, 0.1301, -0.23957, 0.63204, 0.61684, -0.16272, -0.31797, -0.12518, 0.23702, 0.37654, -0.21841, -0.28892], [0.35056, -0.13541, 0.10962, 0.1986, 0.52203, -0.00221, -0.62479, -0.28297, -0.04175, -0.4663, 0.33893, 0.03352, -0.53735, -0.13237, -0.19235, -0.08952], [0.30245, 0.48027, 0.04041, 0.00617, 0.19425, 0.39521, -0.68166, -0.09781, -0.05428, 0.18834, 0.54976, -0.06629, 0.20575, 0.03255, -0.2141, -0.21465]], "b": [-0.21662, 1.56937, 0.2443, -1.10235, -1.14463, -0.17093, 0.7798, 0.12637, 0.97, 1.17358, -0.36453, 0.12457, 0.24259, -0.89542, 1.8247, -0.05908]}, {"W": [[-0.61346, 0.31761, 0.76062, -0.32595], [1.09939, -1.23103, -0.12449, 0.14074], [-0.17687, -0.5025, 0.18854, 0.56476], [-0.21034, 0.58898, -0.98686, 0.58312], [-0.5459, 0.78596, 0.39574, -0.68931], [0.25368, 0.98226, -0.95836, -0.24093], [0.22023, 0.36, -1.19381, 0.55882], [0.49096, -0.63213, -0.34575, 0.48664], [0.36853, -1.20468, 0.85869, -0.42754], [0.02402, 0.45868, 0.45227, -1.06453], [-1.09498, 0.15413, 0.14509, 0.7036], [-0.17453, -0.21282, 0.65834, -0.19152], [0.2976, -0.66547, 0.56199, -0.18975], [-0.3828, -0.378, -0.07908, 0.74866], [0.78564, 0.77734, -1.34074, -0.25762], [-0.53783, 0.18719, 0.53258, -0.17273]], "b": [0.74679, -0.1722, -0.33877, 0.04732]}], "donor_range": {"ALB": [32.7, 51.3], "ALP": [38.2, 106.3], "ALT": [10.2, 63.6], "AST": [15.4, 46.7], "BIL": [2.6, 23.4], "CHE": [4.9, 12.3], "CHOL": [3.7, 7.7], "CREA": [53.3, 107.7], "GGT": [8.9, 92.6], "PROT": [63.3, 80.6]}, "examples": {"Blood donor": {"Age": 47.0, "Sex": 1.0, "ALB": 42.2, "ALP": 66.7, "ALT": 23.1, "AST": 24.8, "BIL": 6.9, "CHE": 8.3, "CHOL": 5.4, "CREA": 78.0, "GGT": 21.4, "PROT": 72.2}, "Hepatitis": {"Age": 37.0, "Sex": 1.0, "ALB": 43.5, "ALP": 34.6, "ALT": 15.2, "AST": 47.2, "BIL": 13.0, "CHE": 9.5, "CHOL": 5.1, "CREA": 72.2, "GGT": 45.5, "PROT": 73.7}, "Fibrosis": {"Age": 51.0, "Sex": 1.0, "ALB": 41.0, "ALP": 39.5, "ALT": 34.0, "AST": 70.0, "BIL": 13.0, "CHE": 8.6, "CHOL": 4.6, "CREA": 71.4, "GGT": 72.2, "PROT": 76.1}, "Cirrhosis": {"Age": 56.0, "Sex": 1.0, "ALB": 33.0, "ALP": 80.0, "ALT": 5.7, "AST": 92.9, "BIL": 34.0, "CHE": 3.4, "CHOL": 3.9, "CREA": 68.5, "GGT": 96.3, "PROT": 70.0}}, "cv": {"logistic": {"recall": {"Blood donor": [0.946, 0.028], "Hepatitis": [0.568, 0.224], "Fibrosis": [0.55, 0.159], "Cirrhosis": [0.733, 0.189]}, "macro_f1": [0.647, 0.064], "cm": [[503, 17, 7, 6], [2, 15, 4, 3], [0, 5, 14, 2], [0, 1, 6, 23]]}, "mlp": {"recall": {"Blood donor": [0.968, 0.017], "Hepatitis": [0.552, 0.206], "Fibrosis": [0.51, 0.218], "Cirrhosis": [0.74, 0.206]}, "macro_f1": [0.665, 0.098], "cm": [[518, 10, 4, 1], [3, 15, 4, 2], [0, 3, 14, 4], [0, 1, 6, 23]]}}};
+const UNITS = {Age:"years",Sex:"",ALB:"g/L",ALP:"U/L",ALT:"U/L",AST:"U/L",BIL:"µmol/L",CHE:"kU/L",CHOL:"mmol/L",CREA:"µmol/L",GGT:"U/L",PROT:"g/L"};
+const NAMES = {Age:"Age",Sex:"Sex",ALB:"Albumin",ALP:"ALP",ALT:"ALT",AST:"AST",BIL:"Bilirubin",CHE:"Cholinesterase",CHOL:"Cholesterol",CREA:"Creatinine",GGT:"GGT",PROT:"Total protein"};
+const COL = ["var(--c0)","var(--c1)","var(--c2)","var(--c3)"];
+const pct = v => Math.round(v*100) + "%";
+let cur = Object.assign({}, M.examples["Cirrhosis"]);
+let preset = "Cirrhosis";
+
+const forward = x => {
+  let h = M.features.map(f => {
+    let v = x[f]; if (v === "" || v == null || isNaN(v)) v = M.median[f];
+    v = Number(v); if (M.log.includes(f)) v = Math.log1p(Math.max(v, 0));
+    return (v - M.mean[f]) / M.std[f];
+  });
+  M.layers.forEach((L, i) => {
+    const z = L.b.map((b, k) => h.reduce((s, hj, j) => s + hj * L.W[j][k], b));
+    h = i < M.layers.length - 1 ? z.map(v => Math.max(0, v)) : z;
+  });
+  const mx = Math.max(...h), e = h.map(v => Math.exp(v - mx)), s = e.reduce((a, b) => a + b, 0);
+  return e.map(v => v / s);
+};
+
+const presets = document.getElementById("presets");
+presets.innerHTML = M.classes.map(c => `<button type="button" data-p="${c}">${c}</button>`).join("");
+const panel = document.getElementById("panel");
+panel.innerHTML = M.features.map(f => {
+  const r = M.donor_range[f];
+  const input = f === "Sex"
+    ? `<select id="f-${f}" data-f="${f}"><option value="1">Male</option><option value="0">Female</option></select>`
+    : `<input id="f-${f}" data-f="${f}" type="number" inputmode="decimal" step="any">`;
+  return `<tr><td><label for="f-${f}">${NAMES[f]}</label></td><td class="n"><span class="flag" id="g-${f}"></span>${input}</td><td class="unit">${UNITS[f]}</td><td class="n">${r ? r[0] + " – " + r[1] : ""}</td></tr>`;
+}).join("");
+
+const fill = () => {
+  M.features.forEach(f => { document.getElementById("f-" + f).value = cur[f]; });
+  presets.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", b.dataset.p === preset));
+};
+
+const render = () => {
+  M.features.forEach(f => {
+    const r = M.donor_range[f], v = Number(cur[f]), g = document.getElementById("g-" + f);
+    g.textContent = r && cur[f] !== "" ? (v > r[1] ? "H" : v < r[0] ? "L" : "") : "";
+  });
+  const p = forward(cur), k = p.indexOf(Math.max(...p));
+  document.getElementById("top").textContent = M.classes[k];
+  document.getElementById("top").style.color = COL[k];
+  document.getElementById("conf").textContent = `Model probability ${pct(p[k])}. All four outcomes:`;
+  document.getElementById("probs").innerHTML = M.classes.map((c, i) =>
+    `<div class="row"><span>${c}</span><div class="track"><div class="fill" style="width:${(p[i]*100).toFixed(1)}%;background:${COL[i]}"></div></div><span class="val">${pct(p[i])}</span></div>`).join("");
+  const base = M.examples["Blood donor"];
+  const eff = M.features.filter(f => f !== "Age" && f !== "Sex").map(f => {
+    const x = Object.assign({}, cur, {[f]: base[f]});
+    return {f, d: p[k] - forward(x)[k]};
+  }).filter(e => e.d > 0.005).sort((a, b) => b.d - a.d).slice(0, 5);
+  const mx = Math.max(0.01, ...eff.map(e => e.d));
+  document.getElementById("why").innerHTML = eff.length ? eff.map(e =>
+    `<div class="row"><span>${NAMES[e.f]}</span><div class="track"><div class="fill" style="width:${(e.d/mx*100).toFixed(1)}%"></div></div><span class="val">−${pct(e.d)}</span></div>`).join("")
+    : `<p class="note">No single value is driving this answer.</p>`;
+  const plt = Number(document.getElementById("plt").value), age = Number(cur.Age), ast = Number(cur.AST), alt = Number(cur.ALT);
+  const fo = document.getElementById("fib4"), ft = document.getElementById("fib4t");
+  if (plt > 0 && alt > 0 && age > 0 && ast > 0) {
+    const s = age * ast / (plt * Math.sqrt(alt));
+    fo.textContent = s.toFixed(2);
+    ft.textContent = s < 1.3 ? "Below 1.3: advanced fibrosis unlikely." : s <= 2.67 ? "1.3 to 2.67: indeterminate, elastography usually next." : "Above 2.67: advanced fibrosis likely, specialist referral.";
+  } else { fo.textContent = "-"; ft.textContent = "Enter age, AST, ALT and platelets."; }
+};
+
+presets.addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  preset = b.dataset.p; cur = Object.assign({}, M.examples[preset]); fill(); render();
+});
+panel.addEventListener("input", e => {
+  const f = e.target.dataset.f; if (!f) return;
+  cur[f] = e.target.value; preset = ""; fill(); render();
+});
+document.getElementById("plt").addEventListener("input", render);
+
+const cv = M.cv.mlp, base = M.cv.logistic, cm = cv.cm;
+const short = ["Donor", "Hepatitis", "Fibrosis", "Cirrhosis"];
+let cells = `<div class="h"></div>` + short.map(s => `<div class="h">${s}</div>`).join("");
+cm.forEach((r, i) => {
+  const tot = r.reduce((a, b) => a + b, 0);
+  cells += `<div class="h rl">${short[i]}</div>` + r.map((v, j) => {
+    const a = tot ? v / tot : 0;
+    const bg = `color-mix(in srgb, ${i === j ? "var(--liver)" : "var(--amber)"} ${Math.round(a * 85)}%, transparent)`;
+    return `<div style="background:${bg};${a > .5 ? "color:#fff;font-weight:600" : ""}">${v}</div>`;
+  }).join("");
+});
+document.getElementById("cm").innerHTML = cells;
+const sick = cm.slice(1).reduce((s, r) => s + r[1] + r[2] + r[3], 0), sickTot = cm.slice(1).reduce((s, r) => s + r.reduce((a, b) => a + b, 0), 0);
+const donorsOk = cm[0][0], donorsTot = cm[0].reduce((a, b) => a + b, 0);
+document.getElementById("cmtext").textContent = `${sick} of ${sickTot} patients (${pct(sick / sickTot)}) were flagged as having some liver condition, and ${donorsOk} of ${donorsTot} donors (${pct(donorsOk / donorsTot)}) were correctly left alone. Most mistakes fall between neighbouring stages: hepatitis, fibrosis and cirrhosis.`;
+document.getElementById("pair").innerHTML = M.classes.map((c, i) => {
+  const a = cv.recall[c][0], b = base.recall[c][0];
+  return `<div class="row"><span>${c}</span><div><div class="track"><div class="fill" style="width:${a*100}%;background:${COL[i]}"></div></div><div class="track t2"><div class="fill" style="width:${b*100}%;background:var(--mute)"></div></div></div><span class="val">${pct(a)}</span></div>`;
+}).join("");
+document.getElementById("pairtext").textContent = `Average F1 across the four groups: network ${cv.macro_f1[0].toFixed(2)}, baseline ${base.macro_f1[0].toFixed(2)}. With only ${M.dataset.per_class.Hepatitis} hepatitis and ${M.dataset.per_class.Fibrosis} fibrosis patients, a deep network barely beats simple statistics, and the results swing by ±${Math.round(cv.recall.Fibrosis[1]*100)} points between folds. Telling these stages apart needs imaging or elastography and more labelled cases, which is what the full system below is built for.`;
+
+fill(); render();
+}
+</script>
+</body>
+</html>
