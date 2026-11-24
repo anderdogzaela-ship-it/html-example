@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gestión de datos – prototipo de app</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{--bg:#f3f2f1;--panel:#fff;--ink:#201f1e;--mute:#605e5c;--line:#e1dfdd;--brand:#3b4fa8;--brand2:#2c3c86;--ok:#107c10;--warn:#c19c00;--bad:#a4262c;--code:#1e1e2e;--codeink:#e4e4f0}
+*{box-sizing:border-box}body{margin:0;font-family:"Segoe UI",system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--ink);font-size:14px}
+header{background:var(--brand);color:#fff;display:flex;align-items:center;gap:16px;padding:10px 18px;flex-wrap:wrap}
+header h1{font-size:16px;margin:0;font-weight:600;flex:1;min-width:180px}
+header .who{display:flex;gap:8px;align-items:center;font-size:13px}
+header select{border:0;border-radius:4px;padding:5px 8px;font:inherit}
+.tag{font-size:11px;background:rgba(255,255,255,.18);padding:3px 8px;border-radius:10px}
+.wrap{display:flex;min-height:calc(100vh - 52px)}
+nav{width:190px;background:#fff;border-right:1px solid var(--line);padding:12px 0;flex-shrink:0}
+nav button{display:block;width:100%;text-align:left;border:0;background:none;padding:11px 18px;font:inherit;cursor:pointer;color:var(--ink);border-left:3px solid transparent}
+nav button.on{background:#eef0fa;border-left-color:var(--brand);font-weight:600}
+nav button:disabled{color:#a19f9d;cursor:not-allowed}
+main{flex:1;padding:18px;min-width:0}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.bar h2{margin:0 auto 0 0;font-size:18px}
+input,select.f{border:1px solid #8a8886;border-radius:4px;padding:7px 9px;font:inherit;background:#fff}
+input.search{min-width:240px;flex:1;max-width:380px}
+.btn{border:1px solid var(--brand);background:var(--brand);color:#fff;border-radius:4px;padding:7px 14px;font:inherit;cursor:pointer}
+.btn.sec{background:#fff;color:var(--brand)}.btn.del{background:#fff;color:var(--bad);border-color:var(--bad)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px;margin-bottom:14px}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{color:var(--mute);font-weight:600;background:#faf9f8}.tw{overflow-x:auto}
+.pill{font-size:11px;padding:2px 8px;border-radius:10px;background:#edebe9}
+.pill.Administrador{background:#e3e8fb;color:#2c3c86}.pill.Editor{background:#dff6dd;color:#0b5a0b}.pill.Lector{background:#f3f2f1}
+.pill.Inactivo{background:#fde7e9;color:var(--bad)}
+mark{background:#fff100;padding:0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:14px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:6px;padding:12px}.kpi b{display:block;font-size:22px;margin-top:4px}.kpi span{color:var(--mute);font-size:12px}
+.note{font-size:12px;color:var(--mute);margin:6px 0 0}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#323130;color:#fff;padding:10px 16px;border-radius:4px;display:none;z-index:20;max-width:90vw}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;z-index:10;padding:16px}
+.modal .card{width:420px;max-width:100%}.modal label{display:block;font-size:12px;color:var(--mute);margin:10px 0 4px}.modal input,.modal select{width:100%}
+.err{color:var(--bad);font-size:12px;min-height:16px;margin-top:6px}
+details.how{background:var(--code);color:var(--codeink);border-radius:6px;padding:10px 14px;margin-top:14px}
+details.how summary{cursor:pointer;font-weight:600;color:#c9cdf5}
+details.how pre{white-space:pre-wrap;font-family:Consolas,monospace;font-size:12px;line-height:1.5;margin:10px 0}
+details.how p{font-size:12.5px;color:#c8c8d8;margin:8px 0}
+.banner{background:#fff4ce;border:1px solid #f1d98a;padding:8px 12px;border-radius:6px;font-size:12.5px;margin-bottom:12px}
+.chart-box{position:relative;height:240px}
+@media(max-width:720px){.wrap{flex-direction:column}nav{width:100%;display:flex;overflow-x:auto;padding:0;border-right:0;border-bottom:1px solid var(--line)}nav button{border-left:0;border-bottom:3px solid transparent;white-space:nowrap;width:auto}nav button.on{border-bottom-color:var(--brand)}main{padding:12px 16px}input.search{min-width:0}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Gestión de datos · prototipo navegable</h1>
+  <div class="who">Simular sesión como:
+    <select id="who"></select>
+    <span class="tag" id="roleTag"></span>
+  </div>
+</header>
+<div class="wrap">
+  <nav>
+    <button data-s="reg" class="on">Registros y búsqueda</button>
+    <button data-s="graf">Gráficos</button>
+    <button data-s="usr">Usuarios y roles</button>
+  </nav>
+  <main>
+    <div class="banner">Prototipo con datos de ejemplo para mostrar el funcionamiento de las 4 funciones. En el proyecto real se construye dentro de Power Apps, en el entorno de Microsoft 365 del cliente. Cada pantalla tiene abajo un bloque "Cómo se construye en Power Apps".</div>
+
+    <!-- REGISTROS -->
+    <section id="s-reg">
+      <div class="bar">
+        <h2>Registros</h2>
+        <input class="search" id="q" placeholder="Buscar por palabra clave (cliente, ciudad, asunto, responsable…)">
+        <select class="f" id="fEstado"><option value="">Todos los estados</option></select>
+        <select class="f" id="fArea"><option value="">Todas las áreas</option></select>
+        <button class="btn" id="btnXlsx">Descargar Excel</button>
+      </div>
+      <div class="card tw"><table id="tReg"></table><p class="note" id="regCount"></p></div>
+      <details class="how"><summary>Cómo se construye en Power Apps (búsqueda y exportación)</summary>
+<pre>// Galería de registros: búsqueda que respeta la delegación en SharePoint
+galRegistros.Items =
+  Filter( Registros,
+    (IsBlank(txtBuscar.Text) Or StartsWith(Cliente, txtBuscar.Text)
+       Or StartsWith(Asunto, txtBuscar.Text) Or StartsWith(Ciudad, txtBuscar.Text)),
+    IsBlank(ddEstado.Selected.Value) Or Estado.Value = ddEstado.Selected.Value )
+
+// Botón "Descargar Excel": envía la vista filtrada a un flujo de Power Automate
+btnExcel.OnSelect =
+  Set( gArchivo,
+       ExportarExcel.Run( JSON( galRegistros.AllItems, JSONFormat.IgnoreUnsupportedTypes ) ) );
+  Launch( gArchivo.enlace )</pre>
+<p>Riesgo típico: Search() o el operador "in" no se delegan a SharePoint, así que la app solo buscaría dentro de los primeros 500 (máx. 2.000) registros y diría "sin resultados" aunque el dato exista. Por eso la búsqueda se diseña con funciones delegables o con una columna de palabras clave, y se prueba con más registros que ese límite.</p>
+<p>Power Apps no trae un botón nativo de "exportar a Excel": el flujo recibe las filas filtradas, crea el archivo .xlsx en OneDrive o SharePoint y devuelve el enlace de descarga.</p>
+      </details>
+    </section>
+
+    <!-- GRAFICOS -->
+    <section id="s-graf" hidden>
+      <div class="bar"><h2>Gráficos</h2><span class="note">Se actualizan con la búsqueda y los filtros de la pantalla Registros.</span></div>
+      <div class="kpis" id="kpis"></div>
+      <div class="grid">
+        <div class="card"><b>Registros por área</b><div class="chart-box"><canvas id="cBar"></canvas></div></div>
+        <div class="card"><b>Distribución por estado</b><div class="chart-box"><canvas id="cPie"></canvas></div></div>
+        <div class="card" style="grid-column:1/-1"><b>Monto por mes</b><div class="chart-box"><canvas id="cLine"></canvas></div></div>
+      </div>
+      <details class="how"><summary>Cómo se construye en Power Apps (gráficos)</summary>
+<pre>// Gráfico de columnas nativo: agrupar y contar
+chrArea.Items =
+  AddColumns( GroupBy( colFiltrados, Area, Grupo ), Total, CountRows(Grupo) )
+
+// Gráfico de líneas: monto por mes
+chrMes.Items =
+  AddColumns( GroupBy( AddColumns(colFiltrados, Mes, Text(Fecha, "yyyy-mm")), Mes, Grupo ),
+              Monto, Sum(Grupo, Monto) )</pre>
+<p>Los gráficos básicos (barras, circular, líneas) vienen dentro de Power Apps sin costo extra. Si más adelante se necesitan tableros más completos, se puede insertar un informe de Power BI dentro de la app (requiere licencia de Power BI para quien lo vea).</p>
+      </details>
+    </section>
+
+    <!-- USUARIOS -->
+    <section id="s-usr" hidden>
+      <div class="bar">
+        <h2>Usuarios</h2>
+        <input class="search" id="qU" placeholder="Buscar usuario">
+        <button class="btn" id="btnNew">Nuevo usuario</button>
+      </div>
+      <div class="card tw"><table id="tUsr"></table>
+        <p class="note">Permisos: Administrador gestiona usuarios y todo lo demás · Editor busca, edita y exporta · Lector solo consulta y ve gráficos. Cambie la sesión arriba para ver cómo cambia la app.</p>
+      </div>
+      <details class="how"><summary>Cómo se construye en Power Apps (usuarios y roles)</summary>
+<pre>// Al abrir la app: rol del usuario conectado
+App.OnStart =
+  Set( gYo, LookUp( Usuarios, Lower(Correo) = Lower(User().Email) ) );
+  Set( gRol, If( IsBlank(gYo) Or gYo.Estado.Value = "Inactivo", "Sin acceso", gYo.Rol.Value ) )
+
+// Mostrar u ocultar según el rol
+btnNuevo.Visible      = gRol = "Administrador"
+btnExcel.DisplayMode  = If( gRol = "Lector", DisplayMode.Disabled, DisplayMode.Edit )
+
+// Crear / editar / eliminar
+frmUsuario.OnSuccess = Notify("Usuario guardado", NotificationType.Success)
+btnEliminar.OnSelect =
+  If( CountRows( Filter(Usuarios, Rol.Value = "Administrador") ) = 1
+        And galUsuarios.Selected.Rol.Value = "Administrador",
+      Notify("No se puede eliminar al último administrador", NotificationType.Error),
+      Remove( Usuarios, galUsuarios.Selected ) )</pre>
+<p>Ocultar un botón no es seguridad: quien tenga el enlace de la lista podría abrirla directamente. Por eso los permisos también se aplican en la propia lista o base de datos (grupos de SharePoint o roles de seguridad), no solo en la pantalla.</p>
+      </details>
+    </section>
+  </main>
+</div>
+
+<div class="modal" id="mUsr"><div class="card">
+  <b id="mTitle">Nuevo usuario</b>
+  <label>Nombre</label><input id="uNom">
+  <label>Correo de la organización</label><input id="uMail" type="email">
+  <label>Rol</label><select id="uRol"><option>Administrador</option><option>Editor</option><option>Lector</option></select>
+  <label>Estado</label><select id="uEst"><option>Activo</option><option>Inactivo</option></select>
+  <div class="err" id="uErr"></div>
+  <div class="bar" style="margin:10px 0 0;justify-content:flex-end"><button class="btn sec" id="uCancel">Cancelar</button><button class="btn" id="uSave">Guardar</button></div>
+</div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const $=s=>document.querySelector(s);
+const users=[
+ {id:1,nom:"Ana Torres",mail:"ana.torres@empresa-demo.com",rol:"Administrador",est:"Activo"},
+ {id:2,nom:"Carlos Méndez",mail:"carlos.mendez@empresa-demo.com",rol:"Editor",est:"Activo"},
+ {id:3,nom:"Lucía Rojas",mail:"lucia.rojas@empresa-demo.com",rol:"Editor",est:"Activo"},
+ {id:4,nom:"Diego Fuentes",mail:"diego.fuentes@empresa-demo.com",rol:"Lector",est:"Activo"},
+ {id:5,nom:"Paula Vega",mail:"paula.vega@empresa-demo.com",rol:"Lector",est:"Inactivo"}];
+let nextId=6,me=1,editing=null;
+// datos de ejemplo
+const areas=["Ventas","Operaciones","Soporte","Finanzas"],estados=["Abierto","En proceso","Cerrado","Anulado"],
+ ciudades=["Bogotá","Lima","Santiago","Quito","Medellín","Guayaquil","Cali","Arequipa"],
+ clientes=["Comercial Andina","Distribuidora Norte","Grupo Sierra","Inversiones Pacífico","Ferretería Central","Agroexport Sur","Clínica San Rafael","Transportes Ruta 5","Textiles Lumen","Café Altura"],
+ asuntos=["Cotización de equipos","Reclamo de entrega","Renovación de contrato","Solicitud de crédito","Instalación en sitio","Cambio de dirección","Pedido urgente","Revisión de factura","Capacitación","Visita técnica"];
+let seed=7;const rnd=()=>(seed=(seed*9301+49297)%233280)/233280;const pick=a=>a[Math.floor(rnd()*a.length)];
+const recs=[];
+for(let i=1;i<=180;i++){const m=Math.floor(rnd()*10),d=1+Math.floor(rnd()*27);
+ recs.push({cod:"R-"+String(1000+i),fecha:`2026-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`,cliente:pick(clientes),ciudad:pick(ciudades),asunto:pick(asuntos),area:pick(areas),estado:pick(estados),resp:pick(users.slice(0,4)).nom,monto:Math.round(200+rnd()*4800)});}
+recs.sort((a,b)=>b.fecha.localeCompare(a.fecha));
+
+const roleOf=()=>users.find(u=>u.id===me)?.rol;
+function toast(t){const e=$("#toast");e.textContent=t;e.style.display="block";clearTimeout(e._t);e._t=setTimeout(()=>e.style.display="none",2600);}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function hl(s,q){s=esc(s);if(!q)return s;const words=q.trim().split(/\s+/).filter(Boolean).map(w=>w.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"));if(!words.length)return s;return s.replace(new RegExp("("+words.join("|")+")","gi"),"<mark>$1</mark>");}
+const norm=s=>String(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+
+function filtered(){const q=norm($("#q").value).trim(),e=$("#fEstado").value,a=$("#fArea").value;const words=q.split(/\s+/).filter(Boolean);
+ return recs.filter(r=>(!e||r.estado===e)&&(!a||r.area===a)&&words.every(w=>norm([r.cod,r.cliente,r.ciudad,r.asunto,r.area,r.estado,r.resp].join(" ")).includes(w)));}
+
+function renderReg(){const rows=filtered(),q=$("#q").value;
+ $("#tReg").innerHTML="<tr><th>Código</th><th>Fecha</th><th>Cliente</th><th>Ciudad</th><th>Asunto</th><th>Área</th><th>Estado</th><th>Responsable</th><th>Monto (USD)</th></tr>"+
+ rows.slice(0,60).map(r=>`<tr><td>${hl(r.cod,q)}</td><td>${r.fecha}</td><td>${hl(r.cliente,q)}</td><td>${hl(r.ciudad,q)}</td><td>${hl(r.asunto,q)}</td><td>${hl(r.area,q)}</td><td><span class="pill">${hl(r.estado,q)}</span></td><td>${hl(r.resp,q)}</td><td>${r.monto.toLocaleString("es")}</td></tr>`).join("");
+ $("#regCount").textContent=`${rows.length} de ${recs.length} registros${rows.length>60?" (se muestran 60; el Excel incluye todos los filtrados)":""}. Puede buscar varias palabras a la vez, sin importar tildes ni mayúsculas.`;
+ renderCharts();}
+
+let charts={};
+function renderCharts(){if(!window.Chart||$("#s-graf").hidden)return;const rows=filtered();
+ const total=rows.reduce((s,r)=>s+r.monto,0);
+ $("#kpis").innerHTML=[["Registros",rows.length],["Monto total (USD)",total.toLocaleString("es")],["Abiertos",rows.filter(r=>r.estado==="Abierto").length],["Cerrados",rows.filter(r=>r.estado==="Cerrado").length]].map(k=>`<div class="kpi"><span>${k[0]}</span><b>${k[1]}</b></div>`).join("");
+ const byArea=areas.map(a=>rows.filter(r=>r.area===a).length),byEst=estados.map(e=>rows.filter(r=>r.estado===e).length);
+ const meses=[...Array(10)].map((_,i)=>`2026-${String(i+1).padStart(2,"0")}`),byMes=meses.map(m=>rows.filter(r=>r.fecha.startsWith(m)).reduce((s,r)=>s+r.monto,0));
+ const pal=["#3b4fa8","#2a9d8f","#e9a23b","#c8553d"];
+ const mk=(id,type,labels,data,extra={})=>{if(charts[id]){charts[id].data.labels=labels;charts[id].data.datasets[0].data=data;charts[id].update();return;}
+  charts[id]=new Chart(document.getElementById(id),{type,data:{labels,datasets:[{data,backgroundColor:type==="line"?"rgba(59,79,168,.15)":pal,borderColor:type==="line"?"#3b4fa8":"#fff",fill:type==="line",tension:.3,label:extra.label||""}]},options:{maintainAspectRatio:false,plugins:{legend:{display:type==="pie",position:"right"}},scales:type==="pie"?{}:{y:{beginAtZero:true}}}});};
+ mk("cBar","bar",areas,byArea,{label:"Registros"});mk("cPie","pie",estados,byEst);
+ mk("cLine","line",["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct"],byMes,{label:"Monto USD"});}
+
+function exportXlsx(){if(roleOf()==="Lector"){toast("Su rol (Lector) no permite descargar datos.");return;}
+ const rows=filtered();if(!rows.length){toast("No hay registros para exportar con esta búsqueda.");return;}
+ const data=rows.map(r=>({"Código":r.cod,"Fecha":r.fecha,"Cliente":r.cliente,"Ciudad":r.ciudad,"Asunto":r.asunto,"Área":r.area,"Estado":r.estado,"Responsable":r.resp,"Monto USD":r.monto}));
+ const ws=XLSX.utils.json_to_sheet(data);ws["!cols"]=[8,11,22,12,24,13,11,16,11].map(w=>({wch:w}));ws["!autofilter"]={ref:ws["!ref"]};
+ const info=XLSX.utils.aoa_to_sheet([["Exportado por",users.find(u=>u.id===me).nom],["Fecha",new Date().toLocaleString("es")],["Búsqueda",$("#q").value||"(ninguna)"],["Estado",$("#fEstado").value||"Todos"],["Área",$("#fArea").value||"Todas"],["Registros",rows.length]]);
+ const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Registros");XLSX.utils.book_append_sheet(wb,info,"Filtros usados");
+ XLSX.writeFile(wb,`registros_${new Date().toISOString().slice(0,10)}.xlsx`);toast(`Excel descargado con ${rows.length} registros.`);}
+
+function renderUsr(){const q=norm($("#qU").value),admin=roleOf()==="Administrador";
+ $("#tUsr").innerHTML="<tr><th>Nombre</th><th>Correo</th><th>Rol</th><th>Estado</th><th></th></tr>"+
+ users.filter(u=>norm(u.nom+" "+u.mail+" "+u.rol).includes(q)).map(u=>`<tr><td>${esc(u.nom)}${u.id===me?" (usted)":""}</td><td>${esc(u.mail)}</td><td><span class="pill ${u.rol}">${u.rol}</span></td><td><span class="pill ${u.est}">${u.est}</span></td>
+ <td>${admin?`<button class="btn sec" onclick="openU(${u.id})">Editar</button> <button class="btn del" onclick="delU(${u.id})">Eliminar</button>`:""}</td></tr>`).join("");
+ $("#btnNew").disabled=!admin;}
+function openU(id){editing=id;const u=users.find(x=>x.id===id)||{nom:"",mail:"",rol:"Lector",est:"Activo"};
+ $("#mTitle").textContent=id?"Editar usuario":"Nuevo usuario";$("#uNom").value=u.nom;$("#uMail").value=u.mail;$("#uRol").value=u.rol;$("#uEst").value=u.est;$("#uErr").textContent="";$("#mUsr").style.display="flex";$("#uNom").focus();}
+const activeAdmins=(excl)=>users.filter(u=>u.rol==="Administrador"&&u.est==="Activo"&&u.id!==excl).length;
+function saveU(){const nom=$("#uNom").value.trim(),mail=$("#uMail").value.trim().toLowerCase(),rol=$("#uRol").value,est=$("#uEst").value;
+ if(!nom||!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail)){$("#uErr").textContent="Complete el nombre y un correo válido.";return;}
+ if(users.some(u=>u.mail===mail&&u.id!==editing)){$("#uErr").textContent="Ya existe un usuario con ese correo.";return;}
+ if(editing){const u=users.find(x=>x.id===editing);if(u.rol==="Administrador"&&(rol!=="Administrador"||est!=="Activo")&&activeAdmins(u.id)===0){$("#uErr").textContent="Debe quedar al menos un administrador activo.";return;}
+  Object.assign(u,{nom,mail,rol,est});toast("Usuario actualizado.");}
+ else{users.push({id:nextId++,nom,mail,rol,est});toast("Usuario creado.");}
+ $("#mUsr").style.display="none";refreshWho();renderUsr();}
+function delU(id){const u=users.find(x=>x.id===id);
+ if(id===me){toast("No puede eliminar su propia cuenta mientras está conectado.");return;}
+ if(u.rol==="Administrador"&&u.est==="Activo"&&activeAdmins(u.id)===0){toast("No se puede eliminar al último administrador.");return;}
+ if(!confirm(`¿Eliminar a ${u.nom}? Sus registros siguen existiendo; solo pierde el acceso.`))return;
+ users.splice(users.indexOf(u),1);toast("Usuario eliminado.");refreshWho();renderUsr();}
+
+function refreshWho(){const s=$("#who");s.innerHTML=users.filter(u=>u.est==="Activo").map(u=>`<option value="${u.id}">${esc(u.nom)} · ${u.rol}</option>`).join("");
+ if(!users.some(u=>u.id===me&&u.est==="Activo"))me=users.find(u=>u.est==="Activo").id;s.value=me;applyRole();}
+function applyRole(){const r=roleOf();$("#roleTag").textContent="Rol: "+r;
+ $("#btnXlsx").disabled=r==="Lector";$("#btnXlsx").title=r==="Lector"?"El rol Lector no puede descargar datos":"";
+ const nb=document.querySelector('nav button[data-s="usr"]');nb.disabled=r!=="Administrador";
+ if(r!=="Administrador"&&!$("#s-usr").hidden)show("reg");renderUsr();}
+function show(s){document.querySelectorAll("main section").forEach(x=>x.hidden=x.id!=="s-"+s);document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.s===s));if(s==="graf")renderCharts();}
+
+estados.forEach(e=>$("#fEstado").insertAdjacentHTML("beforeend",`<option>${e}</option>`));areas.forEach(a=>$("#fArea").insertAdjacentHTML("beforeend",`<option>${a}</option>`));
+["#q","#fEstado","#fArea"].forEach(s=>$(s).addEventListener("input",renderReg));$("#qU").addEventListener("input",renderUsr);
+$("#btnXlsx").onclick=exportXlsx;$("#btnNew").onclick=()=>openU(null);$("#uSave").onclick=saveU;$("#uCancel").onclick=()=>$("#mUsr").style.display="none";
+$("#who").onchange=e=>{me=+e.target.value;applyRole();};
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>show(b.dataset.s));
+refreshWho();renderReg();
+const h={"#graficos":"graf","#usuarios":"usr"}[location.hash];if(h)show(h);
+</script>
+</body>
+</html>
