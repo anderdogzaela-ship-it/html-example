@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fluxo de conteúdo com IA para psicólogas · demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f7f3ee; --card:#fffdfa; --ink:#2f2a26; --muted:#7a6f66; --line:#e6ddd3;
+  --sage:#5f7d6b; --sage-soft:#e3ebe5; --terra:#b8664a; --terra-soft:#f5e3dc;
+  --amber:#b07d1e; --amber-soft:#f8ecd2; --ok:#3f7a52; --ok-soft:#e0efe4;
+  --radius:14px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 Inter,system-ui,sans-serif}
+h1,h2,h3{font-family:Fraunces,Georgia,serif;font-weight:600;line-height:1.2;margin:0}
+.wrap{max-width:1080px;margin:0 auto;padding:28px 16px 60px}
+header.top{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between;margin-bottom:18px}
+header.top h1{font-size:28px}
+header.top p{margin:6px 0 0;color:var(--muted);max-width:640px}
+.badge{display:inline-block;font-size:12px;padding:4px 10px;border-radius:99px;background:var(--amber-soft);color:var(--amber);font-weight:600}
+nav.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:18px 0}
+nav.tabs button{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:9px 14px;border-radius:99px;cursor:pointer;font:500 14px Inter,sans-serif}
+nav.tabs button.on{background:var(--sage);border-color:var(--sage);color:#fff}
+.panel{display:none}.panel.on{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px}
+.grid{display:grid;gap:16px}
+@media(min-width:860px){.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:340px 1fr}}
+label{font-weight:600;font-size:13px;display:block;margin:0 0 6px}
+input,select,textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:15px Inter,sans-serif;background:#fff;color:var(--ink)}
+textarea{min-height:170px;resize:vertical}
+.btn{border:0;background:var(--sage);color:#fff;padding:10px 16px;border-radius:10px;font:600 14px Inter,sans-serif;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--sage);border:1px solid var(--sage)}
+.btn.terra{background:var(--terra)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.muted{color:var(--muted);font-size:13px}
+.steps{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 14px}
+.step{font-size:12px;padding:5px 10px;border-radius:99px;background:#efe8df;color:var(--muted)}
+.step.done{background:var(--ok-soft);color:var(--ok)}
+.step.cur{background:var(--terra-soft);color:var(--terra);font-weight:600}
+.out h3{font-size:17px;margin:14px 0 8px}
+.script li{margin-bottom:6px}
+.carousel{display:flex;gap:10px;overflow-x:auto;padding-bottom:8px;scroll-snap-type:x mandatory}
+.slide{flex:0 0 190px;height:238px;border-radius:12px;padding:16px;scroll-snap-align:start;display:flex;flex-direction:column;justify-content:space-between;background:var(--sage-soft);border:1px solid #cfdcd3}
+.slide:nth-child(even){background:var(--terra-soft);border-color:#ecd0c4}
+.slide .n{font-size:11px;color:var(--muted)}
+.slide .t{font-family:Fraunces,serif;font-size:17px;line-height:1.25}
+.slide .f{font-size:11px;color:var(--muted)}
+.caption{white-space:pre-wrap;background:#fff;border:1px dashed var(--line);border-radius:10px;padding:12px}
+.flags{list-style:none;padding:0;margin:10px 0 0}
+.flags li{padding:10px 12px;border-radius:10px;margin-bottom:8px;font-size:14px}
+.flags li.bad{background:var(--terra-soft)}
+.flags li.warn{background:var(--amber-soft)}
+.flags li.good{background:var(--ok-soft)}
+.flags b{display:block;font-size:13px}
+mark{background:#f3c9b8;padding:0 2px;border-radius:3px}
+.verdict{font-weight:600;padding:10px 12px;border-radius:10px;margin-top:10px}
+.verdict.ok{background:var(--ok-soft);color:var(--ok)}
+.verdict.no{background:var(--terra-soft);color:var(--terra)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+td,th{padding:8px;border-bottom:1px solid var(--line);text-align:left}
+.phone{max-width:380px;margin:0 auto;background:#efe7dc;border-radius:22px;padding:12px;border:1px solid var(--line)}
+.phone .head{background:var(--sage);color:#fff;border-radius:14px;padding:10px 12px;font-weight:600;font-size:14px}
+.chat{height:430px;overflow-y:auto;padding:10px 2px;display:flex;flex-direction:column;gap:8px}
+.msg{max-width:84%;padding:9px 12px;border-radius:12px;font-size:14px;white-space:pre-wrap}
+.msg.bot{background:#fff;align-self:flex-start;border-top-left-radius:4px}
+.msg.me{background:#d9ebdd;align-self:flex-end;border-top-right-radius:4px}
+.msg.sys{align-self:center;background:var(--amber-soft);color:var(--amber);font-size:12px}
+.opts{display:flex;flex-direction:column;gap:6px;padding:4px 0}
+.opts button{background:#fff;border:1px solid var(--sage);color:var(--sage);padding:8px;border-radius:10px;cursor:pointer;font:500 14px Inter,sans-serif}
+.free{display:flex;gap:6px;margin-top:6px}
+.free input{font-size:14px}
+.lead{margin-top:10px;font-size:14px}
+.lead td{padding:5px 8px}
+footer{margin-top:30px;color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+  <div>
+    <span class="badge">Demonstração · dados fictícios</span>
+    <h1 style="margin-top:8px">Do tema ao post, com as normas do CFP no caminho</h1>
+    <p>Três partes de um fluxo de conteúdo e captação para uma psicóloga: o gerador de roteiro, carrossel e legenda; a checagem ética antes de qualquer publicação; e o filtro acolhedor das mensagens que chegam pelos anúncios.</p>
+  </div>
+</header>
+
+<nav class="tabs">
+  <button class="on" data-tab="gen">1. Tema → conteúdo</button>
+  <button data-tab="cfp">2. Checagem CFP</button>
+  <button data-tab="bot">3. Filtro acolhedor</button>
+  <button data-tab="flow">Como funciona de ponta a ponta</button>
+</nav>
+
+<!-- 1 GERADOR -->
+<section class="panel on" id="gen">
+  <div class="grid g3">
+    <div class="card">
+      <label for="theme">Tema do conteúdo</label>
+      <select id="theme">
+        <option value="reuniao">Ansiedade antes de reuniões e apresentações</option>
+        <option value="culpa">Culpa por não dar conta de tudo</option>
+        <option value="nao">Dificuldade em dizer não</option>
+        <option value="custom">Outro tema (digite abaixo)</option>
+      </select>
+      <div id="customBox" style="display:none;margin-top:10px">
+        <input id="customTheme" placeholder="Ex.: comparação nas redes sociais">
+      </div>
+      <label style="margin-top:14px" for="fmt">Formato principal</label>
+      <select id="fmt">
+        <option>Reels + carrossel + legenda</option>
+        <option>Só carrossel + legenda</option>
+      </select>
+      <div class="row" style="margin-top:14px"><button class="btn" id="go">Gerar rascunho</button></div>
+      <p class="muted" style="margin-top:12px">Nesta demo os textos vêm de modelos prontos. No fluxo real, quem escreve é o Claude ou o ChatGPT, usando o prompt com as regras do CFP e o tom de voz da psicóloga; a automação entrega tudo numa pasta e numa planilha de aprovação.</p>
+    </div>
+    <div class="card out" id="genOut">
+      <div class="steps" id="genSteps"></div>
+      <p class="muted">Escolha um tema e clique em “Gerar rascunho”.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 2 CFP -->
+<section class="panel" id="cfp">
+  <div class="grid g2">
+    <div class="card">
+      <label for="txt">Cole aqui uma legenda, roteiro ou texto de anúncio</label>
+      <textarea id="txt"></textarea>
+      <div class="row" style="margin-top:10px">
+        <button class="btn" id="check">Checar</button>
+        <button class="btn ghost" id="loadBad">Exemplo com problemas</button>
+        <button class="btn ghost" id="loadGood">Exemplo adequado</button>
+      </div>
+      <p class="muted" style="margin-top:12px">A checagem é real: funciona com qualquer texto colado. Ela aponta trechos para revisar com base no Código de Ética do psicólogo (art. 20, sobre publicidade). Não substitui a leitura da psicóloga, que dá a aprovação final.</p>
+    </div>
+    <div class="card">
+      <h3 style="font-size:17px">Resultado</h3>
+      <div id="cfpOut" class="muted" style="margin-top:8px">Cole um texto ou carregue um exemplo.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 3 BOT -->
+<section class="panel" id="bot">
+  <div class="grid g2">
+    <div>
+      <div class="phone">
+        <div class="head">Consultório · resposta automática</div>
+        <div class="chat" id="chat"></div>
+        <div class="opts" id="opts"></div>
+        <div class="free"><input id="freeIn" placeholder="Ou escreva livremente…"><button class="btn" id="freeSend">Enviar</button></div>
+      </div>
+      <div class="row" style="justify-content:center;margin-top:10px"><button class="btn ghost" id="restart">Recomeçar conversa</button></div>
+    </div>
+    <div class="card">
+      <h3 style="font-size:17px">O que este filtro faz</h3>
+      <ul>
+        <li>Recebe quem chega pelo anúncio com uma mensagem calorosa, sem parecer formulário.</li>
+        <li>Explica com delicadeza que o atendimento é dedicado a mulheres e é particular, sem convênio, antes de qualquer agenda.</li>
+        <li>Nunca responde perguntas clínicas. Se a pessoa descreve sofrimento intenso, recebe na hora os contatos de apoio (CVV 188, SAMU 192) e a psicóloga é avisada.</li>
+        <li>Entrega para a psicóloga só os contatos dentro do perfil, com o resumo abaixo.</li>
+      </ul>
+      <p class="muted">Experimente responder “Para outra pessoa”, perguntar “aceita convênio?” ou escrever “não aguento mais”.</p>
+      <h3 style="font-size:17px;margin-top:14px">Resumo que chega para a psicóloga</h3>
+      <table class="lead" id="lead"><tr><td class="muted">Aparece aqui quando a conversa termina.</td></tr></table>
+    </div>
+  </div>
+</section>
+
+<!-- FLOW -->
+<section class="panel" id="flow">
+  <div class="card">
+    <h3 style="font-size:18px">Uma semana de conteúdo, do tema à publicação</h3>
+    <table style="margin-top:10px">
+      <tr><th>Etapa</th><th>O que acontece</th><th>Quem faz</th></tr>
+      <tr><td>1. Tema</td><td>Ela escreve o tema numa planilha ou formulário (pode ser pelo celular).</td><td>Psicóloga</td></tr>
+      <tr><td>2. Rascunho</td><td>A automação envia o tema para a IA com o prompt-mestre: tom de voz, público, regras do CFP, formato.</td><td>Automação</td></tr>
+      <tr><td>3. Checagem</td><td>O texto passa pela checagem CFP; o que for sinalizado volta marcado em vermelho.</td><td>Automação</td></tr>
+      <tr><td>4. Aprovação</td><td>Ela lê, ajusta e marca “aprovado”. Nada é publicado sem esse clique.</td><td>Psicóloga</td></tr>
+      <tr><td>5. Arte e vídeo</td><td>Carrossel no modelo visual dela; vídeo gravado por ela, cortado e legendado com IA.</td><td>Psicóloga, com ferramentas de IA</td></tr>
+      <tr><td>6. Agendamento</td><td>Post agendado nos horários de maior engajamento encontrados no diagnóstico.</td><td>Automação ou ela, no agendador</td></tr>
+    </table>
+    <p class="muted" style="margin-top:12px">Ferramentas citadas no projeto original (Claude ou ChatGPT; Make, n8n ou Zapier; Metricool; CapCut, Descript ou Opus Clip) ficam nas contas da própria cliente.</p>
+  </div>
+</section>
+
+<footer>Demonstração com conteúdo fictício. Nome e CRP de exemplo. Não é aconselhamento jurídico nem ético: a interpretação final das normas é da profissional e do seu Conselho Regional.</footer>
+</div>
+
+<script>
+// ---------- tabs
+document.querySelectorAll('nav.tabs button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('nav.tabs button').forEach(x=>x.classList.toggle('on',x===b));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('on',p.id===b.dataset.tab));
+});
+
+const SIGN = "Psicóloga [Seu Nome] · CRP 00/00000";
+
+// ---------- 1 generator
+const PRESETS = {
+  reuniao:{
+    tema:"Ansiedade antes de reuniões e apresentações",
+    gancho:"Você prepara tudo, conhece o assunto… e mesmo assim o coração dispara cinco minutos antes da reunião.",
+    roteiro:[
+      "Gancho (0–3 s): “Você domina o assunto, mas o corpo não acredita.”",
+      "Contexto (3–15 s): a ansiedade antecipatória costuma aparecer justamente quando algo importa para nós. Não é falta de competência.",
+      "O que observar (15–35 s): pensamentos do tipo “vão perceber que eu não sei” e a tendência de ensaiar a fala até a exaustão.",
+      "Um recurso simples (35–50 s): antes de entrar, nomeie o que está sentindo e lembre-se do objetivo da reunião, não da sua performance.",
+      "Fechamento (50–60 s): se essa ansiedade está tirando espaço da sua vida profissional, a psicoterapia é um lugar para entender de onde ela vem."
+    ],
+    slides:["Você prepara tudo e, mesmo assim, o coração dispara antes da reunião?","Ansiedade antecipatória não é falta de competência.","Ela costuma aparecer quando algo importa para você.","Sinais comuns: ensaiar a fala sem parar, imaginar o pior cenário.","Um recurso: nomeie o que sente e volte ao objetivo da reunião.","Quando isso limita sua carreira, vale olhar com cuidado.","Psicoterapia é um espaço para entender de onde isso vem."],
+    tags:"#psicologia #ansiedade #saudemental #mulheresnacarreira #psicoterapia"
+  },
+  culpa:{
+    tema:"Culpa por não dar conta de tudo",
+    gancho:"Trabalho, casa, família, corpo, amizades. Em algum momento a conta não fecha, e a culpa chega antes do descanso.",
+    roteiro:[
+      "Gancho (0–3 s): “Se você sente culpa até quando descansa, este vídeo é para você.”",
+      "Contexto (3–15 s): muitas mulheres crescem ouvindo que precisam dar conta de tudo, e com excelência.",
+      "O que observar (15–35 s): a culpa aparece como cobrança constante, comparação e dificuldade de pedir ajuda.",
+      "Uma reflexão (35–50 s): pergunte-se de quem é a régua que você está usando. Ela foi escolhida por você?",
+      "Fechamento (50–60 s): na psicoterapia, essa régua pode ser revista com calma e respeito à sua história."
+    ],
+    slides:["Você sente culpa até quando descansa?","A expectativa de “dar conta de tudo” pesa.","Ela aparece como cobrança, comparação e silêncio.","Pedir ajuda não é fracasso.","De quem é a régua que você está usando?","Rever essa régua leva tempo e cuidado.","A psicoterapia pode ser esse espaço."],
+    tags:"#psicologia #culpa #saudemental #mulheres #autocuidado"
+  },
+  nao:{
+    tema:"Dificuldade em dizer não",
+    gancho:"Você diz sim para o projeto extra, para o favor, para o jantar… e depois se pergunta por que está tão cansada.",
+    roteiro:[
+      "Gancho (0–3 s): “Quantos ‘sins’ você disse esta semana querendo dizer não?”",
+      "Contexto (3–15 s): para muitas pessoas, dizer não parece colocar a relação em risco.",
+      "O que observar (15–35 s): o cansaço depois de concordar, a irritação guardada, a sensação de não ter tempo para si.",
+      "Um exercício (35–50 s): antes de responder, peça um tempo: “Deixa eu ver minha agenda e te retorno.”",
+      "Fechamento (50–60 s): aprender a colocar limites é um processo, e a psicoterapia pode acompanhar esse caminho."
+    ],
+    slides:["Quantos “sins” você disse querendo dizer não?","Dizer não pode parecer arriscar a relação.","Mas o sim forçado também cobra um preço.","Sinais: cansaço, irritação guardada, falta de tempo.","Experimente pedir um tempo antes de responder.","Limites saudáveis também cuidam das relações.","A psicoterapia pode acompanhar esse processo."],
+    tags:"#psicologia #limites #saudemental #autoconhecimento #psicoterapia"
+  }
+};
+function customPreset(t){
+  t=t.trim()||"um tema do dia a dia";
+  const tl=t.charAt(0).toLowerCase()+t.slice(1);
+  return {tema:t,gancho:`Você já percebeu como ${tl} aparece em pequenos momentos do dia?`,
+    roteiro:[`Gancho (0–3 s): uma pergunta direta sobre ${tl}.`,`Contexto (3–15 s): por que ${tl} é tão comum entre mulheres que acumulam muitos papéis.`,"O que observar (15–35 s): dois ou três sinais que a seguidora reconhece em si.","Uma reflexão ou recurso simples (35–50 s), sem prometer resultado.","Fechamento (50–60 s): a psicoterapia como espaço para olhar o tema com cuidado."],
+    slides:[`Vamos falar sobre ${tl}?`,"Por que isso é tão comum.","Sinais que vale observar.","O que costuma estar por trás.","Uma reflexão para hoje.","Quando procurar ajuda.","A psicoterapia pode ser esse espaço."],
+    tags:"#psicologia #saudemental #psicoterapia #mulheres"};
+}
+const themeSel=document.getElementById('theme');
+themeSel.onchange=()=>document.getElementById('customBox').style.display=themeSel.value==='custom'?'block':'none';
+
+function stepsHtml(cur){
+  const names=["Tema","Rascunho da IA","Checagem CFP","Sua aprovação","Agendado"];
+  return names.map((n,i)=>`<span class="step ${i<cur?'done':i===cur?'cur':''}">${i<cur?'✓ ':''}${n}</span>`).join('');
+}
+document.getElementById('genSteps').innerHTML=stepsHtml(0);
+let lastCaption="";
+document.getElementById('go').onclick=()=>{
+  const p=themeSel.value==='custom'?customPreset(document.getElementById('customTheme').value):PRESETS[themeSel.value];
+  const onlyCarousel=document.getElementById('fmt').selectedIndex===1;
+  const caption=`${p.gancho}\n\n${p.slides.slice(1,5).join(' ')}\n\nSe esse tema faz sentido para você, a psicoterapia pode ser um espaço de cuidado. Atendimento online e presencial.\n\n${SIGN}\n\n${p.tags}`;
+  lastCaption=caption;
+  const out=document.getElementById('genOut');
+  out.innerHTML=`<div class="steps">${stepsHtml(1)}</div><p class="muted">Gerando rascunho para: <b>${esc(p.tema)}</b>…</p>`;
+  setTimeout(()=>{
+    const r=runCheck(caption+"\n"+p.roteiro.join("\n")+"\n"+p.slides.join("\n"));
+    out.innerHTML=`<div class="steps">${stepsHtml(3)}</div>
+    <h2 style="font-size:20px">${esc(p.tema)}</h2>
+    ${onlyCarousel?'':`<h3>Roteiro de Reels (60 s)</h3><ol class="script">${p.roteiro.map(x=>`<li>${esc(x)}</li>`).join('')}</ol>`}
+    <h3>Carrossel (7 telas)</h3>
+    <div class="carousel">${p.slides.map((s,i)=>`<div class="slide"><span class="n">${i+1}/7</span><span class="t">${esc(s)}</span><span class="f">${i===6?SIGN:'arraste →'}</span></div>`).join('')}</div>
+    <h3>Legenda</h3><div class="caption">${esc(caption)}</div>
+    <div class="verdict ${r.bad?'no':'ok'}">${r.bad?'A checagem CFP encontrou pontos para revisar.':'Checagem CFP: nenhum ponto sinalizado. Aguardando a sua aprovação.'}</div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn" id="approve">Aprovar e agendar</button>
+      <button class="btn ghost" id="toCheck">Ver a checagem desta legenda</button>
+    </div>`;
+    document.getElementById('approve').onclick=()=>{
+      out.querySelector('.steps').innerHTML=stepsHtml(5);
+      document.getElementById('approve').outerHTML='<span class="muted">Agendado para o próximo horário de maior engajamento (definido no diagnóstico do perfil). Nesta demo nada é publicado.</span>';
+    };
+    document.getElementById('toCheck').onclick=()=>{document.getElementById('txt').value=lastCaption;document.querySelector('[data-tab=cfp]').click();doCheck();};
+  },700);
+};
+
+// ---------- 2 CFP checker (Código de Ética, art. 20 + sigilo)
+const RULES=[
+  {lvl:'bad',art:'Previsão taxativa de resultados (art. 20, e)',re:/(\b(cura|curar|curada|garantid[oa]s?|garanto|resultado(s)? (garantido|certo)|definitivamente|para sempre|nunca mais|em \d+ sess(ões|ão)|em \d+ semanas?)\b|100%)/gi,tip:'Fale de processo e cuidado, não de resultado prometido.'},
+  {lvl:'bad',art:'Preço usado como propaganda (art. 20, d)',re:/(R\$ ?\d+|\b(desconto|promoção|promo|black friday|primeira sess(ão|ao) (grátis|gratuita)|sess(ão|ao) gratuita|de graça|oferta|cupom)\b)/gi,tip:'Valores podem ser informados quando a pessoa pergunta, mas não como chamariz no post ou no anúncio.'},
+  {lvl:'bad',art:'Divulgação sensacionalista (art. 20, h)',re:/\b(milagre|milagros[oa]|revolucionári[oa]|segredo|chocante|inacreditável|transforme sua vida|método infalível|infalível)\b/gi,tip:'Troque por linguagem descritiva e serena.'},
+  {lvl:'bad',art:'Autopromoção em detrimento de colegas (art. 20, f)',re:/\b(a melhor psicóloga|melhor psicóloga|a única|única psicóloga|diferente das outras|outros psicólogos não)\b/gi,tip:'Apresente a sua abordagem sem comparar com outras profissionais.'},
+  {lvl:'bad',art:'Depoimento ou caso de paciente (sigilo)',re:/\b(depoimento|minha paciente|uma paciente|paciente me (disse|contou)|caso real|antes e depois)\b/gi,tip:'Use situações genéricas e fictícias; nada que permita identificar alguém.'},
+  {lvl:'warn',art:'Linguagem de diagnóstico no conteúdo',re:/\b(você (tem|está com) (ansiedade|depressão|transtorno|tdah|burnout)|faça o teste e descubra|diagnóstico)\b/gi,tip:'Conteúdo educa; diagnóstico só no atendimento.'},
+  {lvl:'warn',art:'Técnicas não reconhecidas pela profissão (art. 20, c)',re:/\b(constelação familiar|reiki|cristais|terapia quântica|barras de access|thetahealing)\b/gi,tip:'Divulgue só práticas reconhecidas ou regulamentadas pela Psicologia.'}
+];
+function esc(s){return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function runCheck(text){
+  const found=[];let marked=esc(text);
+  RULES.forEach(r=>{
+    const m=text.match(r.re);
+    if(m){const uniq=[...new Set(m.map(x=>x.toLowerCase()))];found.push({...r,hits:uniq});
+      uniq.forEach(h=>{marked=marked.replace(new RegExp(esc(h).replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi'),x=>`<mark>${x}</mark>`)});}
+  });
+  const hasCRP=/CRP\s*\d{2}\s*\/\s*\d{3,6}/i.test(text);
+  const hasName=/[Pp]sic[óo]log[ao]\s+[A-ZÀ-Ú\[]/.test(text);
+  return {found,marked,hasCRP,hasName,bad:found.some(f=>f.lvl==='bad')||!hasCRP};
+}
+function doCheck(){
+  const t=document.getElementById('txt').value;const o=document.getElementById('cfpOut');
+  if(!t.trim()){o.innerHTML='Cole um texto primeiro.';return;}
+  const r=runCheck(t);
+  let h='<ul class="flags">';
+  r.found.forEach(f=>h+=`<li class="${f.lvl}"><b>${f.art}</b>Trecho: “${f.hits.join('”, “')}”. ${f.tip}</li>`);
+  h+=r.hasCRP?'<li class="good"><b>Identificação profissional</b>Número do CRP presente (art. 20, a).</li>':'<li class="bad"><b>Identificação profissional (art. 20, a)</b>Falta o nome completo e o número do CRP.</li>';
+  if(!r.hasName&&r.hasCRP)h+='<li class="warn"><b>Nome completo</b>Confirme que o nome completo aparece junto ao CRP.</li>';
+  if(!r.found.length)h+='<li class="good"><b>Promessas, preço, sensacionalismo, depoimentos</b>Nada sinalizado.</li>';
+  h+='</ul>';
+  h+=`<div class="verdict ${r.bad?'no':'ok'}">${r.bad?'Revisar antes de seguir para aprovação.':'Pronto para a sua leitura e aprovação final.'}</div>`;
+  h+=`<h3 style="font-size:15px;margin-top:14px">Texto com os trechos marcados</h3><div class="caption" style="margin-top:6px">${r.marked}</div>`;
+  o.innerHTML=h;o.classList.remove('muted');
+}
+document.getElementById('check').onclick=doCheck;
+document.getElementById('loadBad').onclick=()=>{document.getElementById('txt').value="Chega de sofrer! Com o meu método infalível você vai curar a ansiedade em 8 sessões. Veja o depoimento de uma paciente que mudou de vida. Sou a melhor psicóloga da região. Primeira sessão grátis só esta semana: depois R$ 250.";doCheck();};
+document.getElementById('loadGood').onclick=()=>{document.getElementById('txt').value=PRESETS.reuniao.gancho+"\n\nA ansiedade antecipatória costuma aparecer quando algo importa para nós. Não é falta de competência. Se ela está limitando a sua vida profissional, a psicoterapia é um espaço para entender de onde ela vem.\n\nAtendimento online e presencial.\nPsicóloga [Seu Nome] · CRP 00/00000";doCheck();};
+
+// ---------- 3 bot
+const chat=document.getElementById('chat'),opts=document.getElementById('opts');
+let lead={},waitingFree=null;
+function say(t,who='bot'){const d=document.createElement('div');d.className='msg '+who;d.textContent=t;chat.appendChild(d);chat.scrollTop=chat.scrollHeight;}
+function choices(list){opts.innerHTML='';list.forEach(([label,fn])=>{const b=document.createElement('button');b.textContent=label;b.onclick=()=>{say(label,'me');opts.innerHTML='';setTimeout(fn,450)};opts.appendChild(b);});}
+const CRISIS=/(não aguento|nao aguento|quero morrer|me matar|suic|acabar com tudo|me machucar|crise de pânico agora)/i;
+const CLINICAL=/(rem[eé]dio|medica|diagn[oó]stic|o que eu tenho|é normal|sintoma|ansiedade|depress|o que fa[cç]o)/i;
+const CONV=/(conv[eê]nio|plano de sa[uú]de|unimed|amil|bradesco sa[uú]de|sulam[eé]rica)/i;
+function freeText(t){
+  say(t,'me');
+  if(CRISIS.test(t)){setTimeout(()=>{say("Obrigada por me contar. O que você está sentindo importa. Se estiver em risco agora, ligue para o CVV no 188 (24 horas, gratuito) ou para o SAMU no 192.");say("Avisei a psicóloga sobre a sua mensagem. Ela vai ler pessoalmente.");say("Mensagem marcada como prioridade para a psicóloga","sys");lead.Prioridade="Avisar a psicóloga agora";showLead();},500);return;}
+  if(CONV.test(t)){setTimeout(()=>{say("O atendimento é particular, sem convênio. Se o seu plano oferece reembolso, você pode solicitar com o recibo emitido após cada sessão.");},500);return;}
+  if(CLINICAL.test(t)){setTimeout(()=>{say("Essa é uma pergunta importante, e ela merece ser conversada com cuidado na consulta, não por mensagem automática. Posso te ajudar a marcar um primeiro horário?");},500);return;}
+  if(waitingFree){const f=waitingFree;waitingFree=null;f(t);return;}
+  setTimeout(()=>say("Recebi sua mensagem. Para te orientar melhor, escolha uma das opções acima."),400);
+}
+document.getElementById('freeSend').onclick=()=>{const i=document.getElementById('freeIn');if(i.value.trim()){freeText(i.value.trim());i.value='';}};
+document.getElementById('freeIn').onkeydown=e=>{if(e.key==='Enter')document.getElementById('freeSend').click();};
+function showLead(){document.getElementById('lead').innerHTML=Object.entries(lead).map(([k,v])=>`<tr><td><b>${k}</b></td><td>${esc(v)}</td></tr>`).join('');}
+function start(){
+  chat.innerHTML='';lead={Origem:'Anúncio (Instagram)'};showLead();waitingFree=null;
+  say("Oi! Que bom que você chegou até aqui. Sou a assistente do consultório e vou te ajudar com as primeiras informações. Em seguida, a própria psicóloga continua com você.");
+  setTimeout(()=>{say("O atendimento é dedicado exclusivamente a mulheres. Ele seria para você?");choices([["Sim, para mim",q2],["Para outra pessoa",other]]);},600);
+}
+function other(){say("Que cuidado bonito o seu. Para quem seria?");choices([["Para uma mulher da minha família ou amiga",()=>{lead.Para="Outra mulher (indicação)";say("Combinado! O ideal é que ela mesma entre em contato, porque a decisão de começar a terapia é dela. Você pode compartilhar este número com ela.");say("Contato registrado como indicação","sys");showLead();end()}],["Para um homem",()=>{lead.Para="Homem — fora do perfil";say("Obrigada por perguntar. Este consultório atende exclusivamente mulheres. No site do Conselho Federal de Psicologia (cadastro nacional) é possível encontrar psicólogos e psicólogas com registro ativo na sua cidade.");say("Contato encerrado com orientação, sem encaminhar para a agenda","sys");showLead();end()}]]);}
+function q2(){lead.Para="Ela mesma";showLead();say("Você prefere atendimento online ou presencial?");choices([["Online",()=>q3('Online')],["Presencial",()=>q3('Presencial')],["Ainda não sei",()=>q3('A definir')]]);}
+function q3(m){lead.Modalidade=m;showLead();say("Uma informação importante: o atendimento é particular, sem convênio. Se o seu plano oferece reembolso, você pode solicitar com o recibo de cada sessão. Tudo bem para você?");choices([["Tudo bem, quero seguir",q4],["Queria pelo convênio",()=>{lead.Convenio="Queria convênio — orientada sobre reembolso";showLead();say("Entendo. Se mais adiante fizer sentido, é só me chamar por aqui. Fico à disposição.");end()}]]);}
+function q4(){lead.Convenio="Ciente: particular";showLead();say("Como posso te chamar?");waitingFree=n=>{lead.Nome=n;showLead();say(`Obrigada, ${n.split(' ')[0]}. Qual período costuma ser melhor para você?`);choices([["Manhã",()=>fin('Manhã')],["Tarde",()=>fin('Tarde')],["Noite",()=>fin('Noite')]]);};}
+function fin(p){lead.Periodo=p;lead.Status="Dentro do perfil — psicóloga continua";showLead();say("Perfeito. Já passei suas informações para a psicóloga, que vai te responder pessoalmente com os horários disponíveis. Fico feliz que você tenha dado esse passo.");say("Conversa entregue à psicóloga com o resumo","sys");end();}
+function end(){opts.innerHTML='';waitingFree=null;}
+document.getElementById('restart').onclick=start;
+start();
+</script>
+</body>
+</html>
