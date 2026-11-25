@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mesa de asistencias – demo WhatsApp + tickets + IA</title>
+<meta name="description" content="Simulación: mensajes de WhatsApp que crean y actualizan tickets con campos llenos, formularios por cliente, plantillas aprobadas y un asistente de IA para operadores.">
+<style>
+:root{
+  --bg:#f4f6f8;--card:#ffffff;--ink:#1d2733;--muted:#5d6b7a;--line:#dde3ea;
+  --accent:#1f6feb;--accent-soft:#e7f0ff;--ok:#1a7f4b;--ok-soft:#e5f5ec;
+  --warn:#9a5b00;--warn-soft:#fff3dc;--bad:#b42318;--bad-soft:#fde8e6;
+  --wa:#e9f7ef;--wa-out:#d9fdd3;--phone:#efe7dd;--hl:#fff7c2;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root{--bg:#0f1418;--card:#171e24;--ink:#e6edf3;--muted:#9aa7b4;--line:#2a343e;
+  --accent:#5b9cff;--accent-soft:#16263d;--ok:#4cc38a;--ok-soft:#14291f;--warn:#f0b450;--warn-soft:#2d2412;
+  --bad:#ff7b72;--bad-soft:#2f1715;--wa:#11251a;--wa-out:#1d3b2a;--phone:#1b1a17;--hl:#3a3410;}
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{padding:20px 16px 8px;max-width:1280px;margin:0 auto}
+h1{font-size:22px;margin:0 0 4px}
+.sub{color:var(--muted);margin:0;max-width:900px}
+.badge{display:inline-block;font-size:12px;padding:2px 8px;border-radius:99px;background:var(--warn-soft);color:var(--warn);margin-left:6px;vertical-align:middle}
+nav{max-width:1280px;margin:12px auto 0;padding:0 16px;display:flex;gap:6px;flex-wrap:wrap}
+nav button{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:8px 14px;border-radius:8px;cursor:pointer;font:inherit}
+nav button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+main{max-width:1280px;margin:0 auto;padding:12px 16px 40px}
+.tab{display:none}.tab.on{display:block}
+.grid{display:grid;grid-template-columns:330px 1fr 340px;gap:14px;align-items:start}
+@media (max-width:1100px){.grid{grid-template-columns:1fr 1fr}.grid .copilot{grid-column:1/-1}}
+@media (max-width:720px){.grid{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
+.card h2{font-size:15px;margin:0 0 10px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.muted{color:var(--muted);font-size:13px}
+.scen{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+.scen button{text-align:left;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:8px;padding:8px 10px;cursor:pointer;font:inherit;font-size:13px}
+.scen button:hover{border-color:var(--accent)}
+.phone{background:var(--phone);border-radius:14px;padding:10px;height:420px;overflow-y:auto;display:flex;flex-direction:column;gap:6px}
+.msg{max-width:85%;padding:6px 9px;border-radius:9px;font-size:13.5px;box-shadow:0 1px 0 rgba(0,0,0,.08);white-space:pre-wrap}
+.msg.in{background:var(--card);align-self:flex-start}
+.msg.out{background:var(--wa-out);align-self:flex-end}
+.msg.sys{align-self:center;background:transparent;box-shadow:none;color:var(--muted);font-size:12px;text-align:center}
+.msg .t{display:block;font-size:11px;color:var(--muted);text-align:right}
+.msg.loc{border-left:3px solid var(--ok)}
+.typebar{display:flex;gap:6px;margin-top:8px}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:7px 9px;width:100%}
+textarea{resize:vertical;min-height:70px}
+.btn{border:0;background:var(--accent);color:#fff;border-radius:8px;padding:8px 12px;cursor:pointer;font:inherit;white-space:nowrap}
+.btn.ghost{background:var(--accent-soft);color:var(--accent)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 12px}
+.f label{display:block;font-size:12px;color:var(--muted)}
+.f div{min-height:34px;border:1px solid var(--line);border-radius:8px;padding:6px 9px;transition:background .6s}
+.f div.flash{background:var(--hl)}
+.pill{display:inline-block;font-size:12px;padding:1px 8px;border-radius:99px;background:var(--accent-soft);color:var(--accent)}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}.pill.warn{background:var(--warn-soft);color:var(--warn)}.pill.bad{background:var(--bad-soft);color:var(--bad)}
+.log{margin-top:12px;border-top:1px dashed var(--line);padding-top:10px;font-size:13px;max-height:220px;overflow:auto}
+.log div{padding:3px 0;border-bottom:1px solid var(--line)}
+.log b{font-weight:600}
+.thread{margin-top:10px;font-size:13px;max-height:180px;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:8px}
+.thread p{margin:0 0 6px}
+.cp-sec{margin-bottom:12px}
+.cp-sec h3{font-size:13px;margin:0 0 6px;color:var(--muted);text-transform:none}
+.check li{list-style:none;margin-left:-22px}
+.check li::before{content:"○ ";color:var(--muted)}
+.check li.done::before{content:"● ";color:var(--ok)}
+.canned{display:flex;flex-wrap:wrap;gap:6px}
+.canned button{border:1px dashed var(--line);background:var(--bg);color:var(--ink);border-radius:8px;padding:5px 8px;font-size:12.5px;cursor:pointer}
+.ticketlist{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.ticketlist button{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:8px;padding:4px 10px;font-size:12.5px;cursor:pointer}
+.ticketlist button.on{border-color:var(--accent);color:var(--accent)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
+@media (max-width:820px){.two{grid-template-columns:1fr}}
+.formsec{border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:10px}
+.formsec h4{margin:0 0 8px;font-size:13px}
+.formsec .row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+@media (max-width:520px){.formsec .row,.fields{grid-template-columns:1fr}}
+.formsec label{font-size:12px;color:var(--muted)}
+pre{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px;overflow:auto;font:12.5px/1.45 var(--mono);margin:0 0 12px;white-space:pre}
+.tpl{border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:8px}
+.note{background:var(--accent-soft);border-radius:10px;padding:10px 12px;font-size:13.5px;margin-top:12px}
+.note.warn{background:var(--warn-soft)}
+table{border-collapse:collapse;width:100%;font-size:13px}
+td,th{border-bottom:1px solid var(--line);padding:6px;text-align:left;vertical-align:top}
+footer{max-width:1280px;margin:0 auto;padding:0 16px 30px;color:var(--muted);font-size:12.5px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Mesa de asistencias: WhatsApp → ticket → asistente de IA <span class="badge">simulación</span></h1>
+  <p class="sub">Elige un caso a la izquierda (o escribe como si fueras el usuario). Mira cómo el ticket se crea o se actualiza solo, con cliente, tipo de asistencia, ubicación, prioridad y grupo llenos, y qué le sugiere el asistente al operador. Los clientes, pólizas y teléfonos son ficticios.</p>
+</header>
+<nav>
+  <button class="on" data-tab="t1">1. WhatsApp → ticket + asistente</button>
+  <button data-tab="t2">2. Formularios por cliente</button>
+  <button data-tab="t3">3. Avisos con plantilla aprobada</button>
+  <button data-tab="t4">4. Cómo se arma en Freshdesk (fdk)</button>
+</nav>
+<main>
+<!-- TAB 1 -->
+<section class="tab on" id="t1">
+ <div class="grid">
+  <div class="card">
+   <h2>WhatsApp del usuario <span class="muted" id="phoneNum">—</span></h2>
+   <div class="scen">
+    <button data-s="grua">Grúa: avería en Periférico (Aseguradora Norte)</button>
+    <button data-s="cerraj">Cerrajería: llave rota en la chapa (Banco Sol)</button>
+    <button data-s="doble">Mismo número en dos clientes: hay que preguntar</button>
+    <button data-s="seguimiento">Respuesta a un ticket ya abierto</button>
+   </div>
+   <div class="phone" id="phone"></div>
+   <div class="typebar">
+    <input id="userText" placeholder="Escribe como el usuario…">
+    <button class="btn" id="userSend">Enviar</button>
+   </div>
+   <div class="typebar"><button class="btn ghost" id="userLoc" style="width:100%">Compartir ubicación 📍</button></div>
+  </div>
+
+  <div class="card">
+   <h2>Ticket en la mesa de ayuda <span id="tStatus" class="pill">sin ticket</span></h2>
+   <div class="ticketlist" id="ticketList"></div>
+   <div class="fields">
+    <div class="f"><label>Cliente corporativo</label><div id="f_cliente">—</div></div>
+    <div class="f"><label>Tipo de asistencia</label><div id="f_tipo">—</div></div>
+    <div class="f"><label>Ubicación</label><div id="f_ubic">—</div></div>
+    <div class="f"><label>Prioridad</label><div id="f_prio">—</div></div>
+    <div class="f"><label>Grupo asignado</label><div id="f_grupo">—</div></div>
+    <div class="f"><label>Contacto / póliza</label><div id="f_contacto">—</div></div>
+   </div>
+   <div class="thread" id="thread"><p class="muted">La conversación aparece aquí, dentro del ticket.</p></div>
+   <div style="margin-top:10px">
+    <textarea id="agentReply" placeholder="Respuesta del operador (se envía al WhatsApp del usuario)"></textarea>
+    <div class="typebar"><button class="btn" id="agentSend">Responder por WhatsApp</button><span class="muted" id="windowInfo"></span></div>
+   </div>
+   <div class="log" id="log"><div class="muted">Registro de reglas aplicadas</div></div>
+  </div>
+
+  <div class="card copilot">
+   <h2>Asistente del operador <span class="pill">IA</span></h2>
+   <div class="cp-sec"><h3>Resumen del caso</h3><div id="cpSum" class="muted">Sin caso todavía.</div></div>
+   <div class="cp-sec"><h3>Cobertura de esta asistencia</h3><div id="cpCov" class="muted">—</div></div>
+   <div class="cp-sec"><h3>Datos que faltan antes de enviar al proveedor</h3><ul class="check" id="cpCheck"></ul></div>
+   <div class="cp-sec"><h3>Borrador de respuesta</h3><div id="cpDraft" class="muted">—</div>
+     <button class="btn ghost" id="useDraft" style="margin-top:6px" disabled>Usar borrador</button></div>
+   <div class="cp-sec"><h3>Respuestas predefinidas de este cliente</h3><div class="canned" id="canned"></div></div>
+   <p class="muted">En producción, el resumen y el borrador los genera Freddy AI Copilot o un modelo de IA conectado a la mesa; la cobertura sale del catálogo de cada cliente, no de la memoria del modelo.</p>
+  </div>
+ </div>
+</section>
+
+<!-- TAB 2 -->
+<section class="tab" id="t2">
+ <div class="two">
+  <div class="card">
+   <h2>Formulario del ticket, según el cliente y la asistencia</h2>
+   <div class="row" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+    <div><label class="muted">Cliente corporativo</label><select id="fmCliente"></select></div>
+    <div><label class="muted">Tipo de asistencia</label><select id="fmTipo"></select></div>
+   </div>
+   <div id="fmBody"></div>
+  </div>
+  <div class="card">
+   <h2>Por qué así</h2>
+   <p>Cada cliente tiene su propio catálogo: el tipo de asistencia solo ofrece lo que ese contrato cubre, y cada tipo abre solo la sección que necesita (placas y destino para una grúa; dirección y tipo de chapa para un cerrajero).</p>
+   <p>En Freshdesk esto se arma con campos dependientes y secciones dinámicas del formulario. Cuando un cliente tiene reglas que el formulario nativo no alcanza (por ejemplo, validar el número de póliza contra su lista), se agrega una pequeña app en la barra lateral del ticket.</p>
+   <div class="note">La guía de cobertura que ve el operador sale de esta misma tabla, así que al cambiar un contrato se actualiza en un solo lugar.</div>
+   <h2 style="margin-top:14px">Catálogo (ejemplo)</h2>
+   <div id="catTable"></div>
+  </div>
+ </div>
+</section>
+
+<!-- TAB 3 -->
+<section class="tab" id="t3">
+ <div class="two">
+  <div class="card">
+   <h2>Enviar un aviso iniciado por la mesa</h2>
+   <p class="muted">Pasadas 24 horas desde el último mensaje del usuario, WhatsApp solo acepta plantillas aprobadas por Meta. La app lo revisa antes de enviar.</p>
+   <label class="muted">Plantilla</label><select id="tplSel"></select>
+   <div id="tplVars" style="margin-top:8px"></div>
+   <label class="muted" style="display:block;margin-top:8px">Último mensaje del usuario hace</label>
+   <select id="tplHours"><option value="2">2 horas</option><option value="30">30 horas</option></select>
+   <div class="typebar" style="margin-top:10px"><button class="btn" id="tplSend">Enviar aviso</button><button class="btn ghost" id="freeSend">Enviar texto libre</button></div>
+   <div class="note" id="tplResult">Elige la plantilla y prueba con 2 y con 30 horas.</div>
+  </div>
+  <div class="card">
+   <h2>Vista previa en el teléfono</h2>
+   <div class="phone" id="tplPhone" style="height:300px"></div>
+   <table style="margin-top:12px"><tr><th>Plantilla</th><th>Categoría</th><th>Estado</th></tr><tbody id="tplTable"></tbody></table>
+  </div>
+ </div>
+</section>
+
+<!-- TAB 4 -->
+<section class="tab" id="t4">
+ <div class="two">
+  <div class="card">
+   <h2>Piezas que quedan a nombre de la empresa</h2>
+   <table>
+    <tr><th>Frente</th><th>Qué se configura</th><th>Qué se programa</th></tr>
+    <tr><td>WhatsApp</td><td>Número y plantillas en la cuenta de Meta de la empresa (canal nativo de Freshdesk Omni, o un proveedor oficial)</td><td>Si no es nativo: app serverless que recibe el mensaje y lo entrega al ticket, y envía las respuestas del operador</td></tr>
+    <tr><td>Tickets</td><td>Campos, grupos, reglas de asignación y SLA</td><td>Reglas de la app: buscar al contacto, ticket abierto vs nuevo, prioridad</td></tr>
+    <tr><td>IA</td><td>Freddy AI Copilot (si se contrata) o un modelo externo</td><td>Guía de cobertura desde el catálogo de cada cliente</td></tr>
+    <tr><td>Por cliente</td><td>Formularios, secciones dinámicas, respuestas predefinidas</td><td>Validaciones que el formulario nativo no hace</td></tr>
+   </table>
+   <div class="note warn">Detalle a revisar al empezar: para la vía por API, Meta verifica la dirección que recibe los mensajes con una llamada de comprobación. Se confirma en la primera semana qué pieza responde esa comprobación antes de conectar el número real.</div>
+  </div>
+  <div class="card">
+   <h2>Extracto de la app (Freshworks Developer Kit)</h2>
+   <pre id="code1"></pre>
+   <pre id="code2"></pre>
+  </div>
+ </div>
+</section>
+</main>
+<footer>Simulación de demostración con datos ficticios. No está conectada a Freshdesk ni a WhatsApp; muestra el comportamiento propuesto.</footer>
+
+<script>
+// ---------- Datos ficticios ----------
+const CLIENTES = {
+  norte:{nombre:"Aseguradora Norte", grupo:"Mesa Autos",
+    catalogo:{
+      "Grúa":{cob:"Hasta 50 km o 2 eventos por año. El excedente lo paga el asegurado (avisar antes de enviar la grúa).", datos:["Ubicación","Placas","Destino"], prio:"Alta"},
+      "Paso de corriente":{cob:"3 eventos por año, sin costo.", datos:["Ubicación","Placas"], prio:"Media"},
+      "Cambio de llanta":{cob:"3 eventos por año. La llanta de refacción la pone el asegurado.", datos:["Ubicación","Placas"], prio:"Media"}
+    },
+    canned:["Estamos asignando su grúa, le confirmamos el tiempo de llegada en unos minutos.","¿Me comparte las placas del vehículo, por favor?","¿A qué taller o domicilio desea que lo traslademos?"]},
+  sol:{nombre:"Banco Sol (tarjetahabientes)", grupo:"Mesa Hogar",
+    catalogo:{
+      "Cerrajería":{cob:"3 eventos por año. Mano de obra hasta $1,500 MXN; la chapa nueva la paga el titular.", datos:["Ubicación","Tipo de chapa","Últimos 4 dígitos de la tarjeta"], prio:"Media"},
+      "Plomería":{cob:"2 eventos por año. Mano de obra hasta $1,200 MXN.", datos:["Ubicación","Descripción de la fuga"], prio:"Media"},
+      "Electricista":{cob:"2 eventos por año. No cubre instalaciones nuevas.", datos:["Ubicación","Descripción"], prio:"Media"}
+    },
+    canned:["Por seguridad, ¿me confirma los últimos 4 dígitos de su tarjeta?","Su cerrajero va en camino.","Le recordamos que la chapa nueva no está incluida en la cobertura."]},
+  flota:{nombre:"Flotillas Centro", grupo:"Mesa Flotillas",
+    catalogo:{
+      "Grúa":{cob:"Sin límite de eventos dentro de la zona metropolitana.", datos:["Ubicación","Número económico","Destino"], prio:"Alta"},
+      "Asistencia vial":{cob:"Paso de corriente, llanta y gasolina, sin límite.", datos:["Ubicación","Número económico"], prio:"Media"}
+    },
+    canned:["¿Cuál es el número económico de la unidad?","Unidad asignada, le avisamos al llegar."]}
+};
+const CONTACTOS = {
+  "+52 55 1234 0001":{nombre:"Laura Méndez", clientes:{norte:"Póliza AN-48213"}},
+  "+52 55 1234 0002":{nombre:"Jorge Ruiz", clientes:{sol:"Tarjeta •• 4417"}},
+  "+52 33 9876 0003":{nombre:"Ana Torres", clientes:{norte:"Póliza AN-77102", sol:"Tarjeta •• 0921"}}
+};
+const TIPOS_KW = [
+  [/gr[uú]a|remolc|no arranca y|descompus|me qued[eé] tirado/i,"Grúa"],
+  [/bater[ií]a|corriente|pasar corriente/i,"Paso de corriente"],
+  [/llanta|ponch/i,"Cambio de llanta"],
+  [/llave|chapa|cerraj|me qued[eé] afuera/i,"Cerrajería"],
+  [/fuga|agua|plomer/i,"Plomería"],
+  [/luz|el[eé]ctric|corto/i,"Electricista"]
+];
+const URGENTE_KW = /niñ|beb[eé]|carretera|accidente|noche|sola|lluvia|herid/i;
+
+// ---------- Estado ----------
+let tickets = []; let current = null; let phoneNum = null; let seq = 1042;
+const $ = id => document.getElementById(id);
+const now = () => new Date().toLocaleTimeString("es-MX",{hour:"2-digit",minute:"2-digit"});
+
+function addPhone(text, cls){
+  const d=document.createElement("div"); d.className="msg "+cls; d.textContent=text;
+  if(cls!=="sys"){const t=document.createElement("span");t.className="t";t.textContent=now();d.appendChild(t);}
+  $("phone").appendChild(d); $("phone").scrollTop=1e6;
+}
+function log(html){const d=document.createElement("div");d.innerHTML=`<span class="muted">${now()}</span> ${html}`;$("log").appendChild(d);$("log").scrollTop=1e6;}
+function flash(id,val){const el=$(id); if(el.textContent!==val){el.textContent=val;el.classList.remove("flash");void el.offsetWidth;el.classList.add("flash");setTimeout(()=>el.classList.remove("flash"),1500);}}
+
+function findOpen(num){return tickets.find(t=>t.phone===num && t.estado!=="Resuelto");}
+
+function inbound(text, opts={}){
+  if(!phoneNum) return;
+  addPhone(opts.loc? "📍 Ubicación compartida\n"+opts.loc.dir : text, "in"+(opts.loc?" msg loc":""));
+  const c = CONTACTOS[phoneNum];
+  let t = findOpen(phoneNum);
+  if(t){ log(`Mensaje de <b>${c.nombre}</b> → se agrega al ticket abierto <b>#${t.id}</b> (no se crea uno nuevo)`); }
+  else{
+    t={id:seq++, phone:phoneNum, contacto:c.nombre, cliente:null, tipo:null, ubic:null, prio:null, grupo:null, estado:"Nuevo", msgs:[], datos:{}, lastIn:Date.now(), pendienteCliente:false};
+    tickets.push(t); log(`Número <b>${phoneNum}</b> sin ticket abierto → se crea el ticket <b>#${t.id}</b>`);
+    const ks=Object.keys(c.clientes);
+    if(ks.length===1){ t.cliente=ks[0]; log(`Contacto encontrado: <b>${c.nombre}</b>, cliente <b>${CLIENTES[ks[0]].nombre}</b>`);}
+    else{ t.pendienteCliente=true; t.estado="Esperando dato";
+      log(`<span class="pill warn">ojo</span> El número está en <b>${ks.length} clientes</b>. No se adivina: el bot pregunta y el ticket queda en espera.`);
+      setTimeout(()=>addPhone(`Hola ${c.nombre.split(" ")[0]}, para atenderte bien: ¿tu asistencia es por\n1) ${CLIENTES[ks[0]].nombre}\n2) ${CLIENTES[ks[1]].nombre}?\nResponde 1 o 2.`,"out"),400);
+    }
+  }
+  current=t; t.lastIn=Date.now();
+  t.msgs.push({de:"usuario",txt:opts.loc?("Ubicación: "+opts.loc.dir):text});
+  // respuesta a la pregunta de cliente
+  if(t.pendienteCliente && /^\s*[12]\s*$/.test(text||"")){
+    const ks=Object.keys(c.clientes); t.cliente=ks[parseInt(text)-1]; t.pendienteCliente=false; t.estado="Nuevo";
+    log(`El usuario eligió <b>${CLIENTES[t.cliente].nombre}</b> → se llena el cliente y se aplica su catálogo`);
+    const prev=t.msgs.map(m=>m.txt).join(" "); detectTipo(t, prev);
+  } else if(!opts.loc){ detectTipo(t,text); }
+  if(opts.loc){ t.ubic=opts.loc.dir; t.datos["Ubicación"]=true; log(`Ubicación de WhatsApp (coordenadas ${opts.loc.lat}, ${opts.loc.lng}) → convertida a dirección: <b>${opts.loc.dir}</b>`); }
+  const pl=(text||"").match(/\b[A-Z]{3}-?\d{2,3}-?[A-Z0-9]?\b/i); if(pl){t.datos["Placas"]=true; log(`Placas detectadas: <b>${pl[0].toUpperCase()}</b>`);}
+  if(/taller|llevar(lo)? a|destino|a mi casa/i.test(text||"")){t.datos["Destino"]=true; log("Destino del traslado detectado");}
+  const ne=(text||"").match(/econ[oó]mico\s*#?\s*(\d+)/i); if(ne){t.datos["Número económico"]=true;}
+  const d4=(text||"").match(/\b\d{4}\b/); if(d4 && t.cliente==="sol"){t.datos["Últimos 4 dígitos de la tarjeta"]=true;}
+  if(/chapa|cerradura|llave/i.test(text||"") && t.tipo==="Cerrajería"){t.datos["Tipo de chapa"]=true;}
+  if(/fuga/i.test(text||"")) t.datos["Descripción de la fuga"]=true;
+  if(URGENTE_KW.test(text||"") && t.prio!=="Urgente" && t.tipo){t.prio="Urgente"; log(`Palabra de riesgo en el mensaje → prioridad sube a <b>Urgente</b>`);}
+  if(t.cliente && !t.grupo){t.grupo=CLIENTES[t.cliente].grupo; log(`Asignado al grupo <b>${t.grupo}</b>`);}
+  if(t.estado==="Nuevo" && t.msgs.length>1 && !t.pendienteCliente) t.estado="Abierto";
+  render();
+}
+function detectTipo(t,text){
+  if(!t.cliente || t.tipo) return;
+  for(const [re,tipo] of TIPOS_KW){ if(re.test(text)){
+      const cat=CLIENTES[t.cliente].catalogo;
+      if(cat[tipo]){ t.tipo=tipo; t.prio=t.prio||cat[tipo].prio; log(`Tipo de asistencia: <b>${tipo}</b> (está en el catálogo de ${CLIENTES[t.cliente].nombre}) → prioridad base <b>${t.prio}</b>`);}
+      else log(`<span class="pill bad">no cubierto</span> "${tipo}" no está en el catálogo de ${CLIENTES[t.cliente].nombre} → el ticket queda sin tipo y el asistente avisa al operador`);
+      return; } }
+}
+function render(){
+  const t=current; $("phoneNum").textContent=phoneNum||"—";
+  $("ticketList").innerHTML=tickets.map(x=>`<button class="${x===t?'on':''}" data-id="${x.id}">#${x.id} · ${x.contacto.split(" ")[0]}</button>`).join("");
+  $("ticketList").querySelectorAll("button").forEach(b=>b.onclick=()=>{current=tickets.find(x=>x.id==b.dataset.id);phoneNum=current.phone;render();});
+  if(!t){return;}
+  const st=$("tStatus"); st.textContent="#"+t.id+" · "+t.estado; st.className="pill "+(t.estado==="Esperando dato"?"warn":"ok");
+  flash("f_cliente",t.cliente?CLIENTES[t.cliente].nombre:(t.pendienteCliente?"Pendiente: el usuario elige":"—"));
+  flash("f_tipo",t.tipo||"—"); flash("f_ubic",t.ubic||"—"); flash("f_prio",t.prio||"—"); flash("f_grupo",t.grupo||"—");
+  const c=CONTACTOS[t.phone]; flash("f_contacto",c.nombre+(t.cliente?" · "+c.clientes[t.cliente]:""));
+  $("thread").innerHTML=t.msgs.map(m=>`<p><b>${m.de==="usuario"?t.contacto.split(" ")[0]:"Operador"}:</b> ${esc(m.txt)}</p>`).join("");
+  $("thread").scrollTop=1e6;
+  copilot(t);
+}
+function esc(s){return s.replace(/[&<>]/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[ch]));}
+function copilot(t){
+  const cl=t.cliente?CLIENTES[t.cliente]:null; const item=cl&&t.tipo?cl.catalogo[t.tipo]:null;
+  const nom=t.contacto.split(" ")[0];
+  let sum=`${t.contacto}`+(cl?` (${cl.nombre})`:"")+` escribe por WhatsApp`+(t.tipo?` y pide ${t.tipo.toLowerCase()}`:"")+(t.ubic?` en ${t.ubic}`:"")+`. `;
+  if(t.pendienteCliente) sum+="Su número pertenece a dos clientes y todavía no indica cuál.";
+  else if(!t.tipo) sum+="Aún no se identifica una asistencia cubierta.";
+  $("cpSum").textContent=sum; $("cpSum").className="";
+  $("cpCov").innerHTML=item?esc(item.cob):(cl?'<span class="pill bad">Revisar</span> la solicitud no coincide con el catálogo de este cliente.':'—');
+  const datos=item?item.datos:[];
+  $("cpCheck").innerHTML=datos.map(d=>`<li class="${t.datos[d]?'done':''}">${d}</li>`).join("")||'<li>—</li>';
+  const falta=datos.filter(d=>!t.datos[d]);
+  let draft="—";
+  if(t.pendienteCliente) draft="(Espera la respuesta 1 o 2 del usuario.)";
+  else if(item){
+    draft = falta.length? `Hola ${nom}, ya registramos su solicitud de ${t.tipo.toLowerCase()}. Para enviarle el servicio necesito: ${falta.join(", ").toLowerCase()}.`
+      : `Hola ${nom}, su ${t.tipo.toLowerCase()} quedó solicitada${t.ubic?` a ${t.ubic.split(",")[0]}`:""}. Le confirmo el tiempo de llegada en unos minutos.`;
+    if(/excedente/.test(item.cob)) draft+=" Le recuerdo que su cobertura es hasta 50 km; si el destino queda más lejos, el excedente tiene costo.";
+  }
+  $("cpDraft").textContent=draft; $("cpDraft").className=""; $("useDraft").disabled=(draft==="—"||draft.startsWith("("));
+  $("canned").innerHTML=cl?cl.canned.map(x=>`<button>${esc(x)}</button>`).join(""):'<span class="muted">Aparecen al conocer el cliente.</span>';
+  $("canned").querySelectorAll("button").forEach(b=>b.onclick=()=>{$("agentReply").value=b.textContent;});
+  const hrs=(Date.now()-t.lastIn)/36e5; $("windowInfo").textContent= hrs<24?"Ventana de 24 h abierta: se puede responder con texto libre.":"Ventana cerrada: solo plantilla.";
+}
+$("useDraft").onclick=()=>{$("agentReply").value=$("cpDraft").textContent;};
+$("agentSend").onclick=()=>{
+  const v=$("agentReply").value.trim(); if(!v||!current) return;
+  current.msgs.push({de:"op",txt:v}); if(current.estado==="Nuevo")current.estado="Abierto";
+  if(current.phone===phoneNum) addPhone(v,"out");
+  log(`Operador responde desde el ticket <b>#${current.id}</b> → entregado por WhatsApp`); $("agentReply").value=""; render();
+};
+
+const SCEN={
+  grua:{num:"+52 55 1234 0001", steps:[
+    ["Hola, se me descompuso el coche en Periférico y no arranca, necesito una grúa"],
+    [null,{lat:"19.3906",lng:"-99.1745",dir:"Av. Insurgentes Sur 1235, Col. Del Valle, Benito Juárez, CDMX"}],
+    ["Las placas son MXA-123-B"],
+    ["Quiero que lo lleven al taller de mi agencia en Coyoacán"]]},
+  cerraj:{num:"+52 55 1234 0002", steps:[
+    ["Buenas noches, se rompió la llave en la chapa y me quedé afuera con mi niño"],
+    [null,{lat:"19.4326",lng:"-99.1332",dir:"Calle Regina 45, Col. Centro, Cuauhtémoc, CDMX"}],
+    ["Los últimos dígitos de la tarjeta son 4417"]]},
+  doble:{num:"+52 33 9876 0003", steps:[
+    ["Hola, se me ponchó una llanta"],["1"],
+    [null,{lat:"20.6736",lng:"-103.3440",dir:"Av. Vallarta 3020, Col. Vallarta Poniente, Guadalajara"}]]},
+  seguimiento:{num:"+52 55 1234 0001", steps:[["¿Cuánto falta para que llegue la grúa?"]]}
+};
+let playing=false;
+async function play(k){
+  if(playing) return; playing=true; const s=SCEN[k];
+  if(phoneNum!==s.num){ $("phone").innerHTML=""; phoneNum=s.num; addPhone("Chat con la mesa de asistencias","sys"); }
+  if(k==="seguimiento" && !findOpen(s.num)){ addPhone("Primero corre el caso de la grúa para tener un ticket abierto.","sys"); playing=false; return; }
+  for(const [txt,loc] of s.steps){ await new Promise(r=>setTimeout(r,900)); inbound(txt||"",loc?{loc}:{}); }
+  playing=false;
+}
+document.querySelectorAll(".scen button").forEach(b=>b.onclick=()=>play(b.dataset.s));
+$("userSend").onclick=()=>{const v=$("userText").value.trim(); if(!v)return; if(!phoneNum){phoneNum="+52 55 1234 0001";addPhone("Chat con la mesa de asistencias","sys");} inbound(v); $("userText").value="";};
+$("userText").addEventListener("keydown",e=>{if(e.key==="Enter")$("userSend").click();});
+$("userLoc").onclick=()=>{ if(!phoneNum){phoneNum="+52 55 1234 0001";addPhone("Chat con la mesa de asistencias","sys");} inbound("",{loc:{lat:"19.4270",lng:"-99.1677",dir:"Paseo de la Reforma 222, Col. Juárez, Cuauhtémoc, CDMX"}}); };
+
+// tabs
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("on",x===b));
+  document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x.id===b.dataset.tab));
+});
+
+// ---------- TAB 2: formularios ----------
+const SECC = {
+  "Grúa":[["Placas","MXA-123-B"],["Marca y modelo",""],["Destino del traslado",""],["¿Vehículo en estacionamiento subterráneo?","No"]],
+  "Paso de corriente":[["Placas",""],["¿Hay otro vehículo cerca?",""]],
+  "Cambio de llanta":[["Placas",""],["¿Tiene refacción y gato?",""]],
+  "Cerrajería":[["Tipo de chapa","Llave rota dentro"],["Últimos 4 dígitos de la tarjeta",""],["¿Hay menores o personas vulnerables?",""]],
+  "Plomería":[["Descripción de la fuga",""],["¿Se puede cerrar la llave de paso?",""]],
+  "Electricista":[["Descripción",""],["¿Hay olor a quemado?",""]],
+  "Asistencia vial":[["Número económico",""],["Servicio","Paso de corriente / llanta / gasolina"]]
+};
+function fillForm(){
+  const cl=$("fmCliente").value; const tipos=Object.keys(CLIENTES[cl].catalogo);
+  const prev=$("fmTipo").value; $("fmTipo").innerHTML=tipos.map(t=>`<option>${t}</option>`).join("");
+  if(tipos.includes(prev)) $("fmTipo").value=prev;
+  const tipo=$("fmTipo").value; const item=CLIENTES[cl].catalogo[tipo];
+  let campos=SECC[tipo]||[]; if(cl==="flota" && tipo==="Grúa") campos=[["Número económico","U-118"],["Destino del traslado","Patio central"]];
+  $("fmBody").innerHTML=`
+   <div class="formsec"><h4>Datos generales (todos los clientes)</h4><div class="row">
+    <div><label>Contacto</label><input value="Laura Méndez"></div><div><label>Ubicación</label><input value="Av. Insurgentes Sur 1235, Col. Del Valle"></div>
+    <div><label>Prioridad</label><input value="${item.prio}"></div><div><label>Grupo</label><input value="${CLIENTES[cl].grupo}"></div></div></div>
+   <div class="formsec"><h4>Sección: ${tipo} · ${CLIENTES[cl].nombre}</h4><div class="row">
+    ${campos.map(([l,v])=>`<div><label>${l}</label><input value="${v}"></div>`).join("")}</div></div>
+   <div class="note"><b>Cobertura:</b> ${item.cob}</div>`;
+}
+$("fmCliente").innerHTML=Object.entries(CLIENTES).map(([k,v])=>`<option value="${k}">${v.nombre}</option>`).join("");
+$("fmCliente").onchange=fillForm; $("fmTipo").onchange=fillForm; fillForm();
+$("catTable").innerHTML="<table><tr><th>Cliente</th><th>Asistencia</th><th>Cobertura</th></tr>"+Object.values(CLIENTES).flatMap(c=>Object.entries(c.catalogo).map(([t,i])=>`<tr><td>${c.nombre}</td><td>${t}</td><td>${i.cob}</td></tr>`)).join("")+"</table>";
+
+// ---------- TAB 3: plantillas ----------
+const TPL=[
+  {id:"aviso_llegada",cat:"Utilidad",estado:"Aprobada",txt:"Hola {{1}}, su {{2}} llega en aproximadamente {{3}} minutos. Folio: {{4}}.",vars:["Laura","grúa","25","#1042"]},
+  {id:"encuesta_servicio",cat:"Utilidad",estado:"Aprobada",txt:"Hola {{1}}, ¿cómo calificaría el servicio de {{2}} del folio {{3}}? Responda del 1 al 5.",vars:["Jorge","cerrajería","#1043"]},
+  {id:"aviso_vencimiento",cat:"Marketing",estado:"En revisión",txt:"Hola {{1}}, su cobertura de asistencias con {{2}} vence el {{3}}.",vars:["Ana","Aseguradora Norte","15/12"]}
+];
+$("tplSel").innerHTML=TPL.map((t,i)=>`<option value="${i}">${t.id}</option>`).join("");
+$("tplTable").innerHTML=TPL.map(t=>`<tr><td>${t.id}</td><td>${t.cat}</td><td><span class="pill ${t.estado==="Aprobada"?"ok":"warn"}">${t.estado}</span></td></tr>`).join("");
+function tplVars(){const t=TPL[$("tplSel").value]; $("tplVars").innerHTML=t.vars.map((v,i)=>`<label class="muted">{{${i+1}}}</label><input data-v="${i}" value="${v}">`).join("");}
+$("tplSel").onchange=tplVars; tplVars();
+function tplPhone(text,cls){const d=document.createElement("div");d.className="msg "+cls;d.textContent=text;$("tplPhone").appendChild(d);$("tplPhone").scrollTop=1e6;}
+$("tplSend").onclick=()=>{
+  const t=TPL[$("tplSel").value]; if(t.estado!=="Aprobada"){$("tplResult").innerHTML=`<span class="pill warn">bloqueado</span> La plantilla <b>${t.id}</b> sigue en revisión en Meta. La app no la deja enviar y lo anota en el ticket.`;return;}
+  let txt=t.txt; document.querySelectorAll("#tplVars input").forEach(i=>txt=txt.replace(`{{${+i.dataset.v+1}}}`,i.value));
+  tplPhone(txt,"out"); $("tplResult").innerHTML=`<span class="pill ok">enviado</span> Plantilla aprobada: se puede enviar aunque hayan pasado ${$("tplHours").value} horas. Queda registrada como nota en el ticket.`;
+};
+$("freeSend").onclick=()=>{
+  if(+$("tplHours").value<24){tplPhone("Le escribimos para confirmar que todo quedó bien.","out");$("tplResult").innerHTML=`<span class="pill ok">enviado</span> Dentro de las 24 horas el texto libre sí se entrega.`;}
+  else $("tplResult").innerHTML=`<span class="pill bad">no se envía</span> Pasaron 30 horas: WhatsApp rechazaría el texto libre. En lugar de mostrar el ticket como "respondido" sin que el usuario reciba nada, la app lo detiene y propone una plantilla.`;
+};
+
+// ---------- TAB 4: código ----------
+$("code1").textContent=`// manifest.json (plataforma 3.0)
+{
+  "platform-version": "3.0",
+  "modules": {
+    "common": {
+      "events": {
+        "onAppInstall":    { "handler": "onAppInstallHandler" },
+        "onExternalEvent": { "handler": "onWhatsAppMessage" }
+      },
+      "requests": { "createTicket": {}, "updateTicket": {}, "searchContact": {}, "sendWhatsApp": {} }
+    },
+    "support_ticket": {
+      "location": { "ticket_sidebar": { "url": "index.html", "icon": "styles/images/icon.svg" } }
+    }
+  }
+}`;
+$("code2").textContent=`// server/server.js (resumen)
+exports = {
+  onAppInstallHandler: async function () {
+    const url = await generateTargetUrl();          // dirección que recibe los mensajes
+    // se registra en el proveedor de WhatsApp de la empresa
+    renderData();
+  },
+  onWhatsAppMessage: async function (payload) {
+    const msg = parseWhatsApp(payload.data);       // texto, ubicación o imagen
+    const contacto = await buscarContacto(msg.telefono);
+    const abierto = await ticketAbierto(contacto); // ¿ya hay un caso en curso?
+    if (abierto) return agregarNota(abierto, msg);
+    const cliente = elegirCliente(contacto);       // si hay dos, se pregunta
+    await $request.invokeTemplate("createTicket", {
+      body: JSON.stringify(camposDesdeCatalogo(cliente, msg))
+    });
+  }
+};`;
+render();
+</script>
+</body>
+</html>
