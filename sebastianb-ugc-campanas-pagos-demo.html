@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flujo UGC – demo de campaña y pagos</title>
+<meta name="description" content="Demo: una campaña UGC completa entre marca, creador y admin, con pago retenido en MXN, revisiones, verificación, billetera y reembolso.">
+<style>
+:root{--bg:#f6f4ef;--card:#fff;--ink:#1d1d1f;--mute:#6b6b70;--line:#e4e1d9;--acc:#e8542e;--acc2:#1f7a5a;--warn:#b7791f;--bad:#c0392b;--soft:#fff3ee;--soft2:#eaf6f0}
+@media (prefers-color-scheme:dark){:root{--bg:#141416;--card:#1e1e21;--ink:#f2f2f2;--mute:#a0a0a8;--line:#323238;--soft:#3a241d;--soft2:#17332a}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line)}
+.top{max-width:1100px;margin:auto;padding:10px 16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.logo{font-weight:800;letter-spacing:-.02em}.logo span{color:var(--acc)}
+.roles{display:flex;gap:6px;margin-left:auto}
+.roles button{border:1px solid var(--line);background:transparent;color:var(--ink);padding:7px 12px;border-radius:999px;cursor:pointer;font-weight:600}
+.roles button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.roles button .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--acc);margin-left:6px;vertical-align:middle}
+.guide{max-width:1100px;margin:auto;padding:0 16px 10px;font-size:14px;color:var(--mute)}
+.guide b{color:var(--acc)}
+main{max-width:1100px;margin:auto;padding:16px;display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:16px}
+@media (max-width:900px){main{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+h2{font-size:18px;margin:0 0 10px}h3{font-size:15px;margin:14px 0 6px}
+label{display:block;font-size:13px;color:var(--mute);margin:10px 0 4px}
+input,select,textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink);font:inherit}
+textarea{min-height:64px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{display:inline-block;border:0;background:var(--acc);color:#fff;padding:10px 14px;border-radius:10px;font-weight:700;cursor:pointer;font:inherit;font-weight:700;margin:10px 6px 0 0}
+.btn.sec{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.ok{background:var(--acc2)}.btn.bad{background:var(--bad)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.pill{display:inline-block;font-size:12px;padding:2px 8px;border-radius:999px;background:var(--bg);border:1px solid var(--line);color:var(--mute);margin:0 4px 4px 0}
+.pill.on{background:var(--soft);border-color:var(--acc);color:var(--acc);cursor:pointer}
+.chips .pill{cursor:pointer}
+.muted{color:var(--mute);font-size:13px}
+.kv{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed var(--line)}
+.kv:last-child{border:0}.kv b{font-variant-numeric:tabular-nums}
+.note{background:var(--soft);border-left:3px solid var(--acc);padding:10px 12px;border-radius:8px;font-size:14px;margin:10px 0}
+.note.g{background:var(--soft2);border-color:var(--acc2)}
+.camp{border:1px solid var(--line);border-radius:12px;padding:12px;margin:8px 0}
+.camp .t{font-weight:700}.camp .fee{float:right;font-weight:800;color:var(--acc2)}
+table{width:100%;border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums}
+th,td{padding:6px 4px;border-bottom:1px solid var(--line);text-align:right;vertical-align:top}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--mute);font-weight:600}
+.check{font-weight:700;color:var(--acc2)}.check.x{color:var(--bad)}
+.steps{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px}
+.steps span{flex:1;min-width:24px;height:5px;border-radius:3px;background:var(--line)}
+.steps span.d{background:var(--acc2)}.steps span.c{background:var(--acc)}
+video{width:100%;max-height:300px;border-radius:10px;background:#000}
+.ph{aspect-ratio:9/12;max-height:260px;margin:auto;border-radius:10px;background:linear-gradient(160deg,#e8542e,#7a2bd1);color:#fff;display:flex;align-items:center;justify-content:center;text-align:center;padding:16px;font-weight:700}
+.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;transition:.25s;pointer-events:none;max-width:92vw}
+.toast.s{opacity:1}
+.empty{color:var(--mute);text-align:center;padding:24px 8px}
+.hist{font-size:13px;border-left:2px solid var(--line);padding-left:10px;margin:6px 0}
+.modal{position:fixed;inset:0;background:#0008;display:none;align-items:center;justify-content:center;z-index:9;padding:16px}
+.modal.s{display:flex}.modal .card{max-width:420px;width:100%}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <div class="logo">Flujo<span>UGC</span> <span class="muted" style="color:var(--mute);font-weight:400">· demo</span></div>
+    <div class="roles" id="roles">
+      <button data-r="marca">Marca</button>
+      <button data-r="creador">Creador</button>
+      <button data-r="admin">Admin</button>
+    </div>
+  </div>
+  <div class="guide" id="guide"></div>
+</header>
+
+<main>
+  <section id="view"></section>
+  <aside>
+    <div class="card">
+      <h2>Libro de movimientos (MXN)</h2>
+      <p class="muted">Cada peso queda registrado: cobrado a la marca = retenido + pagado al creador + comisión + reembolsos.</p>
+      <div id="ledger"></div>
+    </div>
+    <div class="card">
+      <h2>Saldos</h2>
+      <div id="balances"></div>
+      <button class="btn sec" id="reset">Reiniciar demo</button>
+    </div>
+  </aside>
+</main>
+
+<div class="modal" id="modal"><div class="card" id="modalBody"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const FEE_PCT = 15; // comisión de ejemplo cobrada a la marca (configurable en Admin)
+const mx = n => n.toLocaleString('es-MX',{style:'currency',currency:'MXN'});
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+const OTHERS = [
+  {id:'c2',name:'Diego M.',city:'Guadalajara',niche:'Tecnología',followers:'18 mil',rate:2200,msg:'Hago reseñas de apps en 30 s, entrego en 4 días.'},
+  {id:'c3',name:'Sofía L.',city:'Monterrey',niche:'Belleza',followers:'41 mil',rate:3500,msg:'Formato antes/después, luz natural.'}
+];
+const SEED_CAMPS = [
+  {id:'s1',title:'Reseña de café de especialidad',brand:'Tostador local',niche:'Comida',fee:1800,slots:3,deadline:'12 días',rights:'6 meses',vis:'publica'},
+  {id:'s2',title:'Unboxing de audífonos',brand:'Marca de audio',niche:'Tecnología',fee:2500,slots:2,deadline:'9 días',rights:'12 meses',vis:'publica'}
+];
+
+let S;
+function fresh(){
+  return {role:'marca',step:0,fee:FEE_PCT,camp:null,apps:[],hired:false,versions:[],revisions:0,maxRev:2,
+    pubLink:'',verified:false,dispute:null,closed:false,withdrawn:false,ledger:[],
+    bal:{retenido:0,pendiente:0,verificado:0,retirado:0,plataforma:0,reembolsado:0,cobrado:0},
+    nicheFilter:'Todas',history:[]};
+}
+function load(){try{const x=JSON.parse(localStorage.getItem('ugcdemo'));if(x&&x.bal){S=x;S.versions=S.versions.map(v=>({...v,url:null}));return}}catch(e){}S=fresh()}
+function save(){try{localStorage.setItem('ugcdemo',JSON.stringify({...S,versions:S.versions.map(v=>({...v,url:null}))}))}catch(e){}}
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('s');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('s'),2600)}
+function log(desc,d){S.ledger.push({desc,...d});Object.keys(d).forEach(k=>S.bal[k]=(S.bal[k]||0)+d[k])}
+function hist(t){S.history.push(t)}
+
+const GUIDE = [
+ ['marca','Crea la campaña y paga: el dinero queda retenido, todavía no llega a nadie.'],
+ ['creador','Busca la campaña con los filtros, lee el script y postúlate.'],
+ ['marca','Revisa las postulaciones y contrata al creador.'],
+ ['creador','Sube el video (MP4 hasta 100 MB) o usa el de ejemplo.'],
+ ['marca','Mira el video: pide una revisión o apruébalo.'],
+ ['creador','Envía el enlace de la publicación.'],
+ ['admin','Verifica la entrega (o abre una disputa). Solo entonces el saldo queda verificado.'],
+ ['marca','Cierra la campaña: el cupo no usado se reembolsa solo. Luego el creador retira su saldo.'],
+ ['creador','Retira tu saldo verificado a tu cuenta CLABE.'],
+ [null,'Flujo completo. Revisa el libro de movimientos: todo cuadra al centavo.']
+];
+function guide(){
+  const g=GUIDE[Math.min(S.step,GUIDE.length-1)];
+  $('#guide').innerHTML = g[0] ? `Paso ${S.step+1} de 9 · cambia a <b>${g[0]==='marca'?'Marca':g[0]==='creador'?'Creador':'Admin'}</b>: ${g[1]}` : `<b>Listo.</b> ${g[1]}`;
+  document.querySelectorAll('#roles button').forEach(b=>{
+    b.classList.toggle('on',b.dataset.r===S.role);
+    b.innerHTML = b.textContent.replace(/\s*$/,'') + (g[0]===b.dataset.r&&S.role!==b.dataset.r?'<span class="dot"></span>':'');
+  });
+}
+function bar(){let h='<div class="steps">';for(let i=0;i<9;i++)h+=`<span class="${i<S.step?'d':i===S.step?'c':''}"></span>`;return h+'</div>'}
+
+/* ---------- MARCA ---------- */
+function vMarca(){
+  if(S.step===0) return `<div class="card">${bar()}<h2>Nueva campaña</h2>
+   <label>Título</label><input id="f_t" value="Video de 30 s probando nuestra app de ahorro">
+   <div class="row"><div><label>Categoría</label><select id="f_n"><option>Finanzas</option><option>Tecnología</option><option>Belleza</option><option>Comida</option></select></div>
+   <div><label>Visibilidad</label><select id="f_v"><option value="publica">Pública (cualquier creador)</option><option value="privada">Privada (solo invitados)</option></select></div></div>
+   <div class="row"><div><label>Pago por video (MXN)</label><input id="f_f" type="number" min="300" step="100" value="2000"></div>
+   <div><label>Creadores a contratar</label><input id="f_s" type="number" min="1" max="10" value="2"></div></div>
+   <div class="row"><div><label>Plazo de entrega</label><select id="f_d"><option>7 días</option><option selected>10 días</option><option>15 días</option></select></div>
+   <div><label>Derechos de uso</label><select id="f_r"><option>Solo orgánico, 3 meses</option><option selected>Orgánico + anuncios, 6 meses</option><option>Orgánico + anuncios, 12 meses</option></select></div></div>
+   <label>Script / brief para el creador</label><textarea id="f_b">Gancho en los primeros 3 s: "¿Cuánto gastaste en cafés este mes?". Muestra la app en pantalla, termina con el código de descarga.</textarea>
+   <div class="row"><div><label>Revisiones incluidas</label><select id="f_m"><option>1</option><option selected>2</option></select></div><div></div></div>
+   <button class="btn" onclick="checkout()">Publicar y pagar</button></div>`;
+  const c=S.camp;
+  let h=`<div class="card">${bar()}<h2>${esc(c.title)}</h2>
+   <span class="pill">${c.vis==='publica'?'Pública':'Privada'}</span><span class="pill">${esc(c.niche)}</span><span class="pill">${mx(c.fee)} por video</span><span class="pill">${c.slots} cupo(s)</span><span class="pill">${esc(c.rights)}</span>`;
+  if(S.step===1) h+=`<div class="note">Pagaste ${mx(c.total)}. El dinero está retenido: el creador lo recibe solo cuando apruebas su video y el admin verifica la publicación.</div><p class="empty">Aún no hay postulaciones. Cambia a Creador para postularte.</p>`;
+  if(S.step===2){
+    h+=`<h3>Postulaciones (${S.apps.length})</h3>`+S.apps.map(a=>`<div class="camp"><span class="fee">${a.followers} seg.</span><div class="t">${esc(a.name)} · ${esc(a.city)}</div><div class="muted">${esc(a.niche)} — “${esc(a.msg)}”</div>
+      ${a.id==='me'?`<button class="btn ok" onclick="hire()">Contratar</button>`:`<button class="btn sec" onclick="toast('En la demo solo contratas a Valeria; en la plataforma puedes contratar hasta ${c.slots}.')">Contratar</button>`}</div>`).join('');
+  }
+  if(S.step===3) h+=`<div class="note g">Contrataste a Valeria R. Derechos de uso acordados: ${esc(c.rights)}. Esperando su video (plazo ${esc(c.deadline)}).</div>`;
+  if(S.step===4){
+    const v=S.versions[S.versions.length-1];
+    h+=`<h3>Entrega · versión ${S.versions.length}</h3>${vid(v)}
+     <p class="muted">Revisiones usadas: ${S.revisions} de ${S.maxRev}</p>
+     <label>Comentario para la revisión</label><textarea id="revNote">Muestra el código de descarga 2 segundos más al final.</textarea>
+     <button class="btn ok" onclick="approve()">Aprobar video</button>
+     <button class="btn sec" onclick="askRev()" ${S.revisions>=S.maxRev?'disabled':''}>Pedir revisión</button>
+     ${S.revisions>=S.maxRev?'<p class="muted">Ya se usaron las revisiones incluidas. Si no estás conforme, puedes abrir una disputa con el admin.</p>':''}`;
+  }
+  if(S.step===5) h+=`<div class="note g">Video aprobado. Esperando que Valeria publique y envíe el enlace.</div>`;
+  if(S.step===6) h+=`<div class="note">El admin está verificando la publicación de Valeria.</div>`;
+  if(S.step>=7){
+    const unused=c.slots-1;
+    h+= S.dispute?`<div class="note">Disputa resuelta: ${esc(S.dispute)}</div>`:`<div class="note g">Entrega verificada. Ya puedes descargar el video original para tus anuncios (${esc(c.rights)}).</div>`;
+    h+= S.closed?`<div class="note g">Campaña cerrada. Reembolsado: ${mx(S.refundUnused||0)} (cupo(s) no usado(s) + su comisión).</div>`
+       :`<p>Tienes ${unused} cupo(s) sin usar (${mx(unused*c.fee)} + comisión).</p><button class="btn" onclick="closeCamp()">Cerrar campaña y reembolsar lo no usado</button>`;
+  }
+  h+=histHtml()+'</div>';
+  return h;
+}
+function checkout(){
+  const fee=+$('#f_f').value, slots=+$('#f_s').value;
+  if(!(fee>=300)) return toast('El pago mínimo por video en la demo es $300 MXN.');
+  if(!(slots>=1&&slots<=10)) return toast('Entre 1 y 10 creadores.');
+  const base=fee*slots, com=Math.round(base*S.fee)/100;
+  S.draft={title:$('#f_t').value||'Campaña sin título',niche:$('#f_n').value,vis:$('#f_v').value,fee,slots,deadline:$('#f_d').value,rights:$('#f_r').value,brief:$('#f_b').value,base,com,total:base+com};
+  S.maxRev=+$('#f_m').value;
+  modal(`<h2>Checkout</h2>
+   <div class="kv"><span>${slots} video(s) × ${mx(fee)}</span><b>${mx(base)}</b></div>
+   <div class="kv"><span>Comisión de la plataforma (${S.fee}%)</span><b>${mx(com)}</b></div>
+   <div class="kv"><span>Total a pagar</span><b>${mx(base+com)}</b></div>
+   <p class="muted">Pago simulado: en la plataforma real la marca paga con tarjeta u otros medios en MXN y el cobro queda retenido hasta la verificación.</p>
+   <button class="btn" onclick="pay()">Pagar ${mx(base+com)}</button><button class="btn sec" onclick="closeModal()">Cancelar</button>`);
+}
+function pay(){
+  const d=S.draft;S.camp={...d,id:'mine',brand:'Tu marca'};delete S.draft;
+  log(`Cobro a la marca: "${d.title}"`,{cobrado:d.total,retenido:d.base,plataforma:d.com});
+  hist('Marca pagó la campaña; fondos retenidos.');S.step=1;closeModal();toast('Pago recibido. Fondos retenidos.');go();
+}
+function hire(){S.hired=true;S.step=3;hist('Marca contrató a Valeria R.');toast('Valeria fue notificada por email y en la app.');go()}
+function askRev(){const n=$('#revNote').value.trim();if(!n)return toast('Escribe qué cambiar.');S.revisions++;S.versions[S.versions.length-1].note=n;S.step=3;hist(`Revisión ${S.revisions} pedida: "${n}"`);toast('Revisión enviada al creador.');go()}
+function approve(){S.step=5;hist(`Video v${S.versions.length} aprobado por la marca.`);toast('Aprobado. El creador debe publicar y enviar el enlace.');go()}
+function closeCamp(){
+  const c=S.camp,unused=c.slots-1,base=unused*c.fee,com=Math.round(base*S.fee)/100;
+  if(unused>0) log(`Reembolso a la marca: ${unused} cupo(s) sin usar`,{retenido:-base,plataforma:-com,reembolsado:base+com});
+  S.refundUnused=base+com;S.closed=true;hist('Campaña cerrada; cupos no usados reembolsados.');
+  S.step=S.withdrawn?9:8;toast('Reembolso registrado.');go();
+}
+
+/* ---------- CREADOR ---------- */
+function vCreador(){
+  let h=`<div class="card">${bar()}<h2>Hola, Valeria</h2><p class="muted">Creadora · CDMX · Finanzas y estilo de vida · <a href="#" onclick="toast('El portafolio y las redes vinculadas se ven aquí.');return false">ver portafolio</a></p>`;
+  if(S.step<1) return h+`<p class="empty">Aún no hay campañas nuevas. Cambia a Marca para crear una.</p></div>`;
+  if(S.step===1){
+    const camps=[...(S.camp.vis==='publica'?[S.camp]:[]),...SEED_CAMPS];
+    const niches=['Todas','Finanzas','Tecnología','Belleza','Comida'];
+    const list=camps.filter(c=>S.nicheFilter==='Todas'||c.niche===S.nicheFilter);
+    h+=`<h3>Descubrir campañas</h3><div class="chips">${niches.map(n=>`<span class="pill ${n===S.nicheFilter?'on':''}" onclick="S.nicheFilter='${n}';go()">${n}</span>`).join('')}</div>`;
+    if(S.camp.vis==='privada') h+=`<div class="note">La campaña de la marca es privada: no aparece en la búsqueda, te llegó como invitación.</div>`+campCard(S.camp,true);
+    h+= list.length?list.map(c=>campCard(c,c.id==='mine')).join(''):'<p class="empty">Sin campañas en esta categoría.</p>';
+  }
+  if(S.step===2) h+=`<div class="note">Postulación enviada. Te avisamos cuando la marca responda.</div>`;
+  if(S.step===3){
+    const last=S.versions[S.versions.length-1];
+    h+=`<h3>${esc(S.camp.title)}</h3><div class="note g">¡Te contrataron! Pago: ${mx(S.camp.fee)} · Derechos: ${esc(S.camp.rights)} · Plazo: ${esc(S.camp.deadline)}</div>
+     <h3>Script</h3><p>${esc(S.camp.brief)}</p>
+     ${last&&last.note?`<div class="note">Revisión pedida (${S.revisions}/${S.maxRev}): “${esc(last.note)}”</div>`:''}
+     <h3>Subir video ${S.versions.length?'(versión '+(S.versions.length+1)+')':''}</h3>
+     <input type="file" id="file" accept="video/mp4">
+     <p class="muted">Solo MP4, hasta 100 MB. El archivo queda privado: solo lo ven la marca y el admin.</p>
+     <button class="btn" onclick="upload()">Subir</button><button class="btn sec" onclick="upload(true)">Usar video de ejemplo</button>`;
+  }
+  if(S.step===4) h+=`<div class="note">Video enviado. La marca lo está revisando.</div>`;
+  if(S.step===5) h+=`<div class="note g">¡Video aprobado! Publícalo y pega aquí el enlace.</div>
+     <label>Enlace de la publicación</label><input id="link" placeholder="https://www.tiktok.com/@valeria/video/...">
+     <button class="btn" onclick="sendLink()">Enviar enlace</button>`;
+  if(S.step>=6){
+    h+=`<h3>Billetera</h3>
+     <div class="kv"><span>Pendiente de verificación</span><b>${mx(S.bal.pendiente)}</b></div>
+     <div class="kv"><span>Saldo verificado (disponible)</span><b>${mx(S.bal.verificado)}</b></div>
+     <div class="kv"><span>Retirado</span><b>${mx(S.bal.retirado)}</b></div>`;
+    if(S.step>=7&&S.bal.verificado>0&&!S.withdrawn) h+=`<label>Cuenta CLABE (18 dígitos)</label><input id="clabe" inputmode="numeric" maxlength="18" value="002180700000000001"><button class="btn ok" onclick="withdraw()">Retirar ${mx(S.bal.verificado)}</button>`;
+    if(S.step===6) h+=`<p class="muted">El dinero pasa a “verificado” cuando el admin confirma que la publicación existe y coincide con el video aprobado.</p>`;
+  }
+  h+=histHtml()+'</div>';return h;
+}
+function campCard(c,mine){
+  return `<div class="camp"><span class="fee">${mx(c.fee)}</span><div class="t">${esc(c.title)}</div>
+   <div class="muted">${esc(c.brand)} · ${esc(c.niche)} · entrega ${esc(c.deadline)} · ${esc(c.rights)}</div>
+   ${mine?`<p style="font-size:14px">${esc(c.brief)}</p><div class="ph">Video de referencia de la marca</div><label>Mensaje para la marca</label><textarea id="appMsg">Tengo audiencia joven que ahorra para viajar; grabo en mi cocina con luz natural.</textarea><button class="btn" onclick="apply()">Postularme</button>`
+   :`<button class="btn sec" onclick="toast('Campaña de ejemplo. Postúlate a la de la marca para seguir el flujo.')">Ver</button>`}</div>`;
+}
+function apply(){
+  S.apps=[{id:'me',name:'Valeria R.',city:'CDMX',niche:'Finanzas',followers:'27 mil',msg:$('#appMsg').value||'Me interesa.'},...OTHERS];
+  S.step=2;hist('Valeria se postuló.');toast('Postulación enviada.');go();
+}
+const objUrls={};
+function upload(sample){
+  let v;
+  if(sample){v={name:'video_v'+(S.versions.length+1)+'.mp4',size:'38.2 MB',url:null}}
+  else{
+    const f=$('#file').files[0];
+    if(!f) return toast('Elige un archivo MP4 o usa el video de ejemplo.');
+    if(f.type!=='video/mp4'&&!/\.mp4$/i.test(f.name)) return toast('Solo se aceptan videos MP4.');
+    if(f.size>100*1024*1024) return toast('El video pesa '+(f.size/1048576).toFixed(1)+' MB. El máximo es 100 MB.');
+    v={name:f.name,size:(f.size/1048576).toFixed(1)+' MB',url:URL.createObjectURL(f)};
+  }
+  S.versions.push(v);S.step=4;hist(`Video v${S.versions.length} subido (${v.size}).`);toast('Video subido. La marca fue notificada.');go();
+}
+function vid(v){return v.url?`<video src="${v.url}" controls playsinline></video><p class="muted">${esc(v.name)} · ${v.size} · privado</p>`
+  :`<div class="ph">${esc(v.name)}<br>${v.size}<br>(video de ejemplo)</div><p class="muted">Archivo privado: enlace temporal visible solo para la marca y el admin.</p>`}
+function sendLink(){
+  const l=$('#link').value.trim();
+  if(!/^https:\/\/(www\.)?(tiktok\.com|instagram\.com|youtube\.com|youtu\.be)\//i.test(l)) return toast('Pega un enlace de TikTok, Instagram o YouTube que empiece con https://');
+  S.pubLink=l;S.step=6;
+  log('Pago del video asignado a Valeria (pendiente de verificación)',{retenido:-S.camp.fee,pendiente:S.camp.fee});
+  hist('Valeria envió el enlace de publicación.');toast('Enlace enviado. El admin lo verificará.');go();
+}
+function withdraw(){
+  const c=$('#clabe').value.replace(/\D/g,'');
+  if(c.length!==18) return toast('La CLABE debe tener 18 dígitos.');
+  const amt=S.bal.verificado;log(`Retiro de Valeria a CLABE ****${c.slice(-4)}`,{verificado:-amt,retirado:amt});
+  S.withdrawn=true;S.step=S.closed?9:7;hist('Valeria retiró su saldo.');toast('Retiro enviado.');go();
+}
+
+/* ---------- ADMIN ---------- */
+function vAdmin(){
+  let h=`<div class="card">${bar()}<h2>Panel de administración</h2>
+   <div class="row"><div><label>Comisión de la plataforma (%)</label><input type="number" id="feeIn" value="${S.fee}" min="0" max="40" ${S.step>0?'disabled':''}></div>
+   <div><label>&nbsp;</label><button class="btn sec" style="margin:0" onclick="setFee()" ${S.step>0?'disabled':''}>Guardar</button></div></div>
+   <p class="muted">${S.step>0?'La comisión se fija al pagar cada campaña; un cambio solo afecta campañas nuevas.':'Ejemplo editable: cambia la comisión antes de crear la campaña.'}</p>
+   <h3>Verificaciones</h3>
+   <div class="kv"><span>Usuarios por verificar</span><b>2</b></div>
+   <div class="kv"><span>Campañas por revisar</span><b>${S.camp&&S.step<2?1:0}</b></div>`;
+  if(S.step===6){
+    const v=S.versions[S.versions.length-1];
+    h+=`<h3>Entrega por verificar</h3><div class="camp"><div class="t">${esc(S.camp.title)} · Valeria R.</div>
+     <div class="muted">Video aprobado: v${S.versions.length} (${v.size}) · revisiones usadas ${S.revisions}/${S.maxRev}</div>
+     <p style="word-break:break-all"><a href="${esc(S.pubLink)}" target="_blank" rel="noopener">${esc(S.pubLink)}</a></p>
+     <button class="btn ok" onclick="verify()">Verificar entrega</button>
+     <button class="btn bad" onclick="openDispute()">Abrir disputa</button></div>`;
+  } else if(S.step<6) h+=`<p class="empty">No hay entregas por verificar todavía.</p>`;
+  else h+=`<div class="note g">Entrega ${S.dispute?'resuelta por disputa':'verificada'}. ${S.dispute?esc(S.dispute):''}</div>`;
+  h+=histHtml()+'</div>';return h;
+}
+function setFee(){const v=+$('#feeIn').value;if(v<0||v>40)return toast('Entre 0 y 40 %.');S.fee=v;toast('Comisión guardada: '+v+'%');go()}
+function verify(){log('Entrega verificada: saldo de Valeria disponible',{pendiente:-S.camp.fee,verificado:S.camp.fee});S.verified=true;S.step=7;hist('Admin verificó la entrega.');toast('Saldo de Valeria verificado.');go()}
+function openDispute(){
+  modal(`<h2>Resolver disputa</h2><p class="muted">Ejemplo: la marca dice que la publicación no muestra el código de descarga. El admin revisa video, chat y enlace.</p>
+   <button class="btn ok" onclick="resolve('pay')">Pagar completo al creador</button>
+   <button class="btn sec" onclick="resolve('half')">Dividir 50 / 50</button>
+   <button class="btn bad" onclick="resolve('refund')">Reembolsar a la marca</button>
+   <button class="btn sec" onclick="closeModal()">Cancelar</button>`);
+}
+function resolve(k){
+  const f=S.camp.fee,com=Math.round(f*S.fee)/100;
+  if(k==='pay'){log('Disputa: pago completo al creador',{pendiente:-f,verificado:f});S.dispute='pago completo al creador.'}
+  if(k==='half'){log('Disputa 50/50: mitad al creador',{pendiente:-f/2,verificado:f/2});log('Disputa 50/50: mitad reembolsada a la marca (+ su comisión)',{pendiente:-f/2,plataforma:-com/2,reembolsado:f/2+com/2});S.dispute='50 % al creador, 50 % reembolsado a la marca.'}
+  if(k==='refund'){log('Disputa: reembolso total a la marca (+ comisión)',{pendiente:-f,plataforma:-com,reembolsado:f+com});S.dispute='reembolso total a la marca.';S.withdrawn=true}
+  S.step=7;hist('Admin resolvió la disputa: '+S.dispute);closeModal();toast('Disputa resuelta.');go();
+}
+
+/* ---------- comunes ---------- */
+function histHtml(){return S.history.length?`<h3>Historial</h3>`+S.history.slice().reverse().map(t=>`<div class="hist">${esc(t)}</div>`).join(''):''}
+function modal(h){$('#modalBody').innerHTML=h;$('#modal').classList.add('s')}
+function closeModal(){$('#modal').classList.remove('s')}
+function renderLedger(){
+  const L=S.ledger;
+  if(!L.length){$('#ledger').innerHTML='<p class="empty">Sin movimientos.</p>'}
+  else $('#ledger').innerHTML=`<table><tr><th>Movimiento</th><th>Monto</th></tr>`+L.map(e=>{
+    const parts=Object.entries(e).filter(([k])=>k!=='desc').map(([k,v])=>`${k} ${v>0?'+':''}${mx(v)}`).join('<br>');
+    return `<tr><td>${esc(e.desc)}</td><td class="muted">${parts}</td></tr>`}).join('')+`</table>`;
+  const b=S.bal, out=b.retenido+b.pendiente+b.verificado+b.retirado+b.plataforma+b.reembolsado, ok=Math.abs(out-b.cobrado)<0.005;
+  $('#balances').innerHTML=[['Cobrado a marcas',b.cobrado],['Retenido (campañas)',b.retenido],['Creador: pendiente',b.pendiente],['Creador: verificado',b.verificado],['Creador: retirado',b.retirado],['Comisión plataforma',b.plataforma],['Reembolsado a marcas',b.reembolsado]]
+   .map(([k,v])=>`<div class="kv"><span>${k}</span><b>${mx(v)}</b></div>`).join('')+
+   `<p class="check ${ok?'':'x'}">${ok?'✓ Cuadra: cada peso cobrado tiene destino.':'✗ Descuadre de '+mx(b.cobrado-out)}</p>`;
+}
+function go(){
+  guide();
+  $('#view').innerHTML = S.role==='marca'?vMarca():S.role==='creador'?vCreador():vAdmin();
+  renderLedger();save();
+}
+document.querySelectorAll('#roles button').forEach(b=>b.onclick=()=>{S.role=b.dataset.r;go();window.scrollTo(0,0)});
+$('#reset').onclick=()=>{S=fresh();go();toast('Demo reiniciada.')};
+$('#modal').onclick=e=>{if(e.target.id==='modal')closeModal()};
+load();
+if(S.step===3||S.step===4){/* object URLs no sobreviven a recargas: se muestra el placeholder */}
+go();
+</script>
+</body>
+</html>
