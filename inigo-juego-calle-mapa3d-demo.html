@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Juego de calle · demo</title>
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+:root{
+  --bg:#0f1216; --panel:#171b21; --panel2:#1f242c; --line:#2c333d; --text:#e8ecf1; --muted:#9aa4b1;
+  --a:#ff5a4e; --b:#3fa2ff; --gold:#f5c542; --ok:#3ccf8e; --warn:#ffb020; --danger:#ff4d5e;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{height:54px;display:flex;align-items:center;gap:12px;padding:0 14px;border-bottom:1px solid var(--line);background:var(--panel)}
+header h1{font-size:15px;margin:0;font-weight:650;white-space:nowrap}
+header .sub{color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tabs{margin-left:auto;display:flex;background:var(--panel2);border-radius:10px;padding:3px;flex-shrink:0}
+.tabs button{border:0;background:none;color:var(--muted);padding:7px 12px;border-radius:8px;font:inherit;cursor:pointer}
+.tabs button.on{background:#2d3540;color:var(--text)}
+main{display:flex;height:calc(100% - 54px)}
+#map{flex:1;position:relative;min-width:0}
+aside{width:360px;flex-shrink:0;border-left:1px solid var(--line);background:var(--panel);overflow-y:auto}
+.sec{padding:14px;border-bottom:1px solid var(--line)}
+.sec h2{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 10px;font-weight:600}
+.row{display:flex;align-items:center;gap:8px}
+.btn{border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:8px 11px;border-radius:9px;font:inherit;cursor:pointer}
+.btn:hover{border-color:#4a5462}
+.btn.primary{background:#2b6cff;border-color:#2b6cff}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:3px 8px;border-radius:99px;background:var(--panel2);border:1px solid var(--line)}
+.dot{width:9px;height:9px;border-radius:50%}
+.muted{color:var(--muted)}
+small{font-size:12px}
+/* map overlays */
+.ov{position:absolute;z-index:5}
+#mapTools{top:12px;left:12px;display:flex;gap:6px;flex-wrap:wrap}
+#mapTools .btn{background:rgba(23,27,33,.92);backdrop-filter:blur(4px)}
+#mapTools .btn.on{border-color:#2b6cff;color:#9cc0ff}
+#radar{left:12px;bottom:28px;background:rgba(23,27,33,.94);border:1px solid var(--line);border-radius:14px;padding:10px 12px;display:flex;gap:12px;align-items:center;min-width:250px}
+#radar .ring{width:46px;height:46px;border-radius:50%;border:2px solid var(--gold);position:relative;flex-shrink:0}
+#radar .ring::after{content:"";position:absolute;inset:-2px;border-radius:50%;border:2px solid var(--gold);animation:pulse var(--p,2s) infinite}
+@keyframes pulse{from{transform:scale(1);opacity:.9}to{transform:scale(1.9);opacity:0}}
+#radar b{font-size:18px}
+#banner{top:12px;left:50%;transform:translateX(-50%);padding:11px 16px;border-radius:12px;font-weight:600;display:none;box-shadow:0 8px 30px rgba(0,0,0,.4);max-width:90%;text-align:center}
+#banner.show{display:block;animation:drop .25s ease-out}
+@keyframes drop{from{transform:translate(-50%,-14px);opacity:0}}
+#hint{right:12px;bottom:28px;background:rgba(23,27,33,.9);border:1px solid var(--line);border-radius:10px;padding:7px 10px;font-size:12px;color:var(--muted);max-width:240px}
+/* chat */
+#chat{height:190px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding-right:4px}
+.msg{background:var(--panel2);border-radius:10px;padding:7px 9px;max-width:88%}
+.msg.me{align-self:flex-end;background:#23354f}
+.msg .who{font-size:11px;color:var(--muted)}
+.msg.sys{align-self:center;background:none;color:var(--warn);font-size:12px;text-align:center}
+.voice{display:flex;align-items:center;gap:6px}
+.voice i{display:inline-block;height:10px;width:3px;background:#9cc0ff;border-radius:2px}
+#ptt{width:100%;margin-top:10px;padding:14px;border-radius:12px;border:2px solid #2b6cff;background:#14233d;color:#cfe0ff;font:600 14px system-ui;cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:none}
+#ptt.on{background:#2b6cff;color:#fff;box-shadow:0 0 0 6px rgba(43,108,255,.25)}
+.lock{font-size:11px;color:var(--ok)}
+/* tables */
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th,td{text-align:left;padding:5px 4px;border-bottom:1px solid var(--line)}
+th{color:var(--muted);font-weight:600}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.kpi{background:var(--panel2);border-radius:10px;padding:8px}
+.kpi b{display:block;font-size:18px}
+.kpi span{font-size:11px;color:var(--muted)}
+#log{max-height:170px;overflow-y:auto;font-size:12.5px}
+#log div{padding:4px 0;border-bottom:1px dashed var(--line)}
+#log time{color:var(--muted);margin-right:6px;font-variant-numeric:tabular-nums}
+input[type=range]{width:100%}
+.replaybar{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:4px}
+.badge-rec{display:inline-flex;align-items:center;gap:6px;color:var(--danger);font-size:12px;font-weight:600}
+.badge-rec::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--danger);animation:blink 1.2s infinite}
+@keyframes blink{50%{opacity:.25}}
+/* modal */
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:50;padding:16px}
+#modal.show{display:flex}
+#modal .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;max-width:340px;width:100%;text-align:center}
+#qr{background:#fff;padding:12px;border-radius:10px;display:inline-block;margin:10px 0}
+.only-player,.only-org{display:none}
+body.player .only-player{display:block}
+body.org .only-org{display:block}
+.note{font-size:12px;color:var(--muted);background:var(--panel2);border-radius:10px;padding:9px 10px}
+.note li{margin:3px 0}
+.note ul{margin:6px 0 0;padding-left:18px}
+@media (max-width:820px){
+  header .sub{display:none}
+  main{flex-direction:column;height:auto}
+  #map{height:62vh;flex:none}
+  aside{width:100%;border-left:0}
+  #radar{min-width:0;left:8px;right:8px;bottom:10px}
+  #hint{display:none}
+}
+</style>
+</head>
+<body class="player">
+<header>
+  <h1>Juego de calle</h1>
+  <span class="sub">Demo · mapa 3D con datos abiertos · simulación de una partida</span>
+  <div class="tabs">
+    <button id="tabPlayer" class="on">Jugador</button>
+    <button id="tabOrg">Organización</button>
+  </div>
+</header>
+<main>
+  <div id="map">
+    <div id="mapTools" class="ov">
+      <button class="btn on" id="b3d">3D</button>
+      <button class="btn" id="b2d">2D</button>
+      <button class="btn" id="bCenter">Centrar</button>
+      <button class="btn" id="bPause">Pausa</button>
+    </div>
+    <div id="banner" class="ov"></div>
+    <div id="radar" class="ov only-player-flex">
+      <div class="ring" id="ring"></div>
+      <div>
+        <div class="muted" style="font-size:12px">Objeto más cercano</div>
+        <b id="radarDist">—</b> <span class="muted" id="radarDir"></span>
+        <div style="font-size:12px" id="radarHaptic" class="muted">Vibración: apagada</div>
+      </div>
+    </div>
+    <div id="hint" class="ov">Toca el mapa para caminar hasta ese punto (o usa las flechas del teclado).</div>
+  </div>
+
+  <aside>
+    <!-- PLAYER -->
+    <div class="only-player">
+      <div class="sec">
+        <h2>Tu grupo</h2>
+        <div class="row" style="justify-content:space-between">
+          <span class="chip"><span class="dot" style="background:var(--a)"></span>Lobos · <span id="teamCount">5</span> jugadores</span>
+          <button class="btn" id="bQR">Invitar con QR</button>
+        </div>
+        <div style="margin-top:10px" class="kpis">
+          <div class="kpi"><b id="pItems">0</b><span>objetos del grupo</span></div>
+          <div class="kpi"><b id="pDist">0 m</b><span>has recorrido</span></div>
+          <div class="kpi"><b id="pZone">Dentro</b><span>zona de juego</span></div>
+        </div>
+      </div>
+      <div class="sec">
+        <h2>Mensajes del grupo <span class="lock">· cifrados</span></h2>
+        <div id="chat"></div>
+        <div class="row" style="margin-top:8px">
+          <input id="chatIn" placeholder="Escribe al grupo…" style="flex:1;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:9px;padding:8px 10px;font:inherit">
+          <button class="btn" id="chatSend">Enviar</button>
+        </div>
+        <button id="ptt">Mantén pulsado para hablar</button>
+        <div class="muted" style="font-size:12px;margin-top:6px">Walkie-talkie: tu voz llega a los 4 compañeros a la vez. En esta demo el audio es simulado.</div>
+      </div>
+    </div>
+
+    <!-- ORGANIZER -->
+    <div class="only-org">
+      <div class="sec">
+        <div class="row" style="justify-content:space-between">
+          <h2 style="margin:0">Partida en directo</h2>
+          <span class="badge-rec" id="recBadge">Grabando</span>
+        </div>
+        <div class="kpis" style="margin-top:10px">
+          <div class="kpi"><b id="oTime">00:00</b><span>duración</span></div>
+          <div class="kpi"><b id="oItems">0/0</b><span>objetos recogidos</span></div>
+          <div class="kpi"><b id="oExits">0</b><span>salidas de zona</span></div>
+        </div>
+      </div>
+      <div class="sec">
+        <h2>Repetición de la partida</h2>
+        <input type="range" id="replay" min="0" max="0" value="0">
+        <div class="replaybar"><span id="replayAt">en directo</span><button class="btn" id="bLive" style="padding:3px 9px">Volver al directo</button></div>
+      </div>
+      <div class="sec">
+        <h2>Grupos</h2>
+        <table>
+          <thead><tr><th>Grupo</th><th class="n">Objetos</th><th class="n">Metros</th><th class="n">Salidas</th></tr></thead>
+          <tbody id="tGroups"></tbody>
+        </table>
+      </div>
+      <div class="sec">
+        <h2>Jugadores</h2>
+        <table>
+          <thead><tr><th>Jugador</th><th class="n">Objetos</th><th class="n">Metros</th><th>Estado</th></tr></thead>
+          <tbody id="tPlayers"></tbody>
+        </table>
+      </div>
+      <div class="sec">
+        <h2>Avisos a los jugadores</h2>
+        <div class="row" style="flex-wrap:wrap">
+          <button class="btn" data-alert="Quedan 10 minutos de partida">10 minutos</button>
+          <button class="btn" data-alert="Nuevo objeto en la plaza central">Nuevo objeto</button>
+          <button class="btn" data-alert="Todos al punto de encuentro">Reunión</button>
+        </div>
+      </div>
+      <div class="sec">
+        <h2>Registro de la partida</h2>
+        <div id="log"></div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="note">
+        Demo para mostrar las mecánicas. Edificios en 3D a partir de datos abiertos de OpenStreetMap; ciudad de ejemplo: centro de Madrid. Jugadores, objetos y mensajes son simulados.
+        <ul>
+          <li>En la app real, la ubicación sigue enviándose con el móvil bloqueado o en segundo plano; un navegador no puede hacerlo, por eso aquí se simula.</li>
+          <li>Catastro e IGN se suman en la app real para alturas y fachadas más precisas.</li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+</main>
+
+<div id="modal"><div class="card">
+  <h3 style="margin:0">Únete a Lobos</h3>
+  <div class="muted" style="font-size:13px;margin-top:4px">Tus compañeros escanean este código con la app y entran directamente a tu grupo.</div>
+  <div id="qr"></div>
+  <div style="font:600 18px ui-monospace,monospace;letter-spacing:.12em" id="qrCode"></div>
+  <button class="btn primary" style="margin-top:14px;width:100%" id="qrClose">Listo</button>
+</div></div>
+
+<script>
+(() => {
+const CENTER = [-3.7072, 40.4160];
+// Game zone (polygon around Plaza Mayor / Sol)
+const ZONE = [[-3.7128,40.4182],[-3.7040,40.4196],[-3.7004,40.4163],[-3.7020,40.4128],[-3.7086,40.4118],[-3.7134,40.4142],[-3.7128,40.4182]];
+const M_LAT = 111320, M_LNG = 111320*Math.cos(CENTER[1]*Math.PI/180);
+const dist = (a,b) => Math.hypot((a[0]-b[0])*M_LNG,(a[1]-b[1])*M_LAT);
+const inZone = p => { let c=false; for(let i=0,j=ZONE.length-1;i<ZONE.length;j=i++){const [xi,yi]=ZONE[i],[xj,yj]=ZONE[j]; if(((yi>p[1])!==(yj>p[1]))&&(p[0]<(xj-xi)*(p[1]-yi)/(yj-yi)+xi)) c=!c;} return c; };
+const bbox = ZONE.reduce((b,p)=>[Math.min(b[0],p[0]),Math.min(b[1],p[1]),Math.max(b[2],p[0]),Math.max(b[3],p[1])],[180,90,-180,-90]);
+let seed = 7; const rnd = () => (seed = (seed*16807)%2147483647)/2147483647;
+const randIn = () => { for(;;){ const p=[bbox[0]+rnd()*(bbox[2]-bbox[0]), bbox[1]+rnd()*(bbox[3]-bbox[1])]; if(inZone(p)) return p; } };
+const fmtT = s => String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+const $ = id => document.getElementById(id);
+
+const GROUPS = { A:{name:'Lobos',color:'#ff5a4e'}, B:{name:'Halcones',color:'#3fa2ff'} };
+const NAMES = ['Tú','Ane','Mikel','Laura','Jon','Sara','Unai','Leire','Pablo','Irene'];
+const players = NAMES.map((n,i)=>({ id:i, name:n, g:i<5?'A':'B', pos:i===0?[-3.7074,40.4155]:randIn(), target:null, dist:0, items:0, exits:0, inside:true, speed:1.3+rnd()*0.6, wander:i===7 }));
+players.forEach(p=>p.target=randIn());
+const me = players[0]; me.target=null;
+const items = Array.from({length:14},(_,i)=>({id:i,pos:randIn(),by:null}));
+// one item close to start so the radar does something right away
+items[0].pos=[-3.7066,40.4158];
+
+let t = 0, paused = false, mode = 'player', replayIdx = null, lastHaptic = 0;
+const history = [];
+const logLines = [];
+
+// ---------- Map ----------
+const map = new maplibregl.Map({ container:'map', style:'https://tiles.openfreemap.org/styles/liberty', center:CENTER, zoom:16.3, pitch:58, bearing:-20, attributionControl:{compact:true} });
+map.addControl(new maplibregl.NavigationControl({visualizePitch:true}),'top-right');
+
+const fc = f => ({type:'FeatureCollection',features:f});
+function playersGeo(snapshot){
+  const src = snapshot || players.map(p=>({id:p.id,pos:p.pos}));
+  return fc(src.filter(s=>mode==='org' || players[s.id].g===me.g).map(s=>{const p=players[s.id]; return {type:'Feature',geometry:{type:'Point',coordinates:s.pos},properties:{name:p.name,color:GROUPS[p.g].color,me:p.id===0?1:0,out:inZone(s.pos)?0:1}};}));
+}
+function itemsGeo(upTo){
+  return fc(items.filter(it=>{ if(upTo==null) return !it.by; return !(it.by && it.at<=upTo); }).map(it=>({type:'Feature',geometry:{type:'Point',coordinates:it.pos},properties:{}})));
+}
+function trailsGeo(upTo){
+  if(mode!=='org') return fc([]);
+  const end = upTo==null ? history.length : upTo+1, start = Math.max(0,end-90);
+  return fc(players.map(p=>({type:'Feature',geometry:{type:'LineString',coordinates:history.slice(start,end).map(h=>h.pos[p.id])},properties:{color:GROUPS[p.g].color}})).filter(f=>f.geometry.coordinates.length>1));
+}
+
+map.on('load', () => {
+  map.addSource('zone',{type:'geojson',data:{type:'Feature',geometry:{type:'Polygon',coordinates:[ZONE]}}});
+  map.addLayer({id:'zone-fill',type:'fill',source:'zone',paint:{'fill-color':'#3ccf8e','fill-opacity':0.07}}, 'building-3d');
+  map.addLayer({id:'zone-line',type:'line',source:'zone',paint:{'line-color':'#3ccf8e','line-width':3,'line-dasharray':[2,1.5]}});
+  map.setPaintProperty('building-3d','fill-extrusion-opacity',0.82);
+  map.addSource('trails',{type:'geojson',data:fc([])});
+  map.addLayer({id:'trails',type:'line',source:'trails',paint:{'line-color':['get','color'],'line-width':2.5,'line-opacity':0.55}});
+  map.addSource('items',{type:'geojson',data:itemsGeo()});
+  map.addLayer({id:'items-halo',type:'circle',source:'items',paint:{'circle-radius':13,'circle-color':'#f5c542','circle-opacity':0.25}});
+  map.addLayer({id:'items',type:'circle',source:'items',paint:{'circle-radius':6,'circle-color':'#f5c542','circle-stroke-color':'#7a5b00','circle-stroke-width':1.5}});
+  map.addSource('players',{type:'geojson',data:playersGeo()});
+  map.addLayer({id:'players-out',type:'circle',source:'players',filter:['==',['get','out'],1],paint:{'circle-radius':17,'circle-color':'#ff4d5e','circle-opacity':0.3}});
+  map.addLayer({id:'players',type:'circle',source:'players',paint:{'circle-radius':['case',['==',['get','me'],1],10,7.5],'circle-color':['get','color'],'circle-stroke-color':'#fff','circle-stroke-width':['case',['==',['get','me'],1],3.5,2]}});
+  map.addLayer({id:'players-label',type:'symbol',source:'players',layout:{'text-field':['get','name'],'text-font':['Noto Sans Bold'],'text-size':12,'text-offset':[0,1.5],'text-anchor':'top','text-allow-overlap':true},paint:{'text-color':'#111','text-halo-color':'#fff','text-halo-width':1.6}});
+  render();
+});
+map.on('click', e => { if(mode==='player'){ me.target=[e.lngLat.lng,e.lngLat.lat]; } });
+
+// ---------- Simulation ----------
+function step(){
+  t++;
+  for(const p of players){
+    if(p.id===0 && !p.target) { /* idle */ }
+    else {
+      if(!p.target){ continue; }
+      const d = dist(p.pos,p.target), v = p.speed*3; // 3x speed so the demo moves
+      if(d < v){ p.dist += d; p.pos = p.target.slice(); p.target = p.id===0 ? null : nextTarget(p); }
+      else { const f=v/d; p.pos=[p.pos[0]+(p.target[0]-p.pos[0])*f, p.pos[1]+(p.target[1]-p.pos[1])*f]; p.dist+=v; }
+    }
+    const inside = inZone(p.pos);
+    if(p.inside && !inside){ p.exits++; log(`${p.name} (${GROUPS[p.g].name}) ha salido de la zona`,'warn'); if(p.id===0){ banner('Has salido de la zona de juego. Vuelve dentro.','danger'); vibrate([300,120,300]); } else if(p.g===me.g){ sysMsg(`${p.name} ha salido de la zona`); } }
+    if(!p.inside && inside){ log(`${p.name} vuelve a la zona`); if(p.id===0) banner('De vuelta en la zona','ok'); }
+    p.inside = inside;
+    for(const it of items){ if(!it.by && dist(p.pos,it.pos)<18){ it.by=p.id; it.at=t; p.items++; log(`${p.name} recoge un objeto para ${GROUPS[p.g].name}`,'gold'); if(p.id===0){ banner('Objeto recogido +1','gold'); vibrate([60,40,60,40,160]); } else if(p.g===me.g) sysMsg(`${p.name} ha recogido un objeto`); } }
+  }
+  history.push({t,pos:players.map(p=>p.pos.slice())});
+  if(t%17===0) teammateChat();
+  render();
+}
+function nextTarget(p){
+  if(p.wander && rnd()<0.5){ // this player tends to drift out of the zone
+    return [bbox[2]+0.0012, bbox[1]+(bbox[3]-bbox[1])*rnd()];
+  }
+  const free = items.filter(i=>!i.by);
+  if(free.length && rnd()<0.45){ const it=free[Math.floor(rnd()*free.length)]; return it.pos.slice(); }
+  return randIn();
+}
+setInterval(()=>{ if(!paused) step(); }, 1000);
+
+// ---------- Keyboard ----------
+document.addEventListener('keydown', e => {
+  if(mode!=='player' || document.activeElement===$('chatIn')) return;
+  const k = {ArrowUp:[0,1],ArrowDown:[0,-1],ArrowLeft:[-1,0],ArrowRight:[1,0]}[e.key];
+  if(!k) return; e.preventDefault();
+  const m = 14; me.target=[me.pos[0]+k[0]*m/M_LNG, me.pos[1]+k[1]*m/M_LAT];
+});
+
+// ---------- Render ----------
+function render(){
+  if(!map.getSource('players')) return;
+  if(replayIdx!=null && mode==='org'){
+    const h = history[replayIdx];
+    map.getSource('players').setData(playersGeo(players.map(p=>({id:p.id,pos:h.pos[p.id]}))));
+    map.getSource('items').setData(itemsGeo(h.t));
+    map.getSource('trails').setData(trailsGeo(replayIdx));
+    $('replayAt').textContent = 'minuto '+fmtT(h.t);
+  } else {
+    map.getSource('players').setData(playersGeo());
+    map.getSource('items').setData(itemsGeo());
+    map.getSource('trails').setData(trailsGeo());
+  }
+  // radar
+  const free = items.filter(i=>!i.by);
+  if(free.length){
+    const n = free.reduce((a,b)=>dist(me.pos,a.pos)<dist(me.pos,b.pos)?a:b);
+    const d = dist(me.pos,n.pos);
+    $('radarDist').textContent = Math.round(d)+' m';
+    const ang = Math.atan2((n.pos[0]-me.pos[0])*M_LNG,(n.pos[1]-me.pos[1])*M_LAT)*180/Math.PI;
+    $('radarDir').textContent = ['norte','noreste','este','sureste','sur','suroeste','oeste','noroeste'][Math.round(((ang+360)%360)/45)%8];
+    const period = d<30?0.45:d<60?0.8:d<120?1.4:2.4;
+    $('ring').style.setProperty('--p',period+'s');
+    $('radarHaptic').textContent = d<120 ? `Vibración: un pulso cada ${period.toString().replace('.',',')} s` : 'Vibración: apagada (lejos)';
+    if(d<120 && mode==='player' && Date.now()-lastHaptic>period*1000){ lastHaptic=Date.now(); vibrate(35); }
+  } else { $('radarDist').textContent='Todos recogidos'; $('radarDir').textContent=''; }
+  // player panel
+  const gi = players.filter(p=>p.g===me.g).reduce((s,p)=>s+p.items,0);
+  $('pItems').textContent = gi;
+  $('pDist').textContent = Math.round(me.dist)+' m';
+  $('pZone').textContent = me.inside?'Dentro':'Fuera';
+  $('pZone').style.color = me.inside?'var(--ok)':'var(--danger)';
+  // org panel
+  $('oTime').textContent = fmtT(t);
+  $('oItems').textContent = items.filter(i=>i.by!=null).length+'/'+items.length;
+  $('oExits').textContent = players.reduce((s,p)=>s+p.exits,0);
+  $('tGroups').innerHTML = Object.entries(GROUPS).map(([k,g])=>{const ps=players.filter(p=>p.g===k); return `<tr><td><span class="dot" style="display:inline-block;background:${g.color};margin-right:6px"></span>${g.name}</td><td class="n">${ps.reduce((s,p)=>s+p.items,0)}</td><td class="n">${Math.round(ps.reduce((s,p)=>s+p.dist,0)).toLocaleString('es')}</td><td class="n">${ps.reduce((s,p)=>s+p.exits,0)}</td></tr>`;}).join('');
+  $('tPlayers').innerHTML = players.map(p=>`<tr><td><span class="dot" style="display:inline-block;background:${GROUPS[p.g].color};margin-right:6px"></span>${p.name}</td><td class="n">${p.items}</td><td class="n">${Math.round(p.dist).toLocaleString('es')}</td><td style="color:${p.inside?'var(--ok)':'var(--danger)'}">${p.inside?'en zona':'fuera'}</td></tr>`).join('');
+  const r = $('replay'); r.max = Math.max(0,history.length-1); if(replayIdx==null) r.value = r.max;
+}
+
+// ---------- UI helpers ----------
+let bannerTimer;
+function banner(text,kind){
+  const b=$('banner'); const c={danger:['#ff4d5e','#fff'],ok:['#3ccf8e','#0b2a1c'],gold:['#f5c542','#2b2100'],info:['#2b6cff','#fff']}[kind]||['#2b6cff','#fff'];
+  b.style.background=c[0]; b.style.color=c[1]; b.textContent=text; b.classList.remove('show'); void b.offsetWidth; b.classList.add('show');
+  clearTimeout(bannerTimer); bannerTimer=setTimeout(()=>b.classList.remove('show'),3200);
+}
+function vibrate(p){ try{ navigator.vibrate && navigator.vibrate(p); }catch(e){} }
+function log(text,kind){
+  logLines.unshift(`<div style="color:${kind==='warn'?'var(--warn)':kind==='gold'?'var(--gold)':'inherit'}"><time>${fmtT(t)}</time>${text}</div>`);
+  $('log').innerHTML = logLines.slice(0,60).join('');
+}
+const chat = $('chat');
+function addMsg(html,cls){ const d=document.createElement('div'); d.className='msg '+(cls||''); d.innerHTML=html; chat.appendChild(d); chat.scrollTop=chat.scrollHeight; }
+function sysMsg(t){ addMsg(t,'sys'); }
+const lines=['Voy hacia la iglesia, creo que hay algo cerca','Halcones están por la calle Mayor','Os espero en la plaza','¡Uno más!','Cuidado con el límite del este','Me quedo vigilando aquí'];
+function teammateChat(){
+  const mates = players.filter(p=>p.g===me.g && p.id!==0);
+  const p = mates[Math.floor(rnd()*mates.length)];
+  if(rnd()<0.35) addMsg(`<div class="who">${p.name}</div><div class="voice">▶ <i></i><i style="height:14px"></i><i></i><i style="height:6px"></i><i></i> <span class="muted">0:0${2+Math.floor(rnd()*6)}</span></div>`);
+  else addMsg(`<div class="who">${p.name}</div>${lines[Math.floor(rnd()*lines.length)]}`);
+}
+addMsg('<div class="who">Ane</div>Estamos todos. Empieza la partida.');
+sysMsg('Mensajes cifrados: solo los miembros de Lobos pueden leerlos');
+
+$('chatSend').onclick = () => { const v=$('chatIn').value.trim(); if(!v) return; addMsg(`<div class="who">Tú</div>${v.replace(/</g,'&lt;')}`,'me'); $('chatIn').value=''; };
+$('chatIn').addEventListener('keydown',e=>{ if(e.key==='Enter') $('chatSend').click(); });
+
+// push-to-talk
+const ptt=$('ptt'); let pttStart=0, pttTimer;
+const pttDown = e => { e.preventDefault(); pttStart=Date.now(); ptt.classList.add('on'); vibrate(25); pttTimer=setInterval(()=>{ ptt.textContent='Hablando al grupo… '+((Date.now()-pttStart)/1000).toFixed(1).replace('.',',')+' s'; },100); };
+const pttUp = () => { if(!pttStart) return; clearInterval(pttTimer); const s=Math.max(1,Math.round((Date.now()-pttStart)/1000)); pttStart=0; ptt.classList.remove('on'); ptt.textContent='Mantén pulsado para hablar'; addMsg(`<div class="who">Tú · walkie-talkie</div><div class="voice">▶ <i></i><i style="height:14px"></i><i></i><i style="height:6px"></i> <span class="muted">0:${String(s).padStart(2,'0')} · enviado a 4</span></div>`,'me'); };
+ptt.addEventListener('pointerdown',pttDown); ptt.addEventListener('pointerup',pttUp); ptt.addEventListener('pointerleave',pttUp); ptt.addEventListener('pointercancel',pttUp);
+document.addEventListener('keydown',e=>{ if(e.code==='Space' && mode==='player' && document.activeElement!==$('chatIn') && !pttStart){ pttDown(e); } });
+document.addEventListener('keyup',e=>{ if(e.code==='Space') pttUp(); });
+
+// organizer alerts
+document.querySelectorAll('[data-alert]').forEach(b=>b.onclick=()=>{ log('Aviso enviado a todos: '+b.dataset.alert); sysMsg('Aviso de la organización: '+b.dataset.alert); banner('Aviso enviado a los 10 jugadores','info'); });
+
+// QR
+let qrMade=false;
+$('bQR').onclick=()=>{ $('modal').classList.add('show'); if(!qrMade){ const code='LOBOS-'+Math.random().toString(36).slice(2,6).toUpperCase(); $('qrCode').textContent=code; new QRCode($('qr'),{text:'juego://unirse?grupo='+code,width:180,height:180}); qrMade=true; } };
+$('qrClose').onclick=()=>$('modal').classList.remove('show');
+
+// replay
+$('replay').oninput=e=>{ const v=+e.target.value; replayIdx = v>=history.length-1?null:v; if(replayIdx==null) $('replayAt').textContent='en directo'; render(); };
+$('bLive').onclick=()=>{ replayIdx=null; $('replayAt').textContent='en directo'; render(); };
+
+// map tools
+$('b3d').onclick=()=>{ map.easeTo({pitch:58,bearing:-20}); map.setLayoutProperty('building-3d','visibility','visible'); $('b3d').classList.add('on'); $('b2d').classList.remove('on'); };
+$('b2d').onclick=()=>{ map.easeTo({pitch:0,bearing:0}); map.setLayoutProperty('building-3d','visibility','none'); $('b2d').classList.add('on'); $('b3d').classList.remove('on'); };
+$('bCenter').onclick=()=>map.easeTo({center: mode==='player'?me.pos:CENTER, zoom: mode==='player'?17:16.1});
+$('bPause').onclick=()=>{ paused=!paused; $('bPause').textContent=paused?'Seguir':'Pausa'; $('bPause').classList.toggle('on',paused); };
+
+// tabs
+function setMode(m){
+  mode=m; document.body.className=m; $('tabPlayer').classList.toggle('on',m==='player'); $('tabOrg').classList.toggle('on',m==='org');
+  $('radar').style.display = m==='player'?'flex':'none';
+  $('hint').textContent = m==='player' ? 'Toca el mapa para caminar hasta ese punto (o usa las flechas). Mantén la barra espaciadora para hablar.' : 'Ves a todos los grupos y su rastro. Mueve la barra de repetición para revisar cualquier momento.';
+  if(m==='org'){ map.easeTo({center:CENTER,zoom:16}); } else { replayIdx=null; }
+  render();
+}
+$('tabPlayer').onclick=()=>setMode('player');
+$('tabOrg').onclick=()=>setMode('org');
+setMode('player');
+log('Empieza la partida: 2 grupos, 10 jugadores, 14 objetos');
+})();
+</script>
+</body>
+</html>
