@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plano de Stands</title>
+<meta name="description" content="Demo: plano interactivo de la muestra empresarial con disponibilidad, reserva sin duplicados, aceptación con fecha y hora, logos y panel de administración.">
+<style>
+:root{
+  --bg:#f4f6f9; --card:#ffffff; --ink:#152033; --muted:#5b6678; --line:#dde3ec;
+  --brand:#0f3b66; --brand2:#127c8a; --soft:#eaf1f8;
+  --av:#2f9e6b; --av-bg:#e3f4ec; --pe:#d9961a; --pe-bg:#fbf0d9; --co:#2f5fa8; --co-bg:#e2eaf7;
+  --hold:#c2410c; --zone:#eef1f5; --zone-ink:#6b7586; --hall:#fbfcfd; --danger:#b42318;
+  --shadow:0 1px 2px rgba(16,24,40,.06),0 4px 14px rgba(16,24,40,.06);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f141b; --card:#171e28; --ink:#e6ebf2; --muted:#9aa6b8; --line:#2a3443;
+    --brand:#7fb2e5; --brand2:#5cc4cf; --soft:#1c2633;
+    --av:#4cc38a; --av-bg:#15322a; --pe:#f0b44a; --pe-bg:#3a2e14; --co:#7ea6ea; --co-bg:#1b2a44;
+    --hold:#fb923c; --zone:#1f2733; --zone-ink:#93a0b3; --hall:#131a23; --danger:#f97066;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.3);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f141b; --card:#171e28; --ink:#e6ebf2; --muted:#9aa6b8; --line:#2a3443;
+  --brand:#7fb2e5; --brand2:#5cc4cf; --soft:#1c2633;
+  --av:#4cc38a; --av-bg:#15322a; --pe:#f0b44a; --pe-bg:#3a2e14; --co:#7ea6ea; --co-bg:#1b2a44;
+  --hold:#fb923c; --zone:#1f2733; --zone-ink:#93a0b3; --hall:#131a23; --danger:#f97066;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.3);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+.demo-bar{background:var(--brand);color:#fff;font-size:13px;padding:7px 16px;text-align:center}
+:root[data-theme="dark"] .demo-bar{color:#0f141b}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .demo-bar{color:#0f141b}}
+header{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;padding:14px 16px;max-width:1320px;margin:0 auto}
+.title h1{font-size:20px;margin:0;letter-spacing:-.01em}
+.title p{margin:2px 0 0;color:var(--muted);font-size:13px}
+.hctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.tabs{display:flex;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:3px}
+.tabs button{border:0;background:none;padding:7px 12px;border-radius:7px;cursor:pointer;color:var(--muted);font-weight:600;font-size:14px}
+.tabs button.on{background:var(--brand);color:#fff}
+:root[data-theme="dark"] .tabs button.on{color:#0f141b}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .tabs button.on{color:#0f141b}}
+select,.btn,input[type=text],input[type=email],input[type=tel],input[type=number],input[type=search],textarea{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:7px 10px}
+.btn{cursor:pointer;font-weight:600;font-size:14px;display:inline-flex;align-items:center;gap:6px;justify-content:center}
+.btn:hover{border-color:var(--brand)}
+.btn.pri{background:var(--brand);border-color:var(--brand);color:#fff}
+:root[data-theme="dark"] .btn.pri{color:#0f141b}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .btn.pri{color:#0f141b}}
+.btn.ok{background:var(--av);border-color:var(--av);color:#fff}
+.btn.warn{color:var(--danger)}
+.btn.sm{padding:4px 9px;font-size:13px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+main{max-width:1320px;margin:0 auto;padding:0 16px 40px}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:16px;align-items:start}
+@media (max-width:960px){.grid{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:700px){#plan{height:min(58vh,380px)}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow)}
+.planwrap{position:relative;overflow:hidden}
+.planbar{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid var(--line)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:5px;border:1.5px solid}
+.zoom{display:flex;gap:4px}
+.zoom .btn{width:34px;height:32px;padding:0}
+#plan{display:block;width:100%;height:min(66vh,620px);touch-action:none;background:var(--bg);cursor:grab;user-select:none;-webkit-user-select:none}
+#plan.editing{cursor:default}
+#plan text{pointer-events:none;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+.stand{cursor:pointer}
+.stand rect.b{stroke-width:1.6;transition:filter .15s}
+.stand:hover rect.b{filter:brightness(.96)}
+.stand.sel rect.b{stroke-width:3.2}
+.stand.hit rect.b{stroke:var(--hold);stroke-width:3.2}
+.editing .stand{cursor:move}
+.hint{position:absolute;left:12px;bottom:10px;font-size:12px;color:var(--muted);background:var(--card);border:1px solid var(--line);padding:4px 8px;border-radius:6px;pointer-events:none}
+.side{padding:16px}
+.side h2{font-size:18px;margin:0 0 4px}
+.side h3{font-size:14px;margin:16px 0 6px;color:var(--muted);text-transform:none;font-weight:700}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.chip{display:inline-block;font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px}
+.chip.av{background:var(--av-bg);color:var(--av)}
+.chip.pe{background:var(--pe-bg);color:var(--pe)}
+.chip.co{background:var(--co-bg);color:var(--co)}
+.chip.ho{background:var(--pe-bg);color:var(--hold)}
+.chip.li{background:var(--zone);color:var(--muted)}
+.facts{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:14px;margin:10px 0}
+.facts dt{color:var(--muted)}
+.facts dd{margin:0}
+.nb{list-style:none;margin:0;padding:0;font-size:14px}
+.nb li{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px dashed var(--line)}
+.nb li:last-child{border-bottom:0}
+.nb button{background:none;border:0;padding:0;color:var(--brand);font-weight:700;cursor:pointer}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.stack{display:flex;flex-direction:column;gap:8px}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
+label.f input,label.f select,label.f textarea{color:var(--ink);font-size:14px;width:100%}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media (max-width:420px){.two{grid-template-columns:1fr}}
+.cond{max-height:120px;overflow:auto;font-size:12.5px;background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:8px 10px;color:var(--ink)}
+.cond ol{margin:0;padding-left:18px}
+#sig{width:100%;height:110px;border:1px dashed var(--muted);border-radius:8px;background:var(--hall);touch-action:none;display:block}
+.alert{border-radius:8px;padding:9px 11px;font-size:13.5px;border:1px solid}
+.alert.w{background:var(--pe-bg);border-color:var(--pe);color:var(--ink)}
+.alert.e{background:transparent;border-color:var(--danger);color:var(--danger)}
+.alert.i{background:var(--soft);border-color:var(--line)}
+.alert.g{background:var(--av-bg);border-color:var(--av)}
+.timer{font-variant-numeric:tabular-nums;font-weight:700;color:var(--hold)}
+.logoprev{width:72px;height:72px;border:1px solid var(--line);border-radius:8px;object-fit:contain;background:#fff}
+.searchres{list-style:none;margin:6px 0 0;padding:0;max-height:180px;overflow:auto}
+.searchres li button{width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:7px 2px;cursor:pointer;display:flex;justify-content:space-between;gap:8px}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}
+@media (max-width:700px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kpi{padding:12px 14px}
+.kpi b{display:block;font-size:24px;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.kpi span{font-size:13px;color:var(--muted)}
+.admin{margin-top:16px;display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:16px;align-items:start}
+@media (max-width:960px){.admin{grid-template-columns:minmax(0,1fr)}}
+.tbl{width:100%;border-collapse:collapse;font-size:13.5px}
+.tbl th{text-align:left;color:var(--muted);font-weight:600;padding:8px;border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl td{padding:8px;border-bottom:1px solid var(--line);vertical-align:middle}
+.tbl td .row{flex-wrap:nowrap}
+.tscroll{overflow-x:auto}
+.mini{width:34px;height:34px;object-fit:contain;border:1px solid var(--line);border-radius:6px;background:#fff;vertical-align:middle}
+.log{list-style:none;margin:0;padding:0;font-size:13px;max-height:260px;overflow:auto}
+.log li{padding:6px 0;border-bottom:1px solid var(--line)}
+.log time{color:var(--muted);font-variant-numeric:tabular-nums;margin-right:6px}
+.sec{padding:14px 16px}
+.sec h2{font-size:16px;margin:0 0 10px}
+.modal{position:fixed;inset:0;background:rgba(10,15,25,.55);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
+.modal.on{display:flex}
+.modal .box{background:var(--card);border-radius:14px;max-width:640px;width:100%;max-height:92vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+.modal .hd{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line)}
+.modal .hd h3{margin:0;font-size:16px}
+.modal .bd{padding:16px}
+.x{background:none;border:0;font-size:22px;line-height:1;cursor:pointer;color:var(--muted)}
+.mail{border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.mail .mh{background:var(--soft);padding:10px 12px;font-size:13px}
+.mail .mb{padding:14px;font-size:14px}
+.mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;word-break:break-all}
+#pano{display:block;width:100%;height:340px;cursor:grab;border-radius:10px;touch-action:none;background:#1b2330}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:10px;font-size:14px;box-shadow:var(--shadow);z-index:60;opacity:0;transition:opacity .2s;pointer-events:none;max-width:calc(100% - 32px)}
+.toast.on{opacity:1}
+.edit-only{display:none}
+.editing-on .edit-only{display:block}
+.hidden{display:none!important}
+hr.sep{border:0;border-top:1px solid var(--line);margin:14px 0}
+</style>
+</head>
+<body>
+<div class="demo-bar">Demo de propuesta · empresas y datos ficticios · todo funciona en este navegador (los correos se muestran en pantalla, no se envían)</div>
+
+<header>
+  <div class="title">
+    <h1>Muestra Empresarial · Plano de stands</h1>
+    <p id="subtitle">Congreso anual · seleccione un stand para ver su disponibilidad y sus vecinos</p>
+  </div>
+  <div class="hctl">
+    <select id="yearSel" aria-label="Edición"></select>
+    <div class="tabs" role="tablist">
+      <button id="tabPub" class="on" role="tab">Expositores</button>
+      <button id="tabAdm" role="tab">Panel de administración</button>
+    </div>
+    <button class="btn" id="btn360">Recorrido 360°</button>
+  </div>
+</header>
+
+<main>
+  <div class="grid">
+    <section class="card planwrap" id="planCard">
+      <div class="planbar">
+        <div class="legend">
+          <span><i style="background:var(--av-bg);border-color:var(--av)"></i>Disponible</span>
+          <span><i style="background:var(--pe-bg);border-color:var(--pe)"></i>Reserva pendiente</span>
+          <span><i style="background:var(--co-bg);border-color:var(--co)"></i>Confirmado</span>
+          <span><i style="background:var(--pe-bg);border-color:var(--hold);border-style:dashed"></i>En proceso ahora</span>
+        </div>
+        <div class="zoom">
+          <button class="btn" id="zIn" aria-label="Acercar">+</button>
+          <button class="btn" id="zOut" aria-label="Alejar">−</button>
+          <button class="btn" id="zFit" aria-label="Ver todo" title="Ver todo">⤢</button>
+        </div>
+      </div>
+      <svg id="plan" xmlns="http://www.w3.org/2000/svg"></svg>
+      <div class="hint" id="hint">Arrastre para mover · rueda o +/− para acercar</div>
+    </section>
+
+    <aside class="card side" id="side"></aside>
+  </div>
+
+  <div id="adminArea" class="hidden">
+    <div class="kpis" id="kpis" style="margin-top:16px"></div>
+    <div class="admin">
+      <section class="card sec">
+        <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:10px">
+          <h2 style="margin:0">Reservas de la edición</h2>
+          <select id="fStatus" aria-label="Filtrar por estado">
+            <option value="">Todas</option><option value="pendiente">Pendientes</option><option value="confirmado">Confirmadas</option><option value="liberado">Liberadas</option>
+          </select>
+        </div>
+        <div class="tscroll"><table class="tbl" id="tbl"></table></div>
+      </section>
+      <section class="card sec">
+        <h2>Plano de cada año</h2>
+        <p class="small muted" style="margin-top:0">Active la edición para mover stands (arrastrando), cambiar número o medidas, agregar o quitar stands y subir la imagen del plano nuevo como fondo.</p>
+        <div class="row">
+          <button class="btn" id="btnEdit">Editar plano</button>
+          <button class="btn" id="btnNewYear">Crear edición siguiente</button>
+        </div>
+        <div id="editTools" class="hidden" style="margin-top:12px">
+          <div class="row">
+            <button class="btn sm" id="btnAdd">+ Agregar stand</button>
+            <label class="btn sm" style="cursor:pointer">Subir imagen del plano<input type="file" id="bgFile" accept="image/*" hidden></label>
+            <button class="btn sm" id="btnBgClear">Quitar imagen</button>
+          </div>
+          <div id="standEditor" style="margin-top:10px"></div>
+        </div>
+        <hr class="sep">
+        <h2>Reglas</h2>
+        <div class="two">
+          <label class="f">Días para formalizar una reserva pendiente<input type="number" id="setExp" min="1" max="30"></label>
+          <label class="f">Minutos de bloqueo mientras se llena el formulario<input type="number" id="setHold" min="5" max="60"></label>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <button class="btn sm" id="btnDay">Simular: pasa 1 día</button>
+          <button class="btn sm warn" id="btnReset">Restablecer demo</button>
+        </div>
+        <p class="small muted" id="clockNote"></p>
+        <hr class="sep">
+        <h2>Actividad</h2>
+        <ul class="log" id="log"></ul>
+      </section>
+    </div>
+  </div>
+</main>
+
+<div class="modal" id="modal"><div class="box"><div class="hd"><h3 id="mTitle"></h3><button class="x" id="mClose" aria-label="Cerrar">×</button></div><div class="bd" id="mBody"></div></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+'use strict';
+const KEY='muestra-stands-demo-v1';
+const SC=10; // px per metre in the SVG
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let uidN=0; const uid=p=>(p||'s')+Date.now().toString(36)+(uidN++).toString(36);
+const me='me-'+Math.random().toString(36).slice(2,8);
+
+/* ---------- seed ---------- */
+function rowStands(prefix,y,h,segs){
+  let n=1,out=[];
+  segs.forEach(sg=>{let x=sg.x0;sg.w.forEach(w=>{out.push({id:prefix+n+'-'+Math.random().toString(36).slice(2,6),num:prefix+'-'+String(n).padStart(2,'0'),x,y,w,h,cat:w>=6?'Doble':'Estándar'});x+=w;n++;});});
+  return out;
+}
+function islands(list){return list.map((p,i)=>({id:'I'+(i+1)+'-'+Math.random().toString(36).slice(2,6),num:'I-'+String(i+1).padStart(2,'0'),x:p[0],y:p[1],w:6,h:6,cat:'Isla'}));}
+function layout2026(){
+  const L=[3,3,3,3,3,3,3],D=[6,3,3,3,6];
+  return {hall:{w:60,h:40},bg:null,archived:true,
+    zones:[{n:'Cafetería',x:2,y:1,w:12,h:3.5},{n:'Baños',x:48,y:1,w:10,h:3.5},{n:'Zona de networking',x:22,y:25,w:16,h:6},{n:'Registro y acreditación',x:23,y:34,w:14,h:4.5}],
+    doors:[{n:'Entrada principal',x:30,y:40,k:'main'},{n:'Acceso al auditorio',x:30,y:0,k:'aud'},{n:'Salida de emergencia',x:0,y:22,k:'exit'},{n:'Salida de emergencia',x:60,y:22,k:'exit'}],
+    aisles:[{n:'Pasillo 1',x:30,y:13.5},{n:'Pasillo 2',x:30,y:22.6},{n:'Pasillo central',x:30,y:8.5,v:true}],
+    views:[{n:'Entrada principal',x:30,y:37},{n:'Pasillo central',x:30,y:13.5},{n:'Zona de networking',x:30,y:23}],
+    stands:[].concat(rowStands('A',6,3,[{x0:7,w:L},{x0:32,w:L}]),rowStands('B',9,3,[{x0:7,w:D},{x0:32,w:D}]),rowStands('C',15,3,[{x0:7,w:D},{x0:32,w:D}]),rowStands('D',18,3,[{x0:7,w:L},{x0:32,w:L}]),islands([[10,25],[44,25]]))};
+}
+function layout2027(){
+  const L=[3,3,3,3,3,3,3],D=[6,3,3,3,6];
+  return {hall:{w:64,h:40},bg:null,archived:false,
+    zones:[{n:'Baños',x:2,y:1,w:9,h:3.5},{n:'Sala de prensa',x:53,y:1,w:9,h:3.5},{n:'Café networking',x:29,y:7,w:6,h:10},{n:'Registro y acreditación',x:25,y:33,w:14,h:4.5}],
+    doors:[{n:'Entrada principal',x:32,y:40,k:'main'},{n:'Acceso al auditorio',x:32,y:0,k:'aud'},{n:'Salida de emergencia',x:0,y:20,k:'exit'},{n:'Salida de emergencia',x:64,y:20,k:'exit'}],
+    aisles:[{n:'Pasillo 1',x:32,y:19.8},{n:'Pasillo 2',x:15.5,y:13.6},{n:'Pasillo 2',x:48.5,y:13.6}],
+    views:[{n:'Entrada principal',x:32,y:37},{n:'Pasillo central',x:32,y:20},{n:'Café networking',x:32,y:5}],
+    stands:[].concat(rowStands('A',6,3,[{x0:6,w:L},{x0:37,w:L}]),rowStands('B',9,3,[{x0:6,w:D},{x0:37,w:D}]),rowStands('C',15,3,[{x0:6,w:L},{x0:37,w:L}]),islands([[8,22],[19,22],[39,22],[50,22]]))};
+}
+const COMPANIES=[
+ ['Boyas Andinas S.A.S.','#0e6ba8','Amarre y monoboyas'],['Marinex Servicios Portuarios','#127c8a','Servicios portuarios'],['PetroPuerto Logística','#7a3e9d','Logística'],
+ ['Ancla Seguridad Industrial','#b7472a','Seguridad industrial'],['Hidrocarb Inspecciones','#2f7d32','Inspección y medición'],['Delta Mangueras Marinas','#c27c0e','Mangueras y conexiones'],
+ ['Navitek Sensores','#1f4e79','Instrumentación'],['Remolcadores Puerto Azul','#00838f','Remolque'],['Sigma Válvulas','#6d4c41','Válvulas'],
+ ['Corrosión Cero','#ad1457','Protección anticorrosiva'],['Atlántica Monitoreo','#455a64','Monitoreo ambiental'],['Faro Ingeniería','#5e35b1','Ingeniería'],
+ ['Grupo Estuario','#2e7d32','Consultoría'],['Oleomar Capacitación','#ef6c00','Formación técnica']];
+function logoSvg(name,color){
+  const ini=name.replace(/S\.A\.S\.|S\.A\./g,'').split(/\s+/).filter(w=>w.length>2).slice(0,2).map(w=>w[0]).join('').toUpperCase();
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" rx="18" fill="${color}"/><circle cx="96" cy="24" r="10" fill="#fff" opacity=".25"/><text x="60" y="76" font-family="Arial,Helvetica,sans-serif" font-size="46" font-weight="700" fill="#fff" text-anchor="middle">${ini}</text></svg>`;
+  return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
+}
+function seed(){
+  const t=Date.now();
+  const S={v:1,offset:0,current:'2027',years:{'2026':layout2026(),'2027':layout2027()},resv:[],log:[],holds:{},settings:{exp:5,hold:15}};
+  const mk=(year,num,ci,status,daysAgo,extra)=>{
+    const y=S.years[year];const s=y.stands.find(z=>z.num===num);const c=COMPANIES[ci];
+    const created=t-daysAgo*864e5;
+    S.resv.push(Object.assign({id:uid('r'),code:codeFor(year),year,standId:s.id,status,company:c[0],sector:c[2],taxId:'900'+(100000+ci*7919).toString().slice(0,6)+'-'+(ci%9),web:'',rep:['Laura Gómez','Andrés Rincón','María Paz Ortiz','Julián Herrera','Camila Duarte','Sergio Patiño','Valentina Ríos'][ci%7],role:'Gerente comercial',email:'contacto@'+c[0].toLowerCase().normalize('NFD').replace(/[^a-z]/g,'').slice(0,12)+'.example',phone:'',logo:logoSvg(c[0],c[1]),createdAt:created,acceptedAt:created,signer:'',sig:null,cond:'v'+year+'.1',expiresAt:created+S.settings.exp*864e5,confirmedAt:status==='confirmado'?created+2*864e5:null,hash:'',renewal:false},extra||{}));
+  };
+  // archived 2026 edition
+  [['A-01',0],['A-04',1],['A-10',2],['B-01',3],['B-03',4],['B-07',5],['C-02',6],['C-09',7],['D-05',8],['D-12',9],['I-01',10],['I-02',11]].forEach(([n,ci])=>mk('2026',n,ci,'confirmado',380));
+  // current 2027 edition
+  [['A-01',0],['A-04',1],['B-01',3],['B-03',4],['B-07',5],['C-02',6],['C-09',7],['I-01',10],['I-03',12]].forEach(([n,ci])=>mk('2027',n,ci,'confirmado',12));
+  mk('2027','A-05',13,'pendiente',1);
+  mk('2027','B-09',2,'pendiente',3,{renewal:true});
+  mk('2027','C-12',9,'pendiente',2);
+  S.resv.forEach(r=>{r.signer=r.rep;});
+  S.log.push({t:t-864e5,m:'Edición 2027 creada a partir del plano 2026. Se ofreció prioridad de renovación a los expositores confirmados.'});
+  return S;
+}
+let codeSeq=1000;
+function codeFor(year){codeSeq++;return 'ME'+String(year).slice(2)+'-'+codeSeq;}
+
+/* ---------- storage ---------- */
+let S;
+function load(){try{const raw=localStorage.getItem(KEY);if(!raw)return null;const o=JSON.parse(raw);if(!o||o.v!==1)return null;return o;}catch(e){return null;}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){/* quota or blocked: keep working in memory */}}
+S=load()||seed();
+S.holds=S.holds||{};
+codeSeq=Math.max(codeSeq,...S.resv.map(r=>+String(r.code).split('-')[1]||0));
+const now=()=>Date.now()+S.offset;
+
+/* ---------- helpers ---------- */
+const Y=()=>S.years[S.current];
+const fmt=t=>new Date(t).toLocaleString('es',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+const fmtS=t=>new Date(t).toLocaleString('es',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',timeZoneName:'short'});
+const fmtT=t=>new Date(t).toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'});
+function log(m){S.log.unshift({t:now(),m});S.log=S.log.slice(0,80);}
+function activeResv(year,sid){return S.resv.find(r=>r.year===year&&r.standId===sid&&(r.status==='pendiente'||r.status==='confirmado'));}
+function holdOf(year,sid){const h=S.holds[year+':'+sid];if(h&&h.until>now())return h;return null;}
+function stateOf(year,s){const r=activeResv(year,s.id);if(r)return r.status;if(holdOf(year,s.id))return 'hold';return 'disponible';}
+function standById(id,y){return (y||Y()).stands.find(s=>s.id===id);}
+function area(s){return +(s.w*s.h).toFixed(1);}
+function ov(a1,a2,b1,b2){return Math.min(a2,b2)-Math.max(a1,b1);}
+function neighbours(s,y){
+  const adj=[],front=[];
+  y.stands.forEach(t=>{if(t.id===s.id)return;
+    const ox=ov(s.x,s.x+s.w,t.x,t.x+t.w),oy=ov(s.y,s.y+s.h,t.y,t.y+t.h);
+    const gx=Math.max(t.x-(s.x+s.w),s.x-(t.x+t.w)),gy=Math.max(t.y-(s.y+s.h),s.y-(t.y+t.h));
+    if((Math.abs(gx)<.01&&oy>0)||(Math.abs(gy)<.01&&ox>0)){adj.push(t);}
+    else if((gy>.1&&gy<=5&&ox>=1)||(gx>.1&&gx<=5&&oy>=1)){
+      // only "facing" if nothing stands in the aisle between them
+      const r=gy>.1&&ox>=1?{x1:Math.max(s.x,t.x),x2:Math.min(s.x+s.w,t.x+t.w),y1:Math.min(s.y+s.h,t.y+t.h),y2:Math.max(s.y,t.y)}:{x1:Math.min(s.x+s.w,t.x+t.w),x2:Math.max(s.x,t.x),y1:Math.max(s.y,t.y),y2:Math.min(s.y+s.h,t.y+t.h)};
+      const blocked=y.stands.some(u=>u.id!==s.id&&u.id!==t.id&&ov(r.x1,r.x2,u.x,u.x+u.w)>0&&ov(r.y1,r.y2,u.y,u.y+u.h)>0);
+      if(!blocked)front.push(t);}
+  });
+  return {adj,front};
+}
+function openSides(s,y){
+  let touch=[false,false,false,false];
+  y.stands.forEach(t=>{if(t.id===s.id)return;
+    const ox=ov(s.x,s.x+s.w,t.x,t.x+t.w),oy=ov(s.y,s.y+s.h,t.y,t.y+t.h);
+    if(ox>0&&Math.abs(t.y+t.h-s.y)<.01)touch[0]=true;
+    if(ox>0&&Math.abs(s.y+s.h-t.y)<.01)touch[2]=true;
+    if(oy>0&&Math.abs(t.x+t.w-s.x)<.01)touch[3]=true;
+    if(oy>0&&Math.abs(s.x+s.w-t.x)<.01)touch[1]=true;
+  });
+  return touch.filter(v=>!v).length;
+}
+function doorDist(s,y){
+  const cx=s.x+s.w/2,cy=s.y+s.h/2;
+  return y.doors.map(d=>({n:d.n,k:d.k,d:Math.round(Math.hypot(d.x-cx,d.y-cy))})).sort((a,b)=>a.d-b.d);
+}
+function rowOf(s){return s.cat==='Isla'?'Islas':'Fila '+s.num.split('-')[0];}
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('on'),3200);}
+async function sha(txt){
+  try{if(window.crypto&&crypto.subtle){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(txt));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');}}catch(e){}
+  let h=2166136261;for(let i=0;i<txt.length;i++){h^=txt.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0).toString(16).padStart(8,'0');
+}
+function expireSweep(){
+  let n=0;
+  S.resv.forEach(r=>{if(r.status==='pendiente'&&r.expiresAt<now()){r.status='liberado';r.releasedAt=now();r.reason='Venció el plazo para formalizar';n++;log(`Stand ${standById(r.standId,S.years[r.year])?.num||'?'} liberado automáticamente: ${r.company} no formalizó a tiempo.`);}});
+  Object.keys(S.holds).forEach(k=>{if(S.holds[k].until<=now())delete S.holds[k];});
+  return n;
+}
+
+/* ---------- view state ---------- */
+let tab='pub',sel=null,editing=false,flow=null; // flow: {sid, step}
+let vb=null;
+function fit(){const y=Y();vb={x:-3,y:-4,w:y.hall.w+6,h:y.hall.h+8};}
+fit();
+
+/* ---------- plan render ---------- */
+const svg=$('#plan');
+function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+function renderPlan(){
+  const y=Y(),W=y.hall.w*SC,H=y.hall.h*SC;
+  svg.setAttribute('viewBox',`${vb.x*SC} ${vb.y*SC} ${vb.w*SC} ${vb.h*SC}`);
+  svg.classList.toggle('editing',editing);
+  const col={disponible:['--av-bg','--av'],pendiente:['--pe-bg','--pe'],confirmado:['--co-bg','--co'],hold:['--pe-bg','--hold']};
+  let h=`<defs><pattern id="hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="8" height="8" fill="${css('--pe-bg')}"/><line x1="0" y1="0" x2="0" y2="8" stroke="${css('--pe')}" stroke-width="2" opacity=".35"/></pattern>
+  <pattern id="grid" width="${SC}" height="${SC}" patternUnits="userSpaceOnUse"><path d="M ${SC} 0 L 0 0 0 ${SC}" fill="none" stroke="${css('--line')}" stroke-width=".6"/></pattern></defs>`;
+  h+=`<rect x="0" y="0" width="${W}" height="${H}" fill="${css('--hall')}" stroke="${css('--ink')}" stroke-width="4"/>`;
+  if(y.bg)h+=`<image href="${y.bg}" x="0" y="0" width="${W}" height="${H}" preserveAspectRatio="none" opacity=".55"/>`;
+  if(editing)h+=`<rect x="0" y="0" width="${W}" height="${H}" fill="url(#grid)"/>`;
+  y.zones.forEach(z=>{const cx=(z.x+z.w/2)*SC,cy=(z.y+z.h/2)*SC,vert=z.h>z.w*1.3,fs=Math.min(14,(vert?z.h:z.w)*SC/(z.n.length*.62));h+=`<rect x="${z.x*SC}" y="${z.y*SC}" width="${z.w*SC}" height="${z.h*SC}" rx="6" fill="${css('--zone')}" stroke="${css('--line')}" stroke-dasharray="6 4"/><text x="${cx}" y="${cy+fs*.35}" text-anchor="middle" font-size="${fs.toFixed(1)}" fill="${css('--zone-ink')}" font-weight="600" ${vert?`transform="rotate(-90 ${cx} ${cy})"`:''}>${esc(z.n)}</text>`;});
+  y.aisles.forEach(a=>{h+=a.v?`<text x="${a.x*SC}" y="${a.y*SC}" text-anchor="middle" font-size="12" fill="${css('--muted')}" transform="rotate(-90 ${a.x*SC} ${a.y*SC})" letter-spacing="2">${esc(a.n.toUpperCase())}</text>`:`<text x="${a.x*SC}" y="${a.y*SC+4}" text-anchor="middle" font-size="12" fill="${css('--muted')}" letter-spacing="2">${esc(a.n.toUpperCase())}</text>`;});
+  y.doors.forEach(d=>{
+    const horiz=d.y===0||d.y===y.hall.h,len=d.k==='main'?60:36,c=d.k==='exit'?css('--danger'):css('--brand2');
+    const x1=horiz?d.x*SC-len/2:d.x*SC,x2=horiz?d.x*SC+len/2:d.x*SC,y1=horiz?d.y*SC:d.y*SC-len/2,y2=horiz?d.y*SC:d.y*SC+len/2;
+    h+=`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${css('--hall')}" stroke-width="8"/><line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="6" stroke-linecap="round"/>`;
+    let tx=d.x*SC,ty=d.y*SC,anc='middle',rot='';
+    if(d.y===y.hall.h)ty+=22;else if(d.y===0)ty-=10;else if(d.x===0){tx-=12;rot=`transform="rotate(-90 ${tx} ${ty})"`;}else{tx+=12;rot=`transform="rotate(90 ${tx} ${ty})"`;}
+    h+=`<text x="${tx}" y="${ty}" text-anchor="${anc}" font-size="13" font-weight="700" fill="${c}" ${rot}>${esc(d.n)}${d.k==='main'?' ↑':''}</text>`;
+  });
+  let nbIds=new Set();
+  if(sel&&!editing){const s=standById(sel);if(s){const n=neighbours(s,y);n.adj.concat(n.front).forEach(t=>nbIds.add(t.id));}}
+  y.stands.forEach(s=>{
+    const st=stateOf(S.current,s),r=activeResv(S.current,s.id),c=col[st];
+    const fill=st==='pendiente'?'url(#hatch)':css(c[0]);
+    const x=s.x*SC,yy=s.y*SC,w=s.w*SC,hh=s.h*SC;
+    h+=`<g class="stand${sel===s.id?' sel':''}" data-sid="${s.id}" tabindex="0" role="button" aria-label="Stand ${esc(s.num)}, ${st}">`;
+    h+=`<rect class="b" x="${x+1}" y="${yy+1}" width="${w-2}" height="${hh-2}" rx="3" fill="${fill}" stroke="${css(c[1])}" ${st==='hold'?'stroke-dasharray="6 4"':''}/>`;
+    if(nbIds.has(s.id))h+=`<rect x="${x+3}" y="${yy+3}" width="${w-6}" height="${hh-6}" rx="2" fill="none" stroke="${css('--ink')}" stroke-width="1.2" stroke-dasharray="3 3" opacity=".55"/>`;
+    if(st==='confirmado'&&r&&r.logo){
+      h+=`<image href="${r.logo}" x="${x+w*.2}" y="${yy+hh*.3}" width="${w*.6}" height="${hh*.6}" preserveAspectRatio="xMidYMid meet"/>`;
+      h+=`<text x="${x+4}" y="${yy+8.5}" font-size="7.5" font-weight="700" fill="${css('--co')}">${esc(s.num)}</text>`;
+    }else{
+      h+=`<text x="${x+w/2}" y="${yy+hh/2+1}" text-anchor="middle" font-size="${s.w>=6&&s.h>=6?15:s.w<4?9.5:12}" font-weight="700" fill="${css('--ink')}">${esc(s.num)}</text>`;
+      h+=`<text x="${x+w/2}" y="${yy+hh/2+13}" text-anchor="middle" font-size="${s.w<4?7:9}" fill="${css('--muted')}">${s.w}×${s.h} m</text>`;
+    }
+    h+=`</g>`;
+  });
+  svg.innerHTML=h;
+}
+
+/* ---------- pan / zoom / drag ---------- */
+function toM(evt){const pt=svg.createSVGPoint();pt.x=evt.clientX;pt.y=evt.clientY;const p=pt.matrixTransform(svg.getScreenCTM().inverse());return {x:p.x/SC,y:p.y/SC};}
+function zoom(f,cx,cy){
+  const nw=Math.min(Math.max(vb.w*f,12),Y().hall.w*2.2),k=nw/vb.w;
+  if(cx==null){cx=vb.x+vb.w/2;cy=vb.y+vb.h/2;}
+  vb={x:cx-(cx-vb.x)*k,y:cy-(cy-vb.y)*k,w:vb.w*k,h:vb.h*k};renderPlan();
+}
+$('#zIn').onclick=()=>zoom(.75);$('#zOut').onclick=()=>zoom(1.33);$('#zFit').onclick=()=>{fit();renderPlan();};
+svg.addEventListener('wheel',e=>{e.preventDefault();const m=toM(e);zoom(e.deltaY<0?.85:1.18,m.x,m.y);},{passive:false});
+const ptrs=new Map();let drag=null,moved=0,pinch0=null;
+svg.addEventListener('pointerdown',e=>{
+  try{svg.setPointerCapture(e.pointerId);}catch(_){}ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});moved=0;
+  if(ptrs.size===2){const [a,b]=[...ptrs.values()];pinch0={d:Math.hypot(a.x-b.x,a.y-b.y),vb:{...vb}};drag=null;return;}
+  const g=e.target.closest('[data-sid]');
+  if(editing&&g){const s=standById(g.dataset.sid);const m=toM(e);drag={mode:'stand',s,dx:m.x-s.x,dy:m.y-s.y,g};sel=s.id;renderSide();return;}
+  drag={mode:'pan',sx:e.clientX,sy:e.clientY,vb:{...vb},sid:g?g.dataset.sid:null};
+});
+svg.addEventListener('pointermove',e=>{
+  if(!ptrs.has(e.pointerId))return;ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(ptrs.size===2&&pinch0){const [a,b]=[...ptrs.values()];const d=Math.hypot(a.x-b.x,a.y-b.y);if(d>0){const k=pinch0.d/d;const cx=pinch0.vb.x+pinch0.vb.w/2,cy=pinch0.vb.y+pinch0.vb.h/2;const nw=Math.min(Math.max(pinch0.vb.w*k,12),Y().hall.w*2.2),kk=nw/pinch0.vb.w;vb={x:cx-pinch0.vb.w*kk/2,y:cy-pinch0.vb.h*kk/2,w:pinch0.vb.w*kk,h:pinch0.vb.h*kk};renderPlan();}return;}
+  if(!drag)return;
+  if(drag.mode==='pan'){
+    const r=svg.getBoundingClientRect(),dx=(e.clientX-drag.sx),dy=(e.clientY-drag.sy);moved=Math.max(moved,Math.abs(dx)+Math.abs(dy));
+    if(moved<4)return;
+    const k=Math.max(drag.vb.w/r.width,drag.vb.h/r.height);
+    vb={...drag.vb,x:drag.vb.x-dx*k,y:drag.vb.y-dy*k};renderPlan();
+  }else{
+    const m=toM(e),y=Y(),s=drag.s;moved++;
+    s.x=Math.min(Math.max(Math.round((m.x-drag.dx)*2)/2,0),y.hall.w-s.w);
+    s.y=Math.min(Math.max(Math.round((m.y-drag.dy)*2)/2,0),y.hall.h-s.h);
+    renderPlan();
+  }
+});
+function endPtr(e){
+  ptrs.delete(e.pointerId);if(ptrs.size<2)pinch0=null;
+  if(!drag)return;
+  if(drag.mode==='pan'&&moved<4&&drag.sid){selectStand(drag.sid);}
+  else if(drag.mode==='pan'&&moved<4&&!drag.sid&&!editing&&!flow){sel=null;flow=null;renderAll();}
+  if(drag.mode==='stand'){if(moved>0)log(`Stand ${drag.s.num} movido a (${drag.s.x}, ${drag.s.y}) m.`);save();renderAll();}
+  drag=null;
+}
+svg.addEventListener('pointerup',endPtr);svg.addEventListener('pointercancel',endPtr);
+svg.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.dataset&&e.target.dataset.sid){e.preventDefault();selectStand(e.target.dataset.sid);}});
+function selectStand(id){if(flow&&flow.sid===id){renderPlan();return;}sel=id;if(flow&&flow.sid!==id)flow=null;renderAll();if(window.innerWidth<960&&!editing)$('#side').scrollIntoView({behavior:'smooth',block:'start'});}
+
+/* ---------- side panel (public) ---------- */
+let timerI=null;
+function chip(st,r){
+  if(st==='disponible')return '<span class="chip av">Disponible</span>';
+  if(st==='pendiente')return `<span class="chip pe">Reserva pendiente${r&&r.renewal?' · prioridad de renovación':''}</span>`;
+  if(st==='confirmado')return '<span class="chip co">Confirmado</span>';
+  if(st==='hold')return '<span class="chip ho">En proceso de reserva</span>';
+  return '<span class="chip li">Liberado</span>';
+}
+function nbLine(t,y){
+  const st=stateOf(S.current,t),r=activeResv(S.current,t.id);
+  let who=st==='confirmado'?`<b>${esc(r.company)}</b>`:st==='pendiente'?'<span class="muted">Reserva pendiente</span>':st==='hold'?'<span class="muted">En proceso</span>':'<span style="color:var(--av);font-weight:600">Disponible</span>';
+  return `<li><button data-go="${t.id}">${esc(t.num)}</button><span>${who}</span></li>`;
+}
+function renderSide(){
+  clearInterval(timerI);timerI=null;
+  const side=$('#side'),y=Y();
+  if(tab==='adm'&&editing){renderStandEditor();side.innerHTML=`<h2>Editando el plano ${esc(S.current)}</h2><p class="small muted">Arrastre los stands sobre el plano. Se ajustan cada 0,5 m y no salen de la sala. Los cambios de número y medidas se hacen en el editor, abajo.</p>${sel?`<div class="alert i small">Seleccionado: <b>${esc(standById(sel)?.num||'')}</b></div>`:''}`;return;}
+  if(!sel){
+    side.innerHTML=`<h2>Busque su lugar</h2>
+      <p class="small muted" style="margin-top:0">Toque un stand del plano para ver medidas, ubicación, estado y qué empresas confirmadas tiene al lado.</p>
+      <label class="f">Buscar empresa expositora<input type="search" id="q" placeholder="Ej.: válvulas, Navitek…"></label>
+      <ul class="searchres" id="qres"></ul>
+      <h3>Esta edición</h3>${summaryHtml()}
+      ${y.archived?'<div class="alert i small" style="margin-top:10px">Esta es una edición archivada: el plano y los expositores se conservan como historial y no admite reservas.</div>':''}`;
+    const q=$('#q');q.oninput=()=>{const v=q.value.trim().toLowerCase();const res=v.length<2?[]:S.resv.filter(r=>r.year===S.current&&r.status==='confirmado'&&(r.company.toLowerCase().includes(v)||r.sector.toLowerCase().includes(v)));
+      $('#qres').innerHTML=res.map(r=>`<li><button data-go="${r.standId}"><span>${esc(r.company)}<br><span class="small muted">${esc(r.sector)}</span></span><b>${esc(standById(r.standId)?.num||'')}</b></button></li>`).join('')||(v.length>=2?'<li class="small muted" style="padding:6px 0">Sin resultados entre las empresas confirmadas.</li>':'');};
+    return;
+  }
+  const s=standById(sel);if(!s){sel=null;return renderSide();}
+  const st=stateOf(S.current,s),r=activeResv(S.current,s.id),nb=neighbours(s,y),dd=doorDist(s,y),os=openSides(s,y);
+  if(flow&&flow.sid===s.id){return renderForm(s);}
+  let h=`<div class="row" style="justify-content:space-between;align-items:center"><h2>Stand ${esc(s.num)}</h2>${chip(st,r)}</div>
+    <dl class="facts"><dt>Tipo</dt><dd>${esc(s.cat)}</dd><dt>Medidas</dt><dd>${s.w} × ${s.h} m · ${area(s)} m²</dd><dt>Ubicación</dt><dd>${esc(rowOf(s))} · ${os} ${os===1?'lado abierto':'lados abiertos'}${os>=2&&s.cat!=='Isla'?' (esquina)':''}</dd>
+    <dt>Accesos</dt><dd>${dd.slice(0,2).map(d=>`${esc(d.n)} a ${d.d} m`).join('<br>')}</dd></dl>`;
+  if(st==='confirmado')h+=`<div class="row" style="align-items:center;gap:12px;margin:8px 0"><img class="logoprev" src="${r.logo}" alt=""><div><b>${esc(r.company)}</b><br><span class="small muted">${esc(r.sector)}</span></div></div>`;
+  h+=`<h3>Stands colindantes</h3><ul class="nb">${nb.adj.map(t=>nbLine(t,y)).join('')||'<li class="muted small">Ninguno: el stand está aislado.</li>'}</ul>`;
+  if(nb.front.length)h+=`<h3>Enfrente, al otro lado del pasillo</h3><ul class="nb">${nb.front.map(t=>nbLine(t,y)).join('')}</ul>`;
+  h+=`<p class="small muted">Las empresas con reserva pendiente no se muestran por nombre hasta que el equipo organizador las confirma.</p>`;
+  h+=`<div class="stack" style="margin-top:12px">`;
+  if(y.archived)h+=`<div class="alert i small">Edición archivada: no admite reservas.</div>`;
+  else if(st==='disponible')h+=`<button class="btn pri" id="go">Solicitar este stand</button>`;
+  else if(st==='hold'){const hd=holdOf(S.current,s.id);h+=hd.by===me?`<button class="btn pri" id="resume">Continuar mi solicitud</button>`:`<div class="alert w small">Otra empresa está completando la solicitud de este stand. Si no la termina, vuelve a estar disponible a las ${fmtT(hd.until)}.</div>${altHtml(s)}`;}
+  else h+=`<div class="alert i small">Este stand ya tiene ${st==='confirmado'?'expositor confirmado':'una reserva en curso'}.</div>${altHtml(s)}`;
+  h+=`<button class="btn" id="v360">Ver esta zona en el recorrido 360°</button></div>`;
+  $('#side').innerHTML=h;
+  const go=$('#go');if(go)go.onclick=()=>startFlow(s);
+  const rs=$('#resume');if(rs)rs.onclick=()=>{flow={sid:s.id};renderSide();};
+  $('#v360').onclick=()=>open360(s);
+}
+function altHtml(s){
+  const y=Y(),cx=s.x+s.w/2,cy=s.y+s.h/2;
+  const alt=y.stands.filter(t=>t.id!==s.id&&stateOf(S.current,t)==='disponible').map(t=>({t,d:Math.hypot(t.x+t.w/2-cx,t.y+t.h/2-cy)+(t.cat===s.cat?0:4)})).sort((a,b)=>a.d-b.d).slice(0,3);
+  if(!alt.length)return '';
+  return `<div class="small">Disponibles cerca: ${alt.map(a=>`<button class="btn sm" data-go="${a.t.id}">${esc(a.t.num)} · ${a.t.w}×${a.t.h}</button>`).join(' ')}</div>`;
+}
+function summaryHtml(){
+  const y=Y();let c={disponible:0,pendiente:0,confirmado:0,hold:0};y.stands.forEach(s=>c[stateOf(S.current,s)]++);
+  return `<dl class="facts"><dt>Disponibles</dt><dd>${c.disponible}</dd><dt>Pendientes</dt><dd>${c.pendiente+c.hold}</dd><dt>Confirmados</dt><dd>${c.confirmado}</dd><dt>Total</dt><dd>${y.stands.length} stands</dd></dl>`;
+}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-go]');if(b){e.preventDefault();selectStand(b.dataset.go);}});
+
+/* ---------- reservation flow ---------- */
+function startFlow(s){
+  expireSweep();
+  const st=stateOf(S.current,s);
+  if(st!=='disponible'){toast('Ese stand acaba de cambiar de estado.');renderAll();return;}
+  S.holds[S.current+':'+s.id]={until:now()+S.settings.hold*6e4,by:me};
+  log(`Stand ${s.num} bloqueado ${S.settings.hold} min mientras una empresa llena la solicitud.`);
+  flow={sid:s.id};save();renderAll();
+}
+let sigDirty=false,logoData=null;
+function renderForm(s){
+  const hd=holdOf(S.current,s.id);
+  const side=$('#side');
+  side.innerHTML=`<div class="row" style="justify-content:space-between;align-items:center"><h2>Solicitud · Stand ${esc(s.num)}</h2><button class="btn sm" id="cancelF">Cancelar</button></div>
+  <div class="alert w small" style="margin:8px 0">Stand reservado para usted durante <span class="timer" id="tmr"></span>. Mientras tanto, nadie más puede solicitarlo.</div>
+  <button class="btn sm" id="sim" style="margin-bottom:8px">Simular: otra empresa intenta este stand ahora</button>
+  <div id="simOut"></div>
+  <form id="frm" class="stack" novalidate>
+    <h3 style="margin-top:6px">Empresa</h3>
+    <label class="f">Razón social *<input type="text" name="company" required></label>
+    <div class="two"><label class="f">Identificación tributaria *<input type="text" name="taxId" required></label>
+    <label class="f">Sector<input type="text" name="sector" placeholder="Ej.: inspección"></label></div>
+    <label class="f">Sitio web<input type="text" name="web" placeholder="https://"></label>
+    <h3>Representante</h3>
+    <div class="two"><label class="f">Nombre completo *<input type="text" name="rep" required></label>
+    <label class="f">Cargo<input type="text" name="role"></label></div>
+    <div class="two"><label class="f">Correo *<input type="email" name="email" required></label>
+    <label class="f">Teléfono<input type="tel" name="phone"></label></div>
+    <h3>Logo para el plano</h3>
+    <div class="row" style="align-items:center"><img class="logoprev" id="lp" alt="" style="display:none"><label class="btn sm" style="cursor:pointer">Subir logo (PNG, JPG o SVG)<input type="file" id="logoF" accept="image/png,image/jpeg,image/svg+xml,image/webp" hidden></label></div>
+    <p class="small muted" style="margin:0">Se publica en el stand cuando el equipo organizador confirma la reserva.</p>
+    <h3>Condiciones de participación (v${esc(S.current)}.1)</h3>
+    <div class="cond"><ol><li>La solicitud reserva el stand ${esc(s.num)} (${s.w}×${s.h} m) de forma provisional durante ${S.settings.exp} días.</li><li>La reserva queda en firme cuando el equipo organizador la confirma.</li><li>Si no se formaliza en ese plazo, el stand se libera sin costo.</li><li>El expositor autoriza la publicación de su nombre y logo en el plano.</li><li>Texto de ejemplo: aquí van las condiciones reales del congreso.</li></ol></div>
+    <label class="small" style="display:flex;gap:8px;align-items:flex-start"><input type="checkbox" name="ok" required style="margin-top:3px"> Acepto las condiciones de participación en nombre de la empresa.</label>
+    <label class="f">Firma (dibuje con el dedo o el mouse)<canvas id="sig"></canvas></label>
+    <div class="row"><button type="button" class="btn sm" id="sigClr">Borrar firma</button></div>
+    <div id="ferr"></div>
+    <button class="btn pri" type="submit">Enviar solicitud y recibir comprobante</button>
+  </form>`;
+  logoData=null;sigDirty=false;
+  const tick=()=>{const h=holdOf(S.current,s.id);if(!h){clearInterval(timerI);flow=null;toast('El bloqueo venció y el stand volvió a quedar disponible.');save();renderAll();return;}const left=Math.max(0,h.until-now());$('#tmr').textContent=`${Math.floor(left/6e4)}:${String(Math.floor(left%6e4/1e3)).padStart(2,'0')}`;};
+  tick();timerI=setInterval(tick,1000);
+  $('#cancelF').onclick=()=>{delete S.holds[S.current+':'+s.id];log(`Solicitud del stand ${s.num} cancelada; vuelve a estar disponible.`);flow=null;save();renderAll();};
+  $('#sim').onclick=()=>{
+    const h=holdOf(S.current,s.id);
+    $('#simOut').innerHTML=`<div class="alert e small" style="margin-bottom:8px">A las ${new Date(now()).toLocaleTimeString('es')} otra empresa tocó «Solicitar» en ${esc(s.num)} y vio: «Otra empresa está completando la solicitud de este stand; si no la termina, se libera a las ${fmtT(h.until)}». No pudo enviar datos.${altHtml(s).replace('<div class="small">','<div class="small" style="margin-top:6px;color:var(--ink)">Se le ofrecieron: ')}</div>`;
+    log(`Intento simultáneo sobre ${s.num} rechazado: el stand estaba en proceso.`);save();
+  };
+  $('#logoF').onchange=e=>{const f=e.target.files[0];if(!f)return;if(f.size>2e6){toast('El logo supera 2 MB.');return;}const rd=new FileReader();rd.onload=()=>{logoData=rd.result;const lp=$('#lp');lp.src=logoData;lp.style.display='block';};rd.readAsDataURL(f);};
+  setupSig();
+  $('#sigClr').onclick=()=>{const c=$('#sig');c.getContext('2d').clearRect(0,0,c.width,c.height);sigDirty=false;};
+  $('#frm').onsubmit=async e=>{
+    e.preventDefault();
+    const fd=new FormData(e.target),v=Object.fromEntries(fd.entries());
+    const errs=[];
+    if(!v.company?.trim())errs.push('la razón social');if(!v.taxId?.trim())errs.push('la identificación tributaria');if(!v.rep?.trim())errs.push('el nombre del representante');
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.email||''))errs.push('un correo válido');if(!v.ok)errs.push('la aceptación de condiciones');if(!sigDirty)errs.push('la firma');
+    if(errs.length){$('#ferr').innerHTML=`<div class="alert e small">Falta ${errs.join(', ')}.</div>`;return;}
+    // final check at submit time: the stand must still be held by this session
+    expireSweep();const h=holdOf(S.current,s.id);
+    if(!h||h.by!==me||activeResv(S.current,s.id)){$('#ferr').innerHTML='<div class="alert e small">El stand ya no está reservado para usted. Elija otro en el plano.</div>';return;}
+    const t=now();
+    const rec={id:uid('r'),code:codeFor(S.current),year:S.current,standId:s.id,status:'pendiente',company:v.company.trim(),sector:(v.sector||'').trim()||'Sin sector',taxId:v.taxId.trim(),web:v.web||'',rep:v.rep.trim(),role:v.role||'',email:v.email.trim(),phone:v.phone||'',
+      logo:logoData||logoSvg(v.company.trim(),'#0f3b66'),logoProvided:!!logoData,createdAt:t,acceptedAt:t,signer:v.rep.trim(),sig:$('#sig').toDataURL('image/png'),cond:'v'+S.current+'.1',ua:navigator.userAgent,expiresAt:t+S.settings.exp*864e5,confirmedAt:null,renewal:false};
+    rec.hash=await sha([rec.code,rec.year,s.num,rec.company,rec.taxId,rec.rep,rec.email,rec.cond,new Date(rec.acceptedAt).toISOString(),rec.sig.length].join('|'));
+    S.resv.push(rec);delete S.holds[S.current+':'+s.id];
+    log(`Solicitud ${rec.code}: ${rec.company} pidió el stand ${s.num}. Comprobante enviado a ${rec.email}.`);
+    flow=null;save();renderAll();showReceipt(rec);
+  };
+}
+function setupSig(){
+  const c=$('#sig'),r=c.getBoundingClientRect(),dpr=window.devicePixelRatio||1;
+  c.width=r.width*dpr;c.height=r.height*dpr;const x=c.getContext('2d');x.scale(dpr,dpr);x.lineWidth=2.2;x.lineCap='round';x.strokeStyle=css('--ink');
+  let dn=false;
+  c.onpointerdown=e=>{dn=true;try{c.setPointerCapture(e.pointerId);}catch(_){}const b=c.getBoundingClientRect();x.beginPath();x.moveTo(e.clientX-b.left,e.clientY-b.top);};
+  c.onpointermove=e=>{if(!dn)return;const b=c.getBoundingClientRect();x.lineTo(e.clientX-b.left,e.clientY-b.top);x.stroke();sigDirty=true;};
+  c.onpointerup=c.onpointercancel=()=>{dn=false;};
+}
+
+/* ---------- modals ---------- */
+function modal(title,html){$('#mTitle').textContent=title;$('#mBody').innerHTML=html;$('#modal').classList.add('on');}
+function closeModal(){$('#modal').classList.remove('on');stop360();}
+$('#mClose').onclick=closeModal;$('#modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+function showReceipt(r,confirm){
+  const s=standById(r.standId,S.years[r.year]);
+  modal(confirm?'Correo de confirmación (vista previa)':'Comprobante enviado por correo (vista previa)',`<div class="mail"><div class="mh"><b>Para:</b> ${esc(r.email)}<br><b>Asunto:</b> ${confirm?'Reserva confirmada':'Comprobante de solicitud'} · Stand ${esc(s?.num)} · Muestra Empresarial ${esc(r.year)}</div>
+  <div class="mb"><p>Hola, ${esc(r.rep)}:</p>
+  <p>${confirm?`Su reserva del stand <b>${esc(s?.num)}</b> quedó confirmada. El logo de ${esc(r.company)} ya aparece en el plano.`:`Recibimos la solicitud de <b>${esc(r.company)}</b> para el stand <b>${esc(s?.num)}</b> (${s?.w}×${s?.h} m, ${esc(s?.cat)}). Queda pendiente de confirmación por el equipo organizador y se mantiene a su nombre hasta el <b>${fmt(r.expiresAt)}</b>.`}</p>
+  <dl class="facts"><dt>Código</dt><dd><b>${esc(r.code)}</b></dd><dt>Empresa</dt><dd>${esc(r.company)} · ${esc(r.taxId)}</dd><dt>Representante</dt><dd>${esc(r.rep)}${r.role?', '+esc(r.role):''}</dd>
+  <dt>Aceptación</dt><dd>Condiciones ${esc(r.cond)} aceptadas el ${fmtS(r.acceptedAt)} por ${esc(r.signer)}</dd>${r.sig?`<dt>Firma</dt><dd><img src="${r.sig}" alt="Firma" style="max-width:220px;height:60px;object-fit:contain;background:#fff;border:1px solid var(--line);border-radius:6px"></dd>`:''}
+  ${r.hash?`<dt>Huella</dt><dd class="mono">${esc(r.hash)}</dd>`:''}</dl>
+  <p class="small muted" style="margin-bottom:0">La huella resume los datos aceptados: si alguien cambiara un dato después, ya no coincidiría. En el sistema real también se guarda la dirección IP y se adjunta el PDF de las condiciones.</p></div></div>
+  <div class="row" style="margin-top:12px"><button class="btn pri" id="seePlan">Ver en el plano</button>${confirm?'':'<button class="btn" id="seeAdm">Ir al panel (confirmarla)</button>'}</div>`);
+  $('#seePlan').onclick=()=>{closeModal();sel=r.standId;setTab('pub');};
+  const sa=$('#seeAdm');if(sa)sa.onclick=()=>{closeModal();sel=r.standId;setTab('adm');};
+}
+
+/* ---------- 360 ---------- */
+let pano=null,yaw=0,panoRAF=null;
+function buildPano(view,focus){
+  const y=Y(),W=2400,H=340,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
+  const hz=H*.52;
+  let g=x.createLinearGradient(0,0,0,hz);g.addColorStop(0,'#2a3445');g.addColorStop(1,'#4d5b70');x.fillStyle=g;x.fillRect(0,0,W,hz);
+  g=x.createLinearGradient(0,hz,0,H);g.addColorStop(0,'#8a8f96');g.addColorStop(1,'#c9ccd1');x.fillStyle=g;x.fillRect(0,hz,W,H-hz);
+  for(let i=0;i<24;i++){x.fillStyle='rgba(255,246,220,.55)';x.fillRect(i*100+30,18+(i%2)*8,40,5);}
+  const items=y.stands.map(s=>{const cx=s.x+s.w/2,cy=s.y+s.h/2,dx=cx-view.x,dy=cy-view.y;return {s,d:Math.max(Math.hypot(dx,dy),1.5),a:Math.atan2(dx,-dy)};}).sort((a,b)=>b.d-a.d);
+  const cols={disponible:'#2f9e6b',pendiente:'#d9961a',confirmado:'#2f5fa8',hold:'#c2410c'};
+  items.forEach(it=>{
+    const st=stateOf(S.current,it.s),half=Math.atan((Math.max(it.s.w,it.s.h)/2)/it.d);
+    const px=((it.a+Math.PI*2)%(Math.PI*2))/(Math.PI*2)*W,pw=Math.max(half*2/(Math.PI*2)*W,10),ph=Math.min(1100/it.d,170);
+    [px-W,px,px+W].forEach(cx=>{
+      if(cx+pw/2<0||cx-pw/2>W)return;
+      x.fillStyle=cols[st];x.globalAlpha=Math.min(1,.45+5/it.d);x.fillRect(cx-pw/2,hz-ph*.55,pw,ph*.75);
+      x.globalAlpha=1;x.fillStyle='rgba(0,0,0,.25)';x.fillRect(cx-pw/2,hz+ph*.2,pw,4);
+      if(focus&&focus.id===it.s.id){x.strokeStyle='#fff';x.lineWidth=3;x.strokeRect(cx-pw/2-3,hz-ph*.55-3,pw+6,ph*.75+6);}
+      if(pw>26){x.fillStyle='#fff';x.font=`700 ${Math.min(Math.max(pw/4,10),18)}px system-ui,sans-serif`;x.textAlign='center';x.fillText(it.s.num,cx,hz-ph*.55+Math.min(Math.max(pw/4,10),18)+4);}
+    });
+  });
+  y.doors.forEach(d=>{const dx=d.x-view.x,dy=d.y-view.y,a=Math.atan2(dx,-dy),px=((a+Math.PI*2)%(Math.PI*2))/(Math.PI*2)*W;
+    [px-W,px,px+W].forEach(cx=>{x.fillStyle=d.k==='exit'?'#d14343':'#2bb3c0';x.fillRect(cx-28,hz-120,56,14);x.fillStyle='#fff';x.font='600 11px system-ui,sans-serif';x.textAlign='center';x.fillText(d.n,cx,hz-128);});});
+  return {c,W,H};
+}
+function nearestView(s){const y=Y();if(!s)return y.views[0];const cx=s.x+s.w/2,cy=s.y+s.h/2;return y.views.slice().sort((a,b)=>Math.hypot(a.x-cx,a.y-cy)-Math.hypot(b.x-cx,b.y-cy))[0];}
+function open360(s){
+  const y=Y();let view=nearestView(s);
+  modal('Recorrido 360° · '+view.n,`<p class="small muted" style="margin-top:0">Arrastre para mirar alrededor. ${s?`El stand ${esc(s.num)} aparece remarcado.`:''}</p><canvas id="pano"></canvas>
+  <div class="row" style="margin-top:10px">${y.views.map(v=>`<button class="btn sm" data-view="${esc(v.n)}">${esc(v.n)}</button>`).join('')}</div>
+  <div class="alert i small" style="margin-top:12px">Escena generada a partir del plano solo para esta demo. En el proyecto, este botón abre el recorrido 360° real del recinto en el punto de vista más cercano al stand elegido.</div>`);
+  const setView=v=>{view=v;pano=buildPano(v,s);$('#mTitle').textContent='Recorrido 360° · '+v.n;
+    if(s){const dx=s.x+s.w/2-v.x,dy=s.y+s.h/2-v.y,a=Math.atan2(dx,-dy);yaw=((a+Math.PI*2)%(Math.PI*2))/(Math.PI*2)*pano.W;}else yaw=0;draw();};
+  document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>setView(y.views.find(v=>v.n===b.dataset.view)));
+  const cv=$('#pano'),dpr=window.devicePixelRatio||1;
+  function draw(){const r=cv.getBoundingClientRect();cv.width=r.width*dpr;cv.height=r.height*dpr;const x=cv.getContext('2d');const sc=cv.height/pano.H;const vw=cv.width/sc;let sx=((yaw-vw/2)%pano.W+pano.W)%pano.W;
+    x.setTransform(sc,0,0,sc,0,0);x.drawImage(pano.c,-sx,0);x.drawImage(pano.c,pano.W-sx,0);if(pano.W*2-sx<vw)x.drawImage(pano.c,pano.W*2-sx,0);}
+  let dn=null;cv.onpointerdown=e=>{dn={x:e.clientX,y:yaw};try{cv.setPointerCapture(e.pointerId);}catch(_){}};cv.onpointermove=e=>{if(!dn)return;yaw=dn.y-(e.clientX-dn.x)*1.4;draw();};cv.onpointerup=cv.onpointercancel=()=>{dn=null;};
+  setTimeout(()=>setView(view),30);
+}
+function stop360(){pano=null;}
+$('#btn360').onclick=()=>open360(sel?standById(sel):null);
+
+/* ---------- admin ---------- */
+function renderAdmin(){
+  const y=Y();let c={disponible:0,pendiente:0,confirmado:0,hold:0},m2=0,m2t=0;
+  y.stands.forEach(s=>{const st=stateOf(S.current,s);c[st]++;m2t+=area(s);if(st==='confirmado')m2+=area(s);});
+  $('#kpis').innerHTML=`<div class="card kpi"><b>${c.disponible}</b><span>Disponibles</span></div><div class="card kpi"><b>${c.pendiente+c.hold}</b><span>Pendientes</span></div><div class="card kpi"><b>${c.confirmado}</b><span>Confirmados</span></div><div class="card kpi"><b>${Math.round(m2/m2t*100)}%</b><span>Superficie confirmada (${Math.round(m2)} de ${Math.round(m2t)} m²)</span></div>`;
+  const f=$('#fStatus').value;
+  const rows=S.resv.filter(r=>r.year===S.current&&(!f||r.status===f)).sort((a,b)=>({pendiente:0,confirmado:1,liberado:2}[a.status]-{pendiente:0,confirmado:1,liberado:2}[b.status])||b.createdAt-a.createdAt);
+  $('#tbl').innerHTML=`<thead><tr><th>Stand</th><th>Empresa</th><th>Estado</th><th>Solicitud</th><th></th></tr></thead><tbody>${rows.map(r=>{const s=standById(r.standId);return `<tr>
+    <td><button class="btn sm" data-go="${r.standId}">${esc(s?.num||'—')}</button></td>
+    <td><div class="row" style="align-items:center;gap:8px"><img class="mini" src="${r.logo}" alt=""><div><b>${esc(r.company)}</b><br><span class="small muted">${esc(r.rep)} · ${esc(r.code)}</span></div></div></td>
+    <td>${chip(r.status,r)}${r.status==='pendiente'?`<br><span class="small muted">vence ${fmt(r.expiresAt)}</span>`:''}${r.status==='liberado'&&r.reason?`<br><span class="small muted">${esc(r.reason)}</span>`:''}</td>
+    <td class="small">${fmt(r.createdAt)}</td>
+    <td><div class="row">${r.status==='pendiente'?`<button class="btn sm ok" data-act="ok" data-id="${r.id}">Confirmar</button>`:''}${r.status!=='liberado'&&!y.archived?`<button class="btn sm" data-act="rel" data-id="${r.id}">Liberar</button>`:''}<button class="btn sm" data-act="edit" data-id="${r.id}">Editar</button><button class="btn sm" data-act="rcpt" data-id="${r.id}">Comprobante</button></div></td></tr>`;}).join('')||'<tr><td colspan="5" class="muted">Sin reservas con este filtro.</td></tr>'}</tbody>`;
+  $('#log').innerHTML=S.log.map(l=>`<li><time>${fmt(l.t)}</time>${esc(l.m)}</li>`).join('');
+  $('#setExp').value=S.settings.exp;$('#setHold').value=S.settings.hold;
+  $('#clockNote').textContent=S.offset?`Reloj de la demo adelantado ${Math.round(S.offset/864e5)} día(s).`:'';
+  $('#btnEdit').textContent=editing?'Terminar edición':'Editar plano';
+  $('#btnEdit').disabled=y.archived;
+  $('#editTools').classList.toggle('hidden',!editing);
+  if(editing)renderStandEditor();
+}
+$('#fStatus').onchange=renderAdmin;
+$('#tbl').addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]');if(!b)return;const r=S.resv.find(z=>z.id===b.dataset.id);if(!r)return;const s=standById(r.standId);
+  if(b.dataset.act==='ok'){r.status='confirmado';r.confirmedAt=now();log(`Reserva ${r.code} confirmada: el logo de ${r.company} ya está publicado en el stand ${s.num}. Correo de confirmación enviado.`);save();sel=r.standId;renderAll();showReceipt(r,true);}
+  if(b.dataset.act==='rel'){
+    modal('Liberar stand '+s.num,`<p>¿Liberar la reserva de <b>${esc(r.company)}</b>? El stand vuelve a quedar disponible en el plano${r.status==='confirmado'?' y su logo se retira':''}.</p><label class="f">Motivo (queda en el historial)<input type="text" id="relWhy" value="Liberado por el equipo organizador"></label><div class="row" style="margin-top:12px"><button class="btn pri" id="relOk">Liberar</button><button class="btn" id="relNo">Cancelar</button></div>`);
+    $('#relNo').onclick=closeModal;$('#relOk').onclick=()=>{r.status='liberado';r.releasedAt=now();r.reason=$('#relWhy').value||'Liberado';log(`Stand ${s.num} liberado (${r.company}): ${r.reason}.`);save();closeModal();renderAll();};
+  }
+  if(b.dataset.act==='edit'){
+    let nl=null;
+    modal('Editar reserva '+r.code,`<div class="stack"><label class="f">Empresa<input type="text" id="eC" value="${esc(r.company)}"></label><label class="f">Sector<input type="text" id="eS" value="${esc(r.sector)}"></label><div class="two"><label class="f">Representante<input type="text" id="eR" value="${esc(r.rep)}"></label><label class="f">Correo<input type="email" id="eE" value="${esc(r.email)}"></label></div>
+    <div class="row" style="align-items:center"><img class="logoprev" id="eLp" src="${r.logo}" alt=""><label class="btn sm" style="cursor:pointer">Reemplazar logo<input type="file" id="eL" accept="image/*" hidden></label></div>
+    <label class="f">Mover a otro stand disponible<select id="eM"><option value="">Mantener ${esc(s.num)}</option>${Y().stands.filter(t=>stateOf(S.current,t)==='disponible').map(t=>`<option value="${t.id}">${esc(t.num)} · ${t.w}×${t.h} m</option>`).join('')}</select></label>
+    <div class="row"><button class="btn pri" id="eOk">Guardar</button><button class="btn" id="eNo">Cancelar</button></div></div>`);
+    $('#eL').onchange=ev=>{const fl=ev.target.files[0];if(!fl)return;const rd=new FileReader();rd.onload=()=>{nl=rd.result;$('#eLp').src=nl;};rd.readAsDataURL(fl);};
+    $('#eNo').onclick=closeModal;
+    $('#eOk').onclick=()=>{r.company=$('#eC').value||r.company;r.sector=$('#eS').value;r.rep=$('#eR').value||r.rep;r.email=$('#eE').value||r.email;if(nl){r.logo=nl;}const mv=$('#eM').value;let msg=`Datos de ${r.code} actualizados${nl?' (logo reemplazado)':''}`;if(mv&&stateOf(S.current,standById(mv))==='disponible'){msg+=`; movida de ${s.num} a ${standById(mv).num}`;r.standId=mv;sel=mv;}log(msg+'.');save();closeModal();renderAll();};
+  }
+  if(b.dataset.act==='rcpt')showReceipt(r,r.status==='confirmado');
+});
+$('#setExp').onchange=e=>{S.settings.exp=Math.min(Math.max(+e.target.value||5,1),30);log(`Plazo para formalizar cambiado a ${S.settings.exp} días (aplica a solicitudes nuevas).`);save();renderAdmin();};
+$('#setHold').onchange=e=>{S.settings.hold=Math.min(Math.max(+e.target.value||15,5),60);log(`Bloqueo durante la solicitud cambiado a ${S.settings.hold} minutos.`);save();renderAdmin();};
+$('#btnDay').onclick=()=>{S.offset+=864e5;const n=expireSweep();toast(n?`${n} reserva(s) vencida(s) liberada(s) automáticamente.`:'Pasó un día. Ninguna reserva venció todavía.');save();renderAll();};
+$('#btnReset').onclick=()=>{try{localStorage.removeItem(KEY);}catch(e){}S=seed();sel=null;flow=null;editing=false;fit();renderAll();toast('Demo restablecida.');};
+$('#btnEdit').onclick=()=>{editing=!editing;flow=null;if(editing)log(`Edición del plano ${S.current} iniciada.`);save();renderAll();};
+$('#btnAdd').onclick=()=>{const y=Y();const n=y.stands.filter(s=>s.num.startsWith('N-')).length+1;const s={id:uid('n'),num:'N-'+String(n).padStart(2,'0'),x:Math.round(y.hall.w/2-1.5),y:Math.round(y.hall.h/2-1.5),w:3,h:3,cat:'Estándar'};y.stands.push(s);sel=s.id;log(`Stand ${s.num} agregado al plano ${S.current}.`);save();renderAll();};
+$('#bgFile').onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{Y().bg=rd.result;log(`Imagen del plano ${S.current} cargada como fondo.`);save();renderAll();toast('Imagen cargada. Ahora puede ubicar los stands encima.');};rd.readAsDataURL(f);};
+$('#btnBgClear').onclick=()=>{Y().bg=null;save();renderAll();};
+function renderStandEditor(){
+  const el=$('#standEditor');if(!el)return;const s=sel&&standById(sel);
+  if(!s){el.innerHTML='<p class="small muted">Toque o arrastre un stand para editarlo.</p>';return;}
+  const r=activeResv(S.current,s.id);
+  el.innerHTML=`<div class="stack"><div class="two"><label class="f">Número<input type="text" id="sN" value="${esc(s.num)}"></label><label class="f">Tipo<select id="sC">${['Estándar','Doble','Isla','Esquina'].map(c=>`<option${c===s.cat?' selected':''}>${c}</option>`).join('')}</select></label></div>
+  <div class="two"><label class="f">Ancho (m)<input type="number" id="sW" step="0.5" min="1" value="${s.w}"></label><label class="f">Fondo (m)<input type="number" id="sH" step="0.5" min="1" value="${s.h}"></label></div>
+  <div class="row"><button class="btn sm pri" id="sSave">Aplicar</button><button class="btn sm" id="sDup">Duplicar</button><button class="btn sm warn" id="sDel" ${r?'disabled title="Tiene una reserva activa"':''}>Quitar</button></div>${r?'<p class="small muted" style="margin:0">Tiene una reserva activa: libérela antes de quitar el stand.</p>':''}</div>`;
+  $('#sSave').onclick=()=>{const y=Y();const num=$('#sN').value.trim()||s.num;if(y.stands.some(t=>t.id!==s.id&&t.num===num)){toast('Ya existe un stand con ese número.');return;}s.num=num;s.cat=$('#sC').value;s.w=Math.max(1,+$('#sW').value||s.w);s.h=Math.max(1,+$('#sH').value||s.h);s.x=Math.min(s.x,y.hall.w-s.w);s.y=Math.min(s.y,y.hall.h-s.h);log(`Stand ${s.num} actualizado: ${s.w}×${s.h} m, ${s.cat}.`);save();renderAll();};
+  $('#sDup').onclick=()=>{const y=Y();const c={...s,id:uid('n'),num:s.num+'b',x:Math.min(s.x+s.w,y.hall.w-s.w)};y.stands.push(c);sel=c.id;log(`Stand ${c.num} creado como copia de ${s.num}.`);save();renderAll();};
+  $('#sDel').onclick=()=>{if(r)return;const y=Y();y.stands=y.stands.filter(t=>t.id!==s.id);log(`Stand ${s.num} quitado del plano ${S.current}.`);sel=null;save();renderAll();};
+}
+$('#btnNewYear').onclick=()=>{
+  const last=String(Math.max(...Object.keys(S.years).map(Number))),next=String(+last+1);
+  const conf=S.resv.filter(r=>r.year===last&&r.status==='confirmado');
+  modal('Crear edición '+next,`<p>Se crea el plano ${next} como copia del plano ${last}. Luego puede subir la imagen del plano nuevo y mover, agregar o quitar stands. La edición ${last} queda archivada con sus expositores.</p>
+  <label class="small" style="display:flex;gap:8px;align-items:flex-start"><input type="checkbox" id="nyPri" checked style="margin-top:3px"> Ofrecer a los ${conf.length} expositores confirmados de ${last} su mismo stand, con prioridad durante <input type="number" id="nyDays" value="15" min="1" max="60" style="width:64px;padding:2px 6px"> días.</label>
+  <div class="row" style="margin-top:12px"><button class="btn pri" id="nyOk">Crear edición ${next}</button><button class="btn" id="nyNo">Cancelar</button></div>`);
+  $('#nyNo').onclick=closeModal;
+  $('#nyOk').onclick=()=>{
+    const src=S.years[last],copy=JSON.parse(JSON.stringify(src));copy.archived=false;const map={};
+    copy.stands.forEach(s=>{const o=s.id;s.id=uid('y');map[o]=s.id;});
+    S.years[next]=copy;src.archived=true;
+    let n=0;
+    if($('#nyPri').checked){const d=Math.max(1,+$('#nyDays').value||15);conf.forEach(r=>{const t=now();S.resv.push({...r,id:uid('r'),code:codeFor(next),year:next,standId:map[r.standId],status:'pendiente',renewal:true,createdAt:t,acceptedAt:t,expiresAt:t+d*864e5,confirmedAt:null,sig:null,hash:'',cond:'v'+next+'.1'});n++;});}
+    log(`Edición ${next} creada a partir del plano ${last}.${n?` ${n} stands reservados con prioridad de renovación para sus expositores anteriores.`:''}`);
+    S.current=next;sel=null;editing=false;fit();save();closeModal();renderAll();toast(`Edición ${next} lista. Active «Editar plano» para ajustarla.`);
+  };
+};
+
+/* ---------- tabs / year ---------- */
+function setTab(t){tab=t;$('#tabPub').classList.toggle('on',t==='pub');$('#tabAdm').classList.toggle('on',t==='adm');if(t==='pub'){editing=false;}renderAll();}
+$('#tabPub').onclick=()=>setTab('pub');$('#tabAdm').onclick=()=>{flow=null;setTab('adm');};
+function renderYears(){
+  const ys=Object.keys(S.years).sort();
+  $('#yearSel').innerHTML=ys.map(y=>`<option value="${y}"${y===S.current?' selected':''}>Edición ${y}${S.years[y].archived?' (archivo)':''}</option>`).join('');
+}
+$('#yearSel').onchange=e=>{S.current=e.target.value;sel=null;flow=null;editing=false;fit();save();renderAll();};
+
+function renderAll(){
+  expireSweep();
+  renderYears();renderPlan();renderSide();
+  $('#adminArea').classList.toggle('hidden',tab!=='adm');
+  $('#hint').textContent=editing?'Modo edición: arrastre los stands · se ajustan cada 0,5 m':'Arrastre para mover · rueda o +/− para acercar · toque un stand';
+  $('#subtitle').textContent=tab==='adm'?'Panel del equipo organizador · confirme o libere reservas y actualice el plano':'Congreso anual · seleccione un stand para ver su disponibilidad y sus vecinos';
+  if(tab==='adm')renderAdmin();
+}
+// refresh holds/expiry once a minute so other "tabs" see stands return
+setInterval(()=>{if(!flow&&!drag){const before=JSON.stringify(S.holds);expireSweep();if(before!==JSON.stringify(S.holds)){save();renderAll();}}},30000);
+window.addEventListener('storage',e=>{if(e.key===KEY){const o=load();if(o){S=o;renderAll();}}});
+const mq=window.matchMedia&&matchMedia('(prefers-color-scheme: dark)');if(mq&&mq.addEventListener)mq.addEventListener('change',renderPlan);
+renderAll();
+})();
+</script>
+</body>
+</html>
