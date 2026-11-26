@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Clinic Platform Demo</title>
+<style>
+:root{--bg:#f4f6f8;--card:#fff;--ink:#1c2530;--mute:#5d6b7a;--line:#dde3ea;--pri:#0f6e6e;--pri2:#e3f2f1;--red:#c0392b;--redbg:#fbe9e7;--blue:#2457c5;--bluebg:#e7eefc;--ok:#1e7b45;--okbg:#e5f4ea;--warn:#9a6400;--warnbg:#fff4dc}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#11161c;--card:#1a2129;--ink:#e6ebf0;--mute:#9aa8b6;--line:#2c3743;--pri:#4fc1b9;--pri2:#16302f;--red:#ff7b6b;--redbg:#3a1f1c;--blue:#7ea6ff;--bluebg:#1c2742;--ok:#5fd38d;--okbg:#17301f;--warn:#f0b44c;--warnbg:#33290f}}
+:root[data-theme="dark"]{--bg:#11161c;--card:#1a2129;--ink:#e6ebf0;--mute:#9aa8b6;--line:#2c3743;--pri:#4fc1b9;--pri2:#16302f;--red:#ff7b6b;--redbg:#3a1f1c;--blue:#7ea6ff;--bluebg:#1c2742;--ok:#5fd38d;--okbg:#17301f;--warn:#f0b44c;--warnbg:#33290f}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{background:var(--card);border-bottom:1px solid var(--line);padding:12px 16px;position:sticky;top:0;z-index:5}
+.wrap{max-width:1150px;margin:0 auto}
+h1{font-size:18px;margin:0 0 2px}
+.sub{color:var(--mute);font-size:13px}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:10px}
+label.sel{font-size:12px;color:var(--mute);display:flex;flex-direction:column;gap:2px}
+select,input,textarea,button{font:inherit;color:inherit}
+select,input,textarea{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:7px 9px}
+button{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:7px 12px;cursor:pointer}
+button.pri{background:var(--pri);border-color:var(--pri);color:#fff}
+:root[data-theme="dark"] button.pri{color:#0b1512}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) button.pri{color:#0b1512}}
+button.danger{border-color:var(--red);color:var(--red)}
+button:disabled{opacity:.45;cursor:not-allowed}
+nav{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+nav button{border-radius:20px;font-size:14px}
+nav button.on{background:var(--pri2);border-color:var(--pri);color:var(--pri);font-weight:600}
+main{padding:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
+.card h2{font-size:16px;margin:0 0 10px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:820px){.grid2{grid-template-columns:1fr}}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:7px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--mute);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.03em}
+.tw{overflow-x:auto}
+.pill{display:inline-block;padding:1px 8px;border-radius:10px;font-size:12px;background:var(--pri2);color:var(--pri)}
+.pill.red{background:var(--redbg);color:var(--red)}.pill.ok{background:var(--okbg);color:var(--ok)}.pill.warn{background:var(--warnbg);color:var(--warn)}.pill.blue{background:var(--bluebg);color:var(--blue)}
+.note{font-size:13px;color:var(--mute)}
+.lock{background:var(--redbg);color:var(--red);border-radius:8px;padding:10px 12px;font-size:14px}
+.okbox{background:var(--okbg);color:var(--ok);border-radius:8px;padding:10px 12px;font-size:14px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:end}
+.row>*{flex:0 1 auto}
+.log{font:12.5px/1.5 ui-monospace,Consolas,monospace;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px;max-height:240px;overflow:auto;white-space:pre-wrap}
+.slots{display:grid;grid-template-columns:70px repeat(var(--n),minmax(140px,1fr));gap:4px;min-width:520px}
+.slot{min-height:34px;border:1px dashed var(--line);border-radius:6px;padding:3px 6px;font-size:12.5px}
+.slot.busy{border:1px solid var(--pri);background:var(--pri2)}
+.slot.in{border-color:var(--ok);background:var(--okbg)}
+.slot.out{opacity:.6}
+.hh{font-size:12px;color:var(--mute);padding-top:8px}
+.odo{display:flex;flex-direction:column;gap:6px;align-items:center;overflow-x:auto;padding:4px}
+.jaw{display:flex;gap:3px}
+.tooth{display:flex;flex-direction:column;align-items:center;font-size:11px;color:var(--mute)}
+.tooth svg{width:38px;height:38px;cursor:pointer}
+.tooth polygon,.tooth rect.c{fill:var(--card);stroke:var(--mute);stroke-width:1}
+.tooth .caries{fill:var(--red)}
+.tooth .filling{fill:var(--blue)}
+.gap{width:14px}
+.tools button.on{outline:2px solid var(--pri)}
+.qr{width:170px;height:170px;background:#fff;padding:8px;border-radius:8px;border:1px solid var(--line)}
+.bars div{display:flex;align-items:center;gap:8px;margin:5px 0;font-size:13px}
+.bars span.b{height:14px;background:var(--pri);border-radius:3px}
+.wa{background:var(--okbg);border-radius:10px 10px 10px 2px;padding:9px 11px;font-size:14px;max-width:360px;white-space:pre-wrap}
+.hide{display:none!important}
+@media print{header,nav,.noprint{display:none!important}body{background:#fff;color:#000}.card{border:none}}
+</style>
+</head>
+<body>
+<header class="noprint"><div class="wrap">
+  <h1>Multi-clinic platform — working demo</h1>
+  <div class="sub">Sample data only. Switch the role and the clinic to see what each user can and cannot reach.</div>
+  <div class="bar">
+    <label class="sel">Signed in as
+      <select id="role">
+        <option value="super">Super Admin (platform)</option>
+        <option value="admin">Clinic Admin</option>
+        <option value="doctor" selected>Doctor / Dentist</option>
+        <option value="recep">Receptionist</option>
+      </select></label>
+    <label class="sel" id="clinicWrap">Clinic
+      <select id="clinic"></select></label>
+    <span class="note" id="who"></span>
+  </div>
+  <nav id="tabs"></nav>
+</div></header>
+<main class="wrap" id="main"></main>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const today=new Date().toISOString().slice(0,10);
+
+const clinics=[
+ {id:"c1",name:"Aurora Dental",type:"dental",plan:"Pro",status:"Active",currency:"USD"},
+ {id:"c2",name:"Valle Medical Center",type:"medical",plan:"Basic",status:"Active",currency:"USD"},
+ {id:"c3",name:"Norte Smile Studio",type:"dental",plan:"Trial",status:"Trial (9 days left)",currency:"USD"}
+];
+const staff={
+ c1:{admin:"Laura Méndez",doctors:["Dr. Ríos","Dra. Paredes"],recep:"Sofía Cano"},
+ c2:{admin:"Marco Silva",doctors:["Dr. Herrera","Dra. Luna"],recep:"Ana Torres"},
+ c3:{admin:"Pablo Ortiz",doctors:["Dra. Vega"],recep:"Inés Rojas"}
+};
+let patients=[
+ {id:1041,clinic:"c1",name:"Carla Núñez",phone:"+00 555 0101",dob:"1988-04-12",allergy:"Penicillin",notes:["2026-10-02 · Dr. Ríos: pain on 36, caries confirmed on X-ray. Filling scheduled."]},
+ {id:1042,clinic:"c1",name:"Jorge Salas",phone:"+00 555 0102",dob:"1975-09-30",allergy:"None",notes:["2026-09-15 · Dra. Paredes: cleaning, 47 missing, crown planned on 46."]},
+ {id:1043,clinic:"c1",name:"Lucía Prado",phone:"+00 555 0103",dob:"2001-01-20",allergy:"Latex",notes:[]},
+ {id:2051,clinic:"c2",name:"Raúl Benítez",phone:"+00 555 0201",dob:"1969-07-07",allergy:"None",notes:["2026-10-20 · Dr. Herrera: BP 145/92, starts monitoring. Control in 4 weeks."]},
+ {id:2052,clinic:"c2",name:"Elena Quispe",phone:"+00 555 0202",dob:"1993-11-03",allergy:"Ibuprofen",notes:[]},
+ {id:3061,clinic:"c3",name:"Mateo Ruiz",phone:"+00 555 0301",dob:"2010-02-14",allergy:"None",notes:[]}
+];
+let appts=[
+ {id:1,clinic:"c1",doctor:"Dr. Ríos",pid:1041,start:"09:00",dur:30,status:"booked",reason:"Filling 36"},
+ {id:2,clinic:"c1",doctor:"Dra. Paredes",pid:1042,start:"10:00",dur:60,status:"booked",reason:"Crown prep 46"},
+ {id:3,clinic:"c1",doctor:"Dr. Ríos",pid:1043,start:"11:00",dur:30,status:"booked",reason:"Check-up"},
+ {id:4,clinic:"c2",doctor:"Dr. Herrera",pid:2051,start:"09:30",dur:30,status:"booked",reason:"BP control"},
+ {id:5,clinic:"c2",doctor:"Dra. Luna",pid:2052,start:"10:30",dur:30,status:"booked",reason:"First visit"},
+ {id:6,clinic:"c3",doctor:"Dra. Vega",pid:3061,start:"09:00",dur:30,status:"booked",reason:"Orthodontic check"}
+];
+let nextAppt=7;
+const priceList={c1:[["Check-up",30],["Cleaning",45],["Filling (1 surface)",60],["Root canal",220],["Crown",380],["Extraction",90]],
+ c2:[["General consultation",35],["Specialist consultation",55],["ECG",40],["Lab panel",60]],
+ c3:[["Check-up",30],["Orthodontic control",50],["Sealant",35]]};
+let invoices=[
+ {no:"A-0001",clinic:"c1",pid:1042,items:[["Cleaning",45]],method:"QR",status:"paid",doctor:"Dra. Paredes"},
+ {no:"A-0002",clinic:"c1",pid:1041,items:[["Check-up",30]],method:"Cash",status:"paid",doctor:"Dr. Ríos"},
+ {no:"A-0003",clinic:"c1",pid:1043,items:[["Check-up",30],["Cleaning",45]],method:"Card",status:"paid",doctor:"Dr. Ríos"},
+ {no:"V-0001",clinic:"c2",pid:2051,items:[["General consultation",35],["ECG",40]],method:"QR",status:"paid",doctor:"Dr. Herrera"}
+];
+const odo={1041:{"36":{o:"caries",d:"caries"},"16":{o:"filling"}},1042:{"47":{whole:"missing"},"46":{whole:"crown"},"26":{o:"filling",m:"filling"}}};
+let audit=[];
+let sel={pid:null,tool:"caries",inv:null};
+let tab="agenda";
+
+const roleName={super:"Super Admin",admin:"Clinic Admin",doctor:"Doctor / Dentist",recep:"Receptionist"};
+const TABS={
+ super:[["clinics","Clinics"],["audit","Audit log"],["security","Isolation test"]],
+ admin:[["agenda","Agenda"],["patients","Patients"],["billing","Billing & QR"],["reports","Reports & PDF"],["reminders","WhatsApp reminders"],["audit","Audit log"],["security","Isolation test"]],
+ doctor:[["agenda","My agenda"],["patients","Records"],["odonto","Odontogram"],["security","Isolation test"]],
+ recep:[["agenda","Agenda & check-in"],["patients","Patients"],["billing","Billing & QR"],["reminders","WhatsApp reminders"],["security","Isolation test"]]
+};
+const role=()=>$("#role").value;
+const cid=()=>$("#clinic").value;
+const clinic=()=>clinics.find(c=>c.id===cid());
+const me=()=>{const s=staff[cid()];return role()==="admin"?s.admin:role()==="recep"?s.recep:role()==="doctor"?s.doctors[0]:"Platform owner"};
+function log(action,result){audit.unshift({t:new Date().toLocaleTimeString(),user:me(),role:roleName[role()],clinic:role()==="super"?"—":clinic().name,action,result})}
+
+// Server-side style guards: every read goes through these, never through the screen alone
+function can(action){
+ const r=role();
+ const rules={
+  "patient.clinical":["doctor"],
+  "patient.contact":["admin","doctor","recep"],
+  "appt.book":["admin","recep"],
+  "appt.checkin":["admin","recep"],
+  "odonto.edit":["doctor"],
+  "billing":["admin","recep"],
+  "reports":["admin"],
+  "clinics.manage":["super"]
+ };
+ return (rules[action]||[]).includes(r);
+}
+function scopedPatients(){ if(role()==="super") return []; return patients.filter(p=>p.clinic===cid()); }
+function getPatient(id){
+ // tenant guard: the clinic comes from the signed-in session, not from the request
+ if(role()==="super"){log("Open patient #"+id,"DENIED · platform role has no patient access");return {denied:"The Super Admin role cannot open patient records in any clinic."};}
+ const p=patients.find(x=>x.id===+id);
+ if(!p||p.clinic!==cid()){log("Open patient #"+id,"DENIED · record belongs to another clinic");return {denied:"Not found in this clinic. Records of other clinics do not exist for this session."};}
+ return {p};
+}
+function toMin(h){const[a,b]=h.split(":").map(Number);return a*60+b}
+function overlap(a,b){return toMin(a.start)<toMin(b.start)+b.dur && toMin(b.start)<toMin(a.start)+a.dur}
+function tryBook(req){
+ // same check the database enforces with a constraint, so two screens cannot both win
+ const clash=appts.find(x=>x.clinic===req.clinic&&x.status!=="cancelled"&&overlap(x,req)&&(x.doctor===req.doctor||x.pid===req.pid));
+ if(clash){const who=clash.doctor===req.doctor?clash.doctor+" is busy "+clash.start+"–"+fmtEnd(clash):"this patient already has "+clash.start+" with "+clash.doctor;return {ok:false,msg:"Rejected: "+who};}
+ const a={...req,id:nextAppt++,status:"booked"};appts.push(a);return {ok:true,a};
+}
+function fmtEnd(a){const m=toMin(a.start)+a.dur;return String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0")}
+const pname=id=>{const p=patients.find(x=>x.id===id);return p?p.name:"#"+id};
+
+function renderHeader(){
+ $("#clinicWrap").classList.toggle("hide",role()==="super");
+ $("#who").textContent=role()==="super"?"Platform view · no patient data":me()+" · "+roleName[role()]+" at "+clinic().name;
+ const list=TABS[role()];
+ if(!list.find(t=>t[0]===tab)) tab=list[0][0];
+ $("#tabs").innerHTML=list.map(([k,l])=>`<button class="${k===tab?"on":""}" data-tab="${k}">${l}</button>`).join("");
+}
+function render(){renderHeader();const f=V[tab];$("#main").innerHTML=f?f():"";bind[tab]&&bind[tab]();}
+
+const V={};const bind={};
+
+// ---------- Super Admin
+V.clinics=()=>{
+ const rows=clinics.map(c=>{const u=1+staff[c.id].doctors.length+1;const n=appts.filter(a=>a.clinic===c.id).length;const rev=invoices.filter(i=>i.clinic===c.id&&i.status==="paid").length;
+  return `<tr><td><b>${esc(c.name)}</b><div class="note">${c.type==="dental"?"Dental":"Medical"}</div></td><td>${c.plan}</td><td><span class="pill ${c.status.startsWith("Trial")?"warn":"ok"}">${c.status}</span></td><td>${u}</td><td>${n} today</td><td>${rev} invoices</td><td><span class="pill red">no access</span></td><td><button data-sus="${c.id}">${c.status==="Suspended"?"Reactivate":"Suspend"}</button></td></tr>`}).join("");
+ return `<div class="card"><h2>All clinics</h2><div class="tw"><table><tr><th>Clinic</th><th>Plan</th><th>Status</th><th>Users</th><th>Appointments</th><th>Billing</th><th>Patient records</th><th></th></tr>${rows}</table></div>
+ <p class="note">The platform owner sees usage, plans and status, never names, diagnoses or notes. Counts are calculated without reading the records themselves.</p></div>
+ <div class="card"><h2>New clinic</h2><div class="row"><input id="ncName" placeholder="Clinic name"><select id="ncType"><option value="dental">Dental</option><option value="medical">Medical</option></select><button class="pri" id="ncAdd">Create clinic + admin invite</button></div>
+ <p class="note">A new clinic starts with an empty, separate space and one Clinic Admin invitation.</p></div>
+ <div class="card"><h2>Try it</h2><button class="danger" id="saPeek">Open the patient list of Aurora Dental</button><div id="saOut" style="margin-top:10px"></div></div>`;
+};
+bind.clinics=()=>{
+ document.querySelectorAll("[data-sus]").forEach(b=>b.onclick=()=>{const c=clinics.find(x=>x.id===b.dataset.sus);c.status=c.status==="Suspended"?"Active":"Suspended";log((c.status==="Suspended"?"Suspend ":"Reactivate ")+c.name,"OK");render()});
+ $("#ncAdd").onclick=()=>{const n=$("#ncName").value.trim();if(!n)return;const id="c"+(clinics.length+1);clinics.push({id,name:n,type:$("#ncType").value,plan:"Trial",status:"Trial (14 days left)",currency:"USD"});staff[id]={admin:"(invited)",doctors:["(to invite)"],recep:"(to invite)"};priceList[id]=[["Consultation",30]];log("Create clinic "+n,"OK");refreshClinics();render()};
+ $("#saPeek").onclick=()=>{const r=getPatient(1041);$("#saOut").innerHTML=`<div class="lock">${esc(r.denied)} The attempt is now in the audit log.</div>`};
+};
+
+// ---------- Agenda
+V.agenda=()=>{
+ const c=clinic(),docs=staff[c.id].doctors,mine=role()==="doctor";
+ const cols=mine?[docs[0]]:docs;
+ const hours=[];for(let m=8*60+30;m<=12*60;m+=30)hours.push(String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0"));
+ let g=`<div class="slots" style="--n:${cols.length}"><div></div>${cols.map(d=>`<div><b>${esc(d)}</b></div>`).join("")}`;
+ hours.forEach(h=>{g+=`<div class="hh">${h}</div>`;cols.forEach(d=>{const a=appts.find(x=>x.clinic===c.id&&x.doctor===d&&x.start===h&&x.status!=="cancelled");
+  if(a){g+=`<div class="slot busy ${a.status==="checked-in"?"in":""} ${a.status==="checked-out"?"out":""}"><b>${esc(pname(a.pid))}</b><br>${a.start}–${fmtEnd(a)} · ${esc(a.reason)}<br><span class="pill ${a.status==="checked-in"?"ok":a.status==="checked-out"?"":"blue"}">${a.status}</span>${can("appt.checkin")?` <button data-ci="${a.id}" style="padding:1px 7px;font-size:12px">${a.status==="booked"?"Check in":a.status==="checked-in"?"Check out":"Done"}</button>`:""}</div>`}
+  else{const cover=appts.find(x=>x.clinic===c.id&&x.doctor===d&&x.status!=="cancelled"&&toMin(x.start)<toMin(h)&&toMin(h)<toMin(x.start)+x.dur);g+=`<div class="slot ${cover?"busy":""}">${cover?'<span class="note">↑ continues</span>':""}</div>`}})});
+ g+=`</div>`;
+ const pats=scopedPatients();
+ const form=can("appt.book")?`<div class="card"><h2>Book an appointment</h2><div class="row">
+  <label class="sel">Patient<select id="bP">${pats.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join("")}</select></label>
+  <label class="sel">Professional<select id="bD">${docs.map(d=>`<option>${esc(d)}</option>`).join("")}</select></label>
+  <label class="sel">Start<select id="bS">${hours.map(h=>`<option>${h}</option>`).join("")}</select></label>
+  <label class="sel">Length<select id="bL"><option value="30">30 min</option><option value="60">60 min</option></select></label>
+  <label class="sel">Reason<input id="bR" value="Check-up"></label>
+  <button class="pri" id="bGo">Book</button></div><div id="bOut" style="margin-top:10px"></div></div>
+ <div class="card"><h2>Two receptionists, same slot, same second</h2>
+  <p class="note">Both screens show 11:30 with ${esc(docs[0])} as free and both press "Book" at once. Only one booking can win; the other gets a clear message instead of a silent double booking.</p>
+  <button id="race">Run the test</button><div class="log" id="raceLog" style="margin-top:10px">Press "Run the test".</div></div>`:
+  `<div class="card note">${mine?"Doctors see their own day. Booking is done by reception or the clinic admin.":""}</div>`;
+ return `<div class="card"><h2>${mine?"My day":"Today"} · ${esc(c.name)}</h2><div class="tw">${g}</div></div>${form}`;
+};
+bind.agenda=()=>{
+ document.querySelectorAll("[data-ci]").forEach(b=>b.onclick=()=>{const a=appts.find(x=>x.id==b.dataset.ci);if(a.status==="booked")a.status="checked-in";else if(a.status==="checked-in")a.status="checked-out";log("Appointment "+a.start+" "+pname(a.pid)+" → "+a.status,"OK");render()});
+ if(!$("#bGo"))return;
+ $("#bGo").onclick=()=>{const r=tryBook({clinic:cid(),pid:+$("#bP").value,doctor:$("#bD").value,start:$("#bS").value,dur:+$("#bL").value,reason:$("#bR").value||"Visit"});
+  log("Book "+$("#bS").value+" "+$("#bD").value,r.ok?"OK":"REJECTED · overlap");
+  if(r.ok){render();}else $("#bOut").innerHTML=`<div class="lock">${esc(r.msg)}. Pick another time or professional.</div>`};
+ $("#race").onclick=()=>{
+  const d=staff[cid()].doctors[0],ps=scopedPatients();
+  appts=appts.filter(x=>!(x.clinic===cid()&&x.start==="11:30"&&x.doctor===d));
+  const A={clinic:cid(),pid:ps[0].id,doctor:d,start:"11:30",dur:30,reason:"Race test A"},B={clinic:cid(),pid:ps[1%ps.length].id,doctor:d,start:"11:30",dur:30,reason:"Race test B"};
+  const first=Math.random()<.5?[A,"Reception desk 1"]:[B,"Reception desk 2"],second=first[0]===A?[B,"Reception desk 2"]:[A,"Reception desk 1"];
+  const r1=tryBook(first[0]),r2=tryBook(second[0]);
+  log("Race test 11:30 "+d,"1 booked, 1 rejected");
+  const out=`${first[1]}  → 11:30 ${d} for ${pname(first[0].pid)} … ${r1.ok?"BOOKED":"rejected"}\n${second[1]}  → 11:30 ${d} for ${pname(second[0].pid)} … ${r2.ok?"BOOKED":"REJECTED (arrived a few ms later)"}\n\nResult: one appointment, and desk ${second[1].slice(-1)} is told to choose another time.`;
+  render();$("#raceLog").textContent=out;
+ };
+};
+
+// ---------- Patients
+V.patients=()=>{
+ const ps=scopedPatients(),clin=can("patient.clinical");
+ if(!sel.pid||!ps.find(p=>p.id===sel.pid))sel.pid=ps[0]&&ps[0].id;
+ const list=ps.map(p=>`<tr><td><a href="#" data-p="${p.id}">${esc(p.name)}</a></td><td>#${p.id}</td><td>${esc(p.phone)}</td><td>${clin?esc(p.allergy):'<span class="pill red">doctor only</span>'}</td></tr>`).join("");
+ const r=getPatient(sel.pid),p=r.p;
+ const detail=!p?"":clin?`<h2>${esc(p.name)} · record</h2><p>Born ${p.dob} · Allergy: <b>${esc(p.allergy)}</b></p>
+  <div class="log" style="max-height:160px">${p.notes.length?p.notes.map(esc).join("\n"):"No notes yet."}</div>
+  <div class="row" style="margin-top:8px"><textarea id="nNote" rows="2" style="flex:1 1 260px" placeholder="Add a clinical note"></textarea><button class="pri" id="nAdd">Save note</button></div>
+  <p class="note">Notes are signed with the doctor's name and time and cannot be silently edited later.</p>
+  ${clinic().type==="dental"?'<button id="toOdo">Open odontogram</button>':""}
+  <button id="pdf1" class="noprint">Export record as PDF</button>`
+ :`<h2>${esc(p.name)}</h2><p>Phone ${esc(p.phone)} · Born ${p.dob}</p><div class="lock">Diagnoses, allergies and notes are visible only to doctors. ${roleName[role()]} sees contact and agenda data.</div>`;
+ return `<div class="grid2"><div class="card"><h2>Patients of ${esc(clinic().name)}</h2><div class="tw"><table><tr><th>Name</th><th>ID</th><th>Phone</th><th>Allergy</th></tr>${list}</table></div></div><div class="card" id="printArea">${detail}</div></div>`;
+};
+bind.patients=()=>{
+ document.querySelectorAll("[data-p]").forEach(a=>a.onclick=e=>{e.preventDefault();sel.pid=+a.dataset.p;render()});
+ $("#nAdd")&&($("#nAdd").onclick=()=>{const t=$("#nNote").value.trim();if(!t)return;const p=getPatient(sel.pid).p;p.notes.push(today+" · "+me()+": "+t);log("Add note to #"+p.id,"OK");render()});
+ $("#toOdo")&&($("#toOdo").onclick=()=>{tab="odonto";render()});
+ $("#pdf1")&&($("#pdf1").onclick=()=>{log("Export record #"+sel.pid+" PDF","OK");window.print()});
+};
+
+// ---------- Odontogram
+const upper=[18,17,16,15,14,13,12,11,21,22,23,24,25,26,27,28],lower=[48,47,46,45,44,43,42,41,31,32,33,34,35,36,37,38];
+function toothSVG(n,st){
+ st=st||{};const f=k=>st[k]?` class="${st[k]}"`:"";
+ let extra="";
+ if(st.whole==="missing")extra=`<line x1="4" y1="4" x2="36" y2="36" stroke="var(--mute)" stroke-width="3"/><line x1="36" y1="4" x2="4" y2="36" stroke="var(--mute)" stroke-width="3"/>`;
+ if(st.whole==="extract")extra=`<line x1="4" y1="4" x2="36" y2="36" stroke="var(--red)" stroke-width="3"/><line x1="36" y1="4" x2="4" y2="36" stroke="var(--red)" stroke-width="3"/>`;
+ if(st.whole==="crown")extra=`<circle cx="20" cy="20" r="18" fill="none" stroke="var(--blue)" stroke-width="3"/>`;
+ if(st.whole==="endo")extra=`<line x1="20" y1="0" x2="20" y2="40" stroke="var(--blue)" stroke-width="3"/>`;
+ return `<div class="tooth"><svg viewBox="0 0 40 40" data-t="${n}">
+ <polygon data-s="v" points="0,0 40,0 28,12 12,12"${f("v")}/><polygon data-s="d" points="40,0 40,40 28,28 28,12"${f("d")}/>
+ <polygon data-s="l" points="0,40 40,40 28,28 12,28"${f("l")}/><polygon data-s="m" points="0,0 12,12 12,28 0,40"${f("m")}/>
+ <polygon data-s="o" points="12,12 28,12 28,28 12,28"${f("o")}/>${extra}</svg>${n}</div>`;
+}
+V.odonto=()=>{
+ if(clinic().type!=="dental")return `<div class="card"><h2>Odontogram</h2><p class="note">This clinic is set up as a medical clinic, so the dental chart is switched off. Dental clinics get it automatically.</p></div>`;
+ const ps=scopedPatients();if(!sel.pid||!ps.find(p=>p.id===sel.pid))sel.pid=ps[0].id;
+ const st=odo[sel.pid]||(odo[sel.pid]={});
+ const jaw=arr=>`<div class="jaw">${arr.map((n,i)=>(i===8?'<div class="gap"></div>':"")+toothSVG(n,st[n])).join("")}</div>`;
+ const tools=[["caries","Caries (surface)"],["filling","Filling (surface)"],["clear","Clear surface"],["crown","Crown"],["endo","Root canal"],["extract","To extract"],["missing","Missing"],["wclear","Clear tooth"]];
+ const summary=Object.entries(st).flatMap(([n,s])=>{const o=[];if(s.whole)o.push(n+": "+({missing:"missing",extract:"to extract",crown:"crown",endo:"root canal"})[s.whole]);const surf=Object.entries(s).filter(([k])=>k!=="whole");if(surf.length)o.push(n+": "+surf.map(([k,v])=>v+" "+({v:"buccal",l:"lingual",m:"mesial",d:"distal",o:"occlusal"})[k]).join(", "));return o});
+ const plan=Object.entries(st).flatMap(([n,s])=>{const o=[];const c=Object.entries(s).filter(([k,v])=>k!=="whole"&&v==="caries").length;if(c)o.push([`Filling (${c} surface${c>1?"s":""}) · ${n}`,60+30*(c-1)]);if(s.whole==="extract")o.push(["Extraction · "+n,90]);return o});
+ return `<div class="card"><div class="row" style="justify-content:space-between"><h2>Odontogram</h2><label class="sel">Patient<select id="oP">${ps.map(p=>`<option value="${p.id}" ${p.id===sel.pid?"selected":""}>${esc(p.name)}</option>`).join("")}</select></label></div>
+ <div class="row tools noprint" style="margin-bottom:10px">${tools.map(([k,l])=>`<button data-tool="${k}" class="${sel.tool===k?"on":""}">${l}</button>`).join("")}</div>
+ <div class="odo">${jaw(upper)}<div style="height:6px"></div>${jaw(lower)}</div>
+ <p class="note">Pick a tool, then click a surface (outer, inner, sides, centre) or any part of a tooth for the whole-tooth marks. Numbers follow the international FDI system.</p></div>
+ <div class="grid2"><div class="card"><h2>Findings</h2><div class="log">${summary.length?summary.map(esc).join("\n"):"No findings yet."}</div></div>
+ <div class="card"><h2>Treatment plan from the chart</h2>${plan.length?`<table>${plan.map(([t,p])=>`<tr><td>${esc(t)}</td><td>USD ${p}</td></tr>`).join("")}<tr><td><b>Total</b></td><td><b>USD ${plan.reduce((a,b)=>a+b[1],0)}</b></td></tr></table><p class="note">In the full version, reception turns this plan into an invoice with one click.</p>`:'<p class="note">Mark caries or "to extract" and the plan with prices appears here.</p>'}</div></div>`;
+};
+bind.odonto=()=>{
+ if(!$("#oP"))return;
+ $("#oP").onchange=e=>{sel.pid=+e.target.value;render()};
+ document.querySelectorAll("[data-tool]").forEach(b=>b.onclick=()=>{sel.tool=b.dataset.tool;render()});
+ document.querySelectorAll("svg[data-t]").forEach(s=>s.onclick=e=>{
+  if(!can("odonto.edit"))return;
+  const n=s.dataset.t,surf=e.target.dataset&&e.target.dataset.s,st=odo[sel.pid];st[n]=st[n]||{};const t=sel.tool;
+  if(["crown","endo","extract","missing"].includes(t))st[n].whole=st[n].whole===t?undefined:t;
+  else if(t==="wclear")delete st[n];
+  else if(surf){if(t==="clear")delete st[n][surf];else st[n][surf]=st[n][surf]===t?undefined:t;}
+  if(st[n]){Object.keys(st[n]).forEach(k=>st[n][k]===undefined&&delete st[n][k]);if(!Object.keys(st[n]).length)delete st[n];}
+  log("Odontogram "+pname(sel.pid)+" tooth "+n+" · "+t,"OK");render();
+ });
+};
+
+// ---------- Billing & QR
+function qrSVG(seed){
+ let h=0;for(const ch of seed)h=(h*31+ch.charCodeAt(0))>>>0;const rnd=()=>(h=(h*1103515245+12345)>>>0)/4294967296;
+ const N=25;let r="";const finder=(x,y)=>x<7&&y<7||x>=N-7&&y<7||x<7&&y>=N-7;
+ for(let y=0;y<N;y++)for(let x=0;x<N;x++){let on;if(finder(x,y)){const fx=x>=N-7?x-(N-7):x,fy=y>=N-7?y-(N-7):y;on=fx===0||fx===6||fy===0||fy===6||(fx>=2&&fx<=4&&fy>=2&&fy<=4)}else on=rnd()<.48;if(on)r+=`<rect x="${x}" y="${y}" width="1" height="1"/>`}
+ return `<svg class="qr" viewBox="0 0 ${N} ${N}" shape-rendering="crispEdges" fill="#000">${r}</svg>`;
+}
+V.billing=()=>{
+ const ps=scopedPatients(),pl=priceList[cid()];
+ const mine=invoices.filter(i=>i.clinic===cid());
+ const inv=sel.inv&&mine.find(i=>i.no===sel.inv);
+ const tot=i=>i.items.reduce((a,b)=>a+b[1],0);
+ return `<div class="grid2"><div class="card"><h2>New invoice</h2>
+  <div class="row"><label class="sel">Patient<select id="iP">${ps.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join("")}</select></label>
+  <label class="sel">Professional<select id="iD">${staff[cid()].doctors.map(d=>`<option>${esc(d)}</option>`).join("")}</select></label></div>
+  <div style="margin:10px 0">${pl.map(([n,p],k)=>`<label style="display:block"><input type="checkbox" data-it="${k}"> ${esc(n)} — USD ${p}</label>`).join("")}</div>
+  <button class="pri" id="iNew">Create invoice and payment QR</button></div>
+  <div class="card">${inv?`<h2>Invoice ${inv.no}</h2><p>${esc(pname(inv.pid))} · ${esc(inv.doctor)}<br>${inv.items.map(i=>esc(i[0])+" USD "+i[1]).join("<br>")}<br><b>Total USD ${tot(inv)}</b></p>
+   ${inv.status==="pending"?`<div class="row" style="align-items:center">${qrSVG(inv.no+tot(inv))}<div><p class="note">The patient scans this with their banking or wallet app. When the payment arrives the invoice turns "paid" by itself and reception sees it.</p><button id="paySim" class="pri">Simulate payment received</button> <button id="payCash">Paid in cash</button></div></div><p class="note">Sample QR for the demo; the real one is created by the payment provider you choose, with your account.</p>`:`<div class="okbox">Paid by ${inv.method}. Receipt ready.</div><button id="rcpt" style="margin-top:8px">Print / PDF receipt</button>`}`:'<h2>Payment</h2><p class="note">Create an invoice to see its payment QR.</p>'}</div></div>
+  <div class="card"><h2>Invoices · ${esc(clinic().name)}</h2><div class="tw"><table><tr><th>No.</th><th>Patient</th><th>Total</th><th>Method</th><th>Status</th></tr>${mine.map(i=>`<tr><td><a href="#" data-inv="${i.no}">${i.no}</a></td><td>${esc(pname(i.pid))}</td><td>USD ${tot(i)}</td><td>${i.method}</td><td><span class="pill ${i.status==="paid"?"ok":"warn"}">${i.status}</span></td></tr>`).join("")}</table></div>
+  <p class="note">Numbers run in order per clinic with no gaps, so the accountant never finds a missing invoice.</p></div>`;
+};
+bind.billing=()=>{
+ $("#iNew").onclick=()=>{const its=[...document.querySelectorAll("[data-it]:checked")].map(c=>priceList[cid()][c.dataset.it]);if(!its.length)return;
+  const pre=clinic().name[0].toUpperCase(),n=invoices.filter(i=>i.clinic===cid()).length+1,no=pre+"-"+String(n).padStart(4,"0");
+  invoices.push({no,clinic:cid(),pid:+$("#iP").value,items:its,method:"QR",status:"pending",doctor:$("#iD").value});sel.inv=no;log("Create invoice "+no,"OK");render()};
+ document.querySelectorAll("[data-inv]").forEach(a=>a.onclick=e=>{e.preventDefault();sel.inv=a.dataset.inv;render()});
+ const i=invoices.find(x=>x.no===sel.inv);
+ $("#paySim")&&($("#paySim").onclick=()=>{i.status="paid";i.method="QR";log("Payment received "+i.no,"OK · confirmed by provider");render()});
+ $("#payCash")&&($("#payCash").onclick=()=>{i.status="paid";i.method="Cash";log("Cash payment "+i.no,"OK");render()});
+ $("#rcpt")&&($("#rcpt").onclick=()=>window.print());
+};
+
+// ---------- Reports
+V.reports=()=>{
+ const mine=invoices.filter(i=>i.clinic===cid()&&i.status==="paid"),tot=i=>i.items.reduce((a,b)=>a+b[1],0);
+ const by=(k)=>{const m={};mine.forEach(i=>m[i[k]]=(m[i[k]]||0)+tot(i));return m};
+ const bars=m=>{const max=Math.max(1,...Object.values(m));return Object.entries(m).map(([k,v])=>`<div><span style="width:110px">${esc(k)}</span><span class="b" style="width:${Math.round(v/max*180)}px"></span><span>USD ${v}</span></div>`).join("")||'<p class="note">No paid invoices yet.</p>'};
+ const pend=invoices.filter(i=>i.clinic===cid()&&i.status==="pending");
+ const sum=mine.reduce((a,i)=>a+tot(i),0);
+ return `<div id="printArea"><div class="card"><div class="row" style="justify-content:space-between"><h2>Financial report · ${esc(clinic().name)} · ${today}</h2><button class="noprint" id="pdf2">Export PDF</button></div>
+ <div class="grid2"><div><p class="note">Income by professional</p><div class="bars">${bars(by("doctor"))}</div></div><div><p class="note">Income by payment method</p><div class="bars">${bars(by("method"))}</div></div></div>
+ <p><b>Collected: USD ${sum}</b> · Pending: ${pend.length} invoice(s), USD ${pend.reduce((a,i)=>a+tot(i),0)}</p>
+ <p class="note">Only this clinic's figures. The PDF uses the clinic's name and logo.</p></div></div>`;
+};
+bind.reports=()=>{$("#pdf2").onclick=()=>{log("Export financial report PDF","OK");window.print()}};
+
+// ---------- Reminders
+V.reminders=()=>{
+ const list=appts.filter(a=>a.clinic===cid()&&a.status==="booked");
+ const a=list[0];
+ const msg=a?`Hello ${pname(a.pid).split(" ")[0]}, this is ${clinic().name}. Reminder: your appointment with ${a.doctor} is tomorrow at ${a.start}.\nReply 1 to confirm or 2 to reschedule.`:"";
+ return `<div class="grid2"><div class="card"><h2>Reminders for tomorrow</h2><div class="tw"><table><tr><th>Time</th><th>Patient</th><th>Status</th></tr>${list.map((x,i)=>`<tr><td>${x.start}</td><td>${esc(pname(x.pid))}</td><td><span class="pill ${i===0?"ok":"blue"}">${i===0?"confirmed (replied 1)":"sent 24 h before"}</span></td></tr>`).join("")}</table></div>
+ <p class="note">Sent automatically from the clinic's own WhatsApp number. Each clinic writes its own text; the message carries only name, day and time, never the reason for the visit.</p></div>
+ <div class="card"><h2>What the patient receives</h2>${a?`<div class="wa">${esc(msg)}</div>`:'<p class="note">No booked appointments.</p>'}</div></div>`;
+};
+
+// ---------- Audit
+V.audit=()=>{
+ const rows=(role()==="super"?audit:audit.filter(x=>x.clinic===clinic().name));
+ return `<div class="card"><h2>Audit log${role()==="super"?" · platform":" · "+esc(clinic().name)}</h2><div class="tw"><table><tr><th>Time</th><th>User</th><th>Role</th><th>Clinic</th><th>Action</th><th>Result</th></tr>${rows.map(r=>`<tr><td>${r.t}</td><td>${esc(r.user)}</td><td>${r.role}</td><td>${esc(r.clinic)}</td><td>${esc(r.action)}</td><td>${r.result.startsWith("DENIED")||r.result.startsWith("REJECTED")?`<span class="pill red">${esc(r.result)}</span>`:esc(r.result)}</td></tr>`).join("")||'<tr><td colspan="6" class="note">Use the demo and every action appears here.</td></tr>'}</table></div></div>`;
+};
+
+// ---------- Isolation test
+V.security=()=>{
+ const other=role()==="super"?null:clinics.find(c=>c.id!==cid());
+ const foreign=other?patients.find(p=>p.clinic===other.id):null;
+ return `<div class="card"><h2>Can this user reach data they should not?</h2>
+ <p class="note">Each test sends the request the way an attacker would (changing the ID in the address or the form), not by clicking the screen.</p>
+ <div class="row" style="flex-direction:column;align-items:flex-start">
+ ${role()==="super"?`<button class="danger" data-x="sa">Platform admin asks for patient #1041</button>`:
+ `<button class="danger" data-x="cross">Ask for patient #${foreign.id} of ${esc(other.name)} from ${esc(clinic().name)}</button>
+  <button class="danger" data-x="role">${can("patient.clinical")?"Read clinical notes (allowed for doctors)":"Read clinical notes as "+roleName[role()]}</button>
+  <button class="danger" data-x="xss">Save a patient named &lt;script&gt;steal()&lt;/script&gt;</button>
+  <button class="danger" data-x="sql">Search patients for:  ' OR 1=1 --</button>`}
+ </div><div class="log" id="xOut" style="margin-top:12px">Pick a test.</div></div>
+ <div class="card"><h2>What protects the data</h2><ul>
+ <li>The clinic is taken from the signed-in session, never from the request, and the database itself refuses rows from another clinic, so a forgotten check in one screen still cannot leak data.</li>
+ <li>Passwords are stored as one-way hashes (Argon2), with login attempt limits; two-step login can be switched on per clinic.</li>
+ <li>Every read or change of a record is logged with user, time and result.</li>
+ <li>Daily encrypted backups kept off the server, with a tested restore.</li></ul></div>`;
+};
+bind.security=()=>{
+ document.querySelectorAll("[data-x]").forEach(b=>b.onclick=()=>{
+  const x=b.dataset.x,o=$("#xOut");let t="";
+  if(x==="sa"){const r=getPatient(1041);t="GET /patients/1041 (role: Super Admin)\n→ 403  "+r.denied}
+  if(x==="cross"){const other=clinics.find(c=>c.id!==cid()),f=patients.find(p=>p.clinic===other.id);const r=getPatient(f.id);t=`GET /patients/${f.id}  (session clinic: ${clinic().name})\n→ 404  ${r.denied}\nThe answer is "not found", not "forbidden", so nobody can even learn that the record exists.`}
+  if(x==="role"){if(can("patient.clinical")){t="GET /patients/"+scopedPatients()[0].id+"/notes (role: Doctor)\n→ 200  allowed, and the read is logged.";log("Read notes #"+scopedPatients()[0].id,"OK")}else{t="GET /patients/"+scopedPatients()[0].id+"/notes (role: "+roleName[role()]+")\n→ 403  Clinical notes need the Doctor role.";log("Read notes #"+scopedPatients()[0].id,"DENIED · role")}}
+  if(x==="xss"){const n="<script>steal()<\/script>";t="Saved name shown back as plain text:  "+n+"\nIt is displayed, never executed. Everything users type is escaped on output.";log("Save patient name with script tag","OK · stored as text")}
+  if(x==="sql"){const q="' OR 1=1 --";const res=scopedPatients().filter(p=>p.name.toLowerCase().includes(q.toLowerCase()));t="Search text: "+q+"\n→ "+res.length+" results. The text is sent as a value, never as part of the query, so it cannot turn into \"give me every patient\".";log("Search with SQL injection text","OK · 0 results")}
+  o.textContent=t;
+ });
+};
+
+function refreshClinics(){const v=$("#clinic").value;$("#clinic").innerHTML=clinics.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join("");if(v)$("#clinic").value=v}
+refreshClinics();
+$("#role").onchange=()=>{sel.inv=null;render()};
+$("#clinic").onchange=()=>{sel.pid=null;sel.inv=null;render()};
+document.addEventListener("click",e=>{const b=e.target.closest("[data-tab]");if(b){tab=b.dataset.tab;render()}});
+render();
+</script>
+</body>
+</html>
