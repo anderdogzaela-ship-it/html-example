@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Demo · Recibos de saúde: do WhatsApp ao recibo emitido</title>
+<style>
+:root{--bg:#f6f7f5;--card:#fff;--ink:#1d2321;--mut:#5f6b66;--line:#dfe4e1;--acc:#0f766e;--acc2:#e6f4f2;--warn:#b45309;--warnbg:#fff4e0;--bad:#b91c1c;--badbg:#fdecec;--ok:#15803d;--okbg:#e8f6ec;--wa:#e7f8dc}
+*{box-sizing:border-box}body{margin:0;font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+header{background:#123c37;color:#fff;padding:22px 20px 18px}
+header h1{margin:0 0 6px;font-size:21px}header p{margin:0;color:#cfe3df;max-width:900px;font-size:14px}
+.note{background:#fff8e6;border-bottom:1px solid #f0dca8;color:#6b4e00;padding:9px 20px;font-size:13px}
+main{max-width:1240px;margin:0 auto;padding:18px 16px 40px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.tabs button{border:1px solid var(--line);background:#fff;padding:8px 12px;border-radius:8px;cursor:pointer;font:inherit;font-size:14px}
+.tabs button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.grid{display:grid;grid-template-columns:330px 1fr;gap:16px}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:16px}
+.card h2{font-size:15px;margin:0 0 10px;display:flex;align-items:center;gap:8px}
+.num{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--acc2);color:var(--acc);font-size:12px;font-weight:700}
+.chat{background:#efeae2;border-radius:10px;padding:10px;max-height:430px;overflow:auto}
+.msg{max-width:88%;padding:6px 9px;border-radius:8px;margin:5px 0;font-size:13.5px;white-space:pre-wrap;box-shadow:0 1px 0 rgba(0,0,0,.06)}
+.in{background:#fff}.out{background:var(--wa);margin-left:auto}
+.msg small{display:block;color:#7a857f;font-size:11px;text-align:right}
+.att{display:flex;gap:8px;align-items:center;background:#f3f3f3;border-radius:6px;padding:6px;margin-bottom:4px;font-size:12.5px}
+.att b{background:#d93025;color:#fff;font-size:10px;padding:3px 4px;border-radius:3px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{border-bottom:1px solid var(--line);padding:6px 7px;text-align:left;vertical-align:top}
+th{background:#f1f4f2;font-weight:600;color:#33403b;white-space:nowrap}
+.fields td:first-child{color:var(--mut);width:42%}
+.pill{display:inline-block;padding:1px 8px;border-radius:99px;font-size:12px;font-weight:600}
+.p-ok{background:var(--okbg);color:var(--ok)}.p-warn{background:var(--warnbg);color:var(--warn)}.p-bad{background:var(--badbg);color:var(--bad)}.p-mut{background:#eef0ef;color:var(--mut)}
+.flag{border-left:4px solid var(--warn);background:var(--warnbg);padding:7px 10px;border-radius:6px;margin:8px 0;font-size:13.5px}
+.flag.bad{border-color:var(--bad);background:var(--badbg)}
+.steps{list-style:none;padding:0;margin:0}
+.steps li{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-bottom:1px dashed var(--line);font-size:14px}
+.dot{flex:0 0 18px;height:18px;border-radius:50%;border:2px solid var(--line);margin-top:2px}
+.done .dot{background:var(--ok);border-color:var(--ok)}.run .dot{border-color:var(--acc);border-top-color:transparent;animation:sp 1s linear infinite}
+.wait .dot{background:var(--warn);border-color:var(--warn)}
+@keyframes sp{to{transform:rotate(360deg)}}
+.steps li span.t{color:var(--mut);font-size:12px;margin-left:auto;white-space:nowrap}
+.btn{background:var(--acc);color:#fff;border:0;padding:9px 14px;border-radius:8px;font:inherit;font-size:14px;cursor:pointer}
+.btn:disabled{opacity:.45;cursor:default}.btn.sec{background:#fff;color:var(--acc);border:1px solid var(--acc)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.form{border:2px dashed #b9c4bf;border-radius:10px;padding:12px;background:#fbfcfb}
+.form .lbl{font-size:12px;color:var(--mut);margin-top:8px}
+.form .inp{border:1px solid #c8d0cc;border-radius:6px;padding:6px 8px;min-height:32px;background:#fff;font-size:14px;transition:background .3s}
+.form .inp.fill{background:#eaf7f4}
+.tag{font-size:11.5px;color:#6b4e00;background:#fff3cc;padding:2px 7px;border-radius:5px}
+.receipt{border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;font-size:13.5px}
+.receipt:after{content:"SIMULAÇÃO · SEM VALOR FISCAL";position:absolute;top:44%;left:-10%;right:-10%;text-align:center;transform:rotate(-12deg);font-weight:800;font-size:22px;color:rgba(185,28,28,.16);pointer-events:none}
+code{background:#f1f4f2;padding:2px 6px;border-radius:5px;font-size:12.5px;word-break:break-all}
+.log{font:12px/1.5 ui-monospace,Consolas,monospace;background:#0f1a17;color:#cde7df;border-radius:8px;padding:10px;max-height:220px;overflow:auto;white-space:pre-wrap}
+.mut{color:var(--mut);font-size:13px}
+a{color:var(--acc)}
+</style>
+</head>
+<body>
+<header>
+<h1>Recibos de saúde: do WhatsApp ao recibo emitido e enviado</h1>
+<p>Demonstração do fluxo completo: conversa → dados extraídos e conferidos → linha na planilha → preenchimento do Receita Saúde no Carnê-Leão → recibo salvo com nome padrão → link na planilha → envio ao paciente pelo WhatsApp. Escolha um caso e clique em processar.</p>
+</header>
+<div class="note">Demonstração com dados fictícios (CPFs gerados só para teste). Nada aqui acessa o gov.br, o Google ou o WhatsApp: o formulário e o recibo são simulações neutras, sem a identidade visual de nenhum órgão. A extração usa regras fixas para funcionar sem internet; na versão real, a IA lê a conversa e estas mesmas regras conferem o resultado.</div>
+<main>
+<div class="tabs" id="tabs"></div>
+<div class="grid">
+  <div>
+    <div class="card"><h2><span class="num">1</span>Conversa no WhatsApp</h2><div class="chat" id="chat"></div>
+      <div class="row"><button class="btn" id="go">Processar esta conversa</button></div></div>
+  </div>
+  <div>
+    <div class="card"><h2><span class="num">2</span>Dados extraídos e conferência</h2><div id="ext"><p class="mut">Clique em “Processar esta conversa”.</p></div></div>
+    <div class="card"><h2><span class="num">3–8</span>Robô: planilha, Carnê-Leão, recibo, Drive e envio</h2>
+      <ul class="steps" id="steps"></ul>
+      <div id="action"></div>
+    </div>
+    <div class="card" id="formCard" style="display:none"><h2>Preenchimento do Receita Saúde <span class="tag">formulário simulado</span></h2><div class="form" id="form"></div></div>
+    <div class="card" id="recCard" style="display:none"><h2>Recibo baixado e arquivado</h2><div id="rec"></div></div>
+    <div class="card"><h2>Planilha de controle (Google Sheets)</h2><div style="overflow:auto"><table id="sheet"></table></div></div>
+    <div class="card"><h2>Registro de cada passo (rastreabilidade)</h2><div class="log" id="log">—</div></div>
+  </div>
+</div>
+</main>
+<script>
+const PROF={id:"DRA-HELENA",nome:"Dra. Helena Prado (fictícia)"};
+const CASES=[
+ {key:"a",titulo:"Caso 1 · tudo certo",msgs:[
+  ["in","Oi! Fiz o pix da consulta de hoje, R$ 350,00 🙂"],
+  ["out","Obrigada, Marina! Para o recibo, me confirma nome completo e CPF?"],
+  ["in","Marina Souza Lima, CPF 529.982.247-25. Pagamento foi dia 25/11/2026"],
+  ["in","Foi a sessão de psicoterapia individual"]]},
+ {key:"b",titulo:"Caso 2 · mãe paga pela filha",msgs:[
+  ["in","Bom dia, segue o comprovante da sessão da Laura"],
+  ["in","[comprovante.jpg] Transferência R$ 280,00 em 24/11/2026"],
+  ["out","Obrigada! Quem é o titular do pagamento e quem foi atendida?"],
+  ["in","Eu pago, Patrícia Alves Rocha, CPF 111.444.777-35. A paciente é minha filha Laura Alves Rocha, CPF 390.533.447-05"],
+  ["in","Atendimento: avaliação fonoaudiológica"]]},
+ {key:"c",titulo:"Caso 3 · CPF digitado errado",msgs:[
+  ["in","Oi, paguei as duas sessões de fisioterapia, 2 x R$ 180"],
+  ["in","Roberto Dias Neto 867.254.193-46"],
+  ["in","pagamento ontem"]]}
+];
+let cur=CASES[0],rows=[],logLines=[],seq=123,running=false;
+const $=id=>document.getElementById(id);
+function onlyDig(s){return (s||"").replace(/\D/g,"")}
+function cpfOk(c){c=onlyDig(c);if(c.length!==11||/^(\d)\1+$/.test(c))return false;
+ for(let t=9;t<11;t++){let s=0;for(let i=0;i<t;i++)s+=+c[i]*(t+1-i);let d=(s*10)%11;if(d===10)d=0;if(d!==+c[t])return false}return true}
+function fmtCpf(c){c=onlyDig(c);return c.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,"$1.$2.$3-$4")}
+function maskCpf(c){c=onlyDig(c);return "***."+c.slice(3,6)+"."+c.slice(6,9)+"-**"}
+function brl(v){return v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}
+function now(){return new Date().toLocaleTimeString("pt-BR")}
+function log(s){logLines.push(now()+"  "+s);$("log").textContent=logLines.join("\n");$("log").scrollTop=1e9}
+function renderTabs(){$("tabs").innerHTML=CASES.map(c=>`<button class="${c===cur?"on":""}" data-k="${c.key}">${c.titulo}</button>`).join("");
+ $("tabs").querySelectorAll("button").forEach(b=>b.onclick=()=>{if(running)return;cur=CASES.find(c=>c.key===b.dataset.k);reset()})}
+function renderChat(extra){const all=cur.msgs.concat(extra||[]);
+ $("chat").innerHTML=all.map(([d,t,att])=>`<div class="msg ${d}">${att?`<div class="att"><b>PDF</b>${att}</div>`:""}${t.replace(/</g,"&lt;")}<small>${d==="in"?"paciente":"consultório"}</small></div>`).join("");$("chat").scrollTop=1e9}
+function extract(c){
+ const txt=c.msgs.filter(m=>m[0]==="in").map(m=>m[1]).join("\n");
+ const cpfs=[...txt.matchAll(/\d{3}\.?\d{3}\.?\d{3}-?\d{2}/g)].map(m=>m[0]);
+ const names=[...txt.matchAll(/([A-ZÁÉÍÓÚÂÊÔÃÕÇ][a-záéíóúâêôãõç]+(?: [A-ZÁÉÍÓÚÂÊÔÃÕÇ][a-záéíóúâêôãõç]+){2,})/g)].map(m=>m[1]);
+ let valor=null,mult=txt.match(/(\d+)\s*x\s*R\$\s*([\d.,]+)/i);
+ if(mult)valor=+mult[1]*parseFloat(mult[2].replace(/\./g,"").replace(",","."));
+ else{const v=txt.match(/R\$\s*([\d.]+,\d{2}|\d+)/);if(v)valor=parseFloat(v[1].replace(/\./g,"").replace(",","."))}
+ const dm=txt.match(/(\d{2})\/(\d{2})\/(\d{4})/);let data=dm?`${dm[3]}-${dm[2]}-${dm[1]}`:null,dataRel=!dm&&/ontem|hoje/i.test(txt);
+ let desc="";for(const re of[/atendimento:\s*([^\n]+)/i,/foi a ([^\n]+)/i,/(sess(?:[aã]o|[oõ]es) de [^\n,]+)/i,/(consulta[^\n,]*)/i]){const m=txt.match(re);if(m){desc=m[1].trim();break}}
+ const pagador={nome:names[0]||null,cpf:cpfs[0]||null},benef=names[1]?{nome:names[1],cpf:cpfs[1]||null}:{nome:pagador.nome,cpf:pagador.cpf};
+ const flags=[];
+ (benef.nome!==pagador.nome?[pagador.cpf,benef.cpf]:[pagador.cpf]).forEach((x,i)=>{if(!x)flags.push(["bad",`Falta o CPF do ${i?"beneficiário":"pagador"}.`]);else if(!cpfOk(x))flags.push(["bad",`CPF ${x} não passa na conferência dos dígitos: provável erro de digitação. Nada é emitido; o paciente recebe um pedido de confirmação.`])});
+ if(!data&&dataRel)flags.push(["warn","A data veio como “ontem/hoje”. O robô calcula a data a partir do horário da mensagem, mas pede uma confirmação humana."]);
+ if(!data&&!dataRel)flags.push(["bad","Data do pagamento não encontrada."]);
+ if(mult)flags.push(["warn",`Valor calculado (${mult[1]} sessões × R$ ${mult[2]}). Confirmar se é um recibo pelo total ou um por sessão.`]);
+ if(benef.nome!==pagador.nome)flags.push(["ok","Pagador e beneficiário são pessoas diferentes: os dois CPFs vão para o recibo, cada um no seu campo."]);
+ return{pagador,benef,valor,data,dataRel,desc,flags,blocked:flags.some(f=>f[0]==="bad")};
+}
+function renderExt(e){
+ const st=x=>x? (cpfOk(x)?`<span class="pill p-ok">válido</span>`:`<span class="pill p-bad">inválido</span>`):`<span class="pill p-bad">faltando</span>`;
+ $("ext").innerHTML=`<table class="fields">
+ <tr><td>Pagador</td><td>${e.pagador.nome||"—"}</td></tr>
+ <tr><td>CPF do pagador</td><td>${e.pagador.cpf||"—"} ${st(e.pagador.cpf)}</td></tr>
+ <tr><td>Beneficiário (paciente)</td><td>${e.benef.nome||"—"}</td></tr>
+ <tr><td>CPF do beneficiário</td><td>${e.benef.cpf||"—"} ${st(e.benef.cpf)}</td></tr>
+ <tr><td>Valor</td><td>${e.valor!=null?brl(e.valor):"—"}</td></tr>
+ <tr><td>Data do pagamento</td><td>${e.data?e.data.split("-").reverse().join("/"):(e.dataRel?"relativa (“ontem”)":"—")}</td></tr>
+ <tr><td>Descrição do serviço</td><td>${e.desc||"—"}</td></tr>
+ <tr><td>Profissional (identificador)</td><td>${PROF.id}</td></tr></table>
+ ${e.flags.map(f=>`<div class="flag ${f[0]==="bad"?"bad":""}" ${f[0]==="ok"?'style="border-color:#15803d;background:#e8f6ec"':""}>${f[1]}</div>`).join("")}`;
+}
+const STEPS=["Linha registrada na planilha","Navegador aberto no gov.br: aguardando login da pessoa responsável","Perfil trocado para o profissional e Carnê-Leão aberto","Campos do Receita Saúde preenchidos","Conferência humana antes de emitir","Recibo emitido e PDF baixado","PDF salvo no Drive com nome padrão","Planilha atualizada com o link do recibo","Recibo enviado ao paciente pelo WhatsApp"];
+function renderSteps(state){$("steps").innerHTML=STEPS.map((s,i)=>`<li class="${state[i]||""}"><span class="dot"></span><span>${s}</span><span class="t">${state["t"+i]||""}</span></li>`).join("")}
+function renderSheet(){
+ $("sheet").innerHTML=`<tr><th>ID</th><th>Profissional</th><th>Pagador</th><th>CPF pag.</th><th>Beneficiário</th><th>Valor</th><th>Pagamento</th><th>Status</th><th>Recibo</th><th>Link do PDF</th></tr>`+
+ (rows.length?rows.map(r=>`<tr><td>${r.id}</td><td>${PROF.id}</td><td>${r.e.pagador.nome||"—"}</td><td>${r.e.pagador.cpf?maskCpf(r.e.pagador.cpf):"—"}</td><td>${r.e.benef.nome||"—"}</td><td>${r.e.valor!=null?brl(r.e.valor):"—"}</td><td>${r.e.data?r.e.data.split("-").reverse().join("/"):"?"}</td><td>${r.status}</td><td>${r.nr||""}</td><td>${r.link?`<a href="#" onclick="return false">${r.link}</a>`:""}</td></tr>`).join(""):`<tr><td colspan="10" class="mut">Vazia. Cada conversa processada vira uma linha.</td></tr>`)}
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+function btnAction(html){$("action").innerHTML=html?`<div class="row">${html}</div>`:""}
+function until(id){return new Promise(r=>{$(id).onclick=()=>{btnAction("");r()}})}
+async function run(){
+ if(running)return;running=true;$("go").disabled=true;renderChat();
+ const e=extract(cur);renderExt(e);
+ const r={id:"RC-"+String(seq).padStart(5,"0"),e,status:'<span class="pill p-mut">novo</span>'};rows.push(r);
+ log(`${r.id} conversa recebida (${cur.msgs.length} mensagens), dados extraídos`);
+ const st={};renderSteps(st);await wait(500);
+ st[0]="done";st.t0=now();r.status=e.blocked?'<span class="pill p-bad">bloqueado</span>':'<span class="pill p-warn">aguardando emissão</span>';renderSheet();renderSteps(st);log(`${r.id} linha criada na planilha`);
+ if(e.blocked){
+  log(`${r.id} BLOQUEADO: ${e.flags.filter(f=>f[0]==="bad").map(f=>f[1].split(":")[0]).join("; ")}`);
+  renderChat([["out","Oi, Roberto! Antes de emitir o seu recibo, pode conferir o CPF? O número enviado não fecha os dígitos de verificação. E o pagamento foi em qual data? Obrigada!"]]);
+  log(`${r.id} pedido de confirmação enviado ao paciente pelo WhatsApp; nada foi digitado no Carnê-Leão`);
+  btnAction(`<span class="mut">Nenhum dado errado chega à Receita: o recibo fica parado até a resposta.</span>`);
+  running=false;$("go").disabled=false;seq++;return}
+ st[1]="wait";renderSteps(st);
+ btnAction(`<button class="btn" id="b1">Login feito (simular)</button><span class="mut">O gov.br limita acessos automáticos; por isso a pessoa responsável faz o login e a verificação uma vez, e o robô segue na mesma sessão com o lote inteiro.</span>`);
+ log(`${r.id} navegador aberto; aguardando login humano`);await until("b1");
+ st[1]="done";st.t1=now();st[2]="run";renderSteps(st);log(`${r.id} login concluído pela pessoa responsável`);await wait(900);
+ st[2]="done";st.t2=now();st[3]="run";renderSteps(st);log(`${r.id} perfil trocado para ${PROF.id}; Carnê-Leão > Rendimentos > Receita Saúde`);
+ $("formCard").style.display="";
+ const F=[["CPF do titular do pagamento",fmtCpf(e.pagador.cpf)],["CPF do beneficiário",fmtCpf(e.benef.cpf)],["Data do pagamento",e.data?e.data.split("-").reverse().join("/"):"26/11/2026 (calculada de “ontem”)"],["Valor",brl(e.valor)],["Descrição do serviço",e.desc]];
+ $("form").innerHTML=F.map((f,i)=>`<div class="lbl">${f[0]}</div><div class="inp" id="f${i}"></div>`).join("")+`<p class="mut" style="margin:10px 0 0">Na primeira etapa do projeto, estes campos são conferidos com a tela real do Carnê-Leão da sua conta.</p>`;
+ for(let i=0;i<F.length;i++){await wait(350);$("f"+i).textContent=F[i][1];$("f"+i).classList.add("fill")}
+ st[3]="done";st.t3=now();st[4]="wait";renderSteps(st);log(`${r.id} ${F.length} campos preenchidos`);
+ btnAction(`<button class="btn" id="b2">Conferido: emitir</button><button class="btn sec" id="b2b">Emitir sem conferir (modo automático)</button><span class="mut">Recibo errado só pode ser cancelado por pouco tempo; no começo, cada emissão passa por um clique de conferência. Depois, se preferir, liga-se o modo automático para os casos sem nenhum alerta.</span>`);
+ await new Promise(res=>{$("b2").onclick=()=>{btnAction("");log(`${r.id} conferido por humano`);res()};$("b2b").onclick=()=>{btnAction("");log(`${r.id} modo automático (sem alertas)`);res()}});
+ st[4]="done";st.t4=now();st[5]="run";renderSteps(st);await wait(900);
+ r.nr=String(Math.floor(100000+Math.random()*899999));r.nr="SIM-"+r.nr;st[5]="done";st.t5=now();renderSteps(st);log(`${r.id} recibo ${r.nr} emitido; PDF baixado`);
+ const fname=`${PROF.id}_${r.nr}_${e.data||"2026-11-26"}_${onlyDig(e.pagador.cpf)}.pdf`;
+ st[6]="run";renderSteps(st);await wait(700);st[6]="done";st.t6=now();renderSteps(st);log(`${r.id} salvo em Drive/Recibos/${PROF.id}/2026-11/${fname}`);
+ $("recCard").style.display="";
+ $("rec").innerHTML=`<div class="receipt"><b>Recibo de serviço de saúde nº ${r.nr}</b><br>Profissional: ${PROF.nome}<br>Pagador: ${e.pagador.nome} · CPF ${fmtCpf(e.pagador.cpf)}<br>Beneficiário: ${e.benef.nome} · CPF ${fmtCpf(e.benef.cpf)}<br>Valor: ${brl(e.valor)} · Pagamento: ${(e.data||"2026-11-26").split("-").reverse().join("/")}<br>Serviço: ${e.desc}</div>
+ <p class="mut" style="margin:10px 0 4px">Nome padrão do arquivo (identificador_recibo_data_CPF):</p><code>${fname}</code>
+ <p class="mut" style="margin:8px 0 0">Pasta: Recibos / ${PROF.id} / 2026-11 · acesso restrito a quem você autorizar, porque o nome do arquivo leva CPF.</p>`;
+ r.link="drive.google.com/file/d/…"+r.nr.slice(-4);st[7]="done";st.t7=now();r.status='<span class="pill p-ok">emitido</span>';renderSheet();renderSteps(st);log(`${r.id} planilha atualizada com o link`);
+ await wait(600);
+ renderChat([["out",`Olá, ${e.pagador.nome.split(" ")[0]}! Segue o recibo nº ${r.nr} referente a ${e.desc} (${brl(e.valor)}). Ele já consta na Receita para a sua declaração.`,fname]]);
+ st[8]="done";st.t8=now();renderSteps(st);r.status='<span class="pill p-ok">enviado</span>';renderSheet();log(`${r.id} recibo enviado ao paciente pelo WhatsApp. Fluxo concluído.`);
+ btnAction(`<span class="mut">Tempo humano neste recibo: um login (que vale para o lote) e um clique de conferência.</span>`);
+ running=false;$("go").disabled=false;seq++;
+}
+function reset(){renderTabs();renderChat();$("ext").innerHTML='<p class="mut">Clique em “Processar esta conversa”.</p>';renderSteps({});btnAction("");$("formCard").style.display="none";$("recCard").style.display="none"}
+$("go").onclick=run;reset();renderSheet();
+</script>
+</body>
+</html>
