@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Caja y Stock – demo</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{--bg:#eef1f5;--card:#fff;--ink:#1c2430;--mut:#6b7684;--line:#e3e7ec;--pri:#0f6e5c;--pri2:#e3f3ef;--red:#c2413a;--red2:#fbe9e7;--amb:#b7791f;--amb2:#fdf3e1;--blue:#2f5fb3}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#11151a;--card:#1b2128;--ink:#e8edf2;--mut:#98a3af;--line:#2b333c;--pri:#3cbf9f;--pri2:#173a33;--red:#ef7a72;--red2:#3a2020;--amb:#e3ad55;--amb2:#3a2f1b;--blue:#79a2ea}}
+:root[data-theme="dark"]{--bg:#11151a;--card:#1b2128;--ink:#e8edf2;--mut:#98a3af;--line:#2b333c;--pri:#3cbf9f;--pri2:#173a33;--red:#ef7a72;--red2:#3a2020;--amb:#e3ad55;--amb2:#3a2f1b;--blue:#79a2ea}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+.wrap{display:flex;gap:28px;justify-content:center;align-items:flex-start;padding:24px 16px;flex-wrap:wrap}
+.side{max-width:340px}.side h1{font-size:22px;margin:0 0 6px}.side p{color:var(--mut);margin:0 0 12px}.side li{margin-bottom:6px;color:var(--mut)}.side b{color:var(--ink)}
+.phone{width:390px;max-width:100%;height:800px;background:var(--bg);border:10px solid #222;border-radius:38px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 50px #0003}
+header{background:var(--pri);color:#fff;padding:16px 18px 14px}header small{opacity:.8}header .big{font-size:28px;font-weight:700}
+main{flex:1;overflow:auto;padding:12px}
+nav{display:flex;border-top:1px solid var(--line);background:var(--card)}nav button{flex:1;border:0;background:none;padding:10px 0 12px;color:var(--mut);font-size:12px;cursor:pointer}nav button.on{color:var(--pri);font-weight:700}
+.card{background:var(--card);border-radius:14px;padding:14px;margin-bottom:12px;border:1px solid var(--line)}
+.card h3{margin:0 0 8px;font-size:15px}.mut{color:var(--mut);font-size:13px}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:8px}.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px}.kpi .v{font-size:18px;font-weight:700}
+.bar{height:8px;background:var(--line);border-radius:6px;overflow:hidden;margin:4px 0 8px}.bar i{display:block;height:100%}
+.row{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.pill{font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600}.ok{background:var(--pri2);color:var(--pri)}.bad{background:var(--red2);color:var(--red)}.warn{background:var(--amb2);color:var(--amb)}
+.prod{padding:10px 0;border-bottom:1px solid var(--line)}.prod:last-child{border:0}
+.btn{border:0;border-radius:10px;padding:9px 12px;font-weight:600;cursor:pointer;background:var(--pri);color:#fff}.btn.sec{background:var(--pri2);color:var(--pri)}.btn.sm{padding:5px 9px;font-size:12px}
+select,input{width:100%;padding:9px;border-radius:9px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;margin-bottom:8px}
+.toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#222;color:#fff;padding:10px 16px;border-radius:10px;opacity:0;transition:.3s;pointer-events:none;font-size:14px}.toast.on{opacity:1}
+.sug{border-left:4px solid var(--pri);padding-left:10px;margin-bottom:12px}.sug.r{border-color:var(--red)}.sug.a{border-color:var(--amb)}
+canvas{max-width:100%}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="side">
+<h1>Caja y Stock</h1>
+<p>Demo de una app para administrar un negocio local: caja, mercadería, gastos según ingresos, gráficas de pérdidas y excedente, y sugerencias. Datos ficticios.</p>
+<ul>
+<li><b>Prueba esto:</b> en "Movimientos" registra una venta. Baja el stock, sube la caja y cambia el excedente en todas las pantallas.</li>
+<li><b>Gastos:</b> cada categoría tiene un tope como % de los ingresos del mes; al pasarlo, aparece la alerta.</li>
+<li><b>Pérdidas:</b> mermas, vencidos, descuentos, gastos sobre el tope y capital inmovilizado en mercadería que no rota.</li>
+<li><b>Retiros del dueño</b> van aparte: no se mezclan con los gastos del negocio.</li>
+<li><b>Sugerencias</b> calculadas con los números del propio negocio (orientativas, no asesoría financiera).</li>
+</ul>
+</div>
+<div class="phone">
+<header><small>Capital disponible en caja</small><div class="big" id="hCaja"></div><small id="hSub"></small></header>
+<main id="main"></main>
+<nav id="nav"></nav>
+</div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const $=s=>document.querySelector(s), fmt=n=>(n<0?'-':'')+'$'+Math.abs(Math.round(n)).toLocaleString('es');
+const S={caja:418000,
+ prods:[
+  {n:'Gaseosa 1,5 L',c:900,p:1500,q:64,min:24,vend30:180},
+  {n:'Yerba 1 kg',c:2600,p:3900,q:18,min:20,vend30:70},
+  {n:'Galletitas surtidas',c:700,p:1200,q:95,min:30,vend30:150},
+  {n:'Aceite 900 ml',c:1900,p:2700,q:40,min:12,vend30:22},
+  {n:'Detergente 750 ml',c:1100,p:1700,q:72,min:15,vend30:9},
+  {n:'Pan lactal',c:1300,p:2100,q:12,min:15,vend30:110},
+  {n:'Café molido 250 g',c:3200,p:4800,q:30,min:8,vend30:4},
+ ],
+ gastos:[ // tope = % de ingresos del mes
+  {cat:'Alquiler',v:150000,tope:12},{cat:'Sueldos',v:190000,tope:15},{cat:'Servicios (luz, agua, internet)',v:52000,tope:4},
+  {cat:'Transporte y fletes',v:41000,tope:2.5},{cat:'Publicidad',v:15000,tope:2},{cat:'Otros',v:22000,tope:2}],
+ perdidas:{Mermas:26000,'Vencidos':19000,'Descuentos dados':31000},
+ retiros:120000,
+ ingresosMes:1480000, comprasMes:760000,
+ hist:{m:['Jun','Jul','Ago','Sep','Oct','Nov'],ing:[1210000,1290000,1260000,1350000,1420000,0],gas:[1080000,1150000,1190000,1170000,1240000,0]},
+ mov:[]
+};
+let tab='inicio';
+function totGastos(){return S.gastos.reduce((a,g)=>a+g.v,0)}
+function totPerd(){return Object.values(S.perdidas).reduce((a,b)=>a+b,0)}
+function excedente(){return S.ingresosMes-S.comprasMes-totGastos()-totPerd()}
+function stockVal(){return S.prods.reduce((a,p)=>a+p.c*p.q,0)}
+function dias(p){return p.vend30?Math.round(p.q/(p.vend30/30)):999}
+function inmov(){return S.prods.filter(p=>dias(p)>90).reduce((a,p)=>a+p.c*p.q,0)}
+function sobreTope(){return S.gastos.reduce((a,g)=>a+Math.max(0,g.v-S.ingresosMes*g.tope/100),0)}
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');setTimeout(()=>e.classList.remove('on'),2200)}
+const TABS={inicio:'Inicio',stock:'Stock',mov:'Movimientos',graf:'Gráficas',sug:'Sugerencias'};
+function nav(){$('#nav').innerHTML=Object.entries(TABS).map(([k,v])=>`<button class="${k==tab?'on':''}" onclick="go('${k}')">${v}</button>`).join('')}
+function go(t){tab=t;render()}
+let charts=[];
+function render(){
+ charts.forEach(c=>c.destroy());charts=[];
+ $('#hCaja').textContent=fmt(S.caja);
+ const ex=excedente();$('#hSub').textContent='Excedente del mes: '+fmt(ex);
+ nav();$('#main').innerHTML=V[tab]();$('#main').scrollTop=0;
+ if(tab=='graf')drawCharts();
+}
+const V={
+inicio(){const ex=excedente(),tg=totGastos();
+ return `<div class="kpis">
+ <div class="kpi"><div class="mut">Ingresos del mes</div><div class="v">${fmt(S.ingresosMes)}</div></div>
+ <div class="kpi"><div class="mut">Gastos fijos</div><div class="v">${fmt(tg)}</div></div>
+ <div class="kpi"><div class="mut">Pérdidas</div><div class="v" style="color:var(--red)">${fmt(totPerd())}</div></div>
+ <div class="kpi"><div class="mut">Excedente</div><div class="v" style="color:${ex>=0?'var(--pri)':'var(--red)'}">${fmt(ex)}</div></div></div>
+ <div class="card" style="margin-top:12px"><h3>Gastos según ingresos</h3><div class="mut" style="margin-bottom:8px">Cada gasto tiene un tope como % de lo que entra este mes.</div>
+ ${S.gastos.map(g=>{const pct=g.v/S.ingresosMes*100,over=pct>g.tope;return `<div class="row"><span>${g.cat}</span><span class="pill ${over?'bad':'ok'}">${pct.toFixed(1)}% / tope ${g.tope}%</span></div>
+ <div class="bar"><i style="width:${Math.min(100,pct/g.tope*100)}%;background:${over?'var(--red)':'var(--pri)'}"></i></div>`}).join('')}
+ ${sobreTope()>0?`<div class="pill bad" style="display:inline-block">Gastos sobre el tope: ${fmt(sobreTope())}</div>`:''}</div>
+ <div class="card"><h3>Retiros del dueño</h3><div class="row"><span class="mut">Este mes, separados de los gastos</span><b>${fmt(S.retiros)}</b></div></div>
+ <div class="card"><h3>Avisos de stock</h3>${S.prods.filter(p=>p.q<p.min).map(p=>`<div class="row prod"><span>${p.n}</span><span class="pill warn">quedan ${p.q} (mín. ${p.min})</span></div>`).join('')||'<span class="mut">Todo en orden</span>'}</div>`},
+stock(){return `<div class="kpis"><div class="kpi"><div class="mut">Mercadería (a costo)</div><div class="v">${fmt(stockVal())}</div></div>
+ <div class="kpi"><div class="mut">Capital inmovilizado</div><div class="v" style="color:var(--amb)">${fmt(inmov())}</div></div></div>
+ <div class="card" style="margin-top:12px"><h3>Productos</h3>${S.prods.map(p=>{const d=dias(p),m=((p.p-p.c)/p.p*100).toFixed(0);
+ return `<div class="prod"><div class="row"><b>${p.n}</b><span>${p.q} u.</span></div>
+ <div class="row mut"><span>Costo ${fmt(p.c)} · Venta ${fmt(p.p)} · Margen ${m}%</span></div>
+ <div class="row" style="margin-top:4px"><span class="mut">Alcanza para ${d>365?'más de un año':d+' días'}</span>
+ ${p.q<p.min?'<span class="pill warn">Reponer</span>':d>90?'<span class="pill bad">No rota</span>':'<span class="pill ok">Rota bien</span>'}</div></div>`}).join('')}</div>`},
+mov(){return `<div class="card"><h3>Registrar movimiento</h3>
+ <select id="mt"><option value="venta">Venta</option><option value="compra">Compra de mercadería</option><option value="merma">Merma / vencido</option><option value="gasto">Gasto</option><option value="retiro">Retiro del dueño</option></select>
+ <select id="mp">${S.prods.map((p,i)=>`<option value="${i}">${p.n}</option>`).join('')}</select>
+ <input id="mq" type="number" min="1" value="5" placeholder="Cantidad o monto">
+ <button class="btn" onclick="reg()" style="width:100%">Guardar</button>
+ <div class="mut" style="margin-top:6px">Venta y compra mueven caja y stock juntos; una merma baja el stock y suma a pérdidas.</div></div>
+ <div class="card"><h3>Últimos movimientos</h3>${S.mov.length?S.mov.slice(-8).reverse().map(m=>`<div class="row prod"><span>${m.t}</span><b style="color:${m.v>=0?'var(--pri)':'var(--red)'}">${fmt(m.v)}</b></div>`).join(''):'<span class="mut">Aún no registraste nada en esta demo.</span>'}</div>`},
+graf(){return `<div class="card"><h3>Ingresos vs gastos (6 meses)</h3><canvas id="c1" height="190"></canvas></div>
+ <div class="card"><h3>¿Dónde se pierde dinero este mes?</h3><canvas id="c2" height="210"></canvas><div class="mut">Incluye el capital que está quieto en mercadería sin rotación.</div></div>
+ <div class="card"><h3>Excedente mensual</h3><canvas id="c3" height="170"></canvas></div>`},
+sug(){const fijos=totGastos(),reserva=fijos*3,ex=excedente(),inm=inmov(),slow=S.prods.filter(p=>dias(p)>90),fast=S.prods.filter(p=>p.q<p.min);
+ const out=[];
+ out.push(`<div class="sug"><b>Fondo de reserva</b><div class="mut">Tus gastos fijos son ${fmt(fijos)} al mes. Una reserva de 3 meses sería ${fmt(reserva)}; hoy la caja cubre ${(S.caja/fijos).toFixed(1)} meses.</div></div>`);
+ if(fast.length)out.push(`<div class="sug"><b>Reinvertir en lo que rota</b><div class="mut">${fast.map(p=>p.n).join(', ')} se están por agotar y venden todos los días. Reponerlos devuelve el dinero en semanas.</div></div>`);
+ if(inm)out.push(`<div class="sug a"><b>Liberar capital quieto</b><div class="mut">${fmt(inm)} están en ${slow.map(p=>p.n).join(', ')}, que alcanzan para más de 3 meses. Una promoción o comprar menos la próxima vez libera ese dinero.</div></div>`);
+ if(sobreTope()>0)out.push(`<div class="sug r"><b>Gastos por encima del tope</b><div class="mut">${S.gastos.filter(g=>g.v>S.ingresosMes*g.tope/100).map(g=>g.cat).join(', ')} superan su % de los ingresos por ${fmt(sobreTope())} en total.</div></div>`);
+ if(ex>0)out.push(`<div class="sug"><b>Qué hacer con el excedente (${fmt(ex)})</b><div class="mut">Orden sugerido: completar la reserva, después reponer lo que rota, y recién entonces mejoras del local o un ahorro a plazo. Opciones orientativas, no asesoría financiera.</div></div>`);
+ return `<div class="card"><h3>Sugerencias de este mes</h3><div class="mut" style="margin-bottom:10px">Se calculan con los números de tu negocio y cambian cuando registras movimientos.</div>${out.join('')}</div>`}
+};
+function reg(){const t=$('#mt').value,p=S.prods[+$('#mp').value],q=Math.max(1,+$('#mq').value||1);
+ if(t=='venta'){if(q>p.q){toast('No hay stock suficiente: quedan '+p.q);return}p.q-=q;p.vend30+=q;const v=q*p.p;S.caja+=v;S.ingresosMes+=v;S.comprasMes+=q*p.c;S.mov.push({t:`Venta ${q} × ${p.n}`,v});toast('Venta guardada: stock y caja actualizados')}
+ else if(t=='compra'){const v=q*p.c;if(v>S.caja){toast('La caja no alcanza para esta compra');return}p.q+=q;S.caja-=v;S.mov.push({t:`Compra ${q} × ${p.n}`,v:-v});toast('Compra guardada: entra al stock')}
+ else if(t=='merma'){if(q>p.q){toast('No hay tantas unidades');return}p.q-=q;S.perdidas.Mermas+=q*p.c;S.mov.push({t:`Merma ${q} × ${p.n}`,v:-q*p.c});toast('Merma registrada como pérdida')}
+ else if(t=='gasto'){S.caja-=q;S.gastos[5].v+=q;S.mov.push({t:'Gasto (otros)',v:-q});toast('Gasto guardado y comparado con su tope')}
+ else {S.caja-=q;S.retiros+=q;S.mov.push({t:'Retiro del dueño',v:-q});toast('Retiro guardado aparte de los gastos')}
+ render()}
+function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim()}
+function drawCharts(){const ink=css('--mut'),grid=css('--line');Chart.defaults.color=ink;Chart.defaults.borderColor=grid;
+ const ing=[...S.hist.ing.slice(0,5),S.ingresosMes],gas=[...S.hist.gas.slice(0,5),totGastos()+S.comprasMes];
+ const ax={y:{ticks:{callback:v=>'$'+(v/1000)+'k'}}};
+ charts.push(new Chart($('#c1'),{type:'bar',data:{labels:S.hist.m,datasets:[{label:'Ingresos',data:ing,backgroundColor:css('--pri')},{label:'Compras + gastos',data:gas,backgroundColor:css('--amb')}]},options:{scales:ax,plugins:{legend:{position:'bottom'}}}}));
+ const pl={...S.perdidas,'Gastos sobre tope':sobreTope(),'Capital sin rotación':inmov()};
+ charts.push(new Chart($('#c2'),{type:'bar',data:{labels:Object.keys(pl),datasets:[{data:Object.values(pl),backgroundColor:css('--red')}]},options:{indexAxis:'y',scales:{x:{ticks:{callback:v=>'$'+(v/1000)+'k'}}},plugins:{legend:{display:false}}}}));
+ const exs=ing.map((v,i)=>v-gas[i]-(i==5?totPerd():40000));
+ charts.push(new Chart($('#c3'),{type:'line',data:{labels:S.hist.m,datasets:[{data:exs,borderColor:css('--blue'),backgroundColor:css('--blue'),tension:.3}]},options:{scales:ax,plugins:{legend:{display:false}}}}));
+}
+render();
+</script>
+</body>
+</html>
